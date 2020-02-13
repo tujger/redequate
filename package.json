@@ -27,10 +27,14 @@
   "peerDependencies": {
     "@material-ui/core": "^0.18.3",
     "@material-ui/icons": "^0.18.3",
+    "axios": "latest",
+    "firebase": "latest",
     "prop-types": "^15.5.4",
     "react": "^0.14.9 || ^15.0.0 || ^16.0.0",
     "react-dom": "^0.14.9 || ^15.0.0 || ^16.0.0",
     "react-redux": "latest",
+    "react-router-dom": "latest",
+    "react-router-hooks": "latest",
     "react-text-mask": "latest",
     "text-mask-addons": "latest"
   },
