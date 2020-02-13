@@ -6,7 +6,9 @@
   "license": "MIT",
   "repository": "tujger/edeqa-pwa-react-core",
   "main": "dist/index.js",
+  "examples_main": "dist/examples/index.js",
   "module": "dist/index.es.js",
+  "examples_module": "dist/examples/index.es.js",
   "jsnext:main": "dist/index.es.js",
   "engines": {
     "node": ">=8",
@@ -28,7 +30,9 @@
     "prop-types": "^15.5.4",
     "react": "^0.14.9 || ^15.0.0 || ^16.0.0",
     "react-dom": "^0.14.9 || ^15.0.0 || ^16.0.0",
-    "react-redux": "latest"
+    "react-redux": "latest",
+    "react-text-mask": "latest",
+    "text-mask-addons": "latest"
   },
   "devDependencies": {
     "@svgr/rollup": "^2.4.1",

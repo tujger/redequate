@@ -27,7 +27,7 @@ const ListComponent = props => {
             {items.map((item, index) => <itemComponent.type key={index} {...itemComponent.props} data={item}/>)}
             {!items.length && emptyComponent}
         </List>
-}
+};
 
 ListComponent.propTypes = {
     items: PropTypes.array,
