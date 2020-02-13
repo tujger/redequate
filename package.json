@@ -21,10 +21,14 @@
     "predeploy": "cd example && npm install && npm run build",
     "deploy": "gh-pages -d example/build"
   },
+  "dependencies": {},
   "peerDependencies": {
+    "@material-ui/core": "^0.18.3",
+    "@material-ui/icons": "^0.18.3",
     "prop-types": "^15.5.4",
-    "react": "^15.0.0 || ^16.0.0",
-    "react-dom": "^15.0.0 || ^16.0.0"
+    "react": "^0.14.9 || ^15.0.0 || ^16.0.0",
+    "react-dom": "^0.14.9 || ^15.0.0 || ^16.0.0",
+    "react-redux": "latest"
   },
   "devDependencies": {
     "@svgr/rollup": "^2.4.1",
