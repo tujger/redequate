@@ -30,7 +30,7 @@ export default {
     url(),
     svgr(),
     babel({
-      exclude: ['node_modules/**', 'src/lib/**'],
+      exclude: ['node_modules/**', 'src/lib/geo-coder/**'],
       plugins: [ 'external-helpers' ]
     }),
     resolve(),
