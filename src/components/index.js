@@ -1,13 +1,8 @@
-export {ExampleComponent} from "./ExampleComponent";
 export {default as AvatarView} from "./AvatarView";
 export {default as BottomMenu} from "./BottomMenu";
 export {default as ButtonAddEvent} from "./ButtonAddEvent";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";
-export {default as MainAppbar} from "./MainAppbar";
-export {default as MainContent} from "./MainContent";
-export {default as MainHeader} from "./MainHeader";
-export {default as MainMenu} from "./MainMenu";
 export {default as PasswordField} from "./PasswordField";
 export {default as ProfileComponent} from "./ProfileComponent";
 export {default as ProgressView, progressView} from "./ProgressView";
