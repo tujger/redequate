@@ -4,6 +4,7 @@ export {default as ButtonAddEvent} from "./ButtonAddEvent";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";
 export {default as PasswordField} from "./PasswordField";
+export {default as PlacesTextField} from "./PlacesTextField";
 export {default as ProfileComponent} from "./ProfileComponent";
 export {default as ProgressView, progressView} from "./ProgressView";
 export {default as ServiceComponent} from "./ServiceComponent";

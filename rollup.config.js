@@ -30,7 +30,7 @@ export default {
     url(),
     svgr(),
     babel({
-      exclude: 'node_modules/**',
+      exclude: ['node_modules/**', 'src/lib/**'],
       plugins: [ 'external-helpers' ]
     }),
     resolve(),

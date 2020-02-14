@@ -27,8 +27,10 @@
   "peerDependencies": {
     "@material-ui/core": "latest",
     "@material-ui/icons": "latest",
+    "@material-ui/lab": "latest",
     "axios": "latest",
     "firebase": "latest",
+    "geo-coder": "latest",
     "prop-types": "latest",
     "react": "latest",
     "react-add-to-calendar-hoc": "latest",
