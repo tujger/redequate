@@ -28,7 +28,7 @@ export const fetchFunction = firebase => (name, options, onsuccess, onerror) => 
         });
       });
     } else {
-      logoutUser();
+      logoutUser(firebase)();
     }
   });
 };

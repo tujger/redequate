@@ -14,7 +14,7 @@ import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 
 const EditProfile = (props) => {
-    let {data, location = {}, history, dispatch, disabled, firebase, store} = props;
+    let {data, location = {}, history, dispatch, firebase, store} = props;
     const {state:givenState = {}} = location;
     const {tosuccessroute, data:givenData} = givenState;
 
@@ -25,24 +25,24 @@ const EditProfile = (props) => {
         error:"",
         image: data ? data.image || "" : "",
         name: data ? data.name || "" : "",
-        phone: data ? data.phone || "" : ""
+        phone: data ? data.phone || "" : "",
+        disabled: false
     });
-    const {name = "", error = "", address = "", phone = "", image = ""} = state;
+    const {name = "", error = "", address = "", phone = "", image = "", disabled} = state;
 
     const onerror = error => {
-        dispatch(ProgressView.HIDE);
-        dispatch({type: "editProfileEnable"});
+        setState({...state, disabled: false});
+        refreshAll(store);
     };
 
     const saveUser = () => {
-        // setState({...state, requesting: true});
-        dispatch({type: "editProfileDisable"});
+        setState({...state, disabled: true});
         dispatch(ProgressView.SHOW);
         fetchUser(firebase)(data.uid, user => {
             updateUser(firebase)({...user, name, address, phone, image}, (user) => {
                 setTimeout(() => {
-                  refreshAll(store);
-                    dispatch({type: "editProfileEnable"});
+                    setState({...state, disabled: false});
+                    refreshAll(store);
                     history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
                 }, 1000)
             }, onerror);
@@ -146,17 +146,4 @@ const EditProfile = (props) => {
     </Grid>
 };
 
-export const editProfile = (state = {disabled:false}, action) => {
-    switch(action.type) {
-        case "editProfileDisable":
-            return {disabled: true};
-        case "editProfileEnable":
-            return {disabled: false};
-        default:
-            return state;
-    }
-};
-
-const mapStateToProps = ({editProfile}) => ({disabled: editProfile.disabled});
-
-export default connect(mapStateToProps)(withRouter(EditProfile));
+export default connect()(withRouter(EditProfile));

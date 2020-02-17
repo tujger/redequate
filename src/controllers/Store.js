@@ -3,14 +3,12 @@ import ResponsiveDrawerLayout, {responsiveDrawerLayout} from "../layouts/Respons
 import TopBottomMenuLayout, {topBottomMenuLayout} from "../layouts/TopBottomMenuLayout";
 import TopBottomToolbarLayout, {topBottomToolbarLayout} from "../layouts/TopBottomToolbarLayout";
 import {snackbar} from "../components/Snackbar";
-import {editProfile} from "../pages/EditProfile";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
     const store = createStore(combineReducers({
-        editProfile,
         progressView,
         responsiveDrawerLayout,
         snackbar,

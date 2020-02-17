@@ -6,11 +6,17 @@ export const fetchUser = firebase => (uid, onsuccess, onerror) => {
         db.ref("users").child(uid).once("value").then(snapshot => {
             let val = snapshot.val() || {};
             val.uid = uid;
-            onsuccess && onsuccess(val);
+            db.ref("admin").child(uid).child("role").once("value").then(snapshot => {
+                val.role = snapshot.val();
+                onsuccess && onsuccess(val);
+            }).catch(error => {
+                val.role = val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED;
+                onsuccess && onsuccess(val);
+            });
         }).catch(onerror);
     } else {
         try {
-            logoutUser();
+            logoutUser(firebase)();
             onsuccess && onsuccess();
         } catch(e) {
             onerror(e);
@@ -45,7 +51,7 @@ export const updateUser = firebase => (user, onsuccess, onerror) => {
         }).catch(onerror);
     } else {
         try {
-            logoutUser();
+            logoutUser(firebase)();
             onsuccess && onsuccess();
         } catch(e) {
             onerror(e);
@@ -84,7 +90,8 @@ export const user = User();
 
 export const currentRole = currentUser => {
     if (currentUser && !currentUser.role) {
-        logoutUser();
+        console.error("Current user role is invalid, reset ro USER", currentUser);
+        return Role.USER;
     }
     return currentUser ? currentUser.role || Role.LOGIN : Role.LOGIN;
 };
