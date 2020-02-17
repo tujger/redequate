@@ -137,26 +137,3 @@ export const sendConfirmationEmail = (firebase, store) => options => {
         }
     });
 };
-
-export const fetchFunction = firebase => (name, options, onsuccess, onerror) =>  {
-    firebase.auth().onAuthStateChanged(data => {
-        if (data) {
-            data.getIdToken().then(token => {
-                let config = {
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                };
-                const namedFunction = firebase.functions().httpsCallable(name, config);
-                namedFunction(options).then(result => {
-                    onsuccess(result.data, result);
-                }).catch(error => {
-                    onerror(error);
-                });
-            });
-        } else {
-            logoutUser();
-        }
-    });
-};
-

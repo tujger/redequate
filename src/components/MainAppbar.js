@@ -26,21 +26,23 @@ const styles = theme => ({
 });
 
 function MainAppbar(props) {
-    const {pages, classes, onHamburgerClick} = props;
+    const {pages, classes, className, onHamburgerClick} = props;
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
-    return <AppBar position="fixed">
+    return <AppBar position="fixed" className={className}>
         <Toolbar>
-            <Hidden mdUp implementation="css">
-                <IconButton
-                    color="inherit"
-                    aria-label="open drawer"
-                    edge="start"
-                    onClick={onHamburgerClick}>
-                    <Menu/>
-                </IconButton>
-            </Hidden>
+            {onHamburgerClick ?
+              <Hidden mdUp implementation="css">
+                  <IconButton
+                      color="inherit"
+                      aria-label="open drawer"
+                      edge="start"
+                      onClick={onHamburgerClick}>
+                      <Menu/>
+                  </IconButton>
+              </Hidden>
+              : null}
             <Typography variant="h6" noWrap className={classes.title}>
                 <Switch>
                     {itemsFlat.map((item, index) => <Route

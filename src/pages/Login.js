@@ -3,17 +3,16 @@ import {fetchUser, updateUser, user} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import ResponsiveDrawer from "../layouts/ResponsiveDrawer";
-import TopBottomMenuLayout from "../layouts/TopBottomMenuLayout";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
 import {Lock, Mail as UserIcon} from "@material-ui/icons";
 import GoogleLogo from "../images/google-logo.svg";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
+import {refreshAll} from "../controllers";
 
 const Login = (props) => {
-    const {signup = true, history, location, popup = true, dispatch, pages, firebase} = props;
+    const {signup = true, history, location, popup = true, dispatch, pages, firebase, store} = props;
     const [state, setState] = React.useState({
         email: "",
         password: "",
@@ -40,10 +39,7 @@ const Login = (props) => {
     const loginSuccess = response => {
         fetchUser(firebase)(response.user.uid, (data) => {
             updateUser(firebase)({...data, current: true}, () => {
-                dispatch(ProgressView.HIDE);
-                dispatch(ResponsiveDrawer.REFRESH);
-                dispatch(TopBottomMenuLayout.REFRESH);
-                dispatch(TopBottomMenuLayout.REFRESH);
+              refreshAll(store);
                 setState({...state, requesting: false});
                 if (location && location.pathname === pages.login.route) {
                     history.push(pages.profile.route);

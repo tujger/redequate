@@ -1,15 +1,14 @@
 import React from "react";
 import {Redirect, withRouter} from "react-router-dom";
-import {fetchUser, updateUser, user, sendConfirmationEmail} from "../controllers/User";
+import {fetchUser, sendConfirmationEmail, updateUser, user} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import ResponsiveDrawer from "../layouts/ResponsiveDrawer";
-import TopBottomMenuLayout from "../layouts/TopBottomMenuLayout";
 import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
 import {Lock, Mail as UserIcon} from "@material-ui/icons";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
+import {refreshAll} from "../controllers";
 
 const Signup = (props) => {
     const {signup = true, dispatch, firebase, pages, store} = props;
@@ -46,9 +45,7 @@ const Signup = (props) => {
                 sendConfirmationEmail(firebase, store)({
                     email: email,
                     onsuccess: () => {
-                        dispatch(ProgressView.SHOW);
-                        dispatch(ResponsiveDrawer.REFRESH);
-                        dispatch(TopBottomMenuLayout.REFRESH);
+                      refreshAll(store);
                         setState({...state, requesting: false});
                     },
                     onerror: signupError
@@ -58,9 +55,7 @@ const Signup = (props) => {
     };
 
     const signupError = error => {
-        dispatch(ProgressView.HIDE);
-        dispatch(ResponsiveDrawer.REFRESH);
-        dispatch(TopBottomMenuLayout.REFRESH);
+      refreshAll(store);
         console.error(error);
         setState({...state, error: error.message, requesting: false});
     };
@@ -88,11 +83,7 @@ const Signup = (props) => {
             window.localStorage.removeItem('emailForSignIn');
             fetchUser(firebase)(response.user.uid, (data) => {
                 updateUser(firebase)({...response.user, current: true}, () => {
-                    dispatch(ProgressView.HIDE);
-                    setTimeout(() => {
-                        dispatch(ResponsiveDrawer.REFRESH);
-                        dispatch(TopBottomMenuLayout.REFRESH);
-                    });
+                  refreshAll(store);
                     props.history.push(pages.edituser.route);
                 }, signupError);
             });

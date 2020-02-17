@@ -1,22 +1,20 @@
 import React, {useState} from "react";
 import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
 import {
-    LocationCity as AddressIcon,
-    Mail as MailIcon,
-    Person as NameIcon,
-    Phone as PhoneIcon
+  LocationCity as AddressIcon,
+  Mail as MailIcon,
+  Person as NameIcon,
+  Phone as PhoneIcon
 } from "@material-ui/icons";
 import {Redirect, withRouter} from "react-router-dom";
 import {fetchUser, updateUser} from "../controllers/User";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
-import ResponsiveDrawer from "../layouts/ResponsiveDrawer";
-import TopBottomMenuLayout from "../layouts/TopBottomMenuLayout";
-
 import {connect} from "react-redux";
+import {refreshAll} from "../controllers/Store";
 
 const EditProfile = (props) => {
-    let {data, location = {}, history, dispatch, disabled, firebase} = props;
+    let {data, location = {}, history, dispatch, disabled, firebase, store} = props;
     const {state:givenState = {}} = location;
     const {tosuccessroute, data:givenData} = givenState;
 
@@ -34,7 +32,6 @@ const EditProfile = (props) => {
     const onerror = error => {
         dispatch(ProgressView.HIDE);
         dispatch({type: "editProfileEnable"});
-        // setState({...state, requesting: false, error: error.message});
     };
 
     const saveUser = () => {
@@ -44,10 +41,8 @@ const EditProfile = (props) => {
         fetchUser(firebase)(data.uid, user => {
             updateUser(firebase)({...user, name, address, phone, image}, (user) => {
                 setTimeout(() => {
-                    dispatch(ProgressView.HIDE);
+                  refreshAll(store);
                     dispatch({type: "editProfileEnable"});
-                    dispatch(ResponsiveDrawer.REFRESH);
-                    dispatch(TopBottomMenuLayout.REFRESH);
                     history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
                 }, 1000)
             }, onerror);

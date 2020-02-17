@@ -1,2 +1,3 @@
+export {default as ResponsiveDrawerLayout, responsiveDrawerLayout} from "./ResponsiveDrawerLayout";
 export {default as TopBottomMenuLayout, topBottomMenuLayout} from "./TopBottomMenuLayout";
-export {default as ResponsiveDrawer, responsiveDrawer} from "./ResponsiveDrawer";
+export {default as TopBottomToolbarLayout, topBottomToolbarLayout} from "./TopBottomToolbarLayout";

@@ -5,9 +5,8 @@ import {withRouter} from "react-router-dom";
 import {sendConfirmationEmail} from "../controllers/User";
 import {TextMaskEmail} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
-import ResponsiveDrawer from "../layouts/ResponsiveDrawer";
-import TopBottomMenuLayout from "../layouts/TopBottomMenuLayout";
 import {connect} from "react-redux";
+import {refreshAll} from "../controllers/Store";
 
 const AddUser = (props) => {
     const {dispatch, firebase, pages, store} = props;
@@ -26,16 +25,12 @@ const AddUser = (props) => {
             email: email,
             includeEmail: true,
             onsuccess: () => {
-                dispatch(ProgressView.HIDE);
-                dispatch(ResponsiveDrawer.REFRESH);
-                dispatch(TopBottomMenuLayout.REFRESH);
+              refreshAll(store);
                 // setState({...state, requesting: false});
                 props.history.push(pages.users.route);
             },
             onerror: error => {
-                dispatch(ProgressView.HIDE);
-                dispatch(ResponsiveDrawer.REFRESH);
-                dispatch(TopBottomMenuLayout.REFRESH);
+              refreshAll(store);
                 setState({...state, requesting: false, error: error.message});
             }
         });

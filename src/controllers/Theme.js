@@ -67,14 +67,6 @@ const theme = createMuiTheme({
                 width: drawerWidth
             }
         },
-        MuiAppBar: {
-            root: {
-                [breakpoints.up('md')]: {
-                    width: `calc(100% - ${drawerWidth}px)`,
-                    marginLeft: drawerWidth,
-                },
-            }
-        },
         MuiFab: {
             primary: {
                 position: "fixed",
@@ -89,5 +81,6 @@ const theme = createMuiTheme({
         }
     },
 });
+theme.drawerWidth = drawerWidth;
 
 export default theme;

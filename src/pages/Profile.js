@@ -2,11 +2,10 @@ import React from "react";
 import {Button, ButtonGroup, Grid, Typography} from "@material-ui/core";
 import ProfileComponent from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import ResponsiveDrawer from "../layouts/ResponsiveDrawer";
-import TopBottomMenuLayout from "../layouts/TopBottomMenuLayout";
-import {logoutUser, user, sendConfirmationEmail} from "../controllers/User";
+import {logoutUser, sendConfirmationEmail, user} from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import {connect} from "react-redux";
+import {refreshAll} from "../controllers";
 
 const Profile = (props) => {
     const {dispatch, firebase, pages, store} = props;
@@ -27,8 +26,7 @@ const Profile = (props) => {
                 color="primary"
                 onClick={() => {
                     logoutUser(firebase)();
-                    dispatch(ResponsiveDrawer.REFRESH);
-                    dispatch(TopBottomMenuLayout.REFRESH);
+                  refreshAll(store);
                 }}
                 variant={"contained"}
             >
@@ -37,18 +35,14 @@ const Profile = (props) => {
             {!currentUser.emailVerified && <Button
                 color="primary"
                 onClick={() => {
-                    dispatch(ResponsiveDrawer.REFRESH);
-                    dispatch(TopBottomMenuLayout.REFRESH);
+                  refreshAll(store);
+                            dispatch(ProgressView.SHOW);
                     sendConfirmationEmail(firebase, store)({
                         email: currentUser.email,
                         onsuccess: () => {
-                            dispatch(ProgressView.HIDE);
-                            dispatch(ResponsiveDrawer.REFRESH);
-                            dispatch(TopBottomMenuLayout.REFRESH);
+                          refreshAll(store);
                         }, onerror: error => {
-                            dispatch(ProgressView.HIDE);
-                            dispatch(ResponsiveDrawer.REFRESH);
-                            dispatch(TopBottomMenuLayout.REFRESH);
+                        refreshAll(store);
                         }
                     })
                 }}

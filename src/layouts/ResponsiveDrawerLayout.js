@@ -20,7 +20,6 @@ import {user} from "../controllers/User";
 import {connect} from "react-redux";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
-window.history.pushState(null, null, window.location.href);
 
 let onpopstateBackup;
 
@@ -34,10 +33,15 @@ const styles = theme => ({
     indent: {
         ...theme.mixins.toolbar,
     },
-
+    appbar: {
+      [theme.breakpoints.up('md')]: {
+        width: `calc(100% - ${theme.drawerWidth}px)`,
+        marginLeft: theme.drawerWidth,
+      }
+    }
 });
 
-function ResponsiveDrawer(props) {
+function ResponsiveDrawerLayout(props) {
     const {container, menu, classes, firebase, headerImage, pages, store, copyright} = props;
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
@@ -102,6 +106,7 @@ function ResponsiveDrawer(props) {
             </Drawer>
         </Hidden>
         <MainAppbar
+          className={classes.appbar}
             {...props}
             pages={pages}
             onHamburgerClick={handleDrawerToggle}
@@ -113,9 +118,9 @@ function ResponsiveDrawer(props) {
     </div>
 }
 
-ResponsiveDrawer.REFRESH = {type: "responsiveDrawerRefresh"};
+ResponsiveDrawerLayout.REFRESH = {type: "responsiveDrawerLayoutRefresh"};
 
-ResponsiveDrawer.propTypes = {
+ResponsiveDrawerLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
     copyright: PropTypes.string,
     firebase: PropTypes.any,
@@ -125,15 +130,15 @@ ResponsiveDrawer.propTypes = {
     title: PropTypes.string,
 };
 
-export const responsiveDrawer = (state = {random: 0}, action) => {
+export const responsiveDrawerLayout = (state = {random: 0}, action) => {
     switch (action.type) {
-        case ResponsiveDrawer.REFRESH.type:
+        case ResponsiveDrawerLayout.REFRESH.type:
             return {random: Math.random()};
         default:
             return state;
     }
 };
 
-const mapStateToProps = ({responsiveDrawer}) => ({random: responsiveDrawer.random});
+const mapStateToProps = ({responsiveDrawerLayout}) => ({random: responsiveDrawerLayout.random});
 
-export default connect(mapStateToProps)(withStyles(styles)(ResponsiveDrawer));
+export default connect(mapStateToProps)(withStyles(styles)(ResponsiveDrawerLayout));

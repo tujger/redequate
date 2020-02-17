@@ -8,13 +8,17 @@ import {withWidth} from "@material-ui/core";
 import PropTypes from "prop-types";
 import Store from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
+import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout";
 import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
-import ResponsiveDrawer from "./layouts/ResponsiveDrawer";
+import TopBottomToolbarLayout from "./layouts/TopBottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
 import {theme as defaultTheme} from "./controllers";
 
+const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+window.history.pushState(null, null, window.location.href);
+
 const Dispatcher = (props) => {
-    const {pages, menu, firebaseConfig, width, name, copyright, theme, reducers, headerImage} = props;
+    const {pages, menu, firebaseConfig, width, name, copyright, theme, reducers, headerImage, layout} = props;
     const [state, setState] = React.useState({firebase: null, store: null});
     const {firebase, store} = state;
 
@@ -40,15 +44,30 @@ const Dispatcher = (props) => {
                     <Route
                         path={"/*"}
                         children={
-                            (["xs", "sm", "md"].indexOf(width) >= 0) ?
-                                <ResponsiveDrawer
+                            layout ? <layout.type copyright={copyright}
+                                                    firebase={firebase}
+                                                    headerImage={headerImage}
+                                                    menu={menu}
+                                                    pages={pages}
+                                                    store={store}
+                                                    {...layout.props}/>
+                              : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
+                              (iOS ? <TopBottomToolbarLayout
+                                  copyright={copyright}
+                                  firebase={firebase}
+                                  headerImage={headerImage}
+                                  menu={menu}
+                                  pages={pages}
+                                  store={store}
+                                />
+                                : <ResponsiveDrawerLayout
                                     copyright={copyright}
                                     firebase={firebase}
                                     headerImage={headerImage}
                                     menu={menu}
                                     pages={pages}
                                     store={store}
-                                /> :
+                                />) :
                                 <TopBottomMenuLayout
                                     copyright={copyright}
                                     firebase={firebase}
@@ -56,7 +75,7 @@ const Dispatcher = (props) => {
                                     menu={menu}
                                     pages={pages}
                                     store={store}
-                                />
+                                />)
                         }
                     />
                 </Switch>
@@ -69,6 +88,7 @@ const Dispatcher = (props) => {
 Dispatcher.propTypes = {
     firebaseConfig: PropTypes.any,
     headerImage: PropTypes.string,
+    layout: PropTypes.any,
     menu: PropTypes.array,
     pages: PropTypes.object,
     copyright: PropTypes.string,
