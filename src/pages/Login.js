@@ -38,8 +38,8 @@ const Login = (props) => {
     };
     const loginSuccess = response => {
         fetchUser(firebase)(response.user.uid, (data) => {
-            updateUser(firebase)({...data, current: true}, () => {
-              refreshAll(store);
+            updateUser(firebase)({...response.user.toJSON(), ...data, current: true}, () => {
+                refreshAll(store);
                 setState({...state, requesting: false});
                 if (location && location.pathname === pages.login.route) {
                     history.push(pages.profile.route);

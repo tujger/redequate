@@ -3,11 +3,11 @@ import Snackbar from "../components/Snackbar";
 export const fetchUser = firebase => (uid, onsuccess, onerror) => {
     const db = firebase.database();
     if (uid) {
-        db.ref("users").child(uid).once("value").then(snapshot => {
+        db.ref("users").child(uid).child("public").once("value").then(snapshot => {
             let val = snapshot.val() || {};
             val.uid = uid;
-            db.ref("admin").child(uid).child("role").once("value").then(snapshot => {
-                val.role = snapshot.val();
+            db.ref("users").child(uid).child("role").once("value").then(snapshot => {
+              val.role = snapshot.val();
                 onsuccess && onsuccess(val);
             }).catch(error => {
                 val.role = val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED;
@@ -27,21 +27,23 @@ export const fetchUser = firebase => (uid, onsuccess, onerror) => {
 export const updateUser = firebase => (user, onsuccess, onerror) => {
     const db = firebase.database();
     if (user) {
-        db.ref("users").child(user.uid).once("value").then(snapshot => {
+        db.ref("users").child(user.uid).child("public").once("value").then(snapshot => {
             let val = snapshot.val() || {};
             let data = snapshot.val() || {};
             data.address = firstOf(user.address, val.address);
             data.created = firstOf(user.created, val.created, new Date().getTime());
             data.email = firstOf(user.email, val.email);
             data.emailVerified = firstOf(user.emailVerified, val.emailVerified);
-            data.image = firstOf(user.photoURL, user.image, val.image);
-            data.name = firstOf(user.displayName, user.name, val.name);
-            data.phone = firstOf(user.phoneNumber, user.phone, val.phone);
+            data.image = firstOf(user.image, user.photoURL, val.image);
+            data.name = firstOf(user.name, user.displayName, val.name);
+            data.phone = firstOf(user.phone, user.phoneNumber, val.phone);
             data.provider = firstOf(user.providerData ? (user.providerData[0] && user.providerData[0].providerId) || user.providerId : user.providerId, val.provider);
-            if(val.role !== Role.ADMIN) {
-                data.role = firstOf(user.emailVerified !== undefined ? (user.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED) : Role.USER, val.role);
+            db.ref("users").child(user.uid).child("public").set(data);
+            if(user.role !== Role.ADMIN) {
+                data.role = firstOf(user.emailVerified !== undefined ? (user.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED) : Role.USER, user.role);
+            } else {
+                data.role = user.role;
             }
-            db.ref("users").child(user.uid).set(data);
             data.uid = user.uid;
             if(user.current || (currentUser && currentUser.uid === data.uid)) {
                 currentUser = data;
@@ -90,7 +92,7 @@ export const user = User();
 
 export const currentRole = currentUser => {
     if (currentUser && !currentUser.role) {
-        console.error("Current user role is invalid, reset ro USER", currentUser);
+        // console.error("Current user role is invalid, reset ro USER", currentUser);
         return Role.USER;
     }
     return currentUser ? currentUser.role || Role.LOGIN : Role.LOGIN;
