@@ -9,12 +9,13 @@ export const serviceWorkerRegister = () => {
             if (registration && registration.waiting) {
                 pushNotificationsSnackbarNotify({
                     buttonLabel: "Update",
-                    priority: "high",
-                    title: "New version available",
                     onButtonClick: () => {
                         registration.waiting.postMessage({type: 'SKIP_WAITING'});
                         window.location.reload();
-                    }
+                    },
+                    priority: "high",
+                    title: "New version available",
+                    variant: "warning"
                 });
             }
         },
@@ -22,12 +23,13 @@ export const serviceWorkerRegister = () => {
             if (registration && registration.waiting) {
                 pushNotificationsSnackbarNotify({
                     buttonLabel: "Activate",
-                    priority: "high",
-                    title: "New version available",
                     onButtonClick: () => {
                         registration.waiting.postMessage({type: 'SKIP_WAITING'});
                         window.location.reload();
-                    }
+                    },
+                    priority: "high",
+                    title: "New version available",
+                    variant: "warning"
                 });
             }
         },

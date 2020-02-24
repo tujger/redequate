@@ -116,7 +116,7 @@ function ResponsiveDrawerLayout(props) {
         <MainContent firebase={firebase} pages={pages} store={store} user={user}
                      classes={{content: classes.content}}/>
         <Snackbar/>
-       <PushNotificationsSnackbar/>
+        <PushNotificationsSnackbar/>
     </div>
 }
 

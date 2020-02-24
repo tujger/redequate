@@ -8,6 +8,7 @@ export {default as PasswordField} from "./PasswordField";
 export {default as PlacesTextField} from "./PlacesTextField";
 export {default as ProfileComponent} from "./ProfileComponent";
 export {default as ProgressView, progressView} from "./ProgressView";
+export {default as RichSnackbarContent} from "./RichSnackbarContent";
 export {default as ServiceComponent} from "./ServiceComponent";
 export {default as Snackbar, snackbar} from "./Snackbar";
 export {default as StickyHeader} from "./StickyHeader";
