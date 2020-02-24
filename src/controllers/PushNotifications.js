@@ -7,18 +7,24 @@ import CloseIcon from '@material-ui/icons/Close';
 import {useSnackbar} from "notistack";
 import RichSnackbarContent from "../components/RichSnackbarContent";
 
-export const setupReceivingNotifications = (firebase, onMessage) => {
+export const setupReceivingNotifications = (firebase, onMessage, onComplete, onError) => {
   try {
     // Safari case
     //https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html#//apple_ref/doc/uid/TP40013225-CH3-SW1
     Notification.requestPermission().then(permission => {
       console.log(permission);
+      if(!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+      console.log("failed");
+        onError && onError(new Error("ServiceWorker is inactive"));
+        return;
+      }
       navigator.serviceWorker.ready.then(async registration => {
         console.log("Set up notifications", registration);
         const messaging = firebase.messaging();
         try {
-          if (!localStorage.getItem("notification-token")) {
-            const token = await messaging.getToken();
+          let token = null;
+          if (!hasNotifications()) {
+            token = await messaging.getToken();
             localStorage.setItem("notification-token", token);
           }
           messaging.onMessage(payload => {
@@ -35,17 +41,21 @@ export const setupReceivingNotifications = (firebase, onMessage) => {
             //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
             registration.showNotification(payload.notification.title, payload.notification);
           });
+          onComplete && onComplete(token);
         } catch(e) {
           console.error("Failed to set up notifications:", e);
+          onError && onError(e);
         }
       })
     }).catch(error => {
       console.error(error);
       (onMessage || pushNotificationsSnackbarNotify)({title: error.message});
+      onError && onError(error);
     });
   } catch (error) {
     console.error(error);
     (onMessage || pushNotificationsSnackbarNotify)({title: error.message});
+    onError && onError(error);
   }
 };
 
@@ -92,4 +102,8 @@ export const pushNotificationsSnackbarNotify = props => {
   }
   snackbar.payload = props;
   snackbar.click();
+};
+
+export const hasNotifications = () => {
+  return Boolean(localStorage.getItem("notification-token"));
 };

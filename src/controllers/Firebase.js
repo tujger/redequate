@@ -5,8 +5,10 @@ import "firebase/functions";
 import "firebase/messaging";
 import {logoutUser} from "./User";
 
+let _firebase = null;
 const Firebase = firebaseConfig => {
   firebase.initializeApp(firebaseConfig);
+  _firebase = firebase;
   return firebase;
 };
 
@@ -21,7 +23,7 @@ export const fetchFunction = firebase => (name, options, onsuccess, onerror) => 
             'Authorization': 'Bearer ' + token
           }
         };
-        const namedFunction = firebase.functions().httpsCallable(name, config);
+        const namedFunction = _firebase.functions().httpsCallable(name, config);
         namedFunction(options).then(result => {
           onsuccess(result.data, result);
         }).catch(error => {

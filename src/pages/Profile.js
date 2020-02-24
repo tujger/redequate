@@ -1,18 +1,54 @@
 import React from "react";
-import {Button, ButtonGroup, Grid, Typography} from "@material-ui/core";
+import {Button, ButtonGroup, Grid, Typography, FormControlLabel, Checkbox} from "@material-ui/core";
 import ProfileComponent from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {logoutUser, sendConfirmationEmail, user} from "../controllers/User";
+import {logoutUser, sendConfirmationEmail, updateUserPrivate, user} from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import {connect} from "react-redux";
-import {refreshAll} from "../controllers";
+import {refreshAll} from "../controllers/Store";
+import {hasNotifications, setupReceivingNotifications, pushNotificationsSnackbarNotify} from "../controllers/PushNotifications";
 
 const Profile = (props) => {
     const {dispatch, firebase, pages, store} = props;
+    const [state, setState] = React.useState({disabled: false});
+    const {disabled} = state;
+
     let currentUser = user.currentUser();
     if (!currentUser) {
         return <Redirect to={pages.users.route}/>
     }
+
+    const onError = error => {
+      dispatch(ProgressView.HIDE);
+      setState({...state, disabled: false});
+      pushNotificationsSnackbarNotify({
+        title: "Setup notifications failed: " + error.message,
+        priority: "high",
+        variant: "error",
+      });
+    };
+
+    const handleNotifications = (evt, enable) => {
+      dispatch(ProgressView.SHOW);
+      setState({...state, disabled: true});
+      if(enable) {
+        setupReceivingNotifications(firebase, null, token => {
+          updateUserPrivate(firebase)({notifications: token}, result => {
+            console.log(result);
+            dispatch(ProgressView.HIDE);
+            setState({...state, disabled: false});
+            pushNotificationsSnackbarNotify({
+              title: token,
+              priority: "high",
+              variant: "info",
+            });
+          }, onError)
+        }, onError);
+      } else {
+        console.log("DISABLE NOTIF")
+      }
+    };
+
     return <div>
         <ProfileComponent data={currentUser}/>
         {!currentUser.emailVerified && <Grid container>
@@ -21,12 +57,22 @@ const Profile = (props) => {
                     be available.</Typography>
             </Grid>
         </Grid>}
-        <ButtonGroup variant="contained" color="primary" size="large">
+        <Grid container><FormControlLabel
+          control={
+            <Checkbox
+              disabled={disabled}
+              checked={hasNotifications()}
+              onChange={handleNotifications}
+            />
+          }
+          label={"Get notifications"}
+        /></Grid>
+        <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large">
             <Button
                 color="primary"
                 onClick={() => {
                     logoutUser(firebase)();
-                  refreshAll(store);
+                    refreshAll(store);
                 }}
                 variant={"contained"}
             >
