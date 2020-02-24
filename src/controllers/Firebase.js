@@ -2,6 +2,7 @@ import firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/database";
 import "firebase/functions";
+import "firebase/messaging";
 import {logoutUser} from "./User";
 
 const Firebase = firebaseConfig => {

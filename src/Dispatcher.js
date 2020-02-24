@@ -13,6 +13,8 @@ import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 import TopBottomToolbarLayout from "./layouts/TopBottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
 import {theme as defaultTheme} from "./controllers";
+import {setupReceivingNotifications} from "./controllers/PushNotifications";
+import { SnackbarProvider } from "notistack";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 window.history.pushState(null, null, window.location.href);
@@ -23,12 +25,16 @@ const Dispatcher = (props) => {
     const {firebase, store} = state;
 
     React.useEffect(() => {
-        setState({...state, firebase: Firebase(firebaseConfig), store: Store(name, reducers)});
+        let firebaseInstance = Firebase(firebaseConfig);
+        setupReceivingNotifications(firebaseInstance);
+        setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
+
 // eslint-disable-next-line
     }, []);
 
     if(!store) return <LoadingComponent/>;
     return <Provider store={store}>
+      <SnackbarProvider maxSnack={4} preventDuplicate>
         <ThemeProvider theme={theme || defaultTheme}>
             <BrowserRouter>
                 <Switch>
@@ -82,6 +88,7 @@ const Dispatcher = (props) => {
             </BrowserRouter>
             <PWAPrompt promptOnVisit={3} timesToShow={3}/>
         </ThemeProvider>
+      </SnackbarProvider>
     </Provider>;
 };
 

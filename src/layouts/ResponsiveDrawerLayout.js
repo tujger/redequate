@@ -18,6 +18,7 @@ import MainMenu from "../components/MainMenu";
 import Snackbar from "../components/Snackbar";
 import {user} from "../controllers/User";
 import {connect} from "react-redux";
+import {PushNotificationsSnackbar} from "../controllers/PushNotifications";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -115,6 +116,7 @@ function ResponsiveDrawerLayout(props) {
         <MainContent firebase={firebase} pages={pages} store={store} user={user}
                      classes={{content: classes.content}}/>
         <Snackbar/>
+       <PushNotificationsSnackbar/>
     </div>
 }
 

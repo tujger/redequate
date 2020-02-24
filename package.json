@@ -31,6 +31,7 @@
     "axios": "latest",
     "firebase": "latest",
     "geo-coder": "latest",
+    "notistack": "latest",
     "prop-types": "latest",
     "react": "latest",
     "react-add-to-calendar-hoc": "latest",

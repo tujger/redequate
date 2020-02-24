@@ -7,6 +7,7 @@ import MainAppbar from "../components/MainAppbar";
 import MainContent from "../components/MainContent";
 import Snackbar from "../components/Snackbar";
 import {connect} from "react-redux";
+import {PushNotificationsSnackbar} from "../controllers/PushNotifications";
 
 const styles = theme => ({
     content: {
@@ -31,6 +32,7 @@ function TopBottomToolbarLayout(props) {
         <Typography className={classes.indent}/>
         <BottomToolbar items={menu}/>
         <Snackbar/>
+        <PushNotificationsSnackbar/>
     </div>
 }
 
