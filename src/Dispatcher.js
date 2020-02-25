@@ -13,6 +13,7 @@ import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 import TopBottomToolbarLayout from "./layouts/TopBottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
 import {theme as defaultTheme} from "./controllers";
+import {watchUserChanged} from "./controllers/User";
 import {setupReceivingNotifications} from "./controllers/PushNotifications";
 import { SnackbarProvider } from "notistack";
 
@@ -28,7 +29,7 @@ const Dispatcher = (props) => {
         let firebaseInstance = Firebase(firebaseConfig);
         setupReceivingNotifications(firebaseInstance);
         setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
-
+        watchUserChanged(firebaseInstance);
 // eslint-disable-next-line
     }, []);
 

@@ -7,7 +7,7 @@ import {
   Phone as PhoneIcon
 } from "@material-ui/icons";
 import {Redirect, withRouter} from "react-router-dom";
-import {fetchUser, updateUser} from "../controllers/User";
+import {fetchUser, updateUser, fetchUserPublic, updateUserPublic} from "../controllers/User";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
 import {connect} from "react-redux";
@@ -38,7 +38,16 @@ const EditProfile = (props) => {
     const saveUser = () => {
         setState({...state, disabled: true});
         dispatch(ProgressView.SHOW);
-        fetchUser(firebase)(data.uid, user => {
+        fetchUserPublic(firebase)(data.uid).then(() => {
+          updateUserPublic(firebase)(data.uid, {name, address, phone, image}).then((user) => {
+            setTimeout(() => {
+              setState({...state, disabled: false});
+              refreshAll(store);
+              history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
+            }, 1000)
+          }).catch(onerror);
+        }).catch(onerror);
+        /*fetchUser(firebase)(data.uid, user => {
             updateUser(firebase)({...user, name, address, phone, image}, (user) => {
                 setTimeout(() => {
                     setState({...state, disabled: false});
@@ -46,7 +55,16 @@ const EditProfile = (props) => {
                     history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
                 }, 1000)
             }, onerror);
-        }, onerror);
+        }, onerror);*/
+/*        fetchUser(firebase)(data.uid, user => {
+            updateUser(firebase)({...user, name, address, phone, image}, (user) => {
+                setTimeout(() => {
+                    setState({...state, disabled: false});
+                    refreshAll(store);
+                    history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
+                }, 1000)
+            }, onerror);
+        }, onerror);*/
     };
 
     if(!data) {

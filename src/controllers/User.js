@@ -1,5 +1,6 @@
 import Snackbar from "../components/Snackbar";
 
+// deprecated
 export const fetchUser = firebase => (uid, onsuccess, onerror) => {
   const db = firebase.database();
   if (uid) {
@@ -24,6 +25,7 @@ export const fetchUser = firebase => (uid, onsuccess, onerror) => {
   }
 };
 
+// deprecated
 export const updateUser = firebase => (user, onsuccess, onerror) => {
   const db = firebase.database();
   if (user) {
@@ -61,17 +63,67 @@ export const updateUser = firebase => (user, onsuccess, onerror) => {
   }
 };
 
-export const updateUserPrivate = firebase => (user, onsuccess, onerror) => {
+export const updateUserPublic = firebase => (uid, props) => new Promise((resolve, reject) => {
+  updateUserSection(firebase, "public", uid, props, result => resolve(result), error => reject(error));
+});
+
+export const updateUserPrivate = firebase => (uid, props) => new Promise((resolve, reject) => {
+  updateUserSection(firebase, "private", uid, props, result => resolve(result), error => reject(error));
+});
+
+const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) => {
   const db = firebase.database();
-  if (user) {
-    db.ref("users").child(user.uid).child("private").once("value").then(snapshot => {
-      let val = snapshot.val() || {};
+  if (uid) {
+    fetchUserSection(firebase, section, uid, data => {
+      const {role, ...existed} = data;
+      const {current, uid: _uid, ...other} = props;
+      let val = {...existed, ...other};
+      db.ref("users").child(uid).child(section).set(val);
+      val = {...val, uid, role};
+      if (current || (currentUser && currentUser.uid === uid)) {
+        if(section === "private") currentUserPrivate = val;
+        else currentUser = val;
+        window.localStorage.setItem("user_uid", uid);
+        window.localStorage.setItem("user_" + section, JSON.stringify(val));
+      }
       onsuccess && onsuccess(val);
-    }).catch(onerror);
+
+    }, onerror);
   } else {
     onerror(e);
   }
-}
+};
+
+export const fetchUserPublic = firebase => uid => new Promise((resolve, reject) => {
+  fetchUserSection(firebase, "public", uid, result => resolve(result), error => reject(error));
+});
+
+export const fetchUserPrivate = firebase => uid => new Promise((resolve, reject) => {
+  fetchUserSection(firebase, "private", uid, result => resolve(result), error => reject(error));
+});
+
+const fetchUserSection = (firebase, section, uid, onsuccess, onerror) => {
+  const db = firebase.database();
+  if (uid) {
+    db.ref("users").child(uid).child(section).once("value").then(snapshot => {
+      let val = snapshot.val() || {};
+      db.ref("users").child(uid).child("role").once("value").then(snapshot => {
+        val.role = snapshot.val();
+        onsuccess && onsuccess(val);
+      }).catch(error => {
+        val.role = val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED;
+        onsuccess && onsuccess(val);
+      });
+    }).catch(onerror);
+  } else {
+    try {
+      // logoutUser(firebase)();
+      onsuccess && onsuccess(null);
+    } catch (e) {
+      onerror(e);
+    }
+  }
+};
 
 export const firstOf = (...args) => {
   for (let i in args) {
@@ -82,8 +134,14 @@ export const firstOf = (...args) => {
   return null;
 };
 
-let currentUser = JSON.parse(window.localStorage.getItem("user"));
-// firebase.auth().onAuthStateChanged(fetchUser);
+let currentUser = JSON.parse(window.localStorage.getItem("user_public"));
+let currentUserPrivate = JSON.parse(window.localStorage.getItem("user_private"));
+
+export const watchUserChanged = firebase => {
+  firebase.auth().onAuthStateChanged(result => {
+    console.log("AUTHCHANGED", result);
+  });
+}
 
 export const logoutUser = firebase => () => {
   window.localStorage.removeItem("user");
@@ -94,6 +152,7 @@ export const logoutUser = firebase => () => {
 const User = () => {
   let body = {
     currentUser: () => currentUser,
+    currentUserPrivate: () => currentUserPrivate,
   };
   return body;
 };
@@ -102,30 +161,30 @@ export default User;
 
 export const user = User();
 
-export const currentRole = currentUser => {
-  if (currentUser && !currentUser.role) {
+export const currentRole = user => {
+  if (user && !user.role) {
     // console.error("Current user role is invalid, reset ro USER", currentUser);
     return Role.USER;
   }
-  return currentUser ? currentUser.role || Role.LOGIN : Role.LOGIN;
+  return user ? user.role || Role.LOGIN : Role.LOGIN;
 };
 
-export const matchRole = (roles, currentUser) => {
+export const matchRole = (roles, user) => {
   if (!roles) return true;
   if (roles.indexOf(Role.AUTH) >= 0) return true;
-  if (!currentRole(currentUser)) return false;
-  return roles.indexOf(currentRole(currentUser)) >= 0;
+  if (!currentRole(user)) return false;
+  return roles.indexOf(currentRole(user)) >= 0;
 };
 
-export const needAuth = (roles, currentUser) => {
+export const needAuth = (roles, user) => {
   if (!roles) return false;
-  return currentRole(currentUser) === Role.LOGIN;
+  return currentRole(user) === Role.LOGIN;
 };
 
-export const roleIs = (role, currentUser) => {
+export const roleIs = (role, user) => {
   if (!role) return true;
-  if (!currentRole(currentUser)) return false;
-  return role.indexOf(currentRole(currentUser)) >= 0;
+  if (!currentRole(user)) return false;
+  return role.indexOf(currentRole(user)) >= 0;
 };
 
 export const Role = {

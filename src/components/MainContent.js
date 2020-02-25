@@ -20,6 +20,7 @@ const styles = theme => ({
 const MainContent = props => {
     const {pages, classes, user} = props;
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
+    console.log(user.currentUser())
     return <main className={classes.content}>
         <Suspense fallback={<LoadingComponent/>}>
             <Switch>

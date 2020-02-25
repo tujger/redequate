@@ -2,7 +2,13 @@ import React from "react";
 import {Button, ButtonGroup, Grid, Typography, FormControlLabel, Checkbox} from "@material-ui/core";
 import ProfileComponent from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {logoutUser, sendConfirmationEmail, updateUserPrivate, user} from "../controllers/User";
+import {
+  logoutUser,
+  sendConfirmationEmail,
+  updateUserPrivate,
+  updateUserPublic,
+  user
+} from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
@@ -33,8 +39,7 @@ const Profile = (props) => {
       setState({...state, disabled: true});
       if(enable) {
         setupReceivingNotifications(firebase, null, token => {
-          updateUserPrivate(firebase)({notifications: token}, result => {
-            console.log(result);
+          updateUserPrivate(firebase)(currentUser.uid, {notification: token}).then(result => {
             dispatch(ProgressView.HIDE);
             setState({...state, disabled: false});
             pushNotificationsSnackbarNotify({
@@ -42,10 +47,28 @@ const Profile = (props) => {
               priority: "high",
               variant: "info",
             });
-          }, onError)
+          }).catch(onError);
         }, onError);
+        /*updateUserPrivate1(firebase)(currentUser.uid, {notifications: token}, result => {
+          console.log(result);
+          dispatch(ProgressView.HIDE);
+          setState({...state, disabled: false});
+          pushNotificationsSnackbarNotify({
+            title: token,
+            priority: "high",
+            variant: "info",
+          });
+        }, onError)*/
       } else {
         console.log("DISABLE NOTIF")
+        updateUserPrivate(firebase)(currentUser.uid, {notification: null}).then(result => {
+          localStorage.removeItem("notification-token");
+          pushNotificationsSnackbarNotify({
+            title: "Unsubscribed"
+          });
+          dispatch(ProgressView.HIDE);
+          setState({...state, disabled: false});
+        }).catch(onError);
       }
     };
 
