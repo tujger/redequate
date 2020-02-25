@@ -53,7 +53,7 @@ const MenuSection = withStyles(styles)(props => {
   const [state, setState] = React.useState({anchor: null});
   const {anchor} = state;
 
-  if (!matchRole(first.roles, user.currentUser())) return null;
+  if (!matchRole(first.roles, user)) return null;
 
   return <Button
     className={"MuiTopMenu-section"}
@@ -72,7 +72,7 @@ const MenuSection = withStyles(styles)(props => {
       placement={"bottom-end"}
       role={undefined}>
       <MenuList>{menu.map((item, index) => {
-        if (!matchRole(item.roles, user.currentUser())) return null;
+        if (!matchRole(item.roles, user)) return null;
         return <Link to={item.route}
                      key={index}
                      className={classes.label}
@@ -94,9 +94,9 @@ const TopMenu = props => {
   const {items, classes, className, pages} = props;
   return <div className={["MuiTopMenu-root", classes.topmenu, className].join(" ")}>
     {items.map((list, index) => <MenuSection key={index} items={list}/>)}
-    {user.currentUser() &&
+    {user.uid() &&
     <Link to={pages.profile.route} className={[classes.label, classes.profileitem].join(" ")}>
-      <AvatarView user={user.currentUser()}/>
+      <AvatarView user={user}/>
     </Link>}
   </div>
 };

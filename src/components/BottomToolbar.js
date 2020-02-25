@@ -48,7 +48,7 @@ const BottomToolbar = withRouter(withStyles(styles)(props => {
                            onChange={handleChange} showLabels>
     {items.map((list, index) => {
       const [first, ...menu] = list;
-      if (!matchRole(first.roles, user.currentUser())) return null;
+      if (!matchRole(first.roles, user)) return null;
 
       const currentItem = menu.filter(item => item.route === location.pathname)[0] || first;
       return <BottomNavigationAction
@@ -62,7 +62,7 @@ const BottomToolbar = withRouter(withStyles(styles)(props => {
       const [first, ...menu] = list;
       const currentItem = menu.filter(item => item.route === location.pathname)[0] || first;
       if(currentItem.route !== location.pathname) return null;
-      if (!matchRole(currentItem.roles, user.currentUser())) return null;
+      if (!matchRole(currentItem.roles, user)) return null;
       return <Popper
         key={index}
         anchorEl={anchor}
@@ -74,7 +74,7 @@ const BottomToolbar = withRouter(withStyles(styles)(props => {
         placement={"top"}
         role={undefined}>
         <MenuList>{menu.map((item, index) => {
-          if (!matchRole(item.roles, user.currentUser())) return null;
+          if (!matchRole(item.roles, user)) return null;
           return <Link to={item.route}
                        key={index}
                        className={classes.label}

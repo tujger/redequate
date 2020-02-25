@@ -1,98 +1,43 @@
-import Snackbar from "../components/Snackbar";
+import {notifySnackbar} from "./Notifications";
 
-// deprecated
-export const fetchUser = firebase => (uid, onsuccess, onerror) => {
-  const db = firebase.database();
-  if (uid) {
-    db.ref("users").child(uid).child("public").once("value").then(snapshot => {
-      let val = snapshot.val() || {};
-      val.uid = uid;
-      db.ref("users").child(uid).child("role").once("value").then(snapshot => {
-        val.role = snapshot.val();
-        onsuccess && onsuccess(val);
-      }).catch(error => {
-        val.role = val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED;
-        onsuccess && onsuccess(val);
-      });
-    }).catch(onerror);
-  } else {
-    try {
-      logoutUser(firebase)();
-      onsuccess && onsuccess();
-    } catch (e) {
-      onerror(e);
-    }
-  }
-};
-
-// deprecated
-export const updateUser = firebase => (user, onsuccess, onerror) => {
-  const db = firebase.database();
-  if (user) {
-    db.ref("users").child(user.uid).child("public").once("value").then(snapshot => {
-      let val = snapshot.val() || {};
-      let data = snapshot.val() || {};
-      data.address = firstOf(user.address, val.address);
-      data.created = firstOf(user.created, val.created, new Date().getTime());
-      data.email = firstOf(user.email, val.email);
-      data.emailVerified = firstOf(user.emailVerified, val.emailVerified);
-      data.image = firstOf(user.image, user.photoURL, val.image);
-      data.name = firstOf(user.name, user.displayName, val.name);
-      data.phone = firstOf(user.phone, user.phoneNumber, val.phone);
-      data.provider = firstOf(user.providerData ? (user.providerData[0] && user.providerData[0].providerId) || user.providerId : user.providerId, val.provider);
-      db.ref("users").child(user.uid).child("public").set(data);
-      if (user.role !== Role.ADMIN) {
-        data.role = firstOf(user.emailVerified !== undefined ? (user.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED) : Role.USER, user.role);
+const User = (data) => {
+  let private_ = null, public_ = null, uid_ = null, role_ = null;
+  let body = {
+    "private": () => private_,
+    "public": () => public_,
+    role: () => role_,
+    uid: () => uid_,
+    set: (type, data) => {
+      if (type === "private") private_ = data;
+      else if (type === "public") public_ = data;
+      else if (type === "uid") uid_ = data;
+      else if (type === "role") role_ = data;
+      else console.error(`Unknown type '${type}' set to '${data}'`);
+    },
+    parse: data => {
+      if (data.public) {
+        public_ = data.public;
+        private_ = data.private;
+        uid_ = data.uid;
+        role_ = data.role;
       } else {
-        data.role = user.role;
+        const {address, created, email, emailVerified, image, name, phone, provider, uid, role} = data;
+        uid_ = uid;
+        role_ = role;
+        public_ = {
+          created, address, email, emailVerified, image, name, phone, provider
+        }
       }
-      data.uid = user.uid;
-      if (user.current || (currentUser && currentUser.uid === data.uid)) {
-        currentUser = data;
-        window.localStorage.setItem("user", JSON.stringify(data));
-      }
-      onsuccess && onsuccess(data);
-    }).catch(onerror);
-  } else {
-    try {
-      logoutUser(firebase)();
-      onsuccess && onsuccess();
-    } catch (e) {
-      onerror(e);
-    }
-  }
+    },
+    toString: () => JSON.stringify(toJSON()),
+    toJSON: () => toJSON(),
+  };
+  const toJSON = () => ({"public": public_, "private": private_, uid: uid_, role: role_});
+  if (data) body.parse(data);
+  return body;
 };
 
-export const updateUserPublic = firebase => (uid, props) => new Promise((resolve, reject) => {
-  updateUserSection(firebase, "public", uid, props, result => resolve(result), error => reject(error));
-});
-
-export const updateUserPrivate = firebase => (uid, props) => new Promise((resolve, reject) => {
-  updateUserSection(firebase, "private", uid, props, result => resolve(result), error => reject(error));
-});
-
-const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) => {
-  const db = firebase.database();
-  if (uid) {
-    fetchUserSection(firebase, section, uid, data => {
-      const {role, ...existed} = data;
-      const {current, uid: _uid, ...other} = props;
-      let val = {...existed, ...other};
-      db.ref("users").child(uid).child(section).set(val);
-      val = {...val, uid, role};
-      if (current || (currentUser && currentUser.uid === uid)) {
-        if(section === "private") currentUserPrivate = val;
-        else currentUser = val;
-        window.localStorage.setItem("user_uid", uid);
-        window.localStorage.setItem("user_" + section, JSON.stringify(val));
-      }
-      onsuccess && onsuccess(val);
-
-    }, onerror);
-  } else {
-    onerror(e);
-  }
-};
+export default User;
 
 export const fetchUserPublic = firebase => uid => new Promise((resolve, reject) => {
   fetchUserSection(firebase, "public", uid, result => resolve(result), error => reject(error));
@@ -125,6 +70,37 @@ const fetchUserSection = (firebase, section, uid, onsuccess, onerror) => {
   }
 };
 
+export const updateUserPublic = firebase => (uid, props) => new Promise((resolve, reject) => {
+  updateUserSection(firebase, "public", uid, props, result => resolve(result), error => reject(error));
+});
+
+export const updateUserPrivate = firebase => (uid, props) => new Promise((resolve, reject) => {
+  updateUserSection(firebase, "private", uid, props, result => resolve(result), error => reject(error));
+});
+
+const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) => {
+  const db = firebase.database();
+  if (uid) {
+    fetchUserSection(firebase, section, uid, data => {
+      const {role, uid: ignored1, ...existed} = data;
+      const {current, role: ignored2, uid: ignored3, ...updates} = props;
+      let val = {...existed, ...updates};
+      db.ref("users").child(uid).child(section).set(val);
+      if (current || user.uid() === uid) {
+        user.set(section, val);
+        user.set("uid", uid);
+        user.set("role", role);
+        window.localStorage.setItem("user_uid", uid);
+        window.localStorage.setItem("user_role", role);
+        window.localStorage.setItem("user_" + section, JSON.stringify(val));
+      }
+      onsuccess && onsuccess(val);
+    }, onerror);
+  } else {
+    onerror(e);
+  }
+};
+
 export const firstOf = (...args) => {
   for (let i in args) {
     if (args[i] !== undefined && args[i] !== null && args[i] !== "") {
@@ -134,39 +110,37 @@ export const firstOf = (...args) => {
   return null;
 };
 
-let currentUser = JSON.parse(window.localStorage.getItem("user_public"));
-let currentUserPrivate = JSON.parse(window.localStorage.getItem("user_private"));
-
 export const watchUserChanged = firebase => {
   firebase.auth().onAuthStateChanged(result => {
     console.log("AUTHCHANGED", result);
   });
-}
+};
 
 export const logoutUser = firebase => () => {
-  window.localStorage.removeItem("user");
-  currentUser = null;
+  window.localStorage.removeItem("user_public");
+  window.localStorage.removeItem("user_private");
+  window.localStorage.removeItem("user_uid");
+  window.localStorage.removeItem("user_role");
+  window.localStorage.removeItem("notification-token");
+  user.set("private", null);
+  user.set("public", null);
+  user.set("role", null);
+  user.set("uid", null);
   firebase.auth().signOut();
 };
 
-const User = () => {
-  let body = {
-    currentUser: () => currentUser,
-    currentUserPrivate: () => currentUserPrivate,
-  };
-  return body;
-};
-
-export default User;
-
 export const user = User();
+user.set("public", JSON.parse(window.localStorage.getItem("user_public")));
+user.set("private", JSON.parse(window.localStorage.getItem("user_private")));
+user.set("role", window.localStorage.getItem("user_role"));
+user.set("uid", window.localStorage.getItem("user_uid"));
 
 export const currentRole = user => {
-  if (user && !user.role) {
+  if (user && user.uid() && !user.role()) {
     // console.error("Current user role is invalid, reset ro USER", currentUser);
     return Role.USER;
   }
-  return user ? user.role || Role.LOGIN : Role.LOGIN;
+  return user ? user.role() || Role.LOGIN : Role.LOGIN;
 };
 
 export const matchRole = (roles, user) => {
@@ -195,25 +169,22 @@ export const Role = {
   USER_NOT_VERIFIED: "userNotVerified"
 };
 
-export const sendConfirmationEmail = (firebase, store) => options => {
+export const sendConfirmationEmail = (firebase, store) => options => new Promise((resolve, reject) => {
   let actionCodeSettings = {
     url: window.location.origin + "/signup" + (options.includeEmail ? "?email=" + options.email : ""),
     handleCodeInApp: true,
   };
   firebase.auth().sendSignInLinkToEmail(options.email, actionCodeSettings).then(() => {
     window.localStorage.setItem("emailForSignIn", options.email);
-    store && store.dispatch({type: Snackbar.SHOW, message: "Confirmation email has sent"});
-    if (options.onsuccess) {
-      options.onsuccess();
-    } else {
-      console.log("Confirmation email has sent");
-    }
+    notifySnackbar({
+      title: "Confirmation email has sent"
+    });
+    resolve();
   }).catch(error => {
-    store && store.dispatch({type: Snackbar.SHOW, message: error.message});
-    if (options.onerror) {
-      options.onerror(error);
-    } else {
-      console.error(error);
-    }
+    notifySnackbar({
+      title: error.message,
+      variant: "error"
+    });
+    reject(error);
   });
-};
+});

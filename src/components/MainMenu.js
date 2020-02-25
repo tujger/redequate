@@ -37,7 +37,7 @@ function MainMenu(props) {
             const section = <div className={"MuiMainMenu-section"} key={Math.random()}>
                 <List>
                     {list.map((item) => {
-                        if (!matchRole(item.roles, user.currentUser())) return null;
+                        if (!matchRole(item.roles, user)) return null;
                         hasItems = true;
                         if(!firstDone) {
                             firstDone = true;

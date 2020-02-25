@@ -20,7 +20,7 @@ const styles = theme => ({
 const MainContent = props => {
     const {pages, classes, user} = props;
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
-    console.log(user.currentUser())
+
     return <main className={classes.content}>
         <Suspense fallback={<LoadingComponent/>}>
             <Switch>
@@ -28,14 +28,14 @@ const MainContent = props => {
                     key={index}
                     path={item.route}
                     exact={true}
-                    children={needAuth(item.roles, user.currentUser())
+                    children={needAuth(item.roles, user)
                         ?
-                        <pages.login.component.type {...props} {...pages.login.component.props}/> : (matchRole(item.roles, user.currentUser())
+                        <pages.login.component.type {...props} {...pages.login.component.props}/> : (matchRole(item.roles, user)
                             ? <item.component.type {...props} {...item.component.props}/> :
                             <pages.notfound.component.type {...props} {...pages.notfound.component.props}/>)}
                     onEnter={() => {
-                        document.title = needAuth(item.roles, user.currentUser())
-                            ? pages.login.title || pages.login.label : (matchRole(item.roles, user.currentUser())
+                        document.title = needAuth(item.roles, user)
+                            ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
                                 ? item.title || item.label : pages.notfound.title || pages.notfound.label);
                         // dispatch(ProgressView.HIDE);
                     }}/>

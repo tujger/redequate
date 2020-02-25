@@ -21,19 +21,16 @@ const AddUser = (props) => {
         setState({...state, requesting: true});
         dispatch(ProgressView.SHOW);
 
-        sendConfirmationEmail(firebase, store)({
-            email: email,
-            includeEmail: true,
-            onsuccess: () => {
+        sendConfirmationEmail(firebase, store)({email: email, includeEmail: true})
+          .then(() => {
+              props.history.push(pages.users.route);
+          })
+          .catch(error => {
+              setState({...state, requesting: false, error: error.message});
+          })
+          .finally(() => {
               refreshAll(store);
-                // setState({...state, requesting: false});
-                props.history.push(pages.users.route);
-            },
-            onerror: error => {
-              refreshAll(store);
-                setState({...state, requesting: false, error: error.message});
-            }
-        });
+          });
     };
 
     return <Grid container>

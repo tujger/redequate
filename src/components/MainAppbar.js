@@ -51,8 +51,8 @@ function MainAppbar(props) {
                             exact={true}
                         >
                         <Link to={pages.home.route} className={classes.label}>
-                                {needAuth(item.roles, user.currentUser())
-                                    ? pages.login.title || pages.login.label : (matchRole(item.roles, user.currentUser())
+                                {needAuth(item.roles, user)
+                                    ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
                                         ? item.title || item.label : pages.notfound.title || pages.notfound.label)}
                             </Link>
                         </Route>
@@ -64,8 +64,8 @@ function MainAppbar(props) {
                     </Route>
                 </Switch>
             </Typography>
-            {user.currentUser() && <Link to={pages.profile.route} className={classes.label}>
-                <AvatarView user={user.currentUser()}/>
+            {user.uid() && <Link to={pages.profile.route} className={classes.label}>
+                <AvatarView user={user}/>
             </Link>}
             {/*{user && user.key && <AvatarView user={user} onclick={onavatarclick}/>}*/}
         </Toolbar>

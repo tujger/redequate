@@ -6,6 +6,7 @@ import Snackbar from "../components/Snackbar";
 import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
 import {Mail as UserIcon} from "@material-ui/icons";
 import {connect} from "react-redux";
+import {notifySnackbar} from "../controllers";
 
 const RestorePassword = (props) => {
     const {dispatch, firebase, pages} = props;
@@ -18,17 +19,23 @@ const RestorePassword = (props) => {
     const requestRestorePassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
-        firebase.auth().sendPasswordResetEmail(email).then(function () {
-            dispatch({type: Snackbar.SHOW, message: "Instructions has sent to e-mail"});
+        firebase.auth().sendPasswordResetEmail(email).then(() => {
+          notifySnackbar({
+              title: "Instructions has sent to e-mail"
+            });
             dispatch(ProgressView.HIDE);
             props.history.push(pages.login.route);
         }).catch(error => {
+          notifySnackbar({
+              title: error.message,
+              variant: "error"
+            });
             dispatch(ProgressView.HIDE);
             setState({...state, error: error.message, requesting: false});
         });
     };
 
-    if (user.currentUser()) {
+    if (user.uid()) {
         return <Redirect to={pages.profile.route}/>
     }
 

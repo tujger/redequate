@@ -35,7 +35,7 @@ const MenuSection = withStyles(styles)(props => {
     const {items, classes} = props;
     const [first, ...menu] = items;
 
-    if (!matchRole(first.roles, user.currentUser())) return null;
+    if (!matchRole(first.roles, user)) return null;
 
     return <Grid className={classes.menusection}>
         <Typography>
@@ -43,7 +43,7 @@ const MenuSection = withStyles(styles)(props => {
         </Typography>
         <MenuList>
             {menu.map((item, index) => {
-                if (!matchRole(item.roles, user.currentUser())) return null;
+                if (!matchRole(item.roles, user)) return null;
                 return <Link to={item.route}
                              key={index}
                              className={classes.label}>

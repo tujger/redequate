@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  fetchUser,
-  fetchUserPublic,
-  firstOf, Role,
-  updateUser,
-  updateUserPublic,
-  user
-} from "../controllers/User";
+import {fetchUserPublic, updateUserPublic, user} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
@@ -44,12 +37,13 @@ const Login = (props) => {
     firebase.auth().signInWithEmailAndPassword(email, password).then(loginSuccess).catch(loginError);
   };
   const loginSuccess = response => {
-    const {uid, email, emailVerified, displayName: name, phoneNumber: phone, photoURL: image} = response.user.toJSON();
-    const provider = response.user.providerData ? (response.user.providerData[0] && response.user.providerData[0].providerId) || response.user.providerId : response.user.providerId;
+    const {uid, email, emailVerified, displayName: name, phoneNumber: phone, photoURL: image, providerData = []} = response.user.toJSON();
+    const provider = providerData.filter(item => item && item.providerId).filter((item, index) => index === 0).map(item => item.providerId)[0];
+
     const created = new Date().getTime();
 
-    fetchUserPublic(firebase)(uid).then((data) => {
-      updateUserPublic(firebase)(uid,
+    fetchUserPublic(firebase)(uid)
+      .then(data => updateUserPublic(firebase)(uid,
         {
           created,
           email,
@@ -57,17 +51,21 @@ const Login = (props) => {
           name,
           phone,
           image,
-          provider, ...data,
+          provider,
+          ...data,
           current: true
-        }).then(() => {
-        refreshAll(store);
-        setState({...state, requesting: false});
-        if (location && location.pathname === pages.login.route) {
-          history.push(pages.profile.route);
-        }
-      }).catch(loginError);
-    }).catch(loginError);
+        }))
+    .then(() => {
+      setState({...state, requesting: false});
+      if (location && location.pathname === pages.login.route) {
+        history.push(pages.profile.route);
+      }
+    }).catch(loginError)
+    .finally(() => {
+      refreshAll(store);
+    });
   };
+
   const loginError = error => {
     dispatch(ProgressView.HIDE);
     console.error(error);
@@ -79,7 +77,7 @@ const Login = (props) => {
     firebase.auth().getRedirectResult().then(loginSuccess).catch(loginError);
     return <LoadingComponent/>;
   }
-  if (user.currentUser()) {
+  if (user.uid()) {
     return <Redirect to={pages.profile.route}/>
   }
 

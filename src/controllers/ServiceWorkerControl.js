@@ -1,13 +1,13 @@
 import React from 'react';
 import * as serviceWorker from "../serviceWorker";
-import {pushNotificationsSnackbarNotify} from "./PushNotifications";
+import {notifySnackbar} from "./Notifications";
 
 export const serviceWorkerRegister = () => {
     serviceWorker.register({
         skipWaiting: true,
         onUpdate: registration => {
             if (registration && registration.waiting) {
-                pushNotificationsSnackbarNotify({
+              notifySnackbar({
                     buttonLabel: "Update",
                     onButtonClick: () => {
                         registration.waiting.postMessage({type: 'SKIP_WAITING'});
@@ -21,7 +21,7 @@ export const serviceWorkerRegister = () => {
         },
         onInit: registration => {
             if (registration && registration.waiting) {
-                pushNotificationsSnackbarNotify({
+              notifySnackbar({
                     buttonLabel: "Activate",
                     onButtonClick: () => {
                         registration.waiting.postMessage({type: 'SKIP_WAITING'});

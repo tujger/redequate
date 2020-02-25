@@ -23,13 +23,12 @@ const styles = theme => ({
 });
 
 const ProfileComponent = (props) => {
-    const {classes, data} = props;
-
+    const {classes, user} = props;
     return <Grid container>
-            {data.image && <Grid item xs>
-                <img src={data.image} alt="" className={classes.image}/>
+            {user.public().image && <Grid item xs>
+                <img src={user.public().image} alt="" className={classes.image}/>
             </Grid>}
-            {data.provider && data.provider === "google.com" && <Grid item xs>
+            {user.public().provider && user.public().provider === "google.com" && <Grid item xs>
                 <Grid container justify="flex-end">
                     <img src={GoogleLogo} width={40} height={40} alt=""/>
                 </Grid>
@@ -37,7 +36,7 @@ const ProfileComponent = (props) => {
                     <Typography>Signed with Google</Typography>
                 </Grid>
             </Grid>}
-            {data.provider && data.provider === "password" && <Grid item xs>
+            {user.public().provider && user.public().provider === "password" && <Grid item xs>
                 <Grid container justify="flex-end">
                     <UserIcon/>
                     {/*<img src={GoogleLogo} width={40} height={40} alt=""/>*/}
@@ -45,24 +44,24 @@ const ProfileComponent = (props) => {
                 <Grid container justify="flex-end">
                     <Typography>Signed with e-mail</Typography>
                 </Grid>
-                {!data.emailVerified && <Grid container justify="flex-end">
+                {!user.public().emailVerified && <Grid container justify="flex-end">
                     <Typography>Not verified</Typography>
                 </Grid>}
             </Grid>}
             <Grid container>
-                <Typography>{data.name}</Typography>
+                <Typography>{user.public().name}</Typography>
             </Grid>
             <Grid container>
-                <Typography>{data.email}</Typography>
+                <Typography>{user.public().email}</Typography>
             </Grid>
             <Grid container>
-                <Typography>{data.address}</Typography>
+                <Typography>{user.public().address}</Typography>
             </Grid>
             <Grid container>
-                <Typography>{data.phone}</Typography>
+                <Typography>{user.public().phone}</Typography>
             </Grid>
             <Grid container>
-                <Typography>{new Date(data.created).toLocaleString()}</Typography>
+                <Typography>{new Date(user.public().created).toLocaleString()}</Typography>
             </Grid>
         </Grid>
 };

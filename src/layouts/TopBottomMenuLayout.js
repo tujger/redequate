@@ -11,7 +11,7 @@ import {user} from "../controllers/User";
 import {connect} from "react-redux";
 import Route from "react-router-hooks";
 import {Switch} from "react-router-dom";
-import {PushNotificationsSnackbar} from "../controllers/PushNotifications";
+import {NotificationsSnackbar} from "../controllers/Notifications";
 
 const styles = theme => ({
     indent: {
@@ -73,7 +73,7 @@ function TopBottomMenuLayout(props) {
             </Grid>
         </Grid>
         <Snackbar/>
-        <PushNotificationsSnackbar/>
+        <NotificationsSnackbar/>
     </StickyHeader>
 }
 

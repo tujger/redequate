@@ -7,7 +7,7 @@ import {
   Phone as PhoneIcon
 } from "@material-ui/icons";
 import {Redirect, withRouter} from "react-router-dom";
-import {fetchUser, updateUser, fetchUserPublic, updateUserPublic} from "../controllers/User";
+import User, {fetchUserPublic, updateUserPublic} from "../controllers/User";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
 import {connect} from "react-redux";
@@ -38,15 +38,14 @@ const EditProfile = (props) => {
     const saveUser = () => {
         setState({...state, disabled: true});
         dispatch(ProgressView.SHOW);
-        fetchUserPublic(firebase)(data.uid).then(() => {
-          updateUserPublic(firebase)(data.uid, {name, address, phone, image}).then((user) => {
+        updateUserPublic(firebase)(data.uid, {name, address, phone, image})
+          .then((userData) => {
             setTimeout(() => {
               setState({...state, disabled: false});
               refreshAll(store);
-              history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
+              history.push(tosuccessroute, {data:userData, tosuccessroute: tosuccessroute});
             }, 1000)
           }).catch(onerror);
-        }).catch(onerror);
         /*fetchUser(firebase)(data.uid, user => {
             updateUser(firebase)({...user, name, address, phone, image}, (user) => {
                 setTimeout(() => {
@@ -71,6 +70,8 @@ const EditProfile = (props) => {
         return <Redirect to={tosuccessroute}/>
     }
 
+    const user = User(data);
+
     window.localStorage.setItem(location.pathname, JSON.stringify(data));
 
     return <Grid container>
@@ -84,7 +85,7 @@ const EditProfile = (props) => {
                     disabled
                     label="E-mail"
                     fullWidth
-                    value={data.email}
+                    value={user.public().email}
                 />
             </Grid>
         </Grid>

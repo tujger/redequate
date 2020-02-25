@@ -27,16 +27,16 @@ function AvatarView(props) {
 
     if (!user) return <div/>;
     const isAdmin = currentRole(user) === Role.ADMIN;
-    const isVerified = user.emailVerified !== false;
+    const isVerified = user.public().emailVerified !== false;
 
     return <Avatar
         className={isVerified ? (isAdmin ? classes.admin : null) : classes.notVerified}
         onClick={onclick}
         title={isVerified ? (isAdmin ? "Administrator": null) : "Not verified"}
     >
-        {user.image && <img src={user.image} alt="" className={classes.avatarImage}/>}
-        {!user.image && user.name && user.name.substr(0, 1).toUpperCase()}
-        {!user.image && !user.name && user.email && user.email.substr(0, 1).toUpperCase()}
+        {user.public().image && <img src={user.public().image} alt="" className={classes.avatarImage}/>}
+        {!user.public().image && user.public().name && user.public().name.substr(0, 1).toUpperCase()}
+        {!user.public().image && !user.public().name && user.public().email && user.public().email.substr(0, 1).toUpperCase()}
     </Avatar>
 }
 

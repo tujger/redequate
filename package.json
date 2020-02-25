@@ -29,6 +29,7 @@
     "@material-ui/icons": "latest",
     "@material-ui/lab": "latest",
     "axios": "latest",
+    "device-uuid": "latest",
     "firebase": "latest",
     "geo-coder": "latest",
     "notistack": "latest",

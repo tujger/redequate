@@ -6,136 +6,135 @@ import {
   logoutUser,
   sendConfirmationEmail,
   updateUserPrivate,
+  fetchUserPrivate,
   updateUserPublic,
   user
 } from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
-import {hasNotifications, setupReceivingNotifications, pushNotificationsSnackbarNotify} from "../controllers/PushNotifications";
+import {
+  hasNotifications,
+  setupReceivingNotifications,
+  notifySnackbar
+} from "../controllers/Notifications";
+import {fetchDeviceId} from "../controllers/General";
 
 const Profile = (props) => {
-    const {dispatch, firebase, pages, store} = props;
-    const [state, setState] = React.useState({disabled: false});
-    const {disabled} = state;
+  const {dispatch, firebase, pages, store} = props;
+  const [state, setState] = React.useState({disabled: false});
+  const {disabled} = state;
 
-    let currentUser = user.currentUser();
-    if (!currentUser) {
-        return <Redirect to={pages.users.route}/>
-    }
+  if (!user.uid()) {
+    return <Redirect to={pages.users.route}/>
+  }
 
-    const onError = error => {
-      dispatch(ProgressView.HIDE);
-      setState({...state, disabled: false});
-      pushNotificationsSnackbarNotify({
-        title: "Setup notifications failed: " + error.message,
-        priority: "high",
-        variant: "error",
-      });
-    };
-
-    const handleNotifications = (evt, enable) => {
-      dispatch(ProgressView.SHOW);
-      setState({...state, disabled: true});
-      if(enable) {
-        setupReceivingNotifications(firebase, null, token => {
-          updateUserPrivate(firebase)(currentUser.uid, {notification: token}).then(result => {
-            dispatch(ProgressView.HIDE);
-            setState({...state, disabled: false});
-            pushNotificationsSnackbarNotify({
+  const handleNotifications = (evt, enable) => {
+    dispatch(ProgressView.SHOW);
+    setState({...state, disabled: true});
+    if (enable) {
+      setupReceivingNotifications(firebase)
+        .then(token => fetchUserPrivate(firebase)(user.uid())
+          .then(data => updateUserPrivate(firebase)(user.uid(), {
+            notification: {...data.notification, [fetchDeviceId()]: token}
+          }))
+          .then(result => {
+            notifySnackbar({
               title: token,
               priority: "high",
               variant: "info",
             });
-          }).catch(onError);
-        }, onError);
-        /*updateUserPrivate1(firebase)(currentUser.uid, {notifications: token}, result => {
-          console.log(result);
-          dispatch(ProgressView.HIDE);
-          setState({...state, disabled: false});
-          pushNotificationsSnackbarNotify({
-            title: token,
-            priority: "high",
-            variant: "info",
-          });
-        }, onError)*/
-      } else {
-        console.log("DISABLE NOTIF")
-        updateUserPrivate(firebase)(currentUser.uid, {notification: null}).then(result => {
+            dispatch(ProgressView.HIDE);
+            setState({...state, disabled: false});
+          }))
+      .catch(notifySnackbar)
+      .finally(() => {
+        dispatch(ProgressView.HIDE);
+        setState({...state, disabled: false});
+      });
+    } else {
+      fetchUserPrivate(firebase)(user.uid())
+        .then(data => updateUserPrivate(firebase)(user.uid(), {
+          notification: {...data.notification, [fetchDeviceId()]: null}
+        }))
+        .then(result => {
           localStorage.removeItem("notification-token");
-          pushNotificationsSnackbarNotify({
+          notifySnackbar({
             title: "Unsubscribed"
           });
           dispatch(ProgressView.HIDE);
           setState({...state, disabled: false});
-        }).catch(onError);
-      }
-    };
+        })
+        .catch(notifySnackbar)
+        .finally(() => {
+          dispatch(ProgressView.HIDE);
+          setState({...state, disabled: false});
+        });
+    }
+  };
 
-    return <div>
-        <ProfileComponent data={currentUser}/>
-        {!currentUser.emailVerified && <Grid container>
-            <Grid item xs>
-                <Typography>Note! You are still did not confirmed your email. Some features will not
-                    be available.</Typography>
-            </Grid>
-        </Grid>}
-        <Grid container><FormControlLabel
-          control={
-            <Checkbox
-              disabled={disabled}
-              checked={hasNotifications()}
-              onChange={handleNotifications}
-            />
-          }
-          label={"Get notifications"}
-        /></Grid>
-        <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large">
-            <Button
-                color="primary"
-                onClick={() => {
-                    logoutUser(firebase)();
-                    refreshAll(store);
-                }}
-                variant={"contained"}
-            >
-                Logout
-            </Button>
-            {!currentUser.emailVerified && <Button
-                color="primary"
-                onClick={() => {
-                  refreshAll(store);
-                            dispatch(ProgressView.SHOW);
-                    sendConfirmationEmail(firebase, store)({
-                        email: currentUser.email,
-                        onsuccess: () => {
-                          refreshAll(store);
-                        }, onerror: error => {
-                        refreshAll(store);
-                        }
-                    })
-                }}
-                variant={"contained"}
-            >
-                Resend confirmation
-            </Button>}
-            {currentUser.emailVerified && <Button
-                color="primary"
-                // onClick={() => {
-                //     props.history.push(pages.edituser.route);
-                // }}
-                variant={"contained"}
-                component={React.forwardRef((props, ref) => (
-                    <Link ref={ref} to={{
-                        pathname: pages.edituser.route,
-                        state: {data: currentUser, tosuccessroute: pages.profile.route},
-                    }} {...props}/>
-                ))}
-            >
-                Edit
-            </Button>}
-        </ButtonGroup>
-    </div>;
+  return <div>
+    <ProfileComponent user={user}/>
+    {!user.public().emailVerified && <Grid container>
+      <Grid item xs>
+        <Typography>Note! You are still did not confirmed your email. Some features will not
+          be available.</Typography>
+      </Grid>
+    </Grid>}
+    <Grid container><FormControlLabel
+      control={
+        <Checkbox
+          disabled={disabled}
+          checked={hasNotifications()}
+          onChange={handleNotifications}
+        />
+      }
+      label={"Get notifications"}
+    /></Grid>
+    <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large">
+      <Button
+        color="primary"
+        onClick={() => {
+          logoutUser(firebase)();
+          refreshAll(store);
+        }}
+        variant={"contained"}
+      >
+        Logout
+      </Button>
+      {!user.public().emailVerified && <Button
+        color="primary"
+        onClick={() => {
+          refreshAll(store);
+          dispatch(ProgressView.SHOW);
+          sendConfirmationEmail(firebase, store)({email: user.public().email})
+            .then(() => {
+              refreshAll(store);
+            }).catch(error => {
+              refreshAll(store);
+            });
+        }}
+        variant={"contained"}
+      >
+        Resend confirmation
+      </Button>}
+      {user.public().emailVerified && <Button
+        color="primary"
+        // onClick={() => {
+        //     props.history.push(pages.edituser.route);
+        // }}
+        variant={"contained"}
+        component={React.forwardRef((props, ref) => (
+          <Link ref={ref} to={{
+            pathname: pages.edituser.route,
+            state: {data: {uid:user.uid(), role:user.role(), ...user.public()}, tosuccessroute: pages.profile.route},
+          }} {...props}/>
+        ))}
+      >
+        Edit
+      </Button>}
+    </ButtonGroup>
+  </div>;
 };
 
 export default connect()(withRouter(Profile));
