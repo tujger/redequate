@@ -10,6 +10,7 @@ const User = (data) => {
     role: () => role_,
     uid: () => uid_,
     set: (type, data) => {
+      if(data === "null") data = null;
       if (type === "private") private_ = data;
       else if (type === "public") public_ = data;
       else if (type === "uid") uid_ = data;
@@ -143,7 +144,7 @@ user.set("uid", window.localStorage.getItem("user_uid"));
 
 export const currentRole = user => {
   if (user && user.uid() && !user.role()) {
-    // console.error("Current user role is invalid, reset ro USER", currentUser);
+    // console.error("Current user role is invalid, reset ro USER");
     return Role.USER;
   }
   return user ? user.role() || Role.LOGIN : Role.LOGIN;
