@@ -33,17 +33,12 @@ const Profile = (props) => {
     dispatch(ProgressView.SHOW);
     setState({...state, disabled: true});
     if (enable) {
+      // let token = "token" + user.uid();
       setupReceivingNotifications(firebase)
         .then(token => fetchUserPrivate(firebase)(user.uid())
-          .then(data => updateUserPrivate(firebase)(user.uid(), {
-            notification: {...data.notification, [fetchDeviceId()]: token}
-          }))
+          .then(data => updateUserPrivate(firebase)(user.uid(), {notification: token}))
           .then(result => {
-            notifySnackbar({
-              title: token,
-              priority: "high",
-              variant: "info",
-            });
+            notifySnackbar({title: "Subscribed"});
             dispatch(ProgressView.HIDE);
             setState({...state, disabled: false});
           }))
@@ -54,16 +49,10 @@ const Profile = (props) => {
       });
     } else {
       fetchUserPrivate(firebase)(user.uid())
-        .then(data => updateUserPrivate(firebase)(user.uid(), {
-          notification: {...data.notification, [fetchDeviceId()]: null}
-        }))
+        .then(data => updateUserPrivate(firebase)(user.uid(), {notification: null}))
         .then(result => {
           localStorage.removeItem("notification-token");
-          notifySnackbar({
-            title: "Unsubscribed"
-          });
-          dispatch(ProgressView.HIDE);
-          setState({...state, disabled: false});
+          notifySnackbar({title: "Unsubscribed"});
         })
         .catch(notifySnackbar)
         .finally(() => {

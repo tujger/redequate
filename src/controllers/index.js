@@ -1,6 +1,5 @@
 export * from "./Firebase";
 export * from "./Notifications";
-export {default as sendMail} from "./SendMail";
 export * from "./ServiceWorkerControl";
 export {default as Store, refreshAll} from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";

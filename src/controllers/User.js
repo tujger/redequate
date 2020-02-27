@@ -1,4 +1,6 @@
 import {notifySnackbar} from "./Notifications";
+import {fetchDeviceId} from "./General";
+import {osName, osVersion, deviceType, browserName, deviceDetect} from "react-device-detect";
 
 const User = (data) => {
   let private_ = null, public_ = null, uid_ = null, role_ = null;
@@ -44,7 +46,7 @@ export const fetchUserPublic = firebase => uid => new Promise((resolve, reject) 
 });
 
 export const fetchUserPrivate = firebase => uid => new Promise((resolve, reject) => {
-  fetchUserSection(firebase, "private", uid, result => resolve(result), error => reject(error));
+  fetchUserSection(firebase, "private/" + fetchDeviceId(), uid, result => resolve(result), error => reject(error));
 });
 
 const fetchUserSection = (firebase, section, uid, onsuccess, onerror) => {
@@ -75,7 +77,9 @@ export const updateUserPublic = firebase => (uid, props) => new Promise((resolve
 });
 
 export const updateUserPrivate = firebase => (uid, props) => new Promise((resolve, reject) => {
-  updateUserSection(firebase, "private", uid, props, result => resolve(result), error => reject(error));
+  console.log(deviceDetect());
+
+  updateUserSection(firebase, "private/" + fetchDeviceId(), uid, {osName, osVersion, deviceType, browserName, ...props}, result => resolve(result), error => reject(error));
 });
 
 const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) => {
@@ -84,15 +88,17 @@ const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) =>
     fetchUserSection(firebase, section, uid, data => {
       const {role, uid: ignored1, ...existed} = data;
       const {current, role: ignored2, uid: ignored3, ...updates} = props;
+      console.log(existed, updates);
+
       let val = {...existed, ...updates};
       db.ref("users").child(uid).child(section).set(val);
       if (current || user.uid() === uid) {
-        user.set(section, val);
+        user.set(section.split("/")[0], val);
         user.set("uid", uid);
         user.set("role", role);
         window.localStorage.setItem("user_uid", uid);
         window.localStorage.setItem("user_role", role);
-        window.localStorage.setItem("user_" + section, JSON.stringify(val));
+        window.localStorage.setItem("user_" + (section.split("/")[0]), JSON.stringify(val));
       }
       onsuccess && onsuccess(val);
     }, onerror);

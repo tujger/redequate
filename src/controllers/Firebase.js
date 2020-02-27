@@ -7,6 +7,9 @@ import "firebase/messaging";
 let _firebase = null;
 const Firebase = firebaseConfig => {
   firebase.initializeApp(firebaseConfig);
+  if (process.env.NODE_ENV === 'development') {
+    // firebase.functions().useFunctionsEmulator('http://localhost:5001');
+  }
   _firebase = firebase;
   return firebase;
 };
@@ -22,14 +25,23 @@ export const fetchFunction = firebase => (name, options) => new Promise((resolve
             'Authorization': 'Bearer ' + token
           }
         };
-        console.log(_firebase.functions());
         const namedFunction = _firebase.functions().httpsCallable(name, config);
         return namedFunction(options);
       }).then(result => {
-  console.log("RESULT", result);
         resolve(result.data, result);
       }).catch(reject)
     });
+  } catch(error) {
+    reject(error);
+  }
+});
+
+export const fetchCallable = firebase => (name, options) => new Promise((resolve, reject) => {
+  try {
+    const namedFunction = _firebase.functions().httpsCallable(name);//, config);
+    namedFunction(options).then(result => {
+      resolve(result.data, result);
+    }).catch(reject)
   } catch(error) {
     reject(error);
   }

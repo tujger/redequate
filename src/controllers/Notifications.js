@@ -32,7 +32,7 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
             });
             //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
             //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
-            registration.showNotification(payload.notification.title, payload.notification);
+            // registration.showNotification(payload.notification.title, payload.notification);
           });
           resolve(token);
         } catch(e) {
@@ -96,7 +96,7 @@ export const notifySnackbar = props => {
     console.error(props);
     snackbar.payload = {
       priority: "high",
-      title: props.message,
+      title: "Error: " + props.message,
       variant: "error"
     }
   } else {
