@@ -1,6 +1,4 @@
 import {notifySnackbar} from "./Notifications";
-import {fetchDeviceId} from "./General";
-import {osName, osVersion, deviceType, browserName, deviceDetect} from "react-device-detect";
 
 const User = (data) => {
   let private_ = null, public_ = null, uid_ = null, role_ = null;
@@ -43,11 +41,15 @@ const User = (data) => {
 export default User;
 
 export const fetchUserPublic = firebase => uid => new Promise((resolve, reject) => {
-  fetchUserSection(firebase, "public", uid, result => resolve(result), error => reject(error));
+  fetchUserSection(firebase, "public", uid, resolve, reject);
 });
 
-export const fetchUserPrivate = firebase => uid => new Promise((resolve, reject) => {
-  fetchUserSection(firebase, "private/" + fetchDeviceId(), uid, result => resolve(result), error => reject(error));
+export const fetchUserPrivate = firebase => (uid, deviceId) => new Promise((resolve, reject) => {
+  let section = "private";
+  if (deviceId) {
+    section = "private/" + deviceId;
+  }
+  fetchUserSection(firebase, section, uid, resolve, reject);
 });
 
 const fetchUserSection = (firebase, section, uid, onsuccess, onerror) => {
@@ -74,14 +76,20 @@ const fetchUserSection = (firebase, section, uid, onsuccess, onerror) => {
 };
 
 export const updateUserPublic = firebase => (uid, props) => new Promise((resolve, reject) => {
-  updateUserSection(firebase, "public", uid, props, result => resolve(result), error => reject(error));
+  updateUserSection(firebase, "public", uid, props, resolve, reject);
 });
 
-export const updateUserPrivate = firebase => (uid, props) => new Promise((resolve, reject) => {
-  console.log(deviceDetect());
-
-  updateUserSection(firebase, "private/" + fetchDeviceId(), uid, {osName, osVersion, deviceType, browserName, ...props}, result => resolve(result), error => reject(error));
-});
+export const updateUserPrivate = firebase => (uid, deviceId = "", props) =>
+  new Promise((resolve, reject) => {
+    let section = "private";
+    if(!props && deviceId instanceof Object) {
+      props = deviceId;
+    } else {
+      section = "private/" + deviceId;
+    }
+    console.log(section);
+    updateUserSection(firebase, section, uid, props, resolve, reject);
+  });
 
 const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) => {
   const db = firebase.database();
@@ -89,7 +97,7 @@ const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) =>
     fetchUserSection(firebase, section, uid, data => {
       const {role, uid: ignored1, ...existed} = data;
       const {current, role: ignored2, uid: ignored3, ...updates} = props;
-      console.log(existed, updates);
+      // console.log(existed, updates);
 
       let val = {...existed, ...updates};
       db.ref("users").child(uid).child(section).set(val);

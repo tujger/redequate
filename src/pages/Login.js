@@ -1,5 +1,11 @@
 import React from "react";
-import {fetchUserPublic, updateUserPublic, user} from "../controllers/User";
+import {
+  fetchUserPrivate,
+  fetchUserPublic,
+  updateUserPrivate,
+  updateUserPublic,
+  user
+} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
@@ -9,7 +15,10 @@ import {Lock, Mail as UserIcon} from "@material-ui/icons";
 import GoogleLogo from "../images/google-logo.svg";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
-import {refreshAll} from "../controllers";
+import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
+import {fetchDeviceId} from "../controllers/General";
+import {refreshAll} from "../controllers/Store";
+import {osName, osVersion, deviceType, browserName} from "react-device-detect";
 
 const Login = (props) => {
   const {signup = true, history, location, popup = true, dispatch, pages, firebase, store} = props;
@@ -43,25 +52,44 @@ const Login = (props) => {
     const created = new Date().getTime();
 
     fetchUserPublic(firebase)(uid)
-      .then(data => updateUserPublic(firebase)(uid,
-        {
-          created,
-          email,
-          emailVerified,
-          name,
-          phone,
-          image,
-          provider,
-          ...data,
-          current: true
+    .then(data => updateUserPublic(firebase)(uid,
+      {
+        created,
+        email,
+        emailVerified,
+        name,
+        phone,
+        image,
+        provider,
+        ...data,
+        current: true
+      }))
+    .then(() => fetchUserPrivate(firebase)(uid, fetchDeviceId()))
+    .then(data => updateUserPrivate(firebase)(uid, fetchDeviceId(), {
+      ...data, osName, osVersion, deviceType, browserName
+    }))
+    .then((data) => {
+      if(data && data.notification) {
+        return setupReceivingNotifications(firebase)
+        .then(token => fetchUserPrivate(firebase)(uid)
+        .then(data => updateUserPrivate(firebase)(uid, fetchDeviceId(), {notification: token}))
+        .then(result => {
+          notifySnackbar({title: "Subscribed"});
+          dispatch(ProgressView.HIDE);
+          setState({...state, disabled: false});
         }))
+        .catch(notifySnackbar)
+      }
+      return this;
+    })
     .then(() => {
-      setState({...state, requesting: false});
       if (location && location.pathname === pages.login.route) {
         history.push(pages.profile.route);
       }
-    }).catch(loginError)
+    })
+    .catch(loginError)
     .finally(() => {
+      setState({...state, requesting: false});
       refreshAll(store);
     });
   };

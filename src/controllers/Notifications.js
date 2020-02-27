@@ -8,9 +8,10 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
     //https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html#//apple_ref/doc/uid/TP40013225-CH3-SW1
     Notification.requestPermission().then(permission => {
       if(!navigator.serviceWorker || !navigator.serviceWorker.controller) {
-        reject(new Error("ServiceWorker is inactive"));
+        reject(new Error("Subscribing failed: ServiceWorker is inactive"));
         return;
       }
+      // reject(new Error("No error"));return;
       navigator.serviceWorker.ready.then(async registration => {
         console.log("Set up notifications", registration);
         const messaging = firebase.messaging();
@@ -96,7 +97,7 @@ export const notifySnackbar = props => {
     console.error(props);
     snackbar.payload = {
       priority: "high",
-      title: "Error: " + props.message,
+      title: props.message,
       variant: "error"
     }
   } else {

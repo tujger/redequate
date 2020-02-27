@@ -36,7 +36,7 @@ const Profile = (props) => {
       // let token = "token" + user.uid();
       setupReceivingNotifications(firebase)
         .then(token => fetchUserPrivate(firebase)(user.uid())
-          .then(data => updateUserPrivate(firebase)(user.uid(), {notification: token}))
+          .then(data => updateUserPrivate(firebase)(user.uid(), fetchDeviceId(), {notification: token}))
           .then(result => {
             notifySnackbar({title: "Subscribed"});
             dispatch(ProgressView.HIDE);
@@ -49,7 +49,7 @@ const Profile = (props) => {
       });
     } else {
       fetchUserPrivate(firebase)(user.uid())
-        .then(data => updateUserPrivate(firebase)(user.uid(), {notification: null}))
+        .then(data => updateUserPrivate(firebase)(user.uid(), fetchDeviceId(), {notification: null}))
         .then(result => {
           localStorage.removeItem("notification-token");
           notifySnackbar({title: "Unsubscribed"});
