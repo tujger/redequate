@@ -16,16 +16,17 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
       }
     }).then(token => {
       localStorage.setItem("notification-token", token);
-
       messaging.onMessage(payload => {
-        console.log("message", payload);
-        (onMessage || notifySnackbar)({
-          body: payload.data.body,
+        console.log("message", payload, payload.notification);
+        const options = {
+          body: payload.notification.body,
           from: payload.from,
-          image: payload.data.icon,
-          title: payload.data.title,
+          image: payload.notification.icon,
+          title: payload.notification.title,
           priority: payload.priority,
-        });
+        };
+        console.log("optins", options);
+        (onMessage || notifySnackbar)(options);
         //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
         //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
         // registration.showNotification(payload.notification.title, payload.notification);

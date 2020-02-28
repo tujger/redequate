@@ -15,7 +15,7 @@ import TopBottomToolbarLayout from "./layouts/TopBottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
 import {theme as defaultTheme} from "./controllers";
 import {watchUserChanged} from "./controllers/User";
-import {setupReceivingNotifications} from "./controllers/Notifications";
+import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -29,7 +29,9 @@ const Dispatcher = (props) => {
     React.useEffect(() => {
         let firebaseInstance = Firebase(firebaseConfig);
         fetchDeviceId();
-        setupReceivingNotifications(firebaseInstance).catch(console.error);
+        if(hasNotifications()) {
+          setupReceivingNotifications(firebaseInstance).catch(console.error);
+        }
         setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
         watchUserChanged(firebaseInstance);
 // eslint-disable-next-line
