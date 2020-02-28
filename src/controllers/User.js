@@ -87,7 +87,6 @@ export const updateUserPrivate = firebase => (uid, deviceId = "", props) =>
     } else {
       section = "private/" + deviceId;
     }
-    console.log(section);
     updateUserSection(firebase, section, uid, props, resolve, reject);
   });
 
@@ -97,8 +96,6 @@ const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) =>
     fetchUserSection(firebase, section, uid, data => {
       const {role, uid: ignored1, ...existed} = data;
       const {current, role: ignored2, uid: ignored3, ...updates} = props;
-      // console.log(existed, updates);
-
       let val = {...existed, ...updates};
       db.ref("users").child(uid).child(section).set(val);
       if (current || user.uid() === uid) {

@@ -53,6 +53,7 @@ const Profile = (props) => {
         .then(result => {
           localStorage.removeItem("notification-token");
           notifySnackbar({title: "Unsubscribed"});
+          return firebase.messaging().deleteToken();
         })
         .catch(notifySnackbar)
         .finally(() => {

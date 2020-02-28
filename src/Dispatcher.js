@@ -29,7 +29,7 @@ const Dispatcher = (props) => {
     React.useEffect(() => {
         let firebaseInstance = Firebase(firebaseConfig);
         fetchDeviceId();
-        // setupReceivingNotifications(firebaseInstance).catch(console.error);
+        setupReceivingNotifications(firebaseInstance).catch(console.error);
         setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
         watchUserChanged(firebaseInstance);
 // eslint-disable-next-line
