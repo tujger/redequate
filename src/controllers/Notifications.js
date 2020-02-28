@@ -20,12 +20,11 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
       messaging.onMessage(payload => {
         console.log("message", payload);
         (onMessage || notifySnackbar)({
-          body: payload.notification.body,
+          body: payload.data.body,
           from: payload.from,
-          image: payload.notification.icon,
-          title: payload.notification.title,
+          image: payload.data.icon,
+          title: payload.data.title,
           priority: payload.priority,
-          tag: payload.notification.tag,
         });
         //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
         //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
