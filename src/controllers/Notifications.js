@@ -19,13 +19,12 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
       messaging.onMessage(payload => {
         console.log("message", payload, payload.data);
         const options = {
-          body: payload.data.body,
+          ...payload.notification,
           from: payload.from,
-          image: payload.data.icon,
-          title: payload.data.title,
+          image: payload.notification.icon,
           priority: payload.priority,
         };
-        console.log("optins", options);
+        console.log("options", options);
         (onMessage || notifySnackbar)(options);
         //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
         //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
