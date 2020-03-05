@@ -17,12 +17,12 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
     }).then(token => {
       localStorage.setItem("notification-token", token);
       messaging.onMessage(payload => {
-        console.log("message", payload, payload.notification);
+        console.log("message", payload, payload.data);
         const options = {
-          body: payload.notification.body,
+          body: payload.data.body,
           from: payload.from,
-          image: payload.notification.icon,
-          title: payload.notification.title,
+          image: payload.data.icon,
+          title: payload.data.title,
           priority: payload.priority,
         };
         console.log("optins", options);
