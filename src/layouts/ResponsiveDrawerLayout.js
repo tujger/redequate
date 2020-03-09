@@ -90,9 +90,7 @@ function ResponsiveDrawerLayout(props) {
             </SwipeableDrawer>
         </Hidden>
         <Hidden smDown implementation="css">
-            <Drawer
-                variant="permanent"
-                open>
+            <Drawer variant="permanent" open>
                 <MainHeader image={headerImage}
                             onClick={() => setState({...state, mobileOpen: false})}/>
                 <Divider/>

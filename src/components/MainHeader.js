@@ -8,12 +8,12 @@ const styles = theme => ({
     ...theme.mixins.toolbar,
     backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
+    height: 120,
     [theme.breakpoints.up("md")]: {
       display: "flex",
-      height: 120
     },
     [theme.breakpoints.down("md")]: {
-      alignItems: "center",
+      alignItems: "flex-start",
       justifyContent: "flex-end",
       display: "flex",
     },

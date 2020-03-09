@@ -1,6 +1,20 @@
 import React from 'react';
 import * as serviceWorker from "../serviceWorker";
 import {notifySnackbar} from "./Notifications";
+import {_firebase} from "./Firebase";
+
+const activate = registration => {
+    registration.waiting.postMessage({type: 'SKIP_WAITING'});
+    window.location.reload();
+    try {
+        console.log("FB-SW updating");
+        _firebase.messaging().swRegistration.update().then(reg => {
+            console.log("FB-SW updated", reg);
+        }).catch(console.error);
+    } catch(e) {
+        console.error(e);
+    }
+};
 
 export const serviceWorkerRegister = () => {
     serviceWorker.register({
@@ -10,8 +24,7 @@ export const serviceWorkerRegister = () => {
               notifySnackbar({
                     buttonLabel: "Update",
                     onButtonClick: () => {
-                        registration.waiting.postMessage({type: 'SKIP_WAITING'});
-                        window.location.reload();
+                        activate(registration);
                     },
                     priority: "high",
                     title: "New version available",
@@ -24,8 +37,7 @@ export const serviceWorkerRegister = () => {
               notifySnackbar({
                     buttonLabel: "Activate",
                     onButtonClick: () => {
-                        registration.waiting.postMessage({type: 'SKIP_WAITING'});
-                        window.location.reload();
+                        activate(registration);
                     },
                     priority: "high",
                     title: "New version available",

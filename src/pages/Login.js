@@ -80,7 +80,7 @@ const Login = (props) => {
         }))
         .catch(notifySnackbar)
       }
-      return this;
+      // return this;
     })
     .then(() => {
       if (location && location.pathname === pages.login.route) {
