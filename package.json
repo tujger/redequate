@@ -43,6 +43,7 @@
     "react-router-dom": "latest",
     "react-router-hooks": "latest",
     "react-text-mask": "latest",
+    "react-use-gesture": "latest",
     "redux": "latest",
     "text-mask-addons": "latest"
   },

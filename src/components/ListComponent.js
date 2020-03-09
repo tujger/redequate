@@ -1,6 +1,7 @@
 import React from "react";
 import {List} from "@material-ui/core";
 import PropTypes from 'prop-types';
+import ListItemComponent from "./ListItemComponent";
 
 const ListComponent = props => {
     let {
@@ -24,9 +25,15 @@ const ListComponent = props => {
     });*/
 
     return <List>
-            {items.map((item, index) => <itemComponent.type key={index} {...itemComponent.props} data={item}/>)}
-            {!items.length && emptyComponent}
-        </List>
+        {items.map((item, index) => <ListItemComponent key={index}>
+            <itemComponent.type {...itemComponent.props} data={item} onSwipe={action => {
+                console.log(item);
+                if(action === "right") return true;
+                throw Error("Unimplemented yet: " + action);
+            }}/>
+        </ListItemComponent>)}
+        {!items.length && emptyComponent}
+    </List>
 };
 
 ListComponent.propTypes = {
