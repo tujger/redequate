@@ -4,13 +4,12 @@ import "firebase/database";
 import "firebase/functions";
 import "firebase/messaging";
 
-export let _firebase = null;
+export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
   firebase.initializeApp(firebaseConfig);
   if (process.env.NODE_ENV === 'development') {
-    // firebase.functions().useFunctionsEmulator('http://localhost:5001');
+    firebase.functions().useFunctionsEmulator('http://localhost:5001');
   }
-  _firebase = firebase;
   return firebase;
 };
 
@@ -25,7 +24,7 @@ export const fetchFunction = firebase => (name, options) => new Promise((resolve
             'Authorization': 'Bearer ' + token
           }
         };
-        const namedFunction = _firebase.functions().httpsCallable(name, config);
+        const namedFunction = firebaseMessaging.functions().httpsCallable(name, config);
         return namedFunction(options);
       }).then(result => {
         resolve(result.data, result);
@@ -38,7 +37,7 @@ export const fetchFunction = firebase => (name, options) => new Promise((resolve
 
 export const fetchCallable = firebase => (name, options) => new Promise((resolve, reject) => {
   try {
-    const namedFunction = firebase.functions().httpsCallable(name);//, config);
+    const namedFunction = firebaseMessaging.functions().httpsCallable(name);//, config);
     namedFunction(options).then(result => {
       resolve(result.data);
     }).catch(reject)

@@ -15,13 +15,14 @@
     "npm": ">=5"
   },
   "scripts": {
-    "test": "cross-env CI=1 react-scripts test --env=jsdom",
-    "test:watch": "react-scripts test --env=jsdom",
-    "build": "rollup -c",
-    "start": "rollup -c -w",
-    "prepare": "npm run build",
-    "predeploy": "cd example && npm install && npm run build",
-    "deploy": "gh-pages -d example/build"
+    "test core": "cross-env CI=1 react-scripts test --env=jsdom",
+    "test:watch core": "react-scripts test --env=jsdom",
+    "build core": "rollup -c",
+    "core": "rollup -c -w",
+    "start core": "rollup -c -w",
+    "prepare core": "npm run build",
+    "predeploy core": "cd example && npm install && npm run build",
+    "deploy core": "gh-pages -d example/build"
   },
   "dependencies": {},
   "peerDependencies": {

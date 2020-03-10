@@ -1,15 +1,15 @@
 import React from 'react';
 import * as serviceWorker from "../serviceWorker";
 import {notifySnackbar} from "./Notifications";
-import {_firebase} from "./Firebase";
+import {firebaseMessaging} from "./Firebase";
 
 const activate = registration => {
     registration.waiting.postMessage({type: 'SKIP_WAITING'});
     window.location.reload();
     try {
-        console.log("FB-SW updating");
-        _firebase.messaging().swRegistration.update().then(reg => {
-            console.log("FB-SW updated", reg);
+        console.log("[fb-sw] updating");
+        firebaseMessaging.messaging().swRegistration.update().then(reg => {
+            console.log("[fb-sw] updated", reg);
         }).catch(console.error);
     } catch(e) {
         console.error(e);
