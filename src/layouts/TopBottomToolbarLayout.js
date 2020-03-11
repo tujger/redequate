@@ -49,11 +49,10 @@ TopBottomToolbarLayout.propTypes = {
 };
 
 export const topBottomToolbarLayout = (state = {random: 0}, action) => {
-    switch (action.type) {
-        case TopBottomToolbarLayout.REFRESH.type:
-            return {random: Math.random()};
-        default:
-            return state;
+    if (action.type === TopBottomToolbarLayout.REFRESH.type) {
+      return {random: Math.random()};
+    } else {
+      return state;
     }
 };
 

@@ -26,9 +26,7 @@ const ListComponent = props => {
 
     return <List>
         {items.map((item, index) => <ListItemComponent key={index + JSON.stringify(item)}>
-            <itemComponent.type onSwipe={action => {
-              throw Error("Unimplemented yet: " + action);
-            }} {...itemComponent.props} data={item}/>
+            <itemComponent.type {...itemComponent.props} data={item}/>
         </ListItemComponent>)}
         {!items.length && emptyComponent}
     </List>

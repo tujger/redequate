@@ -1,5 +1,5 @@
 import React from 'react';
-import {IconButton, ListItem, withStyles} from "@material-ui/core";
+import {IconButton, withStyles} from "@material-ui/core";
 import PropTypes from 'prop-types';
 import {Check, Delete} from "@material-ui/icons";
 import {useDrag} from "react-use-gesture";
@@ -13,25 +13,39 @@ const styles = theme => ({
         position: "relative",
         transition: "height .2s",
     },
-    leftButton: {
-        color: "#ff0000",
+    leftAction: {
+        alignItems: "center",
+        display: "flex",
+        flexDirection: "column",
         left: theme.spacing(1),
-        opacity: 0,
-        position: "absolute",
+        position: "absolute"
     },
-    leftButtonSelected: {
+    leftActionButton: {
+        color: "#ff0000",
+    },
+    leftActionButtonSelected: {
         backgroundColor: "#ff0000",
         color: theme.palette.getContrastText("#ff0000"),
     },
-    rightButton: {
-        color: "#00aa00",
-        right: theme.spacing(1),
-        opacity: 0,
-        position: "absolute",
+    leftActionLabel: {
+        color: "#ff0000",
     },
-    rightButtonSelected: {
+    rightAction: {
+        alignItems: "center",
+        display: "flex",
+        flexDirection: "column",
+        right: theme.spacing(1),
+        position: "absolute"
+    },
+    rightActionButton: {
+        color: "#00aa00",
+    },
+    rightActionButtonSelected: {
         backgroundColor: "#00aa00",
         color: theme.palette.getContrastText("#00aa00"),
+    },
+    rightActionLabel: {
+        color: "#00aa00",
     },
     content: {
         position: "relative",
@@ -40,12 +54,12 @@ const styles = theme => ({
 });
 
 const calculateOpacityIndent = () => {
-    let indent = 300;
+    let indent = 100;
     if(isMobile) {
         indent = window.innerWidth / 3;
     } else {
         indent = window.innerWidth/5;
-        if(indent > 300) indent  = 300;
+        if(indent > 100) indent  = 100;
     }
     return indent;
 };
@@ -56,20 +70,21 @@ const defaultLeftButton = <IconButton aria-label="delete">
 </IconButton>;
 
 const defaultRightButton = <IconButton aria-label="check">
-  <Check/>
+    <Check/>
 </IconButton>;
 
 function ListItemComponent(props) {
-    const {classes, children, leftButton = defaultLeftButton, rightButton = defaultRightButton} = props;
+    const {classes, children, leftButton = defaultLeftButton, leftButtonLabel = "Delete", rightButton = defaultRightButton, rightButtonLabel = "Check"} = props;
 
     const [state, setState] = React.useState({});
-    const {x, down, dragging, removing, ref, removed} = state;
+    const {x, dragging, removing, ref, removed} = state;
 
 
     const opacityIndent = calculateOpacityIndent();
     const actionIndent = calculateActionIndent();
 
     const bind = useDrag(evt => {
+        if(!children.props || !children.props.onSwipe) return;
         const {down, movement: [mx]} = evt;
         if (down && Math.abs(mx) < 10) return;
         let x = mx;
@@ -77,9 +92,9 @@ function ListItemComponent(props) {
         try {
             if(!down) {
                 if(mx > actionIndent) {
-                  removing = children.props.onSwipe("right", children);
+                    removing = children.props.onSwipe("right", children);
                 } else if(mx < -actionIndent) {
-                  removing = children.props.onSwipe("left", children);
+                    removing = children.props.onSwipe("left", children);
                 }
                 x = 0;
             }
@@ -88,7 +103,7 @@ function ListItemComponent(props) {
             notifySnackbar({title: e.message, variant: "error"});
             x = 0;
         }
-        setState({...state, dragging: down, down, x: x, removing})
+        setState({...state, dragging: down, x: x, removing})
     });
     const bind_ = (process.env.NODE_ENV === 'development') ? bind : (isMobile ? bind : () => {});
 
@@ -103,7 +118,7 @@ function ListItemComponent(props) {
         ref.current.style.overflowY = "hidden";
         setTimeout(() => {
             try {
-                ref.current.style.height = 0;
+                ref.current.style.height = "0";
                 setTimeout(() => {
                     setState({...state, removing: false, removed: true});
                 }, 200);
@@ -114,16 +129,28 @@ function ListItemComponent(props) {
     }
     if(removed) return null;
     return <div className={classes.root} ref={ref}>
-        <leftButton.type
-            className={[classes.leftButton, x > actionIndent ? classes.leftButtonSelected : ""].join(" ")}
-            {...leftButton.props}
-            style={{opacity: (x || 0)/opacityIndent}}
-        />
-        <rightButton.type
-            className={[classes.rightButton, x < -actionIndent ? classes.rightButtonSelected : ""].join(" ")}
-            {...rightButton.props}
-            style={{opacity: -(x || 0)/opacityIndent}}
-        />
+        <div className={classes.leftAction}>
+            <leftButton.type
+                className={[classes.leftActionButton, x > actionIndent ? classes.leftActionButtonSelected : ""].join(" ")}
+                {...leftButton.props}
+                style={{opacity: (x || 0)/opacityIndent}}
+            />
+            <span
+                className={classes.leftActionLabel}
+                style={{opacity: x > opacityIndent ? 1 : 0}}
+                children={leftButtonLabel} />
+        </div>
+        <div className={classes.rightAction}>
+            <rightButton.type
+                className={[classes.rightActionButton, x < -actionIndent ? classes.rightActionButtonSelected : ""].join(" ")}
+                {...rightButton.props}
+                style={{opacity: -(x || 0)/opacityIndent}}
+            />
+            <span
+                className={classes.rightActionLabel}
+                style={{opacity: x < -opacityIndent ? 1 : 0}}
+                children={rightButtonLabel} />
+        </div>
         <div
             {...bind_()}
             onClickCapture={event => {
@@ -145,6 +172,10 @@ function ListItemComponent(props) {
 
 ListItemComponent.propTypes = {
     children: PropTypes.any,
+    leftButton: PropTypes.element,
+    leftButtonLabel: PropTypes.string,
+    rightButton: PropTypes.element,
+    rightButtonLabel: PropTypes.string,
 };
 
 export default withStyles(styles)(ListItemComponent);

@@ -8,7 +8,7 @@ export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
   firebase.initializeApp(firebaseConfig);
   if (process.env.NODE_ENV === 'development') {
-    firebase.functions().useFunctionsEmulator('http://localhost:5001');
+    // firebase.functions().useFunctionsEmulator('http://localhost:5001');
   }
   return firebase;
 };

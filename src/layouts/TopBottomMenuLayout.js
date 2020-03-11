@@ -89,11 +89,10 @@ TopBottomMenuLayout.propTypes = {
 };
 
 export const topBottomMenuLayout = (state = {random: 0}, action) => {
-    switch (action.type) {
-        case TopBottomMenuLayout.REFRESH.type:
-            return {...state, random: Math.random()};
-        default:
-            return state;
+    if (action.type === TopBottomMenuLayout.REFRESH.type) {
+      return {...state, random: Math.random()};
+    } else {
+      return state;
     }
 };
 

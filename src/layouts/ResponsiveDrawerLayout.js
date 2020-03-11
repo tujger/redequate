@@ -131,11 +131,10 @@ ResponsiveDrawerLayout.propTypes = {
 };
 
 export const responsiveDrawerLayout = (state = {random: 0}, action) => {
-    switch (action.type) {
-        case ResponsiveDrawerLayout.REFRESH.type:
-            return {random: Math.random()};
-        default:
-            return state;
+    if (action.type === ResponsiveDrawerLayout.REFRESH.type) {
+      return {random: Math.random()};
+    } else {
+      return state;
     }
 };
 

@@ -7,7 +7,6 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
     // Safari case
     //https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html#//apple_ref/doc/uid/TP40013225-CH3-SW1
     const messaging = firebase.messaging();
-    console.log(messaging);
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
         return messaging.getToken();

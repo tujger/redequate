@@ -14,7 +14,7 @@ const SimplePage = props => {
 
 SimplePage.propTypes = {
   title: PropTypes.string,
-  body: PropTypes.array | PropTypes.string,
+  body: PropTypes.any,
 };
 
 export default SimplePage;
