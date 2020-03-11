@@ -24,17 +24,19 @@ const styles = theme => ({
         color: "inherit",
         cursor: "default",
         textDecoration: "none",
+    },
+    active: {
+        backgroundColor: "rgba(0,0,0,.1)",
     }
 });
 
 function MainMenu(props) {
     const {items, classes, onClick} = props;
-
     return <div className={"MuiMainMenu-root"}>
-        {items.map((list) => {
+        {items.map((list, index) => {
             let hasItems = false;
             let firstDone = false;
-            const section = <div className={"MuiMainMenu-section"} key={Math.random()}>
+            const section = <div className={"MuiMainMenu-section"} key={index}>
                 <List>
                     {list.map((item) => {
                         if (!matchRole(item.roles, user)) return null;
@@ -43,10 +45,12 @@ function MainMenu(props) {
                             firstDone = true;
                             return null;
                         }
+                        const activeItem = item.route === location.pathname;
                         return <Link to={item.route}
                                      key={item.route + Math.random()}
                                      className={classes.label}>
                             <ListItem button key={item.id}
+                                      className={activeItem ? classes.active : ""}
                                       onClick={onClick}>
                                 <ListItemIcon>{item.icon}</ListItemIcon>
                                 <ListItemText primary={item.label}/>
@@ -59,7 +63,6 @@ function MainMenu(props) {
             return hasItems ? section : null;
         })}
     </div>
-
 }
 
 MainMenu.propTypes = {
