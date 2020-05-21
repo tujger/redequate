@@ -1,13 +1,16 @@
 import React, {useState} from "react";
-import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
-import {
-  LocationCity as AddressIcon,
-  Mail as MailIcon,
-  Person as NameIcon,
-  Phone as PhoneIcon
-} from "@material-ui/icons";
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import TextField from "@material-ui/core/TextField";
+import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
+import AddressIcon from "@material-ui/icons/LocationCity";
+import MailIcon from "@material-ui/icons/Mail";
+import NameIcon from "@material-ui/icons/Person";
+import PhoneIcon from "@material-ui/icons/Phone";
 import {Redirect, withRouter} from "react-router-dom";
-import User, {fetchUserPublic, updateUserPublic} from "../controllers/User";
+import User, {updateUserPublic} from "../controllers/User";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
 import {connect} from "react-redux";
@@ -46,24 +49,6 @@ const EditProfile = (props) => {
               history.push(tosuccessroute, {data:userData, tosuccessroute: tosuccessroute});
             }, 1000)
           }).catch(onerror);
-        /*fetchUser(firebase)(data.uid, user => {
-            updateUser(firebase)({...user, name, address, phone, image}, (user) => {
-                setTimeout(() => {
-                    setState({...state, disabled: false});
-                    refreshAll(store);
-                    history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
-                }, 1000)
-            }, onerror);
-        }, onerror);*/
-/*        fetchUser(firebase)(data.uid, user => {
-            updateUser(firebase)({...user, name, address, phone, image}, (user) => {
-                setTimeout(() => {
-                    setState({...state, disabled: false});
-                    refreshAll(store);
-                    history.push(tosuccessroute, {data:user, tosuccessroute: tosuccessroute});
-                }, 1000)
-            }, onerror);
-        }, onerror);*/
     };
 
     if(!data) {
@@ -85,7 +70,7 @@ const EditProfile = (props) => {
                     disabled
                     label="E-mail"
                     fullWidth
-                    value={user.public().email}
+                    value={user.public().email || ""}
                 />
             </Grid>
         </Grid>

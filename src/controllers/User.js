@@ -8,12 +8,12 @@ const User = (data) => {
     role: () => role_,
     uid: () => uid_,
     set: (type, data) => {
-      if(data === "null") data = null;
+      if (data === "null") data = null;
       if (type === "private") private_ = data;
       else if (type === "public") public_ = data;
       else if (type === "uid") uid_ = data;
       else if (type === "role") role_ = data;
-      else console.error(`Unknown type '${type}' set to '${data}'`);
+      else console.error(`Unknown type "${type}" set to "${data}"`);
     },
     parse: data => {
       if (data.public) {
@@ -82,7 +82,7 @@ export const updateUserPublic = firebase => (uid, props) => new Promise((resolve
 export const updateUserPrivate = firebase => (uid, deviceId = "", props) =>
   new Promise((resolve, reject) => {
     let section = "private";
-    if(!props && deviceId instanceof Object) {
+    if (!props && deviceId instanceof Object) {
       props = deviceId;
     } else {
       section = "private/" + deviceId;
@@ -124,7 +124,7 @@ export const firstOf = (...args) => {
 
 export const watchUserChanged = firebase => {
   firebase.auth().onAuthStateChanged(result => {
-    console.log("AUTHCHANGED", result);
+    console.log("[AuthStateChanged]", result);
   });
 };
 

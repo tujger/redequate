@@ -1,10 +1,9 @@
 import React, {Suspense} from "react";
 import PropTypes from "prop-types";
-import {withStyles} from "@material-ui/core";
-import {Switch} from "react-router-dom";
+import withStyles from "@material-ui/styles/withStyles";
+import {Route, Switch} from "react-router-dom";
 import {matchRole, needAuth} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
-import Route from "react-router-hooks";
 
 const styles = theme => ({
     content: {
@@ -23,24 +22,17 @@ const MainContent = props => {
 
     return <main className={classes.content}>
         <Suspense fallback={<LoadingComponent/>}>
-            <Switch>
-                {itemsFlat.map((item, index) => <Route
-                    key={index}
-                    path={item.route}
-                    exact={true}
-                    children={needAuth(item.roles, user)
-                        ?
-                        <pages.login.component.type {...props} {...pages.login.component.props}/> : (matchRole(item.roles, user)
-                            ? <item.component.type {...props} {...item.component.props}/> :
-                            <pages.notfound.component.type {...props} {...pages.notfound.component.props}/>)}
-                    onEnter={() => {
-                        document.title = needAuth(item.roles, user)
-                            ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
-                                ? item.title || item.label : pages.notfound.title || pages.notfound.label);
-                        // dispatch(ProgressView.HIDE);
-                    }}/>
-                )}
-            </Switch>
+            <Switch>{itemsFlat.map((item, index) => <Route
+                key={index}
+                path={item.route}
+                exact={true}
+                children={
+                    needAuth(item.roles, user)
+                    ? <pages.login.component.type {...props} {...pages.login.component.props}/>
+                        : (matchRole(item.roles, user)
+                        ? <item.component.type {...props} {...item.component.props}/>
+                            : <pages.notfound.component.type {...props} {...pages.notfound.component.props}/>)}
+            />)}</Switch>
         </Suspense>
     </main>
 };

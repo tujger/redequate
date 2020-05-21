@@ -1,6 +1,7 @@
-import React from 'react';
-import {LinearProgress, makeStyles} from "@material-ui/core";
-import {connect} from 'react-redux'
+import React from "react";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import makeStyles from "@material-ui/styles/makeStyles";
+import {connect} from "react-redux"
 
 const useStyles = makeStyles(() => ({
     invisibleProgress: {

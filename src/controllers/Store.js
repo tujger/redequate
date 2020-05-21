@@ -1,7 +1,7 @@
 import ProgressView, {progressView} from "../components/ProgressView";
 import ResponsiveDrawerLayout, {responsiveDrawerLayout} from "../layouts/ResponsiveDrawerLayout";
 import TopBottomMenuLayout, {topBottomMenuLayout} from "../layouts/TopBottomMenuLayout";
-import TopBottomToolbarLayout, {topBottomToolbarLayout} from "../layouts/TopBottomToolbarLayout";
+import BottomToolbarLayout, {bottomToolbarLayout} from "../layouts/BottomToolbarLayout";
 import {snackbar} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
@@ -13,7 +13,7 @@ const Store = (name, reducers) => {
         responsiveDrawerLayout,
         snackbar,
         topBottomMenuLayout,
-      topBottomToolbarLayout,
+        bottomToolbarLayout,
         ...(reducers ? reducers : {})
     }), initialStore || {});
 
@@ -33,7 +33,7 @@ export default Store;
 export const refreshAll = store => {
   store.dispatch(ResponsiveDrawerLayout.REFRESH);
   store.dispatch(TopBottomMenuLayout.REFRESH);
-  store.dispatch(TopBottomToolbarLayout.REFRESH);
+  store.dispatch(BottomToolbarLayout.REFRESH);
   store.dispatch(ProgressView.HIDE);
 };
 

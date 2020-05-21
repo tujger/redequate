@@ -4,8 +4,14 @@ import {fetchUserPublic, sendConfirmationEmail, updateUserPublic, user} from "..
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
-import {Lock, Mail as UserIcon} from "@material-ui/icons";
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import TextField from "@material-ui/core/TextField";
+import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
+import Lock from "@material-ui/icons/Lock";
+import UserIcon from "@material-ui/icons/Mail";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
 import {refreshAll} from "../controllers";
@@ -62,7 +68,7 @@ const Signup = (props) => {
 
   if (!signup) return <Redirect to={pages.home.route}/>;
 
-  if (!error && !user.public().emailVerified && firebase.auth().isSignInWithEmailLink(window.location.href)) {
+  if (!error && (user.public() && !user.public().emailVerified) && firebase.auth().isSignInWithEmailLink(window.location.href)) {
     // Additional state parameters can also be passed via URL.
     // This can be used to continue the user's intended action before triggering
     // the sign-in operation.
@@ -74,14 +80,14 @@ const Signup = (props) => {
     if (!savedEmail) {
       // User opened the link on a different device. To prevent session fixation
       // attacks, ask the user to provide the associated email again. For example:
-      savedEmail = window.prompt('Please provide your email for confirmation');
+      savedEmail = window.prompt("Please provide your email for confirmation");
       if (!savedEmail) return <Redirect to={pages.home.route}/>
     }
     // The client SDK will parse the code from the link for you.
     firebase.auth().signInWithEmailLink(savedEmail, window.location.href)
       .then(response => {
         // Clear email from storage.
-        window.localStorage.removeItem('emailForSignIn');
+        window.localStorage.removeItem("emailForSignIn");
         return fetchUserPublic(firebase)(response.user.uid);
       })
       .then(() => updateUserPublic(firebase)({...response.user, current: true}))

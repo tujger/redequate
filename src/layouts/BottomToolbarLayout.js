@@ -1,9 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {CssBaseline, Typography, withStyles} from "@material-ui/core";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import Typography from "@material-ui/core/Typography";
+import withStyles from "@material-ui/styles/withStyles";
 import {user} from "../controllers/User";
 import BottomToolbar from "../components/BottomToolbar";
-import MainAppbar from "../components/MainAppbar";
+import MainTitlebar from "../components/MainTitlebar";
 import MainContent from "../components/MainContent";
 import Snackbar from "../components/Snackbar";
 import {connect} from "react-redux";
@@ -18,11 +20,11 @@ const styles = theme => ({
     },
 });
 
-function TopBottomToolbarLayout(props) {
+function BottomToolbarLayout(props) {
     const {menu, classes, firebase, headerImage, pages, store, copyright, match} = props;
 
-    return <div><CssBaseline/>
-        <MainAppbar
+    return <React.Fragment><CssBaseline/>
+        <MainTitlebar
             {...props}
             pages={pages}
         />
@@ -33,14 +35,14 @@ function TopBottomToolbarLayout(props) {
         <BottomToolbar items={menu}/>
         <Snackbar/>
         <NotificationsSnackbar/>
-    </div>
+    </React.Fragment>
 }
 
-TopBottomToolbarLayout.REFRESH = {type: "topBottomToolbarLayoutRefresh"};
+BottomToolbarLayout.REFRESH = {type: "bottomToolbarLayoutRefresh"};
 
-TopBottomToolbarLayout.propTypes = {
+BottomToolbarLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
-    copyright: PropTypes.string,
+    copyright: PropTypes.any,
     firebase: PropTypes.any,
     headerImage: PropTypes.string,
     menu: PropTypes.array,
@@ -48,14 +50,14 @@ TopBottomToolbarLayout.propTypes = {
     title: PropTypes.string,
 };
 
-export const topBottomToolbarLayout = (state = {random: 0}, action) => {
-    if (action.type === TopBottomToolbarLayout.REFRESH.type) {
+export const bottomToolbarLayout = (state = {random: 0}, action) => {
+    if (action.type === BottomToolbarLayout.REFRESH.type) {
       return {random: Math.random()};
     } else {
       return state;
     }
 };
 
-const mapStateToProps = ({topBottomToolbarLayout}) => ({random: topBottomToolbarLayout.random});
+const mapStateToProps = ({bottomToolbarLayout}) => ({random: bottomToolbarLayout.random});
 
-export default connect(mapStateToProps)(withStyles(styles)(TopBottomToolbarLayout));
+export default connect(mapStateToProps)(withStyles(styles)(BottomToolbarLayout));

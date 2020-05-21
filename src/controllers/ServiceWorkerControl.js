@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 import * as serviceWorker from "../serviceWorker";
 import {notifySnackbar} from "./Notifications";
 import {firebaseMessaging} from "./Firebase";
 
 const activateUpdate = registration => {
-    registration.waiting.postMessage({type: 'SKIP_WAITING'});
+    registration.waiting.postMessage({type: "SKIP_WAITING"});
     window.location.reload();
     try {
         console.log("[fb-sw] updating");

@@ -1,6 +1,11 @@
 import React, {useState} from "react";
-import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
-import {Mail as MailIcon} from "@material-ui/icons";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import TextField from "@material-ui/core/TextField";
+import Button from "@material-ui/core/Button";
+import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
+import MailIcon from "@material-ui/icons/Mail";
 import {withRouter} from "react-router-dom";
 import {sendConfirmationEmail} from "../controllers/User";
 import {TextMaskEmail} from "../controllers/TextMasks";

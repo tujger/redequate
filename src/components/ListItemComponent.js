@@ -1,10 +1,9 @@
-import React from 'react';
-import {IconButton, withStyles} from "@material-ui/core";
-import PropTypes from 'prop-types';
-import {Check, Delete} from "@material-ui/icons";
+import React from "react";
+import withStyles from "@material-ui/styles/withStyles";
+import PropTypes from "prop-types";
 import {useDrag} from "react-use-gesture";
 import {isMobile} from "react-device-detect";
-import {notifySnackbar} from "../controllers";
+import {notifySnackbar} from "../controllers/Notifications";
 
 const styles = theme => ({
     root: {
@@ -65,51 +64,46 @@ const calculateOpacityIndent = () => {
 };
 const calculateActionIndent = calculateOpacityIndent;
 
-const defaultLeftButton = <IconButton aria-label="delete">
-    <Delete/>
-</IconButton>;
-
-const defaultRightButton = <IconButton aria-label="check">
-    <Check/>
-</IconButton>;
-
 function ListItemComponent(props) {
-    const {classes, children, leftButton = defaultLeftButton, leftButtonLabel = "Delete", rightButton = defaultRightButton, rightButtonLabel = "Check"} = props;
+    const {classes, children, leftAction, rightAction, onClickCapture, onContextMenu} = props;
 
     const [state, setState] = React.useState({});
-    const {x, dragging, removing, ref, removed} = state;
-
+    const {x, dragging, removing, ref, removed, random} = state;
 
     const opacityIndent = calculateOpacityIndent();
     const actionIndent = calculateActionIndent();
 
     const bind = useDrag(evt => {
-        if(!children.props || !children.props.onSwipe) return;
         const {down, movement: [mx]} = evt;
         if (down && Math.abs(mx) < 10) return;
         let x = mx;
         let removing = false;
         try {
             if(!down) {
-                if(mx > actionIndent) {
-                    removing = children.props.onSwipe("right", children);
-                } else if(mx < -actionIndent) {
-                    removing = children.props.onSwipe("left", children);
+                if(leftAction && mx > actionIndent) {
+                    removing = leftAction.action([children.props.data]);
+                } else if(rightAction && mx < -actionIndent) {
+                    removing = rightAction.action([children.props.data]);
                 }
                 x = 0;
+            } else {
+                if(mx > 0 && !leftAction) x = 0;
+                else if(mx < 0 && !rightAction) x = 0;
             }
         } catch(e) {
             console.error(e);
             notifySnackbar({title: e.message, variant: "error"});
             x = 0;
         }
-        setState({...state, dragging: down, x: x, removing})
+        if(ref && ref.current) {
+            setState({...state, dragging: down, x: x, removing})
+        }
     });
-    const bind_ = (process.env.NODE_ENV === 'development') ? bind : (isMobile ? bind : () => {});
+    const bind_ = (process.env.NODE_ENV === "development") ? bind : (isMobile ? bind : () => {});
 
     React.useEffect(() => {
         const ref = React.createRef();
-        setState({...state, ref})
+        setState({...state, ref});
     }, []);
 
     if(removing) {
@@ -127,33 +121,18 @@ function ListItemComponent(props) {
             }
         }, 50);
     }
+
     if(removed) return null;
-    return <div className={classes.root} ref={ref}>
-        <div className={classes.leftAction}>
-            <leftButton.type
-                className={[classes.leftActionButton, x > actionIndent ? classes.leftActionButtonSelected : ""].join(" ")}
-                {...leftButton.props}
-                style={{opacity: (x || 0)/opacityIndent}}
-            />
-            <span
-                className={classes.leftActionLabel}
-                style={{opacity: x > opacityIndent ? 1 : 0}}
-                children={leftButtonLabel} />
-        </div>
-        <div className={classes.rightAction}>
-            <rightButton.type
-                className={[classes.rightActionButton, x < -actionIndent ? classes.rightActionButtonSelected : ""].join(" ")}
-                {...rightButton.props}
-                style={{opacity: -(x || 0)/opacityIndent}}
-            />
-            <span
-                className={classes.rightActionLabel}
-                style={{opacity: x < -opacityIndent ? 1 : 0}}
-                children={rightButtonLabel} />
-        </div>
+    return <div className={classes.root} ref={ref} key={random}>
+        {leftAction && leftAction.itemButton({selected: x > actionIndent, style:{right:"auto", opacity:(x || 0)/opacityIndent}})}
+        {rightAction && rightAction.itemButton({selected: x < -actionIndent, style:{left:"auto", opacity:-(x || 0)/opacityIndent}})}
         <div
             {...bind_()}
-            onClickCapture={event => {
+            onContextMenu={onContextMenu ? (evt => {
+                onContextMenu(evt);
+                setState({...state, random: Math.random()})
+            }) : null}
+            onClickCapture={onClickCapture || (event => {
                 if (dragging) {
                     event.stopPropagation();
                     event.preventDefault();
@@ -161,9 +140,9 @@ function ListItemComponent(props) {
                         setState({...state, dragging: false, x: 0});
                     }
                 }
-            }}
+            })}
             className={classes.content}
-            style={{left: x}}
+            style={{left: x, touchAction: "pan-y"}}
         >
           {children}
         </div>
@@ -172,8 +151,10 @@ function ListItemComponent(props) {
 
 ListItemComponent.propTypes = {
     children: PropTypes.any,
-    leftButton: PropTypes.element,
+    leftButton: PropTypes.func,
     leftButtonLabel: PropTypes.string,
+    onClickCapture: PropTypes.func,
+    onContextMenu: PropTypes.func,
     rightButton: PropTypes.element,
     rightButtonLabel: PropTypes.string,
 };

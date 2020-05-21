@@ -1,8 +1,8 @@
-import React from 'react';
-import Button from '@material-ui/core/Button';
-import Snackbar from '@material-ui/core/Snackbar';
-import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from '@material-ui/icons/Close';
+import React from "react";
+import Button from "@material-ui/core/Button";
+import Snackbar from "@material-ui/core/Snackbar";
+import IconButton from "@material-ui/core/IconButton";
+import CloseIcon from "@material-ui/icons/Close";
 import {connect} from "react-redux";
 
 const SimpleSnackbar = props => {
@@ -13,7 +13,7 @@ const SimpleSnackbar = props => {
     };
 
     const handleClose = (event, reason) => {
-        if (reason === 'clickaway') {
+        if (reason === "clickaway") {
             return;
         }
         dispatch(SimpleSnackbar.HIDE);
@@ -21,8 +21,8 @@ const SimpleSnackbar = props => {
 
     return <Snackbar
         anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'left',
+            vertical: "bottom",
+            horizontal: "left",
         }}
         open={open}
         autoHideDuration={6000}

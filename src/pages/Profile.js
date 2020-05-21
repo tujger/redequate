@@ -1,23 +1,17 @@
 import React from "react";
-import {Button, ButtonGroup, Grid, Typography, FormControlLabel, Checkbox} from "@material-ui/core";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Checkbox from "@material-ui/core/Checkbox";
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
 import ProfileComponent from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {
-  logoutUser,
-  sendConfirmationEmail,
-  updateUserPrivate,
-  fetchUserPrivate,
-  updateUserPublic,
-  user
-} from "../controllers/User";
+import {fetchUserPrivate, logoutUser, sendConfirmationEmail, updateUserPrivate, user} from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
-import {
-  hasNotifications,
-  setupReceivingNotifications,
-  notifySnackbar
-} from "../controllers/Notifications";
+import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId} from "../controllers/General";
 
 const Profile = (props) => {
@@ -33,7 +27,6 @@ const Profile = (props) => {
     dispatch(ProgressView.SHOW);
     setState({...state, disabled: true});
     if (enable) {
-      // let token = "token" + user.uid();
       setupReceivingNotifications(firebase)
         .then(token => fetchUserPrivate(firebase)(user.uid())
           .then(data => updateUserPrivate(firebase)(user.uid(), fetchDeviceId(), {notification: token}))
@@ -42,11 +35,11 @@ const Profile = (props) => {
             dispatch(ProgressView.HIDE);
             setState({...state, disabled: false});
           }))
-      .catch(notifySnackbar)
-      .finally(() => {
-        dispatch(ProgressView.HIDE);
-        setState({...state, disabled: false});
-      });
+        .catch(notifySnackbar)
+        .finally(() => {
+          dispatch(ProgressView.HIDE);
+          setState({...state, disabled: false});
+        });
     } else {
       fetchUserPrivate(firebase)(user.uid())
         .then(data => updateUserPrivate(firebase)(user.uid(), fetchDeviceId(), {notification: null}))
@@ -67,7 +60,7 @@ const Profile = (props) => {
     <ProfileComponent user={user}/>
     {!user.public().emailVerified && <Grid container>
       <Grid item xs>
-        <Typography>Note! You are still did not confirmed your email. Some features will not
+        <Typography>Note! You have still not confirmed email. Some features will not
           be available.</Typography>
       </Grid>
     </Grid>}
@@ -92,17 +85,18 @@ const Profile = (props) => {
       >
         Logout
       </Button>
-      {!user.public().emailVerified && <Button
+      {!user.public().emailVerified && user.public().email && <Button
         color="primary"
         onClick={() => {
           refreshAll(store);
           dispatch(ProgressView.SHOW);
+          console.log(user)
           sendConfirmationEmail(firebase, store)({email: user.public().email})
             .then(() => {
               refreshAll(store);
             }).catch(error => {
-              refreshAll(store);
-            });
+            refreshAll(store);
+          });
         }}
         variant={"contained"}
       >
@@ -117,7 +111,7 @@ const Profile = (props) => {
         component={React.forwardRef((props, ref) => (
           <Link ref={ref} to={{
             pathname: pages.edituser.route,
-            state: {data: {uid:user.uid(), role:user.role(), ...user.public()}, tosuccessroute: pages.profile.route},
+            state: {data: {uid: user.uid(), role: user.role(), ...user.public()}, tosuccessroute: pages.profile.route},
           }} {...props}/>
         ))}
       >

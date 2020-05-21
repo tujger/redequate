@@ -10,7 +10,7 @@ export const TextMaskEmail = props => {
       inputRef(ref ? ref.inputElement : null);
     }}
     mask={emailMask}
-    placeholderChar={'\u2000'}
+    placeholderChar={"\u2000"}
     showMask
   />
 };
@@ -22,8 +22,8 @@ export const TextMaskPhone = props => {
     ref={ref => {
       inputRef(ref ? ref.inputElement : null);
     }}
-    mask={['+', '1', ' ', '(', /[1-9]/, /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/]}
-    placeholderChar={'_'}
+    mask={["+", "1", " ", "(", /[1-9]/, /\d/, /\d/, ")", " ", /\d/, /\d/, /\d/, "-", /\d/, /\d/, /\d/, /\d/]}
+    placeholderChar={"_"}
     showMask
   />
 };

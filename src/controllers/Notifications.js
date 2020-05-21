@@ -130,7 +130,7 @@ export const notifySnackbar = props => {
   const snackbar = document.getElementById("__edeqa_pwa_service_worker_snackbar");
   if(!snackbar) {
     console.error("Cannot notify push notifications due to control element is unavailable. Please set up " +
-      "'import {NotificationsSnackbar} from 'edeqa-pwa-react-core' and <NotificationsSnackbar/> in your file.");
+      "\"import {NotificationsSnackbar} from 'edeqa-pwa-react-core'\" and <NotificationsSnackbar/> in your file.");
     return;
   }
   if(props instanceof Error) {

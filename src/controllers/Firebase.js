@@ -7,8 +7,8 @@ import "firebase/messaging";
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
   firebase.initializeApp(firebaseConfig);
-  if (process.env.NODE_ENV === 'development') {
-    // firebase.functions().useFunctionsEmulator('http://localhost:5001');
+  if (process.env.NODE_ENV === "development") {
+    // firebase.functions().useFunctionsEmulator("http://localhost:5001");
   }
   return firebase;
 };
@@ -21,7 +21,7 @@ export const fetchFunction = firebase => (name, options) => new Promise((resolve
       data.getIdToken().then(token => {
         let config = {
           headers: {
-            'Authorization': 'Bearer ' + token
+            "Authorization": "Bearer " + token
           }
         };
         const namedFunction = firebaseMessaging.functions().httpsCallable(name, config);

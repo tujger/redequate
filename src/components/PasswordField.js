@@ -1,14 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {
-    FormControl,
-    FormHelperText,
-    IconButton,
-    Input,
-    InputAdornment,
-    InputLabel
-} from "@material-ui/core";
-import {Visibility, VisibilityOff} from "@material-ui/icons";
+import FormControl from "@material-ui/core/FormControl";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import IconButton from "@material-ui/core/IconButton";
+import Input from "@material-ui/core/Input";
+import InputAdornment from "@material-ui/core/InputAdornment";
+import InputLabel from "@material-ui/core/InputLabel";
+import Visibility from "@material-ui/icons/Visibility";
+import VisibilityOff from "@material-ui/icons/VisibilityOff";
 
 const PasswordField = props => {
     const {label, onChange, helper, disabled = false} = props;
@@ -31,7 +30,7 @@ const PasswordField = props => {
         <Input
             disabled={disabled}
             onChange={handleChange}
-            type={values.show ? 'text' : 'password'}
+            type={values.show ? "text" : "password"}
             value={values.password}
             error={!!helper}
             endAdornment={

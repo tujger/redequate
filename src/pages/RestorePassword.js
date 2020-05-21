@@ -2,9 +2,13 @@ import React from "react";
 import {user} from "../controllers/User";
 import {Redirect, withRouter} from "react-router-dom";
 import ProgressView from "../components/ProgressView";
-import Snackbar from "../components/Snackbar";
-import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
-import {Mail as UserIcon} from "@material-ui/icons";
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import TextField from "@material-ui/core/TextField";
+import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
+import UserIcon from "@material-ui/icons/Mail";
 import {connect} from "react-redux";
 import {notifySnackbar} from "../controllers";
 

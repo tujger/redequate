@@ -1,24 +1,24 @@
 import React from "react";
-import {
-  fetchUserPrivate,
-  fetchUserPublic,
-  updateUserPrivate,
-  updateUserPublic,
-  user
-} from "../controllers/User";
+import {fetchUserPrivate, fetchUserPublic, updateUserPrivate, updateUserPublic, user} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
 import {Link, Redirect, withRouter} from "react-router-dom";
-import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@material-ui/core";
-import {Lock, Mail as UserIcon} from "@material-ui/icons";
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import TextField from "@material-ui/core/TextField";
+import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
+import Lock from "@material-ui/icons/Lock";
+import UserIcon from "@material-ui/icons/Mail";
 import GoogleLogo from "../images/google-logo.svg";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
 import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
-import {osName, osVersion, deviceType, browserName} from "react-device-detect";
+import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 
 const Login = (props) => {
   const {signup = true, history, location, popup = true, dispatch, pages, firebase, store} = props;

@@ -1,6 +1,7 @@
-import React from 'react';
+import React from "react";
 import PropTypes from "prop-types";
-import {Avatar, makeStyles} from "@material-ui/core";
+import Avatar from "@material-ui/core/Avatar";
+import makeStyles from "@material-ui/styles/makeStyles";
 import {currentRole, Role} from "../controllers/User";
 
 const useStyles = makeStyles(theme => ({
@@ -22,7 +23,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 function AvatarView(props) {
-    const {onclick, user} = props;
+    const {onclick, user, className} = props;
     const classes = useStyles();
 
     if (!user) return <div/>;
@@ -30,7 +31,7 @@ function AvatarView(props) {
     const isVerified = user.public().emailVerified !== false;
 
     return <Avatar
-        className={isVerified ? (isAdmin ? classes.admin : null) : classes.notVerified}
+        className={[isVerified ? (isAdmin ? classes.admin : null) : classes.notVerified, className || ""].join(" ")}
         onClick={onclick}
         title={isVerified ? (isAdmin ? "Administrator": null) : "Not verified"}
     >

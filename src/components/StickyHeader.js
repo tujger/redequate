@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
 
 const styles = theme => ({
     container: {
@@ -11,7 +11,7 @@ const styles = theme => ({
         height: theme.mixins.toolbar.minHeight,
         position: "sticky",
         top: 0,
-        zIndex: 1
+        zIndex: 2
     },
     stickycollapsed: {
         // backgroundImage: "url("+header +")",
@@ -28,7 +28,7 @@ const styles = theme => ({
         position: "fixed",
         top: theme.spacing(1),
         transition: "150ms",
-        zIndex: 2,
+        zIndex: 3,
     },
     titlecollapsed: {
         alignItems: "center",

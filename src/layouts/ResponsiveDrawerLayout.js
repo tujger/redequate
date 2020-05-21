@@ -1,16 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {
-    Box,
-    CssBaseline,
-    Divider,
-    Drawer,
-    Grid,
-    Hidden,
-    SwipeableDrawer,
-    Typography,
-    withStyles
-} from "@material-ui/core";
+import Box from "@material-ui/core/Box";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import Divider from "@material-ui/core/Divider";
+import Drawer from "@material-ui/core/Drawer";
+import Grid from "@material-ui/core/Grid";
+import Hidden from "@material-ui/core/Hidden";
+import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
+import Typography from "@material-ui/core/Typography";
+import withStyles from "@material-ui/styles/withStyles";
 import MainAppbar from "../components/MainAppbar";
 import MainContent from "../components/MainContent";
 import MainHeader from "../components/MainHeader";
@@ -35,7 +33,7 @@ const styles = theme => ({
         ...theme.mixins.toolbar,
     },
     appbar: {
-      [theme.breakpoints.up('md')]: {
+      [theme.breakpoints.up("md")]: {
         width: `calc(100% - ${theme.drawerWidth}px)`,
         marginLeft: theme.drawerWidth,
       }
@@ -63,7 +61,7 @@ function ResponsiveDrawerLayout(props) {
         onpopstateBackup = null;
     }
 
-    return <div><CssBaseline/>
+    return <React.Fragment><CssBaseline/>
         <Hidden mdUp implementation="css">
             <SwipeableDrawer
                 container={container}
@@ -115,14 +113,14 @@ function ResponsiveDrawerLayout(props) {
                      classes={{content: classes.content}}/>
         <Snackbar/>
         <NotificationsSnackbar/>
-    </div>
+    </React.Fragment>
 }
 
 ResponsiveDrawerLayout.REFRESH = {type: "responsiveDrawerLayoutRefresh"};
 
 ResponsiveDrawerLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
-    copyright: PropTypes.string,
+    copyright: PropTypes.any,
     firebase: PropTypes.any,
     headerImage: PropTypes.string,
     menu: PropTypes.array,

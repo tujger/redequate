@@ -1,7 +1,9 @@
 import React from "react";
-import {Grid, Typography, withStyles} from "@material-ui/core";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import withStyles from "@material-ui/styles/withStyles";
 import GoogleLogo from "../images/google-logo.svg"
-import {Mail as UserIcon} from "@material-ui/icons";
+import UserIcon from "@material-ui/icons/Mail";
 import {withRouter} from "react-router-dom";
 
 const styles = theme => ({

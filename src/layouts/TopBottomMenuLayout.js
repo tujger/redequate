@@ -1,6 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {Grid, Typography, withStyles} from "@material-ui/core";
+import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
+import withStyles from "@material-ui/styles/withStyles";
 import BottomMenu from "../components/BottomMenu";
 import MainContent from "../components/MainContent";
 import ProgressView from "../components/ProgressView";
@@ -9,8 +11,7 @@ import StickyHeader from "../components/StickyHeader";
 import TopMenu from "../components/TopMenu";
 import {user} from "../controllers/User";
 import {connect} from "react-redux";
-import Route from "react-router-hooks";
-import {Switch} from "react-router-dom";
+import {Route, Switch} from "react-router-dom";
 import {NotificationsSnackbar} from "../controllers/Notifications";
 
 const styles = theme => ({
@@ -81,7 +82,7 @@ TopBottomMenuLayout.REFRESH = {type: "topBottomMenuLayoutRefresh"};
 
 TopBottomMenuLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
-    copyright: PropTypes.string,
+    copyright: PropTypes.any,
     menu: PropTypes.array,
     pages: PropTypes.object,
     headerImage: PropTypes.string,

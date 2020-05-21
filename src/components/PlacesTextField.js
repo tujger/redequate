@@ -1,5 +1,5 @@
 import React from "react";
-import {TextField} from "@material-ui/core";
+import TextField from "@material-ui/core/TextField";
 import {GeoCode} from "../lib/geo-coder/src/geo-code";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import PropTypes from "prop-types";
@@ -51,7 +51,6 @@ const PlacesTextField = props => {
         autoComplete
         includeInputInList
         freeSolo
-        disableOpenOnFocus
         loading={loading}
         getOptionLabel={option => option.title}
         style={{ width: 300 }}

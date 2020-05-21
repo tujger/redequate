@@ -1,7 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {Hidden, IconButton, withStyles} from "@material-ui/core";
-import {ChevronLeft} from "@material-ui/icons";
+import Hidden from "@material-ui/core/Hidden";
+import IconButton from "@material-ui/core/IconButton";
+import withStyles from "@material-ui/styles/withStyles";
+import ChevronLeft from "@material-ui/icons/ChevronLeft";
 
 const styles = theme => ({
   header: {
