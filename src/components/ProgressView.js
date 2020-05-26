@@ -10,27 +10,33 @@ const useStyles = makeStyles(() => ({
 }));
 
 const ProgressView = props => {
-    const {show, className} = props;
+    const {show, value = null, className} = props;
     const classes = useStyles();
 
     return <LinearProgress
+        variant={value === null ? "indeterminate": "determinate"}
+        value={value}
         className={[show ? "" : classes.invisibleProgress, className].join(" ")}/>
 };
 
 ProgressView.SHOW = {type:"show"};
 ProgressView.HIDE = {type:"hide"};
 
-export const progressView = (state = {show:false}, action) => {
+export const progressView = (state = {show:false, value:null}, action) => {
     switch(action.type) {
         case ProgressView.SHOW.type:
-            return {show: true};
+            if(action.value) {
+                return {show: true, value: +action.value};
+            } else {
+                return {show: true, value: null};
+            }
         case ProgressView.HIDE.type:
-            return {show: false};
+            return {show: false, value: null};
         default:
             return state;
     }
 };
 
-const mapStateToProps = ({progressView}) => ({show: progressView.show});
+const mapStateToProps = ({progressView}) => ({show: progressView.show, value: progressView.value});
 
 export default connect(mapStateToProps)(ProgressView);

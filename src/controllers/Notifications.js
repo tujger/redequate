@@ -113,7 +113,7 @@ export const NotificationsSnackbar = () => {
           image={payload.image}
           onButtonClick={payload.onButtonClick}
           onClick={() => {
-            console.log("NOTIF CLICK");
+            console.log("NOTIF CLICK", payload.variant);
           }}
           variant={payload.variant}
         />
@@ -133,8 +133,8 @@ export const notifySnackbar = props => {
       "\"import {NotificationsSnackbar} from 'edeqa-pwa-react-core'\" and <NotificationsSnackbar/> in your file.");
     return;
   }
-  if(props instanceof Error) {
-    console.error(props);
+  if(props instanceof Error || props.constructor.name === "FirebaseStorageError") {
+    console.error("Error", props);
     snackbar.payload = {
       priority: "high",
       title: props.message,

@@ -30,15 +30,10 @@ const styles = theme => ({
     title: {
         flex: "1 1 auto",
         fontWeight: "bold",
+        left: 0,
         position: "absolute",
         textAlign: "center",
         width: "100%"
-    },
-    content: {
-
-    },
-    indent: {
-
     },
     avatar: {
         height: theme.spacing(4),
@@ -73,7 +68,7 @@ function MainTitlebar(props) {
             <Button
                 className={classes.back}
                 color="inherit"
-                aria-label="open drawer"
+                aria-label="go back"
                 edge="start"
                 onClick={() => {
                     history.goBack();

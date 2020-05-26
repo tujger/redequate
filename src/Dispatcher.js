@@ -25,7 +25,7 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 // window.history.pushState(null, null, window.location.href);
 
 const Dispatcher = (props) => {
-  const {firebaseConfig, name, theme, reducers} = props;
+  const {firebaseConfig, name, theme = defaultTheme, reducers} = props;
   const [state, setState] = React.useState({firebase: null, store: null});
   const {firebase, store} = state;
 
@@ -42,19 +42,19 @@ const Dispatcher = (props) => {
 
   if(!store && !firebase) return <LoadingComponent/>;
   return <Provider store={store}>
-    <SnackbarProvider maxSnack={4} preventDuplicate>
-      <ThemeProvider theme={theme || defaultTheme}>
+    <ThemeProvider theme={theme}>
+      <SnackbarProvider maxSnack={4} preventDuplicate>
         <BrowserRouter>
-          <DispatcherRouterBody {...props} firebase={firebase} store={store}/>
+          <DispatcherRouterBody {...props} firebase={firebase} store={store} theme={theme}/>
         </BrowserRouter>
         <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-      </ThemeProvider>
-    </SnackbarProvider>
+      </SnackbarProvider>
+    </ThemeProvider>
   </Provider>;
 };
 
 const DispatcherRouterBody = withRouter(props => {
-  const {pages, menu, width, copyright, headerImage, layout, history, firebase, store} = props;
+  const {pages, menu, width, copyright, headerImage, layout, history, firebase, store, theme} = props;
 
   const itemsFlat = Object.keys(pages).map(item => pages[item]);
   const updateTitle = (location, action) => {
@@ -66,7 +66,7 @@ const DispatcherRouterBody = withRouter(props => {
           ? current.title || current.label : pages.notfound.title || pages.notfound.label);
     }
   }
-
+console.log("theme", theme)
   React.useEffect(() => {
       updateTitle({pathname: window.location.pathname});
       const currentPathname = window.location.pathname;

@@ -16,6 +16,7 @@ const styles = theme => ({
             width: theme.spacing(12),
             height: theme.spacing(12),
         },
+        objectFit: "cover"
     },
     label: {
         color: "inherit",

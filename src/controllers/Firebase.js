@@ -3,6 +3,7 @@ import "firebase/auth";
 import "firebase/database";
 import "firebase/functions";
 import "firebase/messaging";
+import "firebase/storage";
 
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {

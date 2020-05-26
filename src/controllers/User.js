@@ -109,7 +109,7 @@ const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) =>
       onsuccess && onsuccess(val);
     }, onerror);
   } else {
-    onerror(e);
+    onerror(new Error("UID is not defined"));
   }
 };
 

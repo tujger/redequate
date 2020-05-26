@@ -26,7 +26,8 @@ const styles = theme => ({
     },
     indent: {
 
-    }
+    },
+    appbar: {}
 });
 
 function MainAppbar(props) {
