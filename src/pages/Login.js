@@ -49,12 +49,11 @@ const Login = (props) => {
     const {uid, email, emailVerified, displayName: name, phoneNumber: phone, photoURL: image, providerData = []} = response.user.toJSON();
     const provider = providerData.filter(item => item && item.providerId).filter((item, index) => index === 0).map(item => item.providerId)[0];
 
-    const created = new Date().getTime();
-
     fetchUserPublic(firebase)(uid)
     .then(data => updateUserPublic(firebase)(uid,
       {
-        created,
+        created: firebase.database.ServerValue.TIMESTAMP,
+        updated: firebase.database.ServerValue.TIMESTAMP,
         email,
         emailVerified,
         name,

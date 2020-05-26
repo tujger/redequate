@@ -12,6 +12,7 @@ const styles = theme => ({
         flexDirection: "column",
         maxWidth: "100%",
         padding: theme.spacing(1),
+        position: "relative",
         overflow: "auto"
     },
 });

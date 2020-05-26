@@ -47,7 +47,12 @@ const styles = theme => ({
     },
     progress: {
         marginBottom: -4,
-    }
+    },
+    stickyBottom: {
+      position: "sticky",
+      bottom: 0
+    },
+
 });
 
 function TopBottomMenuLayout(props) {
@@ -63,9 +68,7 @@ function TopBottomMenuLayout(props) {
         headerImage={headerImage}
         sticky={<TopMenu items={menu} pages={pages} className={classes.topmenu}/>}
         stickyClassName={classes.stickytop}
-        stickyBottom={null}
     >
-        <ProgressView className={classes.progress}/>
         <MainContent firebase={firebase} pages={pages} store={store} user={user} classes={{content:classes.content}}/>
         <Grid container justify="center">
             <BottomMenu items={menu} className={classes.footer}/>
@@ -73,6 +76,7 @@ function TopBottomMenuLayout(props) {
                 <Typography variant="caption">{copyright}</Typography>
             </Grid>
         </Grid>
+        <div className={[classes.stickyBottom].join(" ")}>{null}</div>
         <Snackbar/>
         <NotificationsSnackbar/>
     </StickyHeader>

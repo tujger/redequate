@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
+import ProgressView from "./ProgressView";
 
 const styles = theme => ({
     container: {
@@ -85,6 +86,7 @@ const StickyHeader = props => {
              className={[classes.sticky, collapsed ? classes.stickycollapsed : null, stickyClassName].join(" ")}
              style={collapsed ? {backgroundImage: `url(${headerImage})`} : null}
         >{sticky}</div>
+        <ProgressView className={classes.progress}/>
         {children}
         <div
             className={[classes.stickyBottom, stickyBottomClassName].join(" ")}>{stickyBottom}</div>

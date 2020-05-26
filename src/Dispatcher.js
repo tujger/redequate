@@ -66,7 +66,7 @@ const DispatcherRouterBody = withRouter(props => {
           ? current.title || current.label : pages.notfound.title || pages.notfound.label);
     }
   }
-console.log("theme", theme)
+
   React.useEffect(() => {
       updateTitle({pathname: window.location.pathname});
       const currentPathname = window.location.pathname;

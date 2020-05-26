@@ -48,8 +48,10 @@ const Signup = (props) => {
   const signupSuccess = response => {
     fetchUserPublic(firebase)(response.user.uid)
       .then(data => updateUserPublic(firebase)(response.user.uid, {
+        created: firebase.database.ServerValue.TIMESTAMP,
         ...response.user,
         ...data,
+        updated: firebase.database.ServerValue.TIMESTAMP,
         current: true
       }))
       .then(() => sendConfirmationEmail(firebase, store)({email: email}))

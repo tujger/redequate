@@ -101,7 +101,13 @@ const EditProfile = (props) => {
             dispatch({...ProgressView.SHOW, value:progress});
         }, defaultUrl:image}).then(({url, metadata}) => {
             dispatch(ProgressView.SHOW);
-            return updateUserPublic(firebase)(data.uid, {name, address, phone, image:url})
+            return updateUserPublic(firebase)(data.uid, {
+              address,
+              image:url,
+              name,
+              phone,
+              updated: firebase.database.ServerValue.TIMESTAMP
+            })
         }).then((userData) => {
             setTimeout(() => {
                 setState({...state, disabled: false});
