@@ -89,17 +89,21 @@ const EditProfile = (props) => {
         refreshAll(store);
     };
 
-    if(!data || !data.uid) {
-        return <Redirect to={tosuccessroute}/>
-    }
-
     const saveUser = () => {
         setState({...state, disabled: true});
         dispatch(ProgressView.SHOW);
         console.log(file)
-        publishFile(firebase)({uppy, file, snapshot, onprogress: progress => {
-            dispatch({...ProgressView.SHOW, value:progress});
-        }, defaultUrl:image}).then(({url, metadata}) => {
+        publishFile(firebase)({
+            auth:data.uid,
+            uppy,
+            file,
+            snapshot,
+            onprogress: progress => {
+                dispatch({...ProgressView.SHOW, value:progress});
+            },
+            defaultUrl:image,
+            deleteFile:user.public().image
+        }).then(({url, metadata}) => {
             dispatch(ProgressView.SHOW);
             return updateUserPublic(firebase)(data.uid, {
               address,
@@ -135,6 +139,10 @@ const EditProfile = (props) => {
             uppy.removeFile(file.id);
             console.log("file removed", snapshot);
         }
+    }
+
+    if(!data || !data.uid) {
+        return <Redirect to={tosuccessroute}/>
     }
 
     window.localStorage.setItem(location.pathname, JSON.stringify(data));

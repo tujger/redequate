@@ -25,111 +25,113 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 // window.history.pushState(null, null, window.location.href);
 
 const Dispatcher = (props) => {
-  const {firebaseConfig, name, theme = defaultTheme, reducers} = props;
-  const [state, setState] = React.useState({firebase: null, store: null});
-  const {firebase, store} = state;
+    const {firebaseConfig, name, theme = defaultTheme, reducers} = props;
+    const [state, setState] = React.useState({firebase: null, store: null});
+    const {firebase, store} = state;
 
-  React.useEffect(() => {
-    let firebaseInstance = Firebase(firebaseConfig);
-    fetchDeviceId();
-    if(hasNotifications()) {
-      setupReceivingNotifications(firebaseInstance).catch(console.error);
-    }
-    setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
-    watchUserChanged(firebaseInstance);
-// eslint-disable-next-line
-  }, []);
+    React.useEffect(() => {
+        let firebaseInstance = Firebase(firebaseConfig);
+        fetchDeviceId();
+        if(hasNotifications()) {
+            setupReceivingNotifications(firebaseInstance).catch(console.error);
+        }
+        setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
+        watchUserChanged(firebaseInstance);
+  // eslint-disable-next-line
+    }, []);
 
-  if(!store && !firebase) return <LoadingComponent/>;
-  return <Provider store={store}>
-    <ThemeProvider theme={theme}>
-      <SnackbarProvider maxSnack={4} preventDuplicate>
-        <BrowserRouter>
-          <DispatcherRouterBody {...props} firebase={firebase} store={store} theme={theme}/>
-        </BrowserRouter>
-        <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-      </SnackbarProvider>
-    </ThemeProvider>
-  </Provider>;
+    if(!store && !firebase) return <LoadingComponent/>;
+
+    return <Provider store={store}>
+        <ThemeProvider theme={theme}>
+            <SnackbarProvider maxSnack={4} preventDuplicate>
+                <BrowserRouter>
+                    <DispatcherRoutedBody {...props} firebase={firebase} store={store} theme={theme}/>
+                </BrowserRouter>
+                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+            </SnackbarProvider>
+        </ThemeProvider>
+    </Provider>;
 };
 
-const DispatcherRouterBody = withRouter(props => {
-  const {pages, menu, width, copyright, headerImage, layout, history, firebase, store, theme} = props;
+const DispatcherRoutedBody = withRouter(props => {
+    const {pages, menu, width, copyright, headerImage, layout, history, firebase, store} = props;
 
-  const itemsFlat = Object.keys(pages).map(item => pages[item]);
-  const updateTitle = (location, action) => {
-    const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
-    console.log("listen", location, action, current);
-    if(current) {
-      document.title = needAuth(current.roles, user)
-        ? pages.login.title || pages.login.label : (matchRole(current.roles, user)
-          ? current.title || current.label : pages.notfound.title || pages.notfound.label);
-    }
-  }
-
-  React.useEffect(() => {
-      updateTitle({pathname: window.location.pathname});
-      const currentPathname = window.location.pathname;
-      history.replace("/");
-      if(currentPathname !== "/") {
-          history.push(currentPathname);
-      }
-      const unlisten = history.listen(updateTitle);
-      return () => {
-          unlisten();
-      }
-// eslint-disable-next-line
-  }, []);
-
-  return <Switch>
-      <Route
-          children={
-              <props.pages.test.component.type
-                  {...props}
-                  {...pages.test.component.props}
-                  firebase={firebase}
-              />}
-          exact={true}
-          path={pages.test.route}
-      />
-      <Route
-        path={"/*"}
-        children={
-          layout ? <layout.type copyright={copyright}
-                                firebase={firebase}
-                                headerImage={headerImage}
-                                menu={menu}
-                                pages={pages}
-                                store={store}
-                                {...layout.props}/>
-            : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
-            (iOS ? <Suspense fallback={<LoadingComponent/>}><BottomToolbarLayout
-                copyright={copyright}
-                firebase={firebase}
-                headerImage={headerImage}
-                menu={menu}
-                pages={pages}
-                store={store}
-              /></Suspense>
-              : <Suspense fallback={<LoadingComponent/>}><ResponsiveDrawerLayout
-                copyright={copyright}
-                firebase={firebase}
-                headerImage={headerImage}
-                menu={menu}
-                pages={pages}
-                store={store}
-              /></Suspense>) :
-            <Suspense fallback={<LoadingComponent/>}><TopBottomMenuLayout
-              copyright={copyright}
-              firebase={firebase}
-              headerImage={headerImage}
-              menu={menu}
-              pages={pages}
-              store={store}
-            /></Suspense>)
+    const itemsFlat = Object.keys(pages).map(item => pages[item]);
+    const updateTitle = (location, action) => {
+        const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
+        console.log("[Dispatcher]", location);
+        if(current) {
+            document.title = needAuth(current.roles, user)
+              ? pages.login.title || pages.login.label : (matchRole(current.roles, user)
+                ? current.title || current.label : pages.notfound.title || pages.notfound.label);
         }
-      />
-  </Switch>
+    }
+
+    React.useEffect(() => {
+        updateTitle({pathname: window.location.pathname});
+        const currentPathname = window.location.pathname;
+        history.replace("/");
+        if(currentPathname !== "/") {
+            history.push(currentPathname);
+        }
+        const unlisten = history.listen(updateTitle);
+        return () => {
+            unlisten();
+        }
+  // eslint-disable-next-line
+    }, []);
+
+    return <Switch>
+        <Route
+            children={
+                <props.pages.test.component.type
+                    {...props}
+                    {...pages.test.component.props}
+                    firebase={firebase}
+                />}
+            exact={true}
+            path={pages.test.route}
+        />
+        <Route
+            path={"/*"}
+            children={
+                layout ? <layout.type
+                    copyright={copyright}
+                    firebase={firebase}
+                    headerImage={headerImage}
+                    menu={menu}
+                    pages={pages}
+                    store={store}
+                    {...layout.props}/>
+                : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
+                    (iOS ? <Suspense fallback={<LoadingComponent/>}><BottomToolbarLayout
+                        copyright={copyright}
+                        firebase={firebase}
+                        headerImage={headerImage}
+                        menu={menu}
+                        pages={pages}
+                        store={store}
+                    /></Suspense>
+                    : <Suspense fallback={<LoadingComponent/>}><ResponsiveDrawerLayout
+                        copyright={copyright}
+                        firebase={firebase}
+                        headerImage={headerImage}
+                        menu={menu}
+                        pages={pages}
+                        store={store}
+                    /></Suspense>)
+                    : <Suspense fallback={<LoadingComponent/>}><TopBottomMenuLayout
+                        copyright={copyright}
+                        firebase={firebase}
+                        headerImage={headerImage}
+                        menu={menu}
+                        pages={pages}
+                        store={store}
+                    /></Suspense>)
+            }
+        />
+    </Switch>
 });
 
 Dispatcher.propTypes = {

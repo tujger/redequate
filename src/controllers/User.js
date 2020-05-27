@@ -1,4 +1,5 @@
 import {notifySnackbar} from "./Notifications";
+import {refreshAll} from "./Store";
 
 const User = (data) => {
   let private_ = null, public_ = null, uid_ = null, role_ = null;
@@ -13,6 +14,7 @@ const User = (data) => {
       else if (type === "public") public_ = data;
       else if (type === "uid") uid_ = data;
       else if (type === "role") role_ = data;
+      else if (type === "updated") public_.updated = data;
       else console.error(`Unknown type "${type}" set to "${data}"`);
     },
     parse: data => {
@@ -22,11 +24,11 @@ const User = (data) => {
         uid_ = data.uid;
         role_ = data.role;
       } else {
-        const {address, created, email, emailVerified, image, name, phone, provider, uid, role} = data;
+        const {address, created, email, emailVerified, image, name, phone, provider, uid, role, updated} = data;
         uid_ = uid;
         role_ = role;
         public_ = {
-          created, address, email, emailVerified, image, name, phone, provider
+          created, address, email, emailVerified, image, name, phone, provider, updated
         }
       }
     },
@@ -98,15 +100,18 @@ const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) =>
       const {current, role: ignored2, uid: ignored3, ...updates} = props;
       let val = {...existed, ...updates};
       db.ref("users").child(uid).child(section).set(val);
-      if (current || user.uid() === uid) {
-        user.set(section.split("/")[0], val);
-        user.set("uid", uid);
-        user.set("role", role);
-        window.localStorage.setItem("user_uid", uid);
-        window.localStorage.setItem("user_role", role);
-        window.localStorage.setItem("user_" + (section.split("/")[0]), JSON.stringify(val));
-      }
-      onsuccess && onsuccess(val);
+      db.ref("users").child(uid).child("public/updated").once("value").then(updated => {
+          if (current || user.uid() === uid) {
+              user.set(section.split("/")[0], val);
+              user.set("uid", uid);
+              user.set("role", role);
+              user.set("updated", updated.val());
+              window.localStorage.setItem("user_uid", uid);
+              window.localStorage.setItem("user_role", role);
+              window.localStorage.setItem("user_" + (section.split("/")[0]), JSON.stringify(val));
+          }
+          onsuccess && onsuccess(val);
+      })
     }, onerror);
   } else {
     onerror(new Error("UID is not defined"));
@@ -123,9 +128,25 @@ export const firstOf = (...args) => {
 };
 
 export const watchUserChanged = firebase => {
-  firebase.auth().onAuthStateChanged(result => {
-    console.log("[AuthStateChanged]", result);
-  });
+    firebase.auth().onAuthStateChanged(result => {
+        console.log("[AuthStateChanged]", result);
+        if(result && result.uid) {
+            firebase.database().ref("users").child(result.uid).child("public/updated").once("value")
+                .then(data => {
+                    if (data && user && data.val() > user.public().updated) {
+                        notifySnackbar({
+                            buttonLabel: "Log out",
+                            onButtonClick: () => {
+                                logoutUser(firebase)();
+                                window.location.reload();
+                            },
+                            title: "Your profile has been changed. Please relogin to update",
+                            variant: "warning"
+                        })
+                    }
+                }).catch(console.error);
+        }
+    });
 };
 
 export const logoutUser = firebase => () => {

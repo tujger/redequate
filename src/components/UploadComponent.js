@@ -13,6 +13,7 @@ import "@uppy/webcam/dist/style.css"
 import {connect} from "react-redux";
 import PropTypes from "prop-types";
 import useTheme from "@material-ui/styles/useTheme";
+import {user} from "../controllers";
 
 const maxFileSize = 1024;
 
@@ -122,7 +123,7 @@ UploadComponent.propTypes = {
 
 export default connect()(UploadComponent);
 
-export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogress, defaultUrl}) => new Promise((resolve, reject) => {
+export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogress, defaultUrl, auth, deleteFile}) => new Promise((resolve, reject) => {
 
     if(!uppy || !file) {
         resolve({url:defaultUrl, metadata: {}});
@@ -130,9 +131,8 @@ export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogr
     }
 
     const uuid = Uuid();
-    const auth = firebase.auth().getUid();
     const fileRef = firebase.storage().ref().child(auth + "/images/" + uuid + "-" + file.name);
-    console.log("upload-success", file, snapshot, fileRef);
+    console.log("[Upload] uploaded", file, snapshot, fileRef);
     return fetch(snapshot.uploadURL).then(response => {
         if (response.ok) {
             uppy.removeFile(file.id);
@@ -140,25 +140,38 @@ export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogr
         }
         throw new Error("Could not fetch url");
     }).then(blob => {
-        return new Promise((resolve1, reject1) => {
-            const uploadTask = fileRef.put(blob, {
-                contentType: file.type,
-                customMetadata: {
-                    ...metadata,
-                    uid: auth,
-                    // message: Uuid(),
-                    filename: file.name
-                }
-            });
-            uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-                let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
-                onprogress && onprogress(progressValue);
-            }, error => {
-                reject(error);
-            }, () => {
-                resolve1(uploadTask.snapshot.ref);
-            });
+      return new Promise((resolve1, reject1) => {
+        const uploadTask = fileRef.put(blob, {
+          contentType: file.type,
+          customMetadata: {
+            ...metadata,
+            uid: auth,
+            // message: Uuid(),
+            filename: file.name
+          }
         });
+        uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
+          let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
+          onprogress && onprogress(progressValue);
+        }, error => {
+          reject(error);
+        }, () => {
+          resolve1(uploadTask.snapshot.ref);
+        });
+      });
+    }).then(ref => {
+        if(deleteFile) {
+            try {
+                console.log("[Upload] delete old file", deleteFile);
+                const ref = firebase.storage().refFromURL(deleteFile);
+                const res = ref.delete();
+                console.log("delete", res);
+                res.then(console.log)
+            } catch(e) {
+                console.error("[Upload]", e);
+            }
+        }
+        return ref;
     }).then(ref => {
         ref.getDownloadURL().then(url => {
             ref.getMetadata().then(metadata => {

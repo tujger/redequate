@@ -1,9 +1,6 @@
-import createBreakpoints from "@material-ui/core/styles/createBreakpoints"
 import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
 
 const drawerWidth = 240;
-
-const breakpoints = createBreakpoints({});
 
 const colors = () => {
     const month = new Date().getUTCMonth();
