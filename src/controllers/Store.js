@@ -31,9 +31,9 @@ Store.propTypes = {
 export default Store;
 
 export const refreshAll = store => {
-  store.dispatch(ResponsiveDrawerLayout.REFRESH);
-  store.dispatch(TopBottomMenuLayout.REFRESH);
-  store.dispatch(BottomToolbarLayout.REFRESH);
-  store.dispatch(ProgressView.HIDE);
+    store.dispatch(ResponsiveDrawerLayout.REFRESH);
+    store.dispatch(TopBottomMenuLayout.REFRESH);
+    store.dispatch(BottomToolbarLayout.REFRESH);
+    store.dispatch(ProgressView.HIDE);
 };
 

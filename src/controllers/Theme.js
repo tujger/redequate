@@ -2,7 +2,7 @@ import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
 
 const drawerWidth = 240;
 
-const colors = () => {
+export const colors = () => {
     const month = new Date().getUTCMonth();
     const winterColors = {
         primary: "#4767b6",
@@ -29,32 +29,32 @@ const colors = () => {
     ][month];
 };
 
-const theme = createMuiTheme({
+export const createTheme = colors => createMuiTheme({
     palette: {
         // background: {
         //     paper: "#efefef",
         //     default: "#808080",
         // },
         primary: {
-            main: colors().primary,
+            main: colors.primary,
             contrastText: "#ffffff",
-        // "&:focus": {
-        //     main: "#006600",
-        // },
-        // "&:hover": {
-        //     main: "#006600",
-        // },
-        // // light,
-        // // dark
+            // "&:focus": {
+            //     main: "#006600",
+            // },
+            // "&:hover": {
+            //     main: "#006600",
+            // },
+            // // light,
+            // // dark
         },
         secondary: {
-            main: colors().secondary,
+            main: colors.secondary,
             contrastText: "#ffffff",
             "&:focus": {
-                main: colors().secondary,
+                main: colors.secondary,
             },
             "&:hover": {
-                main: colors().secondary,
+                main: colors.secondary,
             }
         },
     },
@@ -77,7 +77,9 @@ const theme = createMuiTheme({
             }
         }
     },
-});
+})
+
+const theme = createTheme(colors());
 theme.drawerWidth = drawerWidth;
 
 export default theme;

@@ -32,15 +32,15 @@ const Dispatcher = (props) => {
     React.useEffect(() => {
         let firebaseInstance = Firebase(firebaseConfig);
         fetchDeviceId();
-        if(hasNotifications()) {
+        if (hasNotifications()) {
             setupReceivingNotifications(firebaseInstance).catch(console.error);
         }
         setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
         watchUserChanged(firebaseInstance);
-  // eslint-disable-next-line
+        // eslint-disable-next-line
     }, []);
 
-    if(!store && !firebase) return <LoadingComponent/>;
+    if (!store && !firebase) return <LoadingComponent/>;
 
     return <Provider store={store}>
         <ThemeProvider theme={theme}>
@@ -61,11 +61,11 @@ const DispatcherRoutedBody = withRouter(props => {
     const updateTitle = (location, action) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
         console.log("[Dispatcher]", location);
-        if(current) {
+        if (current) {
             document.title = (needAuth(current.roles, user)
-              ? pages.login.title || pages.login.label : (matchRole(current.roles, user)
-                ? current.title || current.label : pages.notfound.title || pages.notfound.label))
-            + (name ? " - " + name : "");
+                ? pages.login.title || pages.login.label : (matchRole(current.roles, user)
+                    ? current.title || current.label : pages.notfound.title || pages.notfound.label))
+                + (name ? " - " + name : "");
         }
     }
 
@@ -73,14 +73,14 @@ const DispatcherRoutedBody = withRouter(props => {
         updateTitle({pathname: window.location.pathname});
         const currentPathname = window.location.pathname;
         history.replace("/");
-        if(currentPathname !== "/") {
+        if (currentPathname !== "/") {
             history.push(currentPathname);
         }
         const unlisten = history.listen(updateTitle);
         return () => {
             unlisten();
         }
-  // eslint-disable-next-line
+        // eslint-disable-next-line
     }, []);
 
     return <Switch>
@@ -88,30 +88,30 @@ const DispatcherRoutedBody = withRouter(props => {
             path={"/*"}
             children={
                 layout ? <layout.type
-                    copyright={copyright}
-                    firebase={firebase}
-                    headerImage={headerImage}
-                    menu={menu}
-                    pages={pages}
-                    store={store}
-                    {...layout.props}/>
-                : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
+                        copyright={copyright}
+                        firebase={firebase}
+                        headerImage={headerImage}
+                        menu={menu}
+                        pages={pages}
+                        store={store}
+                        {...layout.props}/>
+                    : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
                     (iOS ? <Suspense fallback={<LoadingComponent/>}><BottomToolbarLayout
-                        copyright={copyright}
-                        firebase={firebase}
-                        headerImage={headerImage}
-                        menu={menu}
-                        pages={pages}
-                        store={store}
-                    /></Suspense>
-                    : <Suspense fallback={<LoadingComponent/>}><ResponsiveDrawerLayout
-                        copyright={copyright}
-                        firebase={firebase}
-                        headerImage={headerImage}
-                        menu={menu}
-                        pages={pages}
-                        store={store}
-                    /></Suspense>)
+                            copyright={copyright}
+                            firebase={firebase}
+                            headerImage={headerImage}
+                            menu={menu}
+                            pages={pages}
+                            store={store}
+                        /></Suspense>
+                        : <Suspense fallback={<LoadingComponent/>}><ResponsiveDrawerLayout
+                            copyright={copyright}
+                            firebase={firebase}
+                            headerImage={headerImage}
+                            menu={menu}
+                            pages={pages}
+                            store={store}
+                        /></Suspense>)
                     : <Suspense fallback={<LoadingComponent/>}><TopBottomMenuLayout
                         copyright={copyright}
                         firebase={firebase}
