@@ -7,7 +7,14 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import ProfileComponent from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {fetchUserPrivate, logoutUser, sendConfirmationEmail, updateUserPrivate, user} from "../controllers/User";
+import {
+  fetchUserPrivate,
+  logoutUser,
+  sendConfirmationEmail,
+  updateUserPrivate,
+  user,
+  watchUserChanged
+} from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
@@ -18,6 +25,10 @@ const Profile = (props) => {
   const {dispatch, firebase, pages, store} = props;
   const [state, setState] = React.useState({disabled: false});
   const {disabled} = state;
+
+  React.useEffect(() => {
+    watchUserChanged(firebase);
+  }, []);
 
   if (!user.uid()) {
     return <Redirect to={pages.users.route}/>

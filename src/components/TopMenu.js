@@ -67,7 +67,6 @@ const MenuSection = withStyles(styles)(props => {
       className={classes.menusection}
       disablePortal
       onClose={() => setState({...state, anchor: null})}
-      onMouseLeave={() => setState({...state, anchor: null})}
       open={Boolean(anchor)}
       placement={"bottom-end"}
       role={undefined}>

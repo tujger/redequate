@@ -1,5 +1,4 @@
 import {notifySnackbar} from "./Notifications";
-import {refreshAll} from "./Store";
 
 const User = (data) => {
   let private_ = null, public_ = null, uid_ = null, role_ = null;
