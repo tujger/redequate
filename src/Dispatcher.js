@@ -55,16 +55,17 @@ const Dispatcher = (props) => {
 };
 
 const DispatcherRoutedBody = withRouter(props => {
-    const {pages, menu, width, copyright, headerImage, layout, history, firebase, store} = props;
+    const {pages, menu, width, copyright, headerImage, layout, history, firebase, store, name} = props;
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location, action) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
         console.log("[Dispatcher]", location);
         if(current) {
-            document.title = needAuth(current.roles, user)
+            document.title = (needAuth(current.roles, user)
               ? pages.login.title || pages.login.label : (matchRole(current.roles, user)
-                ? current.title || current.label : pages.notfound.title || pages.notfound.label);
+                ? current.title || current.label : pages.notfound.title || pages.notfound.label))
+            + (name ? " - " + name : "");
         }
     }
 
@@ -83,16 +84,6 @@ const DispatcherRoutedBody = withRouter(props => {
     }, []);
 
     return <Switch>
-        <Route
-            children={
-                <props.pages.test.component.type
-                    {...props}
-                    {...pages.test.component.props}
-                    firebase={firebase}
-                />}
-            exact={true}
-            path={pages.test.route}
-        />
         <Route
             path={"/*"}
             children={

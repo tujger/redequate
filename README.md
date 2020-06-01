@@ -12,20 +12,34 @@ npm install --save edeqa-pwa-react-core
 
 ## Usage
 
-```jsx
-import React, { Component } from 'react'
+Copy example app and make necessary changes.
 
-import MyComponent from 'edeqa-pwa-react-core'
+https://github.com/tujger/edeqa-pwa-react-demo
 
-class Example extends Component {
-  render () {
-    return (
-      <MyComponent />
-    )
-  }
-}
-```
+## Troubleshooting
+
+https://stackoverflow.com/questions/56021112/react-hooks-in-react-library-giving-invalid-hook-call-error
+
+
+Below are the steps I followed :
+1. In Your Library:
+
+        cd node_modules/react && npm link && cd ../react-dom && npm link && cd .. && cd ..
+
+2. In Your Application:
+
+        npm link react && npm link react-dom
+
+3. Stop your dev-server and do `npm start` again.
+
+
+If `No Xcode or CLT version detected!` happens:
+
+        sudo rm -rf $(xcode-select -print-path)
+        sudo xcode-select --install
+
 
 ## License
+
 
 MIT © [tujger](https://github.com/tujger)
