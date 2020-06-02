@@ -16,7 +16,7 @@ import {matchRole, needAuth, theme as defaultTheme} from "./controllers";
 import {watchUserChanged, user} from "./controllers/User";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
-import MainHeader from "./components/MainHeader";
+import {installWrapperControl} from "./controllers/WrapperControl";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout"));
@@ -32,9 +32,7 @@ const Dispatcher = (props) => {
 
     React.useEffect(() => {
         let firebaseInstance = Firebase(firebaseConfig);
-        window.init = args => {
-            console.log("init args", args);
-        }
+        installWrapperControl();
         fetchDeviceId();
         if (hasNotifications()) {
             setupReceivingNotifications(firebaseInstance).catch(console.error);

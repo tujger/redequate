@@ -49,9 +49,6 @@ export const serviceWorkerRegister = () => {
 };
 
 export const checkForUpdate = () => new Promise((resolve, reject) => {
-    if (window.JSInterface) {
-        window.JSInterface.log("CHECKFORUPDATE");
-    }
     if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
         window.location.reload();
         resolve("reload");

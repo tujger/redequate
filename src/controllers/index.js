@@ -1,6 +1,7 @@
 export * from "./Firebase";
 export * from "./Notifications";
 export * from "./ServiceWorkerControl";
+export * from "./WrapperControl";
 export {default as Store, refreshAll} from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
 export {default as theme, colors, createTheme} from "./Theme";
