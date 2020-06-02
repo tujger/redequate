@@ -9,13 +9,17 @@ const geoCode = new GeoCode();
 const PlacesTextField = props => {
     const {value = "", onChange, type = "formatted"} = props;
 
-    const [state, setState] = React.useState({text:value, options:[], loading:false});
+    const [state, setState] = React.useState({text: value, options: [], loading: false});
     const {text, options, loading} = state;
 
     const handleChange = ev => {
         const val = ev.currentTarget.value;
         setState({...state, text: val, loading: true});
-        geoCode.options.featuretype = {citystate:["city","state"], latlng: ["lat", "lng"], formatted: []}[type] || type;
+        geoCode.options.featuretype = {
+            citystate: ["city", "state"],
+            latlng: ["lat", "lng"],
+            formatted: []
+        }[type] || type;
         geoCode.geolookup(val).then(result => {
             let accum = {};
             let items = result.map(item => {
@@ -34,7 +38,7 @@ const PlacesTextField = props => {
                 item.short_ru = tokens.reverse().join(", ");
                 const title = ["formatted", "short_usps", "short_ru", "lat", "lng", "latlng", "citystate"].indexOf(type) >= 0 ? item[type] : item.address[type];
                 accum[title] = true;
-                return {title:title, data:item};
+                return {title: title, data: item};
             });
             items = items.filter(item => {
                 const ex = accum[item.title];
@@ -53,7 +57,7 @@ const PlacesTextField = props => {
         freeSolo
         loading={loading}
         getOptionLabel={option => option.title}
-        style={{ width: 300 }}
+        style={{width: 300}}
         onChange={onChange}
         renderInput={params => (
             <TextField

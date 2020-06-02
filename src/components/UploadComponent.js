@@ -13,11 +13,10 @@ import "@uppy/webcam/dist/style.css"
 import {connect} from "react-redux";
 import PropTypes from "prop-types";
 import useTheme from "@material-ui/styles/useTheme";
-import {user} from "../controllers";
 
 const maxFileSize = 1024;
 
-const UploadComponent = ({ button, onsuccess, onerror }) => {
+const UploadComponent = ({button, onsuccess, onerror}) => {
     const [state, setState] = React.useState({});
     const {uppy} = state;
 
@@ -28,17 +27,17 @@ const UploadComponent = ({ button, onsuccess, onerror }) => {
     React.useEffect(() => {
 
         const uppy = Uppy({
-          restrictions: {
-            maxNumberOfFiles: 1,
-            maxFileSize: maxFileSize * 1024,
-            allowedFileTypes: ["image/*"]
-          },
-          autoProceed: true,
-          locale: {
-            strings: {
-              dropPasteImport: ""//"Drop files here",
+            restrictions: {
+                maxNumberOfFiles: 1,
+                maxFileSize: maxFileSize * 1024,
+                allowedFileTypes: ["image/*"]
+            },
+            autoProceed: true,
+            locale: {
+                strings: {
+                    dropPasteImport: ""//"Drop files here",
+                }
             }
-          }
         })
         uppy.on("complete", (result) => {
             // console.log("successful files:", result.successful)
@@ -48,7 +47,7 @@ const UploadComponent = ({ button, onsuccess, onerror }) => {
             // console.log("Modal is open", uppy)
         });
         uppy.on("upload-success", (file, snapshot) => {
-            if(onsuccess) {
+            if (onsuccess) {
                 onsuccess({uppy, file, snapshot});
             } else {
                 console.warn("Define 'onsuccess'; snapshot is", snapshot);
@@ -109,7 +108,9 @@ const UploadComponent = ({ button, onsuccess, onerror }) => {
                 uppy && uppy.reset();
                 button.props.onClick && button.props.onClick(event);
             }}/>
-            : <Button onClick={() => {uppy && uppy.reset();}} ref={refButton} children={"Upload"}/>
+            : <Button onClick={() => {
+                uppy && uppy.reset();
+            }} ref={refButton} children={"Upload"}/>
         }
         <style>{dashboardStyle}</style>
         <div ref={refDashboard}/>
@@ -125,8 +126,8 @@ export default connect()(UploadComponent);
 
 export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogress, defaultUrl, auth, deleteFile}) => new Promise((resolve, reject) => {
 
-    if(!uppy || !file) {
-        resolve({url:defaultUrl, metadata: {}});
+    if (!uppy || !file) {
+        resolve({url: defaultUrl, metadata: {}});
         return;
     }
 
@@ -140,34 +141,34 @@ export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogr
         }
         throw new Error("Could not fetch url");
     }).then(blob => {
-      return new Promise((resolve1, reject1) => {
-        const uploadTask = fileRef.put(blob, {
-          contentType: file.type,
-          customMetadata: {
-            ...metadata,
-            uid: auth,
-            // message: Uuid(),
-            filename: file.name
-          }
+        return new Promise((resolve1, reject1) => {
+            const uploadTask = fileRef.put(blob, {
+                contentType: file.type,
+                customMetadata: {
+                    ...metadata,
+                    uid: auth,
+                    // message: Uuid(),
+                    filename: file.name
+                }
+            });
+            uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
+                let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
+                onprogress && onprogress(progressValue);
+            }, error => {
+                reject(error);
+            }, () => {
+                resolve1(uploadTask.snapshot.ref);
+            });
         });
-        uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-          let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
-          onprogress && onprogress(progressValue);
-        }, error => {
-          reject(error);
-        }, () => {
-          resolve1(uploadTask.snapshot.ref);
-        });
-      });
     }).then(ref => {
-        if(deleteFile) {
+        if (deleteFile) {
             try {
                 console.log("[Upload] delete old file", deleteFile);
                 const ref = firebase.storage().refFromURL(deleteFile);
                 const res = ref.delete();
                 console.log("delete", res);
                 res.then(console.log)
-            } catch(e) {
+            } catch (e) {
                 console.error("[Upload]", e);
             }
         }
@@ -175,7 +176,7 @@ export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogr
     }).then(ref => {
         ref.getDownloadURL().then(url => {
             ref.getMetadata().then(metadata => {
-                resolve({url:url, metadata:metadata});
+                resolve({url: url, metadata: metadata});
             }).catch(error => {
                 reject(error);
             })

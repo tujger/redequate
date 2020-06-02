@@ -33,22 +33,21 @@ const styles = theme => ({
         ...theme.mixins.toolbar,
     },
     appbar: {
-      [theme.breakpoints.up("md")]: {
-        width: `calc(100% - ${theme.drawerWidth}px)`,
-        marginLeft: theme.drawerWidth,
-      }
+        [theme.breakpoints.up("md")]: {
+            width: `calc(100% - ${theme.drawerWidth}px)`,
+            marginLeft: theme.drawerWidth,
+        }
     }
 });
 
 function ResponsiveDrawerLayout(props) {
-    const {container, menu, classes, firebase, headerImage, pages, store, copyright} = props;
+    const {container, menu, classes, firebase, headerImage, pages, store, copyright, name} = props;
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
 
     const handleDrawerToggle = () => {
         setState({...state, mobileOpen: !mobileOpen});
     };
-
     if (mobileOpen) {
         onpopstateBackup = window.onpopstate;
         window.onpopstate = () => {
@@ -75,7 +74,10 @@ function ResponsiveDrawerLayout(props) {
                 disableBackdropTransition={!iOS} disableDiscovery={iOS}
                 onOpen={handleDrawerToggle}>
                 <MainHeader image={headerImage}
-                            onClick={() => setState({...state, mobileOpen: false})}/>
+                            name={name}
+                            onClick={() => setState({...state, mobileOpen: false})}
+                            pages={pages}
+                />
                 <Divider/>
                 <MainMenu items={menu} onClick={() => {
                     // dispatch(ProgressView.SHOW);
@@ -90,7 +92,10 @@ function ResponsiveDrawerLayout(props) {
         <Hidden smDown implementation="css">
             <Drawer variant="permanent" open>
                 <MainHeader image={headerImage}
-                            onClick={() => setState({...state, mobileOpen: false})}/>
+                            name={name}
+                            onClick={() => setState({...state, mobileOpen: false})}
+                            pages={pages}
+                />
                 <Divider/>
                 <MainMenu items={menu} onClick={(ev) => {
                     // dispatch(ProgressView.SHOW);
@@ -103,7 +108,7 @@ function ResponsiveDrawerLayout(props) {
             </Drawer>
         </Hidden>
         <MainAppbar
-          className={classes.appbar}
+            className={classes.appbar}
             {...props}
             pages={pages}
             onHamburgerClick={handleDrawerToggle}
@@ -124,15 +129,16 @@ ResponsiveDrawerLayout.propTypes = {
     firebase: PropTypes.any,
     headerImage: PropTypes.string,
     menu: PropTypes.array,
+    name: PropTypes.string,
     pages: PropTypes.object,
     title: PropTypes.string,
 };
 
 export const responsiveDrawerLayout = (state = {random: 0}, action) => {
     if (action.type === ResponsiveDrawerLayout.REFRESH.type) {
-      return {random: Math.random()};
+        return {random: Math.random()};
     } else {
-      return state;
+        return state;
     }
 };
 

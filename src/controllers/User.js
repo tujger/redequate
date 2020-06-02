@@ -98,8 +98,9 @@ const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) =>
             const {role, uid: ignored1, ...existed} = data;
             const {current, role: ignored2, uid: ignored3, ...updates} = props;
             let val = {...existed, ...updates};
-            db.ref("users").child(uid).child(section).set(val);
-            db.ref("users").child(uid).child("public/updated").once("value").then(updated => {
+            db.ref("users").child(uid).child(section).set(val).then(() => {
+                return db.ref("users").child(uid).child("public/updated").once("value");
+            }).then(updated => {
                 if (current || user.uid() === uid) {
                     user.set(section.split("/")[0], val);
                     user.set("uid", uid);
@@ -110,7 +111,7 @@ const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) =>
                     window.localStorage.setItem("user_" + (section.split("/")[0]), JSON.stringify(val));
                 }
                 onsuccess && onsuccess(val);
-            })
+            });
         }, onerror);
     } else {
         onerror(new Error("UID is not defined"));
@@ -127,25 +128,29 @@ export const firstOf = (...args) => {
 };
 
 export const watchUserChanged = firebase => {
-    firebase.auth().onAuthStateChanged(result => {
-        console.log("[AuthStateChanged]", result);
-        if (result && result.uid) {
-            firebase.database().ref("users").child(result.uid).child("public/updated").once("value")
-                .then(data => {
-                    if (data && user && data.val() > user.public().updated) {
-                        notifySnackbar({
-                            buttonLabel: "Log out",
-                            onButtonClick: () => {
-                                logoutUser(firebase)();
-                                window.location.reload();
-                            },
-                            title: "Your profile has been changed. Please relogin to update",
-                            variant: "warning"
-                        })
-                    }
-                }).catch(console.error);
-        }
-    });
+    try {
+        firebase.auth().onAuthStateChanged(result => {
+            console.log("[AuthStateChanged]", result);
+            if (result && result.uid) {
+                firebase.database().ref("users").child(result.uid).child("public/updated").once("value")
+                    .then(data => {
+                        if (data && user && data.val() > user.public().updated) {
+                            notifySnackbar({
+                                buttonLabel: "Log out",
+                                onButtonClick: () => {
+                                    logoutUser(firebase)();
+                                    window.location.reload();
+                                },
+                                title: "Your profile has been changed. Please relogin to update",
+                                variant: "warning"
+                            })
+                        }
+                    }).catch(console.error);
+            }
+        });
+    } catch(error) {
+        console.error(error);
+    }
 };
 
 export const logoutUser = firebase => () => {

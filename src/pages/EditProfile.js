@@ -23,43 +23,43 @@ import withStyles from "@material-ui/styles/withStyles";
 import {notifySnackbar} from "../controllers";
 
 const styles = theme => ({
-  image: {
-      [theme.breakpoints.up("sm")]: {
-          width: theme.spacing(18),
-          height: theme.spacing(18),
-      },
-      [theme.breakpoints.down("sm")]: {
-          width: theme.spacing(24),
-          height: theme.spacing(24),
-      },
-      objectFit: "cover"
-  },
-  label: {
-      color: "inherit",
-      cursor: "default",
-      textDecoration: "none",
-  },
-  photo: {
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "start"
-  },
-  clearPhoto: {
-      backgroundColor: "transparent",
-      position: "absolute",
-      top: 0,
-      right: 0,
-      color: "white",
-  },
-  content: {}
+    image: {
+        [theme.breakpoints.up("sm")]: {
+            width: theme.spacing(18),
+            height: theme.spacing(18),
+        },
+        [theme.breakpoints.down("sm")]: {
+            width: theme.spacing(24),
+            height: theme.spacing(24),
+        },
+        objectFit: "cover"
+    },
+    label: {
+        color: "inherit",
+        cursor: "default",
+        textDecoration: "none",
+    },
+    photo: {
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "start"
+    },
+    clearPhoto: {
+        backgroundColor: "transparent",
+        position: "absolute",
+        top: 0,
+        right: 0,
+        color: "white",
+    },
+    content: {}
 });
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
     let {data, location = {}, history, dispatch, firebase, store, classes} = props;
-    const {state:givenState = {}} = location;
-    const {tosuccessroute = "/", data:givenData} = givenState;
+    const {state: givenState = {}} = location;
+    const {tosuccessroute = "/", data: givenData} = givenState;
 
     data = givenData || data || JSON.parse(window.localStorage.getItem(location.pathname));
     const user = User(data);
@@ -94,29 +94,29 @@ const EditProfile = (props) => {
         dispatch(ProgressView.SHOW);
         console.log(file)
         publishFile(firebase)({
-            auth:data.uid,
+            auth: data.uid,
             uppy,
             file,
             snapshot,
             onprogress: progress => {
-                dispatch({...ProgressView.SHOW, value:progress});
+                dispatch({...ProgressView.SHOW, value: progress});
             },
-            defaultUrl:image,
-            deleteFile:user.public().image
+            defaultUrl: image,
+            deleteFile: user.public().image
         }).then(({url, metadata}) => {
             dispatch(ProgressView.SHOW);
             return updateUserPublic(firebase)(data.uid, {
-              address,
-              image:url,
-              name,
-              phone,
-              updated: firebase.database.ServerValue.TIMESTAMP
+                address,
+                image: url,
+                name,
+                phone,
+                updated: firebase.database.ServerValue.TIMESTAMP
             })
         }).then((userData) => {
             setTimeout(() => {
                 setState({...state, disabled: false});
                 refreshAll(store);
-                history.push(tosuccessroute, {data:userData, tosuccessroute: tosuccessroute});
+                history.push(tosuccessroute, {data: userData, tosuccessroute: tosuccessroute});
             }, 1000)
         }).catch(onerror).finally(() => {
             dispatch(ProgressView.HIDE);
@@ -125,7 +125,7 @@ const EditProfile = (props) => {
 
     const handleUploadPhotoSuccess = ({uppy, file, snapshot}) => {
         removeUploadedFile();
-        setState({...state, uppy, file, snapshot, image:snapshot.uploadURL});
+        setState({...state, uppy, file, snapshot, image: snapshot.uploadURL});
     }
 
     const handleUploadPhotoError = (error) => {
@@ -135,13 +135,13 @@ const EditProfile = (props) => {
     }
 
     const removeUploadedFile = () => {
-        if(uppy && file) {
+        if (uppy && file) {
             uppy.removeFile(file.id);
             console.log("file removed", snapshot);
         }
     }
 
-    if(!data || !data.uid) {
+    if (!data || !data.uid) {
         return <Redirect to={tosuccessroute}/>
     }
 
@@ -150,110 +150,110 @@ const EditProfile = (props) => {
     return <Grid container spacing={1}>
         <Box m={0.5}/>
         <Grid item className={classes.photo}>
-                <Grid container>
-                  {image ? <img src={image} alt="" className={classes.image}/>
+            <Grid container>
+                {image ? <img src={image} alt="" className={classes.image}/>
                     : <EmptyAvatar className={classes.image}/>}
-                    <IconButton className={classes.clearPhoto} onClick={() => {
-                        setState({...state, image: ""});
-                    }}><ClearIcon/></IconButton>
-                </Grid>
-                <UploadComponent
-                    firebase={firebase}
-                    variant={"contained"}
-                    color={"primary"}
-                    button={<Button variant={"contained"} color={"primary"} children={"Change"}/>}
-                    onsuccess={handleUploadPhotoSuccess}
-                    onerror={handleUploadPhotoError}
-                />
+                <IconButton className={classes.clearPhoto} onClick={() => {
+                    setState({...state, image: ""});
+                }}><ClearIcon/></IconButton>
+            </Grid>
+            <UploadComponent
+                firebase={firebase}
+                variant={"contained"}
+                color={"primary"}
+                button={<Button variant={"contained"} color={"primary"} children={"Change"}/>}
+                onsuccess={handleUploadPhotoSuccess}
+                onerror={handleUploadPhotoError}
+            />
         </Grid>
         <Grid item xs>
-          <Grid container spacing={1} alignItems="flex-end">
-              <Grid item>
-                  <MailIcon/>
-              </Grid>
-              <Grid item xs>
-                  <TextField
-                      disabled
-                      label="E-mail"
-                      fullWidth
-                      value={user.public().email || ""}
-                  />
-              </Grid>
-          </Grid>
-          <Box m={1}/>
-          <Grid container spacing={1} alignItems="flex-end">
-              <Grid item>
-                  <NameIcon/>
-              </Grid>
-              <Grid item xs>
-                  <TextField
-                      disabled={disabled}
-                      label="Name"
-                      fullWidth
-                      onChange={ev => {
-                          setState({...state, name: ev.target.value});
-                      }}
-                      value={name}
-                  />
-              </Grid>
-          </Grid>
-          <Box m={1}/>
-          <Grid container spacing={1} alignItems="flex-end">
-              <Grid item>
-                  <AddressIcon/>
-              </Grid>
-              <Grid item xs>
-                  <TextField
-                      disabled={disabled}
-                      label="Address"
-                      fullWidth
-                      onChange={ev => {
-                          setState({...state, address: ev.target.value});
-                      }}
-                      value={address}
-                  />
-              </Grid>
-          </Grid>
-          <Box m={1}/>
-          <Grid container spacing={1} alignItems="flex-end">
-              <Grid item>
-                  <PhoneIcon/>
-              </Grid>
-              <Grid item xs>
-                  <TextField
-                      disabled={disabled}
-                      fullWidth
-                      InputProps={{
-                          inputComponent: TextMaskPhone
-                      }}
-                      label="Phone"
-                      onChange={ev => {
-                          setState({...state, phone: ev.target.value});
-                      }}
-                      value={phone}
-                      />
-             </Grid>
-          </Grid>
-          <Box m={1}/>
-          <FormHelperText error variant={"outlined"}>
-              {error}
-          </FormHelperText>
-          <Box m={2}/>
-          <ButtonGroup variant="contained" color="primary" size="large" fullWidth
-                       disabled={disabled}
-          >
-              <Button
-                  onClick={saveUser}
-              >
-                  Save
-              </Button>
-              <Button
-                  onClick={() => history.goBack()}
-              >
-                  Cancel
-              </Button>
-          </ButtonGroup>
-      </Grid>
+            <Grid container spacing={1} alignItems="flex-end">
+                <Grid item>
+                    <MailIcon/>
+                </Grid>
+                <Grid item xs>
+                    <TextField
+                        disabled
+                        label="E-mail"
+                        fullWidth
+                        value={user.public().email || ""}
+                    />
+                </Grid>
+            </Grid>
+            <Box m={1}/>
+            <Grid container spacing={1} alignItems="flex-end">
+                <Grid item>
+                    <NameIcon/>
+                </Grid>
+                <Grid item xs>
+                    <TextField
+                        disabled={disabled}
+                        label="Name"
+                        fullWidth
+                        onChange={ev => {
+                            setState({...state, name: ev.target.value});
+                        }}
+                        value={name}
+                    />
+                </Grid>
+            </Grid>
+            <Box m={1}/>
+            <Grid container spacing={1} alignItems="flex-end">
+                <Grid item>
+                    <AddressIcon/>
+                </Grid>
+                <Grid item xs>
+                    <TextField
+                        disabled={disabled}
+                        label="Address"
+                        fullWidth
+                        onChange={ev => {
+                            setState({...state, address: ev.target.value});
+                        }}
+                        value={address}
+                    />
+                </Grid>
+            </Grid>
+            <Box m={1}/>
+            <Grid container spacing={1} alignItems="flex-end">
+                <Grid item>
+                    <PhoneIcon/>
+                </Grid>
+                <Grid item xs>
+                    <TextField
+                        disabled={disabled}
+                        fullWidth
+                        InputProps={{
+                            inputComponent: TextMaskPhone
+                        }}
+                        label="Phone"
+                        onChange={ev => {
+                            setState({...state, phone: ev.target.value});
+                        }}
+                        value={phone}
+                    />
+                </Grid>
+            </Grid>
+            <Box m={1}/>
+            <FormHelperText error variant={"outlined"}>
+                {error}
+            </FormHelperText>
+            <Box m={2}/>
+            <ButtonGroup variant="contained" color="primary" size="large" fullWidth
+                         disabled={disabled}
+            >
+                <Button
+                    onClick={saveUser}
+                >
+                    Save
+                </Button>
+                <Button
+                    onClick={() => history.goBack()}
+                >
+                    Cancel
+                </Button>
+            </ButtonGroup>
+        </Grid>
     </Grid>
 };
 

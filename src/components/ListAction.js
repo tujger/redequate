@@ -32,21 +32,21 @@ const useStyles = makeStyles(theme => createStyles({
 const listAction = props => {
     const {action, itemButton, toolbarButton, variant} = props;
 
-    const {label: itemButtonLabel, icon:itemButtonIcon = <DeleteIcon/>, color = "#00ff00"} = itemButton;
-    const {label: toolbarButtonLabel, icon:toolbarButtonIcon = <DeleteIcon/>, ask} = toolbarButton;
+    const {label: itemButtonLabel, icon: itemButtonIcon = <DeleteIcon/>, color = "#00ff00"} = itemButton;
+    const {label: toolbarButtonLabel, icon: toolbarButtonIcon = <DeleteIcon/>, ask} = toolbarButton;
 
-    const classes = useStyles({color:color});
+    const classes = useStyles({color: color});
 
     return {
         itemButton: props => (<div
             className={classes.itemAction}
             style={props.style || ""}>
             <IconButton
-                className={[classes.button, props.selected ? classes.buttonSelected:""].join(" ")}
+                className={[classes.button, props.selected ? classes.buttonSelected : ""].join(" ")}
                 children={itemButtonIcon}/>
             <span
                 className={[classes.label, props.selected ? classes.labelSelected : ""].join(" ")}
-                children={itemButtonLabel} />
+                children={itemButtonLabel}/>
         </div>),
         action: action,
         toolbarButton: (<Tooltip title={toolbarButtonLabel}>

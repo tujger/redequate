@@ -33,7 +33,7 @@ function AvatarView(props) {
     return <Avatar
         className={[isVerified ? (isAdmin ? classes.admin : null) : classes.notVerified, className || ""].join(" ")}
         onClick={onclick}
-        title={isVerified ? (isAdmin ? "Administrator": null) : "Not verified"}
+        title={isVerified ? (isAdmin ? "Administrator" : null) : "Not verified"}
     >
         {user.public().image && <img src={user.public().image} alt="" className={classes.avatarImage}/>}
         {!user.public().image && user.public().name && user.public().name.substr(0, 1).toUpperCase()}

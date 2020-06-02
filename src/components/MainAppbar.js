@@ -21,12 +21,8 @@ const styles = theme => ({
     title: {
         flex: "1 1 auto"
     },
-    content: {
-
-    },
-    indent: {
-
-    },
+    content: {},
+    indent: {},
     appbar: {}
 });
 
@@ -38,16 +34,16 @@ function MainAppbar(props) {
     return <AppBar position="fixed" className={className}>
         <Toolbar>
             {onHamburgerClick ?
-              <Hidden mdUp implementation="css">
-                  <IconButton
-                      color="inherit"
-                      aria-label="open drawer"
-                      edge="start"
-                      onClick={onHamburgerClick}>
-                      <Menu/>
-                  </IconButton>
-              </Hidden>
-              : null}
+                <Hidden mdUp implementation="css">
+                    <IconButton
+                        color="inherit"
+                        aria-label="open drawer"
+                        edge="start"
+                        onClick={onHamburgerClick}>
+                        <Menu/>
+                    </IconButton>
+                </Hidden>
+                : null}
             <Typography variant="h6" noWrap className={classes.title}>
                 <Switch>
                     {itemsFlat.map((item, index) => <Route

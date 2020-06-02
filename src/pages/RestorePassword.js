@@ -24,15 +24,15 @@ const RestorePassword = (props) => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         firebase.auth().sendPasswordResetEmail(email).then(() => {
-          notifySnackbar({
-              title: "Instructions has sent to e-mail"
+            notifySnackbar({
+                title: "Instructions has sent to e-mail"
             });
             dispatch(ProgressView.HIDE);
             props.history.push(pages.login.route);
         }).catch(error => {
-          notifySnackbar({
-              title: error.message,
-              variant: "error"
+            notifySnackbar({
+                title: error.message,
+                variant: "error"
             });
             dispatch(ProgressView.HIDE);
             setState({...state, error: error.message, requesting: false});

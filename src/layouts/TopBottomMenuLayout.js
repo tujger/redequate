@@ -5,7 +5,6 @@ import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import BottomMenu from "../components/BottomMenu";
 import MainContent from "../components/MainContent";
-import ProgressView from "../components/ProgressView";
 import Snackbar from "../components/Snackbar";
 import StickyHeader from "../components/StickyHeader";
 import TopMenu from "../components/TopMenu";
@@ -33,8 +32,7 @@ const styles = theme => ({
     topmenu: {
         backgroundColor: "#ffffff88",
     },
-    headertitle: {
-    },
+    headertitle: {},
     headerlabel: {
         margin: theme.spacing(1),
     },
@@ -49,8 +47,8 @@ const styles = theme => ({
         marginBottom: -4,
     },
     stickyBottom: {
-      position: "sticky",
-      bottom: 0
+        position: "sticky",
+        bottom: 0
     },
 
 });
@@ -69,7 +67,7 @@ function TopBottomMenuLayout(props) {
         sticky={<TopMenu items={menu} pages={pages} className={classes.topmenu}/>}
         stickyClassName={classes.stickytop}
     >
-        <MainContent firebase={firebase} pages={pages} store={store} user={user} classes={{content:classes.content}}/>
+        <MainContent firebase={firebase} pages={pages} store={store} user={user} classes={{content: classes.content}}/>
         <Grid container justify="center">
             <BottomMenu items={menu} className={classes.footer}/>
             <Grid container justify="center" className={classes.version}>
@@ -95,9 +93,9 @@ TopBottomMenuLayout.propTypes = {
 
 export const topBottomMenuLayout = (state = {random: 0}, action) => {
     if (action.type === TopBottomMenuLayout.REFRESH.type) {
-      return {...state, random: Math.random()};
+        return {...state, random: Math.random()};
     } else {
-      return state;
+        return state;
     }
 };
 

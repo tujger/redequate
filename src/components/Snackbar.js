@@ -40,12 +40,12 @@ const SimpleSnackbar = props => {
 };
 
 SimpleSnackbar.SHOW = "snackbarShow";
-SimpleSnackbar.HIDE = {type:"snackbarHide"};
+SimpleSnackbar.HIDE = {type: "snackbarHide"};
 
-export const snackbar = (state = {open:false, buttonText: "Close", message: "Snackbar text", error:""}, action) => {
-    switch(action.type) {
+export const snackbar = (state = {open: false, buttonText: "Close", message: "Snackbar text", error: ""}, action) => {
+    switch (action.type) {
         case SimpleSnackbar.SHOW:
-            let newState = {open:true};
+            let newState = {open: true};
             if (action.message) newState.message = action.message;
             if (action.buttonText) newState.buttonText = action.buttonText;
             if (action.onButtonClick) newState.onButtonClick = action.onButtonClick;
@@ -58,6 +58,11 @@ export const snackbar = (state = {open:false, buttonText: "Close", message: "Sna
     }
 };
 
-const mapStateToProps = ({snackbar}) => ({open: snackbar.open, buttonText: snackbar.buttonText, message: snackbar.message, error:snackbar.error});
+const mapStateToProps = ({snackbar}) => ({
+    open: snackbar.open,
+    buttonText: snackbar.buttonText,
+    message: snackbar.message,
+    error: snackbar.error
+});
 
 export default connect(mapStateToProps)(SimpleSnackbar);

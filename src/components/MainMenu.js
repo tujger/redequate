@@ -45,11 +45,11 @@ function MainMenu(props) {
                 <List>
                     {list.map((item) => {
                         if (!matchRole(item.roles, user)) return null;
-                        hasItems = true;
-                        if(!firstDone) {
+                        if (!firstDone) {
                             firstDone = true;
                             return null;
                         }
+                        hasItems = true;
                         const activeItem = item.route === location.pathname;
                         return <Link to={item.route}
                                      key={item.route + Math.random()}

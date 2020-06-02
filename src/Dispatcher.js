@@ -16,6 +16,7 @@ import {matchRole, needAuth, theme as defaultTheme} from "./controllers";
 import {watchUserChanged, user} from "./controllers/User";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
+import MainHeader from "./components/MainHeader";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout"));
@@ -31,6 +32,9 @@ const Dispatcher = (props) => {
 
     React.useEffect(() => {
         let firebaseInstance = Firebase(firebaseConfig);
+        window.init = args => {
+            console.log("init args", args);
+        }
         fetchDeviceId();
         if (hasNotifications()) {
             setupReceivingNotifications(firebaseInstance).catch(console.error);
@@ -101,6 +105,7 @@ const DispatcherRoutedBody = withRouter(props => {
                             firebase={firebase}
                             headerImage={headerImage}
                             menu={menu}
+                            name={name}
                             pages={pages}
                             store={store}
                         /></Suspense>
@@ -109,6 +114,7 @@ const DispatcherRoutedBody = withRouter(props => {
                             firebase={firebase}
                             headerImage={headerImage}
                             menu={menu}
+                            name={name}
                             pages={pages}
                             store={store}
                         /></Suspense>)
@@ -117,6 +123,7 @@ const DispatcherRoutedBody = withRouter(props => {
                         firebase={firebase}
                         headerImage={headerImage}
                         menu={menu}
+                        name={name}
                         pages={pages}
                         store={store}
                     /></Suspense>)

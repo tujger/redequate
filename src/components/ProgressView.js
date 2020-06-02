@@ -14,18 +14,18 @@ const ProgressView = props => {
     const classes = useStyles();
 
     return <LinearProgress
-        variant={value === null ? "indeterminate": "determinate"}
+        variant={value === null ? "indeterminate" : "determinate"}
         value={value}
         className={[show ? "" : classes.invisibleProgress, className].join(" ")}/>
 };
 
-ProgressView.SHOW = {type:"show"};
-ProgressView.HIDE = {type:"hide"};
+ProgressView.SHOW = {type: "show"};
+ProgressView.HIDE = {type: "hide"};
 
-export const progressView = (state = {show:false, value:null}, action) => {
-    switch(action.type) {
+export const progressView = (state = {show: false, value: null}, action) => {
+    switch (action.type) {
         case ProgressView.SHOW.type:
-            if(action.value) {
+            if (action.value) {
                 return {show: true, value: +action.value};
             } else {
                 return {show: true, value: null};

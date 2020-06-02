@@ -52,9 +52,9 @@ BottomToolbarLayout.propTypes = {
 
 export const bottomToolbarLayout = (state = {random: 0}, action) => {
     if (action.type === BottomToolbarLayout.REFRESH.type) {
-      return {random: Math.random()};
+        return {random: Math.random()};
     } else {
-      return state;
+        return state;
     }
 };
 

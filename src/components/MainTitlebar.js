@@ -44,8 +44,8 @@ const styles = theme => ({
         right: theme.spacing(1),
     },
     toolbar: {
-       paddingLeft: theme.spacing(1),
-       paddingRight: theme.spacing(1),
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
     }
 });
 
@@ -57,29 +57,30 @@ function MainTitlebar(props) {
 
     const label = itemsFlat.filter(item => item.route === location.pathname).map((item, index) => {
         return needAuth(item.roles, user)
-        ? pages.login.title || pages.login.label :
-          (matchRole(item.roles, user)
-          ? item.title || item.label : pages.notfound.title || pages.notfound.label)
+            ? pages.login.title || pages.login.label :
+            (matchRole(item.roles, user)
+                ? item.title || item.label : pages.notfound.title || pages.notfound.label)
     }).filter(item => !!item)[0];
 
     return <AppBar position="fixed" className={[classes.appbar, className || ""].join(" ")}>
         <Toolbar className={classes.toolbar}>
             {location.pathname !== pages.home.route ?
-            <Button
-                className={classes.back}
-                color="inherit"
-                aria-label="go back"
-                edge="start"
-                onClick={() => {
-                    history.goBack();
-                }}>
-                <BackIcon/>
-                Back
-            </Button> : null}
+                <Button
+                    className={classes.back}
+                    color="inherit"
+                    aria-label="go back"
+                    edge="start"
+                    onClick={() => {
+                        history.goBack();
+                    }}>
+                    <BackIcon/>
+                    Back
+                </Button> : null}
             <Typography variant="h6" noWrap className={classes.title}>
                 {label}
             </Typography>
-            {user.uid() && <Link to={pages.profile.route} className={[classes.label, classes.avatarContainer].join(" ")}>
+            {user.uid() &&
+            <Link to={pages.profile.route} className={[classes.label, classes.avatarContainer].join(" ")}>
                 <AvatarView user={user} className={classes.avatar}/>
             </Link>}
             {/*{user && user.key && <AvatarView user={user} onclick={onavatarclick}/>}*/}

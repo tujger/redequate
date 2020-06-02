@@ -54,11 +54,11 @@ const styles = theme => ({
 
 const calculateOpacityIndent = () => {
     let indent = 100;
-    if(isMobile) {
+    if (isMobile) {
         indent = window.innerWidth / 3;
     } else {
-        indent = window.innerWidth/5;
-        if(indent > 100) indent  = 100;
+        indent = window.innerWidth / 5;
+        if (indent > 100) indent = 100;
     }
     return indent;
 };
@@ -79,34 +79,35 @@ function ListItemComponent(props) {
         let x = mx;
         let removing = false;
         try {
-            if(!down) {
-                if(leftAction && mx > actionIndent) {
+            if (!down) {
+                if (leftAction && mx > actionIndent) {
                     removing = leftAction.action([children.props.data]);
-                } else if(rightAction && mx < -actionIndent) {
+                } else if (rightAction && mx < -actionIndent) {
                     removing = rightAction.action([children.props.data]);
                 }
                 x = 0;
             } else {
-                if(mx > 0 && !leftAction) x = 0;
-                else if(mx < 0 && !rightAction) x = 0;
+                if (mx > 0 && !leftAction) x = 0;
+                else if (mx < 0 && !rightAction) x = 0;
             }
-        } catch(e) {
+        } catch (e) {
             console.error(e);
             notifySnackbar({title: e.message, variant: "error"});
             x = 0;
         }
-        if(ref && ref.current) {
+        if (ref && ref.current) {
             setState({...state, dragging: down, x: x, removing})
         }
     });
-    const bind_ = (process.env.NODE_ENV === "development") ? bind : (isMobile ? bind : () => {});
+    const bind_ = (process.env.NODE_ENV === "development") ? bind : (isMobile ? bind : () => {
+    });
 
     React.useEffect(() => {
         const ref = React.createRef();
         setState({...state, ref});
     }, []);
 
-    if(removing) {
+    if (removing) {
         let sizes = ref.current.getBoundingClientRect();
         ref.current.style.height = sizes.height + "px";
         ref.current.style.overflowY = "hidden";
@@ -116,16 +117,22 @@ function ListItemComponent(props) {
                 setTimeout(() => {
                     setState({...state, removing: false, removed: true});
                 }, 200);
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
             }
         }, 50);
     }
 
-    if(removed) return null;
+    if (removed) return null;
     return <div className={classes.root} ref={ref} key={random}>
-        {leftAction && leftAction.itemButton({selected: x > actionIndent, style:{right:"auto", opacity:(x || 0)/opacityIndent}})}
-        {rightAction && rightAction.itemButton({selected: x < -actionIndent, style:{left:"auto", opacity:-(x || 0)/opacityIndent}})}
+        {leftAction && leftAction.itemButton({
+            selected: x > actionIndent,
+            style: {right: "auto", opacity: (x || 0) / opacityIndent}
+        })}
+        {rightAction && rightAction.itemButton({
+            selected: x < -actionIndent,
+            style: {left: "auto", opacity: -(x || 0) / opacityIndent}
+        })}
         <div
             {...bind_()}
             onContextMenu={onContextMenu ? (evt => {
@@ -144,7 +151,7 @@ function ListItemComponent(props) {
             className={classes.content}
             style={{left: x, touchAction: "pan-y"}}
         >
-          {children}
+            {children}
         </div>
     </div>
 }

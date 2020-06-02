@@ -15,7 +15,7 @@ import {refreshAll} from "../controllers/Store";
 
 const AddUser = (props) => {
     const {dispatch, firebase, pages, store} = props;
-    const [state, setState] = useState({requesting:false, error:""});
+    const [state, setState] = useState({requesting: false, error: ""});
     const {email = "", requesting, error = ""} = state;
 
     const addUser = () => {
@@ -27,15 +27,15 @@ const AddUser = (props) => {
         dispatch(ProgressView.SHOW);
 
         sendConfirmationEmail(firebase, store)({email: email, includeEmail: true})
-          .then(() => {
-              props.history.push(pages.users.route);
-          })
-          .catch(error => {
-              setState({...state, requesting: false, error: error.message});
-          })
-          .finally(() => {
-              refreshAll(store);
-          });
+            .then(() => {
+                props.history.push(pages.users.route);
+            })
+            .catch(error => {
+                setState({...state, requesting: false, error: error.message});
+            })
+            .finally(() => {
+                refreshAll(store);
+            });
     };
 
     return <Grid container>

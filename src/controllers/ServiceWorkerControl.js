@@ -49,6 +49,9 @@ export const serviceWorkerRegister = () => {
 };
 
 export const checkForUpdate = () => new Promise((resolve, reject) => {
+    if (window.JSInterface) {
+        window.JSInterface.log("CHECKFORUPDATE");
+    }
     if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
         window.location.reload();
         resolve("reload");
@@ -59,27 +62,31 @@ export const checkForUpdate = () => new Promise((resolve, reject) => {
     }, 10000);
     return navigator.serviceWorker.ready.then(registration => {
         return registration.update();
-    })
-        .then(registration => {
-            if (!registration.installing && !registration.waiting) {
-                notifySnackbar({title: "You already use the latest version"});
-                resolve("latest");
-            } else if (registration.waiting) {
-                notifySnackbar({
-                    buttonLabel: "Activate",
-                    onButtonClick: () => {
-                        activateUpdate(registration);
-                    },
-                    priority: "high",
-                    title: "New version available",
-                    variant: "warning"
-                });
-                resolve("waiting");
-            } else {
-                resolve("installing");
-            }
-        })
-        .finally(() => {
-            clearTimeout(timeout);
-        });
+    }).then(registration => {
+        if (!registration) {
+
+            window.location.reload();
+            resolve("reload");
+        } else if (!registration.installing && !registration.waiting) {
+            notifySnackbar({title: "You already use the latest version"});
+            resolve("latest");
+        } else if (registration.waiting) {
+            notifySnackbar({
+                buttonLabel: "Activate",
+                onButtonClick: () => {
+                    activateUpdate(registration);
+                },
+                priority: "high",
+                title: "New version available",
+                variant: "warning"
+            });
+            resolve("waiting");
+        } else {
+            resolve("installing");
+        }
+    }).catch(error => {
+        reject(error);
+    }).finally(() => {
+        clearTimeout(timeout);
+    });
 });
