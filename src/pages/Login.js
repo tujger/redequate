@@ -6,7 +6,6 @@ import ProgressView from "../components/ProgressView";
 import {Link, Redirect, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
@@ -21,14 +20,13 @@ import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 
 const Login = (props) => {
-    const {signup = true, history, location, popup = true, dispatch, pages, firebase, store} = props;
+    const {history, location, popup = true, dispatch, pages, firebase, store, layout = <LoginLayout/>} = props;
     const [state, setState] = React.useState({
         email: "",
         password: "",
-        error: "",
         requesting: false
     });
-    const {email, password, error, requesting} = state;
+    const {email, password, requesting} = state;
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -103,8 +101,8 @@ const Login = (props) => {
 
     const loginError = error => {
         dispatch(ProgressView.HIDE);
-        console.error(error);
-        setState({...state, error: error.message, requesting: false});
+        notifySnackbar(error);
+        setState({...state, requesting: false});
     };
 
     if (!popup && window.localStorage.getItem(pages.login.route)) {
@@ -116,6 +114,14 @@ const Login = (props) => {
         return <Redirect to={pages.profile.route}/>
     }
 
+    return <layout.type {...props} {...layout.props} email={email} history={props.history} onChangeEmail={ev => {
+        setState({...state, email: ev.target.value});
+    }} onChangePassword={ev => {
+        setState({...state, password: ev.target.value});
+    }} onRequestGoogle={requestLoginGoogle} onRequestLogin={requestLoginPassword} pages={pages} password={password} disabled={requesting}/>
+};
+
+const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword, onRequestLogin, onRequestGoogle, pages, history, signup = true}) => {
     return <Grid container>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems="flex-end">
@@ -124,12 +130,10 @@ const Login = (props) => {
             </Grid>
             <Grid item xs>
                 <TextField
-                    disabled={requesting}
+                    disabled={disabled}
                     label="E-mail"
                     fullWidth
-                    onChange={ev => {
-                        setState({...state, email: ev.target.value});
-                    }}
+                    onChange={onChangeEmail}
                     value={email}
                 />
             </Grid>
@@ -141,23 +145,11 @@ const Login = (props) => {
             </Grid>
             <Grid item xs>
                 <PasswordField
-                    disabled={requesting}
+                    disabled={disabled}
                     label={"Password"}
-                    onChange={ev => {
-                        setState({...state, password: ev.target.value});
-                    }}
+                    onChange={onChangePassword}
                     value={password}
                 />
-            </Grid>
-        </Grid>
-        <Grid container spacing={1} alignItems="flex-end">
-            <Grid item>
-                <Box m={1.5}/>
-            </Grid>
-            <Grid item>
-                <FormHelperText error>
-                    {error}
-                </FormHelperText>
             </Grid>
         </Grid>
         <Grid container spacing={1} alignItems="flex-end">
@@ -169,29 +161,30 @@ const Login = (props) => {
             </Grid>
         </Grid>
         <Box m={1}/>
-        <ButtonGroup variant="contained" color="primary" size="large" fullWidth>
-            <Button onClick={requestLoginPassword}>
+        <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large" fullWidth>
+            <Button onClick={onRequestLogin}>
                 Login
             </Button>
-            {signup && <Button onClick={() => props.history.push(pages.signup.route)}>
+            {signup && <Button onClick={() => history.push(pages.signup.route)}>
                 Sign up
             </Button>}
         </ButtonGroup>
         <Box m={2}/>
         <Grid container justify="center">
-            <Button onClick={requestLoginGoogle}>
+            <Button disabled={disabled} onClick={onRequestGoogle}>
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
                 <Box m={0.5}/>
                 Log in with Google
             </Button>
         </Grid>
     </Grid>
-};
+}
 
 Login.propTypes = {
     signup: PropTypes.bool,
     popup: PropTypes.bool,
     pages: PropTypes.object,
+    layout: PropTypes.any,
 };
 
 export default connect()(withRouter(Login));

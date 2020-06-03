@@ -2,6 +2,7 @@ import React from "react";
 import * as serviceWorker from "../serviceWorker";
 import {notifySnackbar} from "./Notifications";
 import {firebaseMessaging} from "./Firebase";
+import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 
 const activateUpdate = registration => {
     registration.waiting.postMessage({type: "SKIP_WAITING"});
@@ -49,6 +50,13 @@ export const serviceWorkerRegister = () => {
 };
 
 export const checkForUpdate = () => new Promise((resolve, reject) => {
+    if(hasWrapperControlInterface()) {
+        wrapperControlCall({method:"clearCache"}).then(result => {
+            window.location.reload();
+            resolve("reload")
+        }).catch(reject);
+        return;
+    }
     if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
         window.location.reload();
         resolve("reload");
