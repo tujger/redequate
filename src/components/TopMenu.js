@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {MenuItem, withStyles} from "@material-ui/core";
 import {matchRole, user} from "../controllers/User";
 import {Link, useHistory} from "react-router-dom";
+import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
@@ -33,9 +34,9 @@ const styles = theme => ({
         zIndex: 1,
     },
     menusection: {
-        backgroundColor: theme.palette.background.default,
-        color: theme.palette.getContrastText(theme.palette.background.default),
-        boxShadow: theme.shadows[1],
+        // backgroundColor: theme.palette.background.default,
+        // color: theme.palette.getContrastText(theme.palette.background.default),
+        // boxShadow: theme.shadows[1],
     },
     menuitem: {
         fontSize: "inherit"
@@ -68,13 +69,16 @@ const MenuSection = withStyles(styles)(props => {
         {first.label}
         <Popper
             anchorEl={anchor}
-            className={classes.menusection}
+            // className={classes.menusection}
             disablePortal
             onClose={() => setState({...state, anchor: null})}
             open={Boolean(anchor)}
             placement={"bottom-end"}
             role={undefined}>
-            <MenuList>{menu.map((item, index) => {
+            <Paper>
+            <MenuList
+            className={classes.menusection}
+            >{menu.map((item, index) => {
                 if (!matchRole(item.roles, user)) return null;
                 return <Link to={item.route}
                              key={index}
@@ -91,6 +95,7 @@ const MenuSection = withStyles(styles)(props => {
                         key={item.id}/>
                 </Link>
             })}</MenuList>
+            </Paper>
         </Popper>
     </Button>
 });
