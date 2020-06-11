@@ -8,6 +8,7 @@ import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
 import AvatarView from "../components/AvatarView";
+import {usePages} from "../controllers";
 
 const styles = theme => ({
     header: {
@@ -101,7 +102,9 @@ const MenuSection = withStyles(styles)(props => {
 });
 
 const TopMenu = props => {
-    const {items, classes, className, pages} = props;
+    const {items, classes, className} = props;
+    const pages = usePages();
+
     return <div className={["MuiTopMenu-root", classes.topmenu, className].join(" ")}>
         {items.map((list, index) => <MenuSection key={index} items={list}/>)}
         {user.uid() &&

@@ -21,5 +21,7 @@ export {
     Role,
     roleIs,
     fetchUserPrivate,
-    updateUserPrivate
+    updateUserPrivate,
+    useUser,
+    UserData
 } from "./User";

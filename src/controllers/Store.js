@@ -5,20 +5,30 @@ import BottomToolbarLayout, {bottomToolbarLayout} from "../layouts/BottomToolbar
 import {snackbar} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
+import {currentUser} from "./User";
+import {mainAppbar} from "../components/MainAppbar";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
-    const store = createStore(combineReducers({
+    reducers = {
+        bottomToolbarLayout,
         progressView,
         responsiveDrawerLayout,
         snackbar,
         topBottomMenuLayout,
-        bottomToolbarLayout,
-        ...(reducers ? reducers : {})
-    }), initialStore || {});
+        currentUser,
+        mainAppbar,
+        ...reducers};
+    const store = createStore(combineReducers(reducers), initialStore || {});
 
     store.subscribe(state => {
-        window.localStorage.setItem(name, JSON.stringify(store.getState()));
+        const saveable = {};
+        for(let x in store.getState()) {
+            if(reducers[x] && !reducers[x].skipStore) {
+                saveable[x] = store.getState()[x];
+            }
+        }
+        window.localStorage.setItem(name, JSON.stringify(saveable));
     });
     return store;
 };

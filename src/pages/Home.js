@@ -1,8 +1,9 @@
 import React from "react";
-import {withRouter} from "react-router-dom";
+import {useHistory} from "react-router-dom";
 
 const Home = (props) => {
-    const {history} = props;
+    const history = useHistory();
+
     React.useEffect(() => {
         history.entries = [];
         history.index = -1;
@@ -15,4 +16,4 @@ const Home = (props) => {
     </React.Fragment>
 };
 
-export default withRouter(Home);
+export default Home;

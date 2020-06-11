@@ -2,8 +2,9 @@ import React, {Suspense} from "react";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch} from "react-router-dom";
-import {matchRole, needAuth} from "../controllers/User";
+import {matchRole, needAuth, useUser} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
+import {usePages} from "../controllers";
 
 const styles = theme => ({
     content: {
@@ -18,10 +19,12 @@ const styles = theme => ({
 });
 
 const MainContent = props => {
-    const {pages, classes, user} = props;
+    const {classes} = props;
+    const pages = usePages();
+    const user = useUser();
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
-    return <main className={classes.content}>
+    return <main className={[classes.content].join(" ")}>
         <Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => <Route
                 key={index}

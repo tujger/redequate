@@ -1,9 +1,16 @@
 import React from "react";
-import {fetchUserPrivate, fetchUserPublic, updateUserPrivate, updateUserPublic, user} from "../controllers/User";
+import {
+    fetchUserPrivate,
+    fetchUserPublic,
+    logoutUser,
+    updateUserPrivate,
+    updateUserPublic,
+    user
+} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import {Link, Redirect, withRouter} from "react-router-dom";
+import {Link, Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
@@ -13,30 +20,41 @@ import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
 import GoogleLogo from "../images/google-logo.svg";
 import PropTypes from "prop-types";
-import {connect} from "react-redux";
+import {useDispatch} from "react-redux";
 import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
-import {fetchDeviceId} from "../controllers/General";
+import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 
 const Login = (props) => {
-    const {history, location, popup = true, dispatch, pages, firebase, store, layout = <LoginLayout/>} = props;
+    const {popup = true, layout = <LoginLayout/>} = props;
     const [state, setState] = React.useState({
         email: "",
         password: "",
         requesting: false
     });
     const {email, password, requesting} = state;
+    const pages = usePages();
+    const dispatch = useDispatch();
+    const store = useStore();
+    const firebase = useFirebase();
+    const location = useLocation();
+    const history = useHistory();
+
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         const provider = new firebase.auth.GoogleAuthProvider();
         try {
             if (popup) {
-                setState({...state, requesting: true});
-                firebase.auth().signInWithPopup(provider).then(loginSuccess).catch(loginError);
+                logoutUser(firebase)().then(() => {
+                    setState({...state, requesting: true});
+                    firebase.auth().signInWithPopup(provider).then(loginSuccess).catch(loginError);
+                }).catch(loginError)
             } else {
-                window.localStorage.setItem(pages.login.route, provider.providerId);
-                firebase.auth().signInWithRedirect(provider);
+                logoutUser(firebase)().then(() => {
+                    window.localStorage.setItem(pages.login.route, provider.providerId);
+                    firebase.auth().signInWithRedirect(provider);
+                }).catch(loginError)
             }
         } catch(error) {
             loginError(error);
@@ -61,12 +79,12 @@ const Login = (props) => {
                     created: firebase.database.ServerValue.TIMESTAMP,
                     updated: firebase.database.ServerValue.TIMESTAMP,
                     email,
-                    emailVerified,
                     name,
                     phone,
                     image,
                     provider,
                     ...data,
+                    emailVerified,
                     current: true
                 }))
             .then(() => fetchUserPrivate(firebase)(uid, fetchDeviceId()))
@@ -91,6 +109,7 @@ const Login = (props) => {
                 if (location && location.pathname === pages.login.route) {
                     history.push(pages.profile.route);
                 }
+                dispatch({type: "user", user});
             })
             .catch(loginError)
             .finally(() => {
@@ -102,12 +121,13 @@ const Login = (props) => {
     const loginError = error => {
         dispatch(ProgressView.HIDE);
         notifySnackbar(error);
+        logoutUser(firebase)();
         setState({...state, requesting: false});
     };
 
     if (!popup && window.localStorage.getItem(pages.login.route)) {
-        window.localStorage.removeItem(pages.login.route);
         firebase.auth().getRedirectResult().then(loginSuccess).catch(loginError);
+        window.localStorage.removeItem(pages.login.route);
         return <LoadingComponent/>;
     }
     if (user.uid()) {
@@ -187,4 +207,4 @@ Login.propTypes = {
     layout: PropTypes.any,
 };
 
-export default connect()(withRouter(Login));
+export default withRouter(Login);

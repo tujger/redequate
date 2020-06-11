@@ -10,21 +10,24 @@ import ProgressView from "../components/ProgressView";
 import {
     fetchUserPrivate,
     logoutUser,
-    sendConfirmationEmail,
+    sendConfirmationEmail, sendVerificationEmail,
     updateUserPrivate,
     user,
     watchUserChanged
 } from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
-import {connect} from "react-redux";
+import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
-import {fetchDeviceId} from "../controllers/General";
+import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 
 const Profile = (props) => {
-    const {dispatch, firebase, pages, store} = props;
     const [state, setState] = React.useState({disabled: false});
     const {disabled} = state;
+    const pages = usePages();
+    const store = useStore();
+    const firebase = useFirebase();
+    const dispatch = useDispatch();
 
     React.useEffect(() => {
         watchUserChanged(firebase);
@@ -102,7 +105,7 @@ const Profile = (props) => {
                     refreshAll(store);
                     dispatch(ProgressView.SHOW);
                     console.log(user)
-                    sendConfirmationEmail(firebase, store)({email: user.public().email})
+                    sendVerificationEmail(firebase)
                         .then(() => {
                             refreshAll(store);
                         }).catch(error => {
@@ -135,4 +138,4 @@ const Profile = (props) => {
     </div>;
 };
 
-export default connect()(withRouter(Profile));
+export default withRouter(Profile);

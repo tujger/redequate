@@ -26,7 +26,52 @@ const styles = theme => ({
 });
 
 const ProfileComponent = (props) => {
-    const {classes, user} = props;
+    const {classes, user, userData} = props;
+
+    if(userData) {
+        console.log(userData)
+        return <Grid container>
+            {userData.public.image && <Grid item xs>
+                <img src={userData.public.image} alt="" className={classes.image}/>
+            </Grid>}
+            {userData.public.provider && userData.public.provider === "google.com" && <Grid item xs>
+                <Grid container justify="flex-end">
+                    <img src={GoogleLogo} width={40} height={40} alt=""/>
+                </Grid>
+                <Grid container justify="flex-end">
+                    <Typography>Signed with Google</Typography>
+                </Grid>
+            </Grid>}
+            {userData.public.provider && userData.public.provider === "password" && <Grid item xs>
+                <Grid container justify="flex-end">
+                    <UserIcon/>
+                    {/*<img src={GoogleLogo} width={40} height={40} alt=""/>*/}
+                </Grid>
+                <Grid container justify="flex-end">
+                    <Typography>Signed with e-mail</Typography>
+                </Grid>
+                {!userData.public.emailVerified && <Grid container justify="flex-end">
+                    <Typography>Not verified</Typography>
+                </Grid>}
+            </Grid>}
+            <Grid container>
+                <Typography>{userData.public.name}</Typography>
+            </Grid>
+            <Grid container>
+                <Typography>{userData.public.email}</Typography>
+            </Grid>
+            <Grid container>
+                <Typography>{userData.public.address}</Typography>
+            </Grid>
+            <Grid container>
+                <Typography>{userData.public.phone}</Typography>
+            </Grid>
+            <Grid container>
+                <Typography>{new Date(userData.public.created).toLocaleString()}</Typography>
+            </Grid>
+        </Grid>
+    }
+
     return <Grid container>
         {user.public().image && <Grid item xs>
             <img src={user.public().image} alt="" className={classes.image}/>

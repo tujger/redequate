@@ -6,10 +6,11 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import BackIcon from "@material-ui/icons/ChevronLeft";
-import {Link, Route, Switch, withRouter} from "react-router-dom";
+import {Link, Route, Switch, withRouter, useHistory, useLocation} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
 import {matchRole, needAuth, user} from "../controllers/User";
+import {usePages} from "../controllers";
 
 const styles = theme => ({
     appbar: {
@@ -50,10 +51,12 @@ const styles = theme => ({
 });
 
 function MainTitlebar(props) {
-    const {pages, classes, className, onHamburgerClick, history} = props;
+    const {classes, className, onHamburgerClick} = props;
+    const pages = usePages();
+    const location = useLocation();
+    const history = useHistory();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
-    const {location} = history;
 
     const label = itemsFlat.filter(item => item.route === location.pathname).map((item, index) => {
         return needAuth(item.roles, user)

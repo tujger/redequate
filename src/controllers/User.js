@@ -41,30 +41,32 @@ const User = (data) => {
 
 export default User;
 
-export const fetchUserPublic = firebase => uid => new Promise((resolve, reject) => {
-    fetchUserSection(firebase, "public", uid, resolve, reject);
+export const fetchUserPublic = firebase => (uid, child) => new Promise((resolve, reject) => {
+    fetchUserSection(firebase, "public", uid, child, resolve, reject);
 });
 
 export const fetchUserPrivate = firebase => (uid, deviceId) => new Promise((resolve, reject) => {
-    let section = "private";
-    if (deviceId) {
-        section = "private/" + deviceId;
-    }
-    fetchUserSection(firebase, section, uid, resolve, reject);
+    fetchUserSection(firebase, "private", uid, deviceId, resolve, reject);
 });
 
-const fetchUserSection = (firebase, section, uid, onsuccess, onerror) => {
+const fetchUserSection = (firebase, section, uid, child, onsuccess, onerror) => {
     const db = firebase.database();
     if (uid) {
-        db.ref("users").child(uid).child(section).once("value").then(snapshot => {
+        let ref = db.ref("users_" + section).child(uid);
+        if(child) ref = ref.child(child);
+        ref.once("value").then(snapshot => {
             let val = snapshot.val() || {};
-            db.ref("users").child(uid).child("role").once("value").then(snapshot => {
-                val.role = snapshot.val();
+            if(child) {
                 onsuccess && onsuccess(val);
-            }).catch(error => {
-                val.role = val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED;
-                onsuccess && onsuccess(val);
-            });
+            } else {
+                db.ref("roles").child(uid).once("value").then(snapshot => {
+                    val.role = snapshot.val() || (val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED);
+                    onsuccess && onsuccess(val);
+                }).catch(error => {
+                    val.role = val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED;
+                    onsuccess && onsuccess(val);
+                });
+            }
         }).catch(onerror);
     } else {
         try {
@@ -77,38 +79,51 @@ const fetchUserSection = (firebase, section, uid, onsuccess, onerror) => {
 };
 
 export const updateUserPublic = firebase => (uid, props) => new Promise((resolve, reject) => {
-    updateUserSection(firebase, "public", uid, props, resolve, reject);
+    try {
+        console.log(props);
+        const name = props.name;
+        if(name) {
+            const sort = `${props.name.trim().toLowerCase()}_${uid}`;
+            firebase.database().ref("users_public").child(uid).child("_sort_name").set(sort);
+        } else {
+        }
+    } catch(e) {
+        console.error(e);
+    }
+    updateUserSection(firebase, "public", uid, null, props, resolve, reject);
 });
 
 export const updateUserPrivate = firebase => (uid, deviceId = "", props) =>
     new Promise((resolve, reject) => {
-        let section = "private";
         if (!props && deviceId instanceof Object) {
             props = deviceId;
-        } else {
-            section = "private/" + deviceId;
+            deviceId = null;
         }
-        updateUserSection(firebase, section, uid, props, resolve, reject);
+        updateUserSection(firebase, "private", uid, deviceId, props, resolve, reject);
     });
 
-const updateUserSection = (firebase, section, uid, props, onsuccess, onerror) => {
+const updateUserSection = (firebase, section, uid, child, props, onsuccess, onerror) => {
     const db = firebase.database();
     if (uid) {
-        fetchUserSection(firebase, section, uid, data => {
+        fetchUserSection(firebase, section, uid, child, data => {
             const {role, uid: ignored1, ...existed} = data;
             const {current, role: ignored2, uid: ignored3, ...updates} = props;
             let val = {...existed, ...updates};
-            db.ref("users").child(uid).child(section).set(val).then(() => {
-                return db.ref("users").child(uid).child("public/updated").once("value");
+            let ref = db.ref("users_" + section).child(uid);
+            if(child) ref = ref.child(child);
+            ref.set(val).then(() => {
+                return db.ref("users_public").child(uid).child("updated").once("value");
             }).then(updated => {
                 if (current || user.uid() === uid) {
-                    user.set(section.split("/")[0], val);
+                    user.set(section, val);
                     user.set("uid", uid);
-                    user.set("role", role);
                     user.set("updated", updated.val());
                     window.localStorage.setItem("user_uid", uid);
-                    window.localStorage.setItem("user_role", role);
                     window.localStorage.setItem("user_" + (section.split("/")[0]), JSON.stringify(val));
+                    if(role) {
+                        user.set("role", role);
+                        window.localStorage.setItem("user_role", role);
+                    }
                 }
                 onsuccess && onsuccess(val);
             });
@@ -130,11 +145,23 @@ export const firstOf = (...args) => {
 export const watchUserChanged = firebase => {
     try {
         firebase.auth().onAuthStateChanged(result => {
-            console.log("[AuthStateChanged]", result);
+            console.log("[AuthStateChanged]", user.uid(), result && result.toJSON());
+            if(user.public() && !user.public().emailVerified && result.emailVerified) {
+                notifySnackbar({
+                    buttonLabel: "Log out",
+                    onButtonClick: () => {
+                        logoutUser(firebase)();
+                        window.location.reload();
+                    },
+                    title: "Your profile has been changed. Please relogin to update",
+                    variant: "warning"
+                })
+                return;
+            }
             if (result && result.uid) {
-                firebase.database().ref("users").child(result.uid).child("public/updated").once("value")
+                firebase.database().ref("users_public").child(result.uid).child("updated").once("value")
                     .then(data => {
-                        if (data && user && data.val() > user.public().updated) {
+                        if (data && user && user.uid() && data.val() > user.public().updated) {
                             notifySnackbar({
                                 buttonLabel: "Log out",
                                 onButtonClick: () => {
@@ -153,7 +180,7 @@ export const watchUserChanged = firebase => {
     }
 };
 
-export const logoutUser = firebase => () => {
+export const logoutUser = firebase => async () => {
     window.localStorage.removeItem("user_public");
     window.localStorage.removeItem("user_private");
     window.localStorage.removeItem("user_uid");
@@ -163,7 +190,8 @@ export const logoutUser = firebase => () => {
     user.set("public", null);
     user.set("role", null);
     user.set("uid", null);
-    firebase.auth().signOut();
+    await firebase.auth().signOut();
+    console.log("[Logout]", user);
 };
 
 export const user = User();
@@ -173,6 +201,7 @@ user.set("role", window.localStorage.getItem("user_role"));
 user.set("uid", window.localStorage.getItem("user_uid"));
 
 export const currentRole = user => {
+    if(user && user._userData) return user.role;
     if (user && user.uid() && !user.role()) {
         // console.error("Current user role is invalid, reset ro USER");
         return Role.USER;
@@ -225,3 +254,205 @@ export const sendConfirmationEmail = (firebase, store) => options => new Promise
         reject(error);
     });
 });
+
+export const sendVerificationEmail = (firebase) => new Promise((resolve, reject) => {
+    firebase.auth().currentUser.sendEmailVerification().then(() => {
+        notifySnackbar({
+            title: "Confirmation email has sent"
+        });
+        resolve();
+    }).catch(error => {
+        notifySnackbar({
+            title: error.message,
+            variant: "error"
+        });
+        reject(error);
+    });
+});
+
+export const useUser = () => {
+    return user;
+}
+
+export const currentUser = (state = {
+    public: null,
+    private: null,
+    uid: null,
+    role: null,
+}, action) => {
+    const {type, user, ...rest} = action;
+    if (type === "user") {
+        const {
+            public:publicData = () => null,
+            private:privateData = () => null,
+            uid = () => null,
+            role = () => null
+        } = user;
+        return {...state, uid:uid(), role:role(), public:publicData(), private:privateData(), ...rest};
+    } else {
+        return state;
+    }
+};
+
+
+
+// new stuff
+export const UserData = function (firebase) {
+    let _id, _public = {}, _private = {}, _role = null, _name = "", _image = "", _updated, _requestedTimestamp, _error,
+    _loaded = {};
+
+    const _fetch = async ref => {
+        try {
+            return await ref.once("value");
+        } catch(error) {
+            console.error(error);
+            _error = error;
+        }
+    }
+
+    const _body = {
+        get id() {
+            return _id
+        },
+        get image() {
+            return _image;
+        },
+        get name() {
+            return _name;
+        },
+        get public() {
+            return _public
+        },
+        get initials() {
+            if(_name) return _name.substr(0,1);
+            return null;
+        },
+        get role() {
+            return _role || Role.USER;
+        },
+        get verified() {
+            return _public.emailVerified || false;
+        },
+        create: (id, role, data) => {
+            if(!data) {
+                data = role;
+                role = null;
+            }
+            let {public:publicData, private:privateData} = data;
+            if(!publicData) publicData = data;
+            if(!id || !publicData) throw new Error("Not enough data to create UserData instance.")
+            if(publicData) _public = publicData || {};
+            if(privateData) _private = privateData || {};
+            _name = _public.name || "";
+            _role = role;
+            return _body;
+        },
+        fetch: async (id, options = [UserData.PUBLIC]) => {
+            if(id instanceof Array) {
+                options = id;
+            } else if(id && _id && id !== _id) {
+                throw new Error(`Another user id fetched: ${id}!=${_id}.`);
+            } else if(id) {
+                _id = id;
+            }
+            if(!_id) throw new Error("Can't fetch unidentified user data");
+            let fetchFull = options.indexOf(UserData.FULL) >= 0;
+            let fetchImage = options.indexOf(UserData.IMAGE) >= 0;
+            let fetchName = options.indexOf(UserData.NAME) >= 0;
+            let fetchRole = options.indexOf(UserData.ROLE) >= 0;
+            let fetchPublic = options.indexOf(UserData.PUBLIC) >= 0;
+            let fetchPrivate = options.indexOf(UserData.PRIVATE) >= 0;
+            let fetchUpdated = options.indexOf(UserData.UPDATED) >= 0;
+            let force = options.indexOf(UserData.FORCE) >= 0;
+
+            let ref = firebase.database().ref("users_public");
+            let snap;
+            if((!_loaded.public || force) && (fetchPublic || fetchFull)) {
+                snap = await _fetch(ref.child(_id));
+                _public = snap.val() || {};
+                _image = _public.image;
+                _name = _public.name;
+                _updated = _public.updated;
+                _loaded = {..._loaded, public:true, name:true, updated: true, image:true};
+            }
+            if(fetchPrivate === true || fetchFull) {
+                snap = await _fetch(firebase.database().ref("users_private").child(_id));
+                _private = snap.val() || {};
+                _loaded = {..._loaded, private:true};
+            } else if(fetchPrivate && fetchPrivate !== false) {
+                snap = await _fetch(firebase.database().ref("users_private").child(_id).child(fetchPrivate));
+                _private[fetchPrivate] = snap.val() || {};
+                _loaded = {..._loaded, private:true};
+            }
+            if((!_loaded.role || force) && (fetchRole || fetchFull)) {
+                snap = await _fetch(firebase.database().ref("roles").child(_id));
+                _role = snap.val();
+                _loaded = {..._loaded, role:true};
+            }
+            if((!_loaded.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
+                snap = await _fetch(ref.child(_id).child("updated"));
+                _updated = snap.val();
+                _loaded = {..._loaded, updated:true};
+            }
+            if((!_loaded.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
+                snap = await _fetch(ref.child(_id).child("name"));
+                _name = snap.val();
+                _public.name = _name;
+                _loaded = {..._loaded, name:true};
+            }
+            if((!_loaded.image || force) && (fetchImage && !fetchFull && !fetchPublic)) {
+                snap = await _fetch(ref.child(_id).child("image"));
+                _image = snap.val();
+                _public.image = _image;
+                _loaded = {..._loaded, image:true};
+            }
+            _requestedTimestamp = new Date().getTime();
+            return _body;
+        },
+        private: deviceId => {
+            return _private[deviceId] || _private;
+        },
+        save: async () => {
+
+        },
+        savePublic: async () => {
+
+        },
+        savePrivate: async () => {
+
+        },
+        toString: () => {
+            return `[UserData] id: \x1b[34m${_id}\x1b[30m, name: \x1b[34m${_name}\x1b[30m, role: \x1b[34m${_role}\x1b[30m, public: ${JSON.stringify(_public)}`
+        },
+        update: (key = data, data) => {
+            if(key === data) {
+                key = null;
+            }
+            if(!key && data.constructor.name === "String") throw new Error("Value defined without key");
+            if(!key) {
+                const {public:publicData, private:privateData, role, name, id} = data;
+                if(publicData) _public = publicData || {};
+                if(privateData) _private = privateData || {};
+                if(role) _role = role;
+                if(id) _id = id;
+                if(name) {
+                    _name = name;
+                    _public.name = _name;
+                }
+            } else {
+                console.log("[UserData] still ignoring", key, data);
+            }
+        },
+        _userData: true,
+    }
+    return _body;
+}
+UserData.PUBLIC = "public";
+UserData.PRIVATE = "private";
+UserData.ROLE = "role";
+UserData.NAME = "name";
+UserData.IMAGE = "image";
+UserData.UPDATED = "updated";
+UserData.FULL = "full";
+UserData.FORCE = "force";
+

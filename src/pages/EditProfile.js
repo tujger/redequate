@@ -12,15 +12,15 @@ import MailIcon from "@material-ui/icons/Mail";
 import NameIcon from "@material-ui/icons/Person";
 import PhoneIcon from "@material-ui/icons/Phone";
 import EmptyAvatar from "@material-ui/icons/Person";
-import {Redirect, withRouter} from "react-router-dom";
+import {Redirect, withRouter, useHistory, useLocation} from "react-router-dom";
 import User, {updateUserPublic} from "../controllers/User";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
-import {connect} from "react-redux";
+import {connect, useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar} from "../controllers";
+import {notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
 
 const styles = theme => ({
     image: {
@@ -57,7 +57,12 @@ const styles = theme => ({
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
-    let {data, location = {}, history, dispatch, firebase, store, classes} = props;
+    let {data, classes} = props;
+    const dispatch = useDispatch();
+    const store = useStore();
+    const firebase = useFirebase();
+    const history = useHistory();
+
     const {state: givenState = {}} = location;
     const {tosuccessroute = "/", data: givenData} = givenState;
 
@@ -257,4 +262,4 @@ const EditProfile = (props) => {
     </Grid>
 };
 
-export default connect()(withRouter(withStyles(styles)(EditProfile)));
+export default withStyles(styles)(EditProfile);

@@ -8,6 +8,7 @@ import "firebase/storage";
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
     firebase.initializeApp(firebaseConfig);
+    firebase.auth().getRedirectResult().then(console.log)
     if (process.env.NODE_ENV === "development") {
         // firebase.functions().useFunctionsEmulator("http://localhost:5001");
     }

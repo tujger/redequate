@@ -1,15 +1,20 @@
 import React from "react";
 import {logoutUser} from "../controllers/User";
-import {withRouter} from "react-router-dom";
+import {useHistory, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
+import {useFirebase, usePages, useStore} from "../controllers";
 
 const Logout = (props) => {
-    const {immediate = true, history, pages, firebase, store} = props;
+    const {immediate = true} = props;
+    const pages = usePages();
+    const store = useStore();
+    const firebase = useFirebase();
+    const history = useHistory();
 
     const doLogout = () => {
         logoutUser(firebase)();

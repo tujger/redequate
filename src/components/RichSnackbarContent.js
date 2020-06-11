@@ -51,7 +51,10 @@ const RichSnackbarContent = React.forwardRef((props, ref) => {
             size="small" aria-label="close" color={color}
             onClickCapture={((evt) => {
                 evt.stopPropagation();
-                onButtonClick ? onButtonClick(evt) : closeHandler();
+                if(onButtonClick) {
+                    if(onButtonClick(evt) === true) closeHandler();
+                    else closeHandler();
+                }
             })}>
             {buttonLabel}
         </Button>;

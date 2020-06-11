@@ -8,10 +8,10 @@ import MainContent from "../components/MainContent";
 import Snackbar from "../components/Snackbar";
 import StickyHeader from "../components/StickyHeader";
 import TopMenu from "../components/TopMenu";
-import {user} from "../controllers/User";
 import {connect} from "react-redux";
 import {Route, Switch} from "react-router-dom";
 import {NotificationsSnackbar} from "../controllers/Notifications";
+import {usePages} from "../controllers";
 
 const styles = theme => ({
     indent: {
@@ -19,8 +19,8 @@ const styles = theme => ({
         height: "2.5rem",
     },
     content: {
-        marginLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
-        marginRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
     },
     headercontainer: {
         position: "relative",
@@ -54,7 +54,8 @@ const styles = theme => ({
 });
 
 function TopBottomMenuLayout(props) {
-    const {menu, classes, firebase, headerImage, pages, store, copyright} = props;
+    const {menu, classes, headerImage, copyright} = props;
+    const pages = usePages();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
@@ -62,12 +63,11 @@ function TopBottomMenuLayout(props) {
         title={<Switch>
             {itemsFlat.map((item, index) => <Route key={index} path={item.route} exact={true} children={item.label}/>)}
         </Switch>}
-        firebase={firebase}
         headerImage={headerImage}
-        sticky={<TopMenu items={menu} pages={pages} className={classes.topmenu}/>}
+        sticky={<TopMenu items={menu} className={classes.topmenu}/>}
         stickyClassName={classes.stickytop}
     >
-        <MainContent firebase={firebase} pages={pages} store={store} user={user} classes={{content: classes.content}}/>
+        <MainContent classes={{content: classes.content}}/>
         <Grid container justify="center">
             <BottomMenu items={menu} className={classes.footer}/>
             <Grid container justify="center" className={classes.version}>
@@ -98,6 +98,7 @@ export const topBottomMenuLayout = (state = {random: 0}, action) => {
         return state;
     }
 };
+topBottomMenuLayout.skipStore = true;
 
 const mapStateToProps = ({topBottomMenuLayout}) => ({random: (topBottomMenuLayout || {random: 0}).random});
 

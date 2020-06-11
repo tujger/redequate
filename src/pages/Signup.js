@@ -1,5 +1,5 @@
 import React from "react";
-import {Redirect, withRouter} from "react-router-dom";
+import {Redirect, useHistory} from "react-router-dom";
 import {fetchUserPublic, sendConfirmationEmail, updateUserPublic, user} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
@@ -13,11 +13,11 @@ import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
 import PropTypes from "prop-types";
-import {connect} from "react-redux";
-import {refreshAll} from "../controllers";
+import {useDispatch} from "react-redux";
+import {refreshAll, useFirebase, usePages, useStore} from "../controllers";
 
 const Signup = (props) => {
-    const {signup = true, dispatch, firebase, pages, store} = props;
+    const {signup = true} = props;
     const [state, setState] = React.useState({
         email: "",
         password: "",
@@ -26,6 +26,13 @@ const Signup = (props) => {
         requesting: false
     });
     const {email, password, confirm, error, requesting} = state;
+    const pages = usePages();
+    const dispatch = useDispatch();
+    const store = useStore();
+    const firebase = useFirebase();
+    const history = useHistory();
+
+
     const requestSignupPassword = () => {
         if (!email) {
             setState({...state, requesting: false, error: "Empty e-mail"});
@@ -49,7 +56,7 @@ const Signup = (props) => {
         fetchUserPublic(firebase)(response.user.uid)
             .then(data => updateUserPublic(firebase)(response.user.uid, {
                 created: firebase.database.ServerValue.TIMESTAMP,
-                ...response.user,
+                ...response.user.toJSON(),
                 ...data,
                 updated: firebase.database.ServerValue.TIMESTAMP,
                 current: true
@@ -95,7 +102,7 @@ const Signup = (props) => {
             .then(() => updateUserPublic(firebase)({...response.user, current: true}))
             .then(() => {
                 refreshAll(store);
-                props.history.push(pages.edituser.route);
+                history.push(pages.edituser.route);
             })
             .catch(signupError);
         return <LoadingComponent/>
@@ -164,7 +171,7 @@ const Signup = (props) => {
                 Sign up
             </Button>
             <Button
-                onClick={() => props.history.push(pages.login.route)}
+                onClick={() => history.push(pages.login.route)}
             >
                 Cancel
             </Button>
@@ -177,4 +184,4 @@ Signup.propTypes = {
     signup: PropTypes.bool,
 };
 
-export default connect()(withRouter(Signup));
+export default Signup;

@@ -10,6 +10,7 @@ import MainContent from "../components/MainContent";
 import Snackbar from "../components/Snackbar";
 import {connect} from "react-redux";
 import {NotificationsSnackbar} from "../controllers/Notifications";
+import {usePages} from "../controllers";
 
 const styles = theme => ({
     content: {
@@ -21,16 +22,14 @@ const styles = theme => ({
 });
 
 function BottomToolbarLayout(props) {
-    const {menu, classes, firebase, headerImage, pages, store, copyright, match} = props;
+    const {menu, classes} = props;
 
     return <React.Fragment><CssBaseline/>
         <MainTitlebar
             {...props}
-            pages={pages}
         />
         <Typography className={classes.indent}/>
-        <MainContent firebase={firebase} pages={pages} store={store} user={user}
-                     classes={{content: classes.content}}/>
+        <MainContent classes={{content: classes.content}}/>
         <Typography className={classes.indent}/>
         <BottomToolbar items={menu}/>
         <Snackbar/>
@@ -57,6 +56,7 @@ export const bottomToolbarLayout = (state = {random: 0}, action) => {
         return state;
     }
 };
+bottomToolbarLayout.skipStore = true;
 
 const mapStateToProps = ({bottomToolbarLayout}) => ({random: bottomToolbarLayout.random});
 

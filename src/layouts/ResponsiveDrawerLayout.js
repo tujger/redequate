@@ -14,7 +14,6 @@ import MainContent from "../components/MainContent";
 import MainHeader from "../components/MainHeader";
 import MainMenu from "../components/MainMenu";
 import Snackbar from "../components/Snackbar";
-import {user} from "../controllers/User";
 import {connect} from "react-redux";
 import {NotificationsSnackbar} from "../controllers/Notifications";
 
@@ -41,7 +40,7 @@ const styles = theme => ({
 });
 
 function ResponsiveDrawerLayout(props) {
-    const {container, menu, classes, firebase, headerImage, pages, store, copyright, name} = props;
+    const {container, menu, classes, headerImage, copyright, name} = props;
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
 
@@ -76,7 +75,6 @@ function ResponsiveDrawerLayout(props) {
                 <MainHeader image={headerImage}
                             name={name}
                             onClick={() => setState({...state, mobileOpen: false})}
-                            pages={pages}
                 />
                 <Divider/>
                 <MainMenu items={menu} onClick={() => {
@@ -94,7 +92,6 @@ function ResponsiveDrawerLayout(props) {
                 <MainHeader image={headerImage}
                             name={name}
                             onClick={() => setState({...state, mobileOpen: false})}
-                            pages={pages}
                 />
                 <Divider/>
                 <MainMenu items={menu} onClick={(ev) => {
@@ -110,12 +107,10 @@ function ResponsiveDrawerLayout(props) {
         <MainAppbar
             className={classes.appbar}
             {...props}
-            pages={pages}
             onHamburgerClick={handleDrawerToggle}
         />
         <Typography className={classes.indent}/>
-        <MainContent firebase={firebase} pages={pages} store={store} user={user}
-                     classes={{content: classes.content}}/>
+        <MainContent classes={{content: classes.content}}/>
         <Snackbar/>
         <NotificationsSnackbar/>
     </React.Fragment>
@@ -141,6 +136,7 @@ export const responsiveDrawerLayout = (state = {random: 0}, action) => {
         return state;
     }
 };
+responsiveDrawerLayout.skipStore = true;
 
 const mapStateToProps = ({responsiveDrawerLayout}) => ({random: responsiveDrawerLayout.random});
 

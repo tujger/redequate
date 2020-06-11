@@ -11,6 +11,8 @@ import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
 import {matchRole, needAuth, user} from "../controllers/User";
+import {connect} from "react-redux";
+import {usePages} from "../controllers";
 
 const styles = theme => ({
     label: {
@@ -27,10 +29,12 @@ const styles = theme => ({
 });
 
 function MainAppbar(props) {
-    const {pages, classes, className, onHamburgerClick} = props;
+    const {classes, className, onHamburgerClick, label} = props;
+    const pages = usePages();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
+    console.log(label)
     return <AppBar position="fixed" className={className}>
         <Toolbar>
             {onHamburgerClick ?
@@ -52,9 +56,9 @@ function MainAppbar(props) {
                             exact={true}
                         >
                             <Link to={pages.home.route} className={classes.label}>
-                                {needAuth(item.roles, user)
+                                {label || (needAuth(item.roles, user)
                                     ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
-                                        ? item.title || item.label : pages.notfound.title || pages.notfound.label)}
+                                        ? item.title || item.label : pages.notfound.title || pages.notfound.label))}
                             </Link>
                         </Route>
                     )}
@@ -80,4 +84,17 @@ MainAppbar.propTypes = {
     onHamburgerClick: PropTypes.func
 };
 
-export default withStyles(styles)(MainAppbar);
+MainAppbar.LABEL = "label";
+export const mainAppbar = (state = {label: ""}, action) => {
+    if (action.type === MainAppbar.LABEL) {
+        console.log(action.label)
+        return {...state, label: action.label};
+    } else {
+        return state;
+    }
+};
+mainAppbar.skipStore = true;
+
+const mapStateToProps = ({mainAppbar}) => ({label: mainAppbar.label});
+
+export default connect(mapStateToProps)(withStyles(styles)(MainAppbar));

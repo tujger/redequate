@@ -1,6 +1,6 @@
 import React from "react";
 import {user} from "../controllers/User";
-import {Redirect, withRouter} from "react-router-dom";
+import {Redirect, useHistory} from "react-router-dom";
 import ProgressView from "../components/ProgressView";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -9,17 +9,22 @@ import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import UserIcon from "@material-ui/icons/Mail";
-import {connect} from "react-redux";
-import {notifySnackbar} from "../controllers";
+import {useDispatch} from "react-redux";
+import {notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
 
 const RestorePassword = (props) => {
-    const {dispatch, firebase, pages} = props;
     const [state, setState] = React.useState({
         email: "",
         error: "",
         requesting: false
     });
     const {email, error, requesting} = state;
+    const pages = usePages();
+    const dispatch = useDispatch();
+    const firebase = useFirebase();
+    const history = useHistory();
+
+
     const requestRestorePassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
@@ -28,7 +33,7 @@ const RestorePassword = (props) => {
                 title: "Instructions has sent to e-mail"
             });
             dispatch(ProgressView.HIDE);
-            props.history.push(pages.login.route);
+            history.push(pages.login.route);
         }).catch(error => {
             notifySnackbar({
                 title: error.message,
@@ -72,13 +77,11 @@ const RestorePassword = (props) => {
             >
                 Restore
             </Button>
-            <Button
-                onClick={() => props.history.push(pages.login.route)}
-            >
+            <Button onClick={() => history.push(pages.login.route)}>
                 Cancel
             </Button>
         </ButtonGroup>
     </Grid>
 };
 
-export default connect()(withRouter(RestorePassword));
+export default RestorePassword;

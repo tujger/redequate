@@ -7,7 +7,7 @@ import withWidth from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
 import Store from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
-import {fetchDeviceId} from "./controllers/General";
+import {fetchDeviceId, usePages, useFirebase, useStore} from "./controllers/General";
 // import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout";
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
@@ -17,6 +17,8 @@ import {watchUserChanged, user} from "./controllers/User";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
+import {useDispatch} from "react-redux";
+import MainAppbar from "./components/MainAppbar";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout"));
@@ -26,19 +28,22 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 // window.history.pushState(null, null, window.location.href);
 
 const Dispatcher = (props) => {
-    const {firebaseConfig, name, theme = defaultTheme, reducers} = props;
-    const [state, setState] = React.useState({firebase: null, store: null});
-    const {firebase, store} = state;
+    const {firebaseConfig, name, theme = defaultTheme, reducers, pages:pagesGiven} = props;
+    const [state, setState] = React.useState({store: null});
+    const {store, firebase} = state;
+    usePages(pagesGiven);
+    useStore(store);
+    useFirebase(firebase);
 
     React.useEffect(() => {
-        let firebaseInstance = Firebase(firebaseConfig);
+        const firebase = Firebase(firebaseConfig);
         installWrapperControl();
         fetchDeviceId();
         if (hasNotifications()) {
-            setupReceivingNotifications(firebaseInstance).catch(console.error);
+            setupReceivingNotifications(firebase).catch(console.error);
         }
-        setState({...state, firebase: firebaseInstance, store: Store(name, reducers)});
-        watchUserChanged(firebaseInstance);
+        setState({...state, firebase, store: Store(name, reducers)});
+        watchUserChanged(firebase);
         // eslint-disable-next-line
     }, []);
 
@@ -48,7 +53,7 @@ const Dispatcher = (props) => {
         <ThemeProvider theme={theme}>
             <SnackbarProvider maxSnack={4} preventDuplicate>
                 <BrowserRouter>
-                    <DispatcherRoutedBody {...props} firebase={firebase} store={store} theme={theme}/>
+                    <DispatcherRoutedBody {...props} theme={theme}/>
                 </BrowserRouter>
                 <PWAPrompt promptOnVisit={3} timesToShow={3}/>
             </SnackbarProvider>
@@ -57,17 +62,19 @@ const Dispatcher = (props) => {
 };
 
 const DispatcherRoutedBody = withRouter(props => {
-    const {pages, menu, width, copyright, headerImage, layout, history, firebase, store, name} = props;
+    const {pages, menu, width, copyright, headerImage, layout, history, name} = props;
+    const dispatch = useDispatch();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location, action) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
         console.log("[Dispatcher]", location);
         if (current) {
-            document.title = (needAuth(current.roles, user)
+            const label = needAuth(current.roles, user)
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, user)
-                    ? current.title || current.label : pages.notfound.title || pages.notfound.label))
-                + (name ? " - " + name : "");
+                    ? current.title || current.label : pages.notfound.title || pages.notfound.label);
+            document.title = label + (name ? " - " + name : "");
+            dispatch({type:MainAppbar.LABEL, label});
         }
     }
 
@@ -91,39 +98,28 @@ const DispatcherRoutedBody = withRouter(props => {
             children={
                 layout ? <layout.type
                         copyright={copyright}
-                        firebase={firebase}
                         headerImage={headerImage}
                         menu={menu}
-                        pages={pages}
                         store={store}
                         {...layout.props}/>
                     : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
                     (iOS ? <Suspense fallback={<LoadingComponent/>}><BottomToolbarLayout
                             copyright={copyright}
-                            firebase={firebase}
                             headerImage={headerImage}
                             menu={menu}
                             name={name}
-                            pages={pages}
-                            store={store}
                         /></Suspense>
                         : <Suspense fallback={<LoadingComponent/>}><ResponsiveDrawerLayout
                             copyright={copyright}
-                            firebase={firebase}
                             headerImage={headerImage}
                             menu={menu}
                             name={name}
-                            pages={pages}
-                            store={store}
                         /></Suspense>)
                     : <Suspense fallback={<LoadingComponent/>}><TopBottomMenuLayout
                         copyright={copyright}
-                        firebase={firebase}
                         headerImage={headerImage}
                         menu={menu}
                         name={name}
-                        pages={pages}
-                        store={store}
                     /></Suspense>)
             }
         />

@@ -51,10 +51,10 @@ export const createTheme = ({colors}) => createMuiTheme({
         }
     },
     palette: {
-        // background: {
-        //     paper: "#efefef",
-        //     default: "#808080",
-        // },
+        background: {
+            paper: "#efefef",
+            default: "#ffffff",
+        },
         primary: {
             main: colors.primary,
             // contrastText: "#000000",
@@ -77,7 +77,15 @@ export const createTheme = ({colors}) => createMuiTheme({
                 main: colors.secondary,
             }
         },
+        // background: {
+        //     paper: colors.paper,
+        //     default: colors.default,
+        // }
     },
+    typography: {
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', sans-serif",
+        fontSize: 15,
+    }
 })
 
 const theme = createTheme({colors:colors()});

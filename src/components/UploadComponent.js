@@ -67,7 +67,8 @@ const UploadComponent = ({button, onsuccess, onerror}) => {
             note: `Images up to ${maxFileSize} kb`,
             theme: "auto",
         }).use(Tus, {
-            endpoint: "https://master.tus.io/files/"
+            endpoint: "https://master.tus.io/files/",
+            removeFingerprintOnSuccess: true
         }).use(ProgressBar, {
             target: Dashboard
         }).use(Webcam, {

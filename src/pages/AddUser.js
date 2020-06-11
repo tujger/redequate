@@ -6,17 +6,23 @@ import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import MailIcon from "@material-ui/icons/Mail";
-import {withRouter} from "react-router-dom";
 import {sendConfirmationEmail} from "../controllers/User";
 import {TextMaskEmail} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
-import {connect} from "react-redux";
+import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
+import {useHistory} from "react-router-dom";
+import {notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
 
 const AddUser = (props) => {
-    const {dispatch, firebase, pages, store} = props;
     const [state, setState] = useState({requesting: false, error: ""});
     const {email = "", requesting, error = ""} = state;
+    const pages = usePages();
+    const dispatch = useDispatch();
+    const store = useStore();
+    const firebase = useFirebase();
+    const history = useHistory();
+
 
     const addUser = () => {
         if (!email) {
@@ -28,11 +34,9 @@ const AddUser = (props) => {
 
         sendConfirmationEmail(firebase, store)({email: email, includeEmail: true})
             .then(() => {
-                props.history.push(pages.users.route);
+                history.push(pages.users.route);
             })
-            .catch(error => {
-                setState({...state, requesting: false, error: error.message});
-            })
+            .catch(notifySnackbar)
             .finally(() => {
                 refreshAll(store);
             });
@@ -70,13 +74,11 @@ const AddUser = (props) => {
             >
                 Invite
             </Button>
-            <Button
-                onClick={() => props.history.push(pages.users.route)}
-            >
+            <Button onClick={() => history.push(pages.users.route)}>
                 Cancel
             </Button>
         </ButtonGroup>
     </Grid>
 };
 
-export default connect()(withRouter(AddUser));
+export default AddUser;

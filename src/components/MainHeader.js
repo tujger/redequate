@@ -6,6 +6,7 @@ import IconButton from "@material-ui/core/IconButton";
 import withStyles from "@material-ui/styles/withStyles";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
 import {Link, Route, Switch} from "react-router-dom";
+import {usePages} from "../controllers";
 
 const styles = theme => ({
     header: {
@@ -36,7 +37,9 @@ const styles = theme => ({
 });
 
 const MainHeader = props => {
-    const {classes, onClick, image, name, pages} = props;
+    const {classes, onClick, image, name} = props;
+    const pages = usePages();
+
     return <div className={classes.header} style={{
         backgroundImage: `url(${image})`
     }}>

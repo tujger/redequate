@@ -6,7 +6,7 @@ import {matchRole, user} from "../controllers/User";
 import MenuList from "@material-ui/core/MenuList";
 import BottomNavigation from "@material-ui/core/BottomNavigation";
 import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
-import {Link, matchPath, withRouter} from "react-router-dom";
+import {Link, matchPath, useHistory, useLocation} from "react-router-dom";
 import Popper from "@material-ui/core/Popper";
 
 const styles = theme => ({
@@ -31,10 +31,13 @@ const styles = theme => ({
     },
 });
 
-const BottomToolbar = withRouter(withStyles(styles)(props => {
-    const {items, classes, match, history, location} = props;
+const BottomToolbar = withStyles(styles)(props => {
+    const {items, classes, match} = props;
     const [state, setState] = React.useState({anchor: null});
     const {anchor} = state;
+    const location = useLocation();
+    const history = useHistory();
+
 
     const handleChange = (event, newValue) => {
         if (matchPath(newValue, match).url === location.pathname) {
@@ -92,7 +95,7 @@ const BottomToolbar = withRouter(withStyles(styles)(props => {
             </Popper>
         })}
     </BottomNavigation>
-}));
+});
 
 BottomToolbar.propTypes = {
     children: PropTypes.array,
