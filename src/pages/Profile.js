@@ -12,7 +12,6 @@ import {
     logoutUser,
     sendConfirmationEmail, sendVerificationEmail,
     updateUserPrivate,
-    user,
     watchUserChanged
 } from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
@@ -20,6 +19,7 @@ import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
+import {useUser} from "../controllers";
 
 const Profile = (props) => {
     const [state, setState] = React.useState({disabled: false});
@@ -28,6 +28,7 @@ const Profile = (props) => {
     const store = useStore();
     const firebase = useFirebase();
     const dispatch = useDispatch();
+    const user = useUser();
 
     React.useEffect(() => {
         watchUserChanged(firebase);

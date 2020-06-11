@@ -63,12 +63,13 @@ const EditProfile = (props) => {
     const firebase = useFirebase();
     const history = useHistory();
 
-    const {state: givenState = {}} = location;
+    const {state: givenState = {}} = history.location;
     const {tosuccessroute = "/", data: givenData} = givenState;
 
-    data = givenData || data || JSON.parse(window.localStorage.getItem(location.pathname));
+    data = givenData || data || JSON.parse(window.localStorage.getItem(history.location.pathname));
     const user = User(data);
 
+    console.log(givenData || data, user)
     const [state, setState] = useState({
         address: user.public().address,
         error: null,
