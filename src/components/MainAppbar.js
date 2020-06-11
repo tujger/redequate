@@ -53,11 +53,7 @@ function MainAppbar(props) {
                     </IconButton>
                 </Hidden>
                 : null}
-            {logo ?
-                <div className={classes.logo}>
-                    <img src={logo} alt={""}/>
-                </div>
-            : <Typography variant="h6" noWrap className={classes.title}>
+            <Typography variant="h6" noWrap className={classes.title}>
                 <Switch>
                     {itemsFlat.map((item, index) => <Route
                             key={index}
@@ -65,9 +61,13 @@ function MainAppbar(props) {
                             exact={true}
                         >
                             <Link to={pages.home.route} className={classes.label}>
-                                {label || (needAuth(item.roles, user)
+                                {logo ? <div className={classes.logo}>
+                                    <img src={logo} alt={""}/>
+                                </div> :
+                                    (label || (needAuth(item.roles, user)
                                     ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
-                                        ? item.title || item.label : pages.notfound.title || pages.notfound.label))}
+                                        ? item.title || item.label : pages.notfound.title || pages.notfound.label)))
+                                }
                             </Link>
                         </Route>
                     )}
@@ -77,7 +77,7 @@ function MainAppbar(props) {
                         </Link>
                     </Route>
                 </Switch>
-            </Typography>}
+            </Typography>
             {user.uid() && <Link to={pages.profile.route} className={classes.label}>
                 <AvatarView user={user}/>
             </Link>}
