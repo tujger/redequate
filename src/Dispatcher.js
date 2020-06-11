@@ -1,6 +1,6 @@
 import React, {Suspense} from "react";
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import {BrowserRouter, Route, Switch, withRouter} from "react-router-dom";
+import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {Provider} from "react-redux";
 import withWidth from "@material-ui/core/withWidth";
@@ -61,9 +61,10 @@ const Dispatcher = (props) => {
     </Provider>;
 };
 
-const DispatcherRoutedBody = withRouter(props => {
-    const {pages, menu, width, copyright, headerImage, layout, history, name} = props;
+const DispatcherRoutedBody = props => {
+    const {pages, menu, width, copyright, headerImage, layout, name, logo} = props;
     const dispatch = useDispatch();
+    const history = useHistory();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location, action) => {
@@ -97,11 +98,11 @@ const DispatcherRoutedBody = withRouter(props => {
             path={"/*"}
             children={
                 layout ? <layout.type
+                        {...layout.props}
                         copyright={copyright}
                         headerImage={headerImage}
                         menu={menu}
-                        store={store}
-                        {...layout.props}/>
+                    />
                     : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
                     (iOS ? <Suspense fallback={<LoadingComponent/>}><BottomToolbarLayout
                             copyright={copyright}
@@ -114,6 +115,7 @@ const DispatcherRoutedBody = withRouter(props => {
                             headerImage={headerImage}
                             menu={menu}
                             name={name}
+                            logo={logo}
                         /></Suspense>)
                     : <Suspense fallback={<LoadingComponent/>}><TopBottomMenuLayout
                         copyright={copyright}
@@ -124,17 +126,19 @@ const DispatcherRoutedBody = withRouter(props => {
             }
         />
     </Switch>
-});
+};
 
 Dispatcher.propTypes = {
-    firebaseConfig: PropTypes.any,
+    copyright: PropTypes.any,
+    firebaseConfig: PropTypes.any.isRequired,
     headerImage: PropTypes.string,
     layout: PropTypes.any,
-    menu: PropTypes.array,
-    pages: PropTypes.object,
-    copyright: PropTypes.any,
-    theme: PropTypes.any,
+    menu: PropTypes.array.isRequired,
+    logo: PropTypes.any,
+    name: PropTypes.string,
+    pages: PropTypes.object.isRequired,
     reducers: PropTypes.object,
+    theme: PropTypes.any,
 };
 
 export default withWidth()(Dispatcher);

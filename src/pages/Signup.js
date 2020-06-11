@@ -1,6 +1,12 @@
 import React from "react";
 import {Redirect, useHistory} from "react-router-dom";
-import {fetchUserPublic, sendConfirmationEmail, updateUserPublic, user} from "../controllers/User";
+import {
+    fetchUserPublic,
+    sendConfirmationEmail,
+    sendVerificationEmail,
+    updateUserPublic,
+    user
+} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
@@ -54,14 +60,30 @@ const Signup = (props) => {
 
     const signupSuccess = response => {
         fetchUserPublic(firebase)(response.user.uid)
-            .then(data => updateUserPublic(firebase)(response.user.uid, {
-                created: firebase.database.ServerValue.TIMESTAMP,
-                ...response.user.toJSON(),
-                ...data,
-                updated: firebase.database.ServerValue.TIMESTAMP,
-                current: true
-            }))
-            .then(() => sendConfirmationEmail(firebase, store)({email: email}))
+            .then(data => {
+                const newdata = response.user.toJSON();
+                const googleData = {
+                    address: newdata.address || "",
+                    created: newdata.created || firebase.database.ServerValue.TIMESTAMP,
+                    email: newdata.email,
+                    emailVerified: newdata.emailVerified || false,
+                    name: newdata.name || "",
+                    phone: newdata.phone || "",
+                    provider: newdata.providerData
+                        .filter(item => item && item.providerId)
+                        .filter((item, index) => index === 0)
+                        .map(item => item.providerId)[0] || "unknown",
+                    updated: newdata.updated || firebase.database.ServerValue.TIMESTAMP
+                }
+                updateUserPublic(firebase)(response.user.uid, {
+                    created: firebase.database.ServerValue.TIMESTAMP,
+                    ...googleData,
+                    ...data,
+                    updated: firebase.database.ServerValue.TIMESTAMP,
+                    current: true
+                })
+            })
+            .then(() => sendVerificationEmail(firebase))
             .then(() => {
                 refreshAll(store);
                 setState({...state, requesting: false});

@@ -23,13 +23,18 @@ const styles = theme => ({
     title: {
         flex: "1 1 auto"
     },
+    logo: {
+        alignItems: "center",
+        display: "flex",
+        flex: "1 1 auto"
+    },
     content: {},
     indent: {},
     appbar: {}
 });
 
 function MainAppbar(props) {
-    const {classes, className, onHamburgerClick, label} = props;
+    const {classes, className, onHamburgerClick, label, logo} = props;
     const pages = usePages();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
@@ -48,7 +53,11 @@ function MainAppbar(props) {
                     </IconButton>
                 </Hidden>
                 : null}
-            <Typography variant="h6" noWrap className={classes.title}>
+            {logo ?
+                <div className={classes.logo}>
+                    <img src={logo} alt={""}/>
+                </div>
+            : <Typography variant="h6" noWrap className={classes.title}>
                 <Switch>
                     {itemsFlat.map((item, index) => <Route
                             key={index}
@@ -68,7 +77,7 @@ function MainAppbar(props) {
                         </Link>
                     </Route>
                 </Switch>
-            </Typography>
+            </Typography>}
             {user.uid() && <Link to={pages.profile.route} className={classes.label}>
                 <AvatarView user={user}/>
             </Link>}
@@ -87,7 +96,6 @@ MainAppbar.propTypes = {
 MainAppbar.LABEL = "label";
 export const mainAppbar = (state = {label: ""}, action) => {
     if (action.type === MainAppbar.LABEL) {
-        console.log(action.label)
         return {...state, label: action.label};
     } else {
         return state;

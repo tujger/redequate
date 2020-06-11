@@ -13,7 +13,7 @@ import NameIcon from "@material-ui/icons/Person";
 import PhoneIcon from "@material-ui/icons/Phone";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, withRouter, useHistory, useLocation} from "react-router-dom";
-import User, {updateUserPublic} from "../controllers/User";
+import User, {updateUserPublic, UserData} from "../controllers/User";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
 import {connect, useDispatch} from "react-redux";
@@ -32,6 +32,7 @@ const styles = theme => ({
             width: theme.spacing(24),
             height: theme.spacing(24),
         },
+        color: "darkgray",
         objectFit: "cover"
     },
     label: {
@@ -57,7 +58,7 @@ const styles = theme => ({
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
-    let {data, classes} = props;
+    let {data, classes, uploadable = true} = props;
     const dispatch = useDispatch();
     const store = useStore();
     const firebase = useFirebase();
@@ -71,14 +72,14 @@ const EditProfile = (props) => {
 
     console.log(givenData || data, user)
     const [state, setState] = useState({
-        address: user.public().address,
+        address: user.public().address || "",
         error: null,
-        image: user.public().image,
-        name: user.public().name,
-        phone: user.public().phone,
+        image: user.public().image || "",
+        name: user.public().name === user.public().email ? "" : (user.public().name || ""),
+        phone: user.public().phone || "",
         disabled: false
     });
-    const {name = "", error = "", address = "", phone = "", image = "", disabled} = state;
+    const {name, error, address, phone, image, disabled} = state;
     uppy = state.uppy;
     file = state.file;
     snapshot = state.snapshot;
@@ -98,7 +99,7 @@ const EditProfile = (props) => {
     const saveUser = () => {
         setState({...state, disabled: true});
         dispatch(ProgressView.SHOW);
-        console.log(file)
+        console.log(address, image, name, phone);
         publishFile(firebase)({
             auth: data.uid,
             uppy,
@@ -109,12 +110,12 @@ const EditProfile = (props) => {
             },
             defaultUrl: image,
             deleteFile: user.public().image
-        }).then(({url, metadata}) => {
+        }).then(({image, metadata}) => {
             dispatch(ProgressView.SHOW);
             return updateUserPublic(firebase)(data.uid, {
                 address,
-                image: url,
-                name,
+                image: image || "",
+                name: name,
                 phone,
                 updated: firebase.database.ServerValue.TIMESTAMP
             })
@@ -151,7 +152,7 @@ const EditProfile = (props) => {
         return <Redirect to={tosuccessroute}/>
     }
 
-    window.localStorage.setItem(location.pathname, JSON.stringify(data));
+    window.localStorage.setItem(history.location.pathname, JSON.stringify(data));
 
     return <Grid container spacing={1}>
         <Box m={0.5}/>
@@ -163,14 +164,14 @@ const EditProfile = (props) => {
                     setState({...state, image: ""});
                 }}><ClearIcon/></IconButton>
             </Grid>
-            <UploadComponent
+            {uploadable && <UploadComponent
                 firebase={firebase}
                 variant={"contained"}
                 color={"primary"}
                 button={<Button variant={"contained"} color={"primary"} children={"Change"}/>}
                 onsuccess={handleUploadPhotoSuccess}
                 onerror={handleUploadPhotoError}
-            />
+            />}
         </Grid>
         <Grid item xs>
             <Grid container spacing={1} alignItems="flex-end">
@@ -197,7 +198,7 @@ const EditProfile = (props) => {
                         label="Name"
                         fullWidth
                         onChange={ev => {
-                            setState({...state, name: ev.target.value});
+                            setState({...state, name: ev.target.value || ""});
                         }}
                         value={name}
                     />
@@ -214,7 +215,7 @@ const EditProfile = (props) => {
                         label="Address"
                         fullWidth
                         onChange={ev => {
-                            setState({...state, address: ev.target.value});
+                            setState({...state, address: ev.target.value || ""});
                         }}
                         value={address}
                     />
@@ -234,7 +235,7 @@ const EditProfile = (props) => {
                         }}
                         label="Phone"
                         onChange={ev => {
-                            setState({...state, phone: ev.target.value});
+                            setState({...state, phone: ev.target.value || ""});
                         }}
                         value={phone}
                     />
@@ -246,16 +247,11 @@ const EditProfile = (props) => {
             </FormHelperText>
             <Box m={2}/>
             <ButtonGroup variant="contained" color="primary" size="large" fullWidth
-                         disabled={disabled}
-            >
-                <Button
-                    onClick={saveUser}
-                >
+                         disabled={disabled}>
+                <Button onClick={saveUser}>
                     Save
                 </Button>
-                <Button
-                    onClick={() => history.goBack()}
-                >
+                <Button onClick={() => history.goBack()}>
                     Cancel
                 </Button>
             </ButtonGroup>

@@ -5,6 +5,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import GoogleLogo from "../images/google-logo.svg"
 import UserIcon from "@material-ui/icons/Mail";
 import {withRouter} from "react-router-dom";
+import {useFirebase} from "../controllers";
 
 const styles = theme => ({
     image: {
@@ -27,6 +28,7 @@ const styles = theme => ({
 
 const ProfileComponent = (props) => {
     const {classes, user, userData} = props;
+    const firebase = useFirebase();
 
     if(userData) {
         console.log(userData)
@@ -67,7 +69,7 @@ const ProfileComponent = (props) => {
                 <Typography>{userData.public.phone}</Typography>
             </Grid>
             <Grid container>
-                <Typography>{new Date(userData.public.created).toLocaleString()}</Typography>
+                <Typography>{userData.public.date()}</Typography>
             </Grid>
         </Grid>
     }
@@ -97,7 +99,8 @@ const ProfileComponent = (props) => {
             </Grid>}
         </Grid>}
         <Grid container>
-            <Typography>{user.public().name}</Typography>
+            <Typography>{user.public().name && user.public().name !== user.public().email
+            && user.public().name}</Typography>
         </Grid>
         <Grid container>
             <Typography>{user.public().email}</Typography>
@@ -109,7 +112,9 @@ const ProfileComponent = (props) => {
             <Typography>{user.public().phone}</Typography>
         </Grid>
         <Grid container>
-            <Typography>{new Date(user.public().created).toLocaleString()}</Typography>
+            <Typography>{
+                user.public().created && !user.public().created[".sv"]
+                && new Date(user.public().created).toLocaleString()}</Typography>
         </Grid>
     </Grid>
 };

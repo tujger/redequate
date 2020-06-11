@@ -21,7 +21,7 @@ import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {useUser} from "../controllers";
 
-const Profile = (props) => {
+const Profile = ({notifications = true}) => {
     const [state, setState] = React.useState({disabled: false});
     const {disabled} = state;
     const pages = usePages();
@@ -75,11 +75,11 @@ const Profile = (props) => {
         <ProfileComponent user={user}/>
         {!user.public().emailVerified && <Grid container>
             <Grid item xs>
-                <Typography>Note! You have still not confirmed email. Some features will not
-                    be available.</Typography>
+                <Typography>Note! You have still not verified email. Some features will not
+                    be available. If you were already verified please log out and log in again.</Typography>
             </Grid>
         </Grid>}
-        <Grid container><FormControlLabel
+        {notifications && <Grid container><FormControlLabel
             control={
                 <Checkbox
                     disabled={disabled}
@@ -88,8 +88,8 @@ const Profile = (props) => {
                 />
             }
             label={"Get notifications"}
-        /></Grid>
-        <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large">
+        /></Grid>}
+            <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large">
             <Button
                 color="primary"
                 onClick={() => {
@@ -115,7 +115,7 @@ const Profile = (props) => {
                 }}
                 variant={"contained"}
             >
-                Resend confirmation
+                Resend verification
             </Button>}
             {user.public().emailVerified && <Button
                 color="primary"

@@ -53,19 +53,24 @@ const fetchUserSection = (firebase, section, uid, child, onsuccess, onerror) => 
     const db = firebase.database();
     if (uid) {
         let ref = db.ref("users_" + section).child(uid);
-        if(child) ref = ref.child(child);
+        if (child) ref = ref.child(child);
         ref.once("value").then(snapshot => {
             let val = snapshot.val() || {};
-            if(child) {
+            if (child) {
                 onsuccess && onsuccess(val);
             } else {
-                db.ref("roles").child(uid).once("value").then(snapshot => {
-                    val.role = snapshot.val() || (val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED);
+                if(val.emailVerified) {
+                    db.ref("roles").child(uid).once("value").then(snapshot => {
+                        val.role = snapshot.val() || Role.USER;
+                        onsuccess && onsuccess(val);
+                    }).catch(error => {
+                        val.role = Role.USER;
+                        onsuccess && onsuccess(val);
+                    });
+                } else {
+                    val.role = Role.USER_NOT_VERIFIED;
                     onsuccess && onsuccess(val);
-                }).catch(error => {
-                    val.role = val.emailVerified ? Role.USER : Role.USER_NOT_VERIFIED;
-                    onsuccess && onsuccess(val);
-                });
+                }
             }
         }).catch(onerror);
     } else {
@@ -79,18 +84,20 @@ const fetchUserSection = (firebase, section, uid, child, onsuccess, onerror) => 
 };
 
 export const updateUserPublic = firebase => (uid, props) => new Promise((resolve, reject) => {
-    try {
-        console.log(props);
-        const name = props.name;
-        if(name) {
-            const sort = `${props.name.trim().toLowerCase()}_${uid}`;
-            firebase.database().ref("users_public").child(uid).child("_sort_name").set(sort);
-        } else {
+    updateUserSection(firebase, "public", uid, null, props, val => {
+        try {
+            val.name = val.name || val.email;
+            const name = val.name;
+            console.warn(name, val)
+            if (name) {
+                const sort = `${name.trim().toLowerCase()}_${uid}`;
+                firebase.database().ref("users_public").child(uid).child("_sort_name").set(sort);
+            }
+            resolve(val);
+        } catch (e) {
+            reject(e);
         }
-    } catch(e) {
-        console.error(e);
-    }
-    updateUserSection(firebase, "public", uid, null, props, resolve, reject);
+    }, reject);
 });
 
 export const updateUserPrivate = firebase => (uid, deviceId = "", props) =>
@@ -110,23 +117,24 @@ const updateUserSection = (firebase, section, uid, child, props, onsuccess, oner
             const {current, role: ignored2, uid: ignored3, ...updates} = props;
             let val = {...existed, ...updates};
             let ref = db.ref("users_" + section).child(uid);
-            if(child) ref = ref.child(child);
-            ref.set(val).then(() => {
-                return db.ref("users_public").child(uid).child("updated").once("value");
-            }).then(updated => {
-                if (current || user.uid() === uid) {
-                    user.set(section, val);
-                    user.set("uid", uid);
-                    user.set("updated", updated.val());
-                    window.localStorage.setItem("user_uid", uid);
-                    window.localStorage.setItem("user_" + (section.split("/")[0]), JSON.stringify(val));
-                    if(role) {
-                        user.set("role", role);
-                        window.localStorage.setItem("user_role", role);
+            if (child) ref = ref.child(child);
+            ref.set(val)
+                .then(() => {
+                // .then(() => db.ref("users_public").child(uid).child("updated").once("value"))
+                // .then(updated => {
+                    if (current || user.uid() === uid) {
+                        user.set(section, val);
+                        user.set("uid", uid);
+                        // user.set("updated", updated.val());
+                        window.localStorage.setItem("user_uid", uid);
+                        window.localStorage.setItem("user_" + (section.split("/")[0]), JSON.stringify(val));
+                        if (role) {
+                            user.set("role", role);
+                            window.localStorage.setItem("user_role", role);
+                        }
                     }
-                }
-                onsuccess && onsuccess(val);
-            });
+                    onsuccess && onsuccess(val);
+                });
         }, onerror);
     } else {
         onerror(new Error("UID is not defined"));
@@ -146,7 +154,19 @@ export const watchUserChanged = firebase => {
     try {
         firebase.auth().onAuthStateChanged(result => {
             console.log("[AuthStateChanged]", user.uid(), result && result.toJSON());
-            if(user.public() && !user.public().emailVerified && result.emailVerified) {
+            if(user.public() && user.role() === Role.USER_NOT_VERIFIED && result.emailVerified) {
+                notifySnackbar({
+                    buttonLabel: "Log out",
+                    onButtonClick: () => {
+                        logoutUser(firebase)();
+                        window.location.reload();
+                    },
+                    title: "Your profile has been changed. Please relogin to update",
+                    variant: "warning"
+                })
+                return;
+            }
+            if (user.public() && !user.public().emailVerified && result.emailVerified) {
                 notifySnackbar({
                     buttonLabel: "Log out",
                     onButtonClick: () => {
@@ -175,7 +195,7 @@ export const watchUserChanged = firebase => {
                     }).catch(console.error);
             }
         });
-    } catch(error) {
+    } catch (error) {
         console.error(error);
     }
 };
@@ -201,7 +221,7 @@ user.set("role", window.localStorage.getItem("user_role"));
 user.set("uid", window.localStorage.getItem("user_uid"));
 
 export const currentRole = user => {
-    if(user && user._userData) return user.role;
+    if (user && user._userData) return user.role;
     if (user && user.uid() && !user.role()) {
         // console.error("Current user role is invalid, reset ro USER");
         return Role.USER;
@@ -258,7 +278,7 @@ export const sendConfirmationEmail = (firebase, store) => options => new Promise
 export const sendVerificationEmail = (firebase) => new Promise((resolve, reject) => {
     firebase.auth().currentUser.sendEmailVerification().then(() => {
         notifySnackbar({
-            title: "Confirmation email has sent"
+            title: "Verification email has sent"
         });
         resolve();
     }).catch(error => {
@@ -283,28 +303,27 @@ export const currentUser = (state = {
     const {type, user, ...rest} = action;
     if (type === "user") {
         const {
-            public:publicData = () => null,
-            private:privateData = () => null,
+            public: publicData = () => null,
+            private: privateData = () => null,
             uid = () => null,
             role = () => null
         } = user;
-        return {...state, uid:uid(), role:role(), public:publicData(), private:privateData(), ...rest};
+        return {...state, uid: uid(), role: role(), public: publicData(), private: privateData(), ...rest};
     } else {
         return state;
     }
 };
 
 
-
 // new stuff
 export const UserData = function (firebase) {
-    let _id, _public = {}, _private = {}, _role = null, _name = "", _image = "", _updated, _requestedTimestamp, _error,
-    _loaded = {};
+    let _id, _public = {}, _email, _private = {}, _role = null, _name = "", _image = "", _updated, _requestedTimestamp, _error,
+        _loaded = {};
 
     const _fetch = async ref => {
         try {
             return await ref.once("value");
-        } catch(error) {
+        } catch (error) {
             console.error(error);
             _error = error;
         }
@@ -317,14 +336,17 @@ export const UserData = function (firebase) {
         get image() {
             return _image;
         },
+        get email() {
+            return _email;
+        },
         get name() {
-            return _name;
+            return _name || _email;
         },
         get public() {
             return _public
         },
         get initials() {
-            if(_name) return _name.substr(0,1);
+            if (_name) return _name.substr(0, 1);
             return null;
         },
         get role() {
@@ -334,29 +356,38 @@ export const UserData = function (firebase) {
             return _public.emailVerified || false;
         },
         create: (id, role, data) => {
-            if(!data) {
+            if (!data) {
                 data = role;
                 role = null;
             }
-            let {public:publicData, private:privateData} = data;
-            if(!publicData) publicData = data;
-            if(!id || !publicData) throw new Error("Not enough data to create UserData instance.")
-            if(publicData) _public = publicData || {};
-            if(privateData) _private = privateData || {};
+            let {public: publicData, private: privateData} = data;
+            if (!publicData) publicData = data;
+            if (!id || !publicData) throw new Error("Not enough data to create UserData instance.")
+            if (publicData) _public = publicData || {};
+            if (privateData) _private = privateData || {};
+            _email = _public.email || "";
             _name = _public.name || "";
             _role = role;
             return _body;
         },
+        date: (format = "M-D-YYYY HH:mm A") => {
+            if(_public.created && !_public.created[".sv"]) {
+                return new Date(_public.created).toLocaleString();
+            } else {
+                return "";
+            }
+        },
         fetch: async (id, options = [UserData.PUBLIC]) => {
-            if(id instanceof Array) {
+            if (id instanceof Array) {
                 options = id;
-            } else if(id && _id && id !== _id) {
+            } else if (id && _id && id !== _id) {
                 throw new Error(`Another user id fetched: ${id}!=${_id}.`);
-            } else if(id) {
+            } else if (id) {
                 _id = id;
             }
-            if(!_id) throw new Error("Can't fetch unidentified user data");
+            if (!_id) throw new Error("Can't fetch unidentified user data");
             let fetchFull = options.indexOf(UserData.FULL) >= 0;
+            let fetchEmail = options.indexOf(UserData.EMAIL) >= 0;
             let fetchImage = options.indexOf(UserData.IMAGE) >= 0;
             let fetchName = options.indexOf(UserData.NAME) >= 0;
             let fetchRole = options.indexOf(UserData.ROLE) >= 0;
@@ -367,44 +398,51 @@ export const UserData = function (firebase) {
 
             let ref = firebase.database().ref("users_public");
             let snap;
-            if((!_loaded.public || force) && (fetchPublic || fetchFull)) {
+            if ((!_loaded.public || force) && (fetchPublic || fetchFull)) {
                 snap = await _fetch(ref.child(_id));
                 _public = snap.val() || {};
+                _email = _public.email;
                 _image = _public.image;
                 _name = _public.name;
                 _updated = _public.updated;
-                _loaded = {..._loaded, public:true, name:true, updated: true, image:true};
+                _loaded = {..._loaded, public: true, email:true, name: true, updated: true, image: true};
             }
-            if(fetchPrivate === true || fetchFull) {
+            if (fetchPrivate === true || fetchFull) {
                 snap = await _fetch(firebase.database().ref("users_private").child(_id));
                 _private = snap.val() || {};
-                _loaded = {..._loaded, private:true};
-            } else if(fetchPrivate && fetchPrivate !== false) {
+                _loaded = {..._loaded, private: true};
+            } else if (fetchPrivate && fetchPrivate !== false) {
                 snap = await _fetch(firebase.database().ref("users_private").child(_id).child(fetchPrivate));
                 _private[fetchPrivate] = snap.val() || {};
-                _loaded = {..._loaded, private:true};
+                _loaded = {..._loaded, private: true};
             }
-            if((!_loaded.role || force) && (fetchRole || fetchFull)) {
+            if ((!_loaded.role || force) && (fetchRole || fetchFull)) {
                 snap = await _fetch(firebase.database().ref("roles").child(_id));
                 _role = snap.val();
-                _loaded = {..._loaded, role:true};
+                _loaded = {..._loaded, role: true};
             }
-            if((!_loaded.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
+            if ((!_loaded.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
                 snap = await _fetch(ref.child(_id).child("updated"));
                 _updated = snap.val();
-                _loaded = {..._loaded, updated:true};
+                _loaded = {..._loaded, updated: true};
             }
-            if((!_loaded.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
+            if ((!_loaded.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
                 snap = await _fetch(ref.child(_id).child("name"));
                 _name = snap.val();
                 _public.name = _name;
-                _loaded = {..._loaded, name:true};
+                _loaded = {..._loaded, name: true};
             }
-            if((!_loaded.image || force) && (fetchImage && !fetchFull && !fetchPublic)) {
+            if ((!_loaded.image || force) && (fetchImage && !fetchFull && !fetchPublic)) {
                 snap = await _fetch(ref.child(_id).child("image"));
                 _image = snap.val();
                 _public.image = _image;
-                _loaded = {..._loaded, image:true};
+                _loaded = {..._loaded, image: true};
+            }
+            if ((!_loaded.email || force) && (fetchEmail && !fetchFull && !fetchPublic)) {
+                snap = await _fetch(ref.child(_id).child("image"));
+                _email = snap.val();
+                _public.email = _email;
+                _loaded = {..._loaded, email: true};
             }
             _requestedTimestamp = new Date().getTime();
             return _body;
@@ -425,17 +463,17 @@ export const UserData = function (firebase) {
             return `[UserData] id: \x1b[34m${_id}\x1b[30m, name: \x1b[34m${_name}\x1b[30m, role: \x1b[34m${_role}\x1b[30m, public: ${JSON.stringify(_public)}`
         },
         update: (key = data, data) => {
-            if(key === data) {
+            if (key === data) {
                 key = null;
             }
-            if(!key && data.constructor.name === "String") throw new Error("Value defined without key");
-            if(!key) {
-                const {public:publicData, private:privateData, role, name, id} = data;
-                if(publicData) _public = publicData || {};
-                if(privateData) _private = privateData || {};
-                if(role) _role = role;
-                if(id) _id = id;
-                if(name) {
+            if (!key && data.constructor.name === "String") throw new Error("Value defined without key");
+            if (!key) {
+                const {public: publicData, private: privateData, role, name, id} = data;
+                if (publicData) _public = publicData || {};
+                if (privateData) _private = privateData || {};
+                if (role) _role = role;
+                if (id) _id = id;
+                if (name) {
                     _name = name;
                     _public.name = _name;
                 }
@@ -451,6 +489,7 @@ UserData.PUBLIC = "public";
 UserData.PRIVATE = "private";
 UserData.ROLE = "role";
 UserData.NAME = "name";
+UserData.EMAIL = "name";
 UserData.IMAGE = "image";
 UserData.UPDATED = "updated";
 UserData.FULL = "full";
