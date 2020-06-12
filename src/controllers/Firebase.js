@@ -47,3 +47,10 @@ export const fetchCallable = firebase => (name, options) => new Promise((resolve
         reject(error);
     }
 });
+
+export const checkIfConnected = database => new Promise((resolve, reject) =>{
+    return database.ref(".info").once("value").then(snapshot => {
+        console.log(snapshot, snapshot.val());
+        resolve();
+    })
+});

@@ -34,11 +34,19 @@ const LazyListComponent = (props) => {
             return;
         }
         dispatch(ProgressView.SHOW);
-        return pagination.next().then(newitems => {
-            newitems = newitems.map(item => itemTransform({...item, id: item._key}));
+        return pagination.next().then(async newitems => {
+            newitems = newitems.map(async item => {
+                try {
+                    return await itemTransform({...item, id: item._key});
+                } catch(error) {
+                    notifySnackbar(error);
+                }
+            });
+            return Promise.all(newitems);
+        }).then(newitems => {
             const update = {
                 finished: pagination.finished,
-                items: [...items, ...newitems.reverse()],
+                items: pagination.order === "asc" ? [...items, ...newitems] : [...items, ...newitems.reverse()],
                 loading: false,
                 pagination
             }
@@ -69,7 +77,7 @@ const LazyListComponent = (props) => {
     return <React.Fragment>
         {loading ?
             <LoadingComponent/> :
-            items.map((item) => itemComponent(item))
+            items.map((item) => item && itemComponent(item))
         }
         {!finished ? <InView onChange={(inView) => {
             if (inView) loadNextPart();
@@ -93,7 +101,8 @@ export const lazyListComponent = (state = {}, action) => {
         case LazyListComponent.UPDATE:
             return {...state, ["_LazyListComponent_" + cacheId]: cacheData};
         case LazyListComponent.RESET:
-            console.log("pagination", state.pagination);
+            const {pagination} = cacheData || state["_LazyListComponent_" + cacheId] || {};
+            if(pagination) pagination.reset();
             return {...state, ["_LazyListComponent_" + cacheId]: {items:[], loading:true, finished:false}};
         case LazyListComponent.EXIT:
             return state;

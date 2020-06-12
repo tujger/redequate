@@ -1,4 +1,4 @@
-const Pagination = ({ref, child, value, pageSize = 10, order = "asc", start, equals, update}) => {
+const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals, update}) => {
     let baseRef = ref;
     let lastKey = null;
     let lastValue = null;
@@ -6,6 +6,8 @@ const Pagination = ({ref, child, value, pageSize = 10, order = "asc", start, equ
     let count = 0;
     let finished = false;
     let started = false;
+
+    console.log(ref.key, equals)
 
     const next = () => {
         if (finished) return new Promise((resolve, reject) => {
@@ -24,40 +26,43 @@ const Pagination = ({ref, child, value, pageSize = 10, order = "asc", start, equ
             // we have to start from the current cursor so add one to page size
             if (order === "asc") {
                 if (equals) {
-                    ref = ref.equalTo(equals, lastKey).limitToFirst(pageSize + 1);
+                    ref = ref.startAt(lastValue, lastKey).endAt(equals + "\uf8ff").limitToFirst(size + 1);
+                    // ref = ref.equalTo(equals, lastKey).limitToFirst(size + 1);
                 } else if (child || value) {
-                    ref = ref.startAt(lastValue, lastKey).limitToFirst(pageSize + 1);
+                    ref = ref.startAt(lastValue, lastKey).limitToFirst(size + 1);
                 } else {
-                    ref = ref.startAt(lastKey).limitToFirst(pageSize + 1);
+                    ref = ref.startAt(lastKey).limitToFirst(size + 1);
                 }
             } else {
                 if (equals) {
-                    ref = ref.equalTo(equals, lastKey).limitToLast(pageSize + 1);
+                    ref = ref.startAt(equals).endAt(lastValue, lastKey).limitToLast(size + 1);
+                    // ref = ref.equalTo(lastValue, lastKey).limitToLast(size + 1);
                 } else if (child || value) {
-                    ref = ref.endAt(lastValue, lastKey).limitToLast(pageSize + 1);
+                    ref = ref.endAt(lastValue, lastKey).limitToLast(size + 1);
                 } else {
-                    ref = ref.endAt(lastKey).limitToLast(pageSize + 1);
+                    ref = ref.endAt(lastKey).limitToLast(size + 1);
                 }
             }
         } else {
             // this is the first page
             if (equals) {
                 if (order === "asc") {
-                    ref = ref.equalTo(equals).limitToFirst(pageSize);
+                    ref = ref.equalTo(equals).limitToFirst(size);
                 } else {
-                    ref = ref.equalTo(equals).limitToLast(pageSize);
+                    // ref = ref.startAt(start).endAt(start + "\uf8ff").limitToLast(size);
+                    ref = ref.equalTo(equals).limitToLast(size);
                 }
             } else if (start) {
                 if (order === "asc") {
-                    ref = ref.startAt(start).endAt(start + "\uf8ff").limitToFirst(pageSize);
+                    ref = ref.startAt(start).endAt(start + "\uf8ff").limitToFirst(size);
                 } else {
-                    ref = ref.startAt(start + "\uf8ff").endAt(start).limitToLast(pageSize);
+                    ref = ref.startAt(start).endAt(start + "\uf8ff").limitToLast(size);
                 }
             } else {
                 if (order === "asc") {
-                    ref = ref.limitToFirst(pageSize);
+                    ref = ref.limitToFirst(size);
                 } else {
-                    ref = ref.limitToLast(pageSize);
+                    ref = ref.limitToLast(size);
                 }
             }
         }
@@ -70,6 +75,7 @@ const Pagination = ({ref, child, value, pageSize = 10, order = "asc", start, equ
                 children.push(child)
             });
             for (let ss of children) {
+                if(lastKey && ss.key === lastKey) continue;
                 if (update) {
                     const value = ss.val();
                     const newValue = await update(ss.key, value);
@@ -88,18 +94,18 @@ const Pagination = ({ref, child, value, pageSize = 10, order = "asc", start, equ
                 count++;
                 countTotal++;
             }
-            if (lastKey !== null) {
-                // skip the first value, which is actually the cursor
-                if (order === "asc") {
-                    keys.shift();
-                    data.shift();
-                } else {
-                    keys.pop();
-                    data.pop();
-                }
-                count--;
-                countTotal--;
-            }
+            // if (lastKey !== null) {
+            //     // skip the first value, which is actually the cursor
+            //     if (order === "asc") {
+            //         keys.shift();
+            //         data.shift();
+            //     } else {
+            //         keys.pop();
+            //         data.pop();
+            //     }
+            //     count--;
+            //     countTotal--;
+            // }
 
             // store the cursor
             if (keys.length) {
@@ -108,11 +114,12 @@ const Pagination = ({ref, child, value, pageSize = 10, order = "asc", start, equ
                 if (child && data[last]) lastValue = data[last][child];
                 else if(value && data[last]) lastValue = data[last].value;
             }
-            if (count < pageSize) finished = true;
+            if (count < size) finished = true;
             return data;
         });
     }
     const reset = () => {
+        baseRef.database.goOnline();
         lastKey = null;
         lastValue = null;
         countTotal = 0;
@@ -129,11 +136,14 @@ const Pagination = ({ref, child, value, pageSize = 10, order = "asc", start, equ
         get countTotal() {
             return countTotal
         },
-        get started() {
-            return started
-        },
         get finished() {
             return finished
+        },
+        get order() {
+            return order;
+        },
+        get started() {
+            return started
         },
     }
 }
