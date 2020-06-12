@@ -7,8 +7,6 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals,
     let finished = false;
     let started = false;
 
-    console.log(ref.key, equals)
-
     const next = () => {
         if (finished) return new Promise((resolve, reject) => {
             resolve([]);
