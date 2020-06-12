@@ -320,6 +320,11 @@ export const UserData = function (firebase) {
     let _id, _public = {}, _email, _private = {}, _role = null, _name = "", _image = "", _updated, _requestedTimestamp, _error,
         _loaded = {};
 
+    const _dateFormatted = date => {
+        if(!date) return "";
+        return new Date(date).toLocaleString();
+    }
+
     const _fetch = async ref => {
         try {
             return await ref.once("value");
@@ -330,14 +335,21 @@ export const UserData = function (firebase) {
     }
 
     const _body = {
+        get created() {
+            return _dateFormatted(_public.created);
+        },
+        get email() {
+            return _email;
+        },
         get id() {
             return _id
         },
         get image() {
             return _image;
         },
-        get email() {
-            return _email;
+        get initials() {
+            if (_name) return _name.substr(0, 1);
+            return null;
         },
         get name() {
             return _name || _email;
@@ -345,12 +357,11 @@ export const UserData = function (firebase) {
         get public() {
             return _public
         },
-        get initials() {
-            if (_name) return _name.substr(0, 1);
-            return null;
-        },
         get role() {
             return _role || Role.USER;
+        },
+        get updated() {
+            return _dateFormatted(_public.updated);
         },
         get verified() {
             return _public.emailVerified || false;
@@ -377,6 +388,7 @@ export const UserData = function (firebase) {
                 return "";
             }
         },
+
         fetch: async (id, options = [UserData.PUBLIC]) => {
             if (id instanceof Array) {
                 options = id;

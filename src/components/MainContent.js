@@ -32,10 +32,10 @@ const MainContent = props => {
                 exact={true}
                 children={
                     needAuth(item.roles, user)
-                        ? <pages.login.component.type {...props} {...pages.login.component.props}/>
+                        ? <pages.login.component.type {...props} {...pages.login.component.props} />
                         : (matchRole(item.roles, user)
-                        ? <item.component.type {...props} {...item.component.props}/>
-                        : <pages.notfound.component.type {...props} {...pages.notfound.component.props}/>)}
+                        ? <item.component.type {...props} {...item.component.props} />
+                        : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)}
             />)}</Switch>
         </Suspense>
     </main>

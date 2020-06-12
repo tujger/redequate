@@ -69,7 +69,7 @@ const ProfileComponent = (props) => {
                 <Typography>{userData.public.phone}</Typography>
             </Grid>
             <Grid container>
-                <Typography>{userData.public.date()}</Typography>
+                <Typography>{userData.created}</Typography>
             </Grid>
         </Grid>
     }
