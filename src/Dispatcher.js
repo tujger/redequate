@@ -1,5 +1,5 @@
 import React, {Suspense} from "react";
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import ThemeProvider from "@material-ui/styles/ThemeProvider";
 import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {Provider} from "react-redux";
@@ -96,34 +96,35 @@ const DispatcherRoutedBody = props => {
     return <Switch>
         <Route
             path={"/*"}
-            children={
-                layout ? <layout.type
+            children={<Suspense fallback={<LoadingComponent/>}>
+                {layout ? <layout.type
                         {...layout.props}
                         copyright={copyright}
                         headerImage={headerImage}
                         menu={menu}
                     />
                     : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
-                    (iOS ? <Suspense fallback={<LoadingComponent/>}><BottomToolbarLayout
+                    (iOS ? <BottomToolbarLayout
                             copyright={copyright}
                             headerImage={headerImage}
                             menu={menu}
                             name={name}
-                        /></Suspense>
-                        : <Suspense fallback={<LoadingComponent/>}><ResponsiveDrawerLayout
+                        />
+                        : <ResponsiveDrawerLayout
                             copyright={copyright}
                             headerImage={headerImage}
                             menu={menu}
                             name={name}
                             logo={logo}
-                        /></Suspense>)
-                    : <Suspense fallback={<LoadingComponent/>}><TopBottomMenuLayout
+                        />)
+                    : <TopBottomMenuLayout
                         copyright={copyright}
                         headerImage={headerImage}
                         menu={menu}
                         name={name}
-                    /></Suspense>)
-            }
+                    />)
+                }
+            </Suspense>}
         />
     </Switch>
 };

@@ -23,7 +23,6 @@ const AddUser = (props) => {
     const firebase = useFirebase();
     const history = useHistory();
 
-
     const addUser = () => {
         if (!email) {
             setState({...state, error: "Empty e-mail"});

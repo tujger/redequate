@@ -11,7 +11,7 @@ import TopMenu from "../components/TopMenu";
 import {connect} from "react-redux";
 import {Route, Switch} from "react-router-dom";
 import {NotificationsSnackbar} from "../controllers/Notifications";
-import {usePages} from "../controllers";
+import {usePages} from "../controllers/General";
 
 const styles = theme => ({
     indent: {

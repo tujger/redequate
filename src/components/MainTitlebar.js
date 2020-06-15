@@ -10,7 +10,7 @@ import {Link, Route, Switch, withRouter, useHistory, useLocation} from "react-ro
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
 import {matchRole, needAuth, user} from "../controllers/User";
-import {usePages} from "../controllers";
+import {usePages} from "../controllers/General";
 
 const styles = theme => ({
     appbar: {

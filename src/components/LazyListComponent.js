@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import LoadingComponent from "./LoadingComponent";
 import {notifySnackbar} from "../controllers";
 import ProgressView from "./ProgressView";
@@ -13,7 +13,8 @@ const LazyListComponent = (props) => {
         itemTransform,
         pagination:givenPagination,
         placeholder,
-        ["_LazyListComponent_" + cache]:cacheData = {}
+        disableProgress,
+        ["LazyListComponent_" + cache]:cacheData = {}
     } = props;
     const [state, setState] = React.useState({});
     const {
@@ -33,11 +34,12 @@ const LazyListComponent = (props) => {
         if (finished) {
             return;
         }
-        dispatch(ProgressView.SHOW);
+        if(!disableProgress) dispatch(ProgressView.SHOW);
         return pagination.next().then(async newitems => {
             newitems = newitems.map(async item => {
                 try {
-                    return await itemTransform({...item, id: item._key});
+                    const component = await itemTransform({...item, id: item._key});
+                    return itemComponent(component);
                 } catch(error) {
                     notifySnackbar(error);
                 }
@@ -54,7 +56,7 @@ const LazyListComponent = (props) => {
                 dispatch({
                     type: LazyListComponent.UPDATE,
                     cacheId: cache,
-                    ["_LazyListComponent_" + cache]: update});
+                    ["LazyListComponent_" + cache]: update});
             } else {
                 setState(state => ({
                     ...state,
@@ -62,48 +64,46 @@ const LazyListComponent = (props) => {
                 }))
             }
         }).catch(notifySnackbar).finally(() => {
-            dispatch(ProgressView.HIDE);
+            if(!disableProgress) dispatch(ProgressView.HIDE);
         });
     };
 
     React.useEffect(() => {
+        // loadNextPart();
         return () => {
-            dispatch(ProgressView.HIDE);
+            if(!disableProgress) dispatch(ProgressView.HIDE);
         }
         // eslint-disable-next-line
     }, []);
 
-    console.log(`[Lazy] loaded ${items.length} items`);
+    if(items.length) console.log(`[Lazy] loaded ${items.length} items`);
+    // console.warn(loading, finished, items.length, cachedItems.length);
     return <React.Fragment>
-        {loading ?
-            <LoadingComponent/> :
-            items.map((item) => item && itemComponent(item))
-        }
-        {!finished ? <InView onChange={(inView) => {
+        {items}
+        {/*{items.map((item) => item && itemComponent(item))}*/}
+        {!finished && <InView style={{width:"100%"}} onChange={(inView) => {
             if (inView) loadNextPart();
         }}>
-            <div/>
-        </InView> : null}
-        {!finished && items.length > 0 ?
-            <React.Fragment>
+            <placeholder.type {...placeholder.props} key={"LazyListComponent__placeholder"}/>
+            {/*<React.Fragment>
                 {(() => {
-                    const a = [];for (let i = 0; i < 3; i++) {a.push(i)} return a;
+                    const a = [];for (let i = 0; i < 1; i++) {a.push(i)} return a;
                 })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
-            </React.Fragment>
-            : null}
+            </React.Fragment>*/}
+        </InView>}
     </React.Fragment>
 }
 
 export const lazyListComponent = (state = {}, action) => {
     const cacheId = action.cacheId;
-    const cacheData = action["_LazyListComponent_" + cacheId];
+    const cacheData = action["LazyListComponent_" + cacheId];
     switch (action.type) {
         case LazyListComponent.UPDATE:
-            return {...state, ["_LazyListComponent_" + cacheId]: cacheData};
+            return {...state, ["LazyListComponent_" + cacheId]: cacheData};
         case LazyListComponent.RESET:
-            const {pagination} = cacheData || state["_LazyListComponent_" + cacheId] || {};
+            const {pagination} = cacheData || state["LazyListComponent_" + cacheId] || {};
             if(pagination) pagination.reset();
-            return {...state, ["_LazyListComponent_" + cacheId]: {items:[], loading:true, finished:false}};
+            return {...state, ["LazyListComponent_" + cacheId]: {items:[], loading:true, finished:false}};
         case LazyListComponent.EXIT:
             return state;
             return {...state, scroll: action.scroll};
@@ -113,9 +113,9 @@ export const lazyListComponent = (state = {}, action) => {
 };
 lazyListComponent.skipStore = true;
 
-LazyListComponent.UPDATE = "_LazyListComponent_update";
-LazyListComponent.RESET = "_LazyListComponent_reset";
-LazyListComponent.EXIT = "_LazyListComponent_exit";
+LazyListComponent.UPDATE = "LazyListComponent_update";
+LazyListComponent.RESET = "LazyListComponent_reset";
+LazyListComponent.EXIT = "LazyListComponent_exit";
 
 const mapStateToProps = ({lazyListComponent, ...rest}) => {
     return {...lazyListComponent};

@@ -3,14 +3,12 @@ import PropTypes from "prop-types";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
-import {user} from "../controllers/User";
 import BottomToolbar from "../components/BottomToolbar";
 import MainTitlebar from "../components/MainTitlebar";
 import MainContent from "../components/MainContent";
 import Snackbar from "../components/Snackbar";
 import {connect} from "react-redux";
 import {NotificationsSnackbar} from "../controllers/Notifications";
-import {usePages} from "../controllers";
 
 const styles = theme => ({
     content: {

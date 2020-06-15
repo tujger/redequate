@@ -4,7 +4,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch} from "react-router-dom";
 import {matchRole, needAuth, useUser} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
-import {usePages} from "../controllers";
+import {usePages} from "../controllers/General";
 
 const styles = theme => ({
     content: {
@@ -34,7 +34,7 @@ const MainContent = props => {
                     needAuth(item.roles, user)
                         ? <pages.login.component.type {...props} {...pages.login.component.props} />
                         : (matchRole(item.roles, user)
-                        ? <item.component.type {...props} {...item.component.props} />
+                        ? <item.component.type {...props} classes={{}} {...item.component.props} />
                         : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)}
             />)}</Switch>
         </Suspense>

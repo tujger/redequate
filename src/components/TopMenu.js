@@ -8,7 +8,7 @@ import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
 import AvatarView from "../components/AvatarView";
-import {usePages} from "../controllers";
+import {usePages} from "../controllers/General";
 
 const styles = theme => ({
     header: {

@@ -12,7 +12,7 @@ import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
 import {matchRole, needAuth, user} from "../controllers/User";
 import {connect} from "react-redux";
-import {usePages} from "../controllers";
+import {usePages} from "../controllers/General";
 
 const styles = theme => ({
     label: {
@@ -39,7 +39,6 @@ function MainAppbar(props) {
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
-    console.log(label)
     return <AppBar position="fixed" className={className}>
         <Toolbar>
             {onHamburgerClick ?

@@ -14,6 +14,7 @@ const ProgressView = props => {
     const classes = useStyles();
 
     return <LinearProgress
+        color="secondary"
         variant={value === null ? "indeterminate" : "determinate"}
         value={value}
         className={[show ? "" : classes.invisibleProgress, className].join(" ")}/>

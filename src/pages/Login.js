@@ -39,7 +39,6 @@ const Login = (props) => {
     const store = useStore();
     const firebase = useFirebase();
     const location = useLocation();
-    const history = useHistory();
 
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
@@ -56,17 +55,19 @@ const Login = (props) => {
                     firebase.auth().signInWithRedirect(provider);
                 }).catch(loginError)
             }
-        } catch(error) {
+        } catch (error) {
             loginError(error);
         }
     };
+
     const requestLoginPassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         firebase.auth().signInWithEmailAndPassword(email, password).then(loginSuccess).catch(loginError);
     };
+
     const loginSuccess = response => {
-        if(!response.user) {
+        if (!response.user) {
             loginError(new Error("Login failed. Please try again"));
             return;
         }
@@ -106,9 +107,6 @@ const Login = (props) => {
                 // return this;
             })
             .then(() => {
-                if (location && location.pathname === pages.login.route) {
-                    history.push(pages.profile.route);
-                }
                 dispatch({type: "user", user});
             })
             .catch(loginError)
@@ -130,18 +128,27 @@ const Login = (props) => {
         window.localStorage.removeItem(pages.login.route);
         return <LoadingComponent/>;
     }
+
     if (user.uid()) {
-        return <Redirect to={pages.profile.route}/>
+        if (location.pathname === pages.login.route) {
+            return <Redirect to={pages.profile.route}/>
+        } else {
+            return <Redirect to={location.pathname}/>
+        }
     }
 
-    return <layout.type {...props} {...layout.props} email={email} history={props.history} onChangeEmail={ev => {
+    return <layout.type {...props} {...layout.props} email={email} onChangeEmail={ev => {
         setState({...state, email: ev.target.value});
     }} onChangePassword={ev => {
         setState({...state, password: ev.target.value});
-    }} onRequestGoogle={requestLoginGoogle} onRequestLogin={requestLoginPassword} pages={pages} password={password} disabled={requesting}/>
+    }} onRequestGoogle={requestLoginGoogle} onRequestLogin={requestLoginPassword} password={password}
+                        disabled={requesting}/>
 };
 
-const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword, onRequestLogin, onRequestGoogle, pages, history, signup = true}) => {
+const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword, onRequestLogin, onRequestGoogle, signup = true}) => {
+    const pages = usePages();
+    const history = useHistory();
+
     return <Grid container>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems="flex-end">

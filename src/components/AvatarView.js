@@ -4,7 +4,7 @@ import Avatar from "@material-ui/core/Avatar";
 import makeStyles from "@material-ui/styles/makeStyles";
 import {currentRole, Role, UserData} from "../controllers/User";
 import {useFirebase, useUserDatas} from "../controllers/General";
-import {notifySnackbar} from "../controllers";
+import {notifySnackbar} from "../controllers/Notifications";
 import Skeleton from "@material-ui/lab/Skeleton";
 
 const useStyles = makeStyles(theme => ({
