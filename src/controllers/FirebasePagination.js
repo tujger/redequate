@@ -1,4 +1,4 @@
-const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals, update}) => {
+const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, equals, update}) => {
     let baseRef = ref;
     let lastKey = null;
     let lastValue = null;
@@ -25,10 +25,11 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals,
             if (order === "asc") {
                 if (equals) {
                     ref = ref.startAt(lastValue, lastKey).endAt(equals + "\uf8ff").limitToFirst(size + 1);
-                    // ref = ref.equalTo(equals, lastKey).limitToFirst(size + 1);
+                    // ref = ref.equalTo(lastValue, lastKey).limitToFirst(size + 1);
                 } else if (child || value) {
                     ref = ref.startAt(lastValue, lastKey).limitToFirst(size + 1);
                 } else {
+                    console.log(lastKey, lastValue)
                     ref = ref.startAt(lastKey).limitToFirst(size + 1);
                 }
             } else {
@@ -52,7 +53,8 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals,
                 }
             } else if (start) {
                 if (order === "asc") {
-                    ref = ref.startAt(start).endAt(start + "\uf8ff").limitToFirst(size);
+                    console.log(start, end)
+                    ref = ref.startAt(start).endAt((end || start) + "\uf8ff").limitToFirst(size);
                 } else {
                     ref = ref.startAt(start).endAt(start + "\uf8ff").limitToLast(size);
                 }
@@ -84,9 +86,11 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals,
                     if (data.length > 1) data.pop();
                 }
                 if(value) {
-                    data.push({_key: ss.key, value: ss.val()});
+                    data.push({value: ss.val(), key: ss.key});
+                } else if(child) {
+                    data.push({value: ss.val(), key: ss.key});
                 } else {
-                    data.push({...ss.val(), _key: ss.key});
+                    data.push({value: ss.val(), key: ss.key});
                 }
                 keys.push(ss.key);
                 count++;
@@ -109,7 +113,8 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals,
             if (keys.length) {
                 const last = order === "asc" ? keys.length - 1 : 0;
                 lastKey = keys[last];
-                if (child && data[last]) lastValue = data[last][child];
+                // console.log(child, lastKey, data[last])
+                if (child && data[last]) lastValue = data[last].value[child];
                 else if(value && data[last]) lastValue = data[last].value;
             }
             if (count < size) finished = true;
@@ -124,6 +129,21 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals,
         count = 0;
         finished = false;
         started = false;
+    }
+    const toString = () => {
+        return `[P] ${
+            child ? "child: " + child : value ? "value: " + value : "key"
+        }, ${
+            start ? "start: " + start + ", " : ""
+        }${
+            end ? "end: " + end + ", " : ""
+        }${
+            equals ? "equals: " + equals + ", " : ""
+        }order: ${order}, count: ${count}, countTotal: ${countTotal}, ${
+            started ? "started" : "not started"
+        }, ${
+            finished ? "finished" : "not finished"
+        }`;
     }
     return {
         next: next,
@@ -143,6 +163,10 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, equals,
         get started() {
             return started
         },
+        get asString() {
+            return toString();
+        },
+        toString: toString
     }
 }
 export default Pagination;

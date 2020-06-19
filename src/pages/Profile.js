@@ -89,9 +89,9 @@ const Profile = ({notifications = true}) => {
             }
             label={"Get notifications"}
         /></Grid>}
-            <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large">
+            <ButtonGroup disabled={disabled} variant="contained" color={"secondary"} size="large">
             <Button
-                color="primary"
+                color={"secondary"}
                 onClick={() => {
                     logoutUser(firebase)();
                     refreshAll(store);
@@ -101,7 +101,7 @@ const Profile = ({notifications = true}) => {
                 Logout
             </Button>
             {!user.public().emailVerified && user.public().email && <Button
-                color="primary"
+                color={"secondary"}
                 onClick={() => {
                     refreshAll(store);
                     dispatch(ProgressView.SHOW);
@@ -118,7 +118,7 @@ const Profile = ({notifications = true}) => {
                 Resend verification
             </Button>}
             {user.public().emailVerified && <Button
-                color="primary"
+                color={"secondary"}
                 // onClick={() => {
                 //     props.history.push(pages.edituser.route);
                 // }}

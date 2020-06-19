@@ -71,7 +71,7 @@ const RestorePassword = (props) => {
             {error}
         </FormHelperText>
         <Box m={2}/>
-        <ButtonGroup variant="contained" color="primary" size="large" fullWidth>
+        <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth>
             <Button
                 onClick={requestRestorePassword}
             >

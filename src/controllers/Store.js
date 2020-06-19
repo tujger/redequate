@@ -7,6 +7,7 @@ import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUser} from "./User";
 import {mainAppbar} from "../components/MainAppbar";
+import {modalComponent} from "../components/ModalComponent";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -18,6 +19,7 @@ const Store = (name, reducers) => {
         topBottomMenuLayout,
         currentUser,
         mainAppbar,
+        modalComponent,
         ...reducers};
     const store = createStore(combineReducers(reducers), initialStore || {});
 

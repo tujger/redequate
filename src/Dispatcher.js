@@ -19,6 +19,7 @@ import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import {useDispatch} from "react-redux";
 import MainAppbar from "./components/MainAppbar";
+import Modal from "./components/ModalComponent";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout"));
@@ -93,7 +94,10 @@ const DispatcherRoutedBody = props => {
         // eslint-disable-next-line
     }, []);
 
-    return <Switch>
+    const background = history.location.state && history.location.state.background
+
+    return <React.Fragment>
+        <Switch location={background}>
         <Route
             path={"/*"}
             children={<Suspense fallback={<LoadingComponent/>}>
@@ -127,6 +131,8 @@ const DispatcherRoutedBody = props => {
             </Suspense>}
         />
     </Switch>
+        {background && <Route path={history.location.pathname} children={<div/>} />}
+    </React.Fragment>
 };
 
 Dispatcher.propTypes = {

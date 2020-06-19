@@ -37,7 +37,7 @@ const Logout = (props) => {
         <Grid container spacing={1} alignItems="flex-end">
             <Button
                 size="large"
-                color="primary"
+                color={"secondary"}
                 onClick={() => {
                     doLogout();
                 }}

@@ -186,7 +186,7 @@ const Signup = (props) => {
             {error}
         </FormHelperText>
         <Box m={2}/>
-        <ButtonGroup variant="contained" color="primary" size="large" fullWidth disabled={requesting}>
+        <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth disabled={requesting}>
             <Button
                 onClick={requestSignupPassword}
             >

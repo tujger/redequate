@@ -388,7 +388,6 @@ export const UserData = function (firebase) {
                 return "";
             }
         },
-
         fetch: async (id, options = [UserData.PUBLIC]) => {
             if (id instanceof Array) {
                 options = id;

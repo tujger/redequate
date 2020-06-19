@@ -2,12 +2,15 @@ export const toDateString = (millis) => {
     const now = new Date();
     const given = new Date(millis);
 
-    if((now.getUTCFullYear() !== given.getUTCFullYear())
-        || (now.getUTCMonth() !== given.getUTCMonth())
-        || (now.getUTCDate() !== given.getUTCDate())) {
-        return given.toLocaleDateString();
+    const dateString = given.toLocaleDateString();
+    const timeString = given.toLocaleTimeString().replace(/^.*?\s\d/, "").replace(/:\d+\s/, " ");
+
+    if((now.getFullYear() !== given.getFullYear())
+        || (now.getMonth() !== given.getMonth())
+        || (now.getDate() !== given.getDate())) {
+        return dateString + " " + timeString;
     } else {
-        return given.toLocaleTimeString().replace(/^.*?\s\d/, "").replace(/:\d+\s/, " ");
+        return timeString;
     }
 
     return new Date(millis).toDateString();
