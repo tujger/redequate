@@ -5,7 +5,6 @@ import ProgressView from "./ProgressView";
 import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
 
-let resetCache;
 const LazyListComponent = (props) => {
     const dispatch = useDispatch();
     const {
@@ -14,6 +13,7 @@ const LazyListComponent = (props) => {
         itemTransform,
         pagination: givenPagination,
         placeholder,
+        placeholders = 1,
         disableProgress,
         ["LazyListComponent_" + cache]: cacheData = {}
     } = props;
@@ -30,11 +30,7 @@ const LazyListComponent = (props) => {
         loading = cache ? cachedLoading : true,
         pagination = cache ? cachedPagination : (givenPagination instanceof Function ? givenPagination() : givenPagination)
     } = state;
-
-    resetCache = () => {
-        pagination && pagination.reset();
-        setState(state => ({...state, items: [], loading: true, finished: false}));
-    }
+    const inViewRef = React.createRef();
 
     const loadNextPart = () => {
         if (finished) {
@@ -62,7 +58,7 @@ const LazyListComponent = (props) => {
                 if (cache) {
                     dispatch({
                         type: LazyListComponent.UPDATE,
-                        cacheId: cache,
+                        cache: cache,
                         ["LazyListComponent_" + cache]: update
                     });
                 } else {
@@ -84,42 +80,37 @@ const LazyListComponent = (props) => {
         // eslint-disable-next-line
     }, []);
 
-    const numberOfPlaceholders = 3;
+    const numberOfPlaceholders = items  ? items.length || placeholders : placeholders;
 
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
     // console.warn(loading, finished, items.length, cachedItems.length);
     return <React.Fragment>
         {items}
         {/*{items.map((item) => item && itemComponent(item))}*/}
-        {!finished && <InView style={{width: "100%"}} onChange={(inView) => {
+        {!finished && <InView ref={inViewRef} style={{width: "100%"}} onChange={(inView) => {
             if (inView) loadNextPart();
         }}>
-
-            {/*<placeholder.type {...placeholder.props} key={"LazyListComponent__placeholder"}/>*/}
-            {<React.Fragment>
-                {(() => {
-                    const a = [];
-                    for (let i = 0; i < numberOfPlaceholders; i++) {
-                        a.push(i)
-                    }
-                    return a;
-                })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
-            </React.Fragment>}
+            {(() => {
+                const a = [];
+                for (let i = 0; i < placeholders; i++) {
+                    a.push(i)
+                }
+                return a;
+            })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
         </InView>}
     </React.Fragment>
 }
 
 export const lazyListComponent = (state = {}, action) => {
-    const cacheId = action.cacheId;
-    const cacheData = action["LazyListComponent_" + cacheId];
+    const cache = action.cache;
+    const cacheData = action["LazyListComponent_" + cache];
     switch (action.type) {
         case LazyListComponent.UPDATE:
-            return {...state, ["LazyListComponent_" + cacheId]: cacheData};
+            return {...state, ["LazyListComponent_" + cache]: cacheData};
         case LazyListComponent.RESET:
-            const {pagination} = cacheData || state["LazyListComponent_" + cacheId] || {};
-            if(!cacheId) resetCache && resetCache();
+            const {pagination} = cacheData || state["LazyListComponent_" + cache] || {};
             if (pagination) pagination.reset();
-            return {...state, ["LazyListComponent_" + cacheId]: {items: [], loading: true, finished: false}};
+            return {...state, ["LazyListComponent_" + cache]: {items: [], loading: true, finished: false}};
         case LazyListComponent.EXIT:
             return state;
         default:
