@@ -133,11 +133,12 @@ export const notifySnackbar = props => {
             "\"import {NotificationsSnackbar} from 'edeqa-pwa-react-core'\" and <NotificationsSnackbar/> in your file.");
         return;
     }
-    if (props instanceof Error || props.constructor.name === "FirebaseStorageError") {
+    const error = props.error || props;
+    if (error && (error instanceof Error || error.constructor.name === "FirebaseStorageError")) {
         console.error("Error", props);
         snackbar.payload = {
+            ...error,
             priority: "high",
-            title: props.message,
             variant: "error"
         }
     } else {

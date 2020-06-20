@@ -12,6 +12,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             resolve([]);
             return;
         }
+
         let ref = baseRef;
         if (child) ref = ref.orderByChild(child);
         else if (value) ref = ref.orderByValue();
@@ -65,6 +66,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
                 }
             }
         }
+        baseRef.database.goOnline();
 
         let timeoutFired = false;
         const timeoutTask = setTimeout(() => {
@@ -72,9 +74,9 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             console.error(`[FP] timed out for ${toString()}`);
             reject(new Error("Timed out on requesting data."));
         }, timeout);
-        ref.once("value").then(async snap => {
+        return ref.once("value").then(async snap => {
             clearTimeout(timeoutTask);
-            if(timeoutFired) return;
+            if (timeoutFired) return;
             const keys = [];
             const data = []; // store data in array so it's ordered
             const children = [];
@@ -82,19 +84,19 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
                 children.push(child)
             });
             for (let ss of children) {
-                if(lastKey && ss.key === lastKey) continue;
+                if (lastKey && ss.key === lastKey) continue;
                 if (update) {
                     const value = ss.val();
                     const newValue = await update(ss.key, value);
-                    if(newValue !== value) {
+                    if (newValue !== value) {
                         ss.ref.set(newValue);
                     }
                     if (keys.length > 1) keys.pop();
                     if (data.length > 1) data.pop();
                 }
-                if(value) {
+                if (value) {
                     data.push({value: ss.val(), key: ss.key});
-                } else if(child) {
+                } else if (child) {
                     data.push({value: ss.val(), key: ss.key});
                 } else {
                     data.push({value: ss.val(), key: ss.key});
@@ -109,14 +111,14 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
                 lastKey = keys[last];
                 // console.log(child, lastKey, data[last])
                 if (child && data[last]) lastValue = data[last].value[child];
-                else if(value && data[last]) lastValue = data[last].value;
+                else if (value && data[last]) lastValue = data[last].value;
             }
             if (count < size) finished = true;
             resolve(data);
         });
     })
     const reset = () => {
-        baseRef.database.goOnline();
+        // baseRef.database.goOnline();
         lastKey = null;
         lastValue = null;
         countTotal = 0;

@@ -56,10 +56,9 @@ const LazyListComponent = (props) => {
                 })
             ).catch(error => {
                 notifySnackbar({
-                    title: error.message,
-                    variant: "error",
+                    error: error,
                     buttonLabel: "Refresh",
-                    onButtonClick: () => dispatch({type: LazyListComponent.RESET, cache})
+                    onButtonClick: () => dispatch({type: LazyListComponent.RESET, cache}),
                 });
                 return {
                     finished: true,
