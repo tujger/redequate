@@ -15,6 +15,7 @@ const LazyListComponent = (props) => {
         placeholder,
         placeholders = 1,
         disableProgress,
+        noItemsComponent = null,
         ["LazyListComponent_" + cache]: cacheData = {}
     } = props;
     const [state, setState] = React.useState({});
@@ -48,13 +49,27 @@ const LazyListComponent = (props) => {
                     }
                 });
                 return Promise.all(newitems);
-            }).then(newitems => {
-                const update = {
+            }).then(newitems => ({
                     finished: pagination.finished,
                     items: pagination.order === "asc" ? [...items, ...newitems] : [...items, ...newitems.reverse()],
                     loading: false,
                     pagination
+                })
+            ).catch(error => {
+                notifySnackbar({
+                    title: error.message,
+                    variant: "error",
+                    buttonLabel: "Refresh",
+                    onButtonClick: () => dispatch({type: LazyListComponent.RESET, cache})
+                });
+                return {
+                    finished: true,
+                    items: [],
+                    loading: false,
+                    pagination
                 }
+            }).then(update => {
+                console.log(cache, update)
                 if (cache) {
                     dispatch({
                         type: LazyListComponent.UPDATE,
@@ -67,7 +82,7 @@ const LazyListComponent = (props) => {
                         ...update,
                     }))
                 }
-            }).catch(notifySnackbar).finally(() => {
+            }).finally(() => {
                 if (!disableProgress) dispatch(ProgressView.HIDE);
             });
     };
@@ -80,10 +95,7 @@ const LazyListComponent = (props) => {
         // eslint-disable-next-line
     }, []);
 
-    const numberOfPlaceholders = items  ? items.length || placeholders : placeholders;
-
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
-    // console.warn(loading, finished, items.length, cachedItems.length);
     return <React.Fragment>
         {items}
         {/*{items.map((item) => item && itemComponent(item))}*/}
@@ -98,6 +110,7 @@ const LazyListComponent = (props) => {
                 return a;
             })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
         </InView>}
+        {!items.length && finished && noItemsComponent}
     </React.Fragment>
 }
 
