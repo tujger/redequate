@@ -6,7 +6,7 @@ export {default as listAction} from "./ListAction";
 export {default as LazyListComponent, lazyListComponent} from "./LazyListComponent";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";
-export {default as ModalComponent, modalComponent} from "./ModalComponent";
+export {default as ModalComponent} from "./ModalComponent";
 export {default as PasswordField} from "./PasswordField";
 export {default as PlacesTextField} from "./PlacesTextField";
 export {default as ProfileComponent} from "./ProfileComponent";

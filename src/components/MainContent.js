@@ -5,7 +5,6 @@ import {Route, Switch, useHistory} from "react-router-dom";
 import {matchRole, needAuth, useUser} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages} from "../controllers/General";
-import Modal from "./ModalComponent";
 
 const styles = theme => ({
     content: {
@@ -46,7 +45,6 @@ const MainContent = props => {
                 />
             })}</Switch>
         </Suspense>
-            <Modal/>
     </main>
 };
 
