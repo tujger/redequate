@@ -1,5 +1,4 @@
 import React from "react";
-import LoadingComponent from "./LoadingComponent";
 import {notifySnackbar} from "../controllers";
 import ProgressView from "./ProgressView";
 import {connect, useDispatch} from "react-redux";
@@ -69,7 +68,6 @@ const LazyListComponent = (props) => {
                     pagination
                 }
             }).then(update => {
-                console.log(cache, update)
                 if (cache) {
                     dispatch({
                         type: LazyListComponent.UPDATE,
@@ -125,7 +123,7 @@ export const lazyListComponent = (state = {}, action) => {
             if (pagination) pagination.reset();
             return {...state, ["LazyListComponent_" + cache]: {items: [], loading: true, finished: false}};
         case LazyListComponent.EXIT:
-            return state;
+            return {...state, ["LazyListComponent_" + cache]: {}};
         default:
             return state;
     }
