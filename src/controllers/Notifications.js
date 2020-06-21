@@ -137,7 +137,9 @@ export const notifySnackbar = props => {
     if (error && (error instanceof Error || error.constructor.name === "FirebaseStorageError")) {
         console.error("Error", props);
         snackbar.payload = {
+            ...props,
             ...error,
+            title: error.message,
             priority: "high",
             variant: "error"
         }

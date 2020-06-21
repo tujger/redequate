@@ -30,7 +30,6 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
                 } else if (child || value) {
                     ref = ref.startAt(lastValue, lastKey).limitToFirst(size + 1);
                 } else {
-                    console.log(lastKey, lastValue)
                     ref = ref.startAt(lastKey).limitToFirst(size + 1);
                 }
             } else {
@@ -72,7 +71,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
         const timeoutTask = setTimeout(() => {
             timeoutFired = true;
             console.error(`[FP] timed out for ${toString()}`);
-            reject(new Error("Timed out on requesting data."));
+            reject(new Error("Timed out on data request."));
         }, timeout);
         return ref.once("value").then(async snap => {
             clearTimeout(timeoutTask);

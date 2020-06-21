@@ -43,21 +43,21 @@ const Login = (props) => {
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         const provider = new firebase.auth.GoogleAuthProvider();
-        try {
+        // try {
             if (popup) {
                 logoutUser(firebase)().then(() => {
                     setState({...state, requesting: true});
-                    firebase.auth().signInWithPopup(provider).then(loginSuccess).catch(loginError);
+                    return firebase.auth().signInWithPopup(provider).then(loginSuccess);
                 }).catch(loginError)
             } else {
                 logoutUser(firebase)().then(() => {
                     window.localStorage.setItem(pages.login.route, provider.providerId);
-                    firebase.auth().signInWithRedirect(provider);
+                    return firebase.auth().signInWithRedirect(provider);
                 }).catch(loginError)
             }
-        } catch (error) {
-            loginError(error);
-        }
+        // } catch (error) {
+        //     loginError(error);
+        // }
     };
 
     const requestLoginPassword = () => {
