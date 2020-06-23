@@ -7,7 +7,7 @@ import withWidth from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
 import Store from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
-import {fetchDeviceId, useFirebase, usePages, useStore} from "./controllers/General";
+import {fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "./controllers/General";
 // import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout";
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
@@ -64,6 +64,10 @@ const DispatcherRoutedBody = props => {
     const {pages, menu, width, copyright, headerImage, layout, name, logo} = props;
     const dispatch = useDispatch();
     const history = useHistory();
+    const windowData = useWindowData({
+        breakpoint: width,
+        isNarrow: () => width === "xs"
+    });
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location, action) => {

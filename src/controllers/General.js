@@ -13,6 +13,7 @@ let firebaseInstance;
 let pagesInstance;
 let userDatasInstance = {};
 let storeInstance = {};
+let windowDataInstance = {};
 
 export const useFirebase = firebase => {
     if(firebase) firebaseInstance = firebase;
@@ -33,4 +34,9 @@ export const useUserDatas = initial => {
 export const useStore = initial => {
     if(initial) storeInstance = initial || {};
     return storeInstance;
+}
+
+export const useWindowData = initial => {
+    if(initial) windowDataInstance = initial || {};
+    return windowDataInstance;
 }

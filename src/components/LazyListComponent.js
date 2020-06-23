@@ -32,6 +32,8 @@ const LazyListComponent = (props) => {
     } = state;
     const inViewRef = React.createRef();
 
+    if(!placeholder) throw new Error("Placeholder is not defined");
+
     const loadNextPart = () => {
         if (finished) {
             return;
@@ -39,10 +41,12 @@ const LazyListComponent = (props) => {
         if (!disableProgress) dispatch(ProgressView.SHOW);
         return pagination.next()
             .then(async newitems => {
-                newitems = newitems.map(async item => {
+                newitems = newitems.map(async (item, index) => {
                     try {
-                        const component = await itemTransform(item);
-                        return itemComponent(component);
+                        const transformed = await itemTransform(item);
+                        if(transformed) {
+                            return itemComponent(transformed, index);
+                        }
                     } catch (error) {
                         notifySnackbar(error);
                     }
