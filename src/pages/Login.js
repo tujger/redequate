@@ -27,7 +27,7 @@ import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 
 const Login = (props) => {
-    const {popup = true, layout = <LoginLayout/>} = props;
+    const {popup = true, onLogin, layout = <LoginLayout/>} = props;
     const [state, setState] = React.useState({
         email: "",
         password: "",
@@ -108,6 +108,7 @@ const Login = (props) => {
             })
             .then(() => {
                 dispatch({type: "user", user});
+                onLogin && onLogin();
             })
             .catch(loginError)
             .finally(() => {

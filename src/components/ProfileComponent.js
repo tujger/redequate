@@ -6,6 +6,7 @@ import GoogleLogo from "../images/google-logo.svg"
 import UserIcon from "@material-ui/icons/Mail";
 import {withRouter} from "react-router-dom";
 import {useFirebase} from "../controllers";
+import EmptyAvatar from "@material-ui/icons/Person";
 
 const styles = theme => ({
     image: {
@@ -17,6 +18,7 @@ const styles = theme => ({
             width: theme.spacing(12),
             height: theme.spacing(12),
         },
+        color: "darkgray",
         objectFit: "cover"
     },
     label: {
@@ -33,9 +35,10 @@ const ProfileComponent = (props) => {
     if(userData) {
         console.log(userData)
         return <Grid container>
-            {userData.public.image && <Grid item xs>
-                <img src={userData.public.image} alt="" className={classes.image}/>
-            </Grid>}
+            <Grid item xs>
+                {userData.public.image ? <img src={userData.public.image} alt="" className={classes.image}/>
+                : <EmptyAvatar className={classes.image}/>}
+            </Grid>
             {userData.public.provider && userData.public.provider === "google.com" && <Grid item xs>
                 <Grid container justify="flex-end">
                     <img src={GoogleLogo} width={40} height={40} alt=""/>
@@ -75,9 +78,10 @@ const ProfileComponent = (props) => {
     }
 
     return <Grid container>
-        {user.public().image && <Grid item xs>
-            <img src={user.public().image} alt="" className={classes.image}/>
-        </Grid>}
+        <Grid item xs>
+            {user.public().image ? <img src={user.public().image} alt="" className={classes.image}/>
+            : <EmptyAvatar className={classes.image}/>}
+        </Grid>
         {user.public().provider && user.public().provider === "google.com" && <Grid item xs>
             <Grid container justify="flex-end">
                 <img src={GoogleLogo} width={40} height={40} alt=""/>

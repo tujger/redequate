@@ -9,6 +9,7 @@ import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
 import AvatarView from "../components/AvatarView";
 import {usePages} from "../controllers/General";
+import {SearchToolbar} from "../pages/Search";
 
 const styles = theme => ({
     header: {
@@ -107,8 +108,10 @@ const TopMenu = props => {
 
     return <div className={["MuiTopMenu-root", classes.topmenu, className].join(" ")}>
         {items.map((list, index) => <MenuSection key={index} items={list}/>)}
-        {user.uid() &&
-        <Link to={pages.profile.route} className={[classes.label, classes.profileitem].join(" ")}>
+        {pages.search && <SearchToolbar/>}
+        {user.uid() && <Link
+            to={pages.profile.route}
+            className={[classes.label, classes.profileitem].join(" ")}>
             <AvatarView user={user}/>
         </Link>}
     </div>

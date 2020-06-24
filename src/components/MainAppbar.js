@@ -13,6 +13,7 @@ import ProgressView from "../components/ProgressView";
 import {matchRole, needAuth, user} from "../controllers/User";
 import {connect} from "react-redux";
 import {usePages} from "../controllers/General";
+import {SearchToolbar} from "../pages/Search";
 
 const styles = theme => ({
     label: {
@@ -30,7 +31,8 @@ const styles = theme => ({
     },
     content: {},
     indent: {},
-    appbar: {}
+    appbar: {},
+
 });
 
 function MainAppbar(props) {
@@ -61,11 +63,11 @@ function MainAppbar(props) {
                         >
                             <Link to={pages.home.route} className={classes.label}>
                                 {logo ? <div className={classes.logo}>
-                                    <img src={logo} alt={""}/>
-                                </div> :
+                                        <img src={logo} alt={""}/>
+                                    </div> :
                                     (label || (needAuth(item.roles, user)
-                                    ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
-                                        ? item.title || item.label : pages.notfound.title || pages.notfound.label)))
+                                        ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
+                                            ? item.title || item.label : pages.notfound.title || pages.notfound.label)))
                                 }
                             </Link>
                         </Route>
@@ -77,6 +79,7 @@ function MainAppbar(props) {
                     </Route>
                 </Switch>
             </Typography>
+            {pages.search && <SearchToolbar/>}
             {user.uid() && <Link to={pages.profile.route} className={classes.label}>
                 <AvatarView user={user}/>
             </Link>}

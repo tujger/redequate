@@ -21,6 +21,7 @@ import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
 import {notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
+// import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
     image: {
@@ -84,44 +85,42 @@ const EditProfile = (props) => {
     file = state.file;
     snapshot = state.snapshot;
 
-    React.useEffect(() => {
-        return () => {
-            removeUploadedFile();
-        }
-    }, [])
-
     const onerror = error => {
         setState({...state, disabled: false});
         notifySnackbar(error);
         refreshAll(store);
     };
 
-    const saveUser = () => {
+    const saveUser = async () => {
         setState({...state, disabled: true});
         dispatch(ProgressView.SHOW);
         console.log(address, image, name, phone);
-        publishFile(firebase)({
-            auth: data.uid,
-            uppy,
-            file,
-            snapshot,
-            onprogress: progress => {
-                dispatch({...ProgressView.SHOW, value: progress});
-            },
-            defaultUrl: image,
-            deleteFile: user.public().image
-        }).then(({image, metadata}) => {
-            dispatch(ProgressView.SHOW);
-            return updateUserPublic(firebase)(data.uid, {
-                address,
-                image: image || "",
-                name: name,
-                phone,
-                updated: firebase.database.ServerValue.TIMESTAMP
-            })
+        let publishing = {};
+
+        if(uppy) {
+            publishing = await publishFile(firebase)({
+                auth: data.uid,
+                uppy,
+                file,
+                snapshot,
+                onprogress: progress => {
+                    dispatch({...ProgressView.SHOW, value: progress});
+                },
+                defaultUrl: image,
+                deleteFile: user.public().image
+            });
+        }
+        const {image:imageSaved, metadata} = publishing;
+        dispatch(ProgressView.SHOW);
+        updateUserPublic(firebase)(data.uid, {
+            address,
+            image: imageSaved || image || "",
+            name: name,
+            phone,
+            updated: firebase.database.ServerValue.TIMESTAMP
         }).then((userData) => {
             setTimeout(() => {
-                setState({...state, disabled: false});
+                setState({...state, disabled: false, uppy: null});
                 refreshAll(store);
                 history.push(tosuccessroute, {data: userData, tosuccessroute: tosuccessroute});
             }, 1000)
@@ -148,6 +147,28 @@ const EditProfile = (props) => {
         }
     }
 
+
+    const onClose = () => {
+        setState({...state, preview: null})
+    }
+
+    const onCrop = (preview) => {
+        setState({...state, preview})
+    }
+
+    const onBeforeFileLoad = (elem) => {
+        if(elem.target.files[0].size > 71680){
+            alert("File is too big!");
+            elem.target.value = "";
+        }
+    }
+
+    React.useEffect(() => {
+        return () => {
+            removeUploadedFile();
+        }
+    }, [])
+
     if (!data || !data.uid) {
         return <Redirect to={tosuccessroute}/>
     }
@@ -161,7 +182,7 @@ const EditProfile = (props) => {
                 {image ? <img src={image} alt="" className={classes.image}/>
                     : <EmptyAvatar className={classes.image}/>}
                 <IconButton className={classes.clearPhoto} onClick={() => {
-                    setState({...state, image: ""});
+                    setState({...state, image: "", uppy: null});
                 }}><ClearIcon/></IconButton>
             </Grid>
             {uploadable && <UploadComponent
@@ -172,6 +193,15 @@ const EditProfile = (props) => {
                 onsuccess={handleUploadPhotoSuccess}
                 onerror={handleUploadPhotoError}
             />}
+            {/*<AvatarEdit
+                width={390}
+                cropRadius={1}
+                height={295}
+                onCrop={onCrop}
+                onClose={onClose}
+                onBeforeFileLoad={onBeforeFileLoad}
+                src={image}
+            />*/}
         </Grid>
         <Grid item xs>
             <Grid container spacing={1} alignItems="flex-end">
