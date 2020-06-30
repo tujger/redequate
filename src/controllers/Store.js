@@ -5,7 +5,7 @@ import BottomToolbarLayout, {bottomToolbarLayout} from "../layouts/BottomToolbar
 import {snackbar} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
-import {currentUser} from "./User";
+import {currentUser, currentUserData} from "./User";
 import {mainAppbar} from "../components/MainAppbar";
 
 const Store = (name, reducers) => {
@@ -17,11 +17,12 @@ const Store = (name, reducers) => {
         snackbar,
         topBottomMenuLayout,
         currentUser,
+        currentUserData,
         mainAppbar,
         ...reducers};
     const store = createStore(combineReducers(reducers), initialStore || {});
 
-    store.subscribe(state => {
+    store.subscribe(() => {
         const saveable = {};
         for(let x in store.getState()) {
             if(reducers[x] && !reducers[x].skipStore) {

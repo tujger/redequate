@@ -136,11 +136,7 @@ export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogr
     const fileRef = firebase.storage().ref().child(auth + "/images/" + uuid + "-" + file.name);
     console.log("[Upload] uploaded", file, snapshot, fileRef);
     return fetch(snapshot.uploadURL).then(response => {
-        if (response.ok) {
-            uppy.removeFile(file.id);
-            return response.blob();
-        }
-        throw new Error("Could not fetch url");
+        return response.blob();
     }).then(blob => {
         return new Promise((resolve1, reject1) => {
             const uploadTask = fileRef.put(blob, {
@@ -162,6 +158,7 @@ export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogr
             });
         });
     }).then(ref => {
+        uppy.removeFile(file.id);
         if (deleteFile) {
             try {
                 console.log("[Upload] delete old file", deleteFile);

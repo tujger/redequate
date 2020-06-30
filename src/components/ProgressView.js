@@ -20,8 +20,8 @@ const ProgressView = props => {
         className={[show ? "" : classes.invisibleProgress, className].join(" ")}/>
 };
 
-ProgressView.SHOW = {type: "show"};
-ProgressView.HIDE = {type: "hide"};
+ProgressView.SHOW = {type: "progressViewShow"};
+ProgressView.HIDE = {type: "progressViewHide"};
 
 export const progressView = (state = {show: false, value: null}, action) => {
     switch (action.type) {

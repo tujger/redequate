@@ -95,7 +95,7 @@ MainAppbar.propTypes = {
     onHamburgerClick: PropTypes.func
 };
 
-MainAppbar.LABEL = "label";
+MainAppbar.LABEL = "mainAppBarLabel";
 export const mainAppbar = (state = {label: ""}, action) => {
     if (action.type === MainAppbar.LABEL) {
         return {...state, label: action.label};

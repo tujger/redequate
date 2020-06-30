@@ -5,6 +5,7 @@ import {
     logoutUser,
     updateUserPrivate,
     updateUserPublic,
+    useCurrentUserData,
     user
 } from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
@@ -25,6 +26,7 @@ import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifi
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
+import {UserData} from "../controllers";
 
 const Login = (props) => {
     const {popup = true, onLogin, layout = <LoginLayout/>} = props;
@@ -44,6 +46,7 @@ const Login = (props) => {
         dispatch(ProgressView.SHOW);
         const provider = new firebase.auth.GoogleAuthProvider();
         // try {
+            dispatch({type:"currentUserData", userData:null});
             if (popup) {
                 logoutUser(firebase)().then(() => {
                     setState({...state, requesting: true});
@@ -71,6 +74,18 @@ const Login = (props) => {
             loginError(new Error("Login failed. Please try again"));
             return;
         }
+        const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+        ud.fetch([UserData.ROLE])
+            .then(() => ud.fetch([UserData.PUBLIC, UserData.FORCE]))
+            .then(() => ud.fetchPrivate(fetchDeviceId(), true))
+            .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName}))
+            .then(() => ud.savePrivate())
+            .then(() => ud.fetch([UserData.UPDATED, UserData.FORCE]))
+            .then(() => {
+                useCurrentUserData(ud);
+                dispatch({type:"currentUserData", userData:ud});
+            }).catch(notifySnackbar)
+
         const {uid, email, emailVerified, displayName: name, phoneNumber: phone, photoURL: image, providerData = []} = response.user.toJSON();
         const provider = providerData.filter(item => item && item.providerId).filter((item, index) => index === 0).map(item => item.providerId)[0];
 
@@ -96,8 +111,8 @@ const Login = (props) => {
                 if (data && data.notification) {
                     return setupReceivingNotifications(firebase)
                         .then(token => fetchUserPrivate(firebase)(uid)
-                            .then(data => updateUserPrivate(firebase)(uid, fetchDeviceId(), {notification: token}))
-                            .then(result => {
+                            .then(() => updateUserPrivate(firebase)(uid, fetchDeviceId(), {notification: token}))
+                            .then(() => {
                                 notifySnackbar({title: "Subscribed"});
                                 dispatch(ProgressView.HIDE);
                                 setState({...state, disabled: false});

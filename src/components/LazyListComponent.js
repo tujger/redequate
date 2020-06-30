@@ -4,6 +4,7 @@ import ProgressView from "./ProgressView";
 import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
 
+
 const LazyListComponent = (props) => {
     const dispatch = useDispatch();
     const {
@@ -21,30 +22,45 @@ const LazyListComponent = (props) => {
     const {
         finished: cachedFinished = false,
         items: cachedItems = [],
-        loading: cachedLoading = true,
+        loading: cachedLoading = false,
         pagination: cachedPagination = givenPagination instanceof Function ? givenPagination() : givenPagination
     } = cacheData;
     const {
         finished = cache ? cachedFinished : false,
         items = cache ? cachedItems : [],
-        loading = cache ? cachedLoading : true,
+        loading = cache ? cachedLoading : false,
         pagination = cache ? cachedPagination : (givenPagination instanceof Function ? givenPagination() : givenPagination)
     } = state;
     const inViewRef = React.createRef();
 
-    if(!placeholder) throw new Error("Placeholder is not defined");
+    if (!placeholder) throw new Error("Placeholder is not defined");
 
     const loadNextPart = () => {
         if (finished) {
             return;
         }
         if (!disableProgress) dispatch(ProgressView.SHOW);
+        // setTimeout(() => {
+        //     console.log(inViewRef.current.node.offsetHeight);
+        // }, 1000)
+        /*if (cache) {
+            dispatch({
+                type: LazyListComponent.UPDATE,
+                cache: cache,
+                ["LazyListComponent_" + cache]: {...cacheData, loading: true}
+            });
+        } else {
+            setState(state => ({
+                ...state,
+                loading: true,
+            }))
+        }*/
         return pagination.next()
             .then(async newitems => {
                 newitems = newitems.map(async (item, index) => {
                     try {
-                        const transformed = await itemTransform(item);
-                        if(transformed) {
+                        const transformed = await itemTransform(item, index);
+                        if (transformed) {
                             return itemComponent(transformed, index);
                         }
                     } catch (error) {
@@ -81,6 +97,7 @@ const LazyListComponent = (props) => {
                     setState(state => ({
                         ...state,
                         ...update,
+                        loading: false,
                     }))
                 }
             }).finally(() => {
@@ -97,23 +114,45 @@ const LazyListComponent = (props) => {
     }, []);
 
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
+
     return <React.Fragment>
         {items}
+        <Observer
+            finished={finished}
+            hasItems={items.length}
+            key={items.length}
+            loadNextPage={loadNextPart}
+            placeholder={placeholder}
+            placeholders={placeholders}
+        />
         {/*{items.map((item) => item && itemComponent(item))}*/}
-        {!finished && <InView ref={inViewRef} style={{width: "100%"}} onChange={(inView) => {
-            if (inView) loadNextPart();
-        }}>
-            {(() => {
-                const a = [];
-                for (let i = 0; i < placeholders; i++) {
-                    a.push(i)
-                }
-                return a;
-            })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
-        </InView>}
         {!items.length && finished && noItemsComponent}
     </React.Fragment>
+};
+
+const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders}) => {
+    if (finished) return null;
+    return <React.Fragment>
+        <InView ref={ref => {
+            if (!ref) return;
+            setTimeout(() => {
+                if (ref && ref.node) ref.node.style.display = "";
+            }, hasItems ? 1500 : 0)
+
+        }} style={{width: "100%", display: "none"}} onChange={(inView) => {
+            // console.log("inview", inView)
+            if (inView) loadNextPage();
+        }}/>
+        {(() => {
+            const a = [];
+            for (let i = 0; i < placeholders; i++) {
+                a.push(i)
+            }
+            return a;
+        })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
+    </React.Fragment>
 }
+
 
 export const lazyListComponent = (state = {}, action) => {
     const cache = action.cache;
@@ -124,7 +163,7 @@ export const lazyListComponent = (state = {}, action) => {
         case LazyListComponent.RESET:
             const {pagination} = cacheData || state["LazyListComponent_" + cache] || {};
             if (pagination) pagination.reset();
-            return {...state, ["LazyListComponent_" + cache]: {items: [], loading: true, finished: false}};
+            return {...state, ["LazyListComponent_" + cache]: {items: [], loading: false, finished: false}};
         case LazyListComponent.EXIT:
             return {...state, ["LazyListComponent_" + cache]: {}};
         default:

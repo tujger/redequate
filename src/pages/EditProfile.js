@@ -10,17 +10,17 @@ import AddressIcon from "@material-ui/icons/LocationCity";
 import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import NameIcon from "@material-ui/icons/Person";
-import PhoneIcon from "@material-ui/icons/Phone";
 import EmptyAvatar from "@material-ui/icons/Person";
-import {Redirect, withRouter, useHistory, useLocation} from "react-router-dom";
-import User, {updateUserPublic, UserData} from "../controllers/User";
+import PhoneIcon from "@material-ui/icons/Phone";
+import {Redirect, useHistory} from "react-router-dom";
+import {useCurrentUserData, UserData} from "../controllers/User";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
-import {connect, useDispatch} from "react-redux";
+import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
+import {notifySnackbar, useFirebase, useStore} from "../controllers";
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
@@ -59,7 +59,7 @@ const styles = theme => ({
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
-    let {data, classes, uploadable = true} = props;
+    let {data, classes, uploadable = true, additionalPublicFields, additionalPrivateFields} = props;
     const dispatch = useDispatch();
     const store = useStore();
     const firebase = useFirebase();
@@ -68,16 +68,15 @@ const EditProfile = (props) => {
     const {state: givenState = {}} = history.location;
     const {tosuccessroute = "/", data: givenData} = givenState;
 
-    data = givenData || data || JSON.parse(window.localStorage.getItem(history.location.pathname));
-    const user = User(data);
+    const userData = useCurrentUserData();
+    data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
-    console.log(givenData || data, user)
     const [state, setState] = useState({
-        address: user.public().address || "",
+        address: userData.public.address || "",
         error: null,
-        image: user.public().image || "",
-        name: user.public().name === user.public().email ? "" : (user.public().name || ""),
-        phone: user.public().phone || "",
+        image: userData.public.image || "",
+        name: userData.public.name === userData.public.email ? "" : (userData.public.name || ""),
+        phone: userData.public.phone || "",
         disabled: false
     });
     const {name, error, address, phone, image, disabled} = state;
@@ -94,7 +93,6 @@ const EditProfile = (props) => {
     const saveUser = async () => {
         setState({...state, disabled: true});
         dispatch(ProgressView.SHOW);
-        console.log(address, image, name, phone);
         let publishing = {};
 
         if(uppy) {
@@ -107,18 +105,33 @@ const EditProfile = (props) => {
                     dispatch({...ProgressView.SHOW, value: progress});
                 },
                 defaultUrl: image,
-                deleteFile: user.public().image
+                deleteFile: userData.public.image
             });
         }
-        const {image:imageSaved, metadata} = publishing;
+        const {url:imageSaved, metadata} = publishing;
         dispatch(ProgressView.SHOW);
-        updateUserPublic(firebase)(data.uid, {
+
+        const additionalPublic = {};
+        if(additionalPublicFields) {
+            additionalPublicFields.forEach(field => {
+                if(state[field.id]) {
+                    additionalPublic[field.id] = state[field.id];
+                }
+            })
+        }
+
+        userData.set({
+            ...additionalPublic,
             address,
             image: imageSaved || image || "",
             name: name,
             phone,
-            updated: firebase.database.ServerValue.TIMESTAMP
-        }).then((userData) => {
+        }).then(() => userData.savePublic())
+            .then(() => userData.fetch([UserData.UPDATED, UserData.FORCE]))
+            .then(() => {
+                useCurrentUserData(userData);
+                dispatch({type:"currentUserData", userData:userData});
+            }).then((userData) => {
             setTimeout(() => {
                 setState({...state, disabled: false, uppy: null});
                 refreshAll(store);
@@ -135,7 +148,7 @@ const EditProfile = (props) => {
     }
 
     const handleUploadPhotoError = (error) => {
-        console.error(error)
+        console.error("[EditProfile] upload", error)
         removeUploadedFile();
         setState({...state, uppy: null, file: null, snapshot: null});
     }
@@ -143,10 +156,9 @@ const EditProfile = (props) => {
     const removeUploadedFile = () => {
         if (uppy && file) {
             uppy.removeFile(file.id);
-            console.log("file removed", snapshot);
+            console.log("[EditProfile] file removed", snapshot);
         }
     }
-
 
     const onClose = () => {
         setState({...state, preview: null})
@@ -169,11 +181,11 @@ const EditProfile = (props) => {
         }
     }, [])
 
-    if (!data || !data.uid) {
+    if (!data) {
         return <Redirect to={tosuccessroute}/>
     }
 
-    window.localStorage.setItem(history.location.pathname, JSON.stringify(data));
+    window.localStorage.setItem(history.location.pathname, JSON.stringify(userData.toJSON()));
 
     return <Grid container spacing={1}>
         <Box m={0.5}/>
@@ -213,7 +225,7 @@ const EditProfile = (props) => {
                         disabled
                         label="E-mail"
                         fullWidth
-                        value={user.public().email || ""}
+                        value={userData.public.email || ""}
                     />
                 </Grid>
             </Grid>
@@ -271,6 +283,28 @@ const EditProfile = (props) => {
                     />
                 </Grid>
             </Grid>
+            {data.public && additionalPublicFields && additionalPublicFields.map(field => {
+                return <React.Fragment key={field.id}>
+                    <Box m={1}/>
+                    <Grid container spacing={1} alignItems="flex-end">
+                        <Grid item>
+                            {field.icon}
+                        </Grid>
+                        <Grid item xs>
+                            <field.editComponent.type
+                                {...field.editComponent.props}
+                                disabled={disabled}
+                                fullWidth
+                                label={field.label}
+                                onChange={ev => {
+                                    setState({...state, [field.id]: ev.target.value || ""});
+                                }}
+                                value={state[field.id] || data.public[field.id] || ""}
+                            />
+                        </Grid>
+                    </Grid>
+                </React.Fragment>
+            })}
             <Box m={1}/>
             <FormHelperText error variant={"outlined"}>
                 {error}

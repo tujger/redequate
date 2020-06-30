@@ -5,7 +5,7 @@ import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import PropTypes from "prop-types";
-import {connect} from "react-redux";
+import {connect, useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {useFirebase, usePages, useStore} from "../controllers";
 
@@ -15,9 +15,11 @@ const Logout = (props) => {
     const store = useStore();
     const firebase = useFirebase();
     const history = useHistory();
+    const dispatch = useDispatch();
 
     const doLogout = () => {
         logoutUser(firebase)();
+        dispatch({type:"currentUserData", userData:null});
         refreshAll(store);
         history.push(pages.home.route);
     }

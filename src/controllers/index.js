@@ -24,5 +24,6 @@ export {
     fetchUserPrivate,
     updateUserPrivate,
     useUser,
-    UserData
+    UserData,
+    useCurrentUserData
 } from "./User";

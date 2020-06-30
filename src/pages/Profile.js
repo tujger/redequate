@@ -5,13 +5,13 @@ import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
-import ProfileComponent from "../components/ProfileComponent";
+import {default as ProfileComponentOrigin} from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
 import {
     fetchUserPrivate,
     logoutUser,
-    sendConfirmationEmail, sendVerificationEmail,
-    updateUserPrivate,
+    sendVerificationEmail,
+    updateUserPrivate, useCurrentUserData,
     watchUserChanged
 } from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
@@ -21,7 +21,7 @@ import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {useUser} from "../controllers";
 
-const Profile = ({notifications = true}) => {
+const Profile = ({notifications = true, additionalPublicFields, additionalPrivateFields, ProfileComponent = <ProfileComponentOrigin/>}) => {
     const [state, setState] = React.useState({disabled: false});
     const {disabled} = state;
     const pages = usePages();
@@ -29,6 +29,7 @@ const Profile = ({notifications = true}) => {
     const firebase = useFirebase();
     const dispatch = useDispatch();
     const user = useUser();
+    const userData = useCurrentUserData();
 
     React.useEffect(() => {
         watchUserChanged(firebase);
@@ -72,7 +73,7 @@ const Profile = ({notifications = true}) => {
     };
 
     return <div>
-        <ProfileComponent user={user}/>
+        <ProfileComponent.type {...ProfileComponent.props} userData={userData} additionalPublicFields={additionalPublicFields}/>
         {!user.public().emailVerified && <Grid container>
             <Grid item xs>
                 <Typography>Note! You have still not verified email. Some features will not
@@ -126,10 +127,10 @@ const Profile = ({notifications = true}) => {
                 component={React.forwardRef((props, ref) => (
                     <Link ref={ref} to={{
                         pathname: pages.edituser.route,
-                        state: {
-                            data: {uid: user.uid(), role: user.role(), ...user.public()},
-                            tosuccessroute: pages.profile.route
-                        },
+                        // state: {
+                        //     data: {uid: user.uid(), role: user.role(), ...user.public()},
+                        //     tosuccessroute: pages.profile.route
+                        // },
                     }} {...props}/>
                 ))}
             >

@@ -12,7 +12,7 @@ import {fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "./c
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
-import {matchRole, needAuth, theme as defaultTheme} from "./controllers";
+import {matchRole, needAuth, theme as defaultTheme, useCurrentUserData, UserData} from "./controllers";
 import {user, watchUserChanged} from "./controllers/User";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
@@ -35,14 +35,29 @@ const Dispatcher = (props) => {
     useFirebase(firebase);
 
     React.useEffect(() => {
-        const firebase = Firebase(firebaseConfig);
-        installWrapperControl();
-        fetchDeviceId();
-        if (hasNotifications()) {
-            setupReceivingNotifications(firebase).catch(console.error);
-        }
-        setState({...state, firebase, store: Store(name, reducers)});
-        watchUserChanged(firebase);
+        (async () => {
+            const firebase = Firebase(firebaseConfig);
+            installWrapperControl();
+            fetchDeviceId();
+            if (hasNotifications()) {
+                setupReceivingNotifications(firebase).catch(console.error);
+            }
+            const store = Store(name, reducers);
+            try {
+                const savedUserData = store.getState().currentUserData;
+                if(savedUserData && savedUserData.userData) {
+                    const userData = new UserData(firebase).fromJSON(savedUserData.userData);
+                    await userData.fetch([UserData.ROLE]);
+
+                    console.log(userData);
+                    useCurrentUserData(userData);
+                }
+            } catch(error) {
+                console.error(error);
+            }
+            setState({...state, firebase, store});
+            watchUserChanged(firebase);
+        })();
         // eslint-disable-next-line
     }, []);
 
@@ -64,13 +79,13 @@ const DispatcherRoutedBody = props => {
     const {pages, menu, width, copyright, headerImage, layout, name, logo} = props;
     const dispatch = useDispatch();
     const history = useHistory();
-    const windowData = useWindowData({
+    useWindowData({
         breakpoint: width,
         isNarrow: () => width === "xs"
     });
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
-    const updateTitle = (location, action) => {
+    const updateTitle = (location) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
         console.log("[Dispatcher]", location);
         if (current) {
