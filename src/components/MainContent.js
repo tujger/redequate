@@ -2,7 +2,7 @@ import React, {Suspense} from "react";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch, useHistory} from "react-router-dom";
-import {matchRole, needAuth, useUser} from "../controllers/User";
+import {matchRole, needAuth, useCurrentUserData} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages} from "../controllers/General";
 
@@ -21,9 +21,9 @@ const styles = theme => ({
 const MainContent = props => {
     const {classes} = props;
     const pages = usePages();
-    const user = useUser();
     const history = useHistory();
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
+    const currentUserData = useCurrentUserData();
 
     let background = history.location.state && history.location.state.background;
 
@@ -35,9 +35,9 @@ const MainContent = props => {
                     path={item.route}
                     exact={true}
                     render={() => {
-                        return needAuth(item.roles, user)
+                        return needAuth(item.roles, currentUserData)
                             ? <pages.login.component.type {...props} {...pages.login.component.props} />
-                            : (matchRole(item.roles, user)
+                            : (matchRole(item.roles, currentUserData)
                             ? <item.component.type {...props} classes={{}} {...item.component.props} />
                             : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)
                         }

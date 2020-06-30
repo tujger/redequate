@@ -10,7 +10,7 @@ import Menu from "@material-ui/icons/Menu";
 import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
-import {matchRole, needAuth, user} from "../controllers/User";
+import {matchRole, needAuth, useCurrentUserData, currentRole, Role} from "../controllers/User";
 import {connect} from "react-redux";
 import {usePages} from "../controllers/General";
 import {SearchToolbar} from "../pages/Search";
@@ -38,6 +38,7 @@ const styles = theme => ({
 function MainAppbar(props) {
     const {classes, className, onHamburgerClick, label, logo} = props;
     const pages = usePages();
+    const currentUserData = useCurrentUserData();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
@@ -65,8 +66,8 @@ function MainAppbar(props) {
                                 {logo ? <div className={classes.logo}>
                                         <img src={logo} alt={""}/>
                                     </div> :
-                                    (label || (needAuth(item.roles, user)
-                                        ? pages.login.title || pages.login.label : (matchRole(item.roles, user)
+                                    (label || (needAuth(item.roles, currentUserData)
+                                        ? pages.login.title || pages.login.label : (matchRole(item.roles, currentUserData)
                                             ? item.title || item.label : pages.notfound.title || pages.notfound.label)))
                                 }
                             </Link>
@@ -80,8 +81,8 @@ function MainAppbar(props) {
                 </Switch>
             </Typography>
             {pages.search && <SearchToolbar/>}
-            {user.uid() && <Link to={pages.profile.route} className={classes.label}>
-                <AvatarView user={user}/>
+            {currentUserData && <Link to={pages.profile.route} className={classes.label}>
+                <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>
             </Link>}
             {/*{user && user.key && <AvatarView user={user} onclick={onavatarclick}/>}*/}
         </Toolbar>
