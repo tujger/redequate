@@ -129,7 +129,7 @@ const EditProfile = (props) => {
         }).then(() => userData.savePublic())
             .then(() => userData.fetch([UserData.UPDATED, UserData.FORCE]))
             .then(() => {
-                useCurrentUserData(userData);
+                console.log(userData)
                 dispatch({type:"currentUserData", userData:userData});
             }).then((userData) => {
             setTimeout(() => {

@@ -1,5 +1,5 @@
 import React from "react";
-import {user} from "../controllers/User";
+import {useCurrentUserData} from "../controllers/User";
 import {Redirect, useHistory} from "react-router-dom";
 import ProgressView from "../components/ProgressView";
 import Button from "@material-ui/core/Button";
@@ -10,7 +10,7 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
-import {notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
+import {notifySnackbar, useFirebase, usePages} from "../controllers";
 
 const RestorePassword = (props) => {
     const [state, setState] = React.useState({
@@ -23,6 +23,7 @@ const RestorePassword = (props) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
+    const currentUserData = useCurrentUserData();
 
 
     const requestRestorePassword = () => {
@@ -44,7 +45,7 @@ const RestorePassword = (props) => {
         });
     };
 
-    if (user.uid()) {
+    if (currentUserData && currentUserData.id) {
         return <Redirect to={pages.profile.route}/>
     }
 

@@ -11,7 +11,8 @@ import {
     fetchUserPrivate,
     logoutUser,
     sendVerificationEmail,
-    updateUserPrivate, useCurrentUserData,
+    updateUserPrivate,
+    useCurrentUserData,
     watchUserChanged
 } from "../controllers/User";
 import {Link, Redirect, withRouter} from "react-router-dom";
@@ -19,24 +20,31 @@ import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
-import {useUser} from "../controllers";
+import withStyles from "@material-ui/styles/withStyles";
 
-const Profile = ({notifications = true, additionalPublicFields, additionalPrivateFields, ProfileComponent = <ProfileComponentOrigin/>}) => {
+const styles = theme => ({
+    root: {
+
+    },
+    buttons: {
+    },
+});
+
+const Profile = ({notifications = true, additionalPublicFields, additionalPrivateFields, classes, ProfileComponent = <ProfileComponentOrigin/>}) => {
     const [state, setState] = React.useState({disabled: false});
     const {disabled} = state;
     const pages = usePages();
     const store = useStore();
     const firebase = useFirebase();
     const dispatch = useDispatch();
-    const user = useUser();
-    const userData = useCurrentUserData();
+    const currentUserData = useCurrentUserData();
 
     React.useEffect(() => {
         watchUserChanged(firebase);
     }, []);
 
-    if (!user.uid()) {
-        return <Redirect to={pages.users.route}/>
+    if (!currentUserData || !currentUserData.id) {
+        return <Redirect to={pages.home.route}/>
     }
 
     const handleNotifications = (evt, enable) => {
@@ -44,8 +52,8 @@ const Profile = ({notifications = true, additionalPublicFields, additionalPrivat
         setState({...state, disabled: true});
         if (enable) {
             setupReceivingNotifications(firebase)
-                .then(token => fetchUserPrivate(firebase)(user.uid())
-                    .then(data => updateUserPrivate(firebase)(user.uid(), fetchDeviceId(), {notification: token}))
+                .then(token => fetchUserPrivate(firebase)(currentUserData.id)
+                    .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: token}))
                     .then(result => {
                         notifySnackbar({title: "Subscribed"});
                         dispatch(ProgressView.HIDE);
@@ -57,8 +65,8 @@ const Profile = ({notifications = true, additionalPublicFields, additionalPrivat
                     setState({...state, disabled: false});
                 });
         } else {
-            fetchUserPrivate(firebase)(user.uid())
-                .then(data => updateUserPrivate(firebase)(user.uid(), fetchDeviceId(), {notification: null}))
+            fetchUserPrivate(firebase)(currentUserData.id)
+                .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: null}))
                 .then(result => {
                     localStorage.removeItem("notification-token");
                     notifySnackbar({title: "Unsubscribed"});
@@ -72,9 +80,10 @@ const Profile = ({notifications = true, additionalPublicFields, additionalPrivat
         }
     };
 
-    return <div>
-        <ProfileComponent.type {...ProfileComponent.props} userData={userData} additionalPublicFields={additionalPublicFields}/>
-        {!user.public().emailVerified && <Grid container>
+    return <div className={classes.root}>
+        <ProfileComponent.type {...ProfileComponent.props} userData={currentUserData}
+                               additionalPublicFields={additionalPublicFields}/>
+        {!currentUserData.verified && <Grid container>
             <Grid item xs>
                 <Typography>Note! You have still not verified email. Some features will not
                     be available. If you were already verified please log out and log in again.</Typography>
@@ -90,23 +99,25 @@ const Profile = ({notifications = true, additionalPublicFields, additionalPrivat
             }
             label={"Get notifications"}
         /></Grid>}
-            <ButtonGroup disabled={disabled} variant="contained" color={"secondary"} size="large">
+        <ButtonGroup disabled={disabled} variant="contained" color={"secondary"} size="large" className={classes.buttons}>
             <Button
+                className={classes.logout}
                 color={"secondary"}
                 onClick={() => {
-                    logoutUser(firebase)();
-                    refreshAll(store);
+                    logoutUser(firebase, store)()
+                        .then(() => refreshAll(store));
                 }}
                 variant={"contained"}
             >
                 Logout
             </Button>
-            {!user.public().emailVerified && user.public().email && <Button
+            {!currentUserData.verified && currentUserData.email && <Button
                 color={"secondary"}
+                className={classes.resendVerification}
                 onClick={() => {
                     refreshAll(store);
                     dispatch(ProgressView.SHOW);
-                    console.log(user)
+                    console.log(currentUserData)
                     sendVerificationEmail(firebase)
                         .then(() => {
                             refreshAll(store);
@@ -118,15 +129,16 @@ const Profile = ({notifications = true, additionalPublicFields, additionalPrivat
             >
                 Resend verification
             </Button>}
-            {user.public().emailVerified && <Button
+            {currentUserData.verified && <Button
                 color={"secondary"}
                 // onClick={() => {
-                //     props.history.push(pages.edituser.route);
+                //     props.history.push(pages.editprofile.route);
                 // }}
+                className={classes.edit}
                 variant={"contained"}
                 component={React.forwardRef((props, ref) => (
                     <Link ref={ref} to={{
-                        pathname: pages.edituser.route,
+                        pathname: pages.editprofile.route,
                         // state: {
                         //     data: {uid: user.uid(), role: user.role(), ...user.public()},
                         //     tosuccessroute: pages.profile.route
@@ -140,4 +152,4 @@ const Profile = ({notifications = true, additionalPublicFields, additionalPrivat
     </div>;
 };
 
-export default withRouter(Profile);
+export default withStyles(styles)(withRouter(Profile));

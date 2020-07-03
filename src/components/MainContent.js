@@ -1,5 +1,4 @@
 import React, {Suspense} from "react";
-import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch, useHistory} from "react-router-dom";
 import {matchRole, needAuth, useCurrentUserData} from "../controllers/User";
@@ -48,13 +47,7 @@ const MainContent = props => {
     </main>
 };
 
-MainContent.propTypes = {
-    pages: PropTypes.object,
-    user: PropTypes.any,
-};
-
 export default withStyles(styles)(MainContent);
-
 
 const ModalWindow = () => {
     let history = useHistory();

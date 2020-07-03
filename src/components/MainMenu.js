@@ -7,7 +7,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import withStyles from "@material-ui/styles/withStyles";
 import {Link} from "react-router-dom";
-import {matchRole, user} from "../controllers/User";
+import {matchRole, useCurrentUserData} from "../controllers/User";
 
 const styles = theme => ({
     header: {
@@ -37,6 +37,8 @@ const styles = theme => ({
 
 function MainMenu(props) {
     const {items, classes, onClick} = props;
+    const currentUserData = useCurrentUserData();
+
     return <div className={"MuiMainMenu-root"}>
         {items.map((list, index) => {
             let hasItems = false;
@@ -44,7 +46,7 @@ function MainMenu(props) {
             const section = <div className={"MuiMainMenu-section"} key={index}>
                 <List>
                     {list.map((item) => {
-                        if (!matchRole(item.roles, user)) return null;
+                        if (!matchRole(item.roles, currentUserData)) return null;
                         if (!firstDone) {
                             firstDone = true;
                             return null;

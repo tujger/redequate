@@ -1,13 +1,5 @@
 import React from "react";
-import {
-    fetchUserPrivate,
-    fetchUserPublic,
-    logoutUser,
-    updateUserPrivate,
-    updateUserPublic,
-    useCurrentUserData,
-    user
-} from "../controllers/User";
+import {logoutUser, useCurrentUserData} from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
@@ -41,26 +33,23 @@ const Login = (props) => {
     const store = useStore();
     const firebase = useFirebase();
     const location = useLocation();
+    const currentUserData = useCurrentUserData();
 
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
-        const provider = new firebase.auth.GoogleAuthProvider();
-        // try {
-            dispatch({type:"currentUserData", userData:null});
-            if (popup) {
-                logoutUser(firebase)().then(() => {
+        logoutUser(firebase, store)()
+            .then(() => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                dispatch({type: "currentUserData", userData: null});
+                if (popup) {
                     setState({...state, requesting: true});
                     return firebase.auth().signInWithPopup(provider).then(loginSuccess);
-                }).catch(loginError)
-            } else {
-                logoutUser(firebase)().then(() => {
+                } else {
                     window.localStorage.setItem(pages.login.route, provider.providerId);
                     return firebase.auth().signInWithRedirect(provider);
-                }).catch(loginError)
-            }
-        // } catch (error) {
-        //     loginError(error);
-        // }
+                }
+            })
+            .catch(loginError)
     };
 
     const requestLoginPassword = () => {
@@ -83,13 +72,35 @@ const Login = (props) => {
             .then(() => ud.fetch([UserData.UPDATED, UserData.FORCE]))
             .then(() => {
                 useCurrentUserData(ud);
-                dispatch({type:"currentUserData", userData:ud});
-            }).catch(notifySnackbar)
+                dispatch({type: "currentUserData", userData: ud});
+            })
+            .then(() => {
+                if (ud.private[fetchDeviceId()].notification) {
+                    return setupReceivingNotifications(firebase)
+                        .then(token => {
+                            return ud.setPrivate(fetchDeviceId(), {notification: token})
+                                .then(() => ud.savePrivate());
+                        })
+                        .then(() => {
+                            notifySnackbar({title: "Subscribed"});
+                            setState({...state, disabled: false});
+                        })
+                        .catch(notifySnackbar)
+                }
+            })
+            .then(() => {
+                onLogin && onLogin();
+            }).catch(loginError)
+            .finally(() => {
+                setState({...state, requesting: false});
+                dispatch(ProgressView.HIDE);
+                refreshAll(store);
+            });
 
-        const {uid, email, emailVerified, displayName: name, phoneNumber: phone, photoURL: image, providerData = []} = response.user.toJSON();
-        const provider = providerData.filter(item => item && item.providerId).filter((item, index) => index === 0).map(item => item.providerId)[0];
+        // const {uid, email, emailVerified, displayName: name, phoneNumber: phone, photoURL: image, providerData = []} = response.user.toJSON();
+        // const provider = providerData.filter(item => item && item.providerId).filter((item, index) => index === 0).map(item => item.providerId)[0];
 
-        fetchUserPublic(firebase)(uid)
+        /*fetchUserPublic(firebase)(uid)
             .then(data => updateUserPublic(firebase)(uid,
                 {
                     created: firebase.database.ServerValue.TIMESTAMP,
@@ -129,14 +140,15 @@ const Login = (props) => {
             .finally(() => {
                 setState({...state, requesting: false});
                 refreshAll(store);
-            });
+            });*/
     };
 
     const loginError = error => {
         dispatch(ProgressView.HIDE);
         notifySnackbar(error);
-        logoutUser(firebase)();
-        setState({...state, requesting: false});
+        dispatch({type: "currentUserData", userData: null});
+        logoutUser(firebase, store)()
+            .then(() => setState({...state, requesting: false}));
     };
 
     if (!popup && window.localStorage.getItem(pages.login.route)) {
@@ -145,7 +157,7 @@ const Login = (props) => {
         return <LoadingComponent/>;
     }
 
-    if (user.uid()) {
+    if (currentUserData && currentUserData.id) {
         if (location.pathname === pages.login.route) {
             return <Redirect to={pages.profile.route}/>
         } else {

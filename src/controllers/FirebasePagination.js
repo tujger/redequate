@@ -84,8 +84,9 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             });
             for (let ss of children) {
                 if (lastKey && ss.key === lastKey) continue;
+                const value = ss.val();
+                if(child && value[child] === undefined) continue;
                 if (update) {
-                    const value = ss.val();
                     const newValue = await update(ss.key, value);
                     if (newValue !== value) {
                         ss.ref.set(newValue);
@@ -114,6 +115,8 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             }
             if (count < size) finished = true;
             resolve(data);
+        }, error => {
+            reject(error);
         });
     })
     const reset = () => {

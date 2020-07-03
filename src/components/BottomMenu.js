@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import MenuItem from "@material-ui/core/MenuItem";
 import withStyles from "@material-ui/styles/withStyles";
-import {matchRole, user} from "../controllers/User";
+import {matchRole, useCurrentUserData} from "../controllers/User";
 import {Link} from "react-router-dom";
 import Grid from "@material-ui/core/Grid";
 import MenuList from "@material-ui/core/MenuList";
@@ -35,8 +35,9 @@ const styles = theme => ({
 const MenuSection = withStyles(styles)(props => {
     const {items, classes} = props;
     const [first, ...menu] = items;
+    const currentUserData = useCurrentUserData();
 
-    if (!matchRole(first.roles, user)) return null;
+    if (!matchRole(first.roles, currentUserData)) return null;
 
     return <Grid className={classes.menusection}>
         <Typography>
@@ -44,7 +45,7 @@ const MenuSection = withStyles(styles)(props => {
         </Typography>
         <MenuList>
             {menu.map((item, index) => {
-                if (!matchRole(item.roles, user)) return null;
+                if (!matchRole(item.roles, currentUserData)) return null;
                 return <Link to={item.route}
                              key={index}
                              className={classes.label}>

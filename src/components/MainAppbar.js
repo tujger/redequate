@@ -42,6 +42,7 @@ function MainAppbar(props) {
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
+    console.log(pages.profile.route)
     return <AppBar position="fixed" className={className}>
         <Toolbar>
             {onHamburgerClick ?

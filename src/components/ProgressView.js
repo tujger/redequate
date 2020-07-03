@@ -5,7 +5,7 @@ import {connect} from "react-redux"
 
 const useStyles = makeStyles(() => ({
     invisibleProgress: {
-        display: "none",
+        opacity: 0,
     }
 }));
 

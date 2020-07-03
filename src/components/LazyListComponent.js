@@ -31,7 +31,6 @@ const LazyListComponent = (props) => {
         loading = cache ? cachedLoading : false,
         pagination = cache ? cachedPagination : (givenPagination instanceof Function ? givenPagination() : givenPagination)
     } = state;
-    const inViewRef = React.createRef();
 
     if (!placeholder) throw new Error("Placeholder is not defined");
 
@@ -40,21 +39,6 @@ const LazyListComponent = (props) => {
             return;
         }
         if (!disableProgress) dispatch(ProgressView.SHOW);
-        // setTimeout(() => {
-        //     console.log(inViewRef.current.node.offsetHeight);
-        // }, 1000)
-        /*if (cache) {
-            dispatch({
-                type: LazyListComponent.UPDATE,
-                cache: cache,
-                ["LazyListComponent_" + cache]: {...cacheData, loading: true}
-            });
-        } else {
-            setState(state => ({
-                ...state,
-                loading: true,
-            }))
-        }*/
         return pagination.next()
             .then(async newitems => {
                 newitems = newitems.map(async (item, index) => {

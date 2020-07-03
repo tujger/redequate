@@ -1,11 +1,6 @@
 import React from "react";
-import PropTypes from "prop-types";
 import Avatar from "@material-ui/core/Avatar";
 import makeStyles from "@material-ui/styles/makeStyles";
-import {currentRole, Role, UserData} from "../controllers/User";
-import {useFirebase, useUserDatas} from "../controllers/General";
-import {notifySnackbar} from "../controllers/Notifications";
-import Skeleton from "@material-ui/lab/Skeleton";
 
 const useStyles = makeStyles(theme => ({
     avatarImage: {
@@ -25,12 +20,8 @@ const useStyles = makeStyles(theme => ({
     }
 }));
 
-function AvatarView(props) {
-    const {onclick, className, image, initials, admin, verified} = props;
+function AvatarView({admin, className, image, initials, onclick, verified}) {
     const classes = useStyles();
-
-    // const isAdmin = currentRole(user) === Role.ADMIN;
-    // const isVerified = true;//user.public().emailVerified !== false;
 
     return <Avatar
         className={[verified ? (admin ? classes.admin : null) : classes.notVerified, classes.avatar, className || ""].join(" ")}
@@ -41,10 +32,5 @@ function AvatarView(props) {
         {!image && initials && initials.toUpperCase()}
     </Avatar>
 }
-
-AvatarView.propTypes = {
-    onclick: PropTypes.func,
-    user: PropTypes.any
-};
 
 export default AvatarView;

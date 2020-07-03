@@ -150,7 +150,7 @@ export const firstOf = (...args) => {
     return null;
 };
 
-export const watchUserChanged = firebase => {
+export const watchUserChanged = (firebase, store) => {
     try {
         firebase.auth().onAuthStateChanged(result => {
             // const ud = new UserData(firebase).fromFirebaseAuth(result.toJSON())
@@ -161,7 +161,7 @@ export const watchUserChanged = firebase => {
                 notifySnackbar({
                     buttonLabel: "Log out",
                     onButtonClick: () => {
-                        logoutUser(firebase)();
+                        logoutUser(firebase, store)();
                         window.location.reload();
                     },
                     title: "Your profile has been changed. Please relogin to update",
@@ -173,7 +173,7 @@ export const watchUserChanged = firebase => {
                 notifySnackbar({
                     buttonLabel: "Log out",
                     onButtonClick: () => {
-                        logoutUser(firebase)();
+                        logoutUser(firebase, store)();
                         window.location.reload();
                     },
                     title: "Your profile has been changed. Please relogin to update",
@@ -185,10 +185,11 @@ export const watchUserChanged = firebase => {
                 firebase.database().ref("users_public").child(result.uid).child("updated").once("value")
                     .then(data => {
                         if (data.val() > currentUserDataInstance.public.updated) {
+                            console.log(`[User] last timestamp ${data.val()} > than saved ${currentUserDataInstance.public.updated}`)
                             notifySnackbar({
                                 buttonLabel: "Log out",
                                 onButtonClick: () => {
-                                    logoutUser(firebase)();
+                                    logoutUser(firebase, store)();
                                     window.location.reload();
                                 },
                                 title: "Your profile has been changed. Please relogin to update",
@@ -203,7 +204,7 @@ export const watchUserChanged = firebase => {
     }
 };
 
-export const logoutUser = firebase => async () => {
+export const logoutUser = (firebase, store) => async () => {
     window.localStorage.removeItem("user_public");
     window.localStorage.removeItem("user_private");
     window.localStorage.removeItem("user_uid");
@@ -214,8 +215,11 @@ export const logoutUser = firebase => async () => {
     user.set("role", null);
     user.set("uid", null);
     await firebase.auth().signOut();
-
-
+    currentUserDataInstance = null;
+    if(store) {
+        store.dispatch({type:"user", user: {}});
+        store.dispatch({type:"currentUserData", userData:null});
+    }
     console.log("[Logout]", user);
 };
 
@@ -324,6 +328,8 @@ export const currentUserData = (state = {
 }, action) => {
     const {type, userData} = action;
     if (type === "currentUserData") {
+        useCurrentUserData(userData);
+        console.log("[User] update current", userData);
         return {...state, userData: userData ? userData.toJSON() : null};
     } else {
         return state;
@@ -337,6 +343,7 @@ export const UserData = function (firebase) {
 
     const _dateFormatted = date => {
         if (!date) return "";
+        if(date === firebase.database.ServerValue.TIMESTAMP) return _dateFormatted(new Date().getTime());
         const _date = new Date(date);
         const now = new Date();
         if (now.getUTCFullYear() === _date.getUTCFullYear()
@@ -348,19 +355,19 @@ export const UserData = function (firebase) {
     }
 
     const _fetch = async ref => {
-        try {
+         // try {
             return await ref.once("value");
-        } catch (error) {
-            console.error(error);
-            _error = error;
-        }
+        // } catch (error) {
+        //     console.error(error);
+        //     _error = error;
+        // }
     }
 
     const prepareUpdates = (includePublic, includePrivate) => {
         const updates = {};
         if(!_id) throw new Error("[UserData] save failed: id is not defined");
         if(includePublic) {
-            if(!_loaded.public) throw new Error("[UserData] public section is not ready");
+            if(!_public) throw new Error("[UserData] public section is not ready");
             for(let x in _public) {
                 if(_public[x] !== undefined) {
                     updates[`users_public/${_id}/${x}`] = _public[x];
@@ -369,7 +376,7 @@ export const UserData = function (firebase) {
             updates[`users_public/${_id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
         }
         if(includePrivate) {
-            if(!_loaded.private) throw new Error("[UserData] private section is not ready");
+            if(!_private) throw new Error("[UserData] private section is not ready");
             for(let deviceId in _private) {
                 for(let x in _private[deviceId]) {
                     if(_private[deviceId][x] !== undefined) {
@@ -496,6 +503,7 @@ export const UserData = function (firebase) {
             if ((!_loaded.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
                 snap = await _fetch(ref.child(_id).child("updated"));
                 _updated = snap.val();
+                _public.updated = _updated;
                 _loaded = {..._loaded, updated: true};
             }
             if ((!_loaded.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
@@ -663,6 +671,6 @@ UserData.FORCE = "force";
 
 let currentUserDataInstance;
 export const useCurrentUserData = userData => {
-    if (userData) currentUserDataInstance = userData;
+    if (userData !== undefined) currentUserDataInstance = userData;
     return currentUserDataInstance;
 }

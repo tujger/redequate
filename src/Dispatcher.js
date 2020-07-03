@@ -12,8 +12,8 @@ import {fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "./c
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
-import {matchRole, needAuth, theme as defaultTheme, useCurrentUserData, UserData} from "./controllers";
-import {user, watchUserChanged} from "./controllers/User";
+import {matchRole, needAuth, theme as defaultTheme} from "./controllers";
+import {watchUserChanged, useCurrentUserData, UserData} from "./controllers/User";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
@@ -48,15 +48,13 @@ const Dispatcher = (props) => {
                 if(savedUserData && savedUserData.userData) {
                     const userData = new UserData(firebase).fromJSON(savedUserData.userData);
                     await userData.fetch([UserData.ROLE]);
-
-                    console.log(userData);
                     useCurrentUserData(userData);
                 }
             } catch(error) {
                 console.error(error);
             }
             setState({...state, firebase, store});
-            watchUserChanged(firebase);
+            watchUserChanged(firebase, store);
         })();
         // eslint-disable-next-line
     }, []);
@@ -79,6 +77,7 @@ const DispatcherRoutedBody = props => {
     const {pages, menu, width, copyright, headerImage, layout, name, logo} = props;
     const dispatch = useDispatch();
     const history = useHistory();
+    const currentUserData = useCurrentUserData();
     useWindowData({
         breakpoint: width,
         isNarrow: () => width === "xs"
@@ -89,8 +88,8 @@ const DispatcherRoutedBody = props => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
         console.log("[Dispatcher]", location);
         if (current) {
-            const label = needAuth(current.roles, user)
-                ? pages.login.title || pages.login.label : (matchRole(current.roles, user)
+            const label = needAuth(current.roles, currentUserData)
+                ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
                     ? current.title || current.label : pages.notfound.title || pages.notfound.label);
             document.title = label + (name ? " - " + name : "");
             dispatch({type:MainAppbar.LABEL, label});

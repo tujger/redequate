@@ -33,95 +33,15 @@ const styles = theme => ({
 });
 
 const ProfileComponent = (props) => {
-    const {classes, user, userData, additionalPublicFields} = props;
+    const {classes, userData, additionalPublicFields} = props;
     const firebase = useFirebase();
-
-
-    console.log(additionalPublicFields)
-    if(userData) {
-        return <Grid container>
-            <Grid item xs>
-                {userData.public.image ? <img src={userData.public.image} alt="" className={classes.image}/>
-                : <EmptyAvatar className={classes.image}/>}
-            </Grid>
-            {userData.public.provider && userData.public.provider === "google.com" && <Grid item xs>
-                <Grid container justify="flex-end">
-                    <img src={GoogleLogo} width={40} height={40} alt=""/>
-                </Grid>
-                <Grid container justify="flex-end">
-                    <Typography>Signed with Google</Typography>
-                </Grid>
-            </Grid>}
-            {userData.public.provider && userData.public.provider === "password" && <Grid item xs>
-                <Grid container justify="flex-end">
-                    <UserIcon/>
-                    {/*<img src={GoogleLogo} width={40} height={40} alt=""/>*/}
-                </Grid>
-                <Grid container justify="flex-end">
-                    <Typography>Signed with e-mail</Typography>
-                </Grid>
-                {!userData.public.emailVerified && <Grid container justify="flex-end">
-                    <Typography>Not verified</Typography>
-                </Grid>}
-            </Grid>}
-            <Grid container spacing={1}>
-                <Grid item>
-                    <NameIcon/>
-                </Grid>
-                <Grid item xs>
-                <Typography>{userData.public.name}</Typography>
-                </Grid>
-            </Grid>
-            <Grid container spacing={1}>
-                <Grid item>
-                    <MailIcon/>
-                </Grid>
-                <Grid item xs>
-                <Typography>{userData.public.email}</Typography>
-                </Grid>
-            </Grid>
-            {userData.public.address && <Grid container spacing={1}>
-                <Grid item>
-                    <AddressIcon/>
-                </Grid>
-                <Grid item xs>
-                <Typography>{userData.public.address}</Typography>
-                </Grid>
-            </Grid>}
-            {userData.public.phone && <Grid container spacing={1}>
-                <Grid item>
-                    <PhoneIcon/>
-                </Grid>
-                <Grid item xs>
-                <Typography>{userData.public.phone}</Typography>
-                </Grid>
-            </Grid>}
-            <Grid container spacing={1}>
-                <Typography>Since {userData.created}</Typography>
-            </Grid>
-
-            {additionalPublicFields && additionalPublicFields.map(field => {
-                return <React.Fragment key={field.id}>
-                    <Grid container spacing={1}>
-                        <Grid item>
-                            {field.icon}
-                        </Grid>
-                        <Grid item xs>
-                            <Typography>{field.viewComponent(userData)}</Typography>
-                        </Grid>
-                    </Grid>
-                </React.Fragment>
-            })}
-
-        </Grid>
-    }
 
     return <Grid container>
         <Grid item xs>
-            {user.public().image ? <img src={user.public().image} alt="" className={classes.image}/>
-            : <EmptyAvatar className={classes.image}/>}
+            {userData.public.image ? <img src={userData.public.image} alt="" className={classes.image}/>
+                : <EmptyAvatar className={classes.image}/>}
         </Grid>
-        {user.public().provider && user.public().provider === "google.com" && <Grid item xs>
+        {userData.public.provider && userData.public.provider === "google.com" && <Grid item xs>
             <Grid container justify="flex-end">
                 <img src={GoogleLogo} width={40} height={40} alt=""/>
             </Grid>
@@ -129,7 +49,7 @@ const ProfileComponent = (props) => {
                 <Typography>Signed with Google</Typography>
             </Grid>
         </Grid>}
-        {user.public().provider && user.public().provider === "password" && <Grid item xs>
+        {userData.public.provider && userData.public.provider === "password" && <Grid item xs>
             <Grid container justify="flex-end">
                 <UserIcon/>
                 {/*<img src={GoogleLogo} width={40} height={40} alt=""/>*/}
@@ -137,7 +57,7 @@ const ProfileComponent = (props) => {
             <Grid container justify="flex-end">
                 <Typography>Signed with e-mail</Typography>
             </Grid>
-            {!user.public().emailVerified && <Grid container justify="flex-end">
+            {!userData.public.emailVerified && <Grid container justify="flex-end">
                 <Typography>Not verified</Typography>
             </Grid>}
         </Grid>}
@@ -146,8 +66,7 @@ const ProfileComponent = (props) => {
                 <NameIcon/>
             </Grid>
             <Grid item xs>
-            <Typography>{user.public().name && user.public().name !== user.public().email
-            && user.public().name}</Typography>
+                <Typography>{userData.public.name}</Typography>
             </Grid>
         </Grid>
         <Grid container spacing={1}>
@@ -155,38 +74,38 @@ const ProfileComponent = (props) => {
                 <MailIcon/>
             </Grid>
             <Grid item xs>
-            <Typography>{user.public().email}</Typography>
+                <Typography>{userData.public.email}</Typography>
             </Grid>
         </Grid>
-        {user.public().address && <Grid container spacing={1}>
+        {userData.public.address && <Grid container spacing={1}>
             <Grid item>
                 <AddressIcon/>
             </Grid>
             <Grid item xs>
-            <Typography>{user.public().address}</Typography>
+                <Typography>{userData.public.address}</Typography>
             </Grid>
         </Grid>}
-        {user.public().phone && <Grid container spacing={1}>
+        {userData.public.phone && <Grid container spacing={1}>
             <Grid item>
                 <PhoneIcon/>
             </Grid>
             <Grid item xs>
-            <Typography>{user.public().phone}</Typography>
+                <Typography>{userData.public.phone}</Typography>
             </Grid>
         </Grid>}
-        <Grid container>
-            <Typography>Since {
-                user.public().created && !user.public().created[".sv"]
-                && new Date(user.public().created).toLocaleDateString()}</Typography>
+        <Grid container spacing={1}>
+            <Typography>Since {userData.created}</Typography>
         </Grid>
+
         {additionalPublicFields && additionalPublicFields.map(field => {
+            if (!userData.public[field.id]) return null;
             return <React.Fragment key={field.id}>
-                <Grid container >
+                <Grid container spacing={1}>
                     <Grid item>
                         {field.icon}
                     </Grid>
                     <Grid item xs>
-                        <Typography>{user.public()[field.id]}</Typography>
+                        <Typography>{field.viewComponent(userData)}</Typography>
                     </Grid>
                 </Grid>
             </React.Fragment>

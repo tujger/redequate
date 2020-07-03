@@ -6,10 +6,10 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import BackIcon from "@material-ui/icons/ChevronLeft";
-import {Link, Route, Switch, withRouter, useHistory, useLocation} from "react-router-dom";
+import {Link, useHistory, useLocation, withRouter} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
-import {matchRole, needAuth, user} from "../controllers/User";
+import {matchRole, needAuth, useCurrentUserData} from "../controllers/User";
 import {usePages} from "../controllers/General";
 
 const styles = theme => ({
@@ -55,13 +55,14 @@ function MainTitlebar(props) {
     const pages = usePages();
     const location = useLocation();
     const history = useHistory();
+    const currentUserData = useCurrentUserData();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
     const label = itemsFlat.filter(item => item.route === location.pathname).map((item, index) => {
-        return needAuth(item.roles, user)
+        return needAuth(item.roles, currentUserData)
             ? pages.login.title || pages.login.label :
-            (matchRole(item.roles, user)
+            (matchRole(item.roles, currentUserData)
                 ? item.title || item.label : pages.notfound.title || pages.notfound.label)
     }).filter(item => !!item)[0];
 
@@ -82,11 +83,10 @@ function MainTitlebar(props) {
             <Typography variant="h6" noWrap className={classes.title}>
                 {label}
             </Typography>
-            {user.uid() &&
+            {currentUserData.id &&
             <Link to={pages.profile.route} className={[classes.label, classes.avatarContainer].join(" ")}>
-                <AvatarView user={user} className={classes.avatar}/>
+                <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified}/>
             </Link>}
-            {/*{user && user.key && <AvatarView user={user} onclick={onavatarclick}/>}*/}
         </Toolbar>
         <ProgressView/>
     </AppBar>

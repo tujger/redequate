@@ -4,7 +4,7 @@ import {
     fetchUserPublic,
     sendConfirmationEmail,
     sendVerificationEmail,
-    updateUserPublic,
+    updateUserPublic, useCurrentUserData,
     user
 } from "../controllers/User";
 import LoadingComponent from "../components/LoadingComponent";
@@ -37,6 +37,7 @@ const Signup = (props) => {
     const store = useStore();
     const firebase = useFirebase();
     const history = useHistory();
+    const currentUserData = useCurrentUserData();
 
 
     const requestSignupPassword = () => {
@@ -124,7 +125,7 @@ const Signup = (props) => {
             .then(() => updateUserPublic(firebase)({...response.user, current: true}))
             .then(() => {
                 refreshAll(store);
-                history.push(pages.edituser.route);
+                history.push(pages.editprofile.route);
             })
             .catch(signupError);
         return <LoadingComponent/>
