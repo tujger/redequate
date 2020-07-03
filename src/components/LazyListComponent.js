@@ -10,7 +10,7 @@ const LazyListComponent = (props) => {
     const {
         cache = false,
         itemComponent,
-        itemTransform,
+        itemTransform = item => item,
         pagination: givenPagination,
         placeholder,
         placeholders = 1,

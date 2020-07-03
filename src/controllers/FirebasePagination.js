@@ -73,6 +73,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             console.error(`[FP] timed out for ${toString()}`);
             reject(new Error("Timed out on data request."));
         }, timeout);
+
         return ref.once("value").then(async snap => {
             clearTimeout(timeoutTask);
             if (timeoutFired) return;

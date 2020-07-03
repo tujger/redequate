@@ -24,7 +24,6 @@ const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDraw
 const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout"));
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
-// window.history.pushState(null, null, window.location.href);
 
 const Dispatcher = (props) => {
     const {firebaseConfig, name, theme = defaultTheme, reducers, pages:pagesGiven} = props;

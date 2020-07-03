@@ -201,7 +201,7 @@ const EditProfile = (props) => {
                 firebase={firebase}
                 variant={"contained"}
                 color={"primary"}
-                button={<Button variant={"contained"} color={"primary"} children={"Change"}/>}
+                button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
                 onsuccess={handleUploadPhotoSuccess}
                 onerror={handleUploadPhotoError}
             />}
