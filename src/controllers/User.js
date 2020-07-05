@@ -388,7 +388,7 @@ export const UserData = function (firebase) {
         if(!_updated) {
             updates[`users_public/${_id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
         }
-        console.log(updates);
+        // console.log(updates);
         return updates;
     }
 
@@ -634,7 +634,7 @@ export const UserData = function (firebase) {
             loaded: _loaded,
         }),
         toString: () => {
-            return `[UserData] id: \x1b[34m${_id}\x1b[30m, name: \x1b[34m${_name}\x1b[30m, role: \x1b[34m${_role}\x1b[30m, public: ${JSON.stringify(_public)}`
+            return `id: \x1b[34m${_id}\x1b[30m, name: \x1b[34m${_name}\x1b[30m, role: \x1b[34m${_role}\x1b[30m, public: ${JSON.stringify(_public)}`
         },
         update: (key = data, data) => {
             if (key === data) {
