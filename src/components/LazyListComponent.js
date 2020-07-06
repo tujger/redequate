@@ -5,17 +5,19 @@ import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
 
 
-const LazyListComponent = (props) => {
+const LazyListComponent = ({
+                               cache = false,
+                               disableProgress,
+                               itemComponent,
+                               itemTransform = item => item,
+                               pagination: givenPagination,
+                               placeholder,
+                               placeholders = 1,
+                               noItemsComponent = null,
+                               ...props
+                           }) => {
     const dispatch = useDispatch();
     const {
-        cache = false,
-        itemComponent,
-        itemTransform = item => item,
-        pagination: givenPagination,
-        placeholder,
-        placeholders = 1,
-        disableProgress,
-        noItemsComponent = null,
         ["LazyListComponent_" + cache]: cacheData = {}
     } = props;
     const [state, setState] = React.useState({});
@@ -90,7 +92,6 @@ const LazyListComponent = (props) => {
     };
 
     React.useEffect(() => {
-        // loadNextPart();
         return () => {
             if (!disableProgress) dispatch(ProgressView.HIDE);
         }
@@ -109,7 +110,6 @@ const LazyListComponent = (props) => {
             placeholder={placeholder}
             placeholders={placeholders}
         />
-        {/*{items.map((item) => item && itemComponent(item))}*/}
         {!items.length && finished && noItemsComponent}
     </React.Fragment>
 };
@@ -117,16 +117,18 @@ const LazyListComponent = (props) => {
 const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders}) => {
     if (finished) return null;
     return <React.Fragment>
-        <InView ref={ref => {
-            if (!ref) return;
-            setTimeout(() => {
-                if (ref && ref.node) ref.node.style.display = "";
-            }, hasItems ? 1500 : 0)
-
-        }} style={{width: "100%", display: "none"}} onChange={(inView) => {
-            // console.log("inview", inView)
-            if (inView) loadNextPage();
-        }}/>
+        <InView
+            onChange={(inView) => {
+                if (inView) loadNextPage();
+            }}
+            ref={ref => {
+                if (!ref) return;
+                setTimeout(() => {
+                    if (ref && ref.node) ref.node.style.display = "";
+                }, hasItems ? 1500 : 0)
+            }}
+            style={{width: "100%", display: "none"}}
+        />
         {(() => {
             const a = [];
             for (let i = 0; i < placeholders; i++) {

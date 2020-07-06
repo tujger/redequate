@@ -23,14 +23,15 @@ import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/Gen
 import withStyles from "@material-ui/styles/withStyles";
 
 const styles = theme => ({
-    root: {
-
-    },
-    buttons: {
-    },
+    root: {},
+    buttons: {},
+    logout: {}
 });
 
-const Profile = ({notifications = true, additionalPublicFields, additionalPrivateFields, classes, ProfileComponent = <ProfileComponentOrigin/>}) => {
+const Profile = ({
+                     notifications = true, additionalPublicFields, additionalPrivateFields, classes, ProfileComponent =
+        <ProfileComponentOrigin/>
+                 }) => {
     const [state, setState] = React.useState({disabled: false});
     const {disabled} = state;
     const pages = usePages();
@@ -99,7 +100,13 @@ const Profile = ({notifications = true, additionalPublicFields, additionalPrivat
             }
             label={"Get notifications"}
         /></Grid>}
-        <ButtonGroup disabled={disabled} variant="contained" color={"secondary"} size="large" className={classes.buttons}>
+        <ButtonGroup
+            className={classes.buttons}
+            color={"secondary"}
+            disabled={disabled}
+            size="large"
+            variant="contained"
+        >
             <Button
                 className={classes.logout}
                 color={"secondary"}

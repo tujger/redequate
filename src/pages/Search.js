@@ -15,7 +15,6 @@ import ClearIcon from "@material-ui/icons/Clear";
 import Input from "@material-ui/core/Input";
 import {usePages} from "../controllers/General";
 
-
 const styles = theme => ({
     button: {
         marginRight: theme.spacing(1),

@@ -222,9 +222,10 @@ const EditProfile = (props) => {
                 </Grid>
                 <Grid item xs>
                     <TextField
+                        color={"secondary"}
                         disabled
-                        label="E-mail"
                         fullWidth
+                        label="E-mail"
                         value={userData.public.email || ""}
                     />
                 </Grid>
@@ -236,9 +237,10 @@ const EditProfile = (props) => {
                 </Grid>
                 <Grid item xs>
                     <TextField
+                        color={"secondary"}
                         disabled={disabled}
-                        label="Name"
                         fullWidth
+                        label="Name"
                         onChange={ev => {
                             setState({...state, name: ev.target.value || ""});
                         }}
@@ -253,9 +255,10 @@ const EditProfile = (props) => {
                 </Grid>
                 <Grid item xs>
                     <TextField
+                        color={"secondary"}
                         disabled={disabled}
-                        label="Address"
                         fullWidth
+                        label="Address"
                         onChange={ev => {
                             setState({...state, address: ev.target.value || ""});
                         }}
@@ -270,6 +273,7 @@ const EditProfile = (props) => {
                 </Grid>
                 <Grid item xs>
                     <TextField
+                        color={"secondary"}
                         disabled={disabled}
                         fullWidth
                         InputProps={{
@@ -293,13 +297,15 @@ const EditProfile = (props) => {
                         <Grid item xs>
                             <field.editComponent.type
                                 {...field.editComponent.props}
+                                color={"secondary"}
                                 disabled={disabled}
                                 fullWidth
                                 label={field.label}
                                 onChange={ev => {
                                     setState({...state, [field.id]: ev.target.value || ""});
                                 }}
-                                value={state[field.id] || data.public[field.id] || ""}
+                                value={state[field.id] !== undefined ?
+                                    state[field.id] : data.public[field.id] || ""}
                             />
                         </Grid>
                     </Grid>
