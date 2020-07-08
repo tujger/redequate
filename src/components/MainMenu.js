@@ -60,7 +60,10 @@ function MainMenu(props) {
                                       className={activeItem ? classes.active : ""}
                                       onClick={onClick}>
                                 <ListItemIcon>{item.icon}</ListItemIcon>
-                                <ListItemText primary={item.label}/>
+                                <ListItemText>
+                                    {item.label}
+                                    {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
+                                </ListItemText>
                             </ListItem>
                         </Link>
                     })}

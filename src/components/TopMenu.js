@@ -9,7 +9,6 @@ import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
 import AvatarView from "../components/AvatarView";
 import {usePages} from "../controllers/General";
-import {SearchToolbar} from "../pages/Search";
 
 const styles = theme => ({
     header: {
@@ -93,7 +92,10 @@ const MenuSection = withStyles(styles)(props => {
                              }}>
                     <MenuItem
                         button
-                        children={item.label}
+                        children={<React.Fragment>
+                            {item.label}
+                            {item.adornment && currentUserData && item.adornment(currentUserData)}
+                        </React.Fragment>}
                         className={classes.menuitem}
                         key={item.id}/>
                 </Link>
@@ -110,7 +112,7 @@ const TopMenu = props => {
 
     return <div className={["MuiTopMenu-root", classes.topmenu, className].join(" ")}>
         {items.map((list, index) => <MenuSection key={index} items={list}/>)}
-        {pages.search && <SearchToolbar/>}
+        {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
         {currentUserData && currentUserData.id && <Link
             to={pages.profile.route}
             className={[classes.label, classes.profileitem].join(" ")}>

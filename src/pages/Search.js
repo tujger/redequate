@@ -12,7 +12,7 @@ import {useHistory} from "react-router-dom";
 import Toolbar from "@material-ui/core/Toolbar";
 import withStyles from "@material-ui/styles/withStyles";
 import ClearIcon from "@material-ui/icons/Clear";
-import Input from "@material-ui/core/Input";
+import InputOrigin from "@material-ui/core/Input";
 import {usePages} from "../controllers/General";
 
 const styles = theme => ({
@@ -50,8 +50,14 @@ const styles = theme => ({
     }
 });
 
-const Search = (props) => {
+const Search = ({toolbar, content, modal, ...props}) => {
     const [state, setState] = React.useState({disabled: false});
+
+    console.warn("SEARCH")
+    if(content) return <SearchContent {...props}/>
+    if(modal) return <SearchModal {...props}/>
+    if(toolbar) return <SearchToolbar {...props}/>
+
     return <SearchContent {...props}/>
 };
 
@@ -102,7 +108,7 @@ export const SearchContent = () => {
 
 export default withStyles(styles)(Search);
 
-export const SearchToolbar = withStyles(styles)(({classes}) => {
+export const SearchToolbar = withStyles(styles)(({classes, Input = <InputOrigin/>}) => {
     const pages = usePages();
     const history = useHistory();
     const [state, setState] = React.useState({});
@@ -141,27 +147,30 @@ export const SearchToolbar = withStyles(styles)(({classes}) => {
             onClick={closeSearch}
             title={"Cancel search"}
         />
-        <Input autoFocus={true}
-               className={classes.searchfield}
-               endAdornment={<IconButton
-                   children={<ClearIcon/>}
-                   onClick={() => {
-                       setState({...state, searchValue: ""});
-                       inputRef.current && inputRef.current.focus();
-                   }}
-                   title={"Clear search"}
-                   variant={"text"}
-               />}
-               onChange={evt => {
-                   setState({...state, searchValue: evt.currentTarget.value})
-               }}
-               onKeyUp={evt => {
-                   if (evt && evt.key === "Escape") closeSearch();
-                   else if (evt && evt.key === "Enter") handleSearch();
-               }}
-               placeholder={"Search"}
-               inputRef={inputRef}
-               value={searchValue}
+        <Input.type
+            autoFocus={true}
+            className={classes.searchfield}
+            color={"secondary"}
+            endAdornment={<IconButton
+                children={<ClearIcon/>}
+                onClick={() => {
+                    setState({...state, searchValue: ""});
+                    inputRef.current && inputRef.current.focus();
+                }}
+                title={"Clear search"}
+                variant={"text"}
+            />}
+            onChange={evt => {
+                setState({...state, searchValue: evt.currentTarget.value})
+            }}
+            onKeyUp={evt => {
+                if (evt && evt.key === "Escape") closeSearch();
+                else if (evt && evt.key === "Enter") handleSearch();
+            }}
+            placeholder={"Search"}
+            inputRef={inputRef}
+            value={searchValue}
+            {...Input.props}
         />
         <IconButton
             children={pages.search.icon}

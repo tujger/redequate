@@ -185,6 +185,7 @@ const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword
             </Grid>
             <Grid item xs>
                 <TextField
+                    color={"secondary"}
                     disabled={disabled}
                     label="E-mail"
                     fullWidth
@@ -200,6 +201,7 @@ const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword
             </Grid>
             <Grid item xs>
                 <PasswordField
+                    color={"secondary"}
                     disabled={disabled}
                     label={"Password"}
                     onChange={onChangePassword}

@@ -59,9 +59,9 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
                 }
             } else {
                 if (order === "asc") {
-                    ref = ref.limitToFirst(size);
+                    ref = ref.startAt("\u0000").limitToFirst(size);
                 } else {
-                    ref = ref.limitToLast(size);
+                    ref = ref.endAt("\uf8ff").limitToLast(size);
                 }
             }
         }

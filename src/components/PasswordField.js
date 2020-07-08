@@ -10,7 +10,7 @@ import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
 
 const PasswordField = props => {
-    const {label, onChange, helper, disabled = false} = props;
+    const {label, onChange, color, helper, disabled = false} = props;
     const [values, setValues] = React.useState({
         password: "",
         show: false
@@ -26,8 +26,9 @@ const PasswordField = props => {
     };
 
     return <FormControl fullWidth>
-        <InputLabel>{label}</InputLabel>
+        <InputLabel color={color}>{label}</InputLabel>
         <Input
+            color={color}
             disabled={disabled}
             onChange={handleChange}
             type={values.show ? "text" : "password"}

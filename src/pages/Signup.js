@@ -141,6 +141,7 @@ const Signup = (props) => {
             </Grid>
             <Grid item xs>
                 <TextField
+                    color={"secondary"}
                     disabled={requesting}
                     label="E-mail"
                     fullWidth
@@ -158,6 +159,7 @@ const Signup = (props) => {
             </Grid>
             <Grid item xs>
                 <PasswordField
+                    color={"secondary"}
                     disabled={requesting}
                     label="Password"
                     onChange={ev => {
@@ -174,6 +176,7 @@ const Signup = (props) => {
             </Grid>
             <Grid item xs>
                 <PasswordField
+                    color={"secondary"}
                     disabled={requesting}
                     label="Confirm password"
                     onChange={ev => {

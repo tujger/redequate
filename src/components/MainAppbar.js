@@ -42,7 +42,6 @@ function MainAppbar(props) {
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
-    console.log(pages.profile.route)
     return <AppBar position="fixed" className={className}>
         <Toolbar>
             {onHamburgerClick ?
@@ -81,7 +80,7 @@ function MainAppbar(props) {
                     </Route>
                 </Switch>
             </Typography>
-            {pages.search && <SearchToolbar/>}
+            {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
             {currentUserData && <Link to={pages.profile.route} className={classes.label}>
                 <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>
             </Link>}

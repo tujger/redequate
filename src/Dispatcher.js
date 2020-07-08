@@ -3,9 +3,9 @@ import ThemeProvider from "@material-ui/styles/ThemeProvider";
 import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {Provider, useDispatch} from "react-redux";
-import withWidth from "@material-ui/core/withWidth";
+import withWidth, {isWidthUp, isWidthDown} from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
-import Store from "./controllers/Store";
+import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
 import {fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "./controllers/General";
 // import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout";
@@ -25,13 +25,18 @@ const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayo
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+let oldWidth;
 const Dispatcher = (props) => {
-    const {firebaseConfig, name, theme = defaultTheme, reducers, pages:pagesGiven} = props;
+    const {firebaseConfig, name, theme = defaultTheme, reducers, pages:pagesGiven, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
     usePages(pagesGiven);
     useStore(store);
     useFirebase(firebase);
+    const windowData = useWindowData({
+        breakpoint: width,
+        isNarrow: () => width === "xs" || width === "sm",
+    });
 
     React.useEffect(() => {
         (async () => {
@@ -60,6 +65,24 @@ const Dispatcher = (props) => {
 
     if (!store && !firebase) return <LoadingComponent/>;
 
+    const onWidthChange = (event) => {
+        clearTimeout(widthPoint);
+        widthPoint = setTimeout(() => {
+            const widths = {1920: "xl", 1280: "lg", 960: "md", 600: "sm", 0: "xs"};
+            let newWidth = "xl";
+            for(let x in widths) {
+                if(window.innerWidth > x) {
+                    newWidth = widths[x];
+                }
+            }
+            if(oldWidth !== newWidth) {
+                refreshAll(store);
+            }
+            oldWidth = newWidth;
+        }, 50)
+    }
+    window.addEventListener("resize", onWidthChange);
+
     return <Provider store={store}>
         <ThemeProvider theme={theme}>
             <SnackbarProvider maxSnack={4} preventDuplicate>
@@ -72,15 +95,12 @@ const Dispatcher = (props) => {
     </Provider>;
 };
 
+let widthPoint;
 const DispatcherRoutedBody = props => {
     const {pages, menu, width, copyright, headerImage, layout, name, logo} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
-    useWindowData({
-        breakpoint: width,
-        isNarrow: () => width === "xs"
-    });
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location) => {

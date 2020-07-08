@@ -16,7 +16,7 @@ import MainMenu from "../components/MainMenu";
 import Snackbar from "../components/Snackbar";
 import {connect} from "react-redux";
 import {NotificationsSnackbar} from "../controllers/Notifications";
-import {useFirebase, usePages, useStore} from "../controllers/General";
+import {useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -47,6 +47,7 @@ function ResponsiveDrawerLayout(props) {
     const pages = usePages();
     const store = useStore();
     const firebase = useFirebase();
+    const windowData = useWindowData();
 
     const handleDrawerToggle = () => {
         setState({...state, mobileOpen: !mobileOpen});
@@ -63,8 +64,9 @@ function ResponsiveDrawerLayout(props) {
         onpopstateBackup = null;
     }
 
+    console.log(windowData.isNarrow())
     return <React.Fragment><CssBaseline/>
-        <Hidden mdUp implementation="css">
+        {windowData.isNarrow() ?
             <SwipeableDrawer
                 container={container}
                 variant="temporary"
@@ -91,8 +93,7 @@ function ResponsiveDrawerLayout(props) {
                     <Typography variant="caption">{copyright}</Typography>
                 </Grid>
             </SwipeableDrawer>
-        </Hidden>
-        <Hidden smDown implementation="css">
+            :
             <Drawer variant="permanent" open>
                 <MainHeader image={headerImage}
                             name={name}
@@ -109,7 +110,7 @@ function ResponsiveDrawerLayout(props) {
                     <Typography variant="caption">{copyright}</Typography>
                 </Grid>
             </Drawer>
-        </Hidden>
+        }
         <MainAppbar
             className={classes.appbar}
             {...props}

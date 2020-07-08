@@ -6,6 +6,6 @@ export {default as Home} from "./Home";
 export {default as NotFound} from "./NotFound";
 export {default as Profile} from "./Profile";
 export {default as RestorePassword} from "./RestorePassword";
-export {default as Search, SearchToolbar} from "./Search";
+export {default as Search, SearchContent, SearchModal, SearchToolbar} from "./Search";
 export {default as Signup} from "./Signup";
 export {default as SimplePage} from "./SimplePage";
