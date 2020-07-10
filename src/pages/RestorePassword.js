@@ -1,10 +1,9 @@
 import React from "react";
-import {useCurrentUserData} from "../controllers/User";
+import {useCurrentUserData} from "../controllers/UserData";
 import {Redirect, useHistory} from "react-router-dom";
 import ProgressView from "../components/ProgressView";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
@@ -15,33 +14,26 @@ import {notifySnackbar, useFirebase, usePages} from "../controllers";
 const RestorePassword = (props) => {
     const [state, setState] = React.useState({
         email: "",
-        error: "",
         requesting: false
     });
-    const {email, error, requesting} = state;
+    const {email, requesting} = state;
     const pages = usePages();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
 
-
     const requestRestorePassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         firebase.auth().sendPasswordResetEmail(email).then(() => {
-            notifySnackbar({
-                title: "Instructions has sent to e-mail"
-            });
-            dispatch(ProgressView.HIDE);
+            notifySnackbar("Instructions have been sent to e-mail.");
             history.push(pages.login.route);
         }).catch(error => {
-            notifySnackbar({
-                title: error.message,
-                variant: "error"
-            });
+            notifySnackbar(error);
+        }).finally(() => {
             dispatch(ProgressView.HIDE);
-            setState({...state, error: error.message, requesting: false});
+            setState({...state, requesting: false});
         });
     };
 
@@ -57,25 +49,18 @@ const RestorePassword = (props) => {
             </Grid>
             <Grid item xs>
                 <TextField
+                    color={"secondary"}
                     disabled={requesting}
                     label="E-mail"
                     fullWidth
-                    onChange={ev => {
-                        setState({...state, email: ev.target.value});
-                    }}
+                    onChange={ev => setState({...state, email: ev.target.value})}
                     value={email}
                 />
             </Grid>
         </Grid>
-        <Box m={1}/>
-        <FormHelperText error variant={"outlined"}>
-            {error}
-        </FormHelperText>
         <Box m={2}/>
         <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth>
-            <Button
-                onClick={requestRestorePassword}
-            >
+            <Button onClick={requestRestorePassword}>
                 Restore
             </Button>
             <Button onClick={() => history.push(pages.login.route)}>

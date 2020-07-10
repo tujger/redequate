@@ -1,6 +1,7 @@
 import React from "react";
 import {useSnackbar} from "notistack";
 import RichSnackbarContent from "../components/RichSnackbarContent";
+import PropTypes from "prop-types";
 
 export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {
     try {
@@ -143,10 +144,20 @@ export const notifySnackbar = props => {
             priority: "high",
             variant: "error"
         }
+    } else if(props.constructor.name === "String") {
+        snackbar.payload = {title: props};
     } else {
         snackbar.payload = props;
     }
     snackbar.click();
+};
+notifySnackbar.propTypes = {
+    title: PropTypes.string,
+    variant: PropTypes.string,
+    buttonLabel: PropTypes.string,
+    onButtonClick: PropTypes.any,
+    error: PropTypes.any,
+    priority: PropTypes.string,
 };
 
 export const hasNotifications = () => {

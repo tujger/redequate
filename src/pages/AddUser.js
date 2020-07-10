@@ -6,7 +6,7 @@ import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import MailIcon from "@material-ui/icons/Mail";
-import {sendConfirmationEmail} from "../controllers/User";
+import {sendInvitationEmail} from "../controllers/UserData";
 import {TextMaskEmail} from "../controllers/TextMasks";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
@@ -31,13 +31,14 @@ const AddUser = (props) => {
         setState({...state, requesting: true});
         dispatch(ProgressView.SHOW);
 
-        sendConfirmationEmail(firebase, store)({email: email, includeEmail: true})
+        sendInvitationEmail(firebase, store)({email: email})
             .then(() => {
                 history.push(pages.users.route);
             })
             .catch(notifySnackbar)
             .finally(() => {
-                refreshAll(store);
+                setState({...state, requesting: false});
+                dispatch(ProgressView.HIDE);
             });
     };
 
@@ -49,6 +50,8 @@ const AddUser = (props) => {
             </Grid>
             <Grid item xs>
                 <TextField
+                    autoFocus={true}
+                    color={"secondary"}
                     disabled={requesting}
                     label="E-mail"
                     fullWidth

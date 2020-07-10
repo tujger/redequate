@@ -33,7 +33,7 @@ const styles = theme => ({
 });
 
 const ProfileComponent = (props) => {
-    const {classes, userData, additionalPublicFields} = props;
+    const {classes, userData, publicFields} = props;
     const firebase = useFirebase();
 
     return <Grid container>
@@ -97,7 +97,7 @@ const ProfileComponent = (props) => {
             <Typography>Since {userData.created}</Typography>
         </Grid>
 
-        {additionalPublicFields && additionalPublicFields.map(field => {
+        {publicFields && publicFields.map(field => {
             if (!userData.public[field.id]) return null;
             return <React.Fragment key={field.id}>
                 <Grid container spacing={1}>

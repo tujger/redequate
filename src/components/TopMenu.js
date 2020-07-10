@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {MenuItem, withStyles} from "@material-ui/core";
-import {currentRole, matchRole, Role, useCurrentUserData} from "../controllers/User";
+import {currentRole, matchRole, Role, useCurrentUserData} from "../controllers/UserData";
 import {Link, useHistory} from "react-router-dom";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
@@ -113,7 +113,7 @@ const TopMenu = props => {
     return <div className={["MuiTopMenu-root", classes.topmenu, className].join(" ")}>
         {items.map((list, index) => <MenuSection key={index} items={list}/>)}
         {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
-        {currentUserData && currentUserData.id && <Link
+        {currentUserData.id && <Link
             to={pages.profile.route}
             className={[classes.label, classes.profileitem].join(" ")}>
             <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>

@@ -10,7 +10,7 @@ import Menu from "@material-ui/icons/Menu";
 import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
-import {matchRole, needAuth, useCurrentUserData, currentRole, Role} from "../controllers/User";
+import {matchRole, needAuth, useCurrentUserData, currentRole, Role} from "../controllers/UserData";
 import {connect} from "react-redux";
 import {usePages} from "../controllers/General";
 import {SearchToolbar} from "../pages/Search";
@@ -81,7 +81,7 @@ function MainAppbar(props) {
                 </Switch>
             </Typography>
             {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
-            {currentUserData && <Link to={pages.profile.route} className={classes.label}>
+            {currentUserData.id && <Link to={pages.profile.route} className={classes.label}>
                 <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>
             </Link>}
             {/*{user && user.key && <AvatarView user={user} onclick={onavatarclick}/>}*/}

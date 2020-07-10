@@ -4,7 +4,7 @@ export {default as Logout} from "./Logout";
 export {default as EditProfile} from "./EditProfile";
 export {default as Home} from "./Home";
 export {default as NotFound} from "./NotFound";
-export {default as Profile} from "./Profile";
+export {default as Profile, publicFields} from "./Profile";
 export {default as RestorePassword} from "./RestorePassword";
 export {default as Search, SearchContent, SearchModal, SearchToolbar} from "./Search";
 export {default as Signup} from "./Signup";

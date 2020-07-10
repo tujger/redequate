@@ -1,7 +1,7 @@
 import React, {Suspense} from "react";
 import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch, useHistory} from "react-router-dom";
-import {matchRole, needAuth, useCurrentUserData} from "../controllers/User";
+import {matchRole, needAuth, useCurrentUserData} from "../controllers/UserData";
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages} from "../controllers/General";
 

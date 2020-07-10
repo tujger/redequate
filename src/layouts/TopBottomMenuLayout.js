@@ -80,7 +80,7 @@ function TopBottomMenuLayout(props) {
     </StickyHeader>
 }
 
-TopBottomMenuLayout.REFRESH = {type: "topBottomMenuLayoutRefresh"};
+TopBottomMenuLayout.REFRESH = {type: "topBottomMenuLayout_Refresh"};
 
 TopBottomMenuLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),

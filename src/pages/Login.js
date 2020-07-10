@@ -1,5 +1,5 @@
 import React from "react";
-import {logoutUser, useCurrentUserData} from "../controllers/User";
+import {logoutUser, sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
@@ -21,7 +21,7 @@ import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 import {UserData} from "../controllers";
 
 const Login = (props) => {
-    const {popup = true, onLogin, layout = <LoginLayout/>} = props;
+    const {popup = true, onLogin, transformUserData, layout = <LoginLayout/>} = props;
     const [state, setState] = React.useState({
         email: "",
         password: "",
@@ -34,12 +34,26 @@ const Login = (props) => {
     const firebase = useFirebase();
     const location = useLocation();
     const currentUserData = useCurrentUserData();
+    const history = useHistory();
+
+    const errorCallback = error => {
+        notifySnackbar(error);
+        dispatch({type: "currentUserData", userData: null});
+        return logoutUser(firebase, store)();
+    };
+
+    const finallyCallback = () => {
+        setState({...state, requesting: false});
+        dispatch(ProgressView.HIDE);
+        refreshAll(store);
+    }
 
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         logoutUser(firebase, store)()
             .then(() => {
                 const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({prompt: "select_account"});
                 dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState({...state, requesting: true});
@@ -49,38 +63,60 @@ const Login = (props) => {
                     return firebase.auth().signInWithRedirect(provider);
                 }
             })
-            .catch(loginError)
+            .catch(errorCallback)
     };
 
     const requestLoginPassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
-        firebase.auth().signInWithEmailAndPassword(email, password).then(loginSuccess).catch(loginError);
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then(loginSuccess)
+            .catch(errorCallback)
+            .finally(finallyCallback);
     };
 
     const loginSuccess = response => {
         if (!response.user) {
-            loginError(new Error("Login failed. Please try again"));
+            throw new Error("Login failed. Please try again");
+        }
+        let isFirstLogin = false;
+        const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+        if (!ud.verified) {
+            notifySnackbar({
+                buttonLabel: "Resend verification",
+                onButtonClick: () => sendVerificationEmail(firebase),
+                priority: "high",
+                title: "Your account is not yet verified.",
+                variant: "warning",
+            })
             return;
         }
-        const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
-        ud.fetch([UserData.ROLE])
+        return ud.fetch([UserData.ROLE, UserData.FORCE])
             .then(() => ud.fetch([UserData.PUBLIC, UserData.FORCE]))
             .then(() => ud.fetchPrivate(fetchDeviceId(), true))
             .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName}))
             .then(() => ud.savePrivate())
-            .then(() => ud.fetch([UserData.UPDATED, UserData.FORCE]))
             .then(() => {
+                if (!ud.persisted) {
+                    isFirstLogin = true;
+                    if (transformUserData) return transformUserData(ud);
+                }
+                return ud;
+            })
+            .then(ud => {
+                if (isFirstLogin) return ud.savePublic();
+                return ud;
+            })
+            // .then(() => ud.fetch([UserData.UPDATED, UserData.FORCE]))
+            .then(ud => {
                 useCurrentUserData(ud);
                 dispatch({type: "currentUserData", userData: ud});
             })
             .then(() => {
                 if (ud.private[fetchDeviceId()].notification) {
                     return setupReceivingNotifications(firebase)
-                        .then(token => {
-                            return ud.setPrivate(fetchDeviceId(), {notification: token})
-                                .then(() => ud.savePrivate());
-                        })
+                        .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
+                            .then(() => ud.savePrivate()))
                         .then(() => {
                             notifySnackbar({title: "Subscribed"});
                             setState({...state, disabled: false});
@@ -90,35 +126,10 @@ const Login = (props) => {
             })
             .then(() => {
                 onLogin && onLogin();
-            }).catch(loginError)
-            .finally(() => {
-                setState({...state, requesting: false});
-                dispatch(ProgressView.HIDE);
-                refreshAll(store);
+                if (isFirstLogin) history.push(pages.editprofile.route);
             });
 
-        // const {uid, email, emailVerified, displayName: name, phoneNumber: phone, photoURL: image, providerData = []} = response.user.toJSON();
-        // const provider = providerData.filter(item => item && item.providerId).filter((item, index) => index === 0).map(item => item.providerId)[0];
-
         /*fetchUserPublic(firebase)(uid)
-            .then(data => updateUserPublic(firebase)(uid,
-                {
-                    created: firebase.database.ServerValue.TIMESTAMP,
-                    updated: firebase.database.ServerValue.TIMESTAMP,
-                    email,
-                    name,
-                    phone,
-                    image,
-                    provider,
-                    ...data,
-                    emailVerified,
-                    current: true
-                }))
-            .then(() => fetchUserPrivate(firebase)(uid, fetchDeviceId()))
-            .then(data => updateUserPrivate(firebase)(uid, fetchDeviceId(), {
-                ...data, osName, osVersion, deviceType, browserName
-            }))
-            .then((data) => {
                 if (data && data.notification) {
                     return setupReceivingNotifications(firebase)
                         .then(token => fetchUserPrivate(firebase)(uid)
@@ -130,30 +141,15 @@ const Login = (props) => {
                             }))
                         .catch(notifySnackbar)
                 }
-                // return this;
-            })
-            .then(() => {
-                dispatch({type: "user", user});
-                onLogin && onLogin();
-            })
-            .catch(loginError)
-            .finally(() => {
-                setState({...state, requesting: false});
-                refreshAll(store);
             });*/
     };
 
-    const loginError = error => {
-        dispatch(ProgressView.HIDE);
-        notifySnackbar(error);
-        dispatch({type: "currentUserData", userData: null});
-        logoutUser(firebase, store)()
-            .then(() => setState({...state, requesting: false}));
-    };
-
     if (!popup && window.localStorage.getItem(pages.login.route)) {
-        firebase.auth().getRedirectResult().then(loginSuccess).catch(loginError);
         window.localStorage.removeItem(pages.login.route);
+        firebase.auth().getRedirectResult()
+            .then(loginSuccess)
+            .catch(errorCallback)
+            .finally(finallyCallback);
         return <LoadingComponent/>;
     }
 
@@ -165,12 +161,17 @@ const Login = (props) => {
         }
     }
 
-    return <layout.type {...props} {...layout.props} email={email} onChangeEmail={ev => {
-        setState({...state, email: ev.target.value});
-    }} onChangePassword={ev => {
-        setState({...state, password: ev.target.value});
-    }} onRequestGoogle={requestLoginGoogle} onRequestLogin={requestLoginPassword} password={password}
-                        disabled={requesting}/>
+    return <layout.type
+        {...props}
+        {...layout.props}
+        disabled={requesting}
+        email={email}
+        onChangeEmail={ev => setState({...state, email: ev.target.value})}
+        onChangePassword={ev => setState({...state, password: ev.target.value})}
+        onRequestGoogle={requestLoginGoogle}
+        onRequestLogin={requestLoginPassword}
+        password={password}
+    />
 };
 
 const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword, onRequestLogin, onRequestGoogle, signup = true}) => {

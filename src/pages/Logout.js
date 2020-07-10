@@ -1,5 +1,5 @@
 import React from "react";
-import {logoutUser} from "../controllers/User";
+import {logoutUser} from "../controllers/UserData";
 import {useHistory, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
@@ -19,6 +19,7 @@ const Logout = (props) => {
     const doLogout = () => {
         logoutUser(firebase, store)()
             .then(() => {
+                firebase
                 refreshAll(store);
                 history.push(pages.home.route);
             });

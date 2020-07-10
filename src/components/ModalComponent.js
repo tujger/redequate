@@ -8,7 +8,7 @@ const styles = theme => ({
         [theme.breakpoints.up("md")]: {
             width: "60%",
         },
-        [theme.breakpoints.down("md")]: {
+        [theme.breakpoints.down("sm")]: {
             borderRadius: 0,
             bottom: 0,
             left: 0,

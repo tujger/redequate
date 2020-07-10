@@ -5,7 +5,6 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Divider from "@material-ui/core/Divider";
 import Drawer from "@material-ui/core/Drawer";
 import Grid from "@material-ui/core/Grid";
-import Hidden from "@material-ui/core/Hidden";
 import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
@@ -16,7 +15,7 @@ import MainMenu from "../components/MainMenu";
 import Snackbar from "../components/Snackbar";
 import {connect} from "react-redux";
 import {NotificationsSnackbar} from "../controllers/Notifications";
-import {useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
+import {usePages, useWindowData} from "../controllers/General";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -45,8 +44,6 @@ function ResponsiveDrawerLayout(props) {
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
     const pages = usePages();
-    const store = useStore();
-    const firebase = useFirebase();
     const windowData = useWindowData();
 
     const handleDrawerToggle = () => {
@@ -64,7 +61,6 @@ function ResponsiveDrawerLayout(props) {
         onpopstateBackup = null;
     }
 
-    console.log(windowData.isNarrow())
     return <React.Fragment><CssBaseline/>
         {windowData.isNarrow() ?
             <SwipeableDrawer
@@ -123,7 +119,7 @@ function ResponsiveDrawerLayout(props) {
     </React.Fragment>
 }
 
-ResponsiveDrawerLayout.REFRESH = {type: "responsiveDrawerLayoutRefresh"};
+ResponsiveDrawerLayout.REFRESH = {type: "responsiveDrawerLayout_Refresh"};
 
 ResponsiveDrawerLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),

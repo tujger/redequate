@@ -6,21 +6,19 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
-import AddressIcon from "@material-ui/icons/LocationCity";
 import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
-import NameIcon from "@material-ui/icons/Person";
 import EmptyAvatar from "@material-ui/icons/Person";
-import PhoneIcon from "@material-ui/icons/Phone";
-import {Redirect, useHistory} from "react-router-dom";
-import {useCurrentUserData, UserData} from "../controllers/User";
-import {TextMaskPhone} from "../controllers/TextMasks";
+import {Redirect, useHistory, useParams} from "react-router-dom";
+import {useCurrentUserData, UserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar, useFirebase, useStore} from "../controllers";
+import {notifySnackbar, useFirebase, useStore, useUserDatas} from "../controllers";
+import {publicFields} from "./Profile";
+import LoadingComponent from "../components/LoadingComponent";
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
@@ -59,27 +57,25 @@ const styles = theme => ({
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
-    let {data, classes, uploadable = true, additionalPublicFields, additionalPrivateFields} = props;
+    let {classes, uploadable = true, publicFields: publicFieldsGiven = publicFields, privateFields} = props;
     const dispatch = useDispatch();
     const store = useStore();
     const firebase = useFirebase();
     const history = useHistory();
-
-    const {state: givenState = {}} = history.location;
-    const {tosuccessroute = "/", data: givenData} = givenState;
-
-    const userData = useCurrentUserData();
-    data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
-
+    const {id} = useParams();
+    const currentUserData = useCurrentUserData();
+    const userDatas = useUserDatas();
     const [state, setState] = useState({
-        address: userData.public.address || "",
         error: null,
-        image: userData.public.image || "",
-        name: userData.public.name === userData.public.email ? "" : (userData.public.name || ""),
-        phone: userData.public.phone || "",
         disabled: false
     });
-    const {name, error, address, phone, image, disabled} = state;
+
+    const {state: givenState = {}} = history.location;
+    const {tosuccessroute} = givenState;
+
+    // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
+
+    const {error, image, disabled, requiredError = [], userData} = state;
     uppy = state.uppy;
     file = state.file;
     snapshot = state.snapshot;
@@ -90,12 +86,28 @@ const EditProfile = (props) => {
         refreshAll(store);
     };
 
+    const requiredFilled = () => {
+        const requiredError = [];
+        publicFieldsGiven.forEach(field => {
+            if (field.required && !state[field.id]) {
+                requiredError.push(field.id);
+            }
+        })
+        if (requiredError.length > 0) {
+            setState({...state, requiredError});
+            return false;
+        }
+        return true;
+    }
+
     const saveUser = async () => {
-        setState({...state, disabled: true});
+        if (!requiredFilled()) return;
+
+        setState({...state, requiredError: [], disabled: true});
         dispatch(ProgressView.SHOW);
         let publishing = {};
 
-        if(uppy) {
+        if (uppy) {
             publishing = await publishFile(firebase)({
                 auth: data.uid,
                 uppy,
@@ -108,36 +120,38 @@ const EditProfile = (props) => {
                 deleteFile: userData.public.image
             });
         }
-        const {url:imageSaved, metadata} = publishing;
+        const {url: imageSaved, metadata} = publishing;
         dispatch(ProgressView.SHOW);
 
         const additionalPublic = {};
-        if(additionalPublicFields) {
-            additionalPublicFields.forEach(field => {
-                if(state[field.id]) {
-                    additionalPublic[field.id] = state[field.id];
-                }
-            })
-        }
+        publicFieldsGiven.forEach(field => {
+            if (state[field.id]) {
+                additionalPublic[field.id] = state[field.id];
+            }
+        })
 
         userData.set({
             ...additionalPublic,
-            address,
             image: imageSaved || image || "",
-            name: name,
-            phone,
         }).then(() => userData.savePublic())
             .then(() => userData.fetch([UserData.UPDATED, UserData.FORCE]))
             .then(() => {
-                console.log(userData)
-                dispatch({type:"currentUserData", userData:userData});
-            }).then((userData) => {
-            setTimeout(() => {
-                setState({...state, disabled: false, uppy: null});
-                refreshAll(store);
-                history.push(tosuccessroute, {data: userData, tosuccessroute: tosuccessroute});
-            }, 1000)
-        }).catch(onerror).finally(() => {
+                console.log("ep", userData)
+                if (currentUserData.id === userData.id) {
+                    dispatch({type: "currentUserData", userData});
+                }
+            })
+            .then(() => {
+                setTimeout(() => {
+                    setState({...state, disabled: false, uppy: null});
+                    refreshAll(store);
+                    if(tosuccessroute) {
+                        history.push(tosuccessroute);
+                    } else {
+                        history.goBack();
+                    }
+                }, 1000)
+            }).catch(onerror).finally(() => {
             dispatch(ProgressView.HIDE);
         });
     };
@@ -169,23 +183,32 @@ const EditProfile = (props) => {
     }
 
     const onBeforeFileLoad = (elem) => {
-        if(elem.target.files[0].size > 71680){
+        if (elem.target.files[0].size > 71680) {
             alert("File is too big!");
             elem.target.value = "";
         }
     }
 
     React.useEffect(() => {
+        dispatch(ProgressView.SHOW);
+        let userData;
+        if(!id || id === ":id") {
+            userData = currentUserData;
+        } else {
+            userData = userDatas[id] || new UserData(firebase).create(id);
+        }
+        userData.fetch([UserData.PUBLIC])
+            .then(userData => userDatas[userData.id] = userData)
+            .then(() => setState({...state, userData, ...userData.public}))
+            .catch(notifySnackbar)
+            .finally(() => dispatch(ProgressView.HIDE))
         return () => {
             removeUploadedFile();
         }
-    }, [])
-
-    if (!data) {
-        return <Redirect to={tosuccessroute}/>
-    }
-
-    window.localStorage.setItem(history.location.pathname, JSON.stringify(userData.toJSON()));
+    }, [id])
+console.log(id, userData)
+    // if (!id) return <Redirect to={tosuccessroute}/>
+    if (!userData) return <LoadingComponent/>
 
     return <Grid container spacing={1}>
         <Box m={0.5}/>
@@ -230,64 +253,9 @@ const EditProfile = (props) => {
                     />
                 </Grid>
             </Grid>
-            <Box m={1}/>
-            <Grid container spacing={1} alignItems="flex-end">
-                <Grid item>
-                    <NameIcon/>
-                </Grid>
-                <Grid item xs>
-                    <TextField
-                        color={"secondary"}
-                        disabled={disabled}
-                        fullWidth
-                        label="Name"
-                        onChange={ev => {
-                            setState({...state, name: ev.target.value || ""});
-                        }}
-                        value={name}
-                    />
-                </Grid>
-            </Grid>
-            <Box m={1}/>
-            <Grid container spacing={1} alignItems="flex-end">
-                <Grid item>
-                    <AddressIcon/>
-                </Grid>
-                <Grid item xs>
-                    <TextField
-                        color={"secondary"}
-                        disabled={disabled}
-                        fullWidth
-                        label="Address"
-                        onChange={ev => {
-                            setState({...state, address: ev.target.value || ""});
-                        }}
-                        value={address}
-                    />
-                </Grid>
-            </Grid>
-            <Box m={1}/>
-            <Grid container spacing={1} alignItems="flex-end">
-                <Grid item>
-                    <PhoneIcon/>
-                </Grid>
-                <Grid item xs>
-                    <TextField
-                        color={"secondary"}
-                        disabled={disabled}
-                        fullWidth
-                        InputProps={{
-                            inputComponent: TextMaskPhone
-                        }}
-                        label="Phone"
-                        onChange={ev => {
-                            setState({...state, phone: ev.target.value || ""});
-                        }}
-                        value={phone}
-                    />
-                </Grid>
-            </Grid>
-            {data.public && additionalPublicFields && additionalPublicFields.map(field => {
+            {userData.public && publicFieldsGiven && publicFieldsGiven.map(field => {
+                const editComponent = field.editComponent || <TextField/>;
+                const missedRequired = requiredError.indexOf(field.id) >= 0;
                 return <React.Fragment key={field.id}>
                     <Box m={1}/>
                     <Grid container spacing={1} alignItems="flex-end">
@@ -295,17 +263,19 @@ const EditProfile = (props) => {
                             {field.icon}
                         </Grid>
                         <Grid item xs>
-                            <field.editComponent.type
-                                {...field.editComponent.props}
+                            <editComponent.type
+                                {...editComponent.props}
                                 color={"secondary"}
                                 disabled={disabled}
+                                error={missedRequired}
                                 fullWidth
+                                helperText={missedRequired ? "Please enter value" : null}
                                 label={field.label}
                                 onChange={ev => {
                                     setState({...state, [field.id]: ev.target.value || ""});
                                 }}
-                                value={state[field.id] !== undefined ?
-                                    state[field.id] : data.public[field.id] || ""}
+                                required={field.required}
+                                value={state[field.id] || ""}
                             />
                         </Grid>
                     </Grid>

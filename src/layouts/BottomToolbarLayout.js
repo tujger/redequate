@@ -35,7 +35,7 @@ function BottomToolbarLayout(props) {
     </React.Fragment>
 }
 
-BottomToolbarLayout.REFRESH = {type: "bottomToolbarLayoutRefresh"};
+BottomToolbarLayout.REFRESH = {type: "bottomToolbarLayout_Refresh"};
 
 BottomToolbarLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),

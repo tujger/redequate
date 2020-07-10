@@ -2,6 +2,7 @@ export {default as AvatarView} from "./AvatarView";
 export {default as BottomMenu} from "./BottomMenu";
 export {default as BottomToolbar} from "./BottomToolbar";
 export {default as ButtonAddEvent} from "./ButtonAddEvent";
+export {default as ConfirmComponent} from "./ConfirmComponent";
 export {default as listAction} from "./ListAction";
 export {default as LazyListComponent, lazyListComponent} from "./LazyListComponent";
 export {default as ListComponent} from "./ListComponent";

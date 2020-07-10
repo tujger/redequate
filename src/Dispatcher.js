@@ -13,7 +13,7 @@ import {fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "./c
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
 import {matchRole, needAuth, theme as defaultTheme} from "./controllers";
-import {watchUserChanged, useCurrentUserData, UserData} from "./controllers/User";
+import {watchUserChanged, useCurrentUserData, UserData} from "./controllers/UserData";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
@@ -105,7 +105,7 @@ const DispatcherRoutedBody = props => {
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
-        console.log("[Dispatcher]", location);
+        console.warn("[Dispatcher]", location);
         if (current) {
             const label = needAuth(current.roles, currentUserData)
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
@@ -118,9 +118,14 @@ const DispatcherRoutedBody = props => {
     React.useEffect(() => {
         updateTitle({pathname: window.location.pathname});
         const currentPathname = window.location.pathname;
+        const currentSearch = window.location.search;
+        const currentHash = window.location.hash;
         history.replace("/");
         if (currentPathname !== "/") {
-            history.push(currentPathname);
+            let path = currentPathname;
+            if(currentSearch) path += currentSearch;
+            if(currentHash) path += currentHash;
+            history.push(path);
         }
         const unlisten = history.listen(updateTitle);
         return () => {

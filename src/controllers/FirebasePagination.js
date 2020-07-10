@@ -89,7 +89,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
                 if(child && value[child] === undefined) continue;
                 if (update) {
                     const newValue = await update(ss.key, value);
-                    if (newValue !== value) {
+                    if (newValue !== undefined && newValue !== value) {
                         ss.ref.set(newValue);
                     }
                     if (keys.length > 1) keys.pop();

@@ -5,7 +5,7 @@ import BottomToolbarLayout, {bottomToolbarLayout} from "../layouts/BottomToolbar
 import {snackbar} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
-import {currentUser, currentUserData} from "./User";
+import {currentUserData} from "./UserData";
 import {mainAppbar} from "../components/MainAppbar";
 
 const Store = (name, reducers) => {
@@ -16,7 +16,6 @@ const Store = (name, reducers) => {
         responsiveDrawerLayout,
         snackbar,
         topBottomMenuLayout,
-        currentUser,
         currentUserData,
         mainAppbar,
         ...reducers};

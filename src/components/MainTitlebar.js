@@ -9,7 +9,7 @@ import BackIcon from "@material-ui/icons/ChevronLeft";
 import {Link, useHistory, useLocation, withRouter} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
-import {matchRole, needAuth, useCurrentUserData} from "../controllers/User";
+import {matchRole, needAuth, useCurrentUserData} from "../controllers/UserData";
 import {usePages} from "../controllers/General";
 
 const styles = theme => ({
