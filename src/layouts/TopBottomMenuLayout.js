@@ -61,7 +61,7 @@ function TopBottomMenuLayout(props) {
 
     return <StickyHeader
         title={<Switch>
-            {itemsFlat.map((item, index) => <Route key={index} path={item.route} exact={true} children={item.label}/>)}
+            {itemsFlat.map((item, index) => <Route key={index} path={item._route} exact={true} children={item.label}/>)}
         </Switch>}
         headerImage={headerImage}
         sticky={<TopMenu items={menu} className={classes.topmenu}/>}

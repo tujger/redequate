@@ -27,12 +27,12 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 let oldWidth;
 const Dispatcher = (props) => {
-    const {firebaseConfig, name, theme = defaultTheme, reducers, pages:pagesGiven, width} = props;
+    const {firebaseConfig, name, theme = defaultTheme, reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
-    usePages(pagesGiven);
     useStore(store);
     useFirebase(firebase);
+    usePages(pages);
     const windowData = useWindowData({
         breakpoint: width,
         isNarrow: () => width === "xs" || width === "sm",
@@ -40,6 +40,10 @@ const Dispatcher = (props) => {
 
     React.useEffect(() => {
         (async () => {
+            for(let x in pages) {
+                pages[x]._route = pages[x].route;
+                pages[x].route = pages[x].route.split(":")[0];
+            }
             const firebase = Firebase(firebaseConfig);
             installWrapperControl();
             fetchDeviceId();

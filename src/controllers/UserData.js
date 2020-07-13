@@ -18,7 +18,7 @@ export const watchUserChanged = (firebase, store) => {
                 }
             } else if (currentUserDataInstance.verified !== result.emailVerified) {
                 notifySnackbar({
-                    title: "Your profile has been changed. Please relogin to update",
+                    title: "Your profile has been changed. Please relogin for update",
                     variant: "warning"
                 })
             } else if (result && result.uid === currentUserDataInstance.id) {
@@ -27,7 +27,7 @@ export const watchUserChanged = (firebase, store) => {
                         if (data.val() > currentUserDataInstance.public.updated) {
                             console.log(`[UserData] last timestamp ${data.val()} > than saved ${currentUserDataInstance.public.updated}`)
                             notifySnackbar({
-                                title: "Your profile has been changed. Please relogin to update",
+                                title: "Your profile has been changed. Please relogin for update",
                                 variant: "warning"
                             })
                         }
@@ -175,7 +175,7 @@ export const UserData = function (firebase) {
 
     const fetchSortName = () => {
         if (_public.name || _public.email) {
-            return (_public.name || _public.email).trim().toLowerCase() + "_" + _id;
+            return normalizeSortName(_public.name || _public.email) + "_" + _id;
         }
         return null;
     }
@@ -451,4 +451,11 @@ export const useCurrentUserData = userData => {
     if (userData !== undefined) currentUserDataInstance = userData;
     if (userData === null) currentUserDataInstance = new UserData();
     return currentUserDataInstance;
+}
+
+export const normalizeSortName = text => {
+    return (text || "")
+        .trim()
+        .replace(/[~`!@#$%^&*()\-_=+\[\]{}|\\;:'",<.>\/?\s™®～]+/g, '')
+        .toLowerCase();
 }

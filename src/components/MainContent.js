@@ -31,7 +31,7 @@ const MainContent = props => {
             <Switch>{itemsFlat.map((item, index) => {
                 return <Route
                     key={index}
-                    path={item.route}
+                    path={item._route}
                     exact={true}
                     render={() => {
                         return needAuth(item.roles, currentUserData)

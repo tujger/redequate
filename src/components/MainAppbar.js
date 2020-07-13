@@ -59,7 +59,7 @@ function MainAppbar(props) {
                 <Switch>
                     {itemsFlat.map((item, index) => <Route
                             key={index}
-                            path={item.route}
+                            path={item._route}
                             exact={true}
                         >
                             <Link to={pages.home.route} className={classes.label}>

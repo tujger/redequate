@@ -47,6 +47,11 @@ const styles = theme => ({
     },
     searchfield: {
         flex: 1,
+    },
+    inputfield: {
+        [theme.breakpoints.up("md")]: {
+            width: theme.spacing(24),
+        },
     }
 });
 
@@ -108,32 +113,43 @@ export const SearchContent = () => {
 
 export default withStyles(styles)(Search);
 
-export const SearchToolbar = withStyles(styles)(({classes, Input = <InputOrigin/>}) => {
+export const SearchToolbar = withStyles(styles)(({classes, open = false, onOpen, transformSearch, onChange, Input = <InputOrigin/>}) => {
     const pages = usePages();
     const history = useHistory();
     const [state, setState] = React.useState({});
-    const {search, searchValue = "", unblock} = state;
+    const {search = open, searchValue = "", unblock} = state;
     const inputRef = React.useRef();
 
     const closeSearch = () => {
-        setState(state => ({...state, search: false, unblock: null}))
+        setState(state => ({...state, search: false, unblock: null}));
         unblock();
     }
 
     const handleSearch = () => {
         if (!searchValue) return;
         closeSearch();
-        history.push(pages.search.route/*.replace(/\*$/, "?q=")*/ + "?q=" + encodeURIComponent(searchValue));
+        if(Input.props.onApply) {
+            Input.props.onApply(searchValue);
+        } else {
+            history.push(pages.search.route + "?q=" + encodeURIComponent(searchValue));
+        }
     }
+
+    React.useEffect(() => {
+        setState(state => ({...state, search: open}));
+    }, [open])
 
     if (!search) return <IconButton
         onClick={() => {
             const unblock = history.block(() => {
                 setState(state => ({...state, search: false, unblock: null}));
                 unblock();
+                delete history.unblock;
                 return false;
             })
+            history.unblock = unblock;
             setState({...state, search: true, unblock})
+            onOpen && onOpen();
         }}
         title={"Search"}
         variant={"text"}
@@ -147,31 +163,40 @@ export const SearchToolbar = withStyles(styles)(({classes, Input = <InputOrigin/
             onClick={closeSearch}
             title={"Cancel search"}
         />
-        <Input.type
+        {/*{Input}*/}
+        {<Input.type
             autoFocus={true}
-            className={classes.searchfield}
+            classes={{root: classes.searchfield, input: classes.inputfield}}
             color={"secondary"}
             endAdornment={<IconButton
                 children={<ClearIcon/>}
                 onClick={() => {
                     setState({...state, searchValue: ""});
                     inputRef.current && inputRef.current.focus();
+                    Input.props.onChange && Input.props.onChange("");
                 }}
                 title={"Clear search"}
                 variant={"text"}
             />}
-            onChange={evt => {
-                setState({...state, searchValue: evt.currentTarget.value})
-            }}
+            fullWidth
             onKeyUp={evt => {
                 if (evt && evt.key === "Escape") closeSearch();
                 else if (evt && evt.key === "Enter") handleSearch();
+                // if(open) {
+                //     Input.props.onKeyUp && Input.props.onKeyUp(evt);
+                // }
             }}
             placeholder={"Search"}
             inputRef={inputRef}
             value={searchValue}
             {...Input.props}
-        />
+            onChange={evt => {
+                let searchValue = (evt.currentTarget || evt.target).value;
+                if(transformSearch) searchValue = transformSearch(searchValue);
+                setState({...state, searchValue});
+                Input.props.onChange && Input.props.onChange(searchValue);
+            }}
+        />}
         <IconButton
             children={pages.search.icon}
             onClick={handleSearch}

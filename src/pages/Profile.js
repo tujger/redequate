@@ -103,8 +103,11 @@ const Profile = ({
     };
 
     return <div className={classes.root}>
-        <ProfileComponent.type {...ProfileComponent.props} userData={currentUserData}
-                               publicFields={publicFields}/>
+        <ProfileComponent.type
+            {...ProfileComponent.props}
+            publicFields={publicFields}
+            userData={currentUserData}
+        />
         {!currentUserData.verified && <Grid container>
             <Grid item xs>
                 <Typography>Note! You have still not verified email. Some features will not
@@ -165,7 +168,7 @@ const Profile = ({
                 className={classes.edit}
                 variant={"contained"}
                 component={React.forwardRef((props, ref) => (
-                    <Link ref={ref} to={pages.editprofile.route} {...props}/>
+                    <Link ref={ref} to={pages.editprofile.route + currentUserData.id} {...props}/>
                 ))}
             >
                 Edit

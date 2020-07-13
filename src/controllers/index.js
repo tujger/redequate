@@ -18,5 +18,6 @@ export {
     Role,
     roleIs,
     UserData,
-    useCurrentUserData
+    useCurrentUserData,
+    normalizeSortName
 } from "./UserData";

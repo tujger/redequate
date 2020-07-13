@@ -206,7 +206,7 @@ const EditProfile = (props) => {
             removeUploadedFile();
         }
     }, [id])
-console.log(id, userData)
+
     // if (!id) return <Redirect to={tosuccessroute}/>
     if (!userData) return <LoadingComponent/>
 
