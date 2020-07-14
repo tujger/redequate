@@ -454,6 +454,7 @@ export const useCurrentUserData = userData => {
 }
 
 export const normalizeSortName = text => {
+    if(!text || !(text.constructor.name === "String")) return text;
     return (text || "")
         .trim()
         .replace(/[~`!@#$%^&*()\-_=+\[\]{}|\\;:'",<.>\/?\s™®～]+/g, '')

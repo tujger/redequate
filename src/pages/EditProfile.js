@@ -19,6 +19,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import {notifySnackbar, useFirebase, useStore, useUserDatas} from "../controllers";
 import {publicFields} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
+import Pagination from "../controllers/FirebasePagination";
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
@@ -75,7 +76,7 @@ const EditProfile = (props) => {
 
     // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
-    const {error, image, disabled, requiredError = [], userData} = state;
+    const {error, image, disabled, requiredError = [], uniqueError = [], userData} = state;
     uppy = state.uppy;
     file = state.file;
     snapshot = state.snapshot;
@@ -94,7 +95,30 @@ const EditProfile = (props) => {
             }
         })
         if (requiredError.length > 0) {
-            setState({...state, requiredError});
+            setState(state => ({...state, requiredError}));
+            return false;
+        }
+        return true;
+    }
+
+    const checkUnique = async () => {
+        const uniqueError = [];
+        for(let field of publicFieldsGiven) {
+            if (field.unique) {
+                const values = await new Pagination({
+                    ref: firebase.database().ref("users_public"),
+                    child: "name",
+                    equals: state[field.id],
+                }).next();
+                for(let value of (values || [])) {
+                    if(value.key && value.key !== id) {
+                        uniqueError.push(field.id);
+                    }
+                }
+            }
+        }
+        if (uniqueError.length > 0) {
+            setState(state => ({...state, uniqueError}));
             return false;
         }
         return true;
@@ -103,8 +127,15 @@ const EditProfile = (props) => {
     const saveUser = async () => {
         if (!requiredFilled()) return;
 
-        setState({...state, requiredError: [], disabled: true});
         dispatch(ProgressView.SHOW);
+        setState(state => ({...state, requiredError: [], uniqueError: [], disabled: true}));
+        const unique = await checkUnique();
+        if(!unique) {
+            setState(state => ({...state, disabled: false}));
+            dispatch(ProgressView.HIDE);
+            return;
+        }
+
         let publishing = {};
 
         if (uppy) {
@@ -121,7 +152,6 @@ const EditProfile = (props) => {
             });
         }
         const {url: imageSaved, metadata} = publishing;
-        dispatch(ProgressView.SHOW);
 
         const additionalPublic = {};
         publicFieldsGiven.forEach(field => {
@@ -136,7 +166,6 @@ const EditProfile = (props) => {
         }).then(() => userData.savePublic())
             .then(() => userData.fetch([UserData.UPDATED, UserData.FORCE]))
             .then(() => {
-                console.log("ep", userData)
                 if (currentUserData.id === userData.id) {
                     dispatch({type: "currentUserData", userData});
                 }
@@ -256,6 +285,7 @@ const EditProfile = (props) => {
             {userData.public && publicFieldsGiven && publicFieldsGiven.map(field => {
                 const editComponent = field.editComponent || <TextField/>;
                 const missedRequired = requiredError.indexOf(field.id) >= 0;
+                const uniqueRequired = uniqueError.indexOf(field.id) >= 0;
                 return <React.Fragment key={field.id}>
                     <Box m={1}/>
                     <Grid container spacing={1} alignItems="flex-end">
@@ -267,9 +297,10 @@ const EditProfile = (props) => {
                                 {...editComponent.props}
                                 color={"secondary"}
                                 disabled={disabled}
-                                error={missedRequired}
+                                error={missedRequired || uniqueRequired}
                                 fullWidth
-                                helperText={missedRequired ? "Please enter value" : null}
+                                helperText={missedRequired ? "Please enter value"
+                                    : (uniqueRequired ? "This name is already taken" : null)}
                                 label={field.label}
                                 onChange={ev => {
                                     setState({...state, [field.id]: ev.target.value || ""});

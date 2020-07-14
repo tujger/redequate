@@ -47,6 +47,7 @@ const styles = theme => ({
     },
     observer: {
         height: 0,
+        marginTop: -theme.mixins.toolbar.minHeight
     }
 });
 
@@ -56,7 +57,6 @@ const StickyHeader = props => {
     const {collapsed} = state;
 
     const refObserver = React.createRef();
-    const refSticky = React.createRef();
     const observer = new IntersectionObserver((entries) => {
         entries.map(entry => {
             setState({...state, collapsed: !entry.isIntersecting});
@@ -67,8 +67,6 @@ const StickyHeader = props => {
     });
 
     React.useEffect(() => {
-        const rectSticky = refSticky.current.getBoundingClientRect();
-        refObserver.current.style.marginTop = `-${rectSticky.height}px`;
         observer.observe(refObserver.current);
         return () => {
             observer.disconnect();
@@ -77,13 +75,11 @@ const StickyHeader = props => {
     }, []);
 
     return <div className={[classes.container, className].join(" ")}>
-        <div
-            className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
+        <div className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
         <div className={classes.content}
              style={{backgroundImage: `url(${headerImage})`}}>{content}</div>
         <div ref={refObserver} className={classes.observer}/>
-        <div ref={refSticky}
-             className={[classes.sticky, collapsed ? classes.stickycollapsed : null, stickyClassName].join(" ")}
+        <div className={[classes.sticky, collapsed ? classes.stickycollapsed : null, stickyClassName].join(" ")}
              style={collapsed ? {backgroundImage: `url(${headerImage})`} : null}
         >{sticky}</div>
         <ProgressView className={classes.progress}/>

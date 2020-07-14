@@ -6,8 +6,6 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
     let count = 0;
     let finished = false;
     let started = false;
-    if(start && start.constructor.name === "String") start = start.replace(/\W/g,"").toLowerCase();
-    if(end && end.constructor.name === "String") end = end.replace(/\W/g,"").toLowerCase();
 
     const next = () => new Promise((resolve, reject) => {
         if (finished) {
