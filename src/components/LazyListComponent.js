@@ -4,7 +4,6 @@ import ProgressView from "./ProgressView";
 import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
 
-
 const LazyListComponent = ({
                                cache = false,
                                disableProgress,
@@ -50,10 +49,13 @@ const LazyListComponent = ({
                             return itemComponent(transformed, index);
                         }
                     } catch (error) {
-                        notifySnackbar(error);
+                        console.error(error);
+                        // notifySnackbar(error);
                     }
                 });
                 return Promise.all(newitems);
+            }).then(newitems => {
+                return newitems.filter(item => item !== undefined);
             }).then(newitems => ({
                     finished: pagination.finished,
                     items: pagination.order === "asc" ? [...items, ...newitems] : [...items, ...newitems.reverse()],
@@ -138,7 +140,6 @@ const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders})
         })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
     </React.Fragment>
 }
-
 
 export const lazyListComponent = (state = {}, action) => {
     const cache = action.cache;

@@ -125,8 +125,13 @@ const Login = (props) => {
                 }
             })
             .then(() => {
-                onLogin && onLogin();
-                if (isFirstLogin) history.push(pages.editprofile.route);
+                refreshAll(store)
+                if(onLogin) {
+                    onLogin(isFirstLogin);
+                } else {
+                    if (isFirstLogin) history.replace(pages.editprofile.route);
+                    else history.replace(pages.home.route);
+                }
             });
 
         /*fetchUserPublic(firebase)(uid)

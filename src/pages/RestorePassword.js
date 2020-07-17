@@ -60,10 +60,10 @@ const RestorePassword = (props) => {
         </Grid>
         <Box m={2}/>
         <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth>
-            <Button onClick={requestRestorePassword}>
+            <Button aria-label={"Restore bassword"} onClick={requestRestorePassword}>
                 Restore
             </Button>
-            <Button onClick={() => history.push(pages.login.route)}>
+            <Button aria-label={"Cancel"} onClick={() => history.push(pages.login.route)}>
                 Cancel
             </Button>
         </ButtonGroup>

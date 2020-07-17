@@ -7,17 +7,21 @@ import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
 import {mainAppbar} from "../components/MainAppbar";
+import {usersReducer} from "../pages/admin/Users";
+import {lazyListComponent} from "../components/LazyListComponent";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
     reducers = {
         bottomToolbarLayout,
+        currentUserData,
+        lazyListComponent,
+        mainAppbar,
         progressView,
         responsiveDrawerLayout,
         snackbar,
         topBottomMenuLayout,
-        currentUserData,
-        mainAppbar,
+        usersReducer,
         ...reducers};
     const store = createStore(combineReducers(reducers), initialStore || {});
 

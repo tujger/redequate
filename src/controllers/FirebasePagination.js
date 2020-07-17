@@ -24,7 +24,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             // a previous page has been loaded so get the next one using the previous value/key
             // we have to start from the current cursor so add one to page size
             if (order === "asc") {
-                if (equals) {
+                if (equals !== undefined) {
                     ref = ref.startAt(lastValue, lastKey).endAt(equals + "\uf8ff").limitToFirst(size + 1);
                     // ref = ref.equalTo(lastValue, lastKey).limitToFirst(size + 1);
                 } else if (child || value) {
@@ -33,7 +33,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
                     ref = ref.startAt(lastKey).limitToFirst(size + 1);
                 }
             } else {
-                if (equals) {
+                if (equals !== undefined) {
                     ref = ref.startAt(equals).endAt(lastValue, lastKey).limitToLast(size + 1);
                     // ref = ref.equalTo(lastValue, lastKey).limitToLast(size + 1);
                 } else if (child || value) {
@@ -44,7 +44,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             }
         } else {
             // this is the first page
-            if (equals) {
+            if (equals !== undefined) {
                 if (order === "asc") {
                     ref = ref.equalTo(equals).limitToFirst(size);
                 } else {
@@ -80,6 +80,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
             const keys = [];
             const data = []; // store data in array so it's ordered
             const children = [];
+
             snap.forEach(child => {
                 children.push(child)
             });
@@ -137,7 +138,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
         }${
             end ? "end: " + end + ", " : ""
         }${
-            equals ? "equals: " + equals + ", " : ""
+            equals !== undefined ? "equals: " + equals + ", " : ""
         }order: ${order}, count: ${count}, countTotal: ${countTotal}, ${
             started ? "started" : "not started"
         }, ${

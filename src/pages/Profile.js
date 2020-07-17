@@ -4,12 +4,12 @@ import Checkbox from "@material-ui/core/Checkbox";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
+import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
 import {default as ProfileComponentOrigin} from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {logoutUser, sendVerificationEmail, useCurrentUserData, watchUserChanged} from "../controllers/UserData";
-import {Link, Redirect} from "react-router-dom";
+import {logoutUser, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
+import {Link, Redirect, useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
@@ -17,8 +17,9 @@ import {useFirebase, usePages, useStore} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
-import {TextMaskPhone} from "../controllers";
+import {matchRole, TextMaskPhone} from "../controllers";
 import withStyles from "@material-ui/styles/withStyles";
+import LoadingComponent from "../components/LoadingComponent";
 
 const styles = theme => ({
     root: {},
@@ -54,20 +55,22 @@ const Profile = ({
         <ProfileComponentOrigin/>
                  }) => {
     const [state, setState] = React.useState({disabled: false});
-    const {disabled} = state;
+    const {userData, disabled} = state;
+    const history = useHistory();
     const pages = usePages();
     const store = useStore();
     const firebase = useFirebase();
     const dispatch = useDispatch();
     const currentUserData = useCurrentUserData();
+    const {id} = useParams();
 
-    React.useEffect(() => {
-        watchUserChanged(firebase);
-    }, []);
+    const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
+    const isSameUser = userData && currentUserData && userData.id === currentUserData.id;
+    const isEditEnabled = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
 
-    if (!currentUserData || !currentUserData.id) {
-        return <Redirect to={pages.home.route}/>
-    }
+    // if (!currentUserData || !currentUserData.id) {
+    //     return <Redirect to={pages.home.route}/>
+    // }
 
     const handleNotifications = (evt, enable) => {
         dispatch(ProgressView.SHOW);
@@ -102,19 +105,43 @@ const Profile = ({
         }
     };
 
+    React.useEffect(() => {
+        if(!id) {
+            setState({...state, userData:currentUserData});
+            return;
+        }
+        new UserData(firebase).fetch(id)
+            .then(userData => setState({...state, userData}))
+            .catch(error => {
+                // notifySnackbar
+                history.goBack();
+                console.error(error);
+            });
+        return () => {
+        }
+        // eslint-disable-next-line
+    }, [id]);
+
+    console.log(id, userData);
+    if(!userData) return <LoadingComponent/>;
     return <div className={classes.root}>
+        {userData.disabled && <Grid container>
+            <InputLabel error>
+                <h4>Your account is suspended. Please contact with administrator.</h4>
+            </InputLabel>
+        </Grid>}
+        {!userData.verified && <Grid container>
+            <InputLabel error>
+                <h4>You have still not verified email. Some features will not
+                    be available. If you were already verified please log out and log in again.</h4>
+            </InputLabel>
+        </Grid>}
         <ProfileComponent.type
             {...ProfileComponent.props}
             publicFields={publicFields}
-            userData={currentUserData}
+            userData={userData}
         />
-        {!currentUserData.verified && <Grid container>
-            <Grid item xs>
-                <Typography>Note! You have still not verified email. Some features will not
-                    be available. If you were already verified please log out and log in again.</Typography>
-            </Grid>
-        </Grid>}
-        {notifications && <Grid container><FormControlLabel
+        {isSameUser && isEditEnabled && notifications && <Grid container><FormControlLabel
             control={
                 <Checkbox
                     disabled={disabled}
@@ -131,7 +158,7 @@ const Profile = ({
             size="large"
             variant="contained"
         >
-            <Button
+            {isSameUser && <Button
                 className={classes.logout}
                 color={"secondary"}
                 onClick={() => {
@@ -141,8 +168,8 @@ const Profile = ({
                 variant={"contained"}
             >
                 Logout
-            </Button>
-            {!currentUserData.verified && currentUserData.email && <Button
+            </Button>}
+            {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
                 color={"secondary"}
                 className={classes.resendVerification}
                 onClick={() => {
@@ -160,7 +187,7 @@ const Profile = ({
             >
                 Resend verification
             </Button>}
-            {currentUserData.verified && <Button
+            {isEditEnabled && <Button
                 color={"secondary"}
                 // onClick={() => {
                 //     props.history.push(pages.editprofile.route);
@@ -168,7 +195,7 @@ const Profile = ({
                 className={classes.edit}
                 variant={"contained"}
                 component={React.forwardRef((props, ref) => (
-                    <Link ref={ref} to={pages.editprofile.route + currentUserData.id} {...props}/>
+                    <Link ref={ref} to={pages.editprofile.route + userData.id} {...props}/>
                 ))}
             >
                 Edit

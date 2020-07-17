@@ -7,7 +7,7 @@ import withWidth, {isWidthUp, isWidthDown} from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
 import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
-import {fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "./controllers/General";
+import {fetchDeviceId, useFirebase, usePages, useStore, useTechnicalInfo, useWindowData} from "./controllers/General";
 // import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout";
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
@@ -33,12 +33,14 @@ const Dispatcher = (props) => {
     useStore(store);
     useFirebase(firebase);
     usePages(pages);
+    useTechnicalInfo(state => ({...state, refreshed: new Date().getTime()}));
     const windowData = useWindowData({
         breakpoint: width,
         isNarrow: () => width === "xs" || width === "sm",
     });
 
     React.useEffect(() => {
+        let maintenanceRef;
         (async () => {
             for(let x in pages) {
                 pages[x]._route = pages[x].route;
@@ -61,13 +63,31 @@ const Dispatcher = (props) => {
             } catch(error) {
                 console.error(error);
             }
-            setState({...state, firebase, store});
+            setInterval(() => {
+                watchUserChanged(firebase, store);
+            }, 30000)
             watchUserChanged(firebase, store);
+            maintenanceRef = firebase.database().ref("meta/maintenance");
+            maintenanceRef.on("value", snapshot => {
+                const maintenance = snapshot.val();
+                useTechnicalInfo(currentMeta => {
+                    if(currentMeta.maintenance !== maintenance) {
+                        console.log("[Dispatcher] maintenance changed to", maintenance);
+                        useTechnicalInfo({...currentMeta, maintenance: maintenance});
+                        refreshAll(store)
+                    }
+                    return useTechnicalInfo();
+                });
+            })
+            setState({...state, firebase, store});
         })();
+        return () => {
+            maintenanceRef && maintenanceRef.off();
+        }
         // eslint-disable-next-line
     }, []);
 
-    if (!store && !firebase) return <LoadingComponent/>;
+    if (!store || !firebase) return <LoadingComponent/>;
 
     const onWidthChange = (event) => {
         clearTimeout(widthPoint);
@@ -109,7 +129,7 @@ const DispatcherRoutedBody = props => {
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
-        console.warn("[Dispatcher]", location);
+        console.log("[Dispatcher]", location);
         if (current) {
             const label = needAuth(current.roles, currentUserData)
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)

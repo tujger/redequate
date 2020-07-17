@@ -6,13 +6,12 @@ import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import MailIcon from "@material-ui/icons/Mail";
-import {sendInvitationEmail} from "../controllers/UserData";
-import {TextMaskEmail} from "../controllers/TextMasks";
-import ProgressView from "../components/ProgressView";
+import {sendInvitationEmail} from "../../controllers/UserData";
+import {TextMaskEmail} from "../../controllers/TextMasks";
+import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
-import {refreshAll} from "../controllers/Store";
 import {useHistory} from "react-router-dom";
-import {notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
+import {notifySnackbar, useFirebase, usePages, useStore} from "../../controllers";
 
 const AddUser = (props) => {
     const [state, setState] = useState({requesting: false, error: ""});
@@ -31,7 +30,7 @@ const AddUser = (props) => {
         setState({...state, requesting: true});
         dispatch(ProgressView.SHOW);
 
-        sendInvitationEmail(firebase, store)({email: email})
+        sendInvitationEmail(firebase)({email: email})
             .then(() => {
                 history.push(pages.users.route);
             })

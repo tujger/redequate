@@ -47,7 +47,7 @@ const RichSnackbarContent = React.forwardRef((props, ref) => {
     try {
         const classes = useStyles();
 
-        const customAction = (color) => <Button
+        const customAction = (color) => <Button aria-label={buttonLabel}
             size="small" aria-label="close" color={color}
             onClickCapture={((evt) => {
                 evt.stopPropagation();

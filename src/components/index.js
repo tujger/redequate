@@ -18,6 +18,7 @@ export {default as Snackbar, snackbar} from "./Snackbar";
 export {default as StickyHeader} from "./StickyHeader";
 export {default as TopMenu} from "./TopMenu";
 export {default as UploadComponent} from "./UploadComponent";
+export {default as UserItemComponent} from "./UserItemComponent";
 
 export {default as MainAppbar} from "./MainAppbar";
 export {default as MainContent} from "./MainContent";

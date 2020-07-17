@@ -139,12 +139,12 @@ const ListComponent = props => {
                 {countSelected} selected
             </Grid> : null}
             {countSelected ? <Tooltip title={"Select all"}>
-                <IconButton size={"medium"} onClick={selectAll} onContextMenu={hiddenContextMenu}>
+                <IconButton size={"medium"} onClick={selectAll} aria-label={"Select all"} onContextMenu={hiddenContextMenu}>
                     <CheckAllIcon/>
                 </IconButton>
             </Tooltip> : null}
             {countSelected ? <Tooltip title={"Unselect all"}>
-                <IconButton size={"medium"} onClick={unselectAll} onContextMenu={hiddenContextMenu}>
+                <IconButton aria-label={"Unselect all"} size={"medium"} onClick={unselectAll} onContextMenu={hiddenContextMenu}>
                     <ClearIcon/>
                 </IconButton>
             </Tooltip> : null}
@@ -159,7 +159,7 @@ const ListComponent = props => {
                 onContextMenu={hiddenContextMenu}
             /> : null}
             {!countSelected ? <Tooltip title={"Sort"}>
-                <IconButton size={"medium"} onContextMenu={hiddenContextMenu}>
+                <IconButton aria-label={"Sort"} size={"medium"} onContextMenu={hiddenContextMenu}>
                     <SortIcon/>
                 </IconButton>
             </Tooltip> : null}
@@ -193,10 +193,10 @@ const ListComponent = props => {
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button autoFocus onClick={cancelDialog} color="primary">
+                <Button aria-label={"Cancel"} autoFocus onClick={cancelDialog} color="primary">
                     Cancel
                 </Button>
-                <Button onClick={() => actionAllConfirmed(action)}
+                <Button aria-label={"Delete"} onClick={() => actionAllConfirmed(action)}
                         color={action.variant === "warning" ? "secondary" : "primary"}>
                     Delete
                 </Button>

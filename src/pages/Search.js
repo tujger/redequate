@@ -31,7 +31,7 @@ const styles = theme => ({
         padding: theme.spacing(1),
     },
     searchbar: {
-        backgroundColor: theme.palette.primary.main,
+        backgroundColor: theme.palette.background.paper,
         bottom: 0,
         position: "absolute",
         right: 0,
@@ -155,7 +155,7 @@ export const SearchToolbar = withStyles(styles)(({classes, open = false, onOpen,
         variant={"text"}
         children={pages.search.icon}/>
 
-    return <Toolbar className={classes.searchbar}>
+    return <Toolbar color={"secondary"} className={classes.searchbar}>
         <IconButton
             children={<BackIcon/>}
             color="inherit"

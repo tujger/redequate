@@ -50,8 +50,8 @@ const ConfirmComponent = ({onConfirm, onCancel, confirmLabel = "OK", cancelLabel
             {children}
         </DialogContent>
         <DialogActions>
-            <Button onClick={onCancel} color={"secondary"}>{cancelLabel}</Button>
-            <Button onClick={onConfirm} color={"secondary"} style={critical ? {color: "#ff0000"} : {}} autoFocus>{confirmLabel}</Button>
+            <Button aria-label={cancelLabel} onClick={onCancel} color={"secondary"}>{cancelLabel}</Button>
+            <Button aria-label={confirmLabel} onClick={onConfirm} color={"secondary"} style={critical ? {color: "#ff0000"} : {}} autoFocus>{confirmLabel}</Button>
         </DialogActions>
     </Dialog>
 }

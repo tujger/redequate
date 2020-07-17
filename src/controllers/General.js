@@ -11,9 +11,9 @@ export const fetchDeviceId = () => {
 
 let firebaseInstance;
 let pagesInstance;
-let userDatasInstance = {};
 let storeInstance = {};
 let windowDataInstance = {};
+let technicalInfoInstance;
 
 export const useFirebase = firebase => {
     if(firebase) firebaseInstance = firebase;
@@ -26,11 +26,6 @@ export const usePages = pages => {
     return pagesInstance;
 }
 
-export const useUserDatas = initial => {
-    if(initial) userDatasInstance = initial || {};
-    return userDatasInstance;
-}
-
 export const useStore = initial => {
     if(initial) storeInstance = initial || {};
     return storeInstance;
@@ -40,3 +35,54 @@ export const useWindowData = initial => {
     if(initial) windowDataInstance = initial || {};
     return windowDataInstance;
 }
+
+export const useTechnicalInfo = (initial) => {
+    if(initial instanceof Function) {
+        technicalInfoInstance = initial(technicalInfoInstance);
+    } else if(initial) technicalInfoInstance = initial || {};
+    return technicalInfoInstance;
+}
+
+
+const CacheDatas = function() {
+    let _cache = {};
+    let _count = 0;
+    let _max = 1000;
+    return {
+        get length() {
+            return _count;
+        },
+        get max() {
+            return _max;
+        },
+        set max(length) {
+            _max = length;
+            if(_count > _max) {
+                _count = 1;
+                _cache = {};
+            }
+        },
+        get: id => {
+            return _cache[id];
+        },
+        put: (id, data) => {
+            if(!id) throw new Error("[Cache] data id is not defined");
+            if(_cache[id]) {
+                return _cache[id];
+            }
+            if(!data) throw new Error("[Cache] data is not defined");
+            _count++;
+            if(_count > _max) {
+                _count = 1;
+                _cache = {};
+            }
+            _cache[id] = data;
+            return data;
+        },
+        remove: id => {
+            delete _cache[id];
+            _count--;
+        },
+    }
+}
+export const cacheDatas = new CacheDatas();

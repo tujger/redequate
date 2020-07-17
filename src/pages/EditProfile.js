@@ -2,24 +2,40 @@ import React, {useState} from "react";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
 import Grid from "@material-ui/core/Grid";
+import InfoIcon from "@material-ui/icons/Info";
 import ClearIcon from "@material-ui/icons/Clear";
+import DeleteIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
+import RoleIcon from "@material-ui/icons/Security";
 import EmptyAvatar from "@material-ui/icons/Person";
-import {Redirect, useHistory, useParams} from "react-router-dom";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
+import {useHistory, useParams} from "react-router-dom";
+import {
+    currentUserData,
+    matchRole,
+    Role,
+    sendInvitationEmail,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar, useFirebase, useStore, useUserDatas} from "../controllers";
+import {notifySnackbar, useFirebase, usePages, useStore, useUserDatas} from "../controllers";
 import {publicFields} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";
+import ConfirmComponent from "../components/ConfirmComponent";
+import LazyListComponent from "../components/LazyListComponent";
+import {Redirect} from "react-router-dom";
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
@@ -59,13 +75,14 @@ const styles = theme => ({
 let uppy, file, snapshot;
 const EditProfile = (props) => {
     let {classes, uploadable = true, publicFields: publicFieldsGiven = publicFields, privateFields} = props;
+    const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
-    const store = useStore();
     const firebase = useFirebase();
     const history = useHistory();
-    const {id} = useParams();
-    const currentUserData = useCurrentUserData();
+    const pages = usePages();
+    const store = useStore();
     const userDatas = useUserDatas();
+    const {id} = useParams();
     const [state, setState] = useState({
         error: null,
         disabled: false
@@ -103,15 +120,16 @@ const EditProfile = (props) => {
 
     const checkUnique = async () => {
         const uniqueError = [];
-        for(let field of publicFieldsGiven) {
+
+        for (let field of publicFieldsGiven) {
             if (field.unique) {
                 const values = await new Pagination({
                     ref: firebase.database().ref("users_public"),
                     child: "name",
                     equals: state[field.id],
                 }).next();
-                for(let value of (values || [])) {
-                    if(value.key && value.key !== id) {
+                for (let value of (values || [])) {
+                    if (value.key && value.key !== userData.id) {
                         uniqueError.push(field.id);
                     }
                 }
@@ -130,7 +148,7 @@ const EditProfile = (props) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, requiredError: [], uniqueError: [], disabled: true}));
         const unique = await checkUnique();
-        if(!unique) {
+        if (!unique) {
             setState(state => ({...state, disabled: false}));
             dispatch(ProgressView.HIDE);
             return;
@@ -140,7 +158,7 @@ const EditProfile = (props) => {
 
         if (uppy) {
             publishing = await publishFile(firebase)({
-                auth: data.uid,
+                auth: userData.id,
                 uppy,
                 file,
                 snapshot,
@@ -174,7 +192,7 @@ const EditProfile = (props) => {
                 setTimeout(() => {
                     setState({...state, disabled: false, uppy: null});
                     refreshAll(store);
-                    if(tosuccessroute) {
+                    if (tosuccessroute) {
                         history.push(tosuccessroute);
                     } else {
                         history.goBack();
@@ -203,6 +221,10 @@ const EditProfile = (props) => {
         }
     }
 
+    const handleAdminAction = disabled => {
+        setState({...state, disabled})
+    }
+
     const onClose = () => {
         setState({...state, preview: null})
     }
@@ -221,7 +243,7 @@ const EditProfile = (props) => {
     React.useEffect(() => {
         dispatch(ProgressView.SHOW);
         let userData;
-        if(!id || id === ":id") {
+        if (!id || id === ":id") {
             userData = currentUserData;
         } else {
             userData = userDatas[id] || new UserData(firebase).create(id);
@@ -239,6 +261,9 @@ const EditProfile = (props) => {
     // if (!id) return <Redirect to={tosuccessroute}/>
     if (!userData) return <LoadingComponent/>
 
+    if(userData.id !== currentUserData.id && !matchRole([Role.ADMIN], currentUserData)) {
+        return <Redirect to={pages.editself.route}/>
+    }
     return <Grid container spacing={1}>
         <Box m={0.5}/>
         <Grid item className={classes.photo}>
@@ -312,10 +337,6 @@ const EditProfile = (props) => {
                     </Grid>
                 </React.Fragment>
             })}
-            <Box m={1}/>
-            <FormHelperText error variant={"outlined"}>
-                {error}
-            </FormHelperText>
             <Box m={2}/>
             <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth
                          disabled={disabled}>
@@ -326,8 +347,185 @@ const EditProfile = (props) => {
                     Cancel
                 </Button>
             </ButtonGroup>
+            {matchRole([Role.ADMIN], currentUserData) && <EditProfileAdmin
+                classes={classes}
+                onAction={handleAdminAction}
+                userData={userData}
+            />}
         </Grid>
     </Grid>
 };
 
 export default withStyles(styles)(EditProfile);
+
+
+const EditProfileAdmin = ({userData, classes, onAction}) => {
+    const dispatch = useDispatch();
+    const firebase = useFirebase();
+    const history = useHistory();
+    const [state, setState] = React.useState({});
+    const {disabled, role = userData.role, deleteOpen, reverifyOpen} = state;
+
+    const saveUser = () => {
+        dispatch(ProgressView.SHOW);
+        setState({...state, disabled: true});
+        onAction && onAction(true);
+
+        const updates = {};
+        updates[`roles/${userData.id}`] = (role === Role.USER || role === Role.USER_NOT_VERIFIED) ? null : role;
+        if(role === Role.USER_NOT_VERIFIED) {
+            updates[`users_public/${userData.id}/emailVerified`] = false;
+        } else if(role === Role.USER || role === Role.ADMIN) {
+            updates[`users_public/${userData.id}/emailVerified`] = true;
+        }
+        updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
+        firebase.database().ref().update(updates)
+            .then(() => userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE]))
+            .then(() => {
+                console.log(userData.role, userData.verified, updates)
+            })
+            .then(() => dispatch({type: LazyListComponent.RESET, cache: "users"}))
+            .catch(notifySnackbar)
+            .finally(() => {
+                dispatch(ProgressView.HIDE);
+                setState({...state, disabled: false});
+                onAction && onAction(false);
+            })
+
+        // setState({...state, disabled: false});
+        // onAction && onAction(false);
+
+    }
+
+    const handleClickDelete = () => {
+        setState(state => ({...state, deleteOpen: true}));
+    }
+
+    const handleClickReverify = () => {
+        setState(state => ({...state, reverifyOpen: true}));
+    }
+
+    const handleRole = (evt) => {
+        setState(state => ({...state, role: evt.target.value}));
+    }
+
+    const deleteUser = () => {
+        dispatch(ProgressView.SHOW);
+        setState(state => ({...state, disabled: true, deleteOpen: false}));
+        onAction && onAction(true);
+        console.log("delete user by admin", userData.id)
+
+        userData.delete()
+            .then(() => {
+                notifySnackbar("User deleted");
+                history.goBack();
+            }).catch(notifySnackbar)
+            .finally(() => {
+                dispatch(ProgressView.HIDE);
+                setState(state => ({...state, disabled: false}));
+                onAction && onAction(false);
+            })
+    }
+
+    const reverifyUser = () => {
+        dispatch(ProgressView.SHOW);
+        setState({...state, disabled: true, reverifyOpen: false});
+        onAction && onAction(true);
+        sendInvitationEmail(firebase)({email: userData.email})
+            .catch(notifySnackbar)
+            .finally(() => {
+                setState(state => ({...state, disabled: false}));
+                dispatch(ProgressView.HIDE);
+                onAction && onAction(false);
+            });
+    }
+
+    React.useEffect(() => {
+        dispatch(ProgressView.SHOW);
+        setState({...state, disabled: true});
+        onAction && onAction(true);
+        userData.fetch([UserData.ROLE, UserData.FORCE])
+            .then(() => setState(state => ({...state, role: userData.role})))
+            .catch(notifySnackbar)
+            .finally(() => {
+                console.log("[EditProfile]", userData);
+                dispatch(ProgressView.HIDE);
+                setState(state => ({...state, disabled: false}));
+                onAction && onAction(false);
+            })
+    }, [userData]);
+
+    return <React.Fragment>
+        <h3>Admin only</h3>
+        <Box m={1}/>
+        <Grid container spacing={1} alignItems={"center"}>
+            <Grid item>
+                <InfoIcon/>
+            </Grid>
+            <Grid item xs>
+                User data updated: {userData.updated}
+            </Grid>
+        </Grid>
+        <Box m={1}/>
+        <Grid container spacing={1} alignItems="flex-end">
+            <Grid item>
+                <RoleIcon/>
+            </Grid>
+            <Grid item xs>
+                <FormControl
+                    color={"secondary"}
+                    disabled={disabled}
+                >
+                    <InputLabel
+                        shrink>
+                        Role
+                    </InputLabel>
+                    <Select
+                        onChange={handleRole}
+                        value={role}
+                    >
+                        <MenuItem value={Role.USER}>User</MenuItem>
+                        <MenuItem value={Role.USER_NOT_VERIFIED}>User not verified</MenuItem>
+                        <MenuItem value={Role.DISABLED}>User disabled</MenuItem>
+                        <MenuItem value={Role.ADMIN}>Admin</MenuItem>
+                    </Select>
+                </FormControl>
+            </Grid>
+        </Grid>
+        <Box m={2}/>
+        <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth
+                     disabled={disabled}>
+            <Button onClick={handleClickDelete} style={{backgroundColor: "#f00", width: "auto"}}>
+                <DeleteIcon/>
+            </Button>
+            <Button onClick={handleClickReverify} style={{width: "auto"}}>
+                <MailIcon/>
+            </Button>
+            <Button onClick={saveUser}>
+                Save
+            </Button>
+        </ButtonGroup>
+        {deleteOpen && <ConfirmComponent
+            confirmLabel={"Delete"}
+            critical
+            onCancel={() => setState(state => ({...state, deleteOpen: false}))}
+            onConfirm={deleteUser}
+            title={"Delete user data?"}
+        >
+            User's <b>{userData.name}</b> account and all his data will be deleted and can not be
+            restored.
+            <br/>
+            WARNING! This action will be proceeded immediately!
+        </ConfirmComponent>}
+        {reverifyOpen && <ConfirmComponent
+            confirmLabel={"Send"}
+            onCancel={() => setState(state => ({...state, reverifyOpen: false}))}
+            onConfirm={reverifyUser}
+            title={"Resend verification?"}
+        >
+            Invitation e-mail will be sent to <b>{userData.name}</b> to allow him set up the new password if necessary.
+            <br/>
+            WARNING! This action will not save the user data!
+        </ConfirmComponent>}
+    </React.Fragment>
+}
