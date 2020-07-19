@@ -288,7 +288,6 @@ export const UserData = function (firebase) {
             let force = options.indexOf(UserData.FORCE) >= 0;
 
             let ref = firebase.database().ref("users_public");
-            let snap;
 
             const tasks = [];
             if ((!_loaded.public || force) && (fetchPublic || fetchFull)) {
@@ -302,6 +301,7 @@ export const UserData = function (firebase) {
                                 _id = undefined;
                                 reject(new Error("User not found"));
                             }
+                            console.warn("[UserData] public", _id, _public);
                             resolve(_public);
                         }).catch(reject);
                 }))
@@ -312,6 +312,7 @@ export const UserData = function (firebase) {
                     _fetch(firebase.database().ref("users_private").child(_id))
                         .then(snap => {
                             _private = {..._private, ...(snap.val() || {})};
+                            console.warn("[UserData] private", _id, _private);
                             resolve(_private);
                         }).catch(reject);
                 }))
@@ -322,6 +323,7 @@ export const UserData = function (firebase) {
                     _fetch(firebase.database().ref("roles").child(_id))
                         .then(snap => {
                             _role = snap.val();
+                            console.warn("[UserData] role", _id, _role);
                             resolve(_role);
                         }).catch(reject);
                 }))
@@ -332,6 +334,7 @@ export const UserData = function (firebase) {
                     _fetch(ref.child(_id).child("updated"))
                         .then(snap => {
                             _public.updated = snap.val();
+                            console.warn("[UserData] updated", _id, _public.updated);
                             resolve(_public.updated);
                         }).catch(reject);
                 }))
@@ -342,6 +345,7 @@ export const UserData = function (firebase) {
                     _fetch(ref.child(_id).child("name"))
                         .then(snap => {
                             _public.name = snap.val();
+                            console.warn("[UserData] name", _id, _public.name);
                             resolve(_public.name);
                         }).catch(reject);
                 }))
@@ -352,6 +356,7 @@ export const UserData = function (firebase) {
                     _fetch(ref.child(_id).child("image"))
                         .then(snap => {
                             _public.image = snap.val();
+                            console.warn("[UserData] image", _id, _public.image);
                             resolve(_public.image);
                         }).catch(reject);
                 }))
@@ -368,13 +373,14 @@ export const UserData = function (firebase) {
                                 _id = undefined;
                                 reject(new Error("User not found"));
                             }
+                            console.warn("[UserData] email", _id, _public.email);
                             resolve(_public.email);
                         }).catch(reject);
                 }))
                 _loaded = {..._loaded, email: true};
             }
             const res = await Promise.all(tasks);
-            if(res.length) console.warn("[UserData] resolved", res);
+            // if(res.length) console.warn("[UserData] resolved", res);
             _public._sort_name = fetchSortName();
             _requestedTimestamp = new Date().getTime();
             return _body;
@@ -530,10 +536,4 @@ export const normalizeSortName = text => {
         .trim()
         .replace(/[~`!@#$%^&*()\-_=+\[\]{}|\\;:'",<.>\/?\s™®～]+/g, '')
         .toLowerCase();
-}
-
-let userDatasInstance = {};
-export const useUserDatas = initial => {
-    if (initial) userDatasInstance = initial || {};
-    return userDatasInstance;
 }

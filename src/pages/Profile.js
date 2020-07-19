@@ -6,10 +6,10 @@ import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
 import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
-import {default as ProfileComponentOrigin} from "../components/ProfileComponent";
+import ProfileComponent, {default as ProfileComponentOrigin} from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
 import {logoutUser, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
-import {Link, Redirect, useHistory, useParams} from "react-router-dom";
+import {Link, useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
@@ -20,11 +20,15 @@ import PhoneIcon from "@material-ui/icons/Phone";
 import {matchRole, TextMaskPhone} from "../controllers";
 import withStyles from "@material-ui/styles/withStyles";
 import LoadingComponent from "../components/LoadingComponent";
+import IconButton from "@material-ui/core/IconButton";
+import BackIcon from "@material-ui/icons/ArrowBack";
+import EditIcon from "@material-ui/icons/Edit";
 
 const styles = theme => ({
     root: {},
     buttons: {},
-    logout: {}
+    edit: {},
+    logout: {},
 });
 
 export const publicFields = [
@@ -66,7 +70,7 @@ const Profile = ({
 
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
     const isSameUser = userData && currentUserData && userData.id === currentUserData.id;
-    const isEditEnabled = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
+    const isEditAllowed = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
 
     // if (!currentUserData || !currentUserData.id) {
     //     return <Redirect to={pages.home.route}/>
@@ -79,11 +83,11 @@ const Profile = ({
             setupReceivingNotifications(firebase)
                 // .then(token => fetchUserPrivate(firebase)(currentUserData.id)
                 //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: token}))
-                    .then(result => {
-                        notifySnackbar({title: "Subscribed"});
-                        dispatch(ProgressView.HIDE);
-                        setState({...state, disabled: false});
-                    })
+                .then(result => {
+                    notifySnackbar({title: "Subscribed"});
+                    dispatch(ProgressView.HIDE);
+                    setState({...state, disabled: false});
+                })
                 .catch(notifySnackbar)
                 .finally(() => {
                     dispatch(ProgressView.HIDE);
@@ -93,21 +97,25 @@ const Profile = ({
             // fetchUserPrivate(firebase)(currentUserData.id)
             //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: null}))
             //     .then(result => {
-                    localStorage.removeItem("notification-token");
-                    notifySnackbar({title: "Unsubscribed"});
-                    firebase.messaging().deleteToken()
-                // })
-                // .catch(notifySnackbar)
-                // .finally(() => {
-                    dispatch(ProgressView.HIDE);
-                    setState({...state, disabled: false});
-                // });
+            localStorage.removeItem("notification-token");
+            notifySnackbar({title: "Unsubscribed"});
+            firebase.messaging().deleteToken()
+            // })
+            // .catch(notifySnackbar)
+            // .finally(() => {
+            dispatch(ProgressView.HIDE);
+            setState({...state, disabled: false});
+            // });
         }
     };
 
     React.useEffect(() => {
-        if(!id) {
-            setState({...state, userData:currentUserData});
+        if (!currentUserData) {
+            history.goBack();
+            return;
+        }
+        if (!id) {
+            setState({...state, userData: currentUserData});
             return;
         }
         new UserData(firebase).fetch(id)
@@ -122,9 +130,23 @@ const Profile = ({
         // eslint-disable-next-line
     }, [id]);
 
-    console.log(id, userData);
-    if(!userData) return <LoadingComponent/>;
+    if (!userData) return <LoadingComponent/>;
     return <div className={classes.root}>
+        <Grid container>
+            <Grid item>
+                <IconButton aria-label={"Back"} onClick={() => history.goBack()}>
+                    <BackIcon/>
+                </IconButton>
+            </Grid>
+            {isEditAllowed && <React.Fragment><Grid item xs></Grid>
+                <Grid item>
+                    <IconButton aria-label={"Edit"} onClick={() => {
+                        history.push(isSameUser ? pages.editprofile.route : pages.edituser.route + userData.id)
+                    }}>
+                        <EditIcon/>
+                    </IconButton>
+                </Grid></React.Fragment>}
+        </Grid>
         {userData.disabled && <Grid container>
             <InputLabel error>
                 <h4>Your account is suspended. Please contact with administrator.</h4>
@@ -141,7 +163,7 @@ const Profile = ({
             publicFields={publicFields}
             userData={userData}
         />
-        {isSameUser && isEditEnabled && notifications && <Grid container><FormControlLabel
+        {isSameUser && isEditAllowed && notifications && <Grid container><FormControlLabel
             control={
                 <Checkbox
                     disabled={disabled}
@@ -186,19 +208,6 @@ const Profile = ({
                 variant={"contained"}
             >
                 Resend verification
-            </Button>}
-            {isEditEnabled && <Button
-                color={"secondary"}
-                // onClick={() => {
-                //     props.history.push(pages.editprofile.route);
-                // }}
-                className={classes.edit}
-                variant={"contained"}
-                component={React.forwardRef((props, ref) => (
-                    <Link ref={ref} to={pages.editprofile.route + userData.id} {...props}/>
-                ))}
-            >
-                Edit
             </Button>}
         </ButtonGroup>
     </div>;

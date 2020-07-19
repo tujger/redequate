@@ -15,27 +15,18 @@ import DeleteIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import RoleIcon from "@material-ui/icons/Security";
 import EmptyAvatar from "@material-ui/icons/Person";
-import {useHistory, useParams} from "react-router-dom";
-import {
-    currentUserData,
-    matchRole,
-    Role,
-    sendInvitationEmail,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
+import {Redirect, useHistory, useParams} from "react-router-dom";
+import {matchRole, Role, sendInvitationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar, useFirebase, usePages, useStore, useUserDatas} from "../controllers";
+import {cacheDatas, notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
 import {publicFields} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";
 import ConfirmComponent from "../components/ConfirmComponent";
-import LazyListComponent from "../components/LazyListComponent";
-import {Redirect} from "react-router-dom";
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
@@ -81,7 +72,6 @@ const EditProfile = (props) => {
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
-    const userDatas = useUserDatas();
     const {id} = useParams();
     const [state, setState] = useState({
         error: null,
@@ -246,12 +236,14 @@ const EditProfile = (props) => {
         if (!id || id === ":id") {
             userData = currentUserData;
         } else {
-            userData = userDatas[id] || new UserData(firebase).create(id);
+            userData = cacheDatas.put(id, UserData(firebase).create(id));
         }
         userData.fetch([UserData.PUBLIC])
-            .then(userData => userDatas[userData.id] = userData)
             .then(() => setState({...state, userData, ...userData.public}))
-            .catch(notifySnackbar)
+            .catch(error => {
+                notifySnackbar(error);
+                history.goBack();
+            })
             .finally(() => dispatch(ProgressView.HIDE))
         return () => {
             removeUploadedFile();
@@ -384,7 +376,7 @@ const EditProfileAdmin = ({userData, classes, onAction}) => {
             .then(() => {
                 console.log(userData.role, userData.verified, updates)
             })
-            .then(() => dispatch({type: LazyListComponent.RESET, cache: "users"}))
+            // .then(() => dispatch({type: LazyListComponent.RESET, cache: "users"}))
             .catch(notifySnackbar)
             .finally(() => {
                 dispatch(ProgressView.HIDE);

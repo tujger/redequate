@@ -106,7 +106,7 @@ function UserItemComponent(props) {
             </Link>}
             title={<Link
                 to={{
-                    pathname: pages.adminuserview.route + userData.id,
+                    pathname: pages.user.route + userData.id,
                 }} className={classes.label}><Grid container>
                 <Grid item className={classes.userName}>
                     {userData.email}
@@ -127,14 +127,14 @@ function UserItemComponent(props) {
         >
             <Link
                 to={{
-                    pathname: pages.adminuserview.route + userData.id,
+                    pathname: pages.user.route + userData.id,
                     state: {data: data}
                 }} className={classes.label}>
                 <MenuItem>View</MenuItem>
             </Link>
             <Link
                 to={{
-                    pathname: pages.editprofile.route + userData.id
+                    pathname: pages.edituser.route + userData.id
                 }} className={classes.label}>
                 <MenuItem id={"edit"}>Edit</MenuItem>
             </Link>

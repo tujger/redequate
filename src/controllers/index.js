@@ -20,6 +20,5 @@ export {
     UserData,
     useCurrentUserData,
     normalizeSortName,
-    useUserDatas
 } from "./UserData";
 

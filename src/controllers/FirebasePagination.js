@@ -158,11 +158,17 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
         get order() {
             return order;
         },
+        get ref() {
+            return baseRef;
+        },
         get started() {
             return started
         },
         get asString() {
             return toString();
+        },
+        get term() {
+            return `${child}|${start}|${end}|${equals}|${value}`;
         },
         next: next,
         reset: reset,

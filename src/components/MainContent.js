@@ -26,7 +26,6 @@ const MainContent = props => {
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const currentUserData = useCurrentUserData();
 
-    let background = history.location.state && history.location.state.background;
     const isDisabled = technical && technical.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
     return <main className={[classes.content].join(" ")}>
@@ -38,6 +37,7 @@ const MainContent = props => {
                     path={item._route}
                     exact={true}
                     render={() => {
+                        if(!item.component) return null;
                         return needAuth(item.roles, currentUserData)
                             ? <pages.login.component.type {...props} {...pages.login.component.props} />
                             : (matchRole(item.roles, currentUserData)

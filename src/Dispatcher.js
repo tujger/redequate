@@ -44,7 +44,7 @@ const Dispatcher = (props) => {
         (async () => {
             for(let x in pages) {
                 pages[x]._route = pages[x].route;
-                pages[x].route = pages[x].route.split(":")[0];
+                pages[x].route = pages[x].route.split(/[*:]/)[0];
             }
             const firebase = Firebase(firebaseConfig);
             installWrapperControl();

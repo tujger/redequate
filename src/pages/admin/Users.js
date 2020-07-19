@@ -13,33 +13,32 @@ import {useTheme} from "@material-ui/core";
 import LazyListComponent from "../../components/LazyListComponent";
 import UserItemComponent from "../../components/UserItemComponent";
 import Pagination from "../../controllers/FirebasePagination";
-import {normalizeSortName, UserData, useUserDatas} from "../../controllers/UserData";
+import {normalizeSortName, UserData} from "../../controllers/UserData";
 import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";
 
 const Users = (props) => {
     const {mode = "all", filter} = props;
     const pages = usePages();
-    const userDatas = useUserDatas();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const theme = useTheme();
 
     const handleMode = evt => {
         // setState({...state, mode: evt.target.value});
-        dispatch({type: LazyListComponent.RESET, cache: "users"});
+        dispatch({type: LazyListComponent.RESET});
         dispatch({type: Users.MODE, mode: evt.target.value, filter});
     }
 
     const handleFilter = evt => {
         dispatch({type: Users.MODE, filter: evt.target.value});
-        dispatch({type: LazyListComponent.RESET, cache: "users"});
+        dispatch({type: LazyListComponent.RESET});
     }
 
     React.useEffect(() => {
         // dispatch(ProgressView.SHOW);
         return () => {
-            dispatch({type: LazyListComponent.RESET, cache: "users"});
+            // dispatch({type: LazyListComponent.RESET, cache: "users"});
             dispatch(ProgressView.HIDE);
         }
 // eslint-disable-next-line
@@ -115,7 +114,7 @@ const Users = (props) => {
                     children={<Clear/>}
                     onClick={() => {
                         dispatch({type: Users.MODE, filter: ""});
-                        dispatch({type: LazyListComponent.RESET, cache: "users"});
+                        dispatch({type: LazyListComponent.RESET});
                     }}
                     size={"small"}
                     title={"Clear filter"}
@@ -132,7 +131,6 @@ const Users = (props) => {
             itemComponent={item => <UserItemComponent key={item.key} data={item}/>}
             placeholder={<UserItemComponent skeleton={true}/>}
             noItemsComponent={<UserItemComponent label={"No users found"}/>}
-            cache={"users"}
         />
         {/*<ListComponent
             items={items}
