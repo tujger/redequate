@@ -125,7 +125,7 @@ const Login = (props) => {
                 }
             })
             .then(() => {
-                refreshAll(store)
+                refreshAll(store);
                 if(onLogin) {
                     onLogin(isFirstLogin);
                 } else {

@@ -54,12 +54,13 @@ const styles = theme => ({
 });
 
 function TopBottomMenuLayout(props) {
-    const {menu, classes, headerImage, copyright} = props;
+    const {menu, classes, headerImage, random, copyright} = props;
     const pages = usePages();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
     return <StickyHeader
+        key={random}
         title={<Switch>
             {itemsFlat.map((item, index) => <Route key={index} path={item._route} exact={true} children={item.label}/>)}
         </Switch>}

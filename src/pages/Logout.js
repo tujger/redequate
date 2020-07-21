@@ -11,15 +11,14 @@ import {useFirebase, usePages, useStore} from "../controllers";
 
 const Logout = (props) => {
     const {immediate = true} = props;
-    const pages = usePages();
-    const store = useStore();
     const firebase = useFirebase();
     const history = useHistory();
+    const pages = usePages();
+    const store = useStore();
 
     const doLogout = () => {
         logoutUser(firebase, store)()
             .then(() => {
-                firebase
                 refreshAll(store);
                 history.push(pages.home.route);
             });
@@ -31,6 +30,7 @@ const Logout = (props) => {
         }
     }, [])
 
+    if(immediate) return null;
     return <Grid container>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems="flex-end">
