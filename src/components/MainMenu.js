@@ -46,6 +46,7 @@ function MainMenu(props) {
             const section = <div className={"MuiMainMenu-section"} key={index}>
                 <List>
                     {list.map((item) => {
+                        if (item.disabled) return null;
                         if (!matchRole(item.roles, currentUserData)) return null;
                         if (!firstDone) {
                             firstDone = true;

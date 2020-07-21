@@ -114,7 +114,8 @@ export const NotificationsSnackbar = () => {
                     image={payload.image}
                     onButtonClick={payload.onButtonClick}
                     onClick={() => {
-                        console.log("NOTIF CLICK", payload.variant);
+                        closeSnackbar(key);
+                        payload.onClick && payload.onClick(key);
                     }}
                     variant={payload.variant}
                 />
@@ -152,10 +153,11 @@ export const notifySnackbar = props => {
     snackbar.click();
 };
 notifySnackbar.propTypes = {
-    title: PropTypes.string,
+    title: PropTypes.any,
     variant: PropTypes.string,
     buttonLabel: PropTypes.string,
     onButtonClick: PropTypes.any,
+    onClick: PropTypes.any,
     error: PropTypes.any,
     priority: PropTypes.string,
 };

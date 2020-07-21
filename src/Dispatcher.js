@@ -7,7 +7,15 @@ import withWidth, {isWidthUp, isWidthDown} from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
 import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
-import {fetchDeviceId, useFirebase, usePages, useStore, useTechnicalInfo, useWindowData} from "./controllers/General";
+import {
+    cacheDatas,
+    fetchDeviceId,
+    useFirebase,
+    usePages,
+    useStore,
+    useTechnicalInfo,
+    useWindowData
+} from "./controllers/General";
 // import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout";
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
@@ -42,7 +50,7 @@ const Dispatcher = (props) => {
     React.useEffect(() => {
         let maintenanceRef;
         (async () => {
-            for(let x in pages) {
+            for (let x in pages) {
                 pages[x]._route = pages[x].route;
                 pages[x].route = pages[x].route.split(/[*:]/)[0];
             }
@@ -55,12 +63,13 @@ const Dispatcher = (props) => {
             const store = Store(name, reducers);
             try {
                 const savedUserData = store.getState().currentUserData;
-                if(savedUserData && savedUserData.userData) {
+                if (savedUserData && savedUserData.userData) {
                     const userData = new UserData(firebase).fromJSON(savedUserData.userData);
                     await userData.fetch([UserData.ROLE]);
                     useCurrentUserData(userData);
+                    cacheDatas.put(userData.id, userData);
                 }
-            } catch(error) {
+            } catch (error) {
                 console.error(error);
             }
             setInterval(() => {
@@ -71,7 +80,7 @@ const Dispatcher = (props) => {
             maintenanceRef.on("value", snapshot => {
                 const maintenance = snapshot.val();
                 useTechnicalInfo(currentMeta => {
-                    if(currentMeta.maintenance !== maintenance) {
+                    if (currentMeta.maintenance !== maintenance) {
                         console.log("[Dispatcher] maintenance changed to", maintenance);
                         useTechnicalInfo({...currentMeta, maintenance: maintenance});
                         refreshAll(store)
@@ -94,12 +103,12 @@ const Dispatcher = (props) => {
         widthPoint = setTimeout(() => {
             const widths = {1920: "xl", 1280: "lg", 960: "md", 600: "sm", 0: "xs"};
             let newWidth = "xl";
-            for(let x in widths) {
-                if(window.innerWidth > x) {
+            for (let x in widths) {
+                if (window.innerWidth > x) {
                     newWidth = widths[x];
                 }
             }
-            if(oldWidth !== newWidth) {
+            if (oldWidth !== newWidth) {
                 refreshAll(store);
             }
             oldWidth = newWidth;
@@ -109,12 +118,12 @@ const Dispatcher = (props) => {
 
     return <Provider store={store}>
         <ThemeProvider theme={theme}>
-            <SnackbarProvider maxSnack={4} preventDuplicate>
-                <BrowserRouter>
+            <BrowserRouter>
+                <SnackbarProvider maxSnack={4} preventDuplicate>
                     <DispatcherRoutedBody {...props} theme={theme}/>
-                </BrowserRouter>
-                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-            </SnackbarProvider>
+                </SnackbarProvider>
+            </BrowserRouter>
+            <PWAPrompt promptOnVisit={3} timesToShow={3}/>
         </ThemeProvider>
     </Provider>;
 };
@@ -135,7 +144,7 @@ const DispatcherRoutedBody = props => {
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
                     ? current.title || current.label : pages.notfound.title || pages.notfound.label);
             document.title = label + (name ? " - " + name : "");
-            dispatch({type:MainAppbar.LABEL, label});
+            dispatch({type: MainAppbar.LABEL, label});
         }
     }
 
@@ -147,8 +156,8 @@ const DispatcherRoutedBody = props => {
         history.replace("/");
         if (currentPathname !== "/") {
             let path = currentPathname;
-            if(currentSearch) path += currentSearch;
-            if(currentHash) path += currentHash;
+            if (currentSearch) path += currentSearch;
+            if (currentHash) path += currentHash;
             history.push(path);
         }
         const unlisten = history.listen(updateTitle);
@@ -162,40 +171,51 @@ const DispatcherRoutedBody = props => {
 
     return <React.Fragment>
         <Switch location={background}>
-        <Route
-            path={"/*"}
-            children={<Suspense fallback={<LoadingComponent/>}>
-                {layout ? <layout.type
-                        {...layout.props}
-                        copyright={copyright}
-                        headerImage={headerImage}
-                        menu={menu}
-                    />
-                    : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
-                    (iOS ? <BottomToolbarLayout
+            <Route
+                path={"/*"}
+                children={<Suspense fallback={<LoadingComponent/>}>
+                    {layout ? <layout.type
+                            {...layout.props}
                             copyright={copyright}
                             headerImage={headerImage}
                             menu={menu}
-                            name={name}
                         />
-                        : <ResponsiveDrawerLayout
-                            copyright={copyright}
-                            headerImage={headerImage}
-                            menu={menu}
-                            name={name}
-                            logo={logo}
-                        />)
-                    : <TopBottomMenuLayout
-                        copyright={copyright}
-                        headerImage={headerImage}
-                        menu={menu}
-                        name={name}
-                    />)
-                }
-            </Suspense>}
-        />
-    </Switch>
-        {background && <Route path={history.location.pathname} children={<div/>} />}
+                        : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
+                            (iOS ? <BottomToolbarLayout
+                                    copyright={copyright}
+                                    headerImage={headerImage}
+                                    menu={menu}
+                                    name={name}
+                                />
+                                : <ResponsiveDrawerLayout
+                                    copyright={copyright}
+                                    headerImage={headerImage}
+                                    menu={menu}
+                                    name={name}
+                                    logo={logo}
+                                />)
+                            : <TopBottomMenuLayout
+                                copyright={copyright}
+                                headerImage={headerImage}
+                                menu={menu}
+                                name={name}
+                            />)
+                    }
+                </Suspense>}
+            />
+        </Switch>
+        {itemsFlat.map((item, index) => {
+            if (!item.daemon || !item.component || item.disabled) return null;
+            if (!matchRole(item.roles, currentUserData)) return null;
+            return <item.component.type
+                key={item.route}
+                {...props}
+                classes={{}}
+                {...item.component.props}
+                daemon
+            />
+        })}
+        {background && <Route path={history.location.pathname} children={<div/>}/>}
     </React.Fragment>
 };
 

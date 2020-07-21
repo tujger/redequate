@@ -135,7 +135,7 @@ RichSnackbarContent.propTypes = {
     closeAfterClick: PropTypes.bool,
     closeHandler: PropTypes.func.isRequired,
     image: PropTypes.string,
-    message: PropTypes.string.isRequired,
+    message: PropTypes.any.isRequired,
     onButtonClick: PropTypes.func,
     onClick: PropTypes.func,
     variant: PropTypes.oneOf(["default", "error", "warning", "info", "success"])

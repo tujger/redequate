@@ -9,6 +9,7 @@ import {currentUserData} from "./UserData";
 import {mainAppbar} from "../components/MainAppbar";
 import {usersReducer} from "../pages/admin/Users";
 import {lazyListComponent} from "../components/LazyListComponent";
+import {topMenuReducer} from "../components/TopMenu";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -20,6 +21,7 @@ const Store = (name, reducers) => {
         progressView,
         responsiveDrawerLayout,
         snackbar,
+        topMenuReducer,
         topBottomMenuLayout,
         usersReducer,
         ...reducers};

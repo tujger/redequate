@@ -86,3 +86,9 @@ const CacheDatas = function() {
     }
 }
 export const cacheDatas = new CacheDatas();
+
+export const MenuBadge = {
+    INCREASE: "badge_Increase",
+    DECREASE: "badge_Decrease",
+    VALUE: "badge_Value",
+}

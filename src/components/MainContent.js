@@ -40,7 +40,7 @@ const MainContent = props => {
                         if(!item.component) return null;
                         return needAuth(item.roles, currentUserData)
                             ? <pages.login.component.type {...props} {...pages.login.component.props} />
-                            : (matchRole(item.roles, currentUserData)
+                            : (matchRole(item.roles, currentUserData) && !item.disabled
                             ? <item.component.type {...props} classes={{}} {...item.component.props} />
                             : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)
                         }

@@ -9,6 +9,7 @@ import Input from "@material-ui/core/Input";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import Toolbar from "@material-ui/core/Toolbar";
+import Hidden from "@material-ui/core/Hidden";
 import {useTheme} from "@material-ui/core";
 import LazyListComponent from "../../components/LazyListComponent";
 import UserItemComponent from "../../components/UserItemComponent";
@@ -18,7 +19,7 @@ import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";
 
 const Users = (props) => {
-    const {mode = "all", filter} = props;
+    const {mode = "all", filter, invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -31,8 +32,8 @@ const Users = (props) => {
     }
 
     const handleFilter = evt => {
-        dispatch({type: Users.MODE, filter: evt.target.value});
         dispatch({type: LazyListComponent.RESET});
+        dispatch({type: Users.MODE, filter: evt.target.value});
     }
 
     React.useEffect(() => {
@@ -65,12 +66,12 @@ const Users = (props) => {
                 const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key);
                 return {key: item.key, value: data};
             }
-/*
-            itemTransform = async (item) => {
-                const data = await new UserData(firebase).fetch(item.key);
-                return {key: item.key, value: data};
-            }
-*/
+            /*
+                        itemTransform = async (item) => {
+                            const data = await new UserData(firebase).fetch(item.key);
+                            return {key: item.key, value: data};
+                        }
+            */
             break;
         case "disabled":
             pagination = new Pagination({
@@ -96,35 +97,68 @@ const Users = (props) => {
     }
 
     return <React.Fragment>
-        <Toolbar disableGutters>
-            <Select
-                color={"secondary"}
-                onChange={handleMode}
-                value={mode}
-            >
-                <MenuItem value={"all"}>All users</MenuItem>
-                <MenuItem value={"admins"}>Administrators</MenuItem>
-                <MenuItem value={"disabled"}>Disabled users</MenuItem>
-                <MenuItem value={"notVerified"}>Users not verified</MenuItem>
-            </Select>
-            {mode === "all" && <Input
-                autoFocus
-                color={"secondary"}
-                endAdornment={filter ? <IconButton
-                    children={<Clear/>}
-                    onClick={() => {
-                        dispatch({type: Users.MODE, filter: ""});
-                        dispatch({type: LazyListComponent.RESET});
-                    }}
-                    size={"small"}
-                    title={"Clear filter"}
-                    variant={"text"}
-                /> : null}
-                onChange={handleFilter}
-                placeholder={"Filter"}
-                value={filter}
-            />}
-        </Toolbar>
+        <Hidden smDown>
+            <Toolbar disableGutters>
+                <Select
+                    color={"secondary"}
+                    onChange={handleMode}
+                    value={mode}
+                >
+                    <MenuItem value={"all"}>All users</MenuItem>
+                    <MenuItem value={"admins"}>Administrators</MenuItem>
+                    <MenuItem value={"disabled"}>Disabled users</MenuItem>
+                    <MenuItem value={"notVerified"}>Users not verified</MenuItem>
+                </Select>
+                {mode === "all" && <Input
+                    autoFocus
+                    color={"secondary"}
+                    endAdornment={filter ? <IconButton
+                        children={<Clear/>}
+                        onClick={() => {
+                            dispatch({type: Users.MODE, filter: ""});
+                            dispatch({type: LazyListComponent.RESET});
+                        }}
+                        size={"small"}
+                        title={"Clear"}
+                        variant={"text"}
+                    /> : null}
+                    onChange={handleFilter}
+                    placeholder={"Search"}
+                    value={filter}
+                />}
+            </Toolbar>
+        </Hidden>
+        <Hidden mdUp>
+            <Toolbar disableGutters style={{justifyContent: "space-between"}}>
+                {mode === "all" && <Input
+                    autoFocus
+                    color={"secondary"}
+                    endAdornment={filter ? <IconButton
+                        children={<Clear/>}
+                        onClick={() => {
+                            dispatch({type: Users.MODE, filter: ""});
+                            dispatch({type: LazyListComponent.RESET});
+                        }}
+                        size={"small"}
+                        title={"Clear"}
+                        variant={"text"}
+                    /> : null}
+                    onChange={handleFilter}
+                    placeholder={"Search"}
+                    value={filter}
+                />}
+                <Select
+                    color={"secondary"}
+                    onChange={handleMode}
+                    value={mode}
+                >
+                    <MenuItem value={"all"}>All users</MenuItem>
+                    <MenuItem value={"admins"}>Administrators</MenuItem>
+                    <MenuItem value={"disabled"}>Disabled users</MenuItem>
+                    <MenuItem value={"notVerified"}>Users not verified</MenuItem>
+                </Select>
+            </Toolbar>
+        </Hidden>
         <LazyListComponent
             pagination={pagination}
             itemTransform={itemTransform}
@@ -176,13 +210,13 @@ const Users = (props) => {
             emptyComponent={<ServiceComponent text={loading ? "Loading..." : "No users"}/>}
             itemComponent={<UserComponent pages={pages} store={store} firebase={firebase}/>}
         />*/}
-        <Link to={pages.adduser.route}
+        {invitation && <Link to={pages.adduser.route}
               key={pages.adduser.route}>
             <Fab aria-label={"Add"} color={"secondary"}
                  style={{zIndex: 1, right: theme.spacing(2), bottom: theme.spacing(2), position: "fixed"}}>
                 <AddIcon/>
             </Fab>
-        </Link>
+        </Link>}
     </React.Fragment>
 };
 

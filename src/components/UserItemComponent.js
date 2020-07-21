@@ -1,11 +1,17 @@
 import React from 'react';
-import {Card, CardHeader, IconButton, Menu, MenuItem, withStyles} from "@material-ui/core";
 import PropTypes from 'prop-types';
 import {MoreVert} from "@material-ui/icons";
-import {Link} from "react-router-dom";
+import {Link, useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import Skeleton from "@material-ui/lab/Skeleton";
 import Grid from "@material-ui/core/Grid";
+import CardActionArea from "@material-ui/core/CardActionArea";
+import Card from "@material-ui/core/Card";
+import CardHeader from "@material-ui/core/CardHeader";
+import IconButton from "@material-ui/core/IconButton";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "./styles";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import {notifySnackbar} from "../controllers/Notifications";
@@ -40,6 +46,7 @@ function UserItemComponent(props) {
     const {data, classes, skeleton, label} = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
+    const history = useHistory();
     const pages = usePages();
     const currentUserData = useCurrentUserData();
 
@@ -92,35 +99,40 @@ function UserItemComponent(props) {
     const userData = UserData(firebase).create(data.key, data.value);
 
     return <Card className={classes.card}>
-        <CardHeader
-            classes={{content: classes.cardContent}}
-            className={[classes.cardHeader, classes.post].join(" ")}
-            action={
-                <IconButton aria-label="settings" onClickCapture={handleMenuClick}>
-                    <MoreVert/>
-                </IconButton>
-            }
-            avatar={<Link className={classes.avatar}
-                          to={pages.user.route + userData.id}>
-                <AvatarView image={userData.image} initials={userData.initials} verified={userData.verified}/>
-            </Link>}
-            title={<Link
-                to={{
-                    pathname: pages.user.route + userData.id,
-                }} className={classes.label}><Grid container>
-                <Grid item className={classes.userName}>
-                    {userData.email}
-                </Grid>
-            </Grid></Link>}
-            subheader={<React.Fragment>
-                <Grid container>
-                    {userData.name}
-                </Grid>
-                <Grid container>
-                    {userData.public.address}
-                </Grid>
-            </React.Fragment>}
-        />
+        <CardActionArea onClick={() => {
+            history.push(pages.user.route + userData.id);
+        }}>
+            <CardHeader
+                classes={{content: classes.cardContent}}
+                className={[classes.cardHeader, classes.post].join(" ")}
+                action={null
+                    /*<IconButton
+                        aria-label="settings"
+                        component={"div"}
+                        onClickCapture={handleMenuClick}>
+                        <MoreVert/>
+                    </IconButton>*/
+                }
+                avatar={<AvatarView
+                    image={userData.image}
+                    initials={userData.initials}
+                    verified={userData.verified}
+                />}
+                title={<Grid container>
+                    <Grid item className={classes.userName}>
+                        {userData.email}
+                    </Grid>
+                </Grid>}
+                subheader={<React.Fragment>
+                    <Grid container>
+                        {userData.name}
+                    </Grid>
+                    <Grid container>
+                        {userData.public.address}
+                    </Grid>
+                </React.Fragment>}
+            />
+        </CardActionArea>
         <Menu
             anchorEl={anchor} keepMounted
             open={Boolean(anchor)} onClose={handleMenuClose}
@@ -128,7 +140,6 @@ function UserItemComponent(props) {
             <Link
                 to={{
                     pathname: pages.user.route + userData.id,
-                    state: {data: data}
                 }} className={classes.label}>
                 <MenuItem>View</MenuItem>
             </Link>

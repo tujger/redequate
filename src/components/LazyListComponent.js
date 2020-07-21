@@ -28,22 +28,17 @@ const LazyListComponent = ({
     const {
         finished: cachedFinished = false,
         items: cachedItems = [],
-        loading: cachedLoading = false,
+        loading: cachedLoading = true,
         pagination: cachedPagination = givenPagination instanceof Function ? givenPagination() : givenPagination
     } = cacheData;
     const {
-        finished = cache ? cachedFinished : false,
-        items = cache ? cachedItems : [],
-        loading = cache ? cachedLoading : false,
-        pagination = cache ? cachedPagination : (givenPagination instanceof Function ? givenPagination() : givenPagination)
+        finished = cache !== undefined ? cachedFinished : false,
+        items = cache !== undefined ? cachedItems : [],
+        loading = cache !== undefined ? cachedLoading : true,
+        pagination = cache !== undefined ? cachedPagination : (givenPagination instanceof Function ? givenPagination() : givenPagination)
     } = state;
 
     const ascending = pagination.order === "asc";
-
-    // if(pagination.order === "asc" && !reverse) = ascending
-    // if(pagination.order === "asc" && reverse) = !ascending
-    // if(pagination.order !== "asc" && reverse) = ascending
-    // if(pagination.order !== "asc" && !reverse) = !ascending
 
     if (!placeholder) throw new Error("Placeholder is not defined");
 
@@ -104,7 +99,6 @@ const LazyListComponent = ({
                     setState(state => ({
                         ...state,
                         ...update,
-                        loading: false,
                     }))
                 }
             })
@@ -143,13 +137,11 @@ const LazyListComponent = ({
                         items: ascending
                             ? (reverse ? [transformed, ...state.items] : [...state.items, transformed])
                             : (reverse ? [...state.items, transformed] : [transformed, ...state.items])
-                        // ...update,
-                        // loading: false,
                     }))
                 }
             });
             liveRemoveRef.on("child_removed", async snapshot => {
-                if(cache) dispatch({type: LazyListComponent.RESET, cache});
+                if (cache) dispatch({type: LazyListComponent.RESET, cache});
                 else dispatch({type: LazyListComponent.RESET});
             });
         }
@@ -167,13 +159,14 @@ const LazyListComponent = ({
         setState(state => ({
             ...state,
             items: [],
-            loading: false,
+            loading: true,
             finished: false,
             pagination: (givenPagination instanceof Function ? givenPagination() : givenPagination)
         }));
     }, [random, givenPagination.term])
 
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
+
     return <React.Fragment>
         {reverse && <Observer
             finished={finished}
@@ -192,9 +185,52 @@ const LazyListComponent = ({
             placeholder={placeholder}
             placeholders={placeholders}
         />}
+        <Scroller live={live} placeholder={placeholder}/>
         {!items.length && finished && noItemsComponent}
     </React.Fragment>
 };
+
+const Scroller = ({live, placeholder}) => {
+    const [scrolled, setScrolled] = React.useState(false);
+
+    const scrollerShown = React.useRef();
+    const taskRef = React.useRef();
+    if (!live) return null;
+
+    React.useEffect(() => {
+        const handleScroll = (evt) => {
+            if (!scrollerShown.current) {
+                setScrolled(true);
+            }
+        };
+        window.addEventListener("wheel", handleScroll, true)
+        window.addEventListener("touchmove", handleScroll, true)
+        return () => {
+            window.removeEventListener("wheel", handleScroll);
+            window.removeEventListener("touchmove", handleScroll);
+        }
+    }, [])
+
+    return <InView
+        onChange={(inView) => {
+            scrollerShown.current = inView;
+            if (inView) {
+                setScrolled(false);
+            }
+        }}
+        ref={ref => {
+            clearTimeout(taskRef.current);
+            if (ref && !scrolled) {
+                taskRef.current = setTimeout(() => {
+                    if (!ref.node) return;
+                    if (ref.node.scrollIntoViewIfNeeded) ref.node.scrollIntoViewIfNeeded(false);
+                    else ref.node.scrollIntoView({block: "end", inline: "nearest", behavior: "smooth"});
+                }, 500);
+            }
+        }} style={{opacity: 0}}>
+        {placeholder}
+    </InView>
+}
 
 const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders}) => {
     if (finished) return null;

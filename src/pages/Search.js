@@ -31,7 +31,7 @@ const styles = theme => ({
         padding: theme.spacing(1),
     },
     searchbar: {
-        backgroundColor: theme.palette.background.paper,
+        backgroundColor: theme.palette.background.default,
         bottom: 0,
         position: "absolute",
         right: 0,

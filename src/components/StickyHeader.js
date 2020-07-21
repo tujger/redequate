@@ -41,7 +41,7 @@ const styles = theme => ({
     content: {
         // backgroundImage: "url("+header +")",
         backgroundRepeat: "no-repeat",
-        height: 128,
+        height: theme.spacing(16),
         // height: 128 - 52,
         zIndex: 2,
     },

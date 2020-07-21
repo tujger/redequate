@@ -10,10 +10,9 @@ import Menu from "@material-ui/icons/Menu";
 import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
-import {matchRole, needAuth, useCurrentUserData, currentRole, Role} from "../controllers/UserData";
+import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../controllers/UserData";
 import {connect} from "react-redux";
-import {usePages} from "../controllers/General";
-import {SearchToolbar} from "../pages/Search";
+import {MenuBadge, usePages} from "../controllers/General";
 
 const styles = theme => ({
     label: {
@@ -32,11 +31,31 @@ const styles = theme => ({
     content: {},
     indent: {},
     appbar: {},
-
+    badge: {
+        backgroundColor: "#ff0000",
+        borderRadius: theme.spacing(1),
+        height: theme.spacing(1),
+        left: theme.spacing(1),
+        position: "absolute",
+        top: theme.spacing(1),
+        width: theme.spacing(1)
+    },
+    badgeWithText: {
+        alignItems: "center",
+        color: "#ffffff",
+        display: "flex",
+        fontSize: theme.spacing(1.25),
+        fontWeight: "bolder",
+        justifyContent: "center",
+        height: theme.spacing(2),
+        left: theme.spacing(.5),
+        top: theme.spacing(.5),
+        width: theme.spacing(2),
+    }
 });
 
 function MainAppbar(props) {
-    const {classes, className, onHamburgerClick, label, logo} = props;
+    const {badge, classes, className, onHamburgerClick, label, logo} = props;
     const pages = usePages();
     const currentUserData = useCurrentUserData();
 
@@ -52,6 +71,12 @@ function MainAppbar(props) {
                         edge="start"
                         onClick={onHamburgerClick}>
                         <Menu/>
+                        {badge && badge !== 0 ? <span
+                            className={classes.badge}/> : null}
+{/*
+                        {badge && badge !== 0 ? <span
+                            className={[classes.badge, badge !== true ? classes.badgeWithText : ""].join(" ")}>{badge !== true ? badge : ""}</span> : null}
+*/}
                     </IconButton>
                 </Hidden>
                 : null}
@@ -96,16 +121,25 @@ MainAppbar.propTypes = {
     onHamburgerClick: PropTypes.func
 };
 
-MainAppbar.LABEL = "mainAppBarLabel";
-export const mainAppbar = (state = {label: ""}, action) => {
-    if (action.type === MainAppbar.LABEL) {
-        return {...state, label: action.label};
-    } else {
-        return state;
+MainAppbar.LABEL = "mainAppBar_Label";
+
+export const mainAppbar = (state = {label: "", badge: 0}, action) => {
+    switch(action.type) {
+        case MainAppbar.LABEL:
+            return {...state, label: action.label};
+        case MenuBadge.INCREASE:
+            return {...state, badge: (state.badge || 0) + 1};
+        case MenuBadge.DECREASE:
+            return {...state, badge: (state.badge || 0) - 1};
+        default:
+            return state;
     }
 };
 mainAppbar.skipStore = true;
 
-const mapStateToProps = ({mainAppbar}) => ({label: mainAppbar.label});
+const mapStateToProps = ({mainAppbar}) => ({
+    label: mainAppbar.label,
+    badge: mainAppbar.badge
+});
 
 export default connect(mapStateToProps)(withStyles(styles)(MainAppbar));

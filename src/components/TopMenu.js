@@ -8,9 +8,19 @@ import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
 import AvatarView from "../components/AvatarView";
-import {usePages} from "../controllers/General";
+import {MenuBadge, usePages} from "../controllers/General";
+import {connect} from "react-redux";
 
 const styles = theme => ({
+    badge: {
+        backgroundColor: "#ff0000",
+        borderRadius: theme.spacing(1),
+        height: theme.spacing(1),
+        right: theme.spacing(.5),
+        position: "absolute",
+        top: theme.spacing(.5),
+        width: theme.spacing(1)
+    },
     header: {
         ...theme.typography.button,
         display: "flex",
@@ -50,7 +60,7 @@ const styles = theme => ({
 });
 
 const MenuSection = withStyles(styles)(props => {
-    const {items, classes} = props;
+    const {badge, items, classes} = props;
     const [first, ...menu] = items;
     const [state, setState] = React.useState({anchor: null});
     const {anchor} = state;
@@ -58,6 +68,11 @@ const MenuSection = withStyles(styles)(props => {
     const currentUserData = useCurrentUserData();
 
     if (!matchRole(first.roles, currentUserData)) return null;
+
+    const checkForBadge = () => {
+        return menu.filter(item => !!badge[item.route]).length > 0;
+    }
+    const hasBadge = checkForBadge();
 
     return <Button
         className={"MuiTopMenu-section"}
@@ -69,6 +84,7 @@ const MenuSection = withStyles(styles)(props => {
         onMouseLeave={() => setState({...state, anchor: null})}
         variant={"text"}>
         {first.label}
+        {hasBadge && <span className={classes.badge}/>}
         <Popper
             anchorEl={anchor}
             // className={classes.menusection}
@@ -81,7 +97,7 @@ const MenuSection = withStyles(styles)(props => {
             <MenuList
             className={classes.menusection}
             >{menu.map((item, index) => {
-                if (!matchRole(item.roles, currentUserData)) return null;
+                if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
                 return <Link to={item.route}
                              key={index}
                              className={classes.label}
@@ -106,12 +122,12 @@ const MenuSection = withStyles(styles)(props => {
 });
 
 const TopMenu = props => {
-    const {items, classes, className} = props;
+    const {badge = {}, items, classes, className} = props;
     const pages = usePages();
     const currentUserData = useCurrentUserData();
 
     return <div className={["MuiTopMenu-root", classes.topmenu, className].join(" ")}>
-        {items.map((list, index) => <MenuSection key={index} items={list}/>)}
+        {items.map((list, index) => <MenuSection key={index} badge={badge} items={list}/>)}
         {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
         {currentUserData.id && <Link
             to={pages.profile.route}
@@ -128,4 +144,23 @@ TopMenu.propTypes = {
     pages: PropTypes.object,
 };
 
-export default withStyles(styles)(TopMenu);
+export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
+    switch(action.type) {
+        case MenuBadge.INCREASE:
+            const id = action.page.route;
+            return {...state, badge: {...state.badge, [id]: (state.badge[id] || 0) + 1}};
+        case MenuBadge.DECREASE:
+            const id1 = action.page.route;
+            return {...state, badge: {...state.badge, [id1]: (state.badge[id1] || 0) - 1}};
+        default:
+            return state;
+    }
+};
+topMenuReducer.skipStore = true;
+
+const mapStateToProps = ({topMenuReducer}) => ({
+        badge: topMenuReducer.badge,
+        // page: topMenuReducer.page,
+});
+
+export default connect(mapStateToProps)(withStyles(styles)(TopMenu));

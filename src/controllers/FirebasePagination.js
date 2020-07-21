@@ -1,4 +1,4 @@
-const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 10000}) => {
+const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 30000}) => {
     let baseRef = ref;
     let lastKey = null;
     let lastValue = null;
@@ -160,6 +160,9 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
         },
         get ref() {
             return baseRef;
+        },
+        get size() {
+            return size;
         },
         get started() {
             return started

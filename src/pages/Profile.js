@@ -9,7 +9,7 @@ import TextField from "@material-ui/core/TextField";
 import ProfileComponent, {default as ProfileComponentOrigin} from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
 import {logoutUser, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
-import {Link, useHistory, useParams} from "react-router-dom";
+import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
@@ -23,6 +23,12 @@ import LoadingComponent from "../components/LoadingComponent";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import EditIcon from "@material-ui/icons/Edit";
+import PlacesTextField from "../components/PlacesTextField";
+import InfoIcon from "@material-ui/icons/Info";
+import RoleIcon from "@material-ui/icons/Security";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
 
 const styles = theme => ({
     root: {},
@@ -41,6 +47,9 @@ export const publicFields = [
         id: "address",
         label: "Address",
         icon: <AddressIcon/>,
+        editComponent: <PlacesTextField
+            type={"formatted"}
+        />
     },
     {
         id: "phone",
@@ -51,6 +60,36 @@ export const publicFields = [
                 inputComponent: TextMaskPhone
             }}
         />
+    },
+]
+
+export const adminFields = [
+    {
+        id: "updated",
+        label: "",
+        icon: <InfoIcon/>,
+        editComponent: props => <div>
+            User data updated: {new Date(props.value).toLocaleString()}
+        </div>
+    },
+    {
+        id: "role",
+        label: "Role",
+        icon: <RoleIcon/>,
+        editComponent: props => <FormControl {...props}>
+            <InputLabel shrink>
+                Role
+            </InputLabel>
+            <Select
+                onChange={props.onChange}
+                value={props.value}
+            >
+                <MenuItem value={Role.USER}>User</MenuItem>
+                <MenuItem value={Role.USER_NOT_VERIFIED}>User not verified</MenuItem>
+                <MenuItem value={Role.DISABLED}>User disabled</MenuItem>
+                <MenuItem value={Role.ADMIN}>Admin</MenuItem>
+            </Select>
+        </FormControl>
     },
 ]
 
@@ -71,10 +110,6 @@ const Profile = ({
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
     const isSameUser = userData && currentUserData && userData.id === currentUserData.id;
     const isEditAllowed = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
-
-    // if (!currentUserData || !currentUserData.id) {
-    //     return <Redirect to={pages.home.route}/>
-    // }
 
     const handleNotifications = (evt, enable) => {
         dispatch(ProgressView.SHOW);

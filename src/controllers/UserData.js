@@ -12,7 +12,6 @@ export const watchUserChanged = (firebase, store) => {
                     refreshAll(store);
                 })
                 .catch(notifySnackbar)
-
         }
 
         firebase.auth().onAuthStateChanged(async result => {
@@ -34,7 +33,7 @@ export const watchUserChanged = (firebase, store) => {
             }
             if (changed) {
                 return notifySnackbar({
-                    title: "Your profile has been changed. Please relogin for update",
+                    title: "Your profile has been changed. Please refresh for update",
                     variant: "warning",
                     priority: "high",
                     buttonLabel: "Refresh",
@@ -118,7 +117,7 @@ export const currentUserData = (state = {
     const {type, userData} = action;
     if (type === "currentUserData") {
         useCurrentUserData(userData);
-        console.warn("[User] update current", userData && userData.public);
+        console.warn("[UserData] set current", userData && userData.public);
         return {...state, userData: userData ? userData.toJSON() : null};
     } else {
         return state;
@@ -160,6 +159,9 @@ export const UserData = function (firebase) {
             _public._sort_name = fetchSortName();
             for (let x in _public) {
                 if (_public[x] !== undefined) {
+                    if(_public[x] !== undefined && (_public[x] || "").constructor.name === "String") {
+                        _public[x] = (_public[x] || "").trim();
+                    }
                     updates[`users_public/${_id}/${x}`] = _public[x];
                 }
             }
@@ -170,6 +172,9 @@ export const UserData = function (firebase) {
             for (let deviceId in _private) {
                 for (let x in _private[deviceId]) {
                     if (_private[deviceId][x] !== undefined) {
+                        if(_private[deviceId][x] !== undefined && (_private[deviceId][x] || "").constructor.name === "String") {
+                            _private[deviceId][x] = (_private[deviceId][x] || "").trim();
+                        }
                         updates[`users_private/${_id}/${deviceId}/${x}`] = _private[deviceId][x];
                     }
                 }
