@@ -9,7 +9,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import Menu from "@material-ui/icons/Menu";
 import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
-import ProgressView from "../components/ProgressView";
+import ProgressView from "./ProgressView";
 import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../controllers/UserData";
 import {connect} from "react-redux";
 import {usePages} from "../controllers/General";
@@ -124,7 +124,7 @@ MainAppbar.propTypes = {
 
 MainAppbar.LABEL = "mainAppBar_Label";
 
-export const mainAppbar = (state = {label: "", badge: 0}, action) => {
+export const mainAppbarReducer = (state = {label: "", badge: 0}, action) => {
     switch(action.type) {
         case MainAppbar.LABEL:
             return {...state, label: action.label};
@@ -138,11 +138,11 @@ export const mainAppbar = (state = {label: "", badge: 0}, action) => {
             return state;
     }
 };
-mainAppbar.skipStore = true;
+mainAppbarReducer.skipStore = true;
 
-const mapStateToProps = ({mainAppbar}) => ({
-    label: mainAppbar.label,
-    badge: mainAppbar.badge
+const mapStateToProps = ({mainAppbarReducer}) => ({
+    label: mainAppbarReducer.label,
+    badge: mainAppbarReducer.badge
 });
 
 export default connect(mapStateToProps)(withStyles(styles)(MainAppbar));

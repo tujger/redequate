@@ -220,7 +220,7 @@ const _DispatcherRoutedBody = props => {
     </React.Fragment>
 };
 
-export const dispatcherRoutedBody = (state = {random: 0}, action) => {
+export const dispatcherRoutedBodyReducer = (state = {random: 0}, action) => {
     switch(action.type) {
         case Layout.REFRESH:
             return {...state, random: Math.random()};
@@ -228,9 +228,9 @@ export const dispatcherRoutedBody = (state = {random: 0}, action) => {
             return state;
     }
 };
-dispatcherRoutedBody.skipStore = true;
+dispatcherRoutedBodyReducer.skipStore = true;
 
-const mapStateToProps = ({dispatcherRoutedBody}) => ({random: dispatcherRoutedBody.random});
+const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
 
 const DispatcherRoutedBody = connect(mapStateToProps)(_DispatcherRoutedBody);
 

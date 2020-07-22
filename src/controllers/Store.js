@@ -1,25 +1,25 @@
-import ProgressView, {progressView} from "../components/ProgressView";
-import {snackbar} from "../components/Snackbar";
+import ProgressView, {progressViewReducer} from "../components/ProgressView";
+import {snackbarReducer} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
-import {mainAppbar} from "../components/MainAppbar";
+import {mainAppbarReducer} from "../components/MainAppbar";
 import {usersReducer} from "../pages/admin/Users";
-import {lazyListComponent} from "../components/LazyListComponent";
+import {lazyListComponentReducer} from "../components/LazyListComponent";
 import {topMenuReducer} from "../components/TopMenu";
-import {dispatcherRoutedBody} from "../Dispatcher";
+import {dispatcherRoutedBodyReducer} from "../Dispatcher";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
     reducers = {
         currentUserData,
-        dispatcherRoutedBody,
-        lazyListComponent,
-        mainAppbar,
-        progressView,
-        snackbar,
+        dispatcherRoutedBodyReducer,
+        lazyListComponentReducer,
+        mainAppbarReducer,
+        progressView: progressViewReducer,
+        snackbar: snackbarReducer,
         topMenuReducer,
-        usersReducer,
+        users: usersReducer,
         ...reducers};
     const store = createStore(combineReducers(reducers), initialStore || {});
 

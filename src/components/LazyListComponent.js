@@ -3,8 +3,9 @@ import {notifySnackbar} from "../controllers";
 import ProgressView from "./ProgressView";
 import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
+import PropTypes from "prop-types";
 
-const LazyListComponent = ({
+const LazyListComponent_ = ({
                                cache = false,
                                disableProgress,
                                itemComponent = (item) => <div key={item.key}>
@@ -18,12 +19,10 @@ const LazyListComponent = ({
                                placeholders = 1,
                                reverse = false,
                                random,
+                               ["LazyListComponent_" + cache]: cacheData = {},
                                ...props
                            }) => {
     const dispatch = useDispatch();
-    const {
-        ["LazyListComponent_" + cache]: cacheData = {}
-    } = props;
     const [state, setState] = React.useState({});
     const {
         finished: cachedFinished = false,
@@ -39,8 +38,6 @@ const LazyListComponent = ({
     } = state;
 
     const ascending = pagination.order === "asc";
-
-    if (!placeholder) throw new Error("Placeholder is not defined");
 
     const loadNextPart = () => {
         if (finished) {
@@ -165,6 +162,8 @@ const LazyListComponent = ({
         }));
     }, [random, givenPagination.term])
 
+    // if (!placeholder) throw new Error("Placeholder is not defined");
+
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
 
     return <React.Fragment>
@@ -257,7 +256,7 @@ const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders})
     </React.Fragment>
 }
 
-export const lazyListComponent = (state = {}, action) => {
+export const lazyListComponentReducer = (state = {}, action) => {
     const cache = action.cache;
     const cacheData = action["LazyListComponent_" + cache];
     switch (action.type) {
@@ -285,15 +284,32 @@ export const lazyListComponent = (state = {}, action) => {
             return state;
     }
 };
-lazyListComponent.skipStore = true;
+lazyListComponentReducer.skipStore = true;
+
+const mapStateToProps = ({lazyListComponentReducer}) => {
+    return {...lazyListComponentReducer};
+}
+
+const LazyListComponent = connect(mapStateToProps)(LazyListComponent_)
 
 LazyListComponent.ADD = "LazyListComponent_add";
 LazyListComponent.EXIT = "LazyListComponent_exit";
 LazyListComponent.RESET = "LazyListComponent_reset";
 LazyListComponent.UPDATE = "LazyListComponent_update";
 
-const mapStateToProps = ({lazyListComponent, ...rest}) => {
-    return {...lazyListComponent};
+LazyListComponent.propTypes = {
+    cache: PropTypes.string,
+    disableProgress: PropTypes.bool,
+    itemComponent: PropTypes.func,
+    itemTransform: PropTypes.func,
+    live: PropTypes.bool,
+    noItemsComponent: PropTypes.object,
+    pagination: PropTypes.oneOfType([
+        PropTypes.object,
+        PropTypes.func]).isRequired,
+    placeholder: PropTypes.element.isRequired,
+    placeholders: PropTypes.number,
+    reverse: PropTypes.bool,
 }
 
-export default connect(mapStateToProps)(LazyListComponent);
+export default LazyListComponent;

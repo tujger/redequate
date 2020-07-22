@@ -20,10 +20,10 @@ const ProgressView = props => {
         className={[show ? "" : classes.invisibleProgress, className].join(" ")}/>
 };
 
-ProgressView.SHOW = {type: "progressViewShow"};
-ProgressView.HIDE = {type: "progressViewHide"};
+ProgressView.SHOW = {type: "progressView_Show"};
+ProgressView.HIDE = {type: "progressView_Hide"};
 
-export const progressView = (state = {show: false, value: null}, action) => {
+export const progressViewReducer = (state = {show: false, value: null}, action) => {
     switch (action.type) {
         case ProgressView.SHOW.type:
             if (action.value) {
@@ -38,6 +38,9 @@ export const progressView = (state = {show: false, value: null}, action) => {
     }
 };
 
-const mapStateToProps = ({progressView}) => ({show: progressView.show, value: progressView.value});
+const mapStateToProps = ({progressView}) => ({
+    show: progressView.show,
+    value: progressView.value
+});
 
 export default connect(mapStateToProps)(ProgressView);

@@ -8,7 +8,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import BackIcon from "@material-ui/icons/ChevronLeft";
 import {Link, useHistory, useLocation, withRouter} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
-import ProgressView from "../components/ProgressView";
+import ProgressView from "./ProgressView";
 import {matchRole, needAuth, useCurrentUserData} from "../controllers/UserData";
 import {usePages} from "../controllers/General";
 

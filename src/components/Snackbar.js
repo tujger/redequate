@@ -39,10 +39,10 @@ const SimpleSnackbar = props => {
     />
 };
 
-SimpleSnackbar.SHOW = "snackbarShow";
-SimpleSnackbar.HIDE = {type: "snackbarHide"};
+SimpleSnackbar.SHOW = "snackbar_Show";
+SimpleSnackbar.HIDE = {type: "snackbar_Hide"};
 
-export const snackbar = (state = {open: false, buttonText: "Close", message: "Snackbar text", error: ""}, action) => {
+export const snackbarReducer = (state = {open: false, buttonText: "Close", message: "Snackbar text", error: ""}, action) => {
     switch (action.type) {
         case SimpleSnackbar.SHOW:
             let newState = {open: true};

@@ -232,9 +232,9 @@ export const usersReducer = (state = {filter: "", mode: "all"}, action) => {
 };
 // gamesReducer.skipStore = true;
 
-const mapStateToProps = ({usersReducer}) => ({
-    filter: usersReducer.filter,
-    mode: usersReducer.mode,
+const mapStateToProps = ({users}) => ({
+    filter: users.filter,
+    mode: users.mode,
 });
 
 export default connect(mapStateToProps)(Users);
