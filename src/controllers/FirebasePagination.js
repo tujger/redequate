@@ -6,6 +6,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
     let count = 0;
     let finished = false;
     let started = false;
+    let timeoutTask;
 
     const next = () => new Promise((resolve, reject) => {
         if (finished) {
@@ -68,7 +69,8 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
         baseRef.database.goOnline();
 
         let timeoutFired = false;
-        const timeoutTask = setTimeout(() => {
+        clearTimeout(timeoutTask);
+        timeoutTask = setTimeout(() => {
             timeoutFired = true;
             console.error(`[FP] timed out for ${toString()}`);
             reject(new Error("Timed out on data request."));
@@ -123,6 +125,7 @@ const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, eq
     })
     const reset = () => {
         // baseRef.database.goOnline();
+        clearTimeout(timeoutTask);
         lastKey = null;
         lastValue = null;
         countTotal = 0;

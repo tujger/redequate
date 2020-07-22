@@ -43,6 +43,7 @@ Store.propTypes = {
 export default Store;
 
 export const refreshAll = store => {
+    console.warn("REFRESH")
     store.dispatch({type: Layout.REFRESH});
     store.dispatch({type: MenuBadge.RESET});
     // store.dispatch(ResponsiveDrawerLayout.REFRESH);
