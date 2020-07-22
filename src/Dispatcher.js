@@ -5,7 +5,7 @@ import PWAPrompt from "react-ios-pwa-prompt";
 import {Provider, useDispatch} from "react-redux";
 import withWidth, {isWidthUp, isWidthDown} from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
-import Store, {refreshAll} from "./controllers/Store";
+import Store, {Layout, refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
@@ -26,6 +26,7 @@ import {hasNotifications, setupReceivingNotifications} from "./controllers/Notif
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import MainAppbar from "./components/MainAppbar";
+import {connect} from "react-redux";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout"));
@@ -129,8 +130,8 @@ const Dispatcher = (props) => {
 };
 
 let widthPoint;
-const DispatcherRoutedBody = props => {
-    const {pages, menu, width, copyright, headerImage, layout, name, logo} = props;
+const _DispatcherRoutedBody = props => {
+    const {pages, menu, width, copyright, headerImage, layout, name, logo, random} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
@@ -169,7 +170,7 @@ const DispatcherRoutedBody = props => {
 
     const background = history.location.state && history.location.state.background
 
-    return <React.Fragment>
+    return <React.Fragment key={random}>
         <Switch location={background}>
             <Route
                 path={"/*"}
@@ -218,6 +219,20 @@ const DispatcherRoutedBody = props => {
         {background && <Route path={history.location.pathname} children={<div/>}/>}
     </React.Fragment>
 };
+
+export const dispatcherRoutedBody = (state = {random: 0}, action) => {
+    switch(action.type) {
+        case Layout.REFRESH:
+            return {...state, random: Math.random()};
+        default:
+            return state;
+    }
+};
+dispatcherRoutedBody.skipStore = true;
+
+const mapStateToProps = ({dispatcherRoutedBody}) => ({random: dispatcherRoutedBody.random});
+
+const DispatcherRoutedBody = connect(mapStateToProps)(_DispatcherRoutedBody);
 
 Dispatcher.propTypes = {
     copyright: PropTypes.any,

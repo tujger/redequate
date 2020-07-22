@@ -8,8 +8,9 @@ import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
 import AvatarView from "../components/AvatarView";
-import {MenuBadge, usePages} from "../controllers/General";
+import {usePages} from "../controllers/General";
 import {connect} from "react-redux";
+import {MenuBadge} from "../controllers/Store";
 
 const styles = theme => ({
     badge: {
@@ -152,6 +153,8 @@ export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
         case MenuBadge.DECREASE:
             const id1 = action.page.route;
             return {...state, badge: {...state.badge, [id1]: (state.badge[id1] || 0) - 1}};
+        case MenuBadge.RESET:
+            return {...state, badge: {}};
         default:
             return state;
     }

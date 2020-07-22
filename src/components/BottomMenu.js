@@ -45,7 +45,7 @@ const MenuSection = withStyles(styles)(props => {
         </Typography>
         <MenuList>
             {menu.map((item, index) => {
-                if (!matchRole(item.roles, currentUserData)) return null;
+                if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
                 return <Link to={item.route}
                              key={index}
                              className={classes.label}>

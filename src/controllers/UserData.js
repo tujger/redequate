@@ -14,7 +14,7 @@ export const watchUserChanged = (firebase, store) => {
                 .catch(notifySnackbar)
         }
 
-        firebase.auth().onAuthStateChanged(async result => {
+        return firebase.auth().onAuthStateChanged(async result => {
             // const ud = new UserData(firebase).fromFirebaseAuth(result.toJSON())
             if (!currentUserDataInstance.id || !result) return;
             let changed = false;

@@ -7,7 +7,6 @@ import BottomToolbar from "../components/BottomToolbar";
 import MainTitlebar from "../components/MainTitlebar";
 import MainContent from "../components/MainContent";
 import Snackbar from "../components/Snackbar";
-import {connect} from "react-redux";
 import {NotificationsSnackbar} from "../controllers/Notifications";
 
 const styles = theme => ({
@@ -35,8 +34,6 @@ function BottomToolbarLayout(props) {
     </React.Fragment>
 }
 
-BottomToolbarLayout.REFRESH = {type: "bottomToolbarLayout_Refresh"};
-
 BottomToolbarLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
     copyright: PropTypes.any,
@@ -47,15 +44,4 @@ BottomToolbarLayout.propTypes = {
     title: PropTypes.string,
 };
 
-export const bottomToolbarLayout = (state = {random: 0}, action) => {
-    if (action.type === BottomToolbarLayout.REFRESH.type) {
-        return {random: Math.random()};
-    } else {
-        return state;
-    }
-};
-bottomToolbarLayout.skipStore = true;
-
-const mapStateToProps = ({bottomToolbarLayout}) => ({random: bottomToolbarLayout.random});
-
-export default connect(mapStateToProps)(withStyles(styles)(BottomToolbarLayout));
+export default withStyles(styles)(BottomToolbarLayout);

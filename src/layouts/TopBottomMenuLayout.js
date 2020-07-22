@@ -8,7 +8,6 @@ import MainContent from "../components/MainContent";
 import Snackbar from "../components/Snackbar";
 import StickyHeader from "../components/StickyHeader";
 import TopMenu from "../components/TopMenu";
-import {connect} from "react-redux";
 import {Route, Switch} from "react-router-dom";
 import {NotificationsSnackbar} from "../controllers/Notifications";
 import {usePages} from "../controllers/General";
@@ -81,8 +80,6 @@ function TopBottomMenuLayout(props) {
     </StickyHeader>
 }
 
-TopBottomMenuLayout.REFRESH = {type: "topBottomMenuLayout_Refresh"};
-
 TopBottomMenuLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
     copyright: PropTypes.any,
@@ -92,15 +89,4 @@ TopBottomMenuLayout.propTypes = {
     title: PropTypes.string,
 };
 
-export const topBottomMenuLayout = (state = {random: 0}, action) => {
-    if (action.type === TopBottomMenuLayout.REFRESH.type) {
-        return {...state, random: Math.random()};
-    } else {
-        return state;
-    }
-};
-topBottomMenuLayout.skipStore = true;
-
-const mapStateToProps = ({topBottomMenuLayout}) => ({random: (topBottomMenuLayout || {random: 0}).random});
-
-export default connect(mapStateToProps)(withStyles(styles)(TopBottomMenuLayout));
+export default withStyles(styles)(TopBottomMenuLayout);

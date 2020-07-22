@@ -13,7 +13,6 @@ import MainContent from "../components/MainContent";
 import MainHeader from "../components/MainHeader";
 import MainMenu from "../components/MainMenu";
 import Snackbar from "../components/Snackbar";
-import {connect} from "react-redux";
 import {NotificationsSnackbar} from "../controllers/Notifications";
 import {usePages, useWindowData} from "../controllers/General";
 
@@ -119,8 +118,6 @@ function ResponsiveDrawerLayout(props) {
     </React.Fragment>
 }
 
-ResponsiveDrawerLayout.REFRESH = {type: "responsiveDrawerLayout_Refresh"};
-
 ResponsiveDrawerLayout.propTypes = {
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
     copyright: PropTypes.any,
@@ -132,15 +129,4 @@ ResponsiveDrawerLayout.propTypes = {
     title: PropTypes.string,
 };
 
-export const responsiveDrawerLayout = (state = {random: 0}, action) => {
-    if (action.type === ResponsiveDrawerLayout.REFRESH.type) {
-        return {random: Math.random()};
-    } else {
-        return state;
-    }
-};
-responsiveDrawerLayout.skipStore = true;
-
-const mapStateToProps = ({responsiveDrawerLayout}) => ({random: responsiveDrawerLayout.random});
-
-export default connect(mapStateToProps)(withStyles(styles)(ResponsiveDrawerLayout));
+export default withStyles(styles)(ResponsiveDrawerLayout);

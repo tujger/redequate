@@ -1,7 +1,4 @@
 import ProgressView, {progressView} from "../components/ProgressView";
-import ResponsiveDrawerLayout, {responsiveDrawerLayout} from "../layouts/ResponsiveDrawerLayout";
-import TopBottomMenuLayout, {topBottomMenuLayout} from "../layouts/TopBottomMenuLayout";
-import BottomToolbarLayout, {bottomToolbarLayout} from "../layouts/BottomToolbarLayout";
 import {snackbar} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
@@ -10,19 +7,18 @@ import {mainAppbar} from "../components/MainAppbar";
 import {usersReducer} from "../pages/admin/Users";
 import {lazyListComponent} from "../components/LazyListComponent";
 import {topMenuReducer} from "../components/TopMenu";
+import {dispatcherRoutedBody} from "../Dispatcher";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
     reducers = {
-        bottomToolbarLayout,
         currentUserData,
+        dispatcherRoutedBody,
         lazyListComponent,
         mainAppbar,
         progressView,
-        responsiveDrawerLayout,
         snackbar,
         topMenuReducer,
-        topBottomMenuLayout,
         usersReducer,
         ...reducers};
     const store = createStore(combineReducers(reducers), initialStore || {});
@@ -47,9 +43,21 @@ Store.propTypes = {
 export default Store;
 
 export const refreshAll = store => {
-    store.dispatch(ResponsiveDrawerLayout.REFRESH);
-    store.dispatch(TopBottomMenuLayout.REFRESH);
-    store.dispatch(BottomToolbarLayout.REFRESH);
+    store.dispatch({type: Layout.REFRESH});
+    store.dispatch({type: MenuBadge.RESET});
+    // store.dispatch(ResponsiveDrawerLayout.REFRESH);
+    // store.dispatch(TopBottomMenuLayout.REFRESH);
+    // store.dispatch(BottomToolbarLayout.REFRESH);
     store.dispatch(ProgressView.HIDE);
 };
 
+export const MenuBadge = {
+    INCREASE: "badge_Increase",
+    DECREASE: "badge_Decrease",
+    RESET: "badge_Reset",
+    VALUE: "badge_Value",
+}
+
+export const Layout = {
+    REFRESH: "layout_Refresh",
+}

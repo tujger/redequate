@@ -5,7 +5,7 @@ export * from "./WrapperControl";
 export * from "./General";
 export * from "./DateFormat";
 export {default as Pagination} from "./FirebasePagination";
-export {default as Store, refreshAll} from "./Store";
+export * from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
 export {default as theme, colors, createTheme} from "./Theme";
 export {

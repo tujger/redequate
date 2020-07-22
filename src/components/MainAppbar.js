@@ -12,7 +12,8 @@ import AvatarView from "../components/AvatarView";
 import ProgressView from "../components/ProgressView";
 import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../controllers/UserData";
 import {connect} from "react-redux";
-import {MenuBadge, usePages} from "../controllers/General";
+import {usePages} from "../controllers/General";
+import {MenuBadge} from "../controllers/Store";
 
 const styles = theme => ({
     label: {
@@ -131,6 +132,8 @@ export const mainAppbar = (state = {label: "", badge: 0}, action) => {
             return {...state, badge: (state.badge || 0) + 1};
         case MenuBadge.DECREASE:
             return {...state, badge: (state.badge || 0) - 1};
+        case MenuBadge.RESET:
+            return {...state, badge: 0};
         default:
             return state;
     }
