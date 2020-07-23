@@ -1,14 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {MoreVert} from "@material-ui/icons";
 import {Link, useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import Skeleton from "@material-ui/lab/Skeleton";
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
-import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import withStyles from "@material-ui/styles/withStyles";
@@ -19,28 +16,7 @@ import {useFirebase, usePages} from "../controllers/General";
 import {fetchCallable, fetchFunction} from "../controllers/Firebase";
 import ProgressView from "./ProgressView";
 import AvatarView from "./AvatarView";
-
-export const UserPlaceholder = ({classes, label}) => (
-    <Card className={classes.card}>
-        <CardHeader className={classes.cardHeader}
-                    avatar={<Skeleton animation={false} variant="circle"
-                                      className={classes.avatar}/>}
-                    title={label !== true ? label : <Skeleton animation="wave" height={12}
-                                                              width="40%"
-                                                              style={{marginBottom: 6}}/>}
-                    subheader={!label && <React.Fragment>
-                        <Skeleton animation="wave" height={12}
-                                  width="100%"
-                                  style={{marginBottom: 6}}/>
-                        <Grid className={classes.cardActions}>
-                            <Skeleton animation={false} variant="rect"
-                                      width="100%" height={10}
-                                      style={{marginBottom: 6}}/>
-                        </Grid>
-                    </React.Fragment>}
-        />
-    </Card>
-)
+import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
 
 function UserItemComponent(props) {
     const {data, classes, skeleton, label} = props;
@@ -93,8 +69,8 @@ function UserItemComponent(props) {
         }
     };
 
-    if (label) return <UserPlaceholder classes={classes} label={label}/>
-    if (skeleton) return <UserPlaceholder classes={classes}/>
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
+    if (skeleton) return <ItemPlaceholderComponent classes={classes}/>
 
     const userData = UserData(firebase).create(data.key, data.value);
 

@@ -4,8 +4,7 @@ import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import {IconButton, withStyles} from "@material-ui/core";
 import SendIcon from "@material-ui/icons/Send";
-import {Link, useHistory, useParams} from "react-router-dom";
-import BackIcon from "@material-ui/icons/ArrowBack";
+import {useHistory, useParams} from "react-router-dom";
 import {InView} from "react-intersection-observer";
 import {
     cacheDatas,
@@ -19,7 +18,6 @@ import {
 import ProgressView from "../components/ProgressView";
 import LoadingComponent from "../components/LoadingComponent";
 import ChatList from "./ChatList";
-import AvatarView from "../components/AvatarView";
 import LazyListComponent from "../components/LazyListComponent";
 import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
@@ -92,7 +90,7 @@ const InputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) => {
         <Grid item xs style={{display: "flex", alignItems: "center"}}>
             <inputComponent.type
                 {...inputComponent.props}
-                autofocus={!windowData.isNarrow}
+                autofocus={!windowData.isNarrow()}
                 color={"secondary"}
                 fullWidth
                 onChange={handleChange}
@@ -131,7 +129,7 @@ const Chat = (props) => {
     const pages = usePages();
     const {id} = useParams();
     const [state, setState] = React.useState({});
-    const {meta, userData, chatMeta} = state;
+    const {userData, chatMeta} = state;
     const inputRef = React.useRef();
 
     const db = firebase.database();

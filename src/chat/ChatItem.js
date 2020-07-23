@@ -10,6 +10,7 @@ import {makeStyles} from "@material-ui/core/styles";
 import {cacheDatas, useCurrentUserData, useFirebase, UserData} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import {styles} from "../components/styles";
+import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 
 const useStylesChat = theme => makeStyles({
     cardActions: {
@@ -68,28 +69,6 @@ const useStylesChat = theme => makeStyles({
     }
 });
 
-const ChatPlaceholder = ({classes, label}) => (
-    <Card className={[classes.card, classes.chatItem].join(" ")}>
-        <CardHeader className={classes.cardHeader}
-                    avatar={<Skeleton animation={false} variant="circle"
-                                      className={classes.avatar}/>}
-                    title={label !== true ? label : <Skeleton animation="wave" height={12}
-                                                              width="40%"
-                                                              style={{marginBottom: 6}}/>}
-                    subheader={!label && <React.Fragment>
-                        <Skeleton animation="wave" height={12}
-                                  width="100%"
-                                  style={{marginBottom: 6}}/>
-                        <Grid className={classes.cardActions}>
-                            <Skeleton animation={false} variant="rect"
-                                      width="100%" height={10}
-                                      style={{marginBottom: 6}}/>
-                        </Grid>
-                    </React.Fragment>}
-        />
-    </Card>
-)
-
 function ChatItem(props) {
     const {data, chatMeta = {}, classes, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
@@ -117,7 +96,7 @@ function ChatItem(props) {
         // eslint-disable-next-line
     }, []);
 
-    if (skeleton) return <ChatPlaceholder classes={{...classes, ...classesChat}}/>;
+    if (skeleton) return <ItemPlaceholderComponent classes={{...classes, ...classesChat}}/>;
 
     const isNew = fetchIsNew() && !shown;
     const isItemOut = currentUserData.id === data.uid;

@@ -30,7 +30,6 @@ const styles = theme => ({
 
 const Chats = (props) => {
     const {
-        clearText = text => text,
         daemon,
         userComponent = userData => userData.name,
         textComponent = text => text,
@@ -71,43 +70,3 @@ const Chats = (props) => {
 };
 
 export default withStyles(styles)(Chats);
-
-export const useStylesDaemon = theme => makeStyles({
-    label: {
-        color: "inherit"
-    },
-    badge: {
-        color: "#ff0000",
-        fontSize: "small",
-        fontWeight: "bolder",
-        marginBottom: theme.spacing(.5),
-        marginLeft: theme.spacing(.5),
-        verticalAlign: "super",
-    }
-})
-
-const _ChatsCounter = ({counter}) => {
-    const theme = useTheme();
-    const classes = useStylesDaemon(theme)({});
-    if (!counter) return null;
-    return <span className={classes.badge}>{counter}</span>
-}
-_ChatsCounter.COUNTER = "chatsCounter_Counter";
-
-export const chatsCounterReducer = (state = {counter: 0}, action) => {
-    switch (action.type) {
-        case _ChatsCounter.COUNTER:
-            return {...state, counter: action.counter};
-        case Layout.REFRESH:
-            return {...state, random: Math.random()};
-        default:
-            return state;
-    }
-};
-chatsCounterReducer.skipStore = true;
-
-const mapStateToProps = ({chatsCounterReducer}) => ({
-    counter: chatsCounterReducer.counter,
-});
-
-export const ChatsCounter = connect(mapStateToProps)(_ChatsCounter);

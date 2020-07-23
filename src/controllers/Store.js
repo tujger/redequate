@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
 import {mainAppbarReducer} from "../components/MainAppbar";
 import {usersReducer} from "../pages/admin/Users";
-import {lazyListComponentReducer} from "../components/LazyListComponent";
+import LazyListComponent, {lazyListComponentReducer} from "../components/LazyListComponent";
 import {topMenuReducer} from "../components/TopMenu";
 import {dispatcherRoutedBodyReducer} from "../Dispatcher";
 import {chatsCounterReducer} from "../chat";
@@ -48,6 +48,8 @@ export const refreshAll = store => {
     console.warn("REFRESH")
     store.dispatch({type: Layout.REFRESH});
     store.dispatch({type: MenuBadge.RESET});
+    store.dispatch({type: LazyListComponent.RESET});
+    store.dispatch({type: LazyListComponent.RESET, cache: "chats"});
     // store.dispatch(ResponsiveDrawerLayout.REFRESH);
     // store.dispatch(TopBottomMenuLayout.REFRESH);
     // store.dispatch(BottomToolbarLayout.REFRESH);

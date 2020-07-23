@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import {Link, useHistory} from "react-router-dom";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
-import Skeleton from "@material-ui/lab/Skeleton";
 import Grid from "@material-ui/core/Grid";
 import {styles} from "../components/styles";
 import {makeStyles} from "@material-ui/core/styles";
@@ -16,11 +15,11 @@ import {
     useCurrentUserData,
     useFirebase,
     usePages,
-    UserData,
-    useWindowData
+    UserData
 } from "../controllers";
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
+import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 
 const useStylesChat = theme => makeStyles({
     cardActions: {
@@ -108,38 +107,12 @@ const useStylesChat = theme => makeStyles({
     },
 });
 
-const ChatsItemPlaceholder = ({classes, label}) => (
-    <Card className={classes.card}>
-        <CardHeader className={classes.cardHeader}
-                    avatar={<Skeleton animation={false} variant="circle"
-                                      className={classes.avatar}/>}
-                    title={label !== true ? label : <Skeleton animation="wave" height={12}
-                                                              width="40%"
-                                                              style={{marginBottom: 6}}/>}
-                    subheader={!label && <React.Fragment>
-                        <Skeleton animation="wave" height={12}
-                                  width="100%"
-                                  style={{marginBottom: 6}}/>
-                        <Skeleton animation="wave" height={12}
-                                  width="100%"
-                                  style={{marginBottom: 6}}/>
-                        <Grid className={classes.cardActions}>
-                            <Skeleton animation={false} variant="rect"
-                                      width="100%" height={10}
-                                      style={{marginBottom: 6}}/>
-                        </Grid>
-                    </React.Fragment>}
-        />
-    </Card>
-)
-
 function ChatsItem(props) {
     const {id, classes, skeleton, label, userComponent, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {shown, userData, chatMeta, online, timestamp} = state;
     const theme = useTheme();
@@ -177,8 +150,8 @@ function ChatsItem(props) {
         // eslint-disable-next-line
     }, []);
 
-    if (skeleton) return <ChatsItemPlaceholder classes={classes}/>;
-    if (label) return <ChatsItemPlaceholder classes={classes} label={label}/>;
+    if (skeleton) return <ItemPlaceholderComponent classes={classes}/>;
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>;
     if (!chatMeta) return null;
 
     const isNew = fetchIsNew() && !shown;
