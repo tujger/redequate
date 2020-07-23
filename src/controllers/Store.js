@@ -8,10 +8,12 @@ import {usersReducer} from "../pages/admin/Users";
 import {lazyListComponentReducer} from "../components/LazyListComponent";
 import {topMenuReducer} from "../components/TopMenu";
 import {dispatcherRoutedBodyReducer} from "../Dispatcher";
+import {chatsCounterReducer} from "../chat";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
     reducers = {
+        chatsCounterReducer,
         currentUserData,
         dispatcherRoutedBodyReducer,
         lazyListComponentReducer,

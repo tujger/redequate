@@ -4,6 +4,7 @@ export * from "./examples";
 export * from "./layouts";
 export * from "./pages";
 export * from "./images";
+export * from "./chat";
 export {default as Dispatcher} from "./Dispatcher";
 
 const packagejson = require("../package.json");

@@ -42,7 +42,7 @@ const Dispatcher = (props) => {
     useStore(store);
     useFirebase(firebase);
     usePages(pages);
-    useTechnicalInfo(state => ({...state, maintenance: null, refreshed: new Date().getTime()}));
+    useTechnicalInfo(state => ({...state, name: name, maintenance: null, refreshed: new Date().getTime()}));
     const windowData = useWindowData({
         breakpoint: width,
         isNarrow: () => width === "xs" || width === "sm",

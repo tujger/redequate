@@ -1,7 +1,11 @@
 import React from "react";
+import ReactDOM from "react-dom";
 import {useSnackbar} from "notistack";
 import RichSnackbarContent from "../components/RichSnackbarContent";
 import PropTypes from "prop-types";
+import {useTechnicalInfo} from "./General";
+import {matchPath, useHistory} from "react-router-dom";
+import {firebaseMessaging} from "./Firebase";
 
 export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {
     try {
@@ -96,13 +100,54 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
 
 export const NotificationsSnackbar = () => {
     const {enqueueSnackbar, closeSnackbar} = useSnackbar();
+    const technicalInfo = useTechnicalInfo();
+    const history = useHistory();
 
     return <div
         id={"__edeqa_pwa_service_worker_snackbar"}
         style={{display: "none"}}
         onClick={evt => {
-            let payload = evt.currentTarget.payload;
-
+            let {system, ...payload} = evt.currentTarget.payload;
+            if(system && !document.hasFocus()) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        const node = document.createElement("div");
+                        ReactDOM.render(<React.Fragment>{payload.title}</React.Fragment>, node, () => {
+                            try {
+                                const title = technicalInfo.name;
+                                const onclick = () => {
+                                    history.push(payload.id || "/")
+                                    // window.open(payload.id || "/");
+                                    window.focus();
+                                };
+                                const options = {
+                                    body: node.innerText,
+                                    // image: "/favicon.ico",
+                                    icon: "/favicon.ico",
+                                    tag: payload.id || title,
+                                    renotify: true,
+                                    // requireInteraction: true,
+                                };
+                                /*navigator.serviceWorker.ready.then(reg => {
+                                    reg.showNotification(title, {...options,
+                                    actions: [
+                                        {title: "Open", action: onclick}
+                                    ]})
+                                })*/
+                                console.log("[Notification]", title, options);
+                                const notification = new Notification(title, options);
+                                notification.onclick = onclick;
+                            } catch(error) {
+                                console.error(error)
+                            }
+                        });
+                    } else {
+                        throw new Error("Notifications denied");
+                    }
+                }).catch(error => {
+                    console.error(error)
+                });
+            }
             const Snackbar = (key) => {
                 return <RichSnackbarContent
                     message={payload.title}
@@ -126,7 +171,7 @@ export const NotificationsSnackbar = () => {
             })
         }}
     />;
-};
+}
 
 export const notifySnackbar = props => {
     const snackbar = document.getElementById("__edeqa_pwa_service_worker_snackbar");
@@ -152,14 +197,16 @@ export const notifySnackbar = props => {
     }
     snackbar.click();
 };
+
 notifySnackbar.propTypes = {
-    title: PropTypes.any,
-    variant: PropTypes.string,
     buttonLabel: PropTypes.string,
+    error: PropTypes.any,
     onButtonClick: PropTypes.any,
     onClick: PropTypes.any,
-    error: PropTypes.any,
     priority: PropTypes.string,
+    system: PropTypes.bool,
+    title: PropTypes.any,
+    variant: PropTypes.string,
 };
 
 export const hasNotifications = () => {

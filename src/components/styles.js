@@ -59,6 +59,7 @@ export const styles = theme => ({
     },
     date: {
         color: "#888888",
+        marginRight: theme.spacing(.5),
         [theme.breakpoints.down("sm")]: {
             fontSize: theme.spacing(1.5),
         },
