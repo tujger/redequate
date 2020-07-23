@@ -9,9 +9,9 @@ import Grid from "@material-ui/core/Grid";
 import {styles} from "../components/styles";
 import {makeStyles} from "@material-ui/core/styles";
 import CardActionArea from "@material-ui/core/CardActionArea";
-import Hidden from "@material-ui/core/Hidden";
 import {
-    cacheDatas, notifySnackbar,
+    cacheDatas,
+    notifySnackbar,
     toDateString,
     useCurrentUserData,
     useFirebase,
@@ -89,10 +89,16 @@ const useStylesChat = theme => makeStyles({
     presence: {
         borderRadius: theme.spacing(1),
         height: theme.spacing(.5),
-        marginBottom: theme.spacing(.5),
         marginLeft: theme.spacing(1),
         marginRight: theme.spacing(1),
         width: theme.spacing(.5),
+        [theme.breakpoints.up("md")]: {
+            marginBottom: theme.spacing(.5),
+        },
+        [theme.breakpoints.down("sm")]: {
+            height: theme.spacing(1),
+            width: theme.spacing(1),
+        },
     },
     offline: {
         backgroundColor: "#bbbbbb",
