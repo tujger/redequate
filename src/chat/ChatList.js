@@ -4,9 +4,10 @@ import ChatItem from "./ChatItem";
 import {useFirebase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 
-const ChatList = ({chatKey, chatMeta, textComponent}) => {
+const ChatList = ({chatKey, chatMeta, containerRef, textComponent}) => {
     const firebase = useFirebase();
     return <LazyListComponent
+        containerRef={containerRef}
         disableProgress={true}
         itemComponent={item => <ChatItem key={item.key} data={item.value} chatMeta={chatMeta} textComponent={textComponent}/>}
         itemTransform={item => {

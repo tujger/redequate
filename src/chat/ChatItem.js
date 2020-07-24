@@ -7,7 +7,7 @@ import CardHeader from "@material-ui/core/CardHeader";
 import Skeleton from "@material-ui/lab/Skeleton";
 import Grid from "@material-ui/core/Grid";
 import {makeStyles} from "@material-ui/core/styles";
-import {cacheDatas, useCurrentUserData, useFirebase, UserData} from "../controllers";
+import {cacheDatas, toDateString, useCurrentUserData, useFirebase, UserData} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import {styles} from "../components/styles";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
@@ -64,12 +64,22 @@ const useStylesChat = theme => makeStyles({
     label: {
         color: "#000000"
     },
+    text: {
+        marginBottom: theme.spacing(1),
+    },
+    timestamp: {
+        bottom: theme.spacing(.5),
+        color: "#888888",
+        fontSize: theme.spacing(1.25),
+        position: "absolute",
+        right: theme.spacing(1),
+    },
     transparent: {
         opacity: 0,
-    }
+    },
 });
 
-function ChatItem(props) {
+const ChatItem = React.forwardRef((props, ref) => {
     const {data, chatMeta = {}, classes, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const firebase = useFirebase();
@@ -102,8 +112,7 @@ function ChatItem(props) {
     const isItemOut = currentUserData.id === data.uid;
 
     if (!authorData) return null;
-    return <React.Fragment>
-        <Card className={[
+    return <Card ref={ref} className={[
             classes.card,
             classesChat.chatItem,
             isItemOut ? classesChat.chatItemOut : classesChat.chatItemIn
@@ -125,12 +134,12 @@ function ChatItem(props) {
                         {toDateString(data.created)}
                     </Grid>*/}
                 </Grid>}
-                subheader={<React.Fragment>
-                    {textComponent(data.text)}
-                </React.Fragment>}
+                subheader={<Grid container className={classesChat.text}>
+                    <Grid item xs>{textComponent(data.text)}</Grid>
+                    <Grid className={classesChat.timestamp}>{toDateString(data.created)}</Grid>
+                </Grid>}
             />
         </Card>
-    </React.Fragment>
 
     return <li>
         {isNew && <InView
@@ -146,7 +155,7 @@ function ChatItem(props) {
             style={{display: "none"}}
         ><b>NEW</b></InView>}
     </li>
-}
+})
 
 ChatItem.propTypes = {
     onSwipe: PropTypes.func

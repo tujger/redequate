@@ -1,4 +1,4 @@
-import React, {useMemo} from "react";
+import React from "react";
 import {notifySnackbar} from "../controllers";
 import ProgressView from "./ProgressView";
 import {connect, useDispatch} from "react-redux";
@@ -7,6 +7,7 @@ import PropTypes from "prop-types";
 
 const LazyListComponent_ = ({
                                 cache = false,
+                                containerRef,
                                 disableProgress,
                                 itemComponent = (item) => <div key={item.key}>
                                     {item.key} - {JSON.stringify(item.value)}
@@ -21,8 +22,7 @@ const LazyListComponent_ = ({
                                 reverse = false,
                                 random,
                                 ["LazyListComponent_" + cache]: cacheData = {},
-                                ...
-                                    props
+                                ...props
                             }) => {
         const dispatch = useDispatch();
         const [state, setState] = React.useState({});
@@ -41,11 +41,18 @@ const LazyListComponent_ = ({
 
         const ascending = pagination.order === "asc";
 
+        const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+        const isOnScreen = node => {
+            const rect = node.getBoundingClientRect();
+            return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+        }
+
         const loadNextPart = () => {
             if (finished) {
                 return;
             }
             if (!disableProgress) dispatch(ProgressView.SHOW);
+
             return pagination.next()
                 .then(async newitems => {
                     newitems = newitems.map(async (item, index) => {
@@ -103,6 +110,13 @@ const LazyListComponent_ = ({
                     }
                 })
                 .finally(() => {
+                    if (reverse && containerRef && containerRef.current) {
+                        const before = containerRef.current.scrollHeight;
+                        setTimeout(() => {
+                            const after = containerRef.current.scrollHeight;
+                            containerRef.current.scrollBy({left: 0, top: after - before});
+                        }, 200)
+                    }
                     if (!disableProgress) dispatch(ProgressView.HIDE);
                 });
         };
@@ -110,6 +124,7 @@ const LazyListComponent_ = ({
         React.useEffect(() => {
             const liveAddRef = live ? pagination.ref.limitToLast(1) : null;
             const liveRemoveRef = live ? pagination.ref : null;
+
             if (live) {
                 let lastKey = null;
                 liveAddRef.on("child_added", async snapshot => {
@@ -165,8 +180,9 @@ const LazyListComponent_ = ({
             }));
         }, [random, givenPagination.term])
 
-        // if (!placeholder) throw new Error("Placeholder is not defined");
-
+        if (reverse === true && !containerRef) {
+            throw new Error("[Lazy] 'containerRef' must be defined due to reverse=true")
+        }
         if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
 
         return <React.Fragment>

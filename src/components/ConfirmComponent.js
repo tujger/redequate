@@ -25,7 +25,7 @@ const styles = theme => ({
     },
 });
 
-const ConfirmComponent = ({onConfirm, onCancel, confirmLabel = "OK", cancelLabel = "Cancel", critical, modal, classes, children, message, title}) => {
+const ConfirmComponent = ({onConfirm, onCancel, confirmLabel = "OK", cancelLabel = confirmLabel ? "Cancel" : "Close", critical, modal = false, classes, children, message, title}) => {
     const history = useHistory();
 
     React.useEffect(() => {
@@ -50,8 +50,8 @@ const ConfirmComponent = ({onConfirm, onCancel, confirmLabel = "OK", cancelLabel
             {children}
         </DialogContent>
         <DialogActions>
-            <Button aria-label={cancelLabel} onClick={onCancel} color={"secondary"}>{cancelLabel}</Button>
-            <Button aria-label={confirmLabel} onClick={onConfirm} color={"secondary"} style={critical ? {color: "#ff0000"} : {}} autoFocus>{confirmLabel}</Button>
+            <Button aria-label={cancelLabel} autoFocus={!confirmLabel} onClick={onCancel} color={"secondary"}>{cancelLabel}</Button>
+            {confirmLabel && <Button aria-label={confirmLabel} onClick={onConfirm} color={"secondary"} style={critical ? {color: "#ff0000"} : {}} autoFocus>{confirmLabel}</Button>}
         </DialogActions>
     </Dialog>
 }

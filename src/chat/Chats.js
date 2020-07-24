@@ -1,12 +1,9 @@
 import React from "react";
-import {connect} from "react-redux";
+import {useDispatch} from "react-redux";
 import {withStyles} from "@material-ui/core";
-import {useTheme} from "@material-ui/styles";
-import {makeStyles} from "@material-ui/core/styles";
 import {useCurrentUserData, useFirebase} from "../controllers";
 import LazyListComponent from "../components/LazyListComponent";
 import Pagination from "../controllers/FirebasePagination";
-import {Layout} from "../controllers/Store";
 import ChatsItem from "./ChatsItem";
 import {ChatsDaemon} from "./ChatsDaemon";
 
@@ -34,17 +31,18 @@ const Chats = (props) => {
         userComponent = userData => userData.name,
         textComponent = text => text,
     } = props;
-    const firebase = useFirebase();
     const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
+    const firebase = useFirebase();
 
     React.useEffect(() => {
+        dispatch({type: LazyListComponent.RESET, cache: "chats"});
         // eslint-disable-next-line
     }, []);
 
     if (daemon) return <ChatsDaemon {...props}/>
 
-    return <React.Fragment>
-        <LazyListComponent
+    return <LazyListComponent
             cache={"chats"}
             pagination={() => new Pagination({
                 child: "timestamp",
@@ -66,7 +64,6 @@ const Chats = (props) => {
             noItemsComponent={<ChatsItem label={"No chats found"}/>}
             placeholder={<ChatsItem skeleton/>}
         />
-    </React.Fragment>
 };
 
 export default withStyles(styles)(Chats);

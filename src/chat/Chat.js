@@ -98,8 +98,8 @@ const InputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) => {
                     if (event.key === "Enter"/* && event.ctrlKey*/) {
                         handleSend();
                     } else if (event && event.key === "Escape") {
-                        handleChange({target:{value:""}});
-                        setState(state => ({...state, value:""}));
+                        handleChange({target: {value: ""}});
+                        setState(state => ({...state, value: ""}));
                     }
                 }}
                 value={value}
@@ -131,6 +131,7 @@ const Chat = (props) => {
     const [state, setState] = React.useState({});
     const {userData, chatMeta} = state;
     const inputRef = React.useRef();
+    const containerRef = React.useRef();
 
     const db = firebase.database();
 
@@ -147,15 +148,17 @@ const Chat = (props) => {
             text: value,
             uid,
         })
+            .then(() => console.log(chatMeta.asString))
             .then(() => chatMeta.update())
             .then(() => chatMeta.updateVisit(currentUserData.id))
+            .then(() => dispatch({type: LazyListComponent.RESET, cache: "chats"}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
     }
 
     React.useEffect(() => {
         dispatch(ProgressView.SHOW);
-        dispatch({type: LazyListComponent.RESET});
+        dispatch({type: LazyListComponent.RESET, cache: "chats"});
         const chatMeta = ChatMeta(firebase).mix(currentUserData.id, id);
         const userData = cacheDatas.put(id, UserData(firebase));
         chatMeta.fetch()
@@ -178,7 +181,7 @@ const Chat = (props) => {
             classes={null}
             id={id}
             userComponent={userComponent}
-            userData={userData} />
+            userData={userData}/>
         {/*{chatMeta.lastVisit(currentUserData.id) && <Grid container>
             Last message to me: {new Date(chatMeta.lastVisit(currentUserData.id)).toLocaleString()}
         </Grid>}
@@ -192,19 +195,22 @@ const Chat = (props) => {
             Last message from me: {new Date(chatMeta.lastVisit(id)).toLocaleString()}
         </Grid>}*/}
 
-        <Grid container className={classes.messagesList} direction={"column"} wrap={"nowrap"}>
-            <ChatList chatKey={chatKey} chatMeta={chatMeta} textComponent={textComponent}/>
+        <Grid container className={classes.messagesList} direction={"column"} ref={containerRef} wrap={"nowrap"}>
+            <ChatList
+                chatKey={chatKey}
+                chatMeta={chatMeta}
+                containerRef={containerRef}
+                textComponent={textComponent}/>
         </Grid>
         <InView
             onChange={(inView) => {
                 if (inputRef.current) {
                     if (inView) {
                         const tokens = classes.messageboxFixed.split(/\s+/);
-                        for(let token of tokens) {
+                        for (let token of tokens) {
                             inputRef.current.classList.remove(token);
                         }
-                    }
-                    else {
+                    } else {
                         const sizes = inputRef.current.getBoundingClientRect();
                         inputRef.current.style.left = sizes.left + "px";
                         inputRef.current.style.width = sizes.width + "px";

@@ -4,7 +4,9 @@ export const ChatMeta = (firebase) => {
     const indexRef = firebase.database().ref("_chats");
     const chatsRef = firebase.database().ref("chats");
 
-    const fetchUids = () => (_meta || {}).members || {};
+    const fetchUids = () => {
+        return (_meta || {}).members || {};
+    }
 
     const _body = {
         get asString() {
@@ -79,6 +81,10 @@ export const ChatMeta = (firebase) => {
         uidOtherThan: uid => {
             for(let userId in fetchUids()) {
                 if(userId === uid) continue;
+                if(userId) return userId;
+            }
+            for(let userId of _id.split("_")) {
+                if(userId === uid) continue;
                 return userId;
             }
         },
@@ -116,6 +122,7 @@ export const ChatMeta = (firebase) => {
             _onlineRef = null;
         },
         updateVisit: async uid => {
+            if(!_persisted) return;
             return await chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
         },
         watch: onChange => {
