@@ -5,6 +5,8 @@ import {Link, useHistory} from "react-router-dom";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import {usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
+import LazyListComponent from "../components/LazyListComponent";
+import {useDispatch} from "react-redux";
 
 const styles = theme => ({
     avatar: {
@@ -44,13 +46,25 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
     const pages = usePages();
     const [state, setState] = React.useState({});
     const {online, timestamp} = state;
+    const dispatch = useDispatch();
 
     React.useEffect(() => {
-        chatMeta.watchOnline({uid: userData.id, onChange: ({online, timestamp}) => {
+        chatMeta.watch(({removed}) => {
+            if(removed) {
+                dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                history.goBack();
+            }
+        });
+        chatMeta.watchOnline({uid: userData.id, onChange: ({online, timestamp, removed}) => {
+            if(removed) {
+                dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                history.goBack();
+            }
             setState(state => ({...state, online, timestamp}));
         }});
         return () => {
             chatMeta.unwatchOnline();
+            chatMeta.unwatch();
         }
         // eslint-disable-next-line
     }, [id]);

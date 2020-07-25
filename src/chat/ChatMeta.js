@@ -1,6 +1,8 @@
+import {cacheDatas} from "../controllers";
+
 const ONLINE_TIMEOUT = 60000;
 export const ChatMeta = (firebase) => {
-    let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef;
+    let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef;
     const indexRef = firebase.database().ref("_chats");
     const chatsRef = firebase.database().ref("chats");
 
@@ -105,6 +107,7 @@ export const ChatMeta = (firebase) => {
                 }
             }
             const updatesIndex = {};
+            console.warn("UPDATE", )
             updatesIndex[`${tokens[0]}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
             updatesIndex[`${tokens[1]}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
 
@@ -116,12 +119,15 @@ export const ChatMeta = (firebase) => {
             _watchRef = null;
             _visitRef && _visitRef._listener && _visitRef.off("child_changed", _visitRef._listener);
             _visitRef = null;
+            _removeRef && _removeRef._listener && _removeRef.off("child_removed", _removeRef._listener);
+            _removeRef = null;
         },
         unwatchOnline: () => {
             _onlineRef && _onlineRef._listener && _onlineRef.off("value", _onlineRef._listener);
             _onlineRef = null;
         },
         updateVisit: async uid => {
+            console.log(_body.asString);
             if(!_persisted) return;
             return await chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
         },
@@ -138,12 +144,19 @@ export const ChatMeta = (firebase) => {
             const visitListener = snapshot => {
                 onChange({uid: snapshot.key, timestamp: snapshot.val(), type: "visit"});
             }
+            const removeListener = snapshot => {
+                _persisted = false;
+                onChange({removed: true, timestamp: snapshot.val(), type: "remove"});
+            }
             _watchRef = chatsRef.child(_id).orderByChild("created").limitToLast(1);
             _watchRef.on("child_added", watchListener);
             _watchRef._listener = watchListener;
             _visitRef = chatsRef.child(_id).child("!meta/members").orderByKey();
             _visitRef.on("child_changed", visitListener);
             _visitRef._listener = visitListener;
+            _removeRef = chatsRef.child(_id).child("!meta/members");
+            _removeRef.on("child_removed", removeListener);
+            _removeRef._listener = removeListener;
         },
         watchOnline: ({uid, timeout = ONLINE_TIMEOUT, onChange}) => {
             let task;

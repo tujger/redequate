@@ -20,6 +20,8 @@ import {
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import LazyListComponent from "../components/LazyListComponent";
+import {useDispatch} from "react-redux";
 
 const useStylesChat = theme => makeStyles({
     cardActions: {
@@ -110,6 +112,7 @@ const useStylesChat = theme => makeStyles({
 function ChatsItem(props) {
     const {id, classes, skeleton, label, userComponent, textComponent} = props;
     const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
@@ -134,10 +137,14 @@ function ChatsItem(props) {
                 return cacheDatas.put(uid, UserData(firebase)).fetch(uid, [UserData.IMAGE, UserData.NAME]);
             })
             .then(userData => {
-                chatMeta.watch((change) => {
+                chatMeta.watch(({removed}) => {
+                    if(removed) {
+                        dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                        history.goBack();
+                    }
                     setState(state => ({...state, chatMeta}));
                 });
-                chatMeta.watchOnline({uid: userData.id, onChange: ({online, timestamp}) => {
+                chatMeta.watchOnline({uid: userData.id, onChange: ({online, timestamp, removed}) => {
                     setState(state => ({...state, online, timestamp}));
                 }});
                 setState({...state, userData, chatMeta});

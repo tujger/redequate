@@ -45,11 +45,11 @@ Store.propTypes = {
 export default Store;
 
 export const refreshAll = store => {
-    console.warn("REFRESH")
+    console.warn("[Store] refresh")
     store.dispatch({type: Layout.REFRESH});
-    store.dispatch({type: MenuBadge.RESET});
     store.dispatch({type: LazyListComponent.RESET});
     store.dispatch({type: LazyListComponent.RESET, cache: "chats"});
+    store.dispatch({type: MenuBadge.RESET});
     // store.dispatch(ResponsiveDrawerLayout.REFRESH);
     // store.dispatch(TopBottomMenuLayout.REFRESH);
     // store.dispatch(BottomToolbarLayout.REFRESH);

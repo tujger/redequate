@@ -53,6 +53,10 @@ const LazyListComponent_ = ({
             }
             if (!disableProgress) dispatch(ProgressView.SHOW);
 
+            let before = null;
+            if (reverse && containerRef && containerRef.current) {
+                before = containerRef.current.scrollHeight;
+            }
             return pagination.next()
                 .then(async newitems => {
                     newitems = newitems.map(async (item, index) => {
@@ -111,11 +115,10 @@ const LazyListComponent_ = ({
                 })
                 .finally(() => {
                     if (reverse && containerRef && containerRef.current) {
-                        const before = containerRef.current.scrollHeight;
-                        setTimeout(() => {
+                        // setTimeout(() => {
                             const after = containerRef.current.scrollHeight;
                             containerRef.current.scrollBy({left: 0, top: after - before});
-                        }, 200)
+                        // }, 200)
                     }
                     if (!disableProgress) dispatch(ProgressView.HIDE);
                 });
