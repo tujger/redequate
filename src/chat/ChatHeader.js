@@ -3,7 +3,7 @@ import Grid from "@material-ui/core/Grid";
 import {IconButton, withStyles} from "@material-ui/core";
 import {Link, useHistory} from "react-router-dom";
 import BackIcon from "@material-ui/icons/ArrowBack";
-import {usePages} from "../controllers";
+import {toDateString, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import LazyListComponent from "../components/LazyListComponent";
 import {useDispatch} from "react-redux";
@@ -50,18 +50,20 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
 
     React.useEffect(() => {
         chatMeta.watch(({removed}) => {
-            if(removed) {
+            if (removed) {
                 dispatch({type: LazyListComponent.RESET, cache: "chats"});
                 history.goBack();
             }
         });
-        chatMeta.watchOnline({uid: userData.id, onChange: ({online, timestamp, removed}) => {
-            if(removed) {
-                dispatch({type: LazyListComponent.RESET, cache: "chats"});
-                history.goBack();
+        chatMeta.watchOnline({
+            uid: userData.id, onChange: ({online, timestamp, removed}) => {
+                if (removed) {
+                    dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                    history.goBack();
+                }
+                setState(state => ({...state, online, timestamp}));
             }
-            setState(state => ({...state, online, timestamp}));
-        }});
+        });
         return () => {
             chatMeta.unwatchOnline();
             chatMeta.unwatch();
@@ -70,27 +72,28 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
     }, [id]);
 
     return <Grid container alignItems={"center"}>
-            <IconButton onClick={() => history.goBack()}>
-                <BackIcon/>
-            </IconButton>
-            <Grid item><Link to={pages.user.route + userData.id} className={classes.nounderline}>
-                <AvatarView
-                    className={classes.avatar}
-                    image={userData.image}
-                    initials={userData.initials}
-                    verified={true}
-                /></Link></Grid>
-            <Grid item className={classes.userName}>
-                {userComponent(userData)}
-            </Grid>
-            <Grid item>
-                <div className={[classes.presence, online ? classes.online : classes.offline].join(" ")} title={online ? "Online" : "Offline"}/>
-            </Grid>
-            {timestamp > 0 && <Grid
-                item className={classes.visitDate}>
-                {new Date(timestamp).toLocaleString()}
-            </Grid>}
+        <IconButton onClick={() => history.goBack()}>
+            <BackIcon/>
+        </IconButton>
+        <Grid item><Link to={pages.user.route + userData.id} className={classes.nounderline}>
+            <AvatarView
+                className={classes.avatar}
+                image={userData.image}
+                initials={userData.initials}
+                verified={true}
+            /></Link></Grid>
+        <Grid item className={classes.userName}>
+            {userComponent(userData)}
         </Grid>
+        <Grid item>
+            <div className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
+                 title={online ? "Online" : "Offline"}/>
+        </Grid>
+        {timestamp > 0 && <Grid
+            item className={classes.visitDate}>
+            {toDateString(timestamp)}
+        </Grid>}
+    </Grid>
 };
 
 export default withStyles(styles)(ChatHeader);

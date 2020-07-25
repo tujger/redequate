@@ -114,12 +114,12 @@ const LazyListComponent_ = ({
                     }
                 })
                 .finally(() => {
-                    if (reverse && containerRef && containerRef.current) {
-                        // setTimeout(() => {
+                    setTimeout(() => {
+                        if (reverse && containerRef && containerRef.current) {
                             const after = containerRef.current.scrollHeight;
                             containerRef.current.scrollBy({left: 0, top: after - before});
-                        // }, 200)
-                    }
+                        }
+                    }, 100)
                     if (!disableProgress) dispatch(ProgressView.HIDE);
                 });
         };

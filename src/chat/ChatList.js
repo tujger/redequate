@@ -19,7 +19,7 @@ const ChatList = ({chatKey, chatMeta, containerRef, textComponent}) => {
         reverse
         pagination={() => new Pagination({
             ref: firebase.database().ref("chats").child(chatKey),
-            size: 20,
+            size: 100,
             order: "desc"
         })}
         placeholder={<ChatItem skeleton/>}

@@ -7,6 +7,7 @@ import moment from "moment";
 import {Button, ButtonGroup, Grid} from "@material-ui/core";
 import {ChevronLeft as LeftIcon, ChevronRight as RightIcon,} from "@material-ui/icons";
 import DatePicker from "react-datepicker-t";
+import "react-datepicker-t/dist/react-datepicker.css";
 
 export const DateP = props => {
     const {classes, style, range, date, start, end, onSelect, extras = true, onClockClick, onDateClick, onExtraSelect} = props;
