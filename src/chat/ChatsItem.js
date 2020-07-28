@@ -159,7 +159,7 @@ function ChatsItem(props) {
 
     if (skeleton) return <ItemPlaceholderComponent classes={classes}/>;
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>;
-    if (!chatMeta) return null;
+    if (!chatMeta || !userData) return null;
 
     const isNew = fetchIsNew() && !shown;
 

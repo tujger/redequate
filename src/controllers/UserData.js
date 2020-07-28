@@ -47,7 +47,7 @@ export const watchUserChanged = (firebase, store) => {
 };
 
 export const logoutUser = (firebase, store) => async () => {
-    window.localStorage.removeItem("notification-token");
+    // window.localStorage.removeItem("notification-token");
     await firebase.auth().signOut();
     console.log("[UserData] logout", currentUserDataInstance);
     currentUserDataInstance = new UserData();

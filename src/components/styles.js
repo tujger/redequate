@@ -24,6 +24,9 @@ export const styles = theme => ({
         paddingRight: theme.spacing(2),
         paddingTop: theme.spacing(1.5),
     },
+    cardHeaderWithLabel: {
+        alignItems: "center",
+    },
     cardActions: {
         display: "flex",
         justifyContent: "flex-end",
@@ -96,5 +99,8 @@ export const styles = theme => ({
     },
     hidden: {
         visibility: "hidden",
+    },
+    nounderline: {
+        textDecoration: "none",
     }
 });

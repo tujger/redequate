@@ -8,6 +8,7 @@ import IconButton from "@material-ui/core/IconButton";
 import Input from "@material-ui/core/Input";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
+import Grid from "@material-ui/core/Grid";
 import Toolbar from "@material-ui/core/Toolbar";
 import Hidden from "@material-ui/core/Hidden";
 import {useTheme} from "@material-ui/core";
@@ -33,7 +34,7 @@ const Users = (props) => {
 
     const handleFilter = evt => {
         dispatch({type: LazyListComponent.RESET});
-        dispatch({type: Users.MODE, filter: evt.target.value});
+        dispatch({type: Users.MODE, mode, filter: evt.target.value});
     }
 
     React.useEffect(() => {
@@ -115,7 +116,7 @@ const Users = (props) => {
                     endAdornment={filter ? <IconButton
                         children={<Clear/>}
                         onClick={() => {
-                            dispatch({type: Users.MODE, filter: ""});
+                            dispatch({type: Users.MODE, mode, filter: ""});
                             dispatch({type: LazyListComponent.RESET});
                         }}
                         size={"small"}
@@ -130,23 +131,25 @@ const Users = (props) => {
         </Hidden>
         <Hidden mdUp>
             <Toolbar disableGutters style={{justifyContent: "space-between"}}>
-                {mode === "all" && <Input
-                    autoFocus
-                    color={"secondary"}
-                    endAdornment={filter ? <IconButton
-                        children={<Clear/>}
-                        onClick={() => {
-                            dispatch({type: Users.MODE, filter: ""});
-                            dispatch({type: LazyListComponent.RESET});
-                        }}
-                        size={"small"}
-                        title={"Clear"}
-                        variant={"text"}
-                    /> : null}
-                    onChange={handleFilter}
-                    placeholder={"Search"}
-                    value={filter}
-                />}
+                <Grid item xs>
+                    {mode === "all" && <Input
+                        autoFocus
+                        color={"secondary"}
+                        endAdornment={filter ? <IconButton
+                            children={<Clear/>}
+                            onClick={() => {
+                                dispatch({type: Users.MODE, filter: ""});
+                                dispatch({type: LazyListComponent.RESET});
+                            }}
+                            size={"small"}
+                            title={"Clear"}
+                            variant={"text"}
+                        /> : null}
+                        onChange={handleFilter}
+                        placeholder={"Search"}
+                        value={filter}
+                    />}
+                </Grid>
                 <Select
                     color={"secondary"}
                     onChange={handleMode}
@@ -211,7 +214,7 @@ const Users = (props) => {
             itemComponent={<UserComponent pages={pages} store={store} firebase={firebase}/>}
         />*/}
         {invitation && <Link to={pages.adduser.route}
-              key={pages.adduser.route}>
+                             key={pages.adduser.route}>
             <Fab aria-label={"Add"} color={"secondary"}
                  style={{zIndex: 1, right: theme.spacing(2), bottom: theme.spacing(2), position: "fixed"}}>
                 <AddIcon/>
@@ -313,6 +316,9 @@ function UsersPagination({firebase, start}) {
         },
         get started() {
             return started
+        },
+        get term() {
+            return `users|${start}`;
         },
         next: next,
         reset: reset,

@@ -106,7 +106,7 @@ const ChatItem = React.forwardRef((props, ref) => {
         // eslint-disable-next-line
     }, []);
 
-    if (skeleton) return <ItemPlaceholderComponent classes={{...classes, ...classesChat}}/>;
+    if (skeleton) return <ItemPlaceholderComponent classes={{avatar: classesChat.avatar}}/>;
 
     const isNew = fetchIsNew() && !shown;
     const isItemOut = currentUserData.id === data.uid;

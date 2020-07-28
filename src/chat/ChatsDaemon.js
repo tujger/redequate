@@ -34,6 +34,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
         });
         const newMessage = (data, chatId) => {
             if (data.uid === currentUserData.id) return;
+            if(!document.hasFocus()) return;
             const userData = cacheDatas.put(data.uid, UserData(firebase));
             userData.fetch(data.uid, [UserData.NAME])
                 .then(() => notifySnackbar({

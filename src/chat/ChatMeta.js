@@ -107,7 +107,6 @@ export const ChatMeta = (firebase) => {
                 }
             }
             const updatesIndex = {};
-            console.warn("UPDATE", )
             updatesIndex[`${tokens[0]}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
             updatesIndex[`${tokens[1]}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
 
@@ -127,7 +126,6 @@ export const ChatMeta = (firebase) => {
             _onlineRef = null;
         },
         updateVisit: async uid => {
-            console.log(_body.asString);
             if(!_persisted) return;
             return await chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
         },

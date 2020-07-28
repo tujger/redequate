@@ -8,6 +8,7 @@ export {default as Profile, publicFields} from "./Profile";
 export {default as RestorePassword} from "./RestorePassword";
 export {default as Search, SearchContent, SearchModal, SearchToolbar} from "./Search";
 export {default as Service} from "./admin/Service";
+export {default as Errors} from "./admin/Errors";
 export {default as Signup} from "./Signup";
 export {default as SimplePage} from "./SimplePage";
 export {default as Users} from "./admin/Users";

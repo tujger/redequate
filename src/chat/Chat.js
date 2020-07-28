@@ -23,14 +23,14 @@ import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
 
 const styles = theme => ({
-    avatar: {
+    /*avatar: {
         height: theme.spacing(4),
         marginRight: theme.spacing(1),
         width: theme.spacing(4),
-    },
-    inputbox: {
+    },*/
+    /*inputbox: {
         flex: "1 auto",
-    },
+    },*/
     messagebox: {
         backgroundColor: theme.palette.background.default,
         flexWrap: "nowrap",
@@ -60,14 +60,6 @@ const styles = theme => ({
         [theme.breakpoints.up("lg")]: {
             height: window.innerHeight - theme.spacing(16) - theme.spacing(16),
         },
-    },
-    nounderline: {
-        textDecoration: "none"
-    },
-    userName: {
-        color: "inherit",
-        fontWeight: "bolder",
-        textDecoration: "none",
     },
 });
 
@@ -199,6 +191,7 @@ const Chat = (props) => {
             <ChatList
                 chatKey={chatKey}
                 chatMeta={chatMeta}
+                classes={null}
                 containerRef={containerRef}
                 textComponent={textComponent}/>
         </Grid>

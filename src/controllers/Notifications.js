@@ -3,9 +3,9 @@ import ReactDOM from "react-dom";
 import {useSnackbar} from "notistack";
 import RichSnackbarContent from "../components/RichSnackbarContent";
 import PropTypes from "prop-types";
-import {useTechnicalInfo} from "./General";
-import {matchPath, useHistory} from "react-router-dom";
-import {firebaseMessaging} from "./Firebase";
+import {fetchDeviceId, useFirebase, useTechnicalInfo} from "./General";
+import {useHistory} from "react-router-dom";
+import {useCurrentUserData} from "./UserData";
 
 export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {
     try {
@@ -19,24 +19,32 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                 throw new Error("Notifications denied");
             }
         }).then(token => {
-            localStorage.setItem("notification-token", token);
             messaging.onMessage(payload => {
-                console.log("message", payload, payload.data);
-                const options = {
-                    ...payload.notification,
-                    from: payload.from,
-                    image: payload.notification.icon,
-                    priority: payload.priority,
-                };
-                console.log("options", options);
-                (onMessage || notifySnackbar)(options);
+                console.log("[Notifications] incoming", payload);
+                if(onMessage) {
+                    onMessage({
+                        ...payload.notification,
+                        from: payload.from,
+                        image: payload.notification.icon,
+                        priority: payload.priority,
+                    })
+                } else {
+                    notifySnackbar({
+                        from: payload.from,
+                        image: payload.notification.image,
+                        priority: payload.priority,
+                        id: payload.notification.tag,
+                        title: payload.notification.body,
+                    })
+                }
                 //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
                 //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
                 // registration.showNotification(payload.notification.title, payload.notification);
             });
             resolve(token);
         }).catch(error => {
-            (onMessage || notifySnackbar)({title: error.message});
+            if(onMessage) onMessage({title: error.message});
+            else notifySnackbar(error);
             reject(error);
         });
         /*      console.log(messaging);
@@ -182,7 +190,7 @@ export const notifySnackbar = props => {
     }
     const error = props.error || props;
     if (error && (error instanceof Error || error.constructor.name === "FirebaseStorageError")) {
-        console.error("Error", props);
+        console.error(props);
         snackbar.payload = {
             ...props,
             ...error,
@@ -210,5 +218,6 @@ notifySnackbar.propTypes = {
 };
 
 export const hasNotifications = () => {
-    return Boolean(localStorage.getItem("notification-token"));
+    return false;
+    // return Boolean(localStorage.getItem("notification-token"));
 };

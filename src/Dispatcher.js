@@ -34,6 +34,24 @@ const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayo
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+const origin = console.error;
+console.error = (...args) => {
+    origin.call(this, ...args);
+    if(args.length > 1) return;
+    return;
+    try {
+        const firebase = useFirebase();
+        const currentUserData = useCurrentUserData();
+        firebase.database().ref("errors").push({
+            error: args[0].stack || args[0],
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            uid: currentUserData.id
+        });
+    } catch(error) {
+        origin.call(this, error);
+    }
+}
+
 let oldWidth;
 const Dispatcher = (props) => {
     const {firebaseConfig, name, theme = defaultTheme, reducers, pages, width} = props;
@@ -67,6 +85,7 @@ const Dispatcher = (props) => {
                 if (savedUserData && savedUserData.userData) {
                     const userData = new UserData(firebase).fromJSON(savedUserData.userData);
                     await userData.fetch([UserData.ROLE]);
+                    await userData.fetchPrivate(fetchDeviceId());
                     useCurrentUserData(userData);
                     cacheDatas.put(userData.id, userData);
                 }

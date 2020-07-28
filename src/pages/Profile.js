@@ -1,5 +1,7 @@
 import React from "react";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Tooltip from "@material-ui/core/Tooltip";
+import Fab from "@material-ui/core/Fab";
 import Checkbox from "@material-ui/core/Checkbox";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -13,15 +15,16 @@ import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
-import {useFirebase, usePages, useStore} from "../controllers/General";
+import {useFirebase, usePages, useStore, useTechnicalInfo} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
-import {matchRole, TextMaskPhone} from "../controllers";
+import {fetchCallable, matchRole, TextMaskPhone} from "../controllers";
 import withStyles from "@material-ui/styles/withStyles";
 import LoadingComponent from "../components/LoadingComponent";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
+import NotificationIcon from "@material-ui/icons/NotificationsActive";
 import EditIcon from "@material-ui/icons/Edit";
 import PlacesTextField from "../components/PlacesTextField";
 import InfoIcon from "@material-ui/icons/Info";
@@ -29,12 +32,22 @@ import RoleIcon from "@material-ui/icons/Security";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
+import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
 
 const styles = theme => ({
     root: {},
     buttons: {},
     edit: {},
     logout: {},
+    fab: {
+        backgroundColor: theme.palette.secondary.main,
+        color: theme.palette.getContrastText(theme.palette.secondary.main),
+        zIndex: 1,
+        "&:hover": {
+            backgroundColor: theme.palette.secondary.main,
+            color: theme.palette.getContrastText(theme.palette.secondary.main),
+        }
+    },
 });
 
 export const publicFields = [
@@ -94,8 +107,8 @@ export const adminFields = [
 ]
 
 const Profile = ({
-                     notifications = true, publicFields = publicFields, privateFields, classes, ProfileComponent =
-        <ProfileComponentOrigin/>
+                     publicFields = publicFields, privateFields, classes, ProfileComponent =
+        <ProfileComponentOrigin/>, ...rest
                  }) => {
     const [state, setState] = React.useState({disabled: false});
     const {userData, disabled} = state;
@@ -105,44 +118,30 @@ const Profile = ({
     const firebase = useFirebase();
     const dispatch = useDispatch();
     const currentUserData = useCurrentUserData();
+    const technicalInfo = useTechnicalInfo();
     const {id} = useParams();
+
+    const handleNotification = () => {
+        dispatch(ProgressView.SHOW);
+        console.log("[Profile] test notification to", userData.id);
+        fetchCallable(firebase)("sendNotification", {
+            uid: userData.id,
+            title: technicalInfo.name,
+            body: `Hello ${userData.name}, how are you?`,
+            priority: "high",
+        })
+            .then(() => notifySnackbar("Sent to " + userData.name))
+            .catch(notifySnackbar)
+            .finally(() => dispatch(ProgressView.HIDE));
+    }
+
+    const handleChatClick = () => {
+        history.push(pages.chat.route + userData.id);
+    }
 
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
     const isSameUser = userData && currentUserData && userData.id === currentUserData.id;
     const isEditAllowed = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
-
-    const handleNotifications = (evt, enable) => {
-        dispatch(ProgressView.SHOW);
-        setState({...state, disabled: true});
-        if (enable) {
-            setupReceivingNotifications(firebase)
-                // .then(token => fetchUserPrivate(firebase)(currentUserData.id)
-                //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: token}))
-                .then(result => {
-                    notifySnackbar({title: "Subscribed"});
-                    dispatch(ProgressView.HIDE);
-                    setState({...state, disabled: false});
-                })
-                .catch(notifySnackbar)
-                .finally(() => {
-                    dispatch(ProgressView.HIDE);
-                    setState({...state, disabled: false});
-                });
-        } else {
-            // fetchUserPrivate(firebase)(currentUserData.id)
-            //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: null}))
-            //     .then(result => {
-            localStorage.removeItem("notification-token");
-            notifySnackbar({title: "Unsubscribed"});
-            firebase.messaging().deleteToken()
-            // })
-            // .catch(notifySnackbar)
-            // .finally(() => {
-            dispatch(ProgressView.HIDE);
-            setState({...state, disabled: false});
-            // });
-        }
-    };
 
     React.useEffect(() => {
         if (!currentUserData) {
@@ -173,7 +172,8 @@ const Profile = ({
                     <BackIcon/>
                 </IconButton>
             </Grid>
-            {isEditAllowed && <React.Fragment><Grid item xs></Grid>
+            <Grid item xs/>
+            {isEditAllowed && <React.Fragment>
                 <Grid item>
                     <IconButton aria-label={"Edit"} onClick={() => {
                         history.push(isSameUser ? pages.editprofile.route : pages.edituser.route + userData.id)
@@ -181,10 +181,16 @@ const Profile = ({
                         <EditIcon/>
                     </IconButton>
                 </Grid></React.Fragment>}
+            {isCurrentUserAdmin && <React.Fragment>
+                <Grid item>
+                    <IconButton aria-label={"Edit"} onClick={handleNotification}>
+                        <NotificationIcon/>
+                    </IconButton>
+                </Grid></React.Fragment>}
         </Grid>
         {userData.disabled && <Grid container>
             <InputLabel error>
-                <h4>Your account is suspended. Please contact with administrator.</h4>
+                <h4>Account is suspended. Please contact with administrator.</h4>
             </InputLabel>
         </Grid>}
         {!userData.verified && <Grid container>
@@ -198,16 +204,6 @@ const Profile = ({
             publicFields={publicFields}
             userData={userData}
         />
-        {isSameUser && isEditAllowed && notifications && <Grid container><FormControlLabel
-            control={
-                <Checkbox
-                    disabled={disabled}
-                    checked={hasNotifications()}
-                    onChange={handleNotifications}
-                />
-            }
-            label={"Get notifications"}
-        /></Grid>}
         <ButtonGroup
             className={classes.buttons}
             color={"secondary"}
@@ -217,34 +213,32 @@ const Profile = ({
         >
             {isSameUser && <Button
                 className={classes.logout}
-                color={"secondary"}
                 onClick={() => {
                     logoutUser(firebase, store)()
                         .then(() => refreshAll(store));
                 }}
-                variant={"contained"}
             >
                 Logout
             </Button>}
             {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
-                color={"secondary"}
                 className={classes.resendVerification}
                 onClick={() => {
-                    refreshAll(store);
                     dispatch(ProgressView.SHOW);
                     console.log(currentUserData)
                     sendVerificationEmail(firebase)
-                        .then(() => {
-                            refreshAll(store);
-                        }).catch(error => {
-                        refreshAll(store);
-                    });
+                        .catch(notifySnackbar)
+                        .finally(() => dispatch(ProgressView.HIDE));
                 }}
-                variant={"contained"}
             >
                 Resend verification
             </Button>}
         </ButtonGroup>
+        {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <Tooltip title={"Start chat"}>
+            <Fab aria-label={"Start chat"} color={"primary"} className={classes.fab}
+                 onClick={handleChatClick}>
+                <ChatIcon/>
+            </Fab>
+        </Tooltip>}
     </div>;
 };
 

@@ -7,7 +7,8 @@ import Box from "@material-ui/core/Box";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
-import InputLabel from "@material-ui/core/InputLabel";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
 import Grid from "@material-ui/core/Grid";
 import InfoIcon from "@material-ui/icons/Info";
 import ClearIcon from "@material-ui/icons/Clear";
@@ -22,7 +23,15 @@ import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import {cacheDatas, notifySnackbar, useFirebase, usePages, useStore} from "../controllers";
+import {
+    cacheDatas, fetchDeviceId,
+    hasNotifications,
+    notifySnackbar,
+    setupReceivingNotifications,
+    useFirebase,
+    usePages,
+    useStore
+} from "../controllers";
 import {adminFields, publicFields} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";
@@ -65,7 +74,7 @@ const styles = theme => ({
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
-    let {classes, uploadable = true, publicFields: publicFieldsGiven = publicFields, adminFields:adminFieldsGiven = adminFields, privateFields} = props;
+    let {classes, uploadable = true, notifications = true, publicFields: publicFieldsGiven = publicFields, adminFields:adminFieldsGiven = adminFields, privateFields} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -75,8 +84,7 @@ const EditProfile = (props) => {
     const {id} = useParams();
     const [state, setState] = useState({
         error: null,
-        disabledUser: false,
-        disabledAdmin: false,
+        disabled: false,
     });
 
     const {state: givenState = {}} = history.location;
@@ -84,14 +92,13 @@ const EditProfile = (props) => {
 
     // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
-    const {image, disabledUser, disabledAdmin, requiredError = [], uniqueError = [], userData, deleteOpen, role} = state;
-    const disabled = disabledUser || disabledAdmin;
+    const {image, disabled, requiredError = [], uniqueError = [], userData, deleteOpen, role} = state;
     uppy = state.uppy;
     file = state.file;
     snapshot = state.snapshot;
 
     const onerror = error => {
-        setState({...state, disabledUser: false});
+        setState({...state, disabled: false});
         notifySnackbar(error);
         refreshAll(store);
     };
@@ -139,10 +146,10 @@ const EditProfile = (props) => {
         if (!requiredFilled()) return;
 
         dispatch(ProgressView.SHOW);
-        setState(state => ({...state, requiredError: [], uniqueError: [], disabledUser: true}));
+        setState(state => ({...state, requiredError: [], uniqueError: [], disabled: true}));
         const unique = await checkUnique();
         if (!unique) {
-            setState(state => ({...state, disabledUser: false}));
+            setState(state => ({...state, disabled: false}));
             dispatch(ProgressView.HIDE);
             return;
         }
@@ -196,7 +203,7 @@ const EditProfile = (props) => {
             .catch(onerror)
             .finally(() => {
                 dispatch(ProgressView.HIDE);
-                setState({...state, disabledUser: false, uppy: null})
+                setState({...state, disabled: false, uppy: null})
             });
     };
 
@@ -251,8 +258,8 @@ const EditProfile = (props) => {
             })
     }
 
-    const handleAdminAction = disabledAdmin => {
-        setState({...state, disabledAdmin})
+    const handleAdminAction = disabled => {
+        setState({...state, disabled})
     }
 
     const onClose = () => {
@@ -270,6 +277,47 @@ const EditProfile = (props) => {
         }
     }
 
+    const handleNotifications = (evt, enable) => {
+        dispatch(ProgressView.SHOW);
+        setState({...state, disabled: true});
+        if (enable) {
+            setupReceivingNotifications(firebase)
+                // .then(token => fetchUserPrivate(firebase)(currentUserData.id)
+                //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: token}))
+                .then(token => {
+                    userData.private[fetchDeviceId()].notification = token;
+                    return userData.savePrivate();
+                })
+                .then(() => notifySnackbar("Subscribed"))
+                .catch(notifySnackbar)
+                .finally(() => {
+                    dispatch(ProgressView.HIDE);
+                    setState({...state, disabled: false});
+                });
+        } else {
+            userData.private[fetchDeviceId()].notification = null;
+            userData.savePrivate()
+                .then(() => {
+                    firebase.messaging().deleteToken()
+                    notifySnackbar("Unsubscribed");
+                })
+                .catch(notifySnackbar)
+                .finally(() => {
+                    dispatch(ProgressView.HIDE);
+                    setState({...state, disabled: false});
+                });
+            // fetchUserPrivate(firebase)(currentUserData.id)
+            //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: null}))
+            //     .then(result => {
+            // localStorage.removeItem("notification-token");
+            notifySnackbar({title: "Unsubscribed"});
+            // });
+        }
+    };
+
+    const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
+
+
     React.useEffect(() => {
         dispatch(ProgressView.SHOW);
         let userData;
@@ -279,6 +327,7 @@ const EditProfile = (props) => {
             userData = cacheDatas.put(id, UserData(firebase).create(id));
         }
         userData.fetch([UserData.PUBLIC, UserData.ROLE])
+            .then(() => isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))
             .then(() => setState({...state, userData, ...userData.public, role: userData.role}))
             .catch(error => {
                 notifySnackbar(error);
@@ -297,8 +346,10 @@ const EditProfile = (props) => {
         return <Redirect to={pages.editself.route}/>
     }
 
-    const isAdminAllowed = !disabledUser && matchRole([Role.ADMIN], currentUserData);
+    const isAdminAllowed = !disabled && matchRole([Role.ADMIN], currentUserData);
+    const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const fields = [...publicFieldsGiven, ...(isAdminAllowed ? adminFieldsGiven : [])];
+    const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && isEditAllowed && notifications;
 
     return <Grid container spacing={1}>
         <Box m={0.5}/>
@@ -358,7 +409,7 @@ const EditProfile = (props) => {
                                 ? editComponent({
                                     ...editComponent.props,
                                     color: "secondary",
-                                    disabled: disabled,
+                                    disabled,
                                     error: missedRequired || uniqueRequired,
                                     fullWidth: true,
                                     helperText: missedRequired ? "Please enter value"
@@ -389,6 +440,19 @@ const EditProfile = (props) => {
                     </Grid>
                 </React.Fragment>
             })}
+            {isNotificationsAvailable && <React.Fragment>
+                <Box m={1}/>
+                <Grid container><FormControlLabel
+                control={
+                    <Switch
+                        disabled={disabled}
+                        checked={Boolean(userData.private[fetchDeviceId()] && userData.private[fetchDeviceId()].notification)}
+                        onChange={handleNotifications}
+                    />
+                }
+                label={"Get notifications"}
+                /></Grid>
+            </React.Fragment>}
             <Box m={2}/>
             <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth
                          disabled={disabled}>

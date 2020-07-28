@@ -9,6 +9,7 @@ import LazyListComponent, {lazyListComponentReducer} from "../components/LazyLis
 import {topMenuReducer} from "../components/TopMenu";
 import {dispatcherRoutedBodyReducer} from "../Dispatcher";
 import {chatsCounterReducer} from "../chat";
+import {errorsReducer} from "../pages/admin/Errors";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -16,6 +17,7 @@ const Store = (name, reducers) => {
         chatsCounterReducer,
         currentUserData,
         dispatcherRoutedBodyReducer,
+        errors: errorsReducer,
         lazyListComponentReducer,
         mainAppbarReducer,
         progressView: progressViewReducer,
