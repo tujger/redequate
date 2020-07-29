@@ -29,10 +29,9 @@ const styles = theme => ({
         lineHeight: "initial",
         padding: theme.spacing(0.5),
     }
-
 });
 
-const MenuSection = withStyles(styles)(props => {
+const MenuSection = props => {
     const {items, classes} = props;
     const [first, ...menu] = items;
     const currentUserData = useCurrentUserData();
@@ -43,28 +42,32 @@ const MenuSection = withStyles(styles)(props => {
         <Typography>
             {first.label}
         </Typography>
-        <MenuList>
-            {menu.map((item, index) => {
-                if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
-                return <Link to={item.route}
-                             key={index}
-                             className={classes.label}>
-                    <MenuItem button key={item.id}
-                              className={classes.menuitem}>
-                        {item.label}
-                    </MenuItem>
-                </Link>
-            })}
-        </MenuList>
+        <MenuList>{menu.map((item, index) => {
+            if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
+            return <Link
+                className={classes.label}
+                key={index}
+                to={item.route}
+            >
+                <MenuItem
+                    button
+                    children={item.label}
+                    className={classes.menuitem}
+                    key={item.id}
+                />
+            </Link>
+        })}</MenuList>
     </Grid>
-});
-
+};
 
 const TopMenu = withStyles(styles)(props => {
     const {items, classes, className} = props;
-    return <Grid container className={["MuiBottomMenu-root", classes.bottommenu, className].join(" ")}
-                 justify={"center"}>
-        {items.map((list, index) => <MenuSection key={index} items={list}/>)}
+    return <Grid
+        className={["MuiBottomMenu-root", classes.bottommenu, className].join(" ")}
+        container
+        justify={"center"}
+    >
+        {items.map((list, index) => <MenuSection key={index} classes={classes} items={list}/>)}
     </Grid>
 });
 

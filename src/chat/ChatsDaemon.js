@@ -51,8 +51,8 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 if (meta.lastVisit(currentUserData.id) > meta.timestamp) return;
                 if (chatsWithNewMessages.indexOf(id) >= 0) return;
                 const match = matchPath(window.location.pathname, {
-                    path: pages.chat._route,
                     exact: true,
+                    path: pages.chat._route,
                     strict: true
                 });
                 if (match && match.params
@@ -91,7 +91,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                     return installListenerIfNeeded(snapshot.key, true);
                 });
             })
-            .catch(error => console.log(error));
+            .catch(console.error);
 
         return () => {
             daemonNew && daemonNew.off();
@@ -102,5 +102,6 @@ export const ChatsDaemon = ({clearText = text => text}) => {
         }
         // eslint-disable-next-line
     }, []);
+    console.log("[ChatsDaemon] installed")
     return null;
 }

@@ -1,5 +1,3 @@
-import {cacheDatas} from "../controllers";
-
 const ONLINE_TIMEOUT = 60000;
 export const ChatMeta = (firebase) => {
     let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef;
@@ -54,13 +52,6 @@ export const ChatMeta = (firebase) => {
                         resolve();
                     })
             }));
-            // tasks.push(new Promise((resolve, reject) => {
-            //     indexRef.child(tokens[1]).child(_id).once("value")
-            //         .then(snapshot => {
-            //             _users[tokens[1]] = snapshot.val();
-            //             resolve();
-            //         })
-            // }));
             tasks.push(new Promise((resolve, reject) => {
                 chatsRef.child(_id).orderByChild("created").limitToLast(1).once("value", snap => {
                     snap.forEach(snapshot => {

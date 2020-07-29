@@ -67,14 +67,13 @@ function MainAppbar(props) {
             {onHamburgerClick ?
                 <Hidden mdUp implementation="css">
                     <IconButton
-                        color="inherit"
                         aria-label="open drawer"
+                        color="inherit"
                         edge="start"
                         onClick={onHamburgerClick}>
                         <Menu/>
-                        {badge && badge !== 0 ? <span
-                            className={classes.badge}/> : null}
-{/*
+                        {badge && badge !== 0 ? <span className={classes.badge}/> : null}
+                        {/*
                         {badge && badge !== 0 ? <span
                             className={[classes.badge, badge !== true ? classes.badgeWithText : ""].join(" ")}>{badge !== true ? badge : ""}</span> : null}
 */}
@@ -84,9 +83,9 @@ function MainAppbar(props) {
             <Typography variant="h6" noWrap className={classes.title}>
                 <Switch>
                     {itemsFlat.map((item, index) => <Route
+                            exact={true}
                             key={index}
                             path={item._route}
-                            exact={true}
                         >
                             <Link to={pages.home.route} className={classes.label}>
                                 {logo ? <div className={classes.logo}>
@@ -108,9 +107,13 @@ function MainAppbar(props) {
             </Typography>
             {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
             {currentUserData.id && <Link to={pages.profile.route} className={classes.label}>
-                <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>
+                <AvatarView
+                    admin={currentRole(currentUserData) === Role.ADMIN}
+                    image={currentUserData.image}
+                    initials={currentUserData.initials}
+                    verified={currentUserData.verified}
+                />
             </Link>}
-            {/*{user && user.key && <AvatarView user={user} onclick={onavatarclick}/>}*/}
         </Toolbar>
         <ProgressView/>
     </AppBar>
@@ -125,13 +128,13 @@ MainAppbar.propTypes = {
 MainAppbar.LABEL = "mainAppBar_Label";
 
 export const mainAppbarReducer = (state = {label: "", badge: 0}, action) => {
-    switch(action.type) {
+    switch (action.type) {
         case MainAppbar.LABEL:
             return {...state, label: action.label};
-        case MenuBadge.INCREASE:
-            return {...state, badge: (state.badge || 0) + 1};
         case MenuBadge.DECREASE:
             return {...state, badge: (state.badge || 0) - 1};
+        case MenuBadge.INCREASE:
+            return {...state, badge: (state.badge || 0) + 1};
         case MenuBadge.RESET:
             return {...state, badge: 0};
         default:

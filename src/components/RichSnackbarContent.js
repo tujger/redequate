@@ -13,40 +13,36 @@ import Button from "@material-ui/core/Button";
 import CloseIcon from "@material-ui/icons/Close";
 import ExpandIcon from "@material-ui/icons/ExpandMore";
 import CollapseIcon from "@material-ui/icons/ExpandLess";
+import {withStyles} from "@material-ui/core";
 
-const useStyles = makeStyles(theme => {
-    try {
-        return {
-            error: {
-                backgroundColor: theme.palette.error.main,
-                color: theme.palette.error.contrastText,
-            },
-            info: {
-                backgroundColor: theme.palette.info.main,
-                color: theme.palette.info.contrastText,
-            },
-            success: {
-                backgroundColor: theme.palette.success.main,
-                color: theme.palette.success.contrastText,
-            },
-            warning: {
-                backgroundColor: theme.palette.warning.dark,
-                color: theme.palette.warning.contrastText,
-            }
-        }
-    } catch (e) {
-        console.error(e);
+const styles = theme => ({
+    error: {
+        backgroundColor: theme.palette.error.main,
+        color: theme.palette.error.contrastText,
+    },
+    info: {
+        backgroundColor: theme.palette.info.main,
+        color: theme.palette.info.contrastText,
+    },
+    success: {
+        backgroundColor: theme.palette.success.main,
+        color: theme.palette.success.contrastText,
+    },
+    warning: {
+        backgroundColor: theme.palette.warning.dark,
+        color: theme.palette.warning.contrastText,
+    },
+
+    snackbarContent: {
     }
 });
 
-const RichSnackbarContent = React.forwardRef((props, ref) => {
-    const {body, buttonLabel, closeAfterClick = true, closeHandler, image, message, onButtonClick, onClick, variant = "default"} = props;
+const RichSnackbarContent = withStyles(styles)(React.forwardRef((props, ref) => {
+    const {body, buttonLabel, classes, closeAfterClick = true, closeHandler, image, message, onButtonClick, onClick, variant = "default"} = props;
     const [state, setState] = React.useState({expanded: false});
     const {expanded} = state;
 
     try {
-        const classes = useStyles();
-
         const customAction = (color) => <Button aria-label={buttonLabel}
             size="small" aria-label="close" color={color}
             onClickCapture={((evt) => {
@@ -90,10 +86,10 @@ const RichSnackbarContent = React.forwardRef((props, ref) => {
         const cardExists = body || image;
         const cardShown = cardExists && expanded;
 
-        return <div ref={ref}>
+        return <div className={classes.snackbarContent} ref={ref}>
             <SnackbarContent
                 message={message}
-                className={classes[variant]}
+                className={["", classes[variant]].join(" ")}
                 action={<React.Fragment>
                     {buttonLabel && !cardShown ? customAction("inherit") : null}
                     {cardExists ? (cardShown ? collapseAction() : expandAction()) : null}
@@ -127,7 +123,7 @@ const RichSnackbarContent = React.forwardRef((props, ref) => {
     } catch (e) {
         console.error(e);
     }
-});
+}));
 
 RichSnackbarContent.propTypes = {
     body: PropTypes.any,

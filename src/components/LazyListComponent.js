@@ -5,25 +5,26 @@ import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
 import PropTypes from "prop-types";
 
-const LazyListComponent_ = ({
-                                cache = false,
-                                containerRef,
-                                disableProgress,
-                                itemComponent = (item) => <div key={item.key}>
-                                    {item.key} - {JSON.stringify(item.value)}
-                                </div>,
-                                itemTransform = item => item,
-                                live = false,
-                                noItemsComponent,
-                                pageTransform = items => items,
-                                pagination: givenPagination,
-                                placeholder,
-                                placeholders = 1,
-                                reverse = false,
-                                random,
-                                ["LazyListComponent_" + cache]: cacheData = {},
-                                ...props
-                            }) => {
+const LazyListComponent_ =
+    ({
+         cache = false,
+         containerRef,
+         disableProgress,
+         itemComponent = (item) => <div key={item.key}>
+             {item.key} - {JSON.stringify(item.value)}
+         </div>,
+         itemTransform = item => item,
+         live = false,
+         noItemsComponent,
+         pageTransform = items => items,
+         pagination: givenPagination,
+         placeholder,
+         placeholders = 1,
+         random,
+         reverse = false,
+         ["LazyListComponent_" + cache]: cacheData = {},
+         ...props
+     }) => {
         const dispatch = useDispatch();
         const [state, setState] = React.useState({});
         const {
@@ -40,12 +41,6 @@ const LazyListComponent_ = ({
         } = state;
 
         const ascending = pagination.order === "asc";
-
-        const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-        const isOnScreen = node => {
-            const rect = node.getBoundingClientRect();
-            return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
-        }
 
         const loadNextPart = () => {
             if (finished) {
@@ -67,7 +62,6 @@ const LazyListComponent_ = ({
                             }
                         } catch (error) {
                             console.error(error);
-                            // notifySnackbar(error);
                         }
                     });
                     return Promise.all(newitems);
@@ -75,20 +69,20 @@ const LazyListComponent_ = ({
                 .then(newitems => pageTransform(newitems))
                 .then(newitems => newitems.filter(item => item !== undefined))
                 .then(newitems => ({
-                        finished: pagination.finished,
-                        items: ascending ? (reverse ? [...newitems.reverse(), ...items] : [...items, ...newitems])
-                            : (reverse ? [...newitems, ...items] : [...items, ...newitems.reverse()]),
-                        // items: (ascending === !reverse) ? [...items, ...newitems] : [...newitems.reverse(), ...items],
-                        loading: false,
                         ascending,
+                        finished: pagination.finished,
+                        items: ascending
+                            ? (reverse ? [...newitems.reverse(), ...items] : [...items, ...newitems])
+                            : (reverse ? [...newitems, ...items] : [...items, ...newitems.reverse()]),
+                        loading: false,
                         pagination,
                         reverse
                     })
                 )
                 .catch(error => {
                     notifySnackbar({
-                        error: error,
                         buttonLabel: "Refresh",
+                        error: error,
                         onButtonClick: () => dispatch({type: LazyListComponent.RESET, cache}),
                     });
                     return {
@@ -128,44 +122,48 @@ const LazyListComponent_ = ({
             const liveAddRef = live ? pagination.ref.limitToLast(1) : null;
             const liveRemoveRef = live ? pagination.ref : null;
 
-            if (live) {
-                let lastKey = null;
-                liveAddRef.on("child_added", async snapshot => {
-                    if (!lastKey && !pagination.finished) {
-                        lastKey = snapshot.key;
-                        return;
-                    }
-                    if (lastKey && lastKey > snapshot.key) return;
+            let lastKey = null;
+            const liveAddListener = async snapshot => {
+                if (!lastKey && !pagination.finished) {
                     lastKey = snapshot.key;
-                    const item = {key: snapshot.key, value: snapshot.val()};
-                    const index = Math.random();
-                    let transformed = await itemTransform(item, index);
-                    if (transformed) {
-                        transformed = itemComponent(transformed, index);
-                    }
-                    if (cache) {
-                        dispatch({
-                            type: LazyListComponent.ADD,
-                            cache: cache,
-                            item: transformed
-                        });
-                    } else {
-                        setState(state => ({
-                            ...state,
-                            items: ascending
-                                ? (reverse ? [transformed, ...state.items] : [...state.items, transformed])
-                                : (reverse ? [...state.items, transformed] : [transformed, ...state.items])
-                        }))
-                    }
-                });
-                liveRemoveRef.on("child_removed", async snapshot => {
-                    if (cache) dispatch({type: LazyListComponent.RESET, cache});
-                    else dispatch({type: LazyListComponent.RESET});
-                });
+                    return;
+                }
+                if (lastKey && lastKey > snapshot.key) return;
+                lastKey = snapshot.key;
+                const item = {key: snapshot.key, value: snapshot.val()};
+                const index = Math.random();
+                let transformed = await itemTransform(item, index);
+                if (transformed) {
+                    transformed = itemComponent(transformed, index);
+                }
+                if (cache) {
+                    dispatch({
+                        type: LazyListComponent.ADD,
+                        cache: cache,
+                        item: transformed
+                    });
+                } else {
+                    setState(state => ({
+                        ...state,
+                        items: ascending
+                            ? (reverse ? [transformed, ...state.items] : [...state.items, transformed])
+                            : (reverse ? [...state.items, transformed] : [transformed, ...state.items])
+                    }))
+                }
+            }
+
+            const liveRemoveListener = async snapshot => {
+                if (cache) dispatch({type: LazyListComponent.RESET, cache});
+                else dispatch({type: LazyListComponent.RESET});
+            }
+
+            if (live) {
+                liveAddRef.on("child_added", liveAddListener);
+                liveRemoveRef.on("child_removed", liveRemoveListener);
             }
             return () => {
-                liveAddRef && liveAddRef.off();
-                liveRemoveRef && liveRemoveRef.off();
+                liveAddRef && liveAddRef.off("child_added", liveAddListener);
+                liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
                 if (!disableProgress) dispatch(ProgressView.HIDE);
             }
             // eslint-disable-next-line
@@ -206,7 +204,7 @@ const LazyListComponent_ = ({
                 placeholder={placeholder}
                 placeholders={placeholders}
             />}
-            <Scroller live={live} placeholder={placeholder}/>
+            <Scroller live={live && ascending} placeholder={placeholder}/>
             {!items.length && finished && noItemsComponent}
         </React.Fragment>
     }
@@ -225,11 +223,11 @@ const Scroller = ({live, placeholder}) => {
                 setScrolled(true);
             }
         };
-        window.addEventListener("wheel", handleScroll, true)
         window.addEventListener("touchmove", handleScroll, true)
+        window.addEventListener("wheel", handleScroll, true)
         return () => {
-            window.removeEventListener("wheel", handleScroll);
             window.removeEventListener("touchmove", handleScroll);
+            window.removeEventListener("wheel", handleScroll);
         }
     }, [])
 
@@ -327,6 +325,7 @@ LazyListComponent.propTypes = {
     itemTransform: PropTypes.func,
     live: PropTypes.bool,
     noItemsComponent: PropTypes.object,
+    pageTransform: PropTypes.func,
     pagination: PropTypes.oneOfType([
         PropTypes.object,
         PropTypes.func]).isRequired,

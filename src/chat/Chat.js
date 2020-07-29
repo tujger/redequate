@@ -157,7 +157,10 @@ const Chat = (props) => {
             .then(() => userData.fetch(id, [UserData.IMAGE, UserData.NAME]))
             .then(() => chatMeta.updateVisit(currentUserData.id))
             .then(() => setState(state => ({...state, chatMeta, userData})))
-            .catch(notifySnackbar)
+            .catch(error => {
+                notifySnackbar(error);
+                history.goBack();
+            })
             .finally(() => dispatch(ProgressView.HIDE));
         return () => {
             chatMeta.updateVisit(currentUserData.id);
@@ -166,28 +169,21 @@ const Chat = (props) => {
     }, [id]);
 
     if (!chatMeta || !userData) return <LoadingComponent/>
-
     return <React.Fragment>
         <ChatHeader
             chatMeta={chatMeta}
             classes={null}
             id={id}
             userComponent={userComponent}
-            userData={userData}/>
-        {/*{chatMeta.lastVisit(currentUserData.id) && <Grid container>
-            Last message to me: {new Date(chatMeta.lastVisit(currentUserData.id)).toLocaleString()}
-        </Grid>}
-        {chatMeta.lastVisit(currentUserData.id) && <Grid container>
-            My last visit: {new Date(chatMeta.lastVisit(currentUserData.id)).toLocaleString()}
-        </Grid>}
-        {chatMeta.lastVisit(id) && <Grid container>
-            {userData.name}'s last visit: {new Date(chatMeta.lastVisit(id)).toLocaleString()}
-        </Grid>}
-        {chatMeta.lastVisit(id) && <Grid container>
-            Last message from me: {new Date(chatMeta.lastVisit(id)).toLocaleString()}
-        </Grid>}*/}
-
-        <Grid container className={classes.messagesList} direction={"column"} ref={containerRef} wrap={"nowrap"}>
+            userData={userData}
+        />
+        <Grid
+            className={classes.messagesList}
+            container
+            direction={"column"}
+            ref={containerRef}
+            wrap={"nowrap"}
+        >
             <ChatList
                 chatKey={chatKey}
                 chatMeta={chatMeta}
@@ -196,6 +192,7 @@ const Chat = (props) => {
                 textComponent={textComponent}/>
         </Grid>
         <InView
+            children={<div/>}
             onChange={(inView) => {
                 if (inputRef.current) {
                     if (inView) {
@@ -211,7 +208,6 @@ const Chat = (props) => {
                     }
                 }
             }}
-            children={<div/>}
         />
         <InputBox inputComponent={inputComponent} ref={inputRef} onSend={handleSend} classes={classes}/>
     </React.Fragment>

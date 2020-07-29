@@ -10,36 +10,40 @@ import withStyles from "@material-ui/styles/withStyles";
 const ItemPlaceholderComponent = ({classes, label}) => (
     <Card className={[classes.card].join(" ")}>
         <CardHeader
-            avatar={label ? <AvatarView initials={label} className={classes.avatar} verified={true}/>
+            avatar={label ? <AvatarView
+                    className={classes.avatar}
+                    initials={label}
+                    verified={true}
+                />
                 : <Skeleton
                     animation={label ? false : "wave"}
-                    variant="circle"
                     className={classes.avatar}
+                    variant="circle"
                 />}
             className={[classes.cardHeader, label ? classes.cardHeaderWithLabel : ""].join(" ")}
             subheader={!label && <React.Fragment>
                 <Skeleton
                     animation="wave"
                     height={12}
-                    width="100%"
                     style={{marginBottom: 6}}
+                    width="100%"
                 />
                 <Grid
                     className={classes.cardActions}>
                     <Skeleton
                         animation={false}
-                        variant="rect"
-                        width="100%"
                         height={10}
                         style={{marginBottom: 6}}
+                        variant="rect"
+                        width="100%"
                     />
                 </Grid>
             </React.Fragment>}
             title={label ? label : <Skeleton
                 animation="wave"
                 height={12}
-                width="40%"
                 style={{marginBottom: 6}}
+                width="40%"
             />}
         />
     </Card>

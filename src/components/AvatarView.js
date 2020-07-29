@@ -24,21 +24,22 @@ const useStyles = bgcolor => makeStyles(theme => ({
     }
 }));
 
-const AvatarView = ({admin, className, image, initials, onclick, verified}) => {
-    const calculateBgColor = () => {
-        if(image || !initials) return null;
-        let hash = 0
-        for (let i = 0; i < initials.length; i++) {
-            hash = initials.charCodeAt(i) + ((hash << 5) - hash);
-            hash = hash & hash;
-        }
-        let rgb = [0, 0, 0];
-        for (let i = 0; i < 3; i++) {
-            rgb[i] = (hash >> (i * 8)) & 255;
-        }
-        return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+const calculateBgColor = (image, initials) => {
+    if(image || !initials) return null;
+    let hash = 0
+    for (let i = 0; i < initials.length; i++) {
+        hash = initials.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash;
     }
-    const bgcolor = calculateBgColor();
+    let rgb = [0, 0, 0];
+    for (let i = 0; i < 3; i++) {
+        rgb[i] = (hash >> (i * 8)) & 255;
+    }
+    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+}
+
+const AvatarView = ({admin, className, image, icon, initials, onclick, verified}) => {
+    const bgcolor = calculateBgColor(image, initials);
     const classes = useStyles(bgcolor)();
 
     return <Avatar
@@ -47,7 +48,8 @@ const AvatarView = ({admin, className, image, initials, onclick, verified}) => {
         title={verified ? (admin ? "Administrator" : null) : "Not verified"}
     >
         {image && <img src={image} alt="" className={classes.avatarImage}/>}
-        {!image && initials && initials.substr(0, 2).toUpperCase()}
+        {!image && icon}
+        {!image && !icon && initials && initials.substr(0, 2).toUpperCase()}
     </Avatar>
 }
 

@@ -48,7 +48,7 @@ export const createTheme = ({colors}) => createMuiTheme({
             root: {
                 width: "100%"
             }
-        }
+        },
     },
     palette: {
         background: {

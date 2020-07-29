@@ -154,7 +154,9 @@ export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
             const id1 = action.page.route;
             return {...state, badge: {...state.badge, [id1]: (state.badge[id1] || 0) - 1}};
         case MenuBadge.RESET:
-            return {...state, badge: {}};
+            const id2 = action.page && action.page.route;
+            if(id2) return {...state, badge: {...state.badge, [id2]: 0}};
+            else return {...state, badge: {}};
         default:
             return state;
     }

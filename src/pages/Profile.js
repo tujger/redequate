@@ -181,12 +181,12 @@ const Profile = ({
                         <EditIcon/>
                     </IconButton>
                 </Grid></React.Fragment>}
-            {isCurrentUserAdmin && <React.Fragment>
+            {/*{isCurrentUserAdmin && <React.Fragment>
                 <Grid item>
                     <IconButton aria-label={"Edit"} onClick={handleNotification}>
                         <NotificationIcon/>
                     </IconButton>
-                </Grid></React.Fragment>}
+                </Grid></React.Fragment>}*/}
         </Grid>
         {userData.disabled && <Grid container>
             <InputLabel error>

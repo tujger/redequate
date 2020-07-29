@@ -1,18 +1,16 @@
 import React from 'react';
-import {useTheme, withStyles,} from "@material-ui/core";
+import {withStyles,} from "@material-ui/core";
 import PropTypes from 'prop-types';
 import {InView} from "react-intersection-observer";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
-import Skeleton from "@material-ui/lab/Skeleton";
 import Grid from "@material-ui/core/Grid";
-import {makeStyles} from "@material-ui/core/styles";
 import {cacheDatas, toDateString, useCurrentUserData, useFirebase, UserData} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import {styles} from "../components/styles";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 
-const useStylesChat = theme => makeStyles({
+const stylesChat = theme => ({
     cardActions: {
         bottom: 0,
         display: "flex",
@@ -85,8 +83,6 @@ const ChatItem = React.forwardRef((props, ref) => {
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
     const {shown, authorData} = state;
-    const theme = useTheme();
-    const classesChat = useStylesChat(theme)();
 
     const fetchIsNew = () => {
         const latestVisit = chatMeta[currentUserData.id + "_visit"] || 0;
@@ -106,7 +102,7 @@ const ChatItem = React.forwardRef((props, ref) => {
         // eslint-disable-next-line
     }, []);
 
-    if (skeleton) return <ItemPlaceholderComponent classes={{avatar: classesChat.avatar}}/>;
+    if (skeleton) return <ItemPlaceholderComponent classes={{avatar: classes.avatar}}/>;
 
     const isNew = fetchIsNew() && !shown;
     const isItemOut = currentUserData.id === data.uid;
@@ -114,13 +110,18 @@ const ChatItem = React.forwardRef((props, ref) => {
     if (!authorData) return null;
     return <Card ref={ref} className={[
             classes.card,
-            classesChat.chatItem,
-            isItemOut ? classesChat.chatItemOut : classesChat.chatItemIn
+        classes.chatItem,
+            isItemOut ? classes.chatItemOut : classes.chatItemIn
         ].join(" ")}>
             <CardHeader
                 classes={{content: classes.cardContent}}
                 className={[classes.cardHeader, classes.post].join(" ")}
-                avatar={<AvatarView className={classesChat.avatar} image={authorData.image} initials={authorData.initials} verified={true}/>}
+                avatar={<AvatarView
+                    className={classes.avatar}
+                    image={authorData.image}
+                    initials={authorData.initials}
+                    verified={true}
+                />}
                 title={<Grid container>
                     {/*<Grid item className={classes.userName}>
                         <UserNameComponent
@@ -134,9 +135,9 @@ const ChatItem = React.forwardRef((props, ref) => {
                         {toDateString(data.created)}
                     </Grid>*/}
                 </Grid>}
-                subheader={<Grid container className={classesChat.text}>
+                subheader={<Grid container className={classes.text}>
                     <Grid item xs>{textComponent(data.text)}</Grid>
-                    <Grid className={classesChat.timestamp}>{toDateString(data.created)}</Grid>
+                    <Grid className={classes.timestamp}>{toDateString(data.created)}</Grid>
                 </Grid>}
             />
         </Card>
@@ -161,4 +162,7 @@ ChatItem.propTypes = {
     onSwipe: PropTypes.func
 };
 
-export default withStyles(styles)(ChatItem);
+export default withStyles((theme) => ({
+    ...styles(theme),
+    ...stylesChat(theme),
+}))(ChatItem);

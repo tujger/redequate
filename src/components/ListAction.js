@@ -38,26 +38,29 @@ const listAction = props => {
     const classes = useStyles({color: color});
 
     return {
+        action: action,
+        ask: ask,
+        askTitle: toolbarButtonLabel,
         itemButton: props => (<div
             className={classes.itemAction}
             style={props.style || ""}>
             <IconButton
+                children={itemButtonIcon}
                 className={[classes.button, props.selected ? classes.buttonSelected : ""].join(" ")}
-                children={itemButtonIcon}/>
+            />
             <span
+                children={itemButtonLabel}
                 className={[classes.label, props.selected ? classes.labelSelected : ""].join(" ")}
-                children={itemButtonLabel}/>
+            />
         </div>),
-        action: action,
         toolbarButton: (<Tooltip title={toolbarButtonLabel}>
             <IconButton
+                children={toolbarButtonIcon}
                 size={"medium"}
                 // onClick={action}
                 // onContextMenu={() => {console.log("oncontextmenu")}}
-                children={toolbarButtonIcon}/>
+            />
         </Tooltip>),
-        askTitle: toolbarButtonLabel,
-        ask: ask,
         variant: variant,
     }
 };

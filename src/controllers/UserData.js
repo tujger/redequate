@@ -292,10 +292,11 @@ export const UserData = function (firebase) {
             let fetchUpdated = options.indexOf(UserData.UPDATED) >= 0;
             let force = options.indexOf(UserData.FORCE) >= 0;
 
+            let _loading = {..._loaded};
             let ref = firebase.database().ref("users_public");
 
             const tasks = [];
-            if ((!_loaded.public || force) && (fetchPublic || fetchFull)) {
+            if ((!_loading.public || force) && (fetchPublic || fetchFull)) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id))
                         .then(snap => {
@@ -306,68 +307,79 @@ export const UserData = function (firebase) {
                                 _id = undefined;
                                 reject(new Error("User not found"));
                             }
+                            _loaded = {..._loaded, public: true, email: true, name: true, updated: true, image: true};
                             // console.warn("[UserData] public", _id, _public);
                             resolve(_public);
                         }).catch(reject);
                 }))
-                _loaded = {..._loaded, public: true, email: true, name: true, updated: true, image: true};
+                _loading = {..._loading, public: true, email: true, name: true, updated: true, image: true};
             }
             if (fetchPrivate === true || fetchFull) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(firebase.database().ref("users_private").child(_id))
                         .then(snap => {
                             _private = {..._private, ...(snap.val() || {})};
+                            _loaded = {..._loaded, private: true};
                             // console.warn("[UserData] private", _id, _private);
                             resolve(_private);
                         }).catch(reject);
                 }))
-                _loaded = {..._loaded, private: true};
+                _loading = {..._loading, private: true};
             }
-            if ((!_loaded.role || force) && (fetchRole || fetchFull)) {
+            if ((!_loading.role || force) && (fetchRole || fetchFull)) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(firebase.database().ref("roles").child(_id))
                         .then(snap => {
                             _role = snap.val();
                             // console.warn("[UserData] role", _id, _role);
+                            _loaded = {..._loaded, role: true};
                             resolve(_role);
                         }).catch(reject);
                 }))
-                _loaded = {..._loaded, role: true};
+                _loading = {..._loading, role: true};
             }
-            if ((!_loaded.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
+            if ((!_loading.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("updated"))
                         .then(snap => {
                             _public.updated = snap.val();
                             // console.warn("[UserData] updated", _id, _public.updated);
+                            _loaded = {..._loaded, updated: true};
                             resolve(_public.updated);
                         }).catch(reject);
                 }))
-                _loaded = {..._loaded, updated: true};
+                _loading = {..._loading, updated: true};
             }
-            if ((!_loaded.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
+            if ((!_loading.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("name"))
                         .then(snap => {
                             _public.name = snap.val();
+                            if(!_public.name) {
+                                cacheDatas.remove(_id);
+                                _id = undefined;
+                                reject(new Error("User not found"));
+                            }
                             // console.warn("[UserData] name", _id, _public.name);
+                            _loaded = {..._loaded, name: true};
                             resolve(_public.name);
                         }).catch(reject);
                 }))
-                _loaded = {..._loaded, name: true};
+                _loading = {..._loading, name: true};
             }
-            if ((!_loaded.image || force) && (fetchImage && !fetchFull && !fetchPublic)) {
+            if ((!_loading.image || force) && (fetchImage && !fetchFull && !fetchPublic)) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("image"))
                         .then(snap => {
                             _public.image = snap.val();
                             // console.warn("[UserData] image", _id, _public.image);
+                            _loaded = {..._loaded, image: true};
                             resolve(_public.image);
                         }).catch(reject);
                 }))
-                _loaded = {..._loaded, image: true};
+                _loading = {..._loading, image: true};
             }
-            if ((!_loaded.email || force) && (fetchEmail && !fetchFull && !fetchPublic)) {
+            if ((!_loading.email || force) && (fetchEmail && !fetchFull && !fetchPublic)) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("email"))
                         .then(snap => {
@@ -378,11 +390,12 @@ export const UserData = function (firebase) {
                                 _id = undefined;
                                 reject(new Error("User not found"));
                             }
+                            _loaded = {..._loaded, email: true};
                             // console.warn("[UserData] email", _id, _public.email);
                             resolve(_public.email);
                         }).catch(reject);
                 }))
-                _loaded = {..._loaded, email: true};
+                _loading = {..._loading, email: true};
             }
             const res = await Promise.all(tasks);
             // if(res.length) console.warn("[UserData] resolved", res);

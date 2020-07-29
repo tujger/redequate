@@ -41,19 +41,8 @@ const Chats = (props) => {
     }, []);
 
     if (daemon) return <ChatsDaemon {...props}/>
-
     return <LazyListComponent
             cache={"chats"}
-            pagination={() => new Pagination({
-                child: "timestamp",
-                order: "desc",
-                ref: firebase.database().ref("_chats").child(currentUserData.id),
-                size: 10,
-            })}
-            itemTransform={async item => {
-                if (item.key === "!meta") return null;
-                return item
-            }}
             itemComponent={item => <ChatsItem
                 id={item.key}
                 key={item.key}
@@ -61,7 +50,17 @@ const Chats = (props) => {
                 textComponent={textComponent}
                 userComponent={userComponent}
             />}
+            itemTransform={async item => {
+                if (item.key === "!meta") return null;
+                return item
+            }}
             noItemsComponent={<ChatsItem label={"No chats found"}/>}
+            pagination={() => new Pagination({
+                child: "timestamp",
+                order: "desc",
+                ref: firebase.database().ref("_chats").child(currentUserData.id),
+                size: 10,
+            })}
             placeholder={<ChatsItem skeleton/>}
         />
 };

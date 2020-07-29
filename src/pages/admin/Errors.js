@@ -79,7 +79,8 @@ const Errors = (props) => {
             </Select>
             <Grid item xs>
                 {mode === "all" && filteredUserData && <Chip
-                    avatar={<AvatarView alt="" image={filteredUserData.image} initials={filteredUserData.name} verified={true} />}
+                    avatar={<AvatarView alt="" image={filteredUserData.image} initials={filteredUserData.name}
+                                        verified={true}/>}
                     label={filteredUserData.name}
                     onDelete={() => {
                         dispatch({type: Errors.MODE, mode, filter: ""});
@@ -92,8 +93,6 @@ const Errors = (props) => {
             </IconButton>
         </Toolbar>
         <LazyListComponent
-            pagination={pagination}
-            itemTransform={itemTransform}
             itemComponent={item => <ErrorItemComponent
                 data={item}
                 key={item.key}
@@ -102,13 +101,19 @@ const Errors = (props) => {
                     dispatch({type: Errors.MODE, mode: "all", filter});
                 }}
             />}
-            placeholder={<ErrorItemComponent skeleton={true}/>}
+            itemTransform={itemTransform}
             noItemsComponent={<ErrorItemComponent label={"No errors found"}/>}
+            pagination={pagination}
+            placeholder={<ErrorItemComponent skeleton={true}/>}
         />
-        {deleteOpen && <ConfirmComponent title={"All errors will be cleared?"} critical confirmLabel={"Delete"}
-                                         onConfirm={handleConfirmDeletion}
-                                         onCancel={() => setState({...state, deleteOpen: false})}>
-        </ConfirmComponent>}
+        {deleteOpen && <ConfirmComponent
+            children={"Errors log will be cleared."}
+            confirmLabel={"Clear"}
+            critical
+            onCancel={() => setState({...state, deleteOpen: false})}
+            onConfirm={handleConfirmDeletion}
+            title={"Warning!"}
+        />}
     </React.Fragment>
 };
 

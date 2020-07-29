@@ -25,35 +25,59 @@ const styles = theme => ({
     },
 });
 
-const ConfirmComponent = ({onConfirm, onCancel, confirmLabel = "OK", cancelLabel = confirmLabel ? "Cancel" : "Close", critical, modal = false, classes, children, message, title}) => {
-    const history = useHistory();
+const ConfirmComponent =
+    ({
+         children,
+         confirmLabel = "OK",
+         cancelLabel = confirmLabel ? "Cancel" : "Close",
+         critical,
+         message,
+         modal = false,
+         onCancel,
+         onConfirm,
+         title
+     }) => {
+        const history = useHistory();
 
-    React.useEffect(() => {
-        const unblock = history.block(() => {
-            onCancel();
-            return false;
+        React.useEffect(() => {
+            const unblock = history.block(() => {
+                onCancel();
+                return false;
+            })
+            return () => {
+                unblock();
+            }
         })
-        return () => {
-            unblock();
-        }
-    })
 
-    return <Dialog
-        open={true}
-        disableBackdropClick={modal}
-        onEscapeKeyDown={onCancel}
-        onClose={onCancel}
-    >
-        {title && <DialogTitle>{title}</DialogTitle>}
-        {message || children ? <DialogContent>
-            {message}
-            {children}
-        </DialogContent> : null}
-        <DialogActions>
-            <Button aria-label={cancelLabel} autoFocus={!confirmLabel} onClick={onCancel} color={"secondary"}>{cancelLabel}</Button>
-            {confirmLabel && <Button aria-label={confirmLabel} onClick={onConfirm} color={"secondary"} style={critical ? {color: "#ff0000"} : {}} autoFocus>{confirmLabel}</Button>}
-        </DialogActions>
-    </Dialog>
-}
+        return <Dialog
+            disableBackdropClick={modal}
+            onClose={onCancel}
+            onEscapeKeyDown={onCancel}
+            open={true}
+        >
+            {title && <DialogTitle>{title}</DialogTitle>}
+            {message || children ? <DialogContent>
+                {message}
+                {children}
+            </DialogContent> : null}
+            <DialogActions>
+                <Button
+                    aria-label={cancelLabel}
+                    autoFocus={!confirmLabel}
+                    children={cancelLabel}
+                    color={"secondary"}
+                    onClick={onCancel}
+                />
+                {confirmLabel && <Button
+                    aria-label={confirmLabel}
+                    autoFocus
+                    children={confirmLabel}
+                    color={"secondary"}
+                    onClick={onConfirm}
+                    style={critical ? {color: "#ff0000"} : {}}
+                />}
+            </DialogActions>
+        </Dialog>
+    }
 
 export default withStyles(styles)(ConfirmComponent);

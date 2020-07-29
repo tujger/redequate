@@ -118,7 +118,7 @@ const Login = (props) => {
                         .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
                             .then(() => ud.savePrivate()))
                         .then(() => {
-                            notifySnackbar({title: "Subscribed"});
+                            notifySnackbar({title: "Subscribed to notifications"});
                             setState({...state, disabled: false});
                         })
                         .catch(notifySnackbar)

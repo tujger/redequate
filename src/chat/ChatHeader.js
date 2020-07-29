@@ -81,7 +81,8 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
                 image={userData.image}
                 initials={userData.initials}
                 verified={true}
-            /></Link></Grid>
+            />
+        </Link></Grid>
         <Grid item className={classes.userName}>
             {userComponent(userData)}
         </Grid>
@@ -89,8 +90,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
             <div className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
                  title={online ? "Online" : "Offline"}/>
         </Grid>
-        {timestamp > 0 && <Grid
-            item className={classes.visitDate}>
+        {timestamp > 0 && <Grid item className={classes.visitDate}>
             {toDateString(timestamp)}
         </Grid>}
     </Grid>

@@ -60,18 +60,6 @@ const useStylesChat = theme => makeStyles({
     indent: {
         width: theme.spacing(4)
     },
-    // chatItem: {
-    //     borderRadius: theme.spacing(2),
-    //     width: "90%"
-    // },
-    // chatItemOut: {
-    //     backgroundColor: "#def6fc",//"#0099ff",
-    //     marginLeft: "10%",
-    // },
-    // chatItemIn: {
-    //     backgroundColor: "#f1f0f0",
-    //     marginRight: "10%",
-    // },
     label: {
         color: "#000000",
         fontWeight: "initial",
@@ -116,9 +104,9 @@ function ChatsItem(props) {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
+    const theme = useTheme();
     const [state, setState] = React.useState({});
     const {shown, userData, chatMeta, online, timestamp} = state;
-    const theme = useTheme();
     const classesChat = useStylesChat(theme)();
 
     const fetchIsNew = () => {
@@ -138,15 +126,17 @@ function ChatsItem(props) {
             })
             .then(userData => {
                 chatMeta.watch(({removed}) => {
-                    if(removed) {
+                    if (removed) {
                         dispatch({type: LazyListComponent.RESET, cache: "chats"});
                         history.goBack();
                     }
                     setState(state => ({...state, chatMeta}));
                 });
-                chatMeta.watchOnline({uid: userData.id, onChange: ({online, timestamp, removed}) => {
-                    setState(state => ({...state, online, timestamp}));
-                }});
+                chatMeta.watchOnline({
+                    uid: userData.id, onChange: ({online, timestamp, removed}) => {
+                        setState(state => ({...state, online, timestamp}));
+                    }
+                });
                 setState({...state, userData, chatMeta});
             })
             .catch(notifySnackbar)
@@ -167,46 +157,48 @@ function ChatsItem(props) {
         <Card className={[
             classes.card,
         ].join(" ")}>
-            <CardActionArea onClick={() => {
+            <CardActionArea onClick={(event) => {
+                event.stopPropagation();
                 history.push(pages.chat.route + userData.id);
             }}>
                 <CardHeader
-                    classes={{content: classes.cardContent}}
-                    className={[classes.cardHeader, classes.post].join(" ")}
                     avatar={<Link
                         className={classesChat.nounderline}
+                        onClick={evt => evt.stopPropagation()}
                         to={pages.user.route + userData.id}
-                        onClick={evt => {
-                        evt.stopPropagation();
-                    }}>
+                    >
                         <AvatarView
                             className={classes.avatar}
                             image={userData.image}
                             initials={userData.initials}
                             verified={true}/>
                     </Link>}
-                    title={<React.Fragment>
-                        <Grid container alignItems={"baseline"}>
-                            <Grid item className={[classes.userName, classesChat.read].join(" ")}>
-                                {userComponent(userData)}
-                            </Grid>
-                            {/*<Hidden smDown>*/}
-                                <Grid item>
-                                    <div className={[classesChat.presence, online ? classesChat.online : classesChat.offline].join(" ")} title={online ? "Online" : "Offline"}/>
-                                        {/*{online ? "" : "·"}*/}
-                                </Grid>
-                            {/*</Hidden>*/}
-                            <Grid item className={classes.date} title={new Date(chatMeta.lastMessage.created).toLocaleString()}>
-                                {toDateString(chatMeta.lastMessage.created)}
-                            </Grid>
+                    classes={{content: classes.cardContent}}
+                    className={[classes.cardHeader, classes.post].join(" ")}
+                    title={<Grid container alignItems={"baseline"}>
+                        <Grid item className={[classes.userName, classesChat.read].join(" ")}>
+                            {userComponent(userData)}
                         </Grid>
-                    </React.Fragment>}
+                        <Grid item>
+                            <div
+                                className={[classesChat.presence, online ? classesChat.online : classesChat.offline].join(" ")}
+                                title={online ? "Online" : "Offline"}/>
+                        </Grid>
+                        <Grid
+                            className={classes.date}
+                            item
+                            title={new Date(chatMeta.lastMessage.created).toLocaleString()}
+                        >
+                            {toDateString(chatMeta.lastMessage.created)}
+                        </Grid>
+                    </Grid>}
                     subheader={<Grid container>
-                        <Grid item xs className={isNew ? classesChat.unread : classesChat.read}>
+                        <Grid item xs
+                              className={isNew ? classesChat.unread : classesChat.read}>
                             {textComponent((cacheDatas.get(chatMeta.lastMessage.uid) || {}).name
-                                    + ": " + chatMeta.lastMessage.text)}
+                                + ": " + chatMeta.lastMessage.text)}
                         </Grid>
-                        </Grid>}
+                    </Grid>}
                 />
             </CardActionArea>
         </Card>

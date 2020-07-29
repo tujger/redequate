@@ -52,14 +52,14 @@ export const serviceWorkerRegister = () => {
 export const checkForUpdate = () => new Promise((resolve, reject) => {
     if(hasWrapperControlInterface()) {
         wrapperControlCall({method:"clearCache"}).then(result => {
-            window.location.reload();
             resolve("reload")
+            window.location.reload();
         }).catch(reject);
         return;
     }
     if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
-        window.location.reload();
         resolve("reload");
+        window.location.reload();
         return;
     }
     const timeout = setTimeout(() => {
@@ -69,9 +69,8 @@ export const checkForUpdate = () => new Promise((resolve, reject) => {
         return registration.update();
     }).then(registration => {
         if (!registration) {
-
-            window.location.reload();
             resolve("reload");
+            window.location.reload();
         } else if (!registration.installing && !registration.waiting) {
             notifySnackbar({title: "You already use the latest version"});
             resolve("latest");
