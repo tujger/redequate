@@ -49,6 +49,10 @@ There is important to define two variables: `pages` and `menu`;
 
         about: {route: "/about", label: "About", icon: <AboutIcon/>, component: <About/>},
 
+        chat: {route: "/chat/:id", label: "Chat", icon: <ChatsIcon/>, component: <Chat/>, roles: [Role.ADMIN, Role.USER]},
+
+        chats: {route: "/chats", label: "Chats", icon: <ChatsIcon/>, component: <Chats/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <ChatsCounter/>},
+
         contacts: {route: "/contacts", label: "Contacts", icon: <ContactsIcon/>, component: <Contacts/>},
 
         editprofile: {route: "/edit/profile/*", label: "Edit profile", icon: <EditProfileIcon/>, component: <EditProfile uploadable={false} publicFields={publicFields}/>, roles: [Role.ADMIN, Role.USER]},

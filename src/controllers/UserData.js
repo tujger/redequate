@@ -531,6 +531,7 @@ export const UserData = function (firebase) {
     }
     return _body;
 }
+
 UserData.PUBLIC = "public";
 UserData.PRIVATE = "private";
 UserData.ROLE = "role";

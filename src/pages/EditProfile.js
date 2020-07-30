@@ -25,12 +25,12 @@ import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
 import {
     cacheDatas, fetchDeviceId,
-    hasNotifications,
+    hasNotifications, hasWrapperControlInterface,
     notifySnackbar,
     setupReceivingNotifications,
     useFirebase,
     usePages,
-    useStore
+    useStore, wrapperControlCall
 } from "../controllers";
 import {adminFields, publicFields} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
@@ -74,7 +74,7 @@ const styles = theme => ({
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
-    let {classes, uploadable = true, notifications = true, publicFields: publicFieldsGiven = publicFields, adminFields:adminFieldsGiven = adminFields, privateFields} = props;
+    let {classes, uploadable = true, notifications = true, publicFields: publicFieldsGiven = publicFields, adminFields: adminFieldsGiven = adminFields, privateFields} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -171,7 +171,7 @@ const EditProfile = (props) => {
         }
         const {url: imageSaved, metadata} = publishing;
 
-        if(isAdminAllowed) await saveUserByAdmin();
+        if (isAdminAllowed) await saveUserByAdmin();
 
         const additionalPublic = {};
         publicFieldsGiven.forEach(field => {
@@ -192,7 +192,7 @@ const EditProfile = (props) => {
             })
             .then(() => {
                 refreshAll(store);
-                if(isAdminAllowed) {
+                if (isAdminAllowed) {
                     history.goBack();
                 } else if (tosuccessroute) {
                     history.push(tosuccessroute);
@@ -297,10 +297,16 @@ const EditProfile = (props) => {
         } else {
             userData.private[fetchDeviceId()].notification = null;
             userData.savePrivate()
-                .then(() => {
-                    firebase.messaging().deleteToken()
-                    notifySnackbar("Unsubscribed");
+                .then(() => firebase.messaging().deleteToken())
+                .catch(error => {
+                    if (error.code === "messaging/unsupported-browser" && hasWrapperControlInterface()) {
+                        return wrapperControlCall({method: "unsubscribeNotifications", timeout: 30000})
+                            .then(result => {
+                                console.log("UNSUBSCRIBE RESULT " + JSON.stringify(result));
+                            })
+                    } else return error;
                 })
+                .then(() => notifySnackbar("Unsubscribed"))
                 .catch(notifySnackbar)
                 .finally(() => {
                     dispatch(ProgressView.HIDE);
@@ -349,7 +355,7 @@ const EditProfile = (props) => {
     const isAdminAllowed = !disabled && matchRole([Role.ADMIN], currentUserData);
     const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const fields = [...publicFieldsGiven, ...(isAdminAllowed ? adminFieldsGiven : [])];
-    const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && isEditAllowed && notifications;
+    const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
 
     return <Grid container spacing={1}>
         <Box m={0.5}/>
@@ -443,14 +449,14 @@ const EditProfile = (props) => {
             {isNotificationsAvailable && <React.Fragment>
                 <Box m={1}/>
                 <Grid container><FormControlLabel
-                control={
-                    <Switch
-                        disabled={disabled}
-                        checked={Boolean(userData.private[fetchDeviceId()] && userData.private[fetchDeviceId()].notification)}
-                        onChange={handleNotifications}
-                    />
-                }
-                label={"Get notifications"}
+                    control={
+                        <Switch
+                            disabled={disabled}
+                            checked={Boolean(userData.private[fetchDeviceId()] && userData.private[fetchDeviceId()].notification)}
+                            onChange={handleNotifications}
+                        />
+                    }
+                    label={"Get notifications"}
                 /></Grid>
             </React.Fragment>}
             <Box m={2}/>
@@ -466,10 +472,10 @@ const EditProfile = (props) => {
             {isAdminAllowed && <React.Fragment>
                 <Box m={8}/>
                 <Grid container justify={"center"}>
-                <Button onClick={handleClickDelete} variant={"text"} style={{color:"#ff0000"}}>
-                    Delete user account
-                </Button>
-            </Grid></React.Fragment>}
+                    <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
+                        Delete user account
+                    </Button>
+                </Grid></React.Fragment>}
         </Grid>
         {deleteOpen && <ConfirmComponent
             confirmLabel={"Delete"}

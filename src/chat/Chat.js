@@ -140,7 +140,7 @@ const Chat = (props) => {
             text: value,
             uid,
         })
-            .then(() => console.log(chatMeta.asString))
+            // .then(() => console.log(chatMeta.asString))
             .then(() => chatMeta.update())
             .then(() => chatMeta.updateVisit(currentUserData.id))
             .then(() => dispatch({type: LazyListComponent.RESET, cache: "chats"}))

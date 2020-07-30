@@ -8,7 +8,7 @@ export const installWrapperControl = () => {
         window.wrapperControlCallback = (message) => {
             console.log("[WC] message " + message);
             const json = JSON.parse(message.replace(/\\'/g, "'"));
-            const {id, method, args, timestamp, error, response} = json;
+            const {id, method, args, timestamp, error, status, ...rest} = json;
             if(!id || !callQueue[id]) {
                 console.error("Failed wrapped call " + id);
                 return;
@@ -17,7 +17,7 @@ export const installWrapperControl = () => {
             if(error) {
                 call.reject(new Error(error));
             } else {
-                call.resolve(response);
+                call.resolve(rest);
             }
             delete callQueue[id];
         }

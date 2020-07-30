@@ -1,8 +1,6 @@
 import React from "react";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Tooltip from "@material-ui/core/Tooltip";
 import Fab from "@material-ui/core/Fab";
-import Checkbox from "@material-ui/core/Checkbox";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
@@ -14,17 +12,16 @@ import {logoutUser, Role, sendVerificationEmail, useCurrentUserData, UserData} f
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
-import {hasNotifications, notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
-import {useFirebase, usePages, useStore, useTechnicalInfo} from "../controllers/General";
+import {notifySnackbar} from "../controllers/Notifications";
+import {useFirebase, usePages, useStore} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
-import {fetchCallable, matchRole, TextMaskPhone} from "../controllers";
+import {matchRole, TextMaskPhone} from "../controllers";
 import withStyles from "@material-ui/styles/withStyles";
 import LoadingComponent from "../components/LoadingComponent";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
-import NotificationIcon from "@material-ui/icons/NotificationsActive";
 import EditIcon from "@material-ui/icons/Edit";
 import PlacesTextField from "../components/PlacesTextField";
 import InfoIcon from "@material-ui/icons/Info";
@@ -118,22 +115,7 @@ const Profile = ({
     const firebase = useFirebase();
     const dispatch = useDispatch();
     const currentUserData = useCurrentUserData();
-    const technicalInfo = useTechnicalInfo();
     const {id} = useParams();
-
-    const handleNotification = () => {
-        dispatch(ProgressView.SHOW);
-        console.log("[Profile] test notification to", userData.id);
-        fetchCallable(firebase)("sendNotification", {
-            uid: userData.id,
-            title: technicalInfo.name,
-            body: `Hello ${userData.name}, how are you?`,
-            priority: "high",
-        })
-            .then(() => notifySnackbar("Sent to " + userData.name))
-            .catch(notifySnackbar)
-            .finally(() => dispatch(ProgressView.HIDE));
-    }
 
     const handleChatClick = () => {
         history.push(pages.chat.route + userData.id);
@@ -181,12 +163,6 @@ const Profile = ({
                         <EditIcon/>
                     </IconButton>
                 </Grid></React.Fragment>}
-            {/*{isCurrentUserAdmin && <React.Fragment>
-                <Grid item>
-                    <IconButton aria-label={"Edit"} onClick={handleNotification}>
-                        <NotificationIcon/>
-                    </IconButton>
-                </Grid></React.Fragment>}*/}
         </Grid>
         {userData.disabled && <Grid container>
             <InputLabel error>

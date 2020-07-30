@@ -3,9 +3,9 @@ import "firebase/auth";
 import "firebase/database";
 import "firebase/functions";
 import "firebase/storage";
-if (process.env.NODE_ENV !== "development") {
+// if (process.env.NODE_ENV !== "development") {
 require("firebase/messaging");
-}
+// }
 
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {

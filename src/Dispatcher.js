@@ -128,7 +128,7 @@ const Dispatcher = (props) => {
                     newWidth = widths[x];
                 }
             }
-            if (oldWidth !== newWidth) {
+            if (oldWidth && oldWidth !== newWidth) {
                 refreshAll(store);
             }
             oldWidth = newWidth;

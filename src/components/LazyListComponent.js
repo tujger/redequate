@@ -1,5 +1,5 @@
 import React from "react";
-import {notifySnackbar} from "../controllers";
+import {notifySnackbar, useWindowData} from "../controllers";
 import ProgressView from "./ProgressView";
 import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
@@ -119,11 +119,13 @@ const LazyListComponent_ =
         };
 
         React.useEffect(() => {
+            let mounted = true;
             const liveAddRef = live ? pagination.ref.limitToLast(1) : null;
             const liveRemoveRef = live ? pagination.ref : null;
 
             let lastKey = null;
             const liveAddListener = async snapshot => {
+                if(!mounted) return;
                 if (!lastKey && !pagination.finished) {
                     lastKey = snapshot.key;
                     return;
@@ -153,6 +155,7 @@ const LazyListComponent_ =
             }
 
             const liveRemoveListener = async snapshot => {
+                if(!mounted) return;
                 if (cache) dispatch({type: LazyListComponent.RESET, cache});
                 else dispatch({type: LazyListComponent.RESET});
             }
@@ -162,6 +165,7 @@ const LazyListComponent_ =
                 liveRemoveRef.on("child_removed", liveRemoveListener);
             }
             return () => {
+                mounted = false;
                 liveAddRef && liveAddRef.off("child_added", liveAddListener);
                 liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
                 if (!disableProgress) dispatch(ProgressView.HIDE);
@@ -204,13 +208,14 @@ const LazyListComponent_ =
                 placeholder={placeholder}
                 placeholders={placeholders}
             />}
-            <Scroller live={live && ascending} placeholder={placeholder}/>
+            <Scroller live={live && !ascending && reverse} placeholder={placeholder}/>
             {!items.length && finished && noItemsComponent}
         </React.Fragment>
     }
 ;
 
 const Scroller = ({live, placeholder}) => {
+    const windowData = useWindowData();
     const [scrolled, setScrolled] = React.useState(false);
 
     const scrollerShown = React.useRef();
@@ -248,7 +253,7 @@ const Scroller = ({live, placeholder}) => {
                 }, 500);
             }
         }} style={{opacity: 0}}>
-        {placeholder}
+        {windowData.isNarrow() ? placeholder : null}
     </InView>
 }
 
