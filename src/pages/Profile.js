@@ -18,7 +18,6 @@ import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
 import {matchRole, TextMaskPhone} from "../controllers";
-import withStyles from "@material-ui/styles/withStyles";
 import LoadingComponent from "../components/LoadingComponent";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
@@ -30,9 +29,16 @@ import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
+import {withStyles} from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import Box from "@material-ui/core/Box";
 
 const styles = theme => ({
-    root: {},
+    root: {
+        [theme.breakpoints.down("sm")]: {
+            textAlign: "center",
+        },
+    },
     buttons: {},
     edit: {},
     logout: {},
@@ -49,9 +55,20 @@ const styles = theme => ({
 
 export const publicFields = [
     {
+        icon: <NameIcon/>,
         id: "name",
         label: "Name",
-        icon: <NameIcon/>,
+        required: true,
+        unique: true,
+        viewComponent: userData => <Typography variant={"h6"}>{userData.name}</Typography>
+    },
+    {
+        id: "created",
+        label: "Date since",
+        viewComponent: userData => <React.Fragment>
+            <Typography variant={"caption"}>Since {userData.created}</Typography>
+            <Box m={1}/>
+        </React.Fragment>
     },
     {
         id: "address",
@@ -105,7 +122,7 @@ export const adminFields = [
 
 const Profile = ({
                      publicFields = publicFields, privateFields, classes, ProfileComponent =
-        <ProfileComponentOrigin/>, ...rest
+        <ProfileComponentOrigin/>, provider, ...rest
                  }) => {
     const [state, setState] = React.useState({disabled: false});
     const {userData, disabled} = state;
@@ -177,6 +194,7 @@ const Profile = ({
         </Grid>}
         <ProfileComponent.type
             {...ProfileComponent.props}
+            provider={provider}
             publicFields={publicFields}
             userData={userData}
         />

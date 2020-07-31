@@ -4,33 +4,29 @@ import IconButton from "@material-ui/core/IconButton";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormControl from "@material-ui/core/FormControl";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
 import Grid from "@material-ui/core/Grid";
-import InfoIcon from "@material-ui/icons/Info";
 import ClearIcon from "@material-ui/icons/Clear";
-import DeleteIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
-import RoleIcon from "@material-ui/icons/Security";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, useHistory, useParams} from "react-router-dom";
-import {matchRole, Role, sendInvitationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
+import {matchRole, Role, useCurrentUserData, UserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import UploadComponent, {publishFile} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
 import {
-    cacheDatas, fetchDeviceId,
-    hasNotifications, hasWrapperControlInterface,
+    cacheDatas,
+    fetchDeviceId,
+    hasWrapperControlInterface,
     notifySnackbar,
-    setupReceivingNotifications,
+    setupReceivingNotifications, TextMaskEmail,
     useFirebase,
     usePages,
-    useStore, wrapperControlCall
+    useStore,
+    wrapperControlCall
 } from "../controllers";
 import {adminFields, publicFields} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
@@ -345,14 +341,12 @@ const EditProfile = (props) => {
         }
     }, [id])
 
-    // if (!id) return <Redirect to={tosuccessroute}/>
     if (!userData) return <LoadingComponent/>
-
     if (userData.id !== currentUserData.id && !matchRole([Role.ADMIN], currentUserData)) {
         return <Redirect to={pages.editself.route}/>
     }
 
-    const isAdminAllowed = !disabled && matchRole([Role.ADMIN], currentUserData);
+    const isAdminAllowed = matchRole([Role.ADMIN], currentUserData);
     const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const fields = [...publicFieldsGiven, ...(isAdminAllowed ? adminFieldsGiven : [])];
     const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
@@ -396,11 +390,12 @@ const EditProfile = (props) => {
                         disabled
                         fullWidth
                         label="E-mail"
-                        value={userData.public.email || ""}
+                        value={userData.email || ""}
                     />
                 </Grid>
             </Grid>
             {userData.public && fields && fields.map(field => {
+                if (field.editComponent === null) return null;
                 const editComponent = field.editComponent || <TextField/>;
                 const missedRequired = requiredError.indexOf(field.id) >= 0;
                 const uniqueRequired = uniqueError.indexOf(field.id) >= 0;

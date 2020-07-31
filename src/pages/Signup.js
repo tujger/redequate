@@ -11,12 +11,10 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
-import PropTypes from "prop-types";
 import {useDispatch} from "react-redux";
-import {notifySnackbar, refreshAll, useFirebase, usePages, useStore} from "../controllers";
+import {notifySnackbar, refreshAll, TextMaskEmail, useFirebase, usePages, useStore} from "../controllers";
 
-const Signup = (props) => {
-    const {signup = true} = props;
+const Signup = ({signup = true, additional}) => {
     const [state, setState] = React.useState({
         email: "",
         password: "",
@@ -94,19 +92,11 @@ const Signup = (props) => {
         let email = params.email;
         dispatch(ProgressView.SHOW);
 
-        // Additional state parameters can also be passed via URL.
-        // This can be used to continue the user's intended action before triggering
-        // the sign-in operation.
-        // Get the email if available. This should be available if the user completes
-        // the flow on the same device where they started it.
         console.log("[Signup] with link for", email)
         if (!email) {
-            // User opened the link on a different device. To prevent session fixation
-            // attacks, ask the user to provide the associated email again. For example:
             email = window.prompt("Please provide your email for confirmation");
             if (!email) return <Redirect to={pages.home.route}/>
         }
-        // The client SDK will parse the code from the link for you.
         firebase.auth().signInWithEmailLink(email, window.location.href)
             .then(() => setState({...state, requestPasswordFor: email}))
             .catch(signupError)
@@ -133,6 +123,9 @@ const Signup = (props) => {
                         setState({...state, email: ev.target.value});
                     }}
                     value={email}
+                    InputProps={{
+                        inputComponent: TextMaskEmail
+                    }}
                 />
             </Grid>
         </Grid>}
@@ -174,6 +167,7 @@ const Signup = (props) => {
                 />
             </Grid>
         </Grid>
+        {additional}
         <Box m={2}/>
         <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth disabled={requesting}>
             <Button
@@ -188,11 +182,6 @@ const Signup = (props) => {
             </Button>
         </ButtonGroup>
     </Grid>
-};
-
-Signup.propTypes = {
-    pages: PropTypes.object,
-    signup: PropTypes.bool,
 };
 
 export default Signup;

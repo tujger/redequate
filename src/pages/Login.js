@@ -3,7 +3,7 @@ import {logoutUser, sendVerificationEmail, useCurrentUserData} from "../controll
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import {Link, Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
+import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
@@ -18,7 +18,7 @@ import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifi
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
-import {UserData} from "../controllers";
+import {TextMaskEmail, UserData} from "../controllers";
 
 const Login = (props) => {
     const {popup = true, onLogin, transformUserData, layout = <LoginLayout/>} = props;
@@ -91,8 +91,7 @@ const Login = (props) => {
             })
             return;
         }
-        return ud.fetch([UserData.ROLE, UserData.FORCE])
-            .then(() => ud.fetch([UserData.PUBLIC, UserData.FORCE]))
+        return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
             .then(() => ud.fetchPrivate(fetchDeviceId(), true))
             .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName}))
             .then(() => ud.savePrivate())
@@ -103,11 +102,7 @@ const Login = (props) => {
                 }
                 return ud;
             })
-            .then(ud => {
-                if (isFirstLogin) return ud.savePublic();
-                return ud;
-            })
-            // .then(() => ud.fetch([UserData.UPDATED, UserData.FORCE]))
+            .then(ud => isFirstLogin ? ud.savePublic() : ud)
             .then(ud => {
                 useCurrentUserData(ud);
                 dispatch({type: "currentUserData", userData: ud});
@@ -126,27 +121,13 @@ const Login = (props) => {
             })
             .then(() => {
                 refreshAll(store);
-                if(onLogin) {
+                if (onLogin) {
                     onLogin(isFirstLogin);
                 } else {
                     if (isFirstLogin) history.replace(pages.editprofile.route);
                     else history.replace(pages.home.route);
                 }
             });
-
-        /*fetchUserPublic(firebase)(uid)
-                if (data && data.notification) {
-                    return setupReceivingNotifications(firebase)
-                        .then(token => fetchUserPrivate(firebase)(uid)
-                            .then(() => updateUserPrivate(firebase)(uid, fetchDeviceId(), {notification: token}))
-                            .then(() => {
-                                notifySnackbar({title: "Subscribed"});
-                                dispatch(ProgressView.HIDE);
-                                setState({...state, disabled: false});
-                            }))
-                        .catch(notifySnackbar)
-                }
-            });*/
     };
 
     if (!popup && window.localStorage.getItem(pages.login.route)) {
@@ -179,12 +160,13 @@ const Login = (props) => {
     />
 };
 
-const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword, onRequestLogin, onRequestGoogle, signup = true}) => {
+const LoginLayout = ({disabled, email, logo, onChangeEmail, password, onChangePassword, onRequestLogin, onRequestGoogle, signup = true}) => {
     const pages = usePages();
     const history = useHistory();
 
     return <Grid container>
-        <Box m={0.5}/>
+        {logo}
+        <Box m={1}/>
         <Grid container spacing={1} alignItems="flex-end">
             <Grid item>
                 <UserIcon/>
@@ -193,10 +175,13 @@ const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword
                 <TextField
                     color={"secondary"}
                     disabled={disabled}
-                    label="E-mail"
                     fullWidth
+                    label="E-mail"
                     onChange={onChangeEmail}
                     value={email}
+                    InputProps={{
+                        inputComponent: TextMaskEmail
+                    }}
                 />
             </Grid>
         </Grid>
@@ -215,24 +200,23 @@ const LoginLayout = ({disabled, email, onChangeEmail, password, onChangePassword
                 />
             </Grid>
         </Grid>
-        <Grid container spacing={1} alignItems="flex-end">
-            <Grid item>
-                <Box m={1.5}/>
-            </Grid>
-            <Grid item>
-                <Link to={pages.restore.route}>Forgot password?</Link>
-            </Grid>
+        <Box m={1}/>
+        <Grid container spacing={1} alignItems="center">
+            <Button disabled={disabled} onClick={onRequestLogin} variant={"contained"} color={"secondary"} size="large"
+                    fullWidth>
+                Continue
+            </Button>
         </Grid>
         <Box m={1}/>
-        <ButtonGroup disabled={disabled} variant="contained" color="primary" size="large" fullWidth>
-            <Button onClick={onRequestLogin}>
-                Login
+        <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size="large" fullWidth>
+            <Button onClick={() => history.push(pages.signup.route)}>
+                Create account
             </Button>
-            {signup && <Button onClick={() => history.push(pages.signup.route)}>
-                Sign up
+            <Button onClick={() => history.push(pages.restore.route)}>
+                Forgot password?
             </Button>}
         </ButtonGroup>
-        <Box m={2}/>
+        <Box m={1}/>
         <Grid container justify="center">
             <Button disabled={disabled} onClick={onRequestGoogle}>
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>

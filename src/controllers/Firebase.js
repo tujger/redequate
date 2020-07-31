@@ -3,6 +3,7 @@ import "firebase/auth";
 import "firebase/database";
 import "firebase/functions";
 import "firebase/storage";
+// import "firebase/analytics";
 // if (process.env.NODE_ENV !== "development") {
 require("firebase/messaging");
 // }
