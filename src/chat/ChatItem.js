@@ -92,13 +92,17 @@ const ChatItem = React.forwardRef((props, ref) => {
 
     React.useEffect(() => {
         if (skeleton) return;
+        let isMounted = true;
         let authorData = cacheDatas.put(data.uid, UserData(firebase));
         authorData.fetch(data.uid, [UserData.IMAGE, UserData.NAME])
-            .then(() => setState({...state, authorData}))
+            .then(() => isMounted && setState({...state, authorData}))
 
         // setTimeout(() => {
         //     setState(state => ({...state, shown: true}));
         // }, 2000)
+        return () => {
+            isMounted = false;
+        }
         // eslint-disable-next-line
     }, []);
 

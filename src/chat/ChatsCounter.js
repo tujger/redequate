@@ -2,7 +2,7 @@ import React from "react";
 import {connect} from "react-redux";
 import {useTheme} from "@material-ui/styles";
 import {makeStyles} from "@material-ui/core/styles";
-import {Layout} from "../controllers/Store";
+import {Layout} from "../controllers/General";
 
 export const useStyles = theme => makeStyles({
     badge: {

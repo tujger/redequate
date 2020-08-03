@@ -6,15 +6,7 @@ import {IconButton, withStyles} from "@material-ui/core";
 import SendIcon from "@material-ui/icons/Send";
 import {useHistory, useParams} from "react-router-dom";
 import {InView} from "react-intersection-observer";
-import {
-    cacheDatas,
-    notifySnackbar,
-    useCurrentUserData,
-    useFirebase,
-    usePages,
-    UserData,
-    useWindowData
-} from "../controllers";
+import {cacheDatas, notifySnackbar, useCurrentUserData, useFirebase, UserData, useWindowData} from "../controllers";
 import ProgressView from "../components/ProgressView";
 import LoadingComponent from "../components/LoadingComponent";
 import ChatList from "./ChatList";
@@ -61,6 +53,11 @@ const styles = theme => ({
             height: window.innerHeight - theme.spacing(16) - theme.spacing(16),
         },
     },
+    inputfield: {
+        alignItems: "center",
+        display: "flex",
+        overflowX: "auto",
+    }
 });
 
 const InputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) => {
@@ -79,7 +76,7 @@ const InputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) => {
     }
 
     return <Grid container ref={ref} className={classes.messagebox}>
-        <Grid item xs style={{display: "flex", alignItems: "center"}}>
+        <Grid item xs className={classes.inputfield}>
             <inputComponent.type
                 {...inputComponent.props}
                 autofocus={!windowData.isNarrow()}
@@ -118,7 +115,6 @@ const Chat = (props) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
-    const pages = usePages();
     const {id} = useParams();
     const [state, setState] = React.useState({});
     const {userData, chatMeta} = state;
@@ -140,7 +136,6 @@ const Chat = (props) => {
             text: value,
             uid,
         })
-            // .then(() => console.log(chatMeta.asString))
             .then(() => chatMeta.update())
             .then(() => chatMeta.updateVisit(currentUserData.id))
             .then(() => dispatch({type: LazyListComponent.RESET, cache: "chats"}))

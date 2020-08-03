@@ -65,6 +65,7 @@ export const publicFields = [
     {
         id: "created",
         label: "Date since",
+        editComponent: null,
         viewComponent: userData => <React.Fragment>
             <Typography variant={"caption"}>Since {userData.created}</Typography>
             <Box m={1}/>
@@ -143,6 +144,7 @@ const Profile = ({
     const isEditAllowed = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
 
     React.useEffect(() => {
+        let isMounted = true;
         if (!currentUserData) {
             history.goBack();
             return;
@@ -152,13 +154,14 @@ const Profile = ({
             return;
         }
         new UserData(firebase).fetch(id)
-            .then(userData => setState({...state, userData}))
+            .then(userData => isMounted && setState({...state, userData}))
             .catch(error => {
                 // notifySnackbar
                 history.goBack();
                 console.error(error);
             });
         return () => {
+            isMounted = false;
         }
         // eslint-disable-next-line
     }, [id]);

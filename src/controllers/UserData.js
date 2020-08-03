@@ -1,15 +1,14 @@
 import {notifySnackbar} from "./Notifications";
-import {refreshAll} from "./Store";
 import {cacheDatas} from "./General";
 
-export const watchUserChanged = (firebase, store) => {
+export const watchUserChanged = (firebase, store, callback) => {
     try {
         const refreshAction = () => {
             currentUserDataInstance.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
                 .then(userData => {
                     useCurrentUserData(userData);
                     store.dispatch({type: "currentUserData", userData});
-                    refreshAll(store);
+                    callback && callback();
                 })
                 .catch(notifySnackbar)
         }

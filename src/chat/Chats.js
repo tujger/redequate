@@ -25,23 +25,29 @@ const styles = theme => ({
     },
 });
 
-const Chats = (props) => {
-    const {
-        daemon,
-        userComponent = userData => userData.name,
-        textComponent = text => text,
-    } = props;
-    const currentUserData = useCurrentUserData();
-    const dispatch = useDispatch();
-    const firebase = useFirebase();
+const Chats =
+    ({
+         daemon,
+         textComponent = text => text,
+         userComponent = userData => userData.name,
+         ...rest
+     }) => {
+        const currentUserData = useCurrentUserData();
+        const dispatch = useDispatch();
+        const firebase = useFirebase();
 
-    React.useEffect(() => {
-        dispatch({type: LazyListComponent.RESET, cache: "chats"});
-        // eslint-disable-next-line
-    }, []);
+        React.useEffect(() => {
+            dispatch({type: LazyListComponent.RESET, cache: "chats"});
+            // eslint-disable-next-line
+        }, []);
 
-    if (daemon) return <ChatsDaemon {...props}/>
-    return <LazyListComponent
+        if (daemon) return <ChatsDaemon
+            {...rest}
+            daemon={daemon}
+            textComponent={textComponent}
+            userComponent={userComponent}
+        />
+        return <LazyListComponent
             cache={"chats"}
             itemComponent={item => <ChatsItem
                 id={item.key}
@@ -63,6 +69,6 @@ const Chats = (props) => {
             })}
             placeholder={<ChatsItem skeleton/>}
         />
-};
+    };
 
 export default withStyles(styles)(Chats);

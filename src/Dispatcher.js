@@ -2,31 +2,27 @@ import React, {Suspense} from "react";
 import ThemeProvider from "@material-ui/styles/ThemeProvider";
 import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
-import {Provider, useDispatch} from "react-redux";
-import withWidth, {isWidthUp, isWidthDown} from "@material-ui/core/withWidth";
+import {connect, Provider, useDispatch} from "react-redux";
+import withWidth from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
-import Store, {Layout, refreshAll} from "./controllers/Store";
+import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
     fetchDeviceId,
+    Layout,
     useFirebase,
     usePages,
     useStore,
     useTechnicalInfo,
     useWindowData
 } from "./controllers/General";
-// import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout";
-// import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout";
-// import BottomToolbarLayout from "./layouts/BottomToolbarLayout";
 import LoadingComponent from "./components/LoadingComponent";
-import {matchRole, needAuth, theme as defaultTheme} from "./controllers";
-import {watchUserChanged, useCurrentUserData, UserData} from "./controllers/UserData";
+import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
+import {default as defaultTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
-import MainAppbar from "./components/MainAppbar";
-import {connect} from "react-redux";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout"));
@@ -93,9 +89,9 @@ const Dispatcher = (props) => {
                 console.error(error);
             }
             setInterval(() => {
-                watchUserChanged(firebase, store);
+                watchUserChanged(firebase, store, () => refreshAll(store));
             }, 30000)
-            watchUserChanged(firebase, store);
+            watchUserChanged(firebase, store, () => refreshAll(store));
             maintenanceRef = firebase.database().ref("meta/maintenance");
             maintenanceRef.on("value", snapshot => {
                 const maintenance = snapshot.val();
@@ -164,7 +160,7 @@ const _DispatcherRoutedBody = props => {
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
                     ? current.title || current.label : pages.notfound.title || pages.notfound.label);
             document.title = label + (name ? " - " + name : "");
-            dispatch({type: MainAppbar.LABEL, label});
+            dispatch({type: Layout.TITLE, label});
         }
     }
 
@@ -238,16 +234,6 @@ const _DispatcherRoutedBody = props => {
         {background && <Route path={history.location.pathname} children={<div/>}/>}
     </React.Fragment>
 };
-
-export const dispatcherRoutedBodyReducer = (state = {random: 0}, action) => {
-    switch(action.type) {
-        case Layout.REFRESH:
-            return {...state, random: Math.random()};
-        default:
-            return state;
-    }
-};
-dispatcherRoutedBodyReducer.skipStore = true;
 
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
 

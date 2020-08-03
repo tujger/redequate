@@ -3,9 +3,8 @@ import ReactDOM from "react-dom";
 import {useSnackbar} from "notistack";
 import RichSnackbarContent from "../components/RichSnackbarContent";
 import PropTypes from "prop-types";
-import {fetchDeviceId, useFirebase, useTechnicalInfo} from "./General";
+import {useTechnicalInfo} from "./General";
 import {useHistory} from "react-router-dom";
-import {useCurrentUserData} from "./UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 
 export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {

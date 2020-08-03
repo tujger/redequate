@@ -3,13 +3,13 @@ import {snackbarReducer} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
-import {mainAppbarReducer} from "../components/MainAppbar";
 import {usersReducer} from "../pages/admin/Users";
 import LazyListComponent, {lazyListComponentReducer} from "../components/LazyListComponent";
 import {topMenuReducer} from "../components/TopMenu";
-import {dispatcherRoutedBodyReducer} from "../Dispatcher";
-import {chatsCounterReducer} from "../chat";
+import {chatsCounterReducer} from "../chat/ChatsCounter";
 import {errorsReducer} from "../pages/admin/Errors";
+import {mainAppbarReducer} from "../components/MainAppbar";
+import {Layout, MenuBadge} from "./General";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -47,24 +47,22 @@ Store.propTypes = {
 export default Store;
 
 export const refreshAll = store => {
-    console.warn("[Store] refresh")
+    console.warn("[Store] refresh");
     store.dispatch({type: Layout.REFRESH});
     store.dispatch({type: LazyListComponent.RESET});
     store.dispatch({type: LazyListComponent.RESET, cache: "chats"});
     store.dispatch({type: MenuBadge.RESET});
-    // store.dispatch(ResponsiveDrawerLayout.REFRESH);
-    // store.dispatch(TopBottomMenuLayout.REFRESH);
-    // store.dispatch(BottomToolbarLayout.REFRESH);
     store.dispatch(ProgressView.HIDE);
 };
 
-export const MenuBadge = {
-    INCREASE: "badge_Increase",
-    DECREASE: "badge_Decrease",
-    RESET: "badge_Reset",
-    VALUE: "badge_Value",
-}
+// moved here from ../Dispatcher.js due to circular dependencies alert
+export const dispatcherRoutedBodyReducer = (state = {random: 0}, action) => {
+    switch (action.type) {
+        case Layout.REFRESH:
+            return {...state, random: Math.random()};
+        default:
+            return state;
+    }
+};
+dispatcherRoutedBodyReducer.skipStore = true;
 
-export const Layout = {
-    REFRESH: "layout_Refresh",
-}

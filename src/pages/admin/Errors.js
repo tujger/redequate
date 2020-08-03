@@ -3,7 +3,6 @@ import {connect, useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
 import IconButton from "@material-ui/core/IconButton";
 import Grid from "@material-ui/core/Grid";
-import Input from "@material-ui/core/Input";
 import Select from "@material-ui/core/Select";
 import Chip from "@material-ui/core/Chip";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -14,7 +13,7 @@ import {cacheDatas, useFirebase} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";
 import ErrorItemComponent from "../../components/ErrorItemComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
-import {notifySnackbar} from "../../controllers";
+import {notifySnackbar} from "../../controllers/Notifications";
 import AvatarView from "../../components/AvatarView";
 
 const Errors = (props) => {

@@ -160,78 +160,92 @@ const Login = (props) => {
     />
 };
 
-const LoginLayout = ({disabled, email, logo, onChangeEmail, password, onChangePassword, onRequestLogin, onRequestGoogle, signup = true}) => {
-    const pages = usePages();
-    const history = useHistory();
+const LoginLayout =
+    ({
+         disabled,
+         email,
+         logo,
+         onChangeEmail,
+         onChangePassword,
+         onRequestGoogle,
+         onRequestLogin,
+         password,
+         signup = true
+     }) => {
+        const pages = usePages();
+        const history = useHistory();
 
-    return <Grid container>
-        {logo}
-        <Box m={1}/>
-        <Grid container spacing={1} alignItems="flex-end">
-            <Grid item>
-                <UserIcon/>
+        return <Grid container>
+            {logo}
+            <Box m={1}/>
+            <Grid container spacing={1} alignItems="flex-end">
+                <Grid item>
+                    <UserIcon/>
+                </Grid>
+                <Grid item xs>
+                    <TextField
+                        color={"secondary"}
+                        disabled={disabled}
+                        fullWidth
+                        label="E-mail"
+                        onChange={onChangeEmail}
+                        value={email}
+                        InputProps={{
+                            inputComponent: TextMaskEmail
+                        }}
+                    />
+                </Grid>
             </Grid>
-            <Grid item xs>
-                <TextField
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    label="E-mail"
-                    onChange={onChangeEmail}
-                    value={email}
-                    InputProps={{
-                        inputComponent: TextMaskEmail
-                    }}
-                />
+            <Box m={1}/>
+            <Grid container spacing={1} alignItems="flex-end">
+                <Grid item>
+                    <Lock/>
+                </Grid>
+                <Grid item xs>
+                    <PasswordField
+                        color={"secondary"}
+                        disabled={disabled}
+                        label={"Password"}
+                        onChange={onChangePassword}
+                        value={password}
+                    />
+                </Grid>
+            </Grid>
+            <Box m={1}/>
+            <Grid container spacing={1} alignItems="center">
+                <Button disabled={disabled} onClick={onRequestLogin} variant={"contained"} color={"secondary"}
+                        size="large"
+                        fullWidth>
+                    Continue
+                </Button>
+            </Grid>
+            <Box m={1}/>
+            <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size="large" fullWidth>
+                {signup && <Button onClick={() => history.push(pages.signup.route)}>
+                    Create account
+                </Button>}
+                <Button onClick={() => history.push(pages.restore.route)}>
+                    Forgot password?
+                </Button>}
+            </ButtonGroup>
+            <Box m={1}/>
+            <Grid container justify="center">
+                <Button disabled={disabled} onClick={onRequestGoogle}>
+                    <img src={GoogleLogo} width={20} height={20} alt={""}/>
+                    <Box m={0.5}/>
+                    Log in with Google
+                </Button>
             </Grid>
         </Grid>
-        <Box m={1}/>
-        <Grid container spacing={1} alignItems="flex-end">
-            <Grid item>
-                <Lock/>
-            </Grid>
-            <Grid item xs>
-                <PasswordField
-                    color={"secondary"}
-                    disabled={disabled}
-                    label={"Password"}
-                    onChange={onChangePassword}
-                    value={password}
-                />
-            </Grid>
-        </Grid>
-        <Box m={1}/>
-        <Grid container spacing={1} alignItems="center">
-            <Button disabled={disabled} onClick={onRequestLogin} variant={"contained"} color={"secondary"} size="large"
-                    fullWidth>
-                Continue
-            </Button>
-        </Grid>
-        <Box m={1}/>
-        <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size="large" fullWidth>
-            <Button onClick={() => history.push(pages.signup.route)}>
-                Create account
-            </Button>
-            <Button onClick={() => history.push(pages.restore.route)}>
-                Forgot password?
-            </Button>}
-        </ButtonGroup>
-        <Box m={1}/>
-        <Grid container justify="center">
-            <Button disabled={disabled} onClick={onRequestGoogle}>
-                <img src={GoogleLogo} width={20} height={20} alt={""}/>
-                <Box m={0.5}/>
-                Log in with Google
-            </Button>
-        </Grid>
-    </Grid>
-}
+    }
 
 Login.propTypes = {
-    signup: PropTypes.bool,
+    layout: PropTypes.element,
+    logo: PropTypes.any,
+    onLogin: PropTypes.func,
     popup: PropTypes.bool,
-    pages: PropTypes.object,
-    layout: PropTypes.any,
+    signup: PropTypes.bool,
+    transformUserData: PropTypes.func,
 };
 
 export default withRouter(Login);

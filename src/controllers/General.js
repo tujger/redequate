@@ -43,7 +43,6 @@ export const useTechnicalInfo = (initial) => {
     return technicalInfoInstance;
 }
 
-
 const CacheDatas = function() {
     let _cache = {};
     let _count = 0;
@@ -86,3 +85,14 @@ const CacheDatas = function() {
     }
 }
 export const cacheDatas = new CacheDatas();
+
+export const MenuBadge = {
+    INCREASE: "badge_Increase",
+    DECREASE: "badge_Decrease",
+    RESET: "badge_Reset",
+    VALUE: "badge_Value",
+}
+export const Layout = {
+    REFRESH: "layout_Refresh",
+    TITLE: "layout_Title",
+}

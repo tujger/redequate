@@ -1,5 +1,4 @@
 import React from 'react';
-import {useDispatch} from "react-redux";
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import CardHeader from "@material-ui/core/CardHeader";
@@ -10,7 +9,8 @@ import AvatarView from "./AvatarView";
 import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
 import {withStyles} from "@material-ui/core";
 import ConfirmComponent from "./ConfirmComponent";
-import {notifySnackbar, toDateString} from "../controllers";
+import {toDateString} from "../controllers/DateFormat";
+import {notifySnackbar} from "../controllers/Notifications";
 
 function ErrorItemComponent(props) {
     const {data, classes, skeleton, label, onUserClick} = props;
@@ -22,10 +22,14 @@ function ErrorItemComponent(props) {
 
     React.useEffect(() => {
         if (!data || !data.value || !data.value.uid) return;
+        let isMounted = true;
         const userData = cacheDatas.put(data.value.uid, UserData(firebase));
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
-            .then(() => setState(state => ({...state, userData})))
+            .then(() => isMounted && setState(state => ({...state, userData})))
             .catch(notifySnackbar)
+        return () => {
+            isMounted = false;
+        }
     }, [])
 
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>

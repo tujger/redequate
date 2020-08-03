@@ -6,6 +6,7 @@ import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
+import FormHelperText from "@material-ui/core/FormHelperText";
 import Grid from "@material-ui/core/Grid";
 import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
@@ -70,7 +71,7 @@ const styles = theme => ({
 
 let uppy, file, snapshot;
 const EditProfile = (props) => {
-    let {classes, uploadable = true, notifications = true, publicFields: publicFieldsGiven = publicFields, adminFields: adminFieldsGiven = adminFields, privateFields} = props;
+    let {classes, uploadable = true, notifications = true, publicFields = publicFields, adminFields: adminFieldsGiven = adminFields, privateFields} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -101,7 +102,7 @@ const EditProfile = (props) => {
 
     const requiredFilled = () => {
         const requiredError = [];
-        publicFieldsGiven.forEach(field => {
+        publicFields.forEach(field => {
             if (field && field.required && !state[field.id]) {
                 requiredError.push(field.id);
             }
@@ -116,7 +117,7 @@ const EditProfile = (props) => {
     const checkUnique = async () => {
         const uniqueError = [];
 
-        for (let field of publicFieldsGiven) {
+        for (let field of publicFields) {
             if (field.unique) {
                 const values = await new Pagination({
                     ref: firebase.database().ref("users_public"),
@@ -170,7 +171,7 @@ const EditProfile = (props) => {
         if (isAdminAllowed) await saveUserByAdmin();
 
         const additionalPublic = {};
-        publicFieldsGiven.forEach(field => {
+        publicFields.forEach(field => {
             if (state[field.id]) {
                 additionalPublic[field.id] = state[field.id];
             }
@@ -348,7 +349,7 @@ const EditProfile = (props) => {
 
     const isAdminAllowed = matchRole([Role.ADMIN], currentUserData);
     const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
-    const fields = [...publicFieldsGiven, ...(isAdminAllowed ? adminFieldsGiven : [])];
+    const fields = [...publicFields, ...(isAdminAllowed ? adminFieldsGiven : [])];
     const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
 
     return <Grid container spacing={1}>
@@ -413,8 +414,6 @@ const EditProfile = (props) => {
                                     disabled,
                                     error: missedRequired || uniqueRequired,
                                     fullWidth: true,
-                                    helperText: missedRequired ? "Please enter value"
-                                        : (uniqueRequired ? "This name is already taken" : null),
                                     label: field.label,
                                     onChange: ev => {
                                         setState({...state, [field.id]: ev.target.value || ""});
@@ -428,8 +427,6 @@ const EditProfile = (props) => {
                                     disabled={disabled}
                                     error={missedRequired || uniqueRequired}
                                     fullWidth
-                                    helperText={missedRequired ? "Please enter value"
-                                        : (uniqueRequired ? "This name is already taken" : null)}
                                     label={field.label}
                                     onChange={ev => {
                                         setState({...state, [field.id]: ev.target.value || ""});
@@ -437,6 +434,8 @@ const EditProfile = (props) => {
                                     required={field.required}
                                     value={state[field.id] || ""}
                                 />}
+                            {missedRequired || uniqueRequired ? <FormHelperText error>{missedRequired ? "Please enter value"
+                                : (uniqueRequired ? "This name is already taken" : null)}</FormHelperText> : null}
                         </Grid>
                     </Grid>
                 </React.Fragment>

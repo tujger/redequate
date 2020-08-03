@@ -118,6 +118,7 @@ function ChatsItem(props) {
 
     React.useEffect(() => {
         if (skeleton || label) return;
+        let isMounted = true;
         const chatMeta = ChatMeta(firebase).create(id);
         chatMeta.fetch()
             .then(() => {
@@ -130,26 +131,26 @@ function ChatsItem(props) {
                         dispatch({type: LazyListComponent.RESET, cache: "chats"});
                         history.goBack();
                     }
-                    setState(state => ({...state, chatMeta}));
+                    isMounted && setState(state => ({...state, chatMeta}));
                 });
                 chatMeta.watchOnline({
-                    uid: userData.id, onChange: ({online, timestamp, removed}) => {
-                        setState(state => ({...state, online, timestamp}));
+                    uid: userData.id, onChange: ({online, timestamp}) => {
+                        isMounted && setState(state => ({...state, online, timestamp}));
                     }
                 });
-                setState({...state, userData, chatMeta});
+                isMounted && setState({...state, userData, chatMeta});
             })
             .catch(notifySnackbar)
         return () => {
             chatMeta.unwatch();
             chatMeta.unwatchOnline();
+            isMounted = false;
         }
         // eslint-disable-next-line
     }, []);
 
-    if (skeleton) return <ItemPlaceholderComponent classes={classes}/>;
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>;
-    if (!chatMeta || !userData) return null;
+    if (skeleton || !chatMeta || !userData) return <ItemPlaceholderComponent classes={classes}/>;
 
     const isNew = fetchIsNew() && !shown;
 
