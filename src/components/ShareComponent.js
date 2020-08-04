@@ -9,7 +9,6 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
     const handleShare = () => {
         try {
-            notifySnackbar(hasWrapperControlInterface() ? "wrapped" : "navigator")
             if (hasWrapperControlInterface()) {
                 wrapperControlCall({method: "shareText", title, text, url})
                     .catch(notifySnackbar);
