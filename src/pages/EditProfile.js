@@ -70,7 +70,7 @@ const styles = theme => ({
 });
 
 let uppy, file, snapshot;
-const EditProfile = (props) => {
+function EditProfile(props) {
     let {classes, uploadable = true, notifications = true, publicFields = publicFields, adminFields: adminFieldsGiven = adminFields, privateFields} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();

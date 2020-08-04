@@ -25,13 +25,13 @@ const styles = theme => ({
     },
 });
 
-const Chats =
+function Chats
     ({
          daemon,
          textComponent = text => text,
          userComponent = userData => userData.name,
          ...rest
-     }) => {
+     }) {
         const currentUserData = useCurrentUserData();
         const dispatch = useDispatch();
         const firebase = useFirebase();

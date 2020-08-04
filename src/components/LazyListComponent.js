@@ -6,7 +6,7 @@ import {connect, useDispatch} from "react-redux";
 import {InView} from "react-intersection-observer";
 import PropTypes from "prop-types";
 
-const LazyListComponent =
+function LazyListComponent
     ({
          cache = false,
          containerRef,
@@ -25,7 +25,7 @@ const LazyListComponent =
          reverse = false,
          ["LazyListComponent_" + cache]: cacheData = {},
          ...props
-     }) => {
+     }) {
         const dispatch = useDispatch();
         const [state, setState] = React.useState({});
         const {
@@ -170,6 +170,7 @@ const LazyListComponent =
                 liveAddRef && liveAddRef.off("child_added", liveAddListener);
                 liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
                 if (!disableProgress) dispatch(ProgressView.HIDE);
+                pagination.reset();
             }
             // eslint-disable-next-line
         }, [pagination, givenPagination.term]);

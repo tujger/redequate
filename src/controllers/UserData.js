@@ -1,7 +1,7 @@
 import {notifySnackbar} from "./Notifications";
 import {cacheDatas} from "./General";
 
-export const watchUserChanged = (firebase, store, callback) => {
+export function watchUserChanged(firebase, store, callback) {
     try {
         const refreshAction = () => {
             currentUserDataInstance.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
@@ -43,9 +43,9 @@ export const watchUserChanged = (firebase, store, callback) => {
     } catch (error) {
         console.error(error);
     }
-};
+}
 
-export const logoutUser = (firebase, store) => async () => {
+export function logoutUser(firebase, store) { return async () => {
     // window.localStorage.removeItem("notification-token");
     await firebase.auth().signOut();
     console.log("[UserData] logout", currentUserDataInstance);
@@ -53,30 +53,30 @@ export const logoutUser = (firebase, store) => async () => {
     if (store) {
         store.dispatch({type: "currentUserData", userData: null});
     }
-};
+}}
 
-export const currentRole = user => {
+export function currentRole(user) {
     if (user) return user.role;
     return Role.LOGIN;
 }
 
-export const matchRole = (roles, user) => {
+export function matchRole(roles, user) {
     if (!roles) return true;
     if (roles.indexOf(Role.AUTH) >= 0) return true;
     if (!currentRole(user)) return false;
     return roles.indexOf(currentRole(user)) >= 0;
-};
+}
 
-export const needAuth = (roles, user) => {
+export function needAuth(roles, user) {
     if (!roles) return false;
     return currentRole(user) === Role.LOGIN;
-};
+}
 
-export const roleIs = (role, user) => {
+export function roleIs(role, user) {
     if (!role) return true;
     if (!currentRole(user)) return false;
     return role.indexOf(currentRole(user)) >= 0;
-};
+}
 
 export const Role = {
     AUTH: "auth",
@@ -87,7 +87,7 @@ export const Role = {
     USER_NOT_VERIFIED: "userNotVerified",
 };
 
-export const sendInvitationEmail = (firebase) => options => new Promise((resolve, reject) => {
+export function sendInvitationEmail(firebase) { return options => new Promise((resolve, reject) => {
     let actionCodeSettings = {
         url: window.location.origin + "/signup/" + options.email,
         handleCodeInApp: true,
@@ -98,9 +98,9 @@ export const sendInvitationEmail = (firebase) => options => new Promise((resolve
             notifySnackbar(error);
             reject(error);
         });
-});
+})}
 
-export const sendVerificationEmail = (firebase) => new Promise((resolve, reject) => {
+export function sendVerificationEmail(firebase) { return new Promise((resolve, reject) => {
     firebase.auth().currentUser.sendEmailVerification().then(() => {
         notifySnackbar("Verification email has been sent");
         resolve();
@@ -108,11 +108,11 @@ export const sendVerificationEmail = (firebase) => new Promise((resolve, reject)
         notifySnackbar(error);
         reject(error);
     });
-});
+})}
 
-export const currentUserData = (state = {
+export function currentUserData(state = {
     userData: null
-}, action) => {
+}, action) {
     const {type, userData} = action;
     if (type === "currentUserData") {
         useCurrentUserData(userData);
@@ -121,10 +121,10 @@ export const currentUserData = (state = {
     } else {
         return state;
     }
-};
+}
 
 // new stuff
-export const UserData = function (firebase) {
+export function UserData(firebase) {
     let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp,
         _error, _loaded = {}, _persisted;
 

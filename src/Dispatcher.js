@@ -31,7 +31,7 @@ const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayo
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 const origin = console.error;
-console.error = (...args) => {
+console.error = function(...args) {
     origin.call(this, ...args);
     if(args.length > 1) return;
     return;
@@ -49,7 +49,7 @@ console.error = (...args) => {
 }
 
 let oldWidth;
-const Dispatcher = (props) => {
+function Dispatcher(props) {
     const {firebaseConfig, name, theme = defaultTheme, reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
@@ -142,10 +142,10 @@ const Dispatcher = (props) => {
             <PWAPrompt promptOnVisit={3} timesToShow={3}/>
         </ThemeProvider>
     </Provider>;
-};
+}
 
 let widthPoint;
-const _DispatcherRoutedBody = props => {
+function _DispatcherRoutedBody(props) {
     const {pages, menu, width, copyright, headerImage, layout, name, logo, random} = props;
     const dispatch = useDispatch();
     const history = useHistory();
@@ -233,7 +233,7 @@ const _DispatcherRoutedBody = props => {
         })}
         {background && <Route path={history.location.pathname} children={<div/>}/>}
     </React.Fragment>
-};
+}
 
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
 

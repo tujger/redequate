@@ -26,7 +26,11 @@ const styles = theme => ({
     logo: {
         alignItems: "center",
         display: "flex",
-        flex: "1 1 auto"
+        flex: "1 1 auto",
+        height: theme.mixins.toolbar.minHeight,
+    },
+    logoImage: {
+        height: "100%",
     },
     content: {},
     indent: {},
@@ -88,7 +92,7 @@ function MainAppbar(props) {
                         >
                             <Link to={pages.home.route} className={classes.label}>
                                 {logo ? <div className={classes.logo}>
-                                        <img src={logo} alt={""}/>
+                                        <img className={classes.logoImage} src={logo} alt={""}/>
                                     </div> :
                                     (label || (needAuth(item.roles, currentUserData)
                                         ? pages.login.title || pages.login.label : (matchRole(item.roles, currentUserData)

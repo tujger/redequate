@@ -1,23 +1,28 @@
 import React from "react";
 import LinearProgress from "@material-ui/core/LinearProgress";
-import makeStyles from "@material-ui/styles/makeStyles";
 import {connect} from "react-redux"
+import withStyles from "@material-ui/styles/withStyles";
 
-const useStyles = makeStyles(() => ({
+const styles = (theme) => ({
     invisibleProgress: {
         opacity: 0,
+    },
+    progress: {
+        [theme.breakpoints.down("sm")]: {
+            bottom: theme.spacing(-.5),
+            left: 0,
+            position: "absolute",
+            right: 0,
+        }
     }
-}));
+});
 
-const ProgressView = props => {
-    const {show, value = null, className} = props;
-    const classes = useStyles();
-
+const ProgressView = ({show, value = null, classes, className}) => {
     return <LinearProgress
         color="secondary"
         variant={value === null ? "indeterminate" : "determinate"}
         value={value}
-        className={[show ? "" : classes.invisibleProgress, className].join(" ")}/>
+        className={[classes.progress, show ? "" : classes.invisibleProgress, className].join(" ")}/>
 };
 
 ProgressView.SHOW = {type: "progressView_Show"};
@@ -43,4 +48,4 @@ const mapStateToProps = ({progressView}) => ({
     value: progressView.value
 });
 
-export default connect(mapStateToProps)(ProgressView);
+export default connect(mapStateToProps)(withStyles(styles)(ProgressView));

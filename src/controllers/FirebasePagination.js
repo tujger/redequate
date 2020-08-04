@@ -1,4 +1,4 @@
-const Pagination = ({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 30000}) => {
+function Pagination({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 30000}) {
     let baseRef = ref;
     let lastKey = null;
     let lastValue = null;

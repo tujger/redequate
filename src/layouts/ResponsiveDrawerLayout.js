@@ -29,6 +29,7 @@ const styles = theme => ({
     },
     indent: {
         ...theme.mixins.toolbar,
+        height: theme.mixins.toolbar.minHeight,
     },
     appbar: {
         [theme.breakpoints.up("md")]: {

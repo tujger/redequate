@@ -30,6 +30,10 @@ const styles = theme => ({
     online: {
         backgroundColor: "#008800",
     },
+    root: {
+        alignItems: "center",
+        flex: "0 0 auto",
+    },
     userName: {
         color: "inherit",
         fontWeight: "bolder",
@@ -71,7 +75,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
         // eslint-disable-next-line
     }, [id]);
 
-    return <Grid container alignItems={"center"}>
+    return <Grid container className={classes.root}>
         <IconButton onClick={() => history.goBack()}>
             <BackIcon/>
         </IconButton>

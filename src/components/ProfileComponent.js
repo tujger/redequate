@@ -4,7 +4,6 @@ import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import {withRouter} from "react-router-dom";
 import EmptyAvatar from "@material-ui/icons/Person";
-import Box from "@material-ui/core/Box";
 import GoogleLogo from "../images/google-logo.svg"
 import UserIcon from "@material-ui/icons/Mail";
 import AvatarView from "./AvatarView";

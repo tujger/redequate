@@ -1,5 +1,5 @@
 const ONLINE_TIMEOUT = 60000;
-export const ChatMeta = (firebase) => {
+export function ChatMeta(firebase) {
     let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef;
     const indexRef = firebase.database().ref("_chats");
     const chatsRef = firebase.database().ref("chats");

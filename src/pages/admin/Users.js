@@ -19,7 +19,7 @@ import {normalizeSortName, UserData} from "../../controllers/UserData";
 import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";
 
-const Users = (props) => {
+function Users(props) {
     const {mode = "all", filter, invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
