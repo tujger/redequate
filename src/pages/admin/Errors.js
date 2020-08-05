@@ -1,6 +1,7 @@
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
+import RefreshIcon from "@material-ui/icons/Refresh";
 import IconButton from "@material-ui/core/IconButton";
 import Grid from "@material-ui/core/Grid";
 import Select from "@material-ui/core/Select";
@@ -21,7 +22,7 @@ const Errors = (props) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
-    const {deleteOpen} = state;
+    const {deleteOpen, random} = state;
 
     const handleMode = evt => {
         dispatch({type: LazyListComponent.RESET});
@@ -87,11 +88,15 @@ const Errors = (props) => {
                     }}
                 />}
             </Grid>
+            <IconButton onClick={() => setState({...state, random: Math.random()})}>
+                <RefreshIcon/>
+            </IconButton>
             <IconButton onClick={() => setState({...state, deleteOpen: true})}>
                 <ClearIcon/>
             </IconButton>
         </Toolbar>
         <LazyListComponent
+            key={random}
             itemComponent={item => <ErrorItemComponent
                 data={item}
                 key={item.key}

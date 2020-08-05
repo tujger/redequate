@@ -149,6 +149,10 @@ const Chat = (props) => {
         const chatMeta = ChatMeta(firebase).mix(currentUserData.id, id);
         const userData = cacheDatas.put(id, UserData(firebase));
         chatMeta.fetch()
+            .catch(error => {
+                if(error.code && error.code === "PERMISSION_DENIED") return;
+                notifySnackbar(error);
+            })
             .then(() => userData.fetch(id, [UserData.IMAGE, UserData.NAME]))
             .then(() => chatMeta.updateVisit(currentUserData.id))
             .then(() => setState(state => ({...state, chatMeta, userData})))

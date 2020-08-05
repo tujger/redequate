@@ -55,6 +55,9 @@ const styles = theme => ({
         left: theme.spacing(.5),
         top: theme.spacing(.5),
         width: theme.spacing(2),
+    },
+    hamburger: {
+        color: theme.palette.getContrastText(theme.palette.primary.main),
     }
 });
 
@@ -71,6 +74,7 @@ function MainAppbar(props) {
                 <Hidden mdUp implementation="css">
                     <IconButton
                         aria-label="open drawer"
+                        className={classes.hamburger}
                         color="inherit"
                         edge="start"
                         onClick={onHamburgerClick}>

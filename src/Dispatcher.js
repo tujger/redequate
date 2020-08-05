@@ -34,7 +34,7 @@ const origin = console.error;
 console.error = function(...args) {
     origin.call(this, ...args);
     if(args.length > 1) return;
-    return;
+    // return;
     try {
         const firebase = useFirebase();
         const currentUserData = useCurrentUserData();

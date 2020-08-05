@@ -18,6 +18,7 @@ export const styles = theme => {
         clockWrapper: {
             backgroundColor: "transparent",
             boxShadow: "none",
+            padding: 0
         },
         clock: {
             backgroundColor: theme.palette.background.default,

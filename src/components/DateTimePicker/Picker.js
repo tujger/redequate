@@ -17,6 +17,7 @@ export const Picker = props => {
     const clockStyles = `.react-timekeeper {
             box-shadow: ${currentStyles.clockContainer.boxShadow};
             background-color: ${currentStyles.clockContainer.backgroundColor};
+            width: 100%;
         }
         .react-timekeeper__clock-wrapper {
             background-color: ${currentStyles.clockWrapper.backgroundColor};
@@ -26,9 +27,14 @@ export const Picker = props => {
             background-color: ${currentStyles.header.backgroundColor};
             border-bottom: ${currentStyles.header.borderBottomWidth}px ${currentStyles.header.borderBottomStyle} ${currentStyles.header.borderBottomColor};
             padding: ${currentStyles.header.padding}px;
+            text-align: center;
           }
           .react-timekeeper__clock {
             background-color: ${currentStyles.clock.backgroundColor};
+          }
+          .react-timekeeper__clock-hours > span,
+          .react-timekeeper__clock-minutes > span {
+            color: ${currentStyles.clock.color};
           }`;
 
     const onClockSelect = value => {

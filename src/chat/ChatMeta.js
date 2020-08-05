@@ -43,24 +43,25 @@ export function ChatMeta(firebase) {
                         }
                         _meta = snapshot.val();
                         resolve();
-                    })
+                    }).catch(reject)
             }));
             tasks.push(new Promise((resolve, reject) => {
                 indexRef.child(tokens[0]).child(_id).once("value")
                     .then(snapshot => {
                         _timestamp = (snapshot.val() || {}).timestamp;
                         resolve();
-                    })
+                    }).catch(reject)
             }));
             tasks.push(new Promise((resolve, reject) => {
-                chatsRef.child(_id).orderByChild("created").limitToLast(1).once("value", snap => {
-                    snap.forEach(snapshot => {
-                        if(snapshot.key !== "!meta") {
-                            _lastMessage = snapshot.val();
-                        }
-                    })
-                    resolve();
-                })
+                chatsRef.child(_id).orderByChild("created").limitToLast(1).once("value")
+                    .then(snap => {
+                        snap.forEach(snapshot => {
+                            if(snapshot.key !== "!meta") {
+                                _lastMessage = snapshot.val();
+                            }
+                        })
+                        resolve();
+                    }).catch(reject)
             }));
             await Promise.all(tasks);
             return _body;

@@ -20,7 +20,7 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
             }
         }).then(token => {
             messaging.onMessage(payload => {
-                console.log("[Notifications] incoming", payload);
+                console.log("[Notifications] incoming " + JSON.stringify(payload));
                 if(onMessage) {
                     onMessage({
                         ...payload.notification,
@@ -102,8 +102,8 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
     } catch (error) {
         if(error.code === "messaging/unsupported-browser") {
             if(hasWrapperControlInterface()) {
-                wrapperControlCall({method: "subscribeNotifications", timeout: 30000}).then(({response}) => {
-                    console.log("RESULT " + JSON.stringify(response));
+                wrapperControlCall({method: "subscribeNotifications", timeout: 30000}).then((response) => {
+                    console.log("[Notifications] token " + JSON.stringify(response));
                     resolve(response);
                 }).catch(error => {
                     console.error(error);

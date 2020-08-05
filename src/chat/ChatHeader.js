@@ -53,6 +53,10 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
     const dispatch = useDispatch();
 
     React.useEffect(() => {
+        if(!userData || !userData.id) {
+            history.goBack();
+            return;
+        }
         chatMeta.watch(({removed}) => {
             if (removed) {
                 dispatch({type: LazyListComponent.RESET, cache: "chats"});

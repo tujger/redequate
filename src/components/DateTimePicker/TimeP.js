@@ -2,9 +2,9 @@ import React from "react";
 import Button from "@material-ui/core/Button";
 import TimeKeeper from "react-timekeeper";
 
-export const TimeP = ({classes, time, onSelect, style}) => <div>
+export const TimeP = ({classes, time, onSelect, style}) => <React.Fragment>
     <TimeKeeper
-        className={classes.clock}
+        className={[classes._clock, classes.clock].join(" ")}
         closeOnMinuteSelect
         doneButton={() => <Button style={{display: "none"}} children={""}/>}
         hour24Mode={false}
@@ -13,4 +13,4 @@ export const TimeP = ({classes, time, onSelect, style}) => <div>
         switchToMinuteOnHourSelect
     />
     <style>{style}</style>
-</div>
+</React.Fragment>

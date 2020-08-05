@@ -3,9 +3,8 @@ import Button from "@material-ui/core/Button";
 import {hasWrapperControlInterface, notifySnackbar, wrapperControlCall} from "../controllers";
 import useWebShare from "react-use-web-share";
 
-
 const ShareComponent = ({title, text, url, component = <Button/>}) => {
-    const { loading, isSupported, share } = useWebShare();
+    const {loading, isSupported, share} = useWebShare();
 
     const handleShare = () => {
         try {
@@ -13,18 +12,22 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
                 wrapperControlCall({method: "shareText", title, text, url})
                     .catch(notifySnackbar);
             } else {
-                share({
-                    text: text,
-                    title: title,
-                    url: url,
-                }).catch(notifySnackbar);
+                try {
+                    share({
+                        text: text,
+                        title: title,
+                        url: url,
+                    })
+                } catch (error) {
+                    notifySnackbar(error);
+                }
             }
-        } catch(error) {
+        } catch (error) {
             notifySnackbar(error);
         }
     }
 
-    if(!(!loading && isSupported) && !hasWrapperControlInterface()) return null;
+    if (!(!loading && isSupported) && !hasWrapperControlInterface()) return null;
     return <component.type
         {...component.props}
         onClick={handleShare}
