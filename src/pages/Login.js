@@ -272,7 +272,7 @@ const LoginLayout =
                 modal
                 onCancel={onDecline}
                 onConfirm={onAgree}
-                title={"Warning!"}
+                title={"User Agreement"}
             >
                 <agreementComponent.type
                     {...agreementComponent.props}

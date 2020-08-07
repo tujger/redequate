@@ -20,7 +20,7 @@ const stylesChat = theme => ({
         width: "90%"
     },
     chatItemOut: {
-        backgroundColor: "#def6fc",//"#0099ff",
+        backgroundColor: "#def6fc",
         marginLeft: "10%",
     },
     chatItemIn: {
@@ -28,6 +28,7 @@ const stylesChat = theme => ({
         marginRight: "10%",
     },
     text: {
+        color: "#101010",
         marginBottom: theme.spacing(1),
     },
     timestamp: {
