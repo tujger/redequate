@@ -53,7 +53,7 @@ const styles = theme => ({
 });
 
 function TopBottomMenuLayout(props) {
-    const {menu, classes, headerImage, random, copyright} = props;
+    const {menu, classes, headerImage, headerComponent, random, copyright} = props;
     const pages = usePages();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
@@ -63,6 +63,7 @@ function TopBottomMenuLayout(props) {
         title={<Switch>
             {itemsFlat.map((item, index) => <Route key={index} path={item._route} exact={true} children={item.label}/>)}
         </Switch>}
+        headerComponent={headerComponent}
         headerImage={headerImage}
         sticky={<TopMenu items={menu} className={classes.topmenu}/>}
         stickyClassName={classes.stickytop}

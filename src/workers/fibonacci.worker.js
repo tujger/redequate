@@ -1,5 +1,5 @@
 /* eslint-disable */
-export default () => {
+export const fibonacci = () => {
     // performance test
     const fib = (x) => {
         if (x <= 0) return 0;

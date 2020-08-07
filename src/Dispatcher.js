@@ -146,7 +146,7 @@ function Dispatcher(props) {
 
 let widthPoint;
 function _DispatcherRoutedBody(props) {
-    const {pages, menu, width, copyright, headerImage, layout, name, logo, random} = props;
+    const {pages, menu, width, copyright, headerComponent, headerImage, layout, name, logo, random} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
@@ -212,6 +212,7 @@ function _DispatcherRoutedBody(props) {
                                 />)
                             : <TopBottomMenuLayout
                                 copyright={copyright}
+                                headerComponent={headerComponent}
                                 headerImage={headerImage}
                                 menu={menu}
                                 name={name}
