@@ -19,15 +19,16 @@ import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/Gen
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 import {TextMaskEmail, UserData} from "../controllers";
+import ConfirmComponent from "../components/ConfirmComponent";
 
-const Login = (props) => {
-    const {popup = true, onLogin, transformUserData, layout = <LoginLayout/>} = props;
+function Login(props) {
+    const {popup = true, agreementComponent = null, onLogin, transformUserData, layout = <LoginLayout/>} = props;
     const [state, setState] = React.useState({
         email: "",
         password: "",
         requesting: false
     });
-    const {email, password, requesting} = state;
+    const {showAgreement, email, password, requesting, response} = state;
     const pages = usePages();
     const dispatch = useDispatch();
     const store = useStore();
@@ -39,13 +40,13 @@ const Login = (props) => {
     const errorCallback = error => {
         notifySnackbar(error);
         dispatch({type: "currentUserData", userData: null});
+        refreshAll(store);
         return logoutUser(firebase, store)();
     };
 
     const finallyCallback = () => {
-        setState({...state, requesting: false});
+        setState(state => ({...state, requesting: false}));
         dispatch(ProgressView.HIDE);
-        refreshAll(store);
     }
 
     const requestLoginGoogle = () => {
@@ -76,6 +77,7 @@ const Login = (props) => {
     };
 
     const loginSuccess = response => {
+        if (!response) return;
         if (!response.user) {
             throw new Error("Login failed. Please try again");
         }
@@ -93,7 +95,7 @@ const Login = (props) => {
         }
         return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
             .then(() => ud.fetchPrivate(fetchDeviceId(), true))
-            .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName}))
+            .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName, agreement: true}))
             .then(() => ud.savePrivate())
             .then(() => {
                 if (!ud.persisted) {
@@ -130,9 +132,32 @@ const Login = (props) => {
             });
     };
 
+    const checkFirstLogin = async response => {
+        if (!Boolean(agreementComponent)) return response;
+        const deviceId = fetchDeviceId();
+        const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+        await ud.fetchPrivate(deviceId, true);
+        const agreement = (ud.private[deviceId] || {}).agreement;
+        if (agreement) return response;
+        setState(state => ({...state, showAgreement: true, response}));
+    }
+
+    const handleAgree = () => {
+        setState(state => ({...state, showAgreement: false}));
+        loginSuccess(response);
+    }
+
+    const handleDecline = () => {
+        setState(state => ({...state, showAgreement: false}));
+        notifySnackbar("Agreement rejected");
+        history.goBack();
+        // history.push(pages.home.route);
+    }
+
     if (!popup && window.localStorage.getItem(pages.login.route)) {
         window.localStorage.removeItem(pages.login.route);
         firebase.auth().getRedirectResult()
+            .then(checkFirstLogin)
             .then(loginSuccess)
             .catch(errorCallback)
             .finally(finallyCallback);
@@ -150,10 +175,13 @@ const Login = (props) => {
     return <layout.type
         {...props}
         {...layout.props}
+        agreementComponent={showAgreement ? agreementComponent : null}
         disabled={requesting}
         email={email}
+        onAgree={handleAgree}
         onChangeEmail={ev => setState({...state, email: ev.target.value})}
         onChangePassword={ev => setState({...state, password: ev.target.value})}
+        onDecline={handleDecline}
         onRequestGoogle={requestLoginGoogle}
         onRequestLogin={requestLoginPassword}
         password={password}
@@ -162,11 +190,14 @@ const Login = (props) => {
 
 const LoginLayout =
     ({
+         agreementComponent,
          disabled,
          email,
          logo,
+         onAgree,
          onChangeEmail,
          onChangePassword,
+         onDecline,
          onRequestGoogle,
          onRequestLogin,
          password,
@@ -236,6 +267,17 @@ const LoginLayout =
                     Log in with Google
                 </Button>
             </Grid>
+            {agreementComponent && <ConfirmComponent
+                confirmLabel={"Agree"}
+                modal
+                onCancel={onDecline}
+                onConfirm={onAgree}
+                title={"Warning!"}
+            >
+                <agreementComponent.type
+                    {...agreementComponent.props}
+                />
+            </ConfirmComponent>}
         </Grid>
     }
 

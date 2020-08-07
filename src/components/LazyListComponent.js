@@ -177,13 +177,14 @@ function LazyListComponent
 
         React.useEffect(() => {
             if (cache) return;
-            // pagination && pagination.reset();
+            const pagination = givenPagination instanceof Function ? givenPagination() : givenPagination;
+            pagination.reset();
             setState(state => ({
                 ...state,
                 items: [],
                 loading: true,
                 finished: false,
-                pagination: (givenPagination instanceof Function ? givenPagination() : givenPagination)
+                pagination
             }));
         }, [random, givenPagination.term])
 

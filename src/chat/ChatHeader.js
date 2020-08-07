@@ -7,21 +7,12 @@ import {toDateString, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import LazyListComponent from "../components/LazyListComponent";
 import {useDispatch} from "react-redux";
+import {stylesList} from "../controllers/Theme";
 
-const styles = theme => ({
-    avatar: {
-        height: theme.spacing(4),
-        marginRight: theme.spacing(1),
-        width: theme.spacing(4),
-    },
-    nounderline: {
-        textDecoration: "none"
-    },
+const stylesHeader = theme => ({
     presence: {
         borderRadius: theme.spacing(1),
         height: theme.spacing(1),
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
         width: theme.spacing(1),
     },
     offline: {
@@ -39,10 +30,6 @@ const styles = theme => ({
         fontWeight: "bolder",
         textDecoration: "none",
     },
-    visitDate: {
-        color: "#888888",
-        fontSize: "smaller",
-    },
 });
 
 const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
@@ -53,7 +40,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
     const dispatch = useDispatch();
 
     React.useEffect(() => {
-        if(!userData || !userData.id) {
+        if (!userData || !userData.id) {
             history.goBack();
             return;
         }
@@ -79,13 +66,13 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
         // eslint-disable-next-line
     }, [id]);
 
-    return <Grid container className={classes.root}>
+    return <Grid container spacing={1} className={classes.root}>
         <IconButton onClick={() => history.goBack()}>
             <BackIcon/>
         </IconButton>
         <Grid item><Link to={pages.user.route + userData.id} className={classes.nounderline}>
             <AvatarView
-                className={classes.avatar}
+                className={classes.avatarSmall}
                 image={userData.image}
                 initials={userData.initials}
                 verified={true}
@@ -98,11 +85,14 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
             <div className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
                  title={online ? "Online" : "Offline"}/>
         </Grid>
-        {timestamp > 0 && <Grid item className={classes.visitDate}>
+        {timestamp > 0 && <Grid item className={classes.date}>
             {toDateString(timestamp)}
         </Grid>}
     </Grid>
 };
 
-export default withStyles(styles)(ChatHeader);
+export default withStyles((theme) => ({
+    ...stylesList(theme),
+    ...stylesHeader(theme),
+}))(ChatHeader);
 

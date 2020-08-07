@@ -18,9 +18,11 @@ import Pagination from "../../controllers/FirebasePagination";
 import {normalizeSortName, UserData} from "../../controllers/UserData";
 import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";
+import {styles} from "../../controllers/Theme";
+import withStyles from "@material-ui/styles/withStyles";
 
 function Users(props) {
-    const {mode = "all", filter, invitation = true} = props;
+    const {classes, mode = "all", filter, invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -215,8 +217,7 @@ function Users(props) {
         />*/}
         {invitation && <Link to={pages.adduser.route}
                              key={pages.adduser.route}>
-            <Fab aria-label={"Add"} color={"secondary"}
-                 style={{zIndex: 1, right: theme.spacing(2), bottom: theme.spacing(2), position: "fixed"}}>
+            <Fab aria-label={"Add"} color={"primary"} className={classes.fab}>
                 <AddIcon/>
             </Fab>
         </Link>}
@@ -240,7 +241,7 @@ const mapStateToProps = ({users}) => ({
     mode: users.mode,
 });
 
-export default connect(mapStateToProps)(Users);
+export default connect(mapStateToProps)(withStyles(styles)(Users));
 
 function UsersPagination({firebase, start}) {
     let count = 0, countTotal = 0, finished = false, started = true, names = [], emails = [],

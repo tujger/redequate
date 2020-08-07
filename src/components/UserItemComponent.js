@@ -9,7 +9,6 @@ import CardHeader from "@material-ui/core/CardHeader";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import withStyles from "@material-ui/styles/withStyles";
-import {styles} from "./styles";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import {notifySnackbar} from "../controllers/Notifications";
 import {useFirebase, usePages} from "../controllers/General";
@@ -17,6 +16,7 @@ import {fetchCallable, fetchFunction} from "../controllers/Firebase";
 import ProgressView from "./ProgressView";
 import AvatarView from "./AvatarView";
 import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
+import {stylesList} from "../controllers/Theme";
 
 function UserItemComponent(props) {
     const {data, classes, skeleton, label} = props;
@@ -74,7 +74,7 @@ function UserItemComponent(props) {
 
     const userData = UserData(firebase).create(data.key, data.value);
 
-    return <Card className={classes.card}>
+    return <Card className={[classes.root, classes.card].join(" ")}>
         <CardActionArea onClick={() => {
             history.push(pages.user.route + userData.id);
         }}>
@@ -90,6 +90,7 @@ function UserItemComponent(props) {
                     </IconButton>*/
                 }
                 avatar={<AvatarView
+                    className={classes.avatar}
                     image={userData.image}
                     initials={userData.initials}
                     verified={userData.verified}
@@ -141,4 +142,4 @@ UserItemComponent.propTypes = {
     onSwipe: PropTypes.func,
 };
 
-export default withStyles(styles)(UserItemComponent);
+export default withStyles(stylesList)(UserItemComponent);

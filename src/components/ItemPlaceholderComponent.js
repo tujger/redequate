@@ -4,8 +4,8 @@ import CardHeader from "@material-ui/core/CardHeader";
 import Skeleton from "@material-ui/lab/Skeleton";
 import Grid from "@material-ui/core/Grid";
 import AvatarView from "./AvatarView";
-import {styles} from "./styles";
 import withStyles from "@material-ui/styles/withStyles";
+import {stylesList} from "../controllers/Theme";
 
 const ItemPlaceholderComponent = ({classes, label}) => (
     <Card className={[classes.card].join(" ")}>
@@ -20,7 +20,7 @@ const ItemPlaceholderComponent = ({classes, label}) => (
                     className={classes.avatar}
                     variant="circle"
                 />}
-            className={[classes.cardHeader, label ? classes.cardHeaderWithLabel : ""].join(" ")}
+            className={[classes.cardHeader,"", label ? classes.cardHeaderWithLabel : ""].join(" ")}
             subheader={!label && <React.Fragment>
                 <Skeleton
                     animation="wave"
@@ -49,4 +49,4 @@ const ItemPlaceholderComponent = ({classes, label}) => (
     </Card>
 )
 
-export default withStyles(styles)(ItemPlaceholderComponent);
+export default withStyles(stylesList)(ItemPlaceholderComponent);

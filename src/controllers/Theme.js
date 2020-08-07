@@ -91,3 +91,180 @@ export const createTheme = ({colors}) => createMuiTheme({
 const theme = createTheme({colors:colors()});
 
 export default theme;
+
+export const styles = theme => ({
+    fab: {
+        backgroundColor: theme.palette.secondary.main,
+        color: theme.palette.getContrastText(theme.palette.secondary.main),
+        zIndex: 1,
+        "&:hover": {
+            backgroundColor: theme.palette.secondary.main,
+            color: theme.palette.getContrastText(theme.palette.secondary.main),
+        }
+    },
+    inforows: {
+        [theme.breakpoints.up("sm")]: {
+            flex: 1,
+            marginLeft: theme.spacing(4),
+            width: "auto",
+        },
+        [theme.breakpoints.down("sm")]: {
+            justifyContent: "center",
+            marginBottom: theme.spacing(3),
+            textAlign: "center",
+        },
+    },
+    inforow: {
+        [theme.breakpoints.down("sm")]: {
+            alignItems: "center",
+            justifyContent: "center",
+        },
+    },
+    label: {
+        color: "#000000",
+        textDecoration: "none",
+    },
+    nounderline: {
+        textDecoration: "none",
+    },
+    superIndex: {
+        color: "#ff0000",
+        fontSize: "small",
+        fontWeight: "bolder",
+        marginBottom: theme.spacing(.5),
+        marginLeft: theme.spacing(.5),
+        verticalAlign: "super",
+    },
+})
+
+export const stylesList = theme => ({
+    avatar: {
+        height: theme.spacing(7),
+        textDecoration: "none",
+        width: theme.spacing(7),
+    },
+    avatarSmall: {
+        height: theme.spacing(4),
+        textDecoration: "none",
+        width: theme.spacing(4),
+    },
+    avatarSmallest: {
+        height: theme.spacing(3),
+        textDecoration: "none",
+        width: theme.spacing(3),
+    },
+    body: {
+        color: "#101010",
+    },
+    card: {
+        backgroundColor: "transparent",
+        boxShadow: "none",
+        borderTopWidth: 0,
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
+        borderBottom: "1px solid #f6f6f6",
+        borderRadius: 0,
+        overflow: "initial",
+        position: "relative",
+    },
+    cardActions: {
+        display: "flex",
+        paddingBottom: theme.spacing(0),
+        paddingRight: theme.spacing(0),
+        paddingTop: theme.spacing(0),
+        [theme.breakpoints.up("md")]: {
+            justifyContent: "flex-end",
+            marginTop: theme.spacing(-.5),
+            paddingLeft: theme.spacing(1),
+        },
+        [theme.breakpoints.down("sm")]: {
+            justifyContent: "space-between",
+            marginTop: theme.spacing(1),
+            paddingLeft: theme.spacing(0),
+        },
+    },
+    cardHeader: {
+        alignItems: "flex-start",
+        paddingBottom: theme.spacing(1.5),
+        paddingLeft: theme.spacing(.5),
+        paddingRight: theme.spacing(2),
+        paddingTop: theme.spacing(1.5),
+    },
+    cardHeaderWithLabel: {
+        alignItems: "center",
+    },
+    cardContent: {
+        overflow: "auto"
+    },
+    counter: {
+        fontSize: theme.spacing(1.5),
+        marginLeft: theme.spacing(1),
+    },
+    date: {
+        color: "#888888",
+        marginRight: theme.spacing(.5),
+        [theme.breakpoints.down("sm")]: {
+            fontSize: theme.spacing(1.5),
+        },
+    },
+    hidden: {
+        visibility: "hidden",
+    },
+    icon: {
+        [theme.breakpoints.up("md")]: {
+            height: theme.spacing(3),
+        },
+        [theme.breakpoints.down("sm")]: {
+            height: theme.spacing(2.5),
+        },
+    },
+    iconSmall: {
+        [theme.breakpoints.up("md")]: {
+            height: theme.spacing(2),
+        },
+    },
+    label: {
+        color: "#000000",
+        textDecoration: "none",
+    },
+    nounderline: {
+        textDecoration: "none",
+    },
+    read: {
+        color: "#888888",
+    },
+    root: {
+        flex: "0 0 auto"
+    },
+    selected: {
+        backgroundColor: theme.palette.background.default,
+    },
+    showMore: {
+        color: "#452187",
+        marginTop: theme.spacing(.5),
+    },
+    since: {
+        alignItems: "flex-end",
+        color: "#888888",
+        display: "flex",
+        marginLeft: theme.spacing(1),
+        [theme.breakpoints.up("md")]: {
+            fontSize: "smaller",
+        },
+        [theme.breakpoints.down("sm")]: {
+            fontSize: theme.spacing(1.5),
+        },
+    },
+    unread: {
+        color: "#000000",
+        fontWeight: "bolder",
+    },
+    userName: {
+        fontWeight: "bolder",
+        marginBottom: theme.spacing(.5),
+        marginRight: theme.spacing(.5),
+        [theme.breakpoints.down("sm")]: {
+            flex: 1,
+        },
+    },
+});

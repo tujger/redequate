@@ -45,9 +45,9 @@ const styles = theme => ({
         zIndex: 1,
     },
     menusection: {
-        // backgroundColor: theme.palette.background.default,
-        // color: theme.palette.getContrastText(theme.palette.background.default),
-        // boxShadow: theme.shadows[1],
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.getContrastText(theme.palette.background.default),
+        boxShadow: theme.shadows[2],
     },
     menuitem: {
         fontSize: "inherit"
@@ -56,7 +56,6 @@ const styles = theme => ({
         // marginLeft: "auto",
         margin: theme.spacing(.5),
     }
-
 });
 
 const MenuSection = withStyles(styles)(props => {

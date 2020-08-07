@@ -32,25 +32,17 @@ import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
 import {withStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
+import {styles} from "../controllers/Theme";
 
-const styles = theme => ({
+const stylesProfile = theme => ({
     root: {
         [theme.breakpoints.down("sm")]: {
             textAlign: "center",
         },
     },
-    buttons: {},
-    edit: {},
-    logout: {},
-    fab: {
-        backgroundColor: theme.palette.secondary.main,
-        color: theme.palette.getContrastText(theme.palette.secondary.main),
-        zIndex: 1,
-        "&:hover": {
-            backgroundColor: theme.palette.secondary.main,
-            color: theme.palette.getContrastText(theme.palette.secondary.main),
-        }
-    },
+    buttons: null,
+    edit: null,
+    logout: null,
 });
 
 export const publicFields = [
@@ -239,4 +231,7 @@ const Profile = ({
     </div>;
 };
 
-export default withStyles(styles)(Profile);
+export default withStyles((theme) => ({
+    ...styles(theme),
+    ...stylesProfile(theme),
+}))(Profile);

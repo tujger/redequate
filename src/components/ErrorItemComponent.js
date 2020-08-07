@@ -2,7 +2,7 @@ import React from 'react';
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import CardHeader from "@material-ui/core/CardHeader";
-import {styles} from "./styles";
+import IconButton from "@material-ui/core/IconButton";
 import {UserData} from "../controllers/UserData";
 import {cacheDatas, useFirebase} from "../controllers/General";
 import AvatarView from "./AvatarView";
@@ -11,14 +11,41 @@ import {withStyles} from "@material-ui/core";
 import ConfirmComponent from "./ConfirmComponent";
 import {toDateString} from "../controllers/DateFormat";
 import {notifySnackbar} from "../controllers/Notifications";
+import {fetchCallable} from "../controllers/Firebase";
+import ProgressView from "./ProgressView";
+import {useDispatch} from "react-redux";
+import ClearIcon from "@material-ui/icons/Clear";
+import {stylesList} from "../controllers/Theme";
 
 function ErrorItemComponent(props) {
     const {data, classes, skeleton, label, onUserClick} = props;
+    const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
-    const {alert, userData} = state;
+    const {alert, userData, removed} = state;
 
     const handleClick = (event) => onUserClick(event, userData.id);
+
+    const handleConfirm = () => {
+        dispatch(ProgressView.SHOW);
+        setState({...state, alert: false});
+        fetchCallable(firebase)("fixError", {
+            key: data.key
+        })
+            .then(({result}) => notifySnackbar(result))
+            .then(() => firebase.database().ref("errors").child(data.key).set(null))
+            .then(() => setState({...state, removed: true}))
+            .catch(notifySnackbar)
+            .finally(() => dispatch(ProgressView.HIDE));
+    }
+
+    const handleRemove = () => {
+        dispatch(ProgressView.SHOW);
+        firebase.database().ref("errors").child(data.key).set(null)
+            .then(() => setState({...state, removed: true}))
+            .catch(notifySnackbar)
+            .finally(() => dispatch(ProgressView.HIDE));
+    }
 
     React.useEffect(() => {
         if (!data || !data.value || !data.value.uid) return;
@@ -32,6 +59,7 @@ function ErrorItemComponent(props) {
         }
     }, [])
 
+    if(removed) return null;
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
     if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes}/>
 
@@ -40,6 +68,9 @@ function ErrorItemComponent(props) {
             setState({...state, alert: true});
         }}>
             <CardHeader
+                action={<IconButton component={"div"} onClick={handleRemove}>
+                    <ClearIcon/>
+                </IconButton>}
                 avatar={<div onClick={handleClick}>
                     <AvatarView
                         image={userData.image}
@@ -66,8 +97,9 @@ function ErrorItemComponent(props) {
             />
         </CardActionArea>
         {alert && <ConfirmComponent
-            confirmLabel={false}
+            confirmLabel={"Try to fix"}
             onCancel={() => setState({...state, alert: false})}
+            onConfirm={handleConfirm}
             title={"Error stacktrace"}
         >
             <pre style={{whiteSpace: "pre-wrap"}}>{data.value.error}</pre>
@@ -75,4 +107,4 @@ function ErrorItemComponent(props) {
     </React.Fragment>
 }
 
-export default withStyles(styles)(ErrorItemComponent);
+export default withStyles(stylesList)(ErrorItemComponent);

@@ -88,11 +88,11 @@ const Errors = (props) => {
                     }}
                 />}
             </Grid>
-            <IconButton onClick={() => setState({...state, random: Math.random()})}>
-                <RefreshIcon/>
-            </IconButton>
             <IconButton onClick={() => setState({...state, deleteOpen: true})}>
                 <ClearIcon/>
+            </IconButton>
+            <IconButton onClick={() => setState({...state, random: Math.random()})}>
+                <RefreshIcon/>
             </IconButton>
         </Toolbar>
         <LazyListComponent

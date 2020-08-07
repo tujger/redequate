@@ -15,14 +15,11 @@ import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
 
 const styles = theme => ({
-    /*avatar: {
-        height: theme.spacing(4),
-        marginRight: theme.spacing(1),
-        width: theme.spacing(4),
-    },*/
-    /*inputbox: {
-        flex: "1 auto",
-    },*/
+    inputfield: {
+        alignItems: "center",
+        display: "flex",
+        overflowX: "auto",
+    },
     messagebox: {
         backgroundColor: theme.palette.background.default,
         flexWrap: "nowrap",
@@ -53,11 +50,6 @@ const styles = theme => ({
             height: window.innerHeight - theme.spacing(16) - theme.spacing(16),
         },
     },
-    inputfield: {
-        alignItems: "center",
-        display: "flex",
-        overflowX: "auto",
-    }
 });
 
 const InputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) => {

@@ -7,45 +7,13 @@ import CardHeader from "@material-ui/core/CardHeader";
 import Grid from "@material-ui/core/Grid";
 import {cacheDatas, toDateString, useCurrentUserData, useFirebase, UserData} from "../controllers";
 import AvatarView from "../components/AvatarView";
-import {styles} from "../components/styles";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import {stylesList} from "../controllers/Theme";
 
 const stylesChat = theme => ({
-    cardActions: {
-        bottom: 0,
-        display: "flex",
-        paddingBottom: theme.spacing(0),
-        paddingLeft: theme.spacing(1),
-        paddingRight: theme.spacing(0),
-        paddingTop: theme.spacing(0),
-        [theme.breakpoints.up("md")]: {
-            justifyContent: "flex-end",
-            marginTop: theme.spacing(-.5),
-            position: "absolute",
-            right: theme.spacing(2),
-        },
-        [theme.breakpoints.down("sm")]: {
-            justifyContent: "space-between",
-            marginTop: theme.spacing(1),
-            paddingLeft: theme.spacing(0),
-        },
-    },
-    avatar: {
+    avatarChat: {
         height: theme.spacing(3),
         width: theme.spacing(3),
-    },
-    icon: {
-        [theme.breakpoints.up("md")]: {
-            height: theme.spacing(2),
-        },
-        [theme.breakpoints.down("sm")]: {
-            height: theme.spacing(2.5),
-        },
-    },
-    content: null,
-    messagebox: null,
-    indent: {
-        width: theme.spacing(4)
     },
     chatItem: {
         borderRadius: theme.spacing(2),
@@ -59,9 +27,6 @@ const stylesChat = theme => ({
         backgroundColor: "#f1f0f0",
         marginRight: "10%",
     },
-    label: {
-        color: "#000000"
-    },
     text: {
         marginBottom: theme.spacing(1),
     },
@@ -71,9 +36,6 @@ const stylesChat = theme => ({
         fontSize: theme.spacing(1.25),
         position: "absolute",
         right: theme.spacing(1),
-    },
-    transparent: {
-        opacity: 0,
     },
 });
 
@@ -106,13 +68,14 @@ const ChatItem = React.forwardRef((props, ref) => {
         // eslint-disable-next-line
     }, []);
 
-    if (skeleton) return <ItemPlaceholderComponent classes={{avatar: classes.avatar}}/>;
+    if (skeleton) return <ItemPlaceholderComponent classes={{avatar: classes.avatarChat}}/>;
 
     const isNew = fetchIsNew() && !shown;
     const isItemOut = currentUserData.id === data.uid;
 
     if (!authorData) return null;
     return <Card ref={ref} className={[
+        classes.root,
             classes.card,
         classes.chatItem,
             isItemOut ? classes.chatItemOut : classes.chatItemIn
@@ -121,7 +84,7 @@ const ChatItem = React.forwardRef((props, ref) => {
                 classes={{content: classes.cardContent}}
                 className={[classes.cardHeader, classes.post].join(" ")}
                 avatar={<AvatarView
-                    className={classes.avatar}
+                    className={[classes.avatar, classes.avatarChat].join(" ")}
                     image={authorData.image}
                     initials={authorData.initials}
                     verified={true}
@@ -167,6 +130,6 @@ ChatItem.propTypes = {
 };
 
 export default withStyles((theme) => ({
-    ...styles(theme),
+    ...stylesList(theme),
     ...stylesChat(theme),
 }))(ChatItem);

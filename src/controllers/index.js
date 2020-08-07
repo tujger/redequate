@@ -7,7 +7,7 @@ export * from "./DateFormat";
 export {default as Pagination} from "./FirebasePagination";
 export * from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
-export {default as theme, colors, createTheme} from "./Theme";
+export {default as theme, colors, createTheme, styles, stylesList} from "./Theme";
 export {
     sendInvitationEmail,
     sendVerificationEmail,
