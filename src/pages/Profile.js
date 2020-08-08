@@ -8,7 +8,14 @@ import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
 import ProfileComponent, {default as ProfileComponentOrigin} from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {logoutUser, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
+import {
+    logoutUser,
+    matchRole,
+    Role,
+    sendVerificationEmail,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
@@ -17,13 +24,15 @@ import {useFirebase, usePages, useStore} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
-import {matchRole, TextMaskPhone} from "../controllers";
+import {fetchCallable} from "../controllers/Firebase";
+import {TextMaskPhone} from "../controllers/TextMasks";
 import LoadingComponent from "../components/LoadingComponent";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import EditIcon from "@material-ui/icons/Edit";
 import PlacesTextField from "../components/PlacesTextField";
 import InfoIcon from "@material-ui/icons/Info";
+import FixIcon from "@material-ui/icons/BugReport";
 import RoleIcon from "@material-ui/icons/Security";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -131,6 +140,15 @@ const Profile = ({
         history.push(pages.chat.route + userData.id);
     }
 
+    const fixErrors = () => {
+        fetchCallable(firebase)("fixUser", {
+            key: userData.id
+        })
+            .then(({result = "Complete"}) => notifySnackbar(result))
+            .catch(notifySnackbar)
+            .finally(() => dispatch(ProgressView.HIDE));
+    }
+
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
     const isSameUser = userData && currentUserData && userData.id === currentUserData.id;
     const isEditAllowed = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
@@ -162,19 +180,32 @@ const Profile = ({
     return <div className={classes.root}>
         <Grid container>
             <Grid item>
-                <IconButton aria-label={"Back"} onClick={() => history.goBack()}>
-                    <BackIcon/>
-                </IconButton>
+                <IconButton
+                    aria-label={"Back"}
+                    children={<BackIcon/>}
+                    onClick={() => history.goBack()}
+                    title={"Back"}
+                />
             </Grid>
             <Grid item xs/>
-            {isEditAllowed && <React.Fragment>
-                <Grid item>
-                    <IconButton aria-label={"Edit"} onClick={() => {
+            {isCurrentUserAdmin && <Grid item>
+                <IconButton
+                    aria-label={"Fix possible errors"}
+                    children={<FixIcon/>}
+                    onClick={fixErrors}
+                    title={"Fix possible errors"}
+                />
+            </Grid>}
+            {isEditAllowed && <Grid item>
+                <IconButton
+                    aria-label={"Edit"}
+                    children={<EditIcon/>}
+                    onClick={() => {
                         history.push(isSameUser ? pages.editprofile.route : pages.edituser.route + userData.id)
-                    }}>
-                        <EditIcon/>
-                    </IconButton>
-                </Grid></React.Fragment>}
+                    }}
+                    title={"Edit"}
+                />
+            </Grid>}
         </Grid>
         {userData.disabled && <Grid container>
             <InputLabel error>
@@ -201,15 +232,15 @@ const Profile = ({
             variant="contained"
         >
             {isSameUser && <Button
+                children={"Logout"}
                 className={classes.logout}
                 onClick={() => {
                     logoutUser(firebase, store)()
                         .then(() => refreshAll(store));
                 }}
-            >
-                Logout
-            </Button>}
+            />}
             {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
+                children={"Resend verification"}
                 className={classes.resendVerification}
                 onClick={() => {
                     dispatch(ProgressView.SHOW);
@@ -218,9 +249,7 @@ const Profile = ({
                         .catch(notifySnackbar)
                         .finally(() => dispatch(ProgressView.HIDE));
                 }}
-            >
-                Resend verification
-            </Button>}
+            />}
         </ButtonGroup>
         {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <Tooltip title={"Start chat"}>
             <Fab aria-label={"Start chat"} color={"primary"} className={classes.fab}
