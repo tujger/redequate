@@ -1,21 +1,10 @@
 import React from "react";
-import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
-import ProgressView from "./ProgressView";
 
 const styles = theme => ({
-    container: {
-        position: "relative",
-    },
-    stickyBottom: {
-        position: "sticky",
-        bottom: 0
-    },
-});
-
-const stylesHeader = theme => ({
     sticky: {
         display: "flex",
+        justifyContent: "flex-end",
         height: theme.mixins.toolbar.minHeight,
         position: "sticky",
         top: 0,
@@ -53,25 +42,7 @@ const stylesHeader = theme => ({
     }
 });
 
-const StickyHeader = props => {
-    const {classes, className, children, headerComponent = <HeaderComponent/>, headerImage, sticky, stickyClassName, stickyBottom, stickyBottomClassName, title, titleClassName, content} = props;
-
-    return <div className={[classes.container, className].join(" ")}>
-        <headerComponent.type {...headerComponent.props} headerImage={headerImage} content={content} sticky={sticky} stickyClassName={stickyClassName} title={title} titleClassName={titleClassName}/>
-        <ProgressView/>
-        {children}
-        <div className={[classes.stickyBottom, stickyBottomClassName].join(" ")}>{stickyBottom}</div>
-    </div>
-};
-
-StickyHeader.propTypes = {
-    children: PropTypes.any,
-    headerImage: PropTypes.string,
-};
-
-export default withStyles(styles)(StickyHeader);
-
-const HeaderComponent = withStyles(stylesHeader)(({classes, content, headerImage, sticky, stickyClassName, title, titleClassName}) => {
+export const StickyHeaderComponent = withStyles(styles)(({classes, content, headerImage, menuComponent, title, titleClassName}) => {
     const [state, setState] = React.useState({collapsed: false});
     const {collapsed} = state;
     const refObserver = React.createRef();
@@ -93,11 +64,14 @@ const HeaderComponent = withStyles(stylesHeader)(({classes, content, headerImage
     }, []);
 
     return <React.Fragment>
-        <div className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
+        <div
+            className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
         <div className={classes.content} style={{backgroundImage: `url(${headerImage})`}}>{content}</div>
         <div ref={refObserver} className={classes.observer}/>
-        <div className={[classes.sticky, collapsed ? classes.stickycollapsed : null, stickyClassName].join(" ")}
+        <div className={[classes.sticky, collapsed ? classes.stickycollapsed : null].join(" ")}
              style={collapsed ? {backgroundImage: `url(${headerImage})`} : null}
-        >{sticky}</div>
+        >
+            {menuComponent}
+        </div>
     </React.Fragment>
 })

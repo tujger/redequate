@@ -5,10 +5,10 @@ import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
 import {usersReducer} from "../pages/admin/Users";
 import LazyListComponent, {lazyListComponentReducer} from "../components/LazyListComponent";
-import {topMenuReducer} from "../components/TopMenu";
+import {topMenuReducer} from "../layouts/TopBottomMenuLayout/TopMenu";
 import {chatsCounterReducer} from "../chat/ChatsCounter";
 import {errorsReducer} from "../pages/admin/Errors";
-import {mainAppbarReducer} from "../components/MainAppbar";
+import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/MainAppbar";
 import {Layout, MenuBadge} from "./General";
 
 const Store = (name, reducers) => {

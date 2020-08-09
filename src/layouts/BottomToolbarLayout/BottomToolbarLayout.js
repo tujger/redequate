@@ -3,11 +3,11 @@ import PropTypes from "prop-types";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
-import BottomToolbar from "../components/BottomToolbar";
-import MainTitlebar from "../components/MainTitlebar";
-import MainContent from "../components/MainContent";
-import Snackbar from "../components/Snackbar";
-import {NotificationsSnackbar} from "../controllers/Notifications";
+import BottomToolbar from "./BottomToolbar";
+import Titlebar from "./Titlebar";
+import MainContent from "../../components/MainContent";
+import Snackbar from "../../components/Snackbar";
+import {NotificationsSnackbar} from "../../controllers/Notifications";
 
 const styles = theme => ({
     content: {
@@ -22,7 +22,7 @@ function BottomToolbarLayout(props) {
     const {menu, classes} = props;
 
     return <React.Fragment><CssBaseline/>
-        <MainTitlebar
+        <Titlebar
             {...props}
         />
         <Typography className={classes.indent}/>

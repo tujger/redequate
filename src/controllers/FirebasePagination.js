@@ -174,7 +174,7 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
             return toString();
         },
         get term() {
-            return `${child}|${start}|${end}|${equals}|${value}`;
+            return `${ref.path}|${child ? child : ""}|${start ? start : ""}|${end ? end : ""}|${equals ? equals : ""}|${value ? value :""}`;
         },
         next: next,
         reset: reset,

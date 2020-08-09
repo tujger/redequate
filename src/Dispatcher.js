@@ -24,9 +24,9 @@ import {hasNotifications, setupReceivingNotifications} from "./controllers/Notif
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
 
-const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout"));
-const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout"));
-const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout"));
+const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
+const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
+const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout/TopBottomMenuLayout"));
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 

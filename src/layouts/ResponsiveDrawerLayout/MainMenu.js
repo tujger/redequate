@@ -7,7 +7,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import withStyles from "@material-ui/styles/withStyles";
 import {Link} from "react-router-dom";
-import {matchRole, useCurrentUserData} from "../controllers/UserData";
+import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 
 const styles = theme => ({
     header: {

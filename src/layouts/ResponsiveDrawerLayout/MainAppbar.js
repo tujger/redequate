@@ -8,11 +8,11 @@ import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import Menu from "@material-ui/icons/Menu";
 import {Link, Route, Switch} from "react-router-dom";
-import AvatarView from "../components/AvatarView";
-import ProgressView from "./ProgressView";
-import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../controllers/UserData";
+import AvatarView from "../../components/AvatarView";
+import ProgressView from "../../components/ProgressView";
+import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import {connect} from "react-redux";
-import {Layout, MenuBadge, usePages} from "../controllers/General";
+import {Layout, MenuBadge, usePages} from "../../controllers/General";
 
 const styles = theme => ({
     label: {

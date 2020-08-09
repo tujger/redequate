@@ -1,14 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {MenuItem, withStyles} from "@material-ui/core";
-import {currentRole, matchRole, Role, useCurrentUserData} from "../controllers/UserData";
+import {currentRole, matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {Link, useHistory} from "react-router-dom";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
-import AvatarView from "../components/AvatarView";
-import {MenuBadge, usePages} from "../controllers/General";
+import AvatarView from "../../components/AvatarView";
+import {MenuBadge, usePages} from "../../controllers/General";
 import {connect} from "react-redux";
 
 const styles = theme => ({

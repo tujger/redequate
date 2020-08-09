@@ -3,14 +3,14 @@ import PropTypes from "prop-types";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
-import BottomMenu from "../components/BottomMenu";
-import MainContent from "../components/MainContent";
-import Snackbar from "../components/Snackbar";
-import StickyHeader from "../components/StickyHeader";
-import TopMenu from "../components/TopMenu";
+import BottomMenu from "./BottomMenu";
+import MainContent from "../../components/MainContent";
+import Snackbar from "../../components/Snackbar";
+import StickyHeader from "./StickyHeader";
+import TopMenu from "./TopMenu";
 import {Route, Switch} from "react-router-dom";
-import {NotificationsSnackbar} from "../controllers/Notifications";
-import {usePages} from "../controllers/General";
+import {NotificationsSnackbar} from "../../controllers/Notifications";
+import {usePages} from "../../controllers/General";
 
 const styles = theme => ({
     indent: {
@@ -65,8 +65,8 @@ function TopBottomMenuLayout(props) {
         </Switch>}
         headerComponent={headerComponent}
         headerImage={headerImage}
-        sticky={<TopMenu items={menu} className={classes.topmenu}/>}
-        stickyClassName={classes.stickytop}
+        menuComponent={<TopMenu items={menu} className={[classes.topmenu, classes.stickytop].join(" ")}/>}
+        menuClassName={classes.stickytop}
     >
         <MainContent classes={{content: classes.content}}/>
         <Grid container justify="center">

@@ -6,7 +6,7 @@ import IconButton from "@material-ui/core/IconButton";
 import withStyles from "@material-ui/styles/withStyles";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
 import {Link, Route, Switch} from "react-router-dom";
-import {usePages} from "../controllers/General";
+import {usePages} from "../../controllers/General";
 
 const styles = theme => ({
     header: {

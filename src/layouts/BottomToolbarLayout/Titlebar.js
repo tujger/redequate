@@ -7,10 +7,10 @@ import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import BackIcon from "@material-ui/icons/ChevronLeft";
 import {Link, useHistory, useLocation, withRouter} from "react-router-dom";
-import AvatarView from "../components/AvatarView";
-import ProgressView from "./ProgressView";
-import {matchRole, needAuth, useCurrentUserData} from "../controllers/UserData";
-import {usePages} from "../controllers/General";
+import AvatarView from "../../components/AvatarView";
+import ProgressView from "../../components/ProgressView";
+import {matchRole, needAuth, useCurrentUserData} from "../../controllers/UserData";
+import {usePages} from "../../controllers/General";
 
 const styles = theme => ({
     appbar: {
@@ -47,10 +47,12 @@ const styles = theme => ({
     toolbar: {
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),
-    }
+    },
+    content: null,
+    indent: null,
 });
 
-function MainTitlebar(props) {
+function Titlebar(props) {
     const {classes, className, onHamburgerClick} = props;
     const pages = usePages();
     const location = useLocation();
@@ -92,10 +94,10 @@ function MainTitlebar(props) {
     </AppBar>
 }
 
-MainTitlebar.propTypes = {
+Titlebar.propTypes = {
     title: PropTypes.string,
     pages: PropTypes.object,
     onHamburgerClick: PropTypes.func
 };
 
-export default withRouter(withStyles(styles)(MainTitlebar));
+export default withRouter(withStyles(styles)(Titlebar));

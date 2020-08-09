@@ -149,6 +149,25 @@ Menu can contain all or some of items from `pages`. First item in each section i
         pages.about,
     ]];
 
+## Set up functions
+
+Set up credentials for `sendMail`:
+
+    firebase functions:config:set gmail.email="myusername@gmail.com" gmail.password="secretpassword"
+
+Getting the password:
+
+* go to gmail.com
+* click your avatar
+* click "Manage your Google Account"
+* go to "Security"
+* in section "Signing in to Google" click "App passwords"
+* (switch on "2-Step verification" if necessary)
+* click "Select App", type some alias
+* click "Generate" and then copy password provided, use it for `secretpassword`
+
+This password will be allowed only for the functions.
+
 
 ## License
 

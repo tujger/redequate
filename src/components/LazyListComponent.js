@@ -170,23 +170,35 @@ function LazyListComponent
             liveAddRef && liveAddRef.off("child_added", liveAddListener);
             liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
             if (!disableProgress) dispatch(ProgressView.HIDE);
-            pagination.reset();
+            if(!cache) pagination.reset();
         }
         // eslint-disable-next-line
-    }, [pagination, givenPagination.term]);
+    }, [pagination.term]);
 
     React.useEffect(() => {
         if (cache) return;
-        const pagination = givenPagination instanceof Function ? givenPagination() : givenPagination;
+        // const pagination = givenPagination instanceof Function ? givenPagination() : givenPagination;
+        // if(!cache) pagination.reset();
+        // setState(state => ({
+        //     ...state,
+        //     items: [],
+        //     loading: true,
+        //     finished: false,
+        //     pagination
+        // }));
         pagination.reset();
-        setState(state => ({
-            ...state,
+        const update = {
+            finished: false,
             items: [],
             loading: true,
-            finished: false,
-            pagination
-        }));
-    }, [random, givenPagination.term])
+            pagination,
+            reverse
+        }
+        setState(state => ({
+            ...state,
+            ...update,
+        }))
+    }, [random, pagination.term])
 
     if (reverse === true && !containerRef) {
         throw new Error("[Lazy] 'containerRef' must be defined due to reverse=true")
@@ -310,10 +322,11 @@ LazyListComponent.propTypes = {
 export const lazyListComponentReducer = (state = {}, action) => {
     const cache = action.cache;
     const cacheData = action["LazyListComponent_" + cache];
+    const savedCacheData = state["LazyListComponent_" + cache] || {};
+
     switch (action.type) {
         case LazyListComponent._ADD:
             const item = action.item;
-            const savedCacheData = state["LazyListComponent_" + cache];
             const {items, ascending, reverse} = savedCacheData;
             const newitems = ascending
                 ? (reverse ? [item, ...items] : [...items, item])
@@ -323,9 +336,10 @@ export const lazyListComponentReducer = (state = {}, action) => {
             return {...state, ["LazyListComponent_" + cache]: {}};
         case LazyListComponent.RESET:
             if (cache) {
-                const {pagination} = cacheData || state["LazyListComponent_" + cache] || {};
+                const cachedData = cacheData || savedCacheData;
+                const {pagination} = cachedData;
                 if (pagination) pagination.reset();
-                return {...state, ["LazyListComponent_" + cache]: {items: [], loading: false, finished: false}};
+                return {...state, ["LazyListComponent_" + cache]: {...cachedData, items: [], loading: false, finished: false}};
             } else {
                 return {...state, random: Math.random()};
             }

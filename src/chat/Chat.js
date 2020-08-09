@@ -13,6 +13,7 @@ import ChatList from "./ChatList";
 import LazyListComponent from "../components/LazyListComponent";
 import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
+const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 const styles = theme => ({
     inputfield: {
@@ -31,7 +32,7 @@ const styles = theme => ({
             width: "100%",
         },
         [theme.breakpoints.down("md")]: {
-            bottom: 0,
+            bottom: iOS ? theme.spacing(7) : 0,
             left: 0,
             margin: 0,
             padding: theme.spacing(1),

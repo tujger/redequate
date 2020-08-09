@@ -8,13 +8,13 @@ import Grid from "@material-ui/core/Grid";
 import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
-import MainAppbar from "../components/MainAppbar";
-import MainContent from "../components/MainContent";
-import MainHeader from "../components/MainHeader";
-import MainMenu from "../components/MainMenu";
-import Snackbar from "../components/Snackbar";
-import {NotificationsSnackbar} from "../controllers/Notifications";
-import {usePages, useWindowData} from "../controllers/General";
+import MainAppbar from "./MainAppbar";
+import MainContent from "../../components/MainContent";
+import MainHeader from "./MainHeader";
+import MainMenu from "./MainMenu";
+import Snackbar from "../../components/Snackbar";
+import {NotificationsSnackbar} from "../../controllers/Notifications";
+import {usePages, useWindowData} from "../../controllers/General";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 

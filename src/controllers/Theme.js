@@ -1,6 +1,7 @@
 import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
 
 const drawerWidth = 240;
+const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 export const colors = ({primary, secondary} = {}) => {
     const month = new Date().getUTCMonth();
@@ -97,6 +98,7 @@ export const styles = theme => ({
         backgroundColor: theme.palette.secondary.main,
         color: theme.palette.getContrastText(theme.palette.secondary.main),
         zIndex: 1,
+        bottom: iOS ? theme.spacing(9) : theme.spacing(2),
         "&:hover": {
             backgroundColor: theme.palette.secondary.main,
             color: theme.palette.getContrastText(theme.palette.secondary.main),
