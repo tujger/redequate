@@ -103,7 +103,7 @@ function EditProfile(props) {
     const requiredFilled = () => {
         const requiredError = [];
         publicFields.forEach(field => {
-            if (field && field.required && !state[field.id]) {
+            if (field && field.required && (!state[field.id] || !state[field.id].toString().trim().length)) {
                 requiredError.push(field.id);
             }
         })

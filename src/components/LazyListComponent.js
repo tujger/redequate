@@ -18,7 +18,7 @@ function LazyListComponent
      live = false,
      noItemsComponent,
      pageTransform = items => items,
-     pagination: givenPagination,
+     pagination: sourcePagination,
      placeholder,
      placeholders = 1,
      random,
@@ -28,17 +28,18 @@ function LazyListComponent
  }) {
     const dispatch = useDispatch();
     const [state, setState] = React.useState({});
+    const givenPagination = sourcePagination instanceof Function ? sourcePagination() : sourcePagination;
     const {
         finished: cachedFinished = false,
         items: cachedItems = [],
         loading: cachedLoading = true,
-        pagination: cachedPagination = givenPagination instanceof Function ? givenPagination() : givenPagination
+        pagination: cachedPagination = givenPagination
     } = cacheData;
     const {
         finished = cache !== undefined ? cachedFinished : false,
         items = cache !== undefined ? cachedItems : [],
         loading = cache !== undefined ? cachedLoading : true,
-        pagination = cache !== undefined ? cachedPagination : (givenPagination instanceof Function ? givenPagination() : givenPagination)
+        pagination = cache !== undefined ? cachedPagination : givenPagination
     } = state;
 
     const ascending = pagination.order === "asc";
@@ -173,7 +174,7 @@ function LazyListComponent
             if(!cache) pagination.reset();
         }
         // eslint-disable-next-line
-    }, [pagination.term]);
+    }, [pagination.term, givenPagination.term]);
 
     React.useEffect(() => {
         if (cache) return;
@@ -186,19 +187,19 @@ function LazyListComponent
         //     finished: false,
         //     pagination
         // }));
-        pagination.reset();
+        givenPagination.reset();
         const update = {
             finished: false,
             items: [],
             loading: true,
-            pagination,
+            pagination: givenPagination,
             reverse
         }
         setState(state => ({
             ...state,
             ...update,
         }))
-    }, [random, pagination.term])
+    }, [random, pagination.term, givenPagination.term])
 
     if (reverse === true && !containerRef) {
         throw new Error("[Lazy] 'containerRef' must be defined due to reverse=true")

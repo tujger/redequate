@@ -11,7 +11,6 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Grid from "@material-ui/core/Grid";
 import Toolbar from "@material-ui/core/Toolbar";
 import Hidden from "@material-ui/core/Hidden";
-import {useTheme} from "@material-ui/core";
 import LazyListComponent from "../../components/LazyListComponent";
 import UserItemComponent from "../../components/UserItemComponent";
 import Pagination from "../../controllers/FirebasePagination";
@@ -26,7 +25,6 @@ function Users(props) {
     const pages = usePages();
     const dispatch = useDispatch();
     const firebase = useFirebase();
-    const theme = useTheme();
 
     const handleMode = evt => {
         // setState({...state, mode: evt.target.value});
