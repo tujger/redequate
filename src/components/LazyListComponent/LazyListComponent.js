@@ -1,10 +1,10 @@
 import React from "react";
-import {notifySnackbar} from "../controllers/Notifications";
-import {useWindowData} from "../controllers/General";
-import ProgressView from "./ProgressView";
+import {notifySnackbar} from "../../controllers/Notifications";
+import ProgressView from "../ProgressView";
 import {connect, useDispatch} from "react-redux";
-import {InView} from "react-intersection-observer";
 import PropTypes from "prop-types";
+import {Observer} from "./Observer";
+import {Scroller} from "./Scroller";
 
 function LazyListComponent
 ({
@@ -54,6 +54,7 @@ function LazyListComponent
         if (reverse && containerRef && containerRef.current) {
             before = containerRef.current.scrollHeight;
         }
+
         return pagination.next()
             .then(async newitems => {
                 newitems = newitems.map(async (item, index) => {
@@ -70,16 +71,18 @@ function LazyListComponent
             })
             .then(newitems => pageTransform(newitems))
             .then(newitems => newitems.filter(item => item !== undefined))
-            .then(newitems => ({
-                    ascending,
-                    finished: pagination.finished,
-                    items: ascending
-                        ? (reverse ? [...newitems.reverse(), ...items] : [...items, ...newitems])
-                        : (reverse ? [...newitems, ...items] : [...items, ...newitems.reverse()]),
-                    loading: false,
-                    pagination,
-                    reverse
-                })
+            .then(newitems => {
+                return ({
+                        ascending,
+                        finished: pagination.finished,
+                        items: ascending
+                            ? (reverse ? [...newitems.reverse(), ...items] : [...items, ...newitems])
+                            : (reverse ? [...newitems, ...items] : [...items, ...newitems.reverse()]),
+                        loading: false,
+                        pagination,
+                        reverse
+                    })
+                }
             )
             .catch(error => {
                 notifySnackbar({
@@ -128,7 +131,7 @@ function LazyListComponent
         let lastKey = null;
         const liveAddListener = async snapshot => {
             if (!isMounted) return;
-            if (!lastKey && !pagination.finished) {
+            if (!lastKey && !givenPagination.finished) {
                 lastKey = snapshot.key;
                 return;
             }
@@ -171,22 +174,12 @@ function LazyListComponent
             liveAddRef && liveAddRef.off("child_added", liveAddListener);
             liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
             if (!disableProgress) dispatch(ProgressView.HIDE);
-            if(!cache) pagination.reset();
+            if (!cache) pagination.reset();
         }
-        // eslint-disable-next-line
     }, [pagination.term, givenPagination.term]);
 
     React.useEffect(() => {
         if (cache) return;
-        // const pagination = givenPagination instanceof Function ? givenPagination() : givenPagination;
-        // if(!cache) pagination.reset();
-        // setState(state => ({
-        //     ...state,
-        //     items: [],
-        //     loading: true,
-        //     finished: false,
-        //     pagination
-        // }));
         givenPagination.reset();
         const update = {
             finished: false,
@@ -202,7 +195,7 @@ function LazyListComponent
     }, [random, pagination.term, givenPagination.term])
 
     if (reverse === true && !containerRef) {
-        throw new Error("[Lazy] 'containerRef' must be defined due to reverse=true")
+        throw new Error("[Lazy] 'containerRef' must be defined due to 'reverse'=true")
     }
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
 
@@ -229,76 +222,6 @@ function LazyListComponent
     </React.Fragment>
 }
 
-const Scroller = ({live, placeholder}) => {
-    const windowData = useWindowData();
-    const [scrolled, setScrolled] = React.useState(false);
-
-    const scrollerShown = React.useRef();
-    const taskRef = React.useRef();
-    if (!live) return null;
-
-    React.useEffect(() => {
-        let isMounted = true;
-        const handleScroll = (evt) => {
-            if (!scrollerShown.current) {
-                isMounted && setScrolled(true);
-            }
-        };
-        window.addEventListener("touchmove", handleScroll, true)
-        window.addEventListener("wheel", handleScroll, true)
-        return () => {
-            window.removeEventListener("touchmove", handleScroll);
-            window.removeEventListener("wheel", handleScroll);
-            isMounted = false;
-        }
-    }, [])
-
-    return <InView
-        onChange={(inView) => {
-            scrollerShown.current = inView;
-            if (inView) {
-                setScrolled(false);
-            }
-        }}
-        ref={ref => {
-            clearTimeout(taskRef.current);
-            if (ref && !scrolled) {
-                taskRef.current = setTimeout(() => {
-                    if (!ref.node) return;
-                    if (ref.node.scrollIntoViewIfNeeded) ref.node.scrollIntoViewIfNeeded(false);
-                    else ref.node.scrollIntoView({block: "end", inline: "nearest", behavior: "smooth"});
-                }, 500);
-            }
-        }} style={{opacity: 0}}>
-        {windowData.isNarrow() ? placeholder : null}
-    </InView>
-}
-
-const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders}) => {
-    if (finished) return null;
-    return <React.Fragment>
-        <InView
-            onChange={(inView) => {
-                if (inView) loadNextPage();
-            }}
-            ref={ref => {
-                if (!ref) return;
-                setTimeout(() => {
-                    if (ref && ref.node) ref.node.style.display = "";
-                }, hasItems ? 1500 : 0)
-            }}
-            style={{width: "100%", display: "none"}}
-        />
-        {(() => {
-            const a = [];
-            for (let i = 0; i < placeholders; i++) {
-                a.push(i)
-            }
-            return a;
-        })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
-    </React.Fragment>
-}
-
 LazyListComponent._ADD = "LazyListComponent_add";
 LazyListComponent.EXIT = "LazyListComponent_exit";
 LazyListComponent.RESET = "LazyListComponent_reset";
@@ -319,38 +242,6 @@ LazyListComponent.propTypes = {
     placeholders: PropTypes.number,
     reverse: PropTypes.bool,
 }
-
-export const lazyListComponentReducer = (state = {}, action) => {
-    const cache = action.cache;
-    const cacheData = action["LazyListComponent_" + cache];
-    const savedCacheData = state["LazyListComponent_" + cache] || {};
-
-    switch (action.type) {
-        case LazyListComponent._ADD:
-            const item = action.item;
-            const {items, ascending, reverse} = savedCacheData;
-            const newitems = ascending
-                ? (reverse ? [item, ...items] : [...items, item])
-                : (reverse ? [...items, item] : [item, ...items]);
-            return {...state, ["LazyListComponent_" + cache]: {...savedCacheData, items: newitems}};
-        case LazyListComponent.EXIT:
-            return {...state, ["LazyListComponent_" + cache]: {}};
-        case LazyListComponent.RESET:
-            if (cache) {
-                const cachedData = cacheData || savedCacheData;
-                const {pagination} = cachedData;
-                if (pagination) pagination.reset();
-                return {...state, ["LazyListComponent_" + cache]: {...cachedData, items: [], loading: false, finished: false}};
-            } else {
-                return {...state, random: Math.random()};
-            }
-        case LazyListComponent.UPDATE:
-            return {...state, ["LazyListComponent_" + cache]: cacheData};
-        default:
-            return state;
-    }
-};
-lazyListComponentReducer.skipStore = true;
 
 const mapStateToProps = ({lazyListComponentReducer}) => {
     return {...lazyListComponentReducer};

@@ -10,7 +10,7 @@ import {cacheDatas, notifySnackbar, useCurrentUserData, useFirebase, UserData, u
 import ProgressView from "../components/ProgressView";
 import LoadingComponent from "../components/LoadingComponent";
 import ChatList from "./ChatList";
-import LazyListComponent from "../components/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);

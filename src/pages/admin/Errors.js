@@ -8,7 +8,7 @@ import Select from "@material-ui/core/Select";
 import Chip from "@material-ui/core/Chip";
 import MenuItem from "@material-ui/core/MenuItem";
 import Toolbar from "@material-ui/core/Toolbar";
-import LazyListComponent from "../../components/LazyListComponent";
+import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas, useFirebase} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";

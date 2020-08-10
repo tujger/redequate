@@ -29,6 +29,7 @@ function ErrorItemComponent(props) {
     const handleConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, alert: false});
+        console.log("[Error] try to fix", data);
         fetchCallable(firebase)("fixError", {
             key: data.key
         })
@@ -53,7 +54,12 @@ function ErrorItemComponent(props) {
         const userData = cacheDatas.put(data.value.uid, UserData(firebase));
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
             .then(() => isMounted && setState(state => ({...state, userData})))
-            .catch(notifySnackbar)
+            .catch(() => {
+                if(!isMounted) return;
+                userData.public.name = "User deleted";
+                console.log("[Error] user deleted", data.value.uid);
+                setState(state => ({...state, userData}))
+            })
         return () => {
             isMounted = false;
         }

@@ -10,7 +10,7 @@ import {
 import React from "react";
 import Pagination from "../controllers/FirebasePagination";
 import {ChatMeta} from "./ChatMeta";
-import LazyListComponent from "../components/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import ChatsCounter from "./ChatsCounter";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";

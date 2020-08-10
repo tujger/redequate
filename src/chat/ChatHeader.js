@@ -5,7 +5,7 @@ import {Link, useHistory} from "react-router-dom";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import {toDateString, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
-import LazyListComponent from "../components/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
 

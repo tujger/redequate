@@ -18,7 +18,7 @@ import {
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import LazyListComponent from "../components/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
 

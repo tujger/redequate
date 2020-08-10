@@ -2,7 +2,7 @@ import React from "react";
 import {useDispatch} from "react-redux";
 import {withStyles} from "@material-ui/core";
 import {useCurrentUserData, useFirebase} from "../controllers";
-import LazyListComponent from "../components/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import Pagination from "../controllers/FirebasePagination";
 import ChatsItem from "./ChatsItem";
 import {ChatsDaemon} from "./ChatsDaemon";

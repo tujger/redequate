@@ -11,7 +11,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Grid from "@material-ui/core/Grid";
 import Toolbar from "@material-ui/core/Toolbar";
 import Hidden from "@material-ui/core/Hidden";
-import LazyListComponent from "../../components/LazyListComponent";
+import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import UserItemComponent from "../../components/UserItemComponent";
 import Pagination from "../../controllers/FirebasePagination";
 import {normalizeSortName, UserData} from "../../controllers/UserData";

@@ -4,12 +4,13 @@ import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
 import {usersReducer} from "../pages/admin/Users";
-import LazyListComponent, {lazyListComponentReducer} from "../components/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {topMenuReducer} from "../layouts/TopBottomMenuLayout/TopMenu";
 import {chatsCounterReducer} from "../chat/ChatsCounter";
 import {errorsReducer} from "../pages/admin/Errors";
 import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/MainAppbar";
 import {Layout, MenuBadge} from "./General";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));

@@ -4,7 +4,7 @@ export {default as ConfirmComponent} from "./ConfirmComponent";
 export {default as DateTimePicker} from "./DateTimePicker";
 export {default as ItemPlaceholderComponent} from "./ItemPlaceholderComponent";
 export {default as listAction} from "./ListAction";
-export {default as LazyListComponent, lazyListComponentReducer} from "./LazyListComponent";
+export {default as LazyListComponent} from "./LazyListComponent/LazyListComponent";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";
 export {default as ModalComponent} from "./ModalComponent";
@@ -20,3 +20,4 @@ export {default as UploadComponent} from "./UploadComponent";
 export {default as UserItemComponent} from "./UserItemComponent";
 
 export {default as MainContent} from "./MainContent";
+export {lazyListComponentReducer} from "./LazyListComponent/lazyListComponentReducer";
