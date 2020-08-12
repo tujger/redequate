@@ -89,9 +89,9 @@ function Dispatcher(props) {
                 console.error(error);
             }
             setInterval(() => {
-                watchUserChanged(firebase, store, () => refreshAll(store));
+                watchUserChanged(firebase, store).then(() => refreshAll(store));
             }, 30000)
-            watchUserChanged(firebase, store, () => refreshAll(store));
+            watchUserChanged(firebase, store).then(() => refreshAll(store));
             maintenanceRef = firebase.database().ref("meta/maintenance");
             maintenanceRef.on("value", snapshot => {
                 const maintenance = snapshot.val();

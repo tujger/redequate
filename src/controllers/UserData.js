@@ -1,59 +1,64 @@
 import {notifySnackbar} from "./Notifications";
 import {cacheDatas} from "./General";
 
-export function watchUserChanged(firebase, store, callback) {
-    try {
-        const refreshAction = () => {
-            currentUserDataInstance.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
-                .then(userData => {
-                    useCurrentUserData(userData);
-                    store.dispatch({type: "currentUserData", userData});
-                    callback && callback();
-                })
-                .catch(notifySnackbar)
-        }
+export function watchUserChanged(firebase, store) {
+    return new Promise((resolve, reject) => {
+        try {
+            const refreshAction = () => {
+                currentUserDataInstance.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
+                    .then(userData => {
+                        useCurrentUserData(userData);
+                        store.dispatch({type: "currentUserData", userData});
+                        resolve();
+                    })
+                    .catch(notifySnackbar)
+            }
 
-        return firebase.auth().onAuthStateChanged(async result => {
-            // const ud = new UserData(firebase).fromFirebaseAuth(result.toJSON())
-            if (!currentUserDataInstance.id || !result) return;
-            let changed = false;
-            if (currentUserDataInstance.role === Role.USER_NOT_VERIFIED && result.emailVerified) {
-                console.warn("[UserData] verified", currentUserDataInstance.id, result && result.toJSON());
-                changed = true;
-            } else if (currentUserDataInstance.verified !== result.emailVerified) {
-                console.warn("[UserData] changed", currentUserDataInstance.id, result && result.toJSON());
-                changed = true;
-            } else if (result && result.uid === currentUserDataInstance.id) {
-                const data = await firebase.database().ref("users_public").child(result.uid).child("updated").once("value");
-                if (data.val() > currentUserDataInstance.public.updated) {
-                    console.warn(`[UserData] last timestamp ${data.val()} > than saved ${currentUserDataInstance.public.updated}`);
+            firebase.auth().onAuthStateChanged(async result => {
+                // const ud = new UserData(firebase).fromFirebaseAuth(result.toJSON())
+                if (!currentUserDataInstance.id || !result) return;
+                let changed = false;
+                if (currentUserDataInstance.role === Role.USER_NOT_VERIFIED && result.emailVerified) {
+                    console.warn("[UserData] verified", currentUserDataInstance.id, result && result.toJSON());
                     changed = true;
+                } else if (currentUserDataInstance.verified !== result.emailVerified) {
+                    console.warn("[UserData] changed", currentUserDataInstance.id, result && result.toJSON());
+                    changed = true;
+                } else if (result && result.uid === currentUserDataInstance.id) {
+                    const data = await firebase.database().ref("users_public").child(result.uid).child("updated").once("value");
+                    if (data.val() > currentUserDataInstance.public.updated) {
+                        console.warn(`[UserData] last timestamp ${data.val()} > than saved ${currentUserDataInstance.public.updated}`);
+                        changed = true;
+                    }
                 }
-            }
-            if (changed) {
-                return notifySnackbar({
-                    title: "Your profile has been changed. Please refresh for update",
-                    variant: "warning",
-                    priority: "high",
-                    buttonLabel: "Refresh",
-                    onButtonClick: refreshAction
-                })
-            }
-        });
-    } catch (error) {
-        console.error(error);
-    }
+                if (changed) {
+                    return notifySnackbar({
+                        title: "Your profile has been changed. Please refresh for update",
+                        variant: "warning",
+                        priority: "high",
+                        buttonLabel: "Refresh",
+                        onButtonClick: refreshAction
+                    })
+                }
+            });
+        } catch (error) {
+            reject(error);
+        }
+    })
 }
 
-export function logoutUser(firebase, store) { return async () => {
-    // window.localStorage.removeItem("notification-token");
-    await firebase.auth().signOut();
-    console.log("[UserData] logout", currentUserDataInstance);
-    currentUserDataInstance = new UserData();
-    if (store) {
-        store.dispatch({type: "currentUserData", userData: null});
+export function logoutUser(firebase, store) {
+    return async () => {
+        // window.localStorage.removeItem("notification-token");
+        await firebase.auth().signOut();
+        console.log("[UserData] logout", currentUserDataInstance);
+        currentUserDataInstance = new UserData();
+        if (store) {
+            store.dispatch({type: "currentUserData", userData: null});
+        }
+        return null;
     }
-}}
+}
 
 export function currentRole(user) {
     if (user) return user.role;
@@ -72,12 +77,6 @@ export function needAuth(roles, user) {
     return currentRole(user) === Role.LOGIN;
 }
 
-export function roleIs(role, user) {
-    if (!role) return true;
-    if (!currentRole(user)) return false;
-    return role.indexOf(currentRole(user)) >= 0;
-}
-
 export const Role = {
     AUTH: "auth",
     ADMIN: "admin",
@@ -87,28 +86,32 @@ export const Role = {
     USER_NOT_VERIFIED: "userNotVerified",
 };
 
-export function sendInvitationEmail(firebase) { return options => new Promise((resolve, reject) => {
-    let actionCodeSettings = {
-        url: window.location.origin + "/signup/" + options.email,
-        handleCodeInApp: true,
-    };
-    return firebase.auth().sendSignInLinkToEmail(options.email, actionCodeSettings)
-        .then(() => notifySnackbar("Invitation email has been sent"))
-        .then(resolve).catch(error => {
+export function sendInvitationEmail(firebase) {
+    return options => new Promise((resolve, reject) => {
+        let actionCodeSettings = {
+            url: window.location.origin + "/signup/" + options.email,
+            handleCodeInApp: true,
+        };
+        return firebase.auth().sendSignInLinkToEmail(options.email, actionCodeSettings)
+            .then(() => notifySnackbar("Invitation email has been sent"))
+            .then(resolve).catch(error => {
+                notifySnackbar(error);
+                reject(error);
+            });
+    })
+}
+
+export function sendVerificationEmail(firebase) {
+    return new Promise((resolve, reject) => {
+        firebase.auth().currentUser.sendEmailVerification().then(() => {
+            notifySnackbar("Verification email has been sent");
+            resolve();
+        }).catch(error => {
             notifySnackbar(error);
             reject(error);
         });
-})}
-
-export function sendVerificationEmail(firebase) { return new Promise((resolve, reject) => {
-    firebase.auth().currentUser.sendEmailVerification().then(() => {
-        notifySnackbar("Verification email has been sent");
-        resolve();
-    }).catch(error => {
-        notifySnackbar(error);
-        reject(error);
-    });
-})}
+    })
+}
 
 export function currentUserData(state = {
     userData: null
@@ -158,7 +161,7 @@ export function UserData(firebase) {
             _public._sort_name = fetchSortName();
             for (let x in _public) {
                 if (_public[x] !== undefined) {
-                    if(_public[x] !== undefined && (_public[x] || "").constructor.name === "String") {
+                    if (_public[x] !== undefined && (_public[x] || "").constructor.name === "String") {
                         _public[x] = (_public[x] || "").trim();
                     }
                     updates[`users_public/${_id}/${x}`] = _public[x];
@@ -171,7 +174,7 @@ export function UserData(firebase) {
             for (let deviceId in _private) {
                 for (let x in _private[deviceId]) {
                     if (_private[deviceId][x] !== undefined) {
-                        if(_private[deviceId][x] !== undefined && (_private[deviceId][x] || "").constructor.name === "String") {
+                        if (_private[deviceId][x] !== undefined && (_private[deviceId][x] || "").constructor.name === "String") {
                             _private[deviceId][x] = (_private[deviceId][x] || "").trim();
                         }
                         updates[`users_private/${_id}/${deviceId}/${x}`] = _private[deviceId][x];
@@ -194,7 +197,7 @@ export function UserData(firebase) {
 
     const _body = {
         get asString() {
-            return _body.toString().replace(/\[\d+m/g, "");
+            return _body.toString().replace(/\x1b\[\d+m/g, "");
         },
         get created() {
             return _dateFormatted(_public.created);
@@ -215,7 +218,10 @@ export function UserData(firebase) {
             return _public.image;
         },
         get initials() {
-            if (_public.name) return _public.name.substr(0, 1);
+            if (_public.name) {
+                const tokens = _public.name.split(/[^A-Za-z]/, 2);
+                return tokens.map(token => token.substr(0, 1).toUpperCase()).join("");
+            }
             return null;
         },
         get name() {
@@ -301,7 +307,7 @@ export function UserData(firebase) {
                         .then(snap => {
                             if (snap.exists() && snap.val().email) _persisted = true;
                             _public = {..._public, ...(snap.val() || {})};
-                            if(!_public.email) {
+                            if (!_public.email) {
                                 cacheDatas.remove(_id);
                                 _id = undefined;
                                 reject(new Error("User not found"));
@@ -354,7 +360,7 @@ export function UserData(firebase) {
                     _fetch(ref.child(_id).child("name"))
                         .then(snap => {
                             _public.name = snap.val();
-                            if(!_public.name) {
+                            if (!_public.name) {
                                 cacheDatas.remove(_id);
                                 _id = undefined;
                                 reject(new Error("User not found"));
@@ -384,7 +390,7 @@ export function UserData(firebase) {
                         .then(snap => {
                             if (snap.exists()) _persisted = true;
                             _public.email = snap.val();
-                            if(!_public.email) {
+                            if (!_public.email) {
                                 cacheDatas.remove(_id);
                                 _id = undefined;
                                 reject(new Error("User not found"));

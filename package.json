@@ -24,8 +24,9 @@
         "predeploy core": "cd example && npm install && npm run build",
         "deploy core": "gh-pages -d example/build"
     },
-    "dependencies": {},
-    "peerDependencies": {
+    "dependencies": {
+        "geo-coder-t": "latest",
+        "notistack": "latest",
         "@material-ui/core": "latest",
         "@material-ui/icons": "latest",
         "@material-ui/lab": "latest",
@@ -40,9 +41,7 @@
         "axios": "latest",
         "device-uuid": "latest",
         "firebase": "latest",
-        "geo-coder": "latest",
         "moment": "latest",
-        "notistack": "latest",
         "prop-types": "latest",
         "react": "latest",
         "react-dom": "latest",
@@ -64,13 +63,13 @@
     "devDependencies": {
         "@svgr/rollup": "^2.4.1",
         "babel-core": "^6.26.3",
-        "babel-eslint": "^8.2.5",
+        "babel-eslint": "^10.1.0",
         "babel-plugin-external-helpers": "^6.22.0",
         "babel-preset-env": "^1.7.0",
         "babel-preset-react": "^6.24.1",
         "babel-preset-stage-0": "^6.24.1",
         "cross-env": "^5.1.4",
-        "eslint": "^5.0.1",
+        "eslint": "^6.6.0",
         "eslint-config-standard": "^11.0.0",
         "eslint-config-standard-react": "^6.0.0",
         "eslint-plugin-import": "^2.13.0",

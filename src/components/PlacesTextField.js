@@ -1,6 +1,6 @@
 import React from "react";
 import TextField from "@material-ui/core/TextField";
-import {GeoCode} from "../lib/geo-coder/src/geo-code";
+import {GeoCode} from "geo-coder-t";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import PropTypes from "prop-types";
 

@@ -16,7 +16,6 @@ export {
     matchRole,
     needAuth,
     Role,
-    roleIs,
     UserData,
     useCurrentUserData,
     normalizeSortName,
