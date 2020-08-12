@@ -70,7 +70,7 @@ function Dispatcher(props) {
                 pages[x].route = pages[x].route.split(/[*:]/)[0];
             }
             const firebase = Firebase(firebaseConfig);
-            installWrapperControl();
+            installWrapperControl(firebase);
             fetchDeviceId();
             if (hasNotifications()) {
                 setupReceivingNotifications(firebase).catch(console.error);

@@ -3,7 +3,7 @@ import Uuid from "react-uuid";
 
 const callQueue = {};
 
-export const installWrapperControl = () => {
+export const installWrapperControl = (firebase) => {
     if(hasWrapperControlInterface()) {
         window.wrapperControlCallback = (message) => {
             console.log(`[WC] message [${message}]`);
@@ -11,6 +11,12 @@ export const installWrapperControl = () => {
             try {
                 const json = JSON.parse(message);
                 const {id, method, args, timestamp, error, status, response = null} = json;
+                if(id === "_on_resume") {
+                    console.log("[WC] off => on firebase.database triggered");
+                    firebase.database().goOffline();
+                    firebase.database().goOnline();
+                    return;
+                }
                 if (!id || !callQueue[id]) {
                     console.error("Failed wrapped call " + id);
                     return;

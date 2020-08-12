@@ -66,7 +66,7 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
                 }
             }
         }
-        baseRef.database.goOnline();
+        // baseRef.database.goOnline();
 
         let timeoutFired = false;
         clearTimeout(timeoutTask);

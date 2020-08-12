@@ -291,7 +291,7 @@ function UsersPagination({firebase, start}) {
     }
 
     const reset = async () => {
-        firebase.database().goOnline();
+        // firebase.database().goOnline();
         namesPagination.reset();
         emailsPagination.reset();
         countTotal = 0;
