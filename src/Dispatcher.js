@@ -1,4 +1,4 @@
-import React, {Suspense} from "react";
+import React from "react";
 import ThemeProvider from "@material-ui/styles/ThemeProvider";
 import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
@@ -23,6 +23,9 @@ import {default as defaultTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
+import HeaderComponent from "./components/HeaderComponent";
+import {StickyHeaderComponent} from "./layouts/TopBottomMenuLayout/StickyHeaderComponent";
+import MainHeader from "./layouts/ResponsiveDrawerLayout/MainHeader";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -50,13 +53,13 @@ console.error = function(...args) {
 
 let oldWidth;
 function Dispatcher(props) {
-    const {firebaseConfig, name, theme = defaultTheme, reducers, pages, width} = props;
+    const {firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
     useStore(store);
     useFirebase(firebase);
     usePages(pages);
-    useTechnicalInfo(state => ({...state, name: name, maintenance: null, refreshed: new Date().getTime()}));
+    useTechnicalInfo(state => ({...state, title: title, maintenance: null, refreshed: new Date().getTime()}));
     const windowData = useWindowData({
         breakpoint: width,
         isNarrow: () => width === "xs" || width === "sm",
@@ -75,7 +78,7 @@ function Dispatcher(props) {
             if (hasNotifications()) {
                 setupReceivingNotifications(firebase).catch(console.error);
             }
-            const store = Store(name, reducers);
+            const store = Store(title, reducers);
             try {
                 const savedUserData = store.getState().currentUserData;
                 if (savedUserData && savedUserData.userData) {
@@ -146,7 +149,7 @@ function Dispatcher(props) {
 
 let widthPoint;
 function _DispatcherRoutedBody(props) {
-    const {pages, menu, width, copyright, headerComponent, headerImage, layout, name, logo, random} = props;
+    const {pages, menu, width, copyright, headerComponent, layout, title, logo, random} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
@@ -159,7 +162,7 @@ function _DispatcherRoutedBody(props) {
             const label = needAuth(current.roles, currentUserData)
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
                     ? current.title || current.label : pages.notfound.title || pages.notfound.label);
-            document.title = label + (name ? " - " + name : "");
+            document.title = label + (title ? " - " + title : "");
             dispatch({type: Layout.TITLE, label});
         }
     }
@@ -189,36 +192,37 @@ function _DispatcherRoutedBody(props) {
         <Switch location={background}>
             <Route
                 path={"/*"}
-                children={<Suspense fallback={<LoadingComponent/>}>
+                children={<React.Suspense fallback={<LoadingComponent/>}>
                     {layout ? <layout.type
                             {...layout.props}
                             copyright={copyright}
-                            headerImage={headerImage}
+                            headerComponent={headerComponent}
+                            logo={logo}
                             menu={menu}
+                            title={title}
                         />
                         : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
                             (iOS ? <BottomToolbarLayout
                                     copyright={copyright}
-                                    headerImage={headerImage}
+                                    headerComponent={headerComponent}
                                     menu={menu}
-                                    name={name}
+                                    title={title}
                                 />
                                 : <ResponsiveDrawerLayout
                                     copyright={copyright}
-                                    headerImage={headerImage}
-                                    menu={menu}
-                                    name={name}
+                                    headerComponent={headerComponent}
                                     logo={logo}
+                                    menu={menu}
+                                    title={title}
                                 />)
                             : <TopBottomMenuLayout
                                 copyright={copyright}
                                 headerComponent={headerComponent}
-                                headerImage={headerImage}
                                 menu={menu}
-                                name={name}
+                                title={title}
                             />)
                     }
-                </Suspense>}
+                </React.Suspense>}
             />
         </Switch>
         {itemsFlat.map((item, index) => {
@@ -247,7 +251,7 @@ Dispatcher.propTypes = {
     layout: PropTypes.any,
     menu: PropTypes.array.isRequired,
     logo: PropTypes.any,
-    name: PropTypes.string,
+    title: PropTypes.string,
     pages: PropTypes.object.isRequired,
     reducers: PropTypes.object,
     theme: PropTypes.any,

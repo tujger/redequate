@@ -1,5 +1,5 @@
 import React from "react";
-import {DeviceUUID} from "device-uuid";
+import DeviceUUID from "device-uuid";
 
 export const fetchDeviceId = () => {
     if (!localStorage.getItem("device_id")) {

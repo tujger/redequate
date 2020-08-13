@@ -11,6 +11,8 @@ import TopMenu from "./TopMenu";
 import {Route, Switch} from "react-router-dom";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 import {usePages} from "../../controllers/General";
+import MainHeader from "../ResponsiveDrawerLayout/MainHeader";
+import HeaderComponent from "../../components/HeaderComponent";
 
 const styles = theme => ({
     indent: {
@@ -53,7 +55,7 @@ const styles = theme => ({
 });
 
 function TopBottomMenuLayout(props) {
-    const {menu, classes, headerImage, headerComponent, random, copyright} = props;
+    const {menu, classes, title, headerComponent = <HeaderComponent/>, random, copyright} = props;
     const pages = usePages();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
@@ -63,9 +65,12 @@ function TopBottomMenuLayout(props) {
         title={<Switch>
             {itemsFlat.map((item, index) => <Route key={index} path={item._route} exact={true} children={item.label}/>)}
         </Switch>}
-        headerComponent={headerComponent}
-        headerImage={headerImage}
-        menuComponent={<TopMenu items={menu} className={[classes.topmenu, classes.stickytop].join(" ")}/>}
+        headerComponent={<headerComponent.type
+            {...headerComponent.props}
+            menuComponent={<TopMenu items={menu} className={[classes.topmenu, classes.stickytop].join(" ")}/>}
+            title={title}
+            wide
+        />}
         menuClassName={classes.stickytop}
     >
         <MainContent classes={{content: classes.content}}/>

@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React from "react";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -79,7 +79,7 @@ function EditProfile(props) {
     const pages = usePages();
     const store = useStore();
     const {id} = useParams();
-    const [state, setState] = useState({
+    const [state, setState] = React.useState({
         error: null,
         disabled: false,
     });

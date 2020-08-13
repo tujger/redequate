@@ -10,11 +10,14 @@ import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import MainAppbar from "./MainAppbar";
 import MainContent from "../../components/MainContent";
-import MainHeader from "./MainHeader";
 import MainMenu from "./MainMenu";
 import Snackbar from "../../components/Snackbar";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
-import {usePages, useWindowData} from "../../controllers/General";
+import {useWindowData} from "../../controllers/General";
+import IconButton from "@material-ui/core/IconButton";
+import ChevronLeft from "@material-ui/icons/ChevronLeft";
+import Hidden from "@material-ui/core/Hidden";
+import HeaderComponent from "../../components/HeaderComponent";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -36,14 +39,17 @@ const styles = theme => ({
             width: `calc(100% - ${theme.drawerWidth}px)`,
             marginLeft: theme.drawerWidth,
         }
+    },
+    headerMenu: {
+        position: "absolute",
+        right: 0,
     }
 });
 
 function ResponsiveDrawerLayout(props) {
-    const {container, menu, classes, headerImage, copyright, name} = props;
+    const {container, menu, classes, title, headerComponent = <HeaderComponent/>, copyright} = props;
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
-    const pages = usePages();
     const windowData = useWindowData();
 
     const handleDrawerToggle = () => {
@@ -74,11 +80,16 @@ function ResponsiveDrawerLayout(props) {
                 }}
                 disableBackdropTransition={!iOS} disableDiscovery={iOS}
                 onOpen={handleDrawerToggle}>
-                <MainHeader image={headerImage}
-                            name={name}
-                            onClick={() => setState({...state, mobileOpen: false})}
-                            pages={pages}
+                <headerComponent.type
+                    {...headerComponent.props}
+                    narrow
+                    title={title}
                 />
+                <Hidden mdUp implementation="css" className={classes.headerMenu}>
+                    <IconButton onClick={() => setState({...state, mobileOpen: false})}>
+                        <ChevronLeft/>
+                    </IconButton>
+                </Hidden>
                 <Divider/>
                 <MainMenu items={menu} onClick={() => {
                     // dispatch(ProgressView.SHOW);
@@ -91,10 +102,10 @@ function ResponsiveDrawerLayout(props) {
             </SwipeableDrawer>
             :
             <Drawer variant="permanent" open>
-                <MainHeader image={headerImage}
-                            name={name}
-                            onClick={() => setState({...state, mobileOpen: false})}
-                            pages={pages}
+                <headerComponent.type
+                    {...headerComponent.props}
+                    narrow
+                    title={title}
                 />
                 <Divider/>
                 <MainMenu items={menu} onClick={(ev) => {
@@ -110,6 +121,7 @@ function ResponsiveDrawerLayout(props) {
         <MainAppbar
             className={classes.appbar}
             {...props}
+            classes={{}}
             onHamburgerClick={handleDrawerToggle}
         />
         <Typography className={classes.indent}/>

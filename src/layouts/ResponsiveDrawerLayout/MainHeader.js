@@ -1,18 +1,17 @@
 import React from "react";
 import PropTypes from "prop-types";
-import Hidden from "@material-ui/core/Hidden";
 import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
 import withStyles from "@material-ui/styles/withStyles";
-import ChevronLeft from "@material-ui/icons/ChevronLeft";
-import {Link, Route, Switch} from "react-router-dom";
+import {Link} from "react-router-dom";
 import {usePages} from "../../controllers/General";
 
 const styles = theme => ({
     header: {
         ...theme.mixins.toolbar,
+        backgroundColor: theme.palette.secondary.main,
         backgroundRepeat: "no-repeat",
         backgroundSize: "cover",
+        color: theme.palette.secondary.contrastText,
         height: 120,
         justifyContent: "space-between",
         [theme.breakpoints.up("md")]: {
@@ -37,22 +36,15 @@ const styles = theme => ({
 });
 
 const MainHeader = props => {
-    const {classes, onClick, image, name} = props;
+    const {classes, title} = props;
     const pages = usePages();
 
-    return <div className={classes.header} style={{
-        backgroundImage: `url(${image})`
-    }}>
+    return <div className={classes.header}>
         <Grid item className={classes.name}>
             <Link to={pages.home.route} className={classes.label}>
-            {name}
+                {title}
             </Link>
         </Grid>
-        <Hidden mdUp implementation="css">
-                    <IconButton onClick={onClick}>
-                        <ChevronLeft/>
-                    </IconButton>
-        </Hidden>
     </div>
 };
 

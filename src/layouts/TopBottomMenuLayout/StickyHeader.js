@@ -15,13 +15,13 @@ const styles = theme => ({
 });
 
 const StickyHeader = props => {
-    const {classes, className, children, headerComponent = <StickyHeaderComponent/>, headerImage, menuComponent, stickyBottom, stickyBottomClassName, title, titleClassName, content} = props;
+    const {classes, className, children, headerComponent, stickyBottom, title, content} = props;
 
     return <div className={[classes.container, className].join(" ")}>
-        <headerComponent.type {...headerComponent.props} headerImage={headerImage} content={content} menuComponent={menuComponent} title={title} titleClassName={titleClassName}/>
+        {headerComponent}
         <ProgressView/>
         {children}
-        <div className={[classes.stickyBottom, stickyBottomClassName].join(" ")}>{stickyBottom}</div>
+        <div className={[classes.stickyBottom].join(" ")}>{stickyBottom}</div>
     </div>
 };
 

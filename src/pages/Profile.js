@@ -42,6 +42,7 @@ import {withStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import {styles} from "../controllers/Theme";
+import NavigationToolbar from "../components/NavigationToolbar";
 
 const stylesProfile = theme => ({
     root: {
@@ -178,35 +179,22 @@ const Profile = ({
 
     if (!userData) return <LoadingComponent/>;
     return <div className={classes.root}>
-        <Grid container>
-            <Grid item>
-                <IconButton
-                    aria-label={"Back"}
-                    children={<BackIcon/>}
-                    onClick={() => history.goBack()}
-                    title={"Back"}
-                />
-            </Grid>
-            <Grid item xs/>
-            {isCurrentUserAdmin && <Grid item>
-                <IconButton
-                    aria-label={"Fix possible errors"}
-                    children={<FixIcon/>}
-                    onClick={fixErrors}
-                    title={"Fix possible errors"}
-                />
-            </Grid>}
-            {isEditAllowed && <Grid item>
-                <IconButton
-                    aria-label={"Edit"}
-                    children={<EditIcon/>}
-                    onClick={() => {
-                        history.push(isSameUser ? pages.editprofile.route : pages.edituser.route + userData.id)
-                    }}
-                    title={"Edit"}
-                />
-            </Grid>}
-        </Grid>
+        <NavigationToolbar
+            mediumButton={isCurrentUserAdmin && <IconButton
+                aria-label={"Fix possible errors"}
+                children={<FixIcon/>}
+                onClick={fixErrors}
+                title={"Fix possible errors"}
+            />}
+            rightButton={isEditAllowed && <IconButton
+                aria-label={"Edit"}
+                children={<EditIcon/>}
+                onClick={() => {
+                    history.push(isSameUser ? pages.editprofile.route : pages.edituser.route + userData.id)
+                }}
+                title={"Edit"}
+            />}
+        />
         {userData.disabled && <Grid container>
             <InputLabel error>
                 <h4>Account is suspended. Please contact with administrator.</h4>

@@ -134,7 +134,7 @@ export const NotificationsSnackbar = () => {
                         const node = document.createElement("div");
                         ReactDOM.render(<React.Fragment>{payload.title}</React.Fragment>, node, () => {
                             try {
-                                const title = technicalInfo.name;
+                                const title = technicalInfo.title;
                                 const onclick = () => {
                                     history.push(payload.id || "/")
                                     // window.open(payload.id || "/");

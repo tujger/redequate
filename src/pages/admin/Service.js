@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React from "react";
 import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
@@ -24,7 +24,7 @@ const Service = (props) => {
     const history = useHistory();
     const currentUserData = useCurrentUserData();
     const {maintenance: maintenanceGiven} = useTechnicalInfo();
-    const [state, setState] = useState({
+    const [state, setState] = React.useState({
         error: null,
         disabled: false,
         message: "Sorry, site is under technical maintenance now. Please come back later."

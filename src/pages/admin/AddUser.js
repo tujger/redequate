@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React from "react";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import TextField from "@material-ui/core/TextField";
@@ -14,7 +14,7 @@ import {useHistory} from "react-router-dom";
 import {notifySnackbar, useFirebase, usePages, useStore} from "../../controllers";
 
 const AddUser = (props) => {
-    const [state, setState] = useState({requesting: false, error: ""});
+    const [state, setState] = React.useState({requesting: false, error: ""});
     const {email = "", requesting, error = ""} = state;
     const pages = usePages();
     const dispatch = useDispatch();

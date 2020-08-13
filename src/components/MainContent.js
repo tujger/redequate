@@ -1,4 +1,4 @@
-import React, {Suspense} from "react";
+import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch} from "react-router-dom";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
@@ -29,7 +29,7 @@ const MainContent = props => {
 
     return <main className={[classes.content].join(" ")}>
         <TechnicalInfoView/>
-        {!isDisabled && <Suspense fallback={<LoadingComponent/>}>
+        {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
                 return <Route
                     exact={true}
@@ -45,8 +45,8 @@ const MainContent = props => {
                     }}
                 />
             })}</Switch>
-        </Suspense>}
-        {isDisabled && <Suspense fallback={<LoadingComponent/>}>
+        </React.Suspense>}
+        {isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
                 return <Route
                     exact={true}
@@ -58,7 +58,7 @@ const MainContent = props => {
                     }}
                 />
             })}</Switch>
-        </Suspense>}
+        </React.Suspense>}
     </main>
 };
 

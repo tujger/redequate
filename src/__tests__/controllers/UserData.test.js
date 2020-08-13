@@ -12,12 +12,7 @@ import {
     sendVerificationEmail,
     sendInvitationEmail
 } from '../../controllers/UserData';
-import Firebase from "../../controllers/Firebase";
-import firebaseConfig from "../../../../gamepal-dev/src/firebase-config.json";
-import Store from "../../controllers/Store";
-
-const firebase = Firebase(firebaseConfig);
-const store = Store("EdeqaTests");
+import {firebase, store} from "../common";
 
 beforeAll(() => {
     console.log("SETUP")
