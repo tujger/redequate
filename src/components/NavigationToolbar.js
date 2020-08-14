@@ -1,12 +1,9 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
-import Box from "@material-ui/core/Box";
 import withStyles from "@material-ui/styles/withStyles";
-import {useTechnicalInfo} from "../controllers";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
-import FixIcon from "@material-ui/icons/BugReport";
-import EditIcon from "@material-ui/icons/Edit";
+import {useHistory} from "react-router-dom";
 
 const styles = theme => ({})
 
@@ -19,6 +16,7 @@ const NavigationToolbar =
              title={"Back"}
          />, rightButton, mediumButton
      }) => {
+        const history = useHistory();
         return <Grid container>
             <Grid item>
                 {backButton}

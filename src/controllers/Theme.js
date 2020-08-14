@@ -178,11 +178,36 @@ export const stylesList = theme => ({
             justifyContent: "flex-end",
             marginTop: theme.spacing(-.5),
             paddingLeft: theme.spacing(1),
+            "& .MuiSvgIcon-root": {
+                height: theme.spacing(2.5),
+            }
         },
         [theme.breakpoints.down("sm")]: {
             justifyContent: "space-between",
             marginTop: theme.spacing(1),
             paddingLeft: theme.spacing(0),
+            "& .MuiSvgIcon-root": {
+                height: theme.spacing(2.5),
+            }
+        },
+    },
+    cardActionsSmall: {
+        display: "flex",
+        paddingBottom: theme.spacing(0),
+        paddingRight: theme.spacing(0),
+        paddingTop: theme.spacing(0),
+        [theme.breakpoints.up("md")]: {
+            justifyContent: "flex-end",
+            marginTop: theme.spacing(-.5),
+            paddingLeft: theme.spacing(1),
+        },
+        [theme.breakpoints.down("sm")]: {
+            justifyContent: "space-between",
+            marginTop: theme.spacing(1),
+            paddingLeft: theme.spacing(0),
+            "& .MuiSvgIcon-root": {
+                height: theme.spacing(2.5),
+            }
         },
     },
     cardHeader: {
@@ -224,6 +249,9 @@ export const stylesList = theme => ({
         [theme.breakpoints.up("md")]: {
             height: theme.spacing(2),
         },
+        // [theme.breakpoints.down("sm")]: {
+        //     height: theme.spacing(2.5),
+        // },
     },
     label: {
         color: "#000000",
