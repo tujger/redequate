@@ -200,6 +200,9 @@ export const stylesList = theme => ({
             justifyContent: "flex-end",
             marginTop: theme.spacing(-.5),
             paddingLeft: theme.spacing(1),
+            "& .MuiSvgIcon-root": {
+                height: theme.spacing(2),
+            },
         },
         [theme.breakpoints.down("sm")]: {
             justifyContent: "space-between",
@@ -207,7 +210,7 @@ export const stylesList = theme => ({
             paddingLeft: theme.spacing(0),
             "& .MuiSvgIcon-root": {
                 height: theme.spacing(2.5),
-            }
+            },
         },
     },
     cardHeader: {

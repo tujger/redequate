@@ -34,7 +34,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
         });
         const newMessage = (data, chatId) => {
             if (data.uid === currentUserData.id) return;
-            if(!document.hasFocus()) return;
+            if (!document.hasFocus()) return;
             const userData = cacheDatas.put(data.uid, UserData(firebase));
             userData.fetch(data.uid, [UserData.NAME])
                 .then(() => notifySnackbar({
@@ -60,6 +60,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                     return;
                 }
                 if (live) newMessage(meta.lastMessage, id);
+                console.warn("NEW", meta.lastVisit(currentUserData.id), meta, meta.lastMessage, match);
                 chatsWithNewMessages.push(id);
                 dispatch({type: LazyListComponent.RESET, cache: "chats"});
                 dispatch({type: MenuBadge.INCREASE, page: pages.chats});
@@ -82,7 +83,10 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                     }
                 })
                 metas[meta.id] = meta;
-            })
+            }).catch(error => {
+                console.error(error);
+                console.error(`[ChatsDaemon] failed for ${currentUserData.id}`)
+            });
 
         pagination.next()
             .then(chats => {

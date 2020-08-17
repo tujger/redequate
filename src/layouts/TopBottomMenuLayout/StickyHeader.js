@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
 import ProgressView from "../../components/ProgressView";
-import {StickyHeaderComponent} from "./StickyHeaderComponent";
 
 const styles = theme => ({
     container: {

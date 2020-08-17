@@ -23,9 +23,6 @@ import {default as defaultTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
-import HeaderComponent from "./components/HeaderComponent";
-import {StickyHeaderComponent} from "./layouts/TopBottomMenuLayout/StickyHeaderComponent";
-import MainHeader from "./layouts/ResponsiveDrawerLayout/MainHeader";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));

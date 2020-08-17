@@ -14,15 +14,19 @@ const NavigationToolbar =
              children={<BackIcon/>}
              onClick={() => history.goBack()}
              title={"Back"}
-         />, rightButton, mediumButton
+         />, children, rightButton, mediumButton
      }) => {
         const history = useHistory();
-        return <Grid container>
+        return <Grid container alignItems={"center"}>
             <Grid item>
                 {backButton}
             </Grid>
-            <Grid item xs/>
-            {mediumButton}
+            <Grid item xs>
+                {children}
+            </Grid>
+            {mediumButton && <Grid item>
+                {mediumButton}
+            </Grid>}
             <Grid item>
                 {rightButton}
             </Grid>

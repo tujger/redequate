@@ -8,6 +8,7 @@ import AvatarView from "../components/AvatarView";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
+import NavigationToolbar from "../components/NavigationToolbar";
 
 const stylesHeader = theme => ({
     presence: {
@@ -40,6 +41,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
     const dispatch = useDispatch();
 
     React.useEffect(() => {
+        let isMounted = true;
         if (!userData || !userData.id) {
             history.goBack();
             return;
@@ -56,20 +58,19 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
                     dispatch({type: LazyListComponent.RESET, cache: "chats"});
                     history.goBack();
                 }
-                setState(state => ({...state, online, timestamp}));
+                isMounted && setState(state => ({...state, online, timestamp}));
             }
         });
         return () => {
+            isMounted = false;
             chatMeta.unwatchOnline();
             chatMeta.unwatch();
         }
         // eslint-disable-next-line
     }, [id]);
 
-    return <Grid container spacing={1} className={classes.root}>
-        <IconButton onClick={() => history.goBack()}>
-            <BackIcon/>
-        </IconButton>
+    return <NavigationToolbar>
+        <Grid container spacing={1} className={classes.root}>
         <Grid item><Link to={pages.user.route + userData.id} className={classes.nounderline}>
             <AvatarView
                 className={classes.avatarSmall}
@@ -88,7 +89,8 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
         {timestamp > 0 && <Grid item className={classes.date}>
             {toDateString(timestamp)}
         </Grid>}
-    </Grid>
+        </Grid>
+    </NavigationToolbar>
 };
 
 export default withStyles((theme) => ({

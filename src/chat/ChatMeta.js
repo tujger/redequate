@@ -1,6 +1,20 @@
+import Pagination from "../controllers/FirebasePagination";
+import {UserData} from "../controllers";
+
 const ONLINE_TIMEOUT = 60000;
+
+/*
+Meta:
+    chats/__KEY__/!meta/members/__UID__: <last visit timestamp>
+    chats/__KEY__/!meta/members/__OPPOSITE_UID__: <last visit timestamp>
+    chats/__KEY__/!meta/timestamp: <last message created>
+    _chats/__UID__/__KEY__/timestamp: <last message created> (the same as previous)
+    _chats/__UID__/__KEY__/private: <__OPPOSITE_UID__> if chat is private
+*/
+
 export function ChatMeta(firebase) {
-    let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef;
+    let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef,
+        _redirect;
     const indexRef = firebase.database().ref("_chats");
     const chatsRef = firebase.database().ref("chats");
 
@@ -18,8 +32,14 @@ export function ChatMeta(firebase) {
         get lastMessage() {
             return _lastMessage || {};
         },
+        get meta() {
+            return _meta;
+        },
         get persisted() {
             return _persisted;
+        },
+        get redirect() {
+            return _redirect;
         },
         get timestamp() {
             return _timestamp;
@@ -33,31 +53,34 @@ export function ChatMeta(firebase) {
         },
         fetch: async (id) => {
             _id = _id || id;
-            const tokens = _id.split("_");
+            if(!_meta) {
+                const snapshot = await chatsRef.child(_id).child("!meta").once("value");
+                if(snapshot.exists()) {
+                    _persisted = true;
+                    _meta = snapshot.val();
+                }
+            }
+            if(!_meta) throw Error(`[ChatMeta] no meta for ${_id}`);
+            const tokens = Object.keys(_meta.members);
+
             const tasks = [];
-            tasks.push(new Promise((resolve, reject) => {
-                chatsRef.child(_id).child("!meta").once("value")
-                    .then(snapshot => {
-                        if(snapshot.exists()) {
-                            _persisted = true;
-                        }
-                        _meta = snapshot.val();
-                        resolve();
-                    }).catch(reject)
-            }));
-            tasks.push(new Promise((resolve, reject) => {
-                indexRef.child(tokens[0]).child(_id).once("value")
-                    .then(snapshot => {
-                        _timestamp = (snapshot.val() || {}).timestamp;
-                        resolve();
-                    }).catch(reject)
-            }));
+            // tasks.push(new Promise((resolve, reject) => {
+            //     chatsRef.child(_id).child("!meta").once("value")
+            //         .then(snapshot => {
+            //             if (snapshot.exists()) {
+            //                 _persisted = true;
+            //                 _meta = snapshot.val();
+            //             }
+            //             resolve();
+            //         }).catch(reject)
+            // }));
             tasks.push(new Promise((resolve, reject) => {
                 chatsRef.child(_id).orderByChild("created").limitToLast(1).once("value")
                     .then(snap => {
                         snap.forEach(snapshot => {
-                            if(snapshot.key !== "!meta") {
+                            if (snapshot.key !== "!meta") {
                                 _lastMessage = snapshot.val();
+                                _timestamp = _lastMessage.created;
                             }
                         })
                         resolve();
@@ -66,42 +89,99 @@ export function ChatMeta(firebase) {
             await Promise.all(tasks);
             return _body;
         },
+        fetchFor: async (currentUid, oppositeUid) => {
+            let chats = [];
+            const snapshot = await chatsRef.child(oppositeUid).child("!meta").once("value");
+            if (snapshot.exists()) {
+                chats.push({key: oppositeUid, meta: snapshot.val(), persisted: true});
+            }
+            if (!chats.length) {
+                chats = await Pagination({
+                    ref: indexRef.child(currentUid),
+                    child: "private",
+                    equals: oppositeUid,
+                    size: 10
+                }).next();
+                for(let chat of chats) {
+                    const snapshot = await chatsRef.child(chat.key).child("!meta").once("value");
+                    chat.redirect = true;
+                    chat.meta = snapshot.val();
+                }
+            }
+            if (!chats.length) {
+                const mixedId = [currentUid, oppositeUid].sort().join("_");
+                const snapshot = await indexRef.child(currentUid).child(mixedId).once("value");
+                if (snapshot.exists()) {
+                    chats.push({
+                        key: snapshot.ref.key,
+                        value: snapshot.val(),
+                        redirect: true,
+                        meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
+                    });
+                }
+            }
+            if (!chats.length) {
+                const snapshot = await firebase.database().ref("users_public").child(oppositeUid).child(UserData.NAME).once("value");
+                if (snapshot.exists()) {
+                    const ref = chatsRef.push();
+                    chats.push({
+                        key: ref.key,
+                        value: {private: oppositeUid},
+                        redirect: true,
+                        meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
+                    });
+                }
+            }
+            if (!chats.length) {
+                chats.push({
+                    key: oppositeUid,
+                });
+            }
+            return chats;
+        },
+        getOrCreateFor: async (currentUid, oppositeUid, meta) => {
+            const chats = await _body.fetchFor(currentUid, oppositeUid);
+            if (!chats.length) throw Error(`[ChatMeta] not found for ${currentUid}/${oppositeUid}`);
+            _body.create(chats[0].key, chats[0].meta || meta);
+            if (chats[0].redirect) _redirect = true;
+            if(chats[0].persisted) _persisted = true;
+            return _body;
+        },
         lastVisit: uid => {
             return fetchUids()[uid] || 0;
         },
         mix: (uid1, uid2, meta) => {
             return _body.create([uid1, uid2].sort().join("_"), meta);
         },
+        forEachUid: callback => {
+            for(let token in _meta.members) {
+                callback(token);
+            }
+        },
         uidOtherThan: uid => {
-            for(let userId in fetchUids()) {
-                if(userId === uid) continue;
-                if(userId) return userId;
+            for (let userId in fetchUids()) {
+                if (userId === uid) continue;
+                if (userId) return userId;
             }
-            for(let userId of _id.split("_")) {
-                if(userId === uid) continue;
-                return userId;
-            }
+            throw Error("Other uid not found");
         },
         update: async () => {
             const updatesMeta = {};
-            const tokens = _id.split("_");
-
-            if(!_persisted) {
+            if (!_persisted) {
                 try {
-                    updatesMeta["members"] = {
-                        [tokens[0]]: 0,
-                        [tokens[1]]: 0
-                    }
+                    updatesMeta["members"] = _meta.members;
                     await chatsRef.child(_id).child("!meta").update(updatesMeta);
                     _persisted = true;
                 } catch (error) {
                     console.error(error)
                 }
             }
+            await chatsRef.child(_id).child("!meta/timestamp").set(firebase.database.ServerValue.TIMESTAMP);
             const updatesIndex = {};
-            updatesIndex[`${tokens[0]}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
-            updatesIndex[`${tokens[1]}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
-
+            _body.forEachUid(token => {
+                updatesIndex[`${token}/${_id}/private`] = _body.uidOtherThan(token);
+                updatesIndex[`${token}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
+            })
             await indexRef.update(updatesIndex);
             return _body;
         },
@@ -118,13 +198,14 @@ export function ChatMeta(firebase) {
             _onlineRef = null;
         },
         updateVisit: async uid => {
-            if(!_persisted) return;
+            if (!_persisted) return;
+            console.log("[ChatMeta] update visit for", _id);
             return await chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = snapshot => {
                 const message = snapshot.val() || {};
-                if(!_lastMessage || (message && message.created !== _lastMessage.created
+                if (!_lastMessage || (message && message.created !== _lastMessage.created
                     && message.text !== _lastMessage.text)) {
                     _lastMessage = message;
                     _timestamp = message.created;
@@ -153,7 +234,7 @@ export function ChatMeta(firebase) {
             const onlineListener = snapshot => {
                 const now = new Date().getTime();
                 const timestamp = snapshot.val();
-                if(now - timestamp < timeout) {
+                if (now - timestamp < timeout) {
                     _meta = _meta || {};
                     _meta.members = _meta.members || {};
                     clearTimeout(task);

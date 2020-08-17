@@ -66,8 +66,9 @@ function ChatsItem(props) {
     React.useEffect(() => {
         if (skeleton || label) return;
         let isMounted = true;
-        const chatMeta = ChatMeta(firebase).create(id);
-        chatMeta.fetch()
+        const chatMeta = ChatMeta(firebase);
+        chatMeta.getOrCreateFor(currentUserData.id, id)
+            .then(() => chatMeta.fetch())
             .then(() => {
                 const uid = chatMeta.uidOtherThan(currentUserData.id);
                 return cacheDatas.put(uid, UserData(firebase)).fetch(uid, [UserData.IMAGE, UserData.NAME]);

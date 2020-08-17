@@ -11,7 +11,6 @@ import TopMenu from "./TopMenu";
 import {Route, Switch} from "react-router-dom";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 import {usePages} from "../../controllers/General";
-import MainHeader from "../ResponsiveDrawerLayout/MainHeader";
 import HeaderComponent from "../../components/HeaderComponent";
 
 const styles = theme => ({

@@ -46,6 +46,7 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
         <component.type
             {...component.props}
             onClick={handleCopy}
+            title={title}
         />
         <input onChange={() => {}} ref={inputRef} style={{display:"none", opacity: 0, position:"fixed", top: 1, left: 1}} value={url}/>
     </React.Fragment>;
@@ -53,6 +54,7 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
     return <component.type
         {...component.props}
         onClick={handleShare}
+        title={title}
     />
 };
 
