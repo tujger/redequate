@@ -34,12 +34,13 @@ export const ChatsDaemon = ({clearText = text => text}) => {
         });
         const newMessage = (data, chatId) => {
             if (data.uid === currentUserData.id) return;
-            if (!document.hasFocus()) return;
+            console.log(`[ChatsDaemon] new message: ${JSON.stringify(data)}`)
+            // if (!document.hasFocus()) return;
             const userData = cacheDatas.put(data.uid, UserData(firebase));
             userData.fetch(data.uid, [UserData.NAME])
                 .then(() => notifySnackbar({
-                    id: pages.chat.route + data.uid,
-                    onClick: () => history.push(pages.chat.route + data.uid),
+                    id: pages.chat.route + chatId,
+                    onClick: () => history.push(pages.chat.route + chatId),
                     system: true,
                     title: <React.Fragment>
                         {userData.name}: {clearText(data.text)}
@@ -48,8 +49,8 @@ export const ChatsDaemon = ({clearText = text => text}) => {
         }
         const installListenerIfNeeded = (id, live) => ChatMeta(firebase).fetch(id)
             .then(meta => {
+                if (meta.lastMessage.uid === currentUserData.id) return;
                 if (meta.lastVisit(currentUserData.id) > meta.timestamp) return;
-                if (chatsWithNewMessages.indexOf(id) >= 0) return;
                 const match = matchPath(window.location.pathname, {
                     exact: true,
                     path: pages.chat._route,
@@ -59,8 +60,8 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                     && match.params.id === meta.uidOtherThan(currentUserData.id)) {
                     return;
                 }
-                if (live) newMessage(meta.lastMessage, id);
-                console.warn("NEW", meta.lastVisit(currentUserData.id), meta, meta.lastMessage, match);
+                // if (live) newMessage(meta.lastMessage, id);
+                if (chatsWithNewMessages.indexOf(id) >= 0) return;
                 chatsWithNewMessages.push(id);
                 dispatch({type: LazyListComponent.RESET, cache: "chats"});
                 dispatch({type: MenuBadge.INCREASE, page: pages.chats});
@@ -88,14 +89,17 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 console.error(`[ChatsDaemon] failed for ${currentUserData.id}`)
             });
 
-        pagination.next()
-            .then(chats => {
-                chats.forEach(chat => installListenerIfNeeded(chat.key))
-                daemonNew.on("child_changed", snapshot => {
-                    return installListenerIfNeeded(snapshot.key, true);
-                });
-            })
-            .catch(console.error);
+        // pagination.next()
+        //     .then(chats => {
+        //         chats.forEach(chat => installListenerIfNeeded(chat.key))
+        //     })
+        //     .catch(console.error);
+        daemonNew.on("child_added", snapshot => {
+            return installListenerIfNeeded(snapshot.key);
+        });
+        daemonNew.on("child_changed", snapshot => {
+            return installListenerIfNeeded(snapshot.key, true);
+        });
 
         return () => {
             daemonNew && daemonNew.off();

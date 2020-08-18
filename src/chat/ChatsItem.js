@@ -8,7 +8,7 @@ import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import {
     cacheDatas,
-    notifySnackbar,
+    notifySnackbar, Role,
     toDateString,
     useCurrentUserData,
     useFirebase,
@@ -108,7 +108,7 @@ function ChatsItem(props) {
         ].join(" ")}>
             <CardActionArea onClick={(event) => {
                 event.stopPropagation();
-                history.push(pages.chat.route + userData.id);
+                history.push(pages.chat.route + chatMeta.id);
             }}>
                 <CardHeader
                     avatar={<Link
@@ -140,6 +140,9 @@ function ChatsItem(props) {
                         >
                             {toDateString(chatMeta.lastMessage.created)}
                         </Grid>
+                        {chatMeta.readonly && <Grid item className={classes.date}>
+                            Read-only
+                        </Grid>}
                     </Grid>}
                     subheader={<Grid container>
                         <Grid item xs

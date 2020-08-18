@@ -154,7 +154,7 @@ export const NotificationsSnackbar = () => {
                                         {title: "Open", action: onclick}
                                     ]})
                                 })*/
-                                console.log("[Notification]", title, options);
+                                console.log(`[Notification] ${title}: ${JSON.stringify(options)}`);
                                 const notification = new Notification(title, options);
                                 notification.onclick = onclick;
                             } catch(error) {

@@ -75,7 +75,7 @@ const Chat = (props) => {
         dispatch({type: LazyListComponent.RESET, cache: "chats"});
         const chatMeta = ChatMeta(firebase);
         chatMeta.getOrCreateFor(currentUserData.id, id, history.location.state && history.location.state.meta)
-            .then(console.log)
+            // .then(console.log)
             .catch(error => {
                 if(error.code === "PERMISSION_DENIED") return;
                 notifySnackbar(error);
@@ -110,7 +110,6 @@ const Chat = (props) => {
 
     }, [])*/
 
-    console.log(id, chatMeta, history.location.state);
     if (!chatMeta || !userData) return <LoadingComponent/>
     return <React.Fragment>
         <ChatHeader
@@ -152,7 +151,7 @@ const Chat = (props) => {
                 }
             }}
         />
-        <ChatInputBox inputComponent={inputComponent} ref={inputRef} onSend={handleSend}/>
+        {!chatMeta.readonly && <ChatInputBox inputComponent={inputComponent} ref={inputRef} onSend={handleSend}/>}
     </React.Fragment>
 };
 

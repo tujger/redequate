@@ -141,6 +141,7 @@ const Profile = ({
         history.push(pages.chat.route + userData.id);
     }
 
+
     const fixErrors = () => {
         fetchCallable(firebase)("fixUser", {
             key: userData.id
