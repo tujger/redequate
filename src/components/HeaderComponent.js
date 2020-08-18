@@ -7,9 +7,10 @@ const HeaderComponent =
          menuComponent,
          title,
          narrow,
-         narrowComponent = <MainHeader title={title} menuComponent={menuComponent}/>,
+        image,
+         narrowComponent = <MainHeader image={image} title={title} menuComponent={menuComponent}/>,
          wide,
-         wideComponent = <StickyHeaderComponent title={title} menuComponent={menuComponent}/>,
+         wideComponent = <StickyHeaderComponent image={image} title={title} menuComponent={menuComponent}/>,
      }) => {
 
         if (narrow && narrowComponent) {

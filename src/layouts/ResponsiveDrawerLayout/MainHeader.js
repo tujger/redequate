@@ -36,10 +36,14 @@ const styles = theme => ({
 });
 
 const MainHeader = props => {
-    const {classes, title} = props;
+    const {classes, title, image} = props;
     const pages = usePages();
 
-    return <div className={classes.header}>
+    return <div
+        className={classes.header}
+        style={image ? {
+            backgroundImage: `url(${image})`
+        } : null}>
         <Grid item className={classes.name}>
             <Link to={pages.home.route} className={classes.label}>
                 {title}

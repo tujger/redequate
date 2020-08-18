@@ -220,14 +220,14 @@ const Profile = ({
             size="large"
             variant="contained"
         >
-            {isSameUser && <Button
+            {/*{isSameUser && <Button
                 children={"Logout"}
                 className={classes.logout}
                 onClick={() => {
                     logoutUser(firebase, store)()
                         .then(() => refreshAll(store));
                 }}
-            />}
+            />}*/}
             {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
                 children={"Resend verification"}
                 className={classes.resendVerification}

@@ -14,7 +14,7 @@ const styles = theme => ({
 });
 
 const StickyHeader = props => {
-    const {classes, className, children, headerComponent, stickyBottom, title, content} = props;
+    const {classes, className, children, headerComponent, stickyBottom} = props;
 
     return <div className={[classes.container, className].join(" ")}>
         {headerComponent}

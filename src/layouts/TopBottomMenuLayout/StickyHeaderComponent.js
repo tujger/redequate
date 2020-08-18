@@ -42,7 +42,7 @@ const styles = theme => ({
     }
 });
 
-export const StickyHeaderComponent = withStyles(styles)(({classes, content, headerImage, menuComponent, title, titleClassName}) => {
+export const StickyHeaderComponent = withStyles(styles)(({classes, content, image, menuComponent, title, titleClassName}) => {
     const [state, setState] = React.useState({collapsed: false});
     const {collapsed} = state;
     const refObserver = React.createRef();
@@ -66,10 +66,10 @@ export const StickyHeaderComponent = withStyles(styles)(({classes, content, head
     return <React.Fragment>
         <div
             className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
-        <div className={classes.content} style={{backgroundImage: `url(${headerImage})`}}>{content}</div>
+        <div className={classes.content} style={{backgroundImage: `url(${image})`}}>{content}</div>
         <div ref={refObserver} className={classes.observer}/>
         <div className={[classes.sticky, collapsed ? classes.stickycollapsed : null].join(" ")}
-             style={collapsed ? {backgroundImage: `url(${headerImage})`} : null}
+             style={collapsed ? {backgroundImage: `url(${image})`} : null}
         >
             {menuComponent}
         </div>
