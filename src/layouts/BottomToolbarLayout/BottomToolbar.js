@@ -22,29 +22,42 @@ const styles = theme => ({
         textDecoration: "none",
     },
     menusection: {
-        backgroundColor: theme.palette.background.default,
-        color: theme.palette.getContrastText(theme.palette.background.default),
-        boxShadow: theme.shadows[1],
+        backgroundColor: theme.palette.background.paper,
+        color: theme.palette.getContrastText(theme.palette.background.paper),
+        boxShadow: theme.shadows[4],
     },
     menuitem: {
         fontSize: "inherit"
     },
+    menuitemSelected: {
+        backgroundColor: theme.palette.secondary.light,
+        color: theme.palette.getContrastText(theme.palette.secondary.light),
+    },
 });
 
 const BottomToolbar = withStyles(styles)(props => {
-    const {items, classes, match} = props;
+    const {items, classes} = props;
     const [state, setState] = React.useState({anchor: null});
-    const {anchor} = state;
-    const location = useLocation();
-    const history = useHistory();
+    const {anchor, current} = state;
     const currentUserData = useCurrentUserData();
+    const history = useHistory();
+    const location = useLocation();
+
+    const isCurrent = (path) => {
+        const match = matchPath(current ? current._route : location.pathname, {
+            exact: true,
+            path: path,
+            strict: true
+        });
+        return !!match;
+    }
 
     const handleChange = (event, newValue) => {
-        if (matchPath(newValue, match) && matchPath(newValue, match).url === location.pathname) {
-            setState({...state, anchor: event.currentTarget});
+        if (isCurrent(newValue)) {
+            setState({...state, current:null, anchor: event.currentTarget});
         } else {
             history.push(newValue);
-            setState({...state, anchor: null});
+            setState({...state, current:null, anchor: null});
         }
     };
 
@@ -56,26 +69,30 @@ const BottomToolbar = withStyles(styles)(props => {
         {items.map((list, index) => {
             const [first, ...menu] = list;
             if (!matchRole(first.roles, currentUserData) || first.disabled) return null;
-            const currentItem = menu.filter(item => item.route === location.pathname)[0] || first;
+            const currentItem = list.filter(item => isCurrent(item._route))[0] || first;
+
             return <BottomNavigationAction
                 icon={currentItem.icon}
                 key={index}
                 label={currentItem.label}
                 value={currentItem.route}
+                onContextMenu={event => {
+                    event.preventDefault();
+                    setState({...state, current:first, anchor: event.currentTarget})
+                }}
             />
         })}
         {items.map((list, index) => {
             const [first, ...menu] = list;
-            const currentItem = menu.filter(item => item.route === location.pathname)[0] || first;
-            if (currentItem.route !== location.pathname) return null;
-            if (!matchRole(currentItem.roles, currentUserData) || currentItem.disabled) return null;
+            const currentItem = list.filter(item => isCurrent(item._route))[0];
+            if(!currentItem) return;
             return <Popper
                 key={index}
                 anchorEl={anchor}
                 className={classes.menusection}
                 disablePortal
-                onClose={() => setState({...state, anchor: null})}
-                onMouseLeave={() => setState({...state, anchor: null})}
+                onClose={() => setState({...state, current:null, anchor: null})}
+                onMouseLeave={() => setState({...state, current:null, anchor: null})}
                 open={Boolean(anchor)}
                 placement={"top"}
                 role={undefined}>
@@ -85,13 +102,17 @@ const BottomToolbar = withStyles(styles)(props => {
                                  key={index}
                                  className={classes.label}
                                  onClick={() => {
-                                     setState({...state, anchor: null})
+                                     setState({...state, current:null, anchor: null})
                                  }}>
                         <MenuItem
                             button
-                            children={item.label}
-                            className={classes.menuitem}
-                            key={item.id}/>
+                            children={<React.Fragment>
+                                {item.label}
+                                {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
+                            </React.Fragment>}
+                            className={[classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
+                            key={item.id}
+                        />
                     </Link>
                 })}</MenuList>
             </Popper>
