@@ -56,11 +56,10 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                     path: pages.chat._route,
                     strict: true
                 });
-                if (match && match.params
-                    && match.params.id === meta.uidOtherThan(currentUserData.id)) {
+                if (match && match.params && match.params.id === id) {
                     return;
                 }
-                // if (live) newMessage(meta.lastMessage, id);
+                if (live) newMessage(meta.lastMessage, id);
                 if (chatsWithNewMessages.indexOf(id) >= 0) return;
                 chatsWithNewMessages.push(id);
                 dispatch({type: LazyListComponent.RESET, cache: "chats"});
@@ -80,7 +79,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                             dispatch({type: ChatsCounter.COUNTER, counter: chatsWithNewMessages.length});
                         }
                     } else {
-                        newMessage(update, id);
+                        // newMessage(update, id);
                     }
                 })
                 metas[meta.id] = meta;

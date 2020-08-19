@@ -160,7 +160,7 @@ function Login(props) {
             .then(checkFirstLogin)
             .then(loginSuccess)
             .catch(errorCallback)
-            .finally(finallyCallback);
+            .finally(() => dispatch(ProgressView.HIDE));
         return <LoadingComponent/>;
     }
 
@@ -186,7 +186,7 @@ function Login(props) {
         onRequestLogin={requestLoginPassword}
         password={password}
     />
-};
+}
 
 const LoginLayout =
     ({

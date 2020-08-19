@@ -25,13 +25,14 @@ const Store = (name, reducers) => {
         snackbar: snackbarReducer,
         topMenuReducer,
         users: usersReducer,
-        ...reducers};
+        ...reducers
+    };
     const store = createStore(combineReducers(reducers), initialStore || {});
 
     store.subscribe(() => {
         const saveable = {};
-        for(let x in store.getState()) {
-            if(reducers[x] && !reducers[x].skipStore) {
+        for (let x in store.getState()) {
+            if (reducers[x] && !reducers[x].skipStore) {
                 saveable[x] = store.getState()[x];
             }
         }

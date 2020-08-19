@@ -44,7 +44,7 @@ function LazyListComponent
 
     const ascending = pagination.order === "asc";
 
-    const loadNextPart = () => {
+    const loadNextPage = () => {
         if (finished) {
             return;
         }
@@ -71,24 +71,21 @@ function LazyListComponent
             })
             .then(newitems => pageTransform(newitems))
             .then(newitems => newitems.filter(item => item !== undefined))
-            .then(newitems => {
-                return ({
-                        ascending,
-                        finished: pagination.finished,
-                        items: ascending
-                            ? (reverse ? [...newitems.reverse(), ...items] : [...items, ...newitems])
-                            : (reverse ? [...newitems, ...items] : [...items, ...newitems.reverse()]),
-                        loading: false,
-                        pagination,
-                        reverse
-                    })
-                }
-            )
+            .then(newitems => ({
+                ascending,
+                finished: pagination.finished,
+                items: ascending
+                    ? (reverse ? [...newitems.reverse(), ...items] : [...items, ...newitems])
+                    : (reverse ? [...newitems, ...items] : [...items, ...newitems.reverse()]),
+                loading: false,
+                pagination,
+                reverse
+            }))
             .catch(error => {
                 notifySnackbar({
                     buttonLabel: "Refresh",
                     error: error,
-                    onButtonClick: () => dispatch({type: LazyListComponent.RESET, cache}),
+                    onButtonClick: () => window.location.reload(),
                 });
                 return {
                     finished: true,
@@ -139,9 +136,9 @@ function LazyListComponent
             lastKey = snapshot.key;
             const item = {key: snapshot.key, value: snapshot.val()};
             const index = Math.random();
-            let transformed = await itemTransform(item, index);
+            let transformed = await itemTransform(item, snapshot.key);
             if (transformed) {
-                transformed = itemComponent(transformed, index);
+                transformed = itemComponent(transformed, snapshot.key);
             }
             if (cache) {
                 dispatch({
@@ -204,7 +201,7 @@ function LazyListComponent
             finished={finished}
             hasItems={items.length}
             key={items.length}
-            loadNextPage={loadNextPart}
+            loadNextPage={loadNextPage}
             placeholder={placeholder}
             placeholders={placeholders}
         />}
@@ -213,7 +210,7 @@ function LazyListComponent
             finished={finished}
             hasItems={items.length}
             key={items.length}
-            loadNextPage={loadNextPart}
+            loadNextPage={loadNextPage}
             placeholder={placeholder}
             placeholders={placeholders}
         />}
