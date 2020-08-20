@@ -14,8 +14,9 @@ import {connect} from "react-redux";
 import PropTypes from "prop-types";
 import useTheme from "@material-ui/styles/useTheme";
 import withStyles from "@material-ui/styles/withStyles";
+import Resizer from "react-image-file-resizer";
 
-const maxFileSize = 1024;
+const MAX_FILE_SIZE = 20 * 1024;
 
 const styles = theme => ({
     "@global": {
@@ -128,19 +129,18 @@ const styles = theme => ({
     },
 })
 
-const UploadComponent = ({button, onsuccess, onerror}) => {
+const UploadComponent = ({button, onsuccess, onerror, limits}) => {
     const [state, setState] = React.useState({});
-    const {uppy} = state;
+    const {uppy, uris = {}} = state;
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
-    const theme = useTheme();
 
     React.useEffect(() => {
         const uppy = Uppy({
             restrictions: {
                 maxNumberOfFiles: 1,
-                maxFileSize: maxFileSize * 1024,
+                maxFileSize: MAX_FILE_SIZE * 1024,
                 allowedFileTypes: ["image/*"]
             },
             autoProceed: true,
@@ -150,8 +150,31 @@ const UploadComponent = ({button, onsuccess, onerror}) => {
                 }
             }
         })
+        uppy.on("file-added", (result) => {
+            if (!maxWidth) return;
+            if(maxSize && maxSize > result.size) return;
+            const quality = limits ? limits.quality || 75 : 75;
+            const type = result.type === "image/png" ? "PNG" : "JPG";
+            console.log(result)
+            console.log(`[UploadComponent] resize ${result.name} to ${maxWidth}x${maxHeight} with quality ${quality}`);
+            Resizer.imageFileResizer(
+                result.data,
+                maxWidth,
+                maxHeight,
+                type,
+                quality,
+                0,
+                uri => {
+                    uppy.uris = uppy.uris || {};
+                    uppy.uris[result.id] = uri;
+                    setState(state => ({...state, uppy}))
+                },
+                "blob"
+            )
+            // console.log("failed files:", result.failed);
+        });
         uppy.on("complete", (result) => {
-            // console.log("successful files:", result.successful)
+            // console.log("successful files:", result);
             // console.log("failed files:", result.failed);
         });
         uppy.on("error", (error) => {
@@ -166,7 +189,7 @@ const UploadComponent = ({button, onsuccess, onerror}) => {
             if (onsuccess) {
                 onsuccess({uppy, file, snapshot});
             } else {
-                console.warn("Define 'onsuccess'; snapshot is", snapshot);
+                console.warn("[UploadComponent] define 'onsuccess'; snapshot is", snapshot);
             }
         });
         uppy.use(Dashboard, {
@@ -185,7 +208,7 @@ const UploadComponent = ({button, onsuccess, onerror}) => {
                     done: "Cancel",
                 }
             },
-            note: `Images up to ${maxFileSize} kb`,
+            note: `Images up to ${MAX_FILE_SIZE} kb${maxWidth ? ` (will be resized to ${maxWidth}x${maxHeight} max)` : ""}`,
             theme: "auto",
         }).use(Tus, {
             endpoint: "https://master.tus.io/files/",
@@ -201,6 +224,14 @@ const UploadComponent = ({button, onsuccess, onerror}) => {
         });
         setState({...state, uppy: uppy});
     }, [])
+
+    let maxWidth, maxHeight, maxSize;
+    if (limits) {
+        maxSize = limits.size;
+        maxHeight = limits.height;
+        maxWidth = limits.width || maxHeight;
+        maxHeight = maxHeight || maxWidth;
+    }
 
     return <React.Fragment>
         {button ?
@@ -223,61 +254,68 @@ UploadComponent.propTypes = {
 
 export default connect()(withStyles(styles)(UploadComponent));
 
-export const publishFile = firebase => ({uppy, file, snapshot, metadata, onprogress, defaultUrl, auth, deleteFile}) => new Promise((resolve, reject) => {
+export function publishFile(firebase) {
+    return ({uppy, file, name, snapshot, metadata, onprogress, defaultUrl, auth, deleteFile}) => new Promise((resolve, reject) => {
 
-    if (!uppy || !file) {
-        resolve({url: defaultUrl, metadata: {}});
-        return;
-    }
-
-    const uuid = Uuid();
-    const fileRef = firebase.storage().ref().child(auth + "/images/" + uuid + "-" + file.name);
-    console.log("[Upload] uploaded", file, snapshot, fileRef);
-    return fetch(snapshot.uploadURL).then(response => {
-        return response.blob();
-    }).then(blob => {
-        return new Promise((resolve1, reject1) => {
-            const uploadTask = fileRef.put(blob, {
-                contentType: file.type,
-                customMetadata: {
-                    ...metadata,
-                    uid: auth,
-                    // message: Uuid(),
-                    filename: file.name
-                }
-            });
-            uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-                let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
-                onprogress && onprogress(progressValue);
-            }, error => {
-                reject(error);
-            }, () => {
-                resolve1(uploadTask.snapshot.ref);
-            });
-        });
-    }).then(ref => {
-        uppy.removeFile(file.id);
-        if (deleteFile) {
-            try {
-                console.log("[Upload] delete old file", deleteFile);
-                const ref = firebase.storage().refFromURL(deleteFile);
-                const res = ref.delete();
-                console.log("delete", res);
-                res.then(console.log)
-            } catch (e) {
-                console.error("[Upload]", e);
-            }
+        if (!uppy || !file) {
+            resolve({url: defaultUrl, metadata: {}});
+            return;
         }
-        return ref;
-    }).then(ref => {
-        ref.getDownloadURL().then(url => {
-            ref.getMetadata().then(metadata => {
-                resolve({url: url, metadata: metadata});
+
+        const fetchImage = async () => {
+            if (uppy.uris && uppy.uris[file.id]) {
+                return uppy.uris[file.id];
+            }
+            return fetch(snapshot.uploadURL).then(response => {
+                return response.blob();
+            })
+        }
+
+        const uuid = Uuid();
+        const fileRef = firebase.storage().ref().child(auth + "/images/" + (name ? name + "-" : "") + uuid + "-" + file.name);
+
+        console.log("[Upload] uploaded", file, snapshot, fileRef);
+        return fetchImage().then(blob => {
+            return new Promise((resolve1, reject1) => {
+                const uploadTask = fileRef.put(blob, {
+                    contentType: file.type,
+                    customMetadata: {
+                        ...metadata,
+                        uid: auth,
+                        // message: Uuid(),
+                        filename: file.name
+                    }
+                });
+                uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
+                    let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
+                    onprogress && onprogress(progressValue);
+                }, error => {
+                    reject(error);
+                }, () => {
+                    resolve1(uploadTask.snapshot.ref);
+                });
+            });
+        }).then(ref => {
+            uppy.removeFile(file.id);
+            if (deleteFile) {
+                try {
+                    console.log("[Upload] delete old file", deleteFile);
+                    firebase.storage().refFromURL(deleteFile).delete();
+                } catch (e) {
+                    console.error("[Upload]", e);
+                }
+            }
+            return ref;
+        }).then(ref => {
+            ref.getDownloadURL().then(url => {
+                ref.getMetadata().then(metadata => {
+                    resolve({url: url, metadata: metadata});
+                }).catch(error => {
+                    reject(error);
+                })
             }).catch(error => {
                 reject(error);
             })
-        }).catch(error => {
-            reject(error);
-        })
+        });
     });
-});
+}

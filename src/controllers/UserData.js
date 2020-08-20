@@ -219,8 +219,10 @@ export function UserData(firebase) {
         },
         get initials() {
             if (_public.name) {
-                const tokens = _public.name.split(/[^A-Za-z]/, 2);
-                return tokens.map(token => token.substr(0, 1).toUpperCase()).join("");
+                const tokens = _public.name.split(/[\W]/, 2);//.split(/[^A-Za-z]/, 2);
+                let result = tokens.map(token => token.substr(0, 1).toUpperCase()).join("");
+                if(!result) result = _public.name.trim().substr(0, 1);
+                return result;
             }
             return null;
         },

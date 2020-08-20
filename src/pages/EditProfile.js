@@ -116,7 +116,6 @@ function EditProfile(props) {
 
     const checkUnique = async () => {
         const uniqueError = [];
-
         for (let field of publicFields) {
             if (field.unique) {
                 const values = await new Pagination({
@@ -189,6 +188,7 @@ function EditProfile(props) {
             })
             .then(() => {
                 refreshAll(store);
+                setState({...state, disabled: false, uppy: null})
                 if (isAdminAllowed) {
                     history.goBack();
                 } else if (tosuccessroute) {
@@ -198,10 +198,7 @@ function EditProfile(props) {
                 }
             })
             .catch(onerror)
-            .finally(() => {
-                dispatch(ProgressView.HIDE);
-                setState({...state, disabled: false, uppy: null})
-            });
+            .finally(() => dispatch(ProgressView.HIDE));
     };
 
     const saveUserByAdmin = () => {
@@ -247,12 +244,11 @@ function EditProfile(props) {
         userData.delete()
             .then(() => {
                 notifySnackbar("User deleted");
-                history.goBack();
-            }).catch(notifySnackbar)
-            .finally(() => {
-                dispatch(ProgressView.HIDE);
                 setState(state => ({...state, disabled: false}));
+                history.goBack();
             })
+            .catch(notifySnackbar)
+            .finally(() => dispatch(ProgressView.HIDE))
     }
 
     const handleAdminAction = disabled => {
@@ -320,7 +316,6 @@ function EditProfile(props) {
 
     const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
 
-
     React.useEffect(() => {
         dispatch(ProgressView.SHOW);
         let userData;
@@ -363,12 +358,13 @@ function EditProfile(props) {
                 }}><ClearIcon/></IconButton>
             </Grid>
             {uploadable && <UploadComponent
-                firebase={firebase}
-                variant={"contained"}
-                color={"primary"}
                 button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
+                color={"primary"}
+                firebase={firebase}
+                limits={{width: 300, height: 300, size: 100000}}
                 onsuccess={handleUploadPhotoSuccess}
                 onerror={handleUploadPhotoError}
+                variant={"contained"}
             />}
             {/*<AvatarEdit
                 width={390}
