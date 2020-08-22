@@ -226,6 +226,20 @@ export const stylesList = theme => ({
     cardContent: {
         overflow: "auto"
     },
+    cardImage: {
+        marginTop: theme.spacing(1),
+        objectFit: "contain",
+        objectPosition: "left",
+        [theme.breakpoints.up("md")]: {
+            marginTop: theme.spacing(1),
+            maxHeight: 200,
+            maxWidth: 200,
+        },
+        [theme.breakpoints.down("sm")]: {
+            maxHeight: "100%",
+            maxWidth: "100%",
+        },
+    },
     counter: {
         fontSize: theme.spacing(1.5),
         marginLeft: theme.spacing(1),

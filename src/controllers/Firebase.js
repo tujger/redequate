@@ -17,7 +17,7 @@ const Firebase = firebaseConfig => {
         console.error(error);
     })
     if (process.env.NODE_ENV === "development") {
-        // firebase.functions().useFunctionsEmulator("http://localhost:5001");
+        firebase.functions().useFunctionsEmulator("http://localhost:5001");
     }
     return firebase;
 };

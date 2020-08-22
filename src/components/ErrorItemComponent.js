@@ -56,8 +56,8 @@ function ErrorItemComponent(props) {
             .then(() => isMounted && setState(state => ({...state, userData})))
             .catch(() => {
                 if(!isMounted) return;
-                userData.public.name = "User deleted";
-                console.log("[Error] user deleted", data.value.uid);
+                userData.public.name = data.value.uid === "anonymous" ? "Anonymous" : "User deleted";
+                if(data.value.uid !== "anonymous") console.log("[Error] user deleted", data.value.uid);
                 setState(state => ({...state, userData}))
             })
         return () => {

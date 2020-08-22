@@ -16,14 +16,14 @@ import {matchRole, Role, useCurrentUserData, UserData} from "../controllers/User
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
-import UploadComponent, {publishFile} from "../components/UploadComponent";
+import UploadComponent, {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
 import {
     cacheDatas,
     fetchDeviceId,
     hasWrapperControlInterface,
     notifySnackbar,
-    setupReceivingNotifications, TextMaskEmail,
+    setupReceivingNotifications,
     useFirebase,
     usePages,
     useStore,
@@ -69,7 +69,6 @@ const styles = theme => ({
     content: {}
 });
 
-let uppy, file, snapshot;
 function EditProfile(props) {
     let {classes, uploadable = true, notifications = true, publicFields = publicFields, adminFields: adminFieldsGiven = adminFields, privateFields} = props;
     const currentUserData = useCurrentUserData();
@@ -89,10 +88,7 @@ function EditProfile(props) {
 
     // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
-    const {image, disabled, requiredError = [], uniqueError = [], userData, deleteOpen, role} = state;
-    uppy = state.uppy;
-    file = state.file;
-    snapshot = state.snapshot;
+    const {image, disabled, requiredError = [], uniqueError = [], userData, deleteOpen, role, uppy} = state;
 
     const onerror = error => {
         setState({...state, disabled: false});
@@ -153,15 +149,12 @@ function EditProfile(props) {
         let publishing = {};
 
         if (uppy) {
-            publishing = await publishFile(firebase)({
+            publishing = await uploadComponentPublish(firebase)({
                 auth: userData.id,
                 uppy,
-                file,
-                snapshot,
                 onprogress: progress => {
                     dispatch({...ProgressView.SHOW, value: progress});
                 },
-                defaultUrl: image,
                 deleteFile: userData.public.image
             });
         }
@@ -187,8 +180,8 @@ function EditProfile(props) {
                 }
             })
             .then(() => {
-                refreshAll(store);
                 setState({...state, disabled: false, uppy: null})
+                refreshAll(store);
                 if (isAdminAllowed) {
                     history.goBack();
                 } else if (tosuccessroute) {
@@ -214,22 +207,14 @@ function EditProfile(props) {
             .then(() => userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE]))
     }
 
-    const handleUploadPhotoSuccess = ({uppy, file, snapshot}) => {
-        removeUploadedFile();
-        setState({...state, uppy, file, snapshot, image: snapshot.uploadURL});
+    const handleUploadPhotoSuccess = ({uppy, snapshot}) => {
+        setState({...state, uppy, image: snapshot.uploadURL});
     }
 
     const handleUploadPhotoError = (error) => {
         console.error("[EditProfile] upload", error)
-        removeUploadedFile();
-        setState({...state, uppy: null, file: null, snapshot: null});
-    }
-
-    const removeUploadedFile = () => {
-        if (uppy && file) {
-            uppy.removeFile(file.id);
-            console.log("[EditProfile] file removed", snapshot);
-        }
+        uploadComponentClean(uppy);
+        setState({...state, uppy: null});
     }
 
     const handleClickDelete = () => {
@@ -251,32 +236,11 @@ function EditProfile(props) {
             .finally(() => dispatch(ProgressView.HIDE))
     }
 
-    const handleAdminAction = disabled => {
-        setState({...state, disabled})
-    }
-
-    const onClose = () => {
-        setState({...state, preview: null})
-    }
-
-    const onCrop = (preview) => {
-        setState({...state, preview})
-    }
-
-    const onBeforeFileLoad = (elem) => {
-        if (elem.target.files[0].size > 71680) {
-            alert("File is too big!");
-            elem.target.value = "";
-        }
-    }
-
     const handleNotifications = (evt, enable) => {
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true});
         if (enable) {
             setupReceivingNotifications(firebase)
-                // .then(token => fetchUserPrivate(firebase)(currentUserData.id)
-                //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: token}))
                 .then(token => {
                     userData.private[fetchDeviceId()].notification = token;
                     return userData.savePrivate();
@@ -305,18 +269,14 @@ function EditProfile(props) {
                     dispatch(ProgressView.HIDE);
                     setState({...state, disabled: false});
                 });
-            // fetchUserPrivate(firebase)(currentUserData.id)
-            //     .then(data => updateUserPrivate(firebase)(currentUserData.id, fetchDeviceId(), {notification: null}))
-            //     .then(result => {
-            // localStorage.removeItem("notification-token");
             notifySnackbar({title: "Unsubscribed"});
-            // });
         }
     };
 
     const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
 
     React.useEffect(() => {
+        let isMounted = true;
         dispatch(ProgressView.SHOW);
         let userData;
         if (!id || id === ":id") {
@@ -326,14 +286,15 @@ function EditProfile(props) {
         }
         userData.fetch([UserData.PUBLIC, UserData.ROLE])
             .then(() => isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))
-            .then(() => setState({...state, userData, ...userData.public, role: userData.role}))
+            .then(() => isMounted && setState({...state, userData, ...userData.public, role: userData.role}))
             .catch(error => {
                 notifySnackbar(error);
                 history.goBack();
             })
             .finally(() => dispatch(ProgressView.HIDE))
         return () => {
-            removeUploadedFile();
+            uploadComponentClean(uppy);
+            isMounted = false;
         }
     }, [id])
 
@@ -361,7 +322,7 @@ function EditProfile(props) {
                 button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
                 color={"primary"}
                 firebase={firebase}
-                limits={{width: 300, height: 300, size: 100000}}
+                limits={{width: 300, height: 300}}
                 onsuccess={handleUploadPhotoSuccess}
                 onerror={handleUploadPhotoError}
                 variant={"contained"}

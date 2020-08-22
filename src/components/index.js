@@ -18,7 +18,7 @@ export {default as RichSnackbarContent} from "./RichSnackbarContent";
 export {default as ServiceComponent} from "./ServiceComponent";
 export {default as ShareComponent} from "./ShareComponent";
 export {default as Snackbar, snackbarReducer} from "./Snackbar";
-export {default as UploadComponent, publishFile} from "./UploadComponent";
+export {default as UploadComponent, uploadComponentPublish, uploadComponentClean} from "./UploadComponent";
 export {default as UserItemComponent} from "./UserItemComponent";
 
 export {default as MainContent} from "./MainContent";

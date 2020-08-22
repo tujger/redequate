@@ -125,7 +125,7 @@ function ChatsItem(props) {
                     classes={{content: classes.cardContent}}
                     className={[classes.cardHeader, classes.post].join(" ")}
                     title={<Grid container alignItems={"baseline"}>
-                        <Grid item className={[classes.userName, classes.read].join(" ")}>
+                        <Grid item className={[classes.userName, isNew ? classes.unread : classes.read].join(" ")}>
                             {userComponent(userData)}
                         </Grid>
                         <Grid item>

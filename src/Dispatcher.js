@@ -41,7 +41,7 @@ console.error = function(...args) {
         firebase.database().ref("errors").push({
             error: args[0].stack || args[0],
             timestamp: firebase.database.ServerValue.TIMESTAMP,
-            uid: currentUserData.id
+            uid: currentUserData.id || "anonymous"
         });
     } catch(error) {
         origin.call(this, error);
@@ -95,6 +95,7 @@ function Dispatcher(props) {
             maintenanceRef = firebase.database().ref("meta/maintenance");
             maintenanceRef.on("value", snapshot => {
                 const maintenance = snapshot.val();
+                console.log(`[Dispatcher] maintenance: ${JSON.stringify(maintenance)}`)
                 useTechnicalInfo(currentMeta => {
                     if (currentMeta.maintenance !== maintenance) {
                         console.log("[Dispatcher] maintenance changed to", maintenance);

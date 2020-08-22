@@ -82,6 +82,7 @@ function Login(props) {
             throw new Error("Login failed. Please try again");
         }
         let isFirstLogin = false;
+        let isFirstOnDevice = false;
         const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
         if (!ud.verified) {
             notifySnackbar({
@@ -95,6 +96,7 @@ function Login(props) {
         }
         return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
             .then(() => ud.fetchPrivate(fetchDeviceId(), true))
+            .then(() => {if(!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true})
             .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName, agreement: true}))
             .then(() => ud.savePrivate())
             .then(() => {
@@ -110,7 +112,7 @@ function Login(props) {
                 dispatch({type: "currentUserData", userData: ud});
             })
             .then(() => {
-                if (ud.private[fetchDeviceId()].notification) {
+                if (isFirstOnDevice || ud.private[fetchDeviceId()].notification) {
                     return setupReceivingNotifications(firebase)
                         .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
                             .then(() => ud.savePrivate()))
@@ -133,6 +135,7 @@ function Login(props) {
     };
 
     const checkFirstLogin = async response => {
+        if(!response || !response.user) throw Error("Login cancelled");
         if (!Boolean(agreementComponent)) return response;
         const deviceId = fetchDeviceId();
         const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());

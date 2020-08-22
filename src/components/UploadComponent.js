@@ -1,5 +1,8 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
+import IconButton from "@material-ui/core/IconButton";
+import FlipIcon from "@material-ui/icons/FlipCameraAndroid";
+import BackIcon from "@material-ui/icons/ArrowBack";
 import Uppy from "@uppy/core"
 import Tus from "@uppy/tus"
 import ProgressBar from "@uppy/progress-bar";
@@ -15,6 +18,8 @@ import PropTypes from "prop-types";
 import useTheme from "@material-ui/styles/useTheme";
 import withStyles from "@material-ui/styles/withStyles";
 import Resizer from "react-image-file-resizer";
+import ReactDOM from "react-dom";
+import {notifySnackbar} from "../controllers";
 
 const MAX_FILE_SIZE = 20 * 1024;
 
@@ -42,6 +47,11 @@ const styles = theme => ({
             "&$disabled": {
                 color: theme.palette.action.disabled,
             },
+        },
+        ".uppy-Dashboard--modal .uppy-Webcam-button--switch": {
+            backgroundColor: theme.palette.secondary.light,
+            color: theme.palette.secondary.contrastText,
+            marginRight: theme.spacing(1.5),
         },
         [theme.breakpoints.up("sm")]: {
             disabled: {},
@@ -72,7 +82,7 @@ const styles = theme => ({
                 fontSize: "inherit",
                 lineHeight: "inherit",
                 whiteSpace: "nowrap",
-            }
+            },
         },
         [theme.breakpoints.down("xs")]: {
             disabled: {},
@@ -124,14 +134,14 @@ const styles = theme => ({
             ".uppy-Dashboard--modal .uppy-DashboardContent-panelBody": {
                 marginTop: -40,
                 zIndex: 1010,
-            }
+            },
         }
     },
 })
 
-const UploadComponent = ({button, onsuccess, onerror, limits}) => {
-    const [state, setState] = React.useState({});
-    const {uppy, uris = {}} = state;
+const UploadComponent = ({button, onsuccess, onerror, limits, facingMode:givenFacingMode}) => {
+    const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
+    const {uppy, facingMode} = state;
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
@@ -154,7 +164,7 @@ const UploadComponent = ({button, onsuccess, onerror, limits}) => {
             if (!maxWidth) return;
             if(maxSize && maxSize > result.size) return;
             const quality = limits ? limits.quality || 75 : 75;
-            const type = result.type === "image/png" ? "PNG" : "JPG";
+            const type = result.type === "image/png" ? "PNG" : "JPEG";
             console.log(result)
             console.log(`[UploadComponent] resize ${result.name} to ${maxWidth}x${maxHeight} with quality ${quality}`);
             Resizer.imageFileResizer(
@@ -165,8 +175,8 @@ const UploadComponent = ({button, onsuccess, onerror, limits}) => {
                 quality,
                 0,
                 uri => {
-                    uppy.uris = uppy.uris || {};
-                    uppy.uris[result.id] = uri;
+                    uppy._uris = uppy._uris || {};
+                    uppy._uris[result.id] = uri;
                     setState(state => ({...state, uppy}))
                 },
                 "blob"
@@ -185,6 +195,46 @@ const UploadComponent = ({button, onsuccess, onerror, limits}) => {
         uppy.on("dashboard:modal-open", () => {
             // console.log("Modal is open", uppy)
         });
+        uppy.on("state-update", (options) => {
+            setTimeout(() => {
+                const webcam = uppy.getPlugin("Webcam");
+                if(webcam && webcam.el) {
+                    const pictureButton = webcam.el.getElementsByClassName("uppy-Webcam-button--picture")[0];
+                    const switchButton = webcam.el.getElementsByClassName("uppy-Webcam-button--switch")[0];
+                    if(pictureButton && !switchButton) {
+                        const node = document.createElement("div");
+                        pictureButton.parentElement.insertBefore(node, pictureButton);
+                        ReactDOM.render(<button
+                            children={<FlipIcon/>}
+                            className={"uppy-u-reset uppy-c-btn uppy-Webcam-button uppy-Webcam-button--switch"}
+                            onClick={() => {
+                                try {
+                                    console.log(webcam);
+                                    const currentFacingMode = webcam.opts.facingMode;
+                                    const newMode = {};
+                                    if(currentFacingMode === "user") {
+                                        newMode.facingMode = "environment";
+                                        newMode.mirror = false;
+                                    } else {
+                                        newMode.facingMode = "user";
+                                        newMode.mirror = true;
+                                    }
+                                    webcam.setOptions(newMode);
+                                    if(webcam.stream) webcam._stop();
+                                    webcam.setPluginState();
+                                    webcam._start();
+                                } catch(error) {
+                                    notifySnackbar(error);
+                                }
+                            }}
+                            type={"button"}
+                        />, node);
+                    }
+                }
+
+            }, 0)
+            // console.log("Modal is open", uppy)
+        });
         uppy.on("upload-success", (file, snapshot) => {
             if (onsuccess) {
                 onsuccess({uppy, file, snapshot});
@@ -195,7 +245,6 @@ const UploadComponent = ({button, onsuccess, onerror, limits}) => {
         uppy.use(Dashboard, {
             target: refDashboard.current,
             trigger: refButton.current,
-            // trigger: "#" + refButton.current.id,
             replaceTargetContent: true,
             closeModalOnClickOutside: true,
             proudlyDisplayPoweredByUppy: false,
@@ -216,11 +265,16 @@ const UploadComponent = ({button, onsuccess, onerror, limits}) => {
         }).use(ProgressBar, {
             target: Dashboard
         }).use(Webcam, {
-            target: Dashboard,
+            facingMode: facingMode,
+            locale: {
+                strings: {
+                    allowAccessDescription: ""//"Drop files here",
+                }
+            },
             modes: [
                 "picture"
             ],
-            facingMode: "user"
+            target: Dashboard,
         });
         setState({...state, uppy: uppy});
     }, [])
@@ -254,19 +308,19 @@ UploadComponent.propTypes = {
 
 export default connect()(withStyles(styles)(UploadComponent));
 
-export function publishFile(firebase) {
-    return ({uppy, file, name, snapshot, metadata, onprogress, defaultUrl, auth, deleteFile}) => new Promise((resolve, reject) => {
-
-        if (!uppy || !file) {
-            resolve({url: defaultUrl, metadata: {}});
+export function uploadComponentPublish(firebase) {
+    return ({uppy, name, metadata, onprogress, auth, deleteFile}) => new Promise((resolve, reject) => {
+        if (!uppy) {
+            resolve();
             return;
         }
+        const file = uppy.getFiles()[0];
 
         const fetchImage = async () => {
-            if (uppy.uris && uppy.uris[file.id]) {
-                return uppy.uris[file.id];
+            if (uppy._uris && uppy._uris[file.id]) {
+                return uppy._uris[file.id];
             }
-            return fetch(snapshot.uploadURL).then(response => {
+            return fetch(file.uploadURL).then(response => {
                 return response.blob();
             })
         }
@@ -274,7 +328,7 @@ export function publishFile(firebase) {
         const uuid = Uuid();
         const fileRef = firebase.storage().ref().child(auth + "/images/" + (name ? name + "-" : "") + uuid + "-" + file.name);
 
-        console.log("[Upload] uploaded", file, snapshot, fileRef);
+        console.log("[Upload] uploaded", file, fileRef);
         return fetchImage().then(blob => {
             return new Promise((resolve1, reject1) => {
                 const uploadTask = fileRef.put(blob, {
@@ -296,7 +350,7 @@ export function publishFile(firebase) {
                 });
             });
         }).then(ref => {
-            uppy.removeFile(file.id);
+            uploadComponentClean(uppy);
             if (deleteFile) {
                 try {
                     console.log("[Upload] delete old file", deleteFile);
@@ -318,4 +372,14 @@ export function publishFile(firebase) {
             })
         });
     });
+}
+
+export function uploadComponentClean(uppy) {
+    if (uppy) {
+        const file = uppy.getFiles()[0];
+        if(file) {
+            uppy.removeFile(file.id);
+            console.log("[UploadComponent] file removed", file.uploadURL);
+        }
+    }
 }
