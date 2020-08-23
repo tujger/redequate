@@ -26,8 +26,8 @@
     },
     "dependencies": {
         "axios": "latest",
-        "device-uuid": "latest",
         "geo-coder-t": "latest",
+        "device-uuid": "latest",
         "react-add-to-calendar-hoc": "latest",
         "react-device-detect": "latest",
         "react-image-file-resizer": "latest",
