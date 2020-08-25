@@ -97,23 +97,37 @@ const MenuSection = withStyles(styles)(props => {
             className={classes.menusection}
             >{menu.map((item, index) => {
                 if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
-                return <Link to={item.route}
-                             key={index}
-                             className={classes.label}
-                             onClick={(event) => {
-                                 setState({...state, anchor: null});
-                                 event && event.stopPropagation();
-                                 // event && event.preventDefault();
-                             }}>
-                    <MenuItem
+                if(item.component) {
+                    return <Link to={item.route}
+                                 key={index}
+                                 className={classes.label}
+                                 onClick={(event) => {
+                                     setState({...state, anchor: null});
+                                     event && event.stopPropagation();
+                                     // event && event.preventDefault();
+                                 }}>
+                        <MenuItem
+                            button
+                            children={<React.Fragment>
+                                {item.label}
+                                {item.adornment && currentUserData && item.adornment(currentUserData)}
+                            </React.Fragment>}
+                            className={classes.menuitem}
+                            onClickCapture={item.onClick}
+                        />
+                    </Link>
+                } else {
+                    return <MenuItem
                         button
                         children={<React.Fragment>
                             {item.label}
                             {item.adornment && currentUserData && item.adornment(currentUserData)}
                         </React.Fragment>}
-                        className={classes.menuitem}
-                        key={item.id}/>
-                </Link>
+                        className={[classes.label, classes.menuitem].join(" ")}
+                        key={index}
+                        onClickCapture={item.onClick}
+                    />
+                }
             })}</MenuList>
             </Paper>
         </Popper>

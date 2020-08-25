@@ -320,6 +320,7 @@ function EditProfile(props) {
             </Grid>
             {uploadable && <UploadComponent
                 button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
+                camera={false}
                 color={"primary"}
                 firebase={firebase}
                 limits={{width: 300, height: 300}}

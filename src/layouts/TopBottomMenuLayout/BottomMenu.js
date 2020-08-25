@@ -44,18 +44,28 @@ const MenuSection = props => {
         </Typography>
         <MenuList>{menu.map((item, index) => {
             if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
-            return <Link
-                className={classes.label}
-                key={index}
-                to={item.route}
-            >
-                <MenuItem
+            if(item.component) {
+                return <Link
+                    className={classes.label}
+                    key={index}
+                    to={item.route}
+                >
+                    <MenuItem
+                        button
+                        children={item.label}
+                        className={classes.menuitem}
+                        onClickCapture={item.onClick}
+                    />
+                </Link>
+            } else {
+                return <MenuItem
                     button
                     children={item.label}
-                    className={classes.menuitem}
-                    key={item.id}
+                    className={[classes.label, classes.menuitem].join(" ")}
+                    key={index}
+                    onClickCapture={item.onClick}
                 />
-            </Link>
+            }
         })}</MenuList>
     </Grid>
 };

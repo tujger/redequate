@@ -13,6 +13,11 @@ import {
     sendInvitationEmail
 } from '../../controllers/UserData';
 import {firebase, store} from "../common";
+import React from "react";
+
+// jest.enableAutomock();
+
+// jest.mock('notistack');
 
 beforeAll(() => {
     console.log("SETUP")

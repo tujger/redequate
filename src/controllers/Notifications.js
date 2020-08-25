@@ -21,20 +21,21 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
         }).then(token => {
             messaging.onMessage(payload => {
                 console.log("[Notifications] incoming " + JSON.stringify(payload));
+                const data = payload.notification || payload.data;
                 if(onMessage) {
                     onMessage({
-                        ...payload.notification,
+                        ...data,
                         from: payload.from,
-                        image: payload.notification.icon,
+                        image: data.icon,
                         priority: payload.priority,
                     })
                 } else {
                     notifySnackbar({
                         from: payload.from,
-                        image: payload.notification.image,
+                        image: data.image,
                         priority: payload.priority,
-                        id: payload.notification.tag,
-                        title: payload.notification.body,
+                        id: data.tag,
+                        title: data.body,
                     })
                 }
                 //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
@@ -195,12 +196,14 @@ export const NotificationsSnackbar = () => {
 
 export const notifySnackbar = props => {
     const snackbar = document.getElementById("__edeqa_pwa_service_worker_snackbar");
+    const error = props.error || props;
     if (!snackbar) {
+        if(error) console.error(error);
+        else console.log(`[Notifications] ${JSON.stringify(props)}`);
         console.error("Cannot notify push notifications due to control element is unavailable. Please set up " +
             "\"import {NotificationsSnackbar} from 'edeqa-pwa-react-core'\" and <NotificationsSnackbar/> in your file.");
         return;
     }
-    const error = props.error || props;
     if (error && (error instanceof Error || error.constructor.name === "FirebaseStorageError")) {
         console.error(props);
         snackbar.payload = {

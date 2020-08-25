@@ -54,19 +54,34 @@ function MainMenu(props) {
                         }
                         hasItems = true;
                         const activeItem = item.route === location.pathname;
-                        return <Link to={item.route}
-                                     key={item.route + Math.random()}
-                                     className={classes.label}>
-                            <ListItem button key={item.id}
-                                      className={activeItem ? classes.active : ""}
-                                      onClick={onClick}>
+                        if (item.component) {
+                            return <Link to={item.route}
+                                         key={item.route + Math.random()}
+                                         className={classes.label}>
+                                <ListItem button
+                                          className={activeItem ? classes.active : ""}
+                                          onClickCapture={item.onClick}
+                                          onClick={onClick}>
+                                    <ListItemIcon>{item.icon}</ListItemIcon>
+                                    <ListItemText>
+                                        {item.label}
+                                        {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
+                                    </ListItemText>
+                                </ListItem>
+                            </Link>
+                        } else {
+                            return <ListItem button
+                                             key={item.route + Math.random()}
+                                             className={activeItem ? classes.active : ""}
+                                             onClickCapture={item.onClick}
+                                             onClick={onClick}>
                                 <ListItemIcon>{item.icon}</ListItemIcon>
                                 <ListItemText>
                                     {item.label}
                                     {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
                                 </ListItemText>
                             </ListItem>
-                        </Link>
+                        }
                     })}
                 </List>
                 <Divider/>

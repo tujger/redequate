@@ -139,7 +139,7 @@ const styles = theme => ({
     },
 })
 
-const UploadComponent = ({button, onsuccess, onerror, limits, facingMode:givenFacingMode}) => {
+const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, facingMode:givenFacingMode}) => {
     const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
     const {uppy, facingMode} = state;
 
@@ -148,17 +148,19 @@ const UploadComponent = ({button, onsuccess, onerror, limits, facingMode:givenFa
 
     React.useEffect(() => {
         const uppy = Uppy({
-            restrictions: {
-                maxNumberOfFiles: 1,
-                maxFileSize: MAX_FILE_SIZE * 1024,
-                allowedFileTypes: ["image/*"]
-            },
+            debug: true,
+            allowMultipleUploads: false,
             autoProceed: true,
             locale: {
                 strings: {
                     dropPasteImport: ""//"Drop files here",
                 }
-            }
+            },
+            restrictions: {
+                maxNumberOfFiles: 1,
+                maxFileSize: MAX_FILE_SIZE * 1024,
+                allowedFileTypes: ["image/*"]
+            },
         })
         uppy.on("file-added", (result) => {
             if (!maxWidth) return;
@@ -193,7 +195,17 @@ const UploadComponent = ({button, onsuccess, onerror, limits, facingMode:givenFa
             // console.log("failed files:", result.failed);
         });
         uppy.on("dashboard:modal-open", () => {
-            // console.log("Modal is open", uppy)
+            console.log("Modal is open", uppy);
+            if(camera) return;
+            setTimeout(() => {
+                try {
+                    const dashboard = uppy.getPlugin("Dashboard");
+                    const browseButton = dashboard.el.getElementsByClassName("uppy-Dashboard-browse")[0];
+                    browseButton.click();
+                } catch(e) {
+                    console.error(e);
+                }
+            }, 0);
         });
         uppy.on("state-update", (options) => {
             setTimeout(() => {
@@ -264,18 +276,21 @@ const UploadComponent = ({button, onsuccess, onerror, limits, facingMode:givenFa
             removeFingerprintOnSuccess: true
         }).use(ProgressBar, {
             target: Dashboard
-        }).use(Webcam, {
-            facingMode: facingMode,
-            locale: {
-                strings: {
-                    allowAccessDescription: ""//"Drop files here",
-                }
-            },
-            modes: [
-                "picture"
-            ],
-            target: Dashboard,
         });
+        if(camera) {
+            uppy.use(Webcam, {
+                facingMode: facingMode,
+                locale: {
+                    strings: {
+                        allowAccessDescription: ""//"Drop files here",
+                    }
+                },
+                modes: [
+                    "picture"
+                ],
+                target: Dashboard,
+            });
+        }
         setState({...state, uppy: uppy});
     }, [])
 

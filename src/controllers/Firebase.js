@@ -10,14 +10,18 @@ require("firebase/messaging");
 
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
-    firebase.initializeApp(firebaseConfig);
+    try {
+        firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+        console.error(e);
+    }
     firebase.auth().getRedirectResult().then(res => {
         console.log("[Firebase] redirect", res);
     }).catch(error => {
         console.error(error);
     })
     if (process.env.NODE_ENV === "development") {
-        firebase.functions().useFunctionsEmulator("http://localhost:5001");
+        // firebase.functions().useFunctionsEmulator("http://localhost:5001");
     }
     return firebase;
 };

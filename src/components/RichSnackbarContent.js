@@ -8,12 +8,11 @@ import CardActions from "@material-ui/core/CardActions";
 import CardMedia from "@material-ui/core/CardMedia";
 import SnackbarContent from "@material-ui/core/SnackbarContent";
 import Collapse from "@material-ui/core/Collapse";
-import makeStyles from "@material-ui/styles/makeStyles";
 import Button from "@material-ui/core/Button";
 import CloseIcon from "@material-ui/icons/Close";
 import ExpandIcon from "@material-ui/icons/ExpandMore";
 import CollapseIcon from "@material-ui/icons/ExpandLess";
-import {withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
 
 const styles = theme => ({
     error: {

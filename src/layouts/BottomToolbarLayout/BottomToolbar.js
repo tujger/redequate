@@ -54,10 +54,10 @@ const BottomToolbar = withStyles(styles)(props => {
 
     const handleChange = (event, newValue) => {
         if (isCurrent(newValue)) {
-            setState({...state, current:null, anchor: event.currentTarget});
+            setState({...state, current: null, anchor: event.currentTarget});
         } else {
             history.push(newValue);
-            setState({...state, current:null, anchor: null});
+            setState({...state, current: null, anchor: null});
         }
     };
 
@@ -78,42 +78,54 @@ const BottomToolbar = withStyles(styles)(props => {
                 value={currentItem.route}
                 onContextMenu={event => {
                     event.preventDefault();
-                    setState({...state, current:first, anchor: event.currentTarget})
+                    setState({...state, current: first, anchor: event.currentTarget})
                 }}
             />
         })}
         {items.map((list, index) => {
             const [first, ...menu] = list;
             const currentItem = list.filter(item => isCurrent(item._route))[0];
-            if(!currentItem) return;
+            if (!currentItem) return;
             return <Popper
                 key={index}
                 anchorEl={anchor}
                 className={classes.menusection}
                 disablePortal
-                onClose={() => setState({...state, current:null, anchor: null})}
-                onMouseLeave={() => setState({...state, current:null, anchor: null})}
+                onClose={() => setState({...state, current: null, anchor: null})}
+                onMouseLeave={() => setState({...state, current: null, anchor: null})}
                 open={Boolean(anchor)}
                 placement={"top"}
                 role={undefined}>
                 <MenuList>{menu.map((item, index) => {
                     if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
-                    return <Link to={item.route}
-                                 key={index}
-                                 className={classes.label}
-                                 onClick={() => {
-                                     setState({...state, current:null, anchor: null})
-                                 }}>
-                        <MenuItem
+                    if (item.component) {
+                        return <Link to={item.route}
+                                     key={index}
+                                     className={classes.label}
+                                     onClick={() => {
+                                         setState({...state, current: null, anchor: null})
+                                     }}>
+                            <MenuItem
+                                button
+                                children={<React.Fragment>
+                                    {item.label}
+                                    {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
+                                </React.Fragment>}
+                                className={[classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
+                                onClickCapture={item.onClick}
+                            />
+                        </Link>
+                    } else {
+                        return <MenuItem
                             button
                             children={<React.Fragment>
                                 {item.label}
                                 {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
                             </React.Fragment>}
-                            className={[classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
-                            key={item.id}
+                            className={[classes.label, classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
+                            onClickCapture={item.onClick}
                         />
-                    </Link>
+                    }
                 })}</MenuList>
             </Popper>
         })}

@@ -16,7 +16,7 @@ export {default as ProfileComponent} from "./ProfileComponent";
 export {default as ProgressView, progressViewReducer} from "./ProgressView";
 export {default as RichSnackbarContent} from "./RichSnackbarContent";
 export {default as ServiceComponent} from "./ServiceComponent";
-export {default as ShareComponent} from "./ShareComponent";
+export {default as ShareComponent, shareText} from "./ShareComponent";
 export {default as Snackbar, snackbarReducer} from "./Snackbar";
 export {default as UploadComponent, uploadComponentPublish, uploadComponentClean} from "./UploadComponent";
 export {default as UserItemComponent} from "./UserItemComponent";

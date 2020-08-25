@@ -168,6 +168,15 @@ Getting the password:
 
 This password will be allowed only for the functions.
 
+## Final deployment
+
+Add .env.production:
+
+    REACT_APP_VERSION=$npm_package_version
+    GENERATE_SOURCEMAP=false
+    INLINE_RUNTIME_CHUNK=false
+    IMAGE_INLINE_SIZE_LIMIT=1024
+
 
 ## License
 

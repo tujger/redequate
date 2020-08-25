@@ -88,7 +88,7 @@ function ErrorItemComponent(props) {
                 className={[classes.cardHeader, classes.post].join(" ")}
                 subheader={<React.Fragment>
                     <Grid container>
-                        {data.value.error.substr(0, 100)}
+                        {JSON.stringify(data.value.error).substr(0, 100)}
                     </Grid>
                 </React.Fragment>}
                 title={<Grid container>
@@ -108,7 +108,12 @@ function ErrorItemComponent(props) {
             onConfirm={handleConfirm}
             title={"Error stacktrace"}
         >
-            <pre style={{whiteSpace: "pre-wrap"}}>{data.value.error}</pre>
+            {/*<pre style={{whiteSpace: "pre-wrap"}}>{JSON.stringify(data.value.error, null, "   ")}</pre>*/}
+            <pre style={{whiteSpace: "pre-wrap"}}>{
+                typeof data.value.error === "object"
+                    ? JSON.stringify(data.value.error, null, "   ")
+                    : data.value.error
+            }</pre>
         </ConfirmComponent>}
     </React.Fragment>
 }

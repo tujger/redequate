@@ -38,6 +38,7 @@ console.error = function(...args) {
     try {
         const firebase = useFirebase();
         const currentUserData = useCurrentUserData();
+        if(!firebase || !firebase.database) return;
         firebase.database().ref("errors").push({
             error: args[0].stack || args[0],
             timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -50,7 +51,7 @@ console.error = function(...args) {
 
 let oldWidth;
 function Dispatcher(props) {
-    const {firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
+    const {copyright, firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
     useStore(store);
@@ -65,47 +66,51 @@ function Dispatcher(props) {
     React.useEffect(() => {
         let maintenanceRef;
         (async () => {
-            for (let x in pages) {
-                pages[x]._route = pages[x].route;
-                pages[x].route = pages[x].route.split(/[*:]/)[0];
-            }
-            const firebase = Firebase(firebaseConfig);
-            installWrapperControl(firebase);
-            fetchDeviceId();
-            if (hasNotifications()) {
-                setupReceivingNotifications(firebase).catch(console.error);
-            }
-            const store = Store(title, reducers);
             try {
-                const savedUserData = store.getState().currentUserData;
-                if (savedUserData && savedUserData.userData) {
-                    const userData = new UserData(firebase).fromJSON(savedUserData.userData);
-                    await userData.fetch([UserData.ROLE]);
-                    await userData.fetchPrivate(fetchDeviceId());
-                    useCurrentUserData(userData);
-                    cacheDatas.put(userData.id, userData);
+                for (let x in pages) {
+                    pages[x]._route = pages[x].route;
+                    pages[x].route = pages[x].route.split(/[*:]/)[0];
                 }
-            } catch (error) {
-                console.error(error);
-            }
-            setInterval(() => {
-                watchUserChanged(firebase, store).then(() => refreshAll(store));
-            }, 30000)
-            watchUserChanged(firebase, store).then(() => refreshAll(store));
-            maintenanceRef = firebase.database().ref("meta/maintenance");
-            maintenanceRef.on("value", snapshot => {
-                const maintenance = snapshot.val();
-                console.log(`[Dispatcher] maintenance: ${JSON.stringify(maintenance)}`)
-                useTechnicalInfo(currentMeta => {
-                    if (currentMeta.maintenance !== maintenance) {
-                        console.log("[Dispatcher] maintenance changed to", maintenance);
-                        useTechnicalInfo({...currentMeta, maintenance: maintenance});
-                        refreshAll(store)
+                const firebase = Firebase(firebaseConfig);
+                installWrapperControl(firebase);
+                fetchDeviceId();
+                if (hasNotifications()) {
+                    setupReceivingNotifications(firebase).catch(console.error);
+                }
+                const store = Store(title, reducers);
+                try {
+                    const savedUserData = store.getState().currentUserData;
+                    if (savedUserData && savedUserData.userData) {
+                        const userData = new UserData(firebase).fromJSON(savedUserData.userData);
+                        await userData.fetch([UserData.ROLE]);
+                        await userData.fetchPrivate(fetchDeviceId());
+                        useCurrentUserData(userData);
+                        cacheDatas.put(userData.id, userData);
                     }
-                    return useTechnicalInfo();
-                });
-            })
-            setState({...state, firebase, store});
+                } catch (error) {
+                    console.error(error);
+                }
+                setInterval(() => {
+                    watchUserChanged(firebase, store).then(() => refreshAll(store));
+                }, 30000)
+                watchUserChanged(firebase, store).then(() => refreshAll(store));
+                maintenanceRef = firebase.database().ref("meta/maintenance");
+                maintenanceRef.on("value", snapshot => {
+                    const maintenance = snapshot.val();
+                    console.log(`[Dispatcher] maintenance: ${JSON.stringify(maintenance)}`)
+                    useTechnicalInfo(currentMeta => {
+                        if (currentMeta.maintenance !== maintenance) {
+                            console.log("[Dispatcher] maintenance changed to", maintenance);
+                            useTechnicalInfo({...currentMeta, maintenance: maintenance});
+                            refreshAll(store)
+                        }
+                        return useTechnicalInfo();
+                    });
+                })
+                setState({...state, firebase, store});
+            } catch(e) {
+                console.error(e);
+            }
         })();
         return () => {
             maintenanceRef && maintenanceRef.off();
@@ -155,7 +160,7 @@ function _DispatcherRoutedBody(props) {
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
-        console.log("[Dispatcher]", location);
+        console.log("[Dispatcher]", JSON.stringify(location));
         if (current) {
             const label = needAuth(current.roles, currentUserData)
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
