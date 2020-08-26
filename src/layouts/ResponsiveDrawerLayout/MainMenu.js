@@ -54,33 +54,30 @@ function MainMenu(props) {
                         }
                         hasItems = true;
                         const activeItem = item.route === location.pathname;
+
+                        const child = <ListItem
+                            button
+                            className={activeItem ? classes.active : ""}
+                            key={item.route + Math.random()}
+                            onClickCapture={item.onClick}
+                            onClick={onClick}
+                        >
+                            <ListItemIcon>{item.icon}</ListItemIcon>
+                            <ListItemText>
+                                {item.label}
+                                {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
+                            </ListItemText>
+                        </ListItem>;
+
                         if (item.component) {
-                            return <Link to={item.route}
-                                         key={item.route + Math.random()}
-                                         className={classes.label}>
-                                <ListItem button
-                                          className={activeItem ? classes.active : ""}
-                                          onClickCapture={item.onClick}
-                                          onClick={onClick}>
-                                    <ListItemIcon>{item.icon}</ListItemIcon>
-                                    <ListItemText>
-                                        {item.label}
-                                        {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
-                                    </ListItemText>
-                                </ListItem>
-                            </Link>
+                            return <Link
+                                children={child}
+                                className={classes.label}
+                                key={item.route + Math.random()}
+                                to={item.route}
+                            />
                         } else {
-                            return <ListItem button
-                                             key={item.route + Math.random()}
-                                             className={activeItem ? classes.active : ""}
-                                             onClickCapture={item.onClick}
-                                             onClick={onClick}>
-                                <ListItemIcon>{item.icon}</ListItemIcon>
-                                <ListItemText>
-                                    {item.label}
-                                    {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
-                                </ListItemText>
-                            </ListItem>
+                            return child
                         }
                     })}
                 </List>

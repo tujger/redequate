@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTheme, withStyles,} from "@material-ui/core";
+import {withStyles,} from "@material-ui/core";
 import PropTypes from 'prop-types';
 import {Link, useHistory} from "react-router-dom";
 import Card from "@material-ui/core/Card";
@@ -52,7 +52,6 @@ function ChatsItem(props) {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const theme = useTheme();
     const [state, setState] = React.useState({});
     const {shown, userData, chatMeta, online, timestamp} = state;
 

@@ -1,40 +1,13 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
-import {hasWrapperControlInterface, notifySnackbar, wrapperControlCall} from "../controllers";
-import useWebShare from "react-use-web-share";
+import {notifySnackbar} from "../controllers/Notifications";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 
 const ShareComponent = ({title, text, url, component = <Button/>}) => {
-    const {loading, isSupported, share} = useWebShare();
 
     const handleShare = () => {
-        shareText({title, text, url});
-/*        try {
-            if (hasWrapperControlInterface()) {
-                wrapperControlCall({method: "shareText", title, text, url})
-                    .catch(notifySnackbar);
-            } else {
-                share({
-                    text: text,
-                    title: title,
-                    url: url,
-                })
-            }
-        } catch (error) {
-            notifySnackbar(error);
-        }*/
+        share({title, text, url});
     }
-
-    const handleCopy = () => {
-        copyToClipboard(url);
-    }
-
-    if (!(!loading && isSupported) && !hasWrapperControlInterface()) return <React.Fragment>
-        <component.type
-            {...component.props}
-            onClick={handleCopy}
-            title={title}
-        />
-    </React.Fragment>;
 
     return <component.type
         {...component.props}
@@ -45,8 +18,7 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
 export default ShareComponent;
 
-export const shareText = ({title, text, url}) => {
-    // const {loading, isSupported, share} = useWebShare();
+export const share = ({title, text, url}) => {
     if (!navigator.share && !hasWrapperControlInterface()) {
         copyToClipboard(url);
     } else {
@@ -55,14 +27,8 @@ export const shareText = ({title, text, url}) => {
                 wrapperControlCall({method: "shareText", title, text, url})
                     .catch(notifySnackbar);
             } else {
-                return navigator
-                    .share({ text, title, url })
+                navigator.share({ text, title, url })
                     .catch(notifySnackbar)
-                /*share({
-                    text: text,
-                    title: title,
-                    url: url,
-                })*/
             }
         } catch (error) {
             notifySnackbar(error);
@@ -70,23 +36,27 @@ export const shareText = ({title, text, url}) => {
     }
 }
 
-export const copyToClipboard = text => {
-    return navigator.clipboard.writeText(text)
-        .then(() => notifySnackbar("Copied to the clipboard"))
-        .catch(notifySnackbar)
+export const copyToClipboard = async text => {
+    if(navigator.clipboard) {
+        return navigator.clipboard.writeText(text)
+            .then(() => notifySnackbar("Copied to the clipboard"))
+            .catch(notifySnackbar)
+    } else {
+        const inputNode = document.createElement("input");
+        inputNode.setAttribute("style", "display:none;opacity:0;position:fixed;top:1;left:1;z-index:1000000;");
+        inputNode.setAttribute("value", text);
+        document.body.appendChild(inputNode);
+        inputNode.style.display = "";
+        inputNode.focus();
+        inputNode.select();
+        const copied = document.execCommand("copy");
+        inputNode.style.display = "none";
+        setTimeout(() => {
+            document.body.removeChild(inputNode);
+        }, 100)
+        console.log("copied", copied, text)
+        if(copied) notifySnackbar("Copied to the clipboard");
+        else notifySnackbar(new Error("Failed copy to clipboard"));
+    }
 
-    const inputNode = document.createElement("input");
-    inputNode.setAttribute("style", "display:none;opacity:0;position:fixed;top:1;left:1;z-index:1000000;");
-    inputNode.setAttribute("value", text);
-    document.body.appendChild(inputNode);
-    inputNode.style.display = "";
-    inputNode.focus();
-    inputNode.select();
-    const copied = document.execCommand("copy");
-    inputNode.style.display = "none";
-    setTimeout(() => {
-        document.body.removeChild(inputNode);
-    }, 100)
-    console.log("copied", copied, text)
-    if(!copied) throw Error("Copy failed")
 }

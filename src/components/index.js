@@ -13,13 +13,10 @@ export {default as NavigationToolbar} from "./NavigationToolbar";
 export {default as PasswordField} from "./PasswordField";
 export {default as PlacesTextField} from "./PlacesTextField";
 export {default as ProfileComponent} from "./ProfileComponent";
-export {default as ProgressView, progressViewReducer} from "./ProgressView";
+export {default as ProgressView} from "./ProgressView";
 export {default as RichSnackbarContent} from "./RichSnackbarContent";
 export {default as ServiceComponent} from "./ServiceComponent";
-export {default as ShareComponent, shareText} from "./ShareComponent";
-export {default as Snackbar, snackbarReducer} from "./Snackbar";
+export {default as ShareComponent, share, copyToClipboard} from "./ShareComponent";
+export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent, uploadComponentPublish, uploadComponentClean} from "./UploadComponent";
 export {default as UserItemComponent} from "./UserItemComponent";
-
-export {default as MainContent} from "./MainContent";
-export {lazyListComponentReducer} from "./LazyListComponent/lazyListComponentReducer";

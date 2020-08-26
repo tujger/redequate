@@ -1,8 +1,6 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
 import FlipIcon from "@material-ui/icons/FlipCameraAndroid";
-import BackIcon from "@material-ui/icons/ArrowBack";
 import Uppy from "@uppy/core"
 import Tus from "@uppy/tus"
 import ProgressBar from "@uppy/progress-bar";
@@ -15,7 +13,6 @@ import "@uppy/dashboard/dist/style.css"
 import "@uppy/webcam/dist/style.css"
 import {connect} from "react-redux";
 import PropTypes from "prop-types";
-import useTheme from "@material-ui/styles/useTheme";
 import withStyles from "@material-ui/styles/withStyles";
 import Resizer from "react-image-file-resizer";
 import ReactDOM from "react-dom";

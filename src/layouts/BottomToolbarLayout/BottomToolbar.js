@@ -98,33 +98,27 @@ const BottomToolbar = withStyles(styles)(props => {
                 role={undefined}>
                 <MenuList>{menu.map((item, index) => {
                     if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
+                    const child = <MenuItem
+                        button
+                        children={<React.Fragment>
+                            {item.label}
+                            {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
+                        </React.Fragment>}
+                        className={[classes.label, classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
+                        onClickCapture={item.onClick}
+                    />;
                     if (item.component) {
-                        return <Link to={item.route}
-                                     key={index}
-                                     className={classes.label}
-                                     onClick={() => {
-                                         setState({...state, current: null, anchor: null})
-                                     }}>
-                            <MenuItem
-                                button
-                                children={<React.Fragment>
-                                    {item.label}
-                                    {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
-                                </React.Fragment>}
-                                className={[classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
-                                onClickCapture={item.onClick}
-                            />
-                        </Link>
-                    } else {
-                        return <MenuItem
-                            button
-                            children={<React.Fragment>
-                                {item.label}
-                                {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
-                            </React.Fragment>}
-                            className={[classes.label, classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
-                            onClickCapture={item.onClick}
+                        return <Link
+                            children={child}
+                            className={classes.label}
+                            key={index}
+                            onClick={() => {
+                                setState({...state, current: null, anchor: null})
+                            }}
+                            to={item.route}
                         />
+                    } else {
+                        return child
                     }
                 })}</MenuList>
             </Popper>

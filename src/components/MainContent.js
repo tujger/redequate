@@ -36,10 +36,9 @@ const MainContent = props => {
                     key={index}
                     path={item._route}
                     render={() => {
-                        if (!item.component) return null;
                         return needAuth(item.roles, currentUserData)
                             ? <pages.login.component.type {...props} {...pages.login.component.props} />
-                            : (matchRole(item.roles, currentUserData) && !item.disabled
+                            : (matchRole(item.roles, currentUserData) && !item.disabled && item.component
                                 ? <item.component.type {...props} classes={{}} {...item.component.props} />
                                 : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)
                     }}
@@ -48,6 +47,7 @@ const MainContent = props => {
         </React.Suspense>}
         {isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
+                if (!item.component || item.disabled) return null;
                 return <Route
                     exact={true}
                     key={index}

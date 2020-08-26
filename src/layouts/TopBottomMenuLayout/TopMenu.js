@@ -93,31 +93,11 @@ const MenuSection = withStyles(styles)(props => {
             placement={"bottom-end"}
             role={undefined}>
             <Paper>
-            <MenuList
-            className={classes.menusection}
-            >{menu.map((item, index) => {
-                if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
-                if(item.component) {
-                    return <Link to={item.route}
-                                 key={index}
-                                 className={classes.label}
-                                 onClick={(event) => {
-                                     setState({...state, anchor: null});
-                                     event && event.stopPropagation();
-                                     // event && event.preventDefault();
-                                 }}>
-                        <MenuItem
-                            button
-                            children={<React.Fragment>
-                                {item.label}
-                                {item.adornment && currentUserData && item.adornment(currentUserData)}
-                            </React.Fragment>}
-                            className={classes.menuitem}
-                            onClickCapture={item.onClick}
-                        />
-                    </Link>
-                } else {
-                    return <MenuItem
+                <MenuList
+                    className={classes.menusection}
+                >{menu.map((item, index) => {
+                    if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
+                    const child = <MenuItem
                         button
                         children={<React.Fragment>
                             {item.label}
@@ -126,9 +106,23 @@ const MenuSection = withStyles(styles)(props => {
                         className={[classes.label, classes.menuitem].join(" ")}
                         key={index}
                         onClickCapture={item.onClick}
-                    />
-                }
-            })}</MenuList>
+                    />;
+                    if (item.component) {
+                        return <Link
+                            children={child}
+                            key={index}
+                            className={classes.label}
+                            onClick={(event) => {
+                                setState({...state, anchor: null});
+                                event && event.stopPropagation();
+                                // event && event.preventDefault();
+                            }}
+                            to={item.route}
+                        />
+                    } else {
+                        return child
+                    }
+                })}</MenuList>
             </Paper>
         </Popper>
     </Button>
@@ -145,7 +139,8 @@ const TopMenu = props => {
         {currentUserData.id && <Link
             to={pages.profile.route}
             className={[classes.label, classes.profileitem].join(" ")}>
-            <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>
+            <AvatarView image={currentUserData.image} initials={currentUserData.initials}
+                        verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>
         </Link>}
     </div>
 };
@@ -158,7 +153,7 @@ TopMenu.propTypes = {
 };
 
 export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
-    switch(action.type) {
+    switch (action.type) {
         case MenuBadge.INCREASE:
             const id = action.page.route;
             return {...state, badge: {...state.badge, [id]: (state.badge[id] || 0) + 1}};
@@ -167,7 +162,7 @@ export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
             return {...state, badge: {...state.badge, [id1]: (state.badge[id1] || 0) - 1}};
         case MenuBadge.RESET:
             const id2 = action.page && action.page.route;
-            if(id2) return {...state, badge: {...state.badge, [id2]: 0}};
+            if (id2) return {...state, badge: {...state.badge, [id2]: 0}};
             else return {...state, badge: {}};
         default:
             return state;
@@ -176,8 +171,8 @@ export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
 topMenuReducer.skipStore = true;
 
 const mapStateToProps = ({topMenuReducer}) => ({
-        badge: topMenuReducer.badge,
-        // page: topMenuReducer.page,
+    badge: topMenuReducer.badge,
+    // page: topMenuReducer.page,
 });
 
 export default connect(mapStateToProps)(withStyles(styles)(TopMenu));

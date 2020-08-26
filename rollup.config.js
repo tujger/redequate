@@ -8,7 +8,7 @@ import svgr from '@svgr/rollup'
 
 import pkg from './package.json'
 
-export default {
+export default [{
     input: 'src/index.js',
     output: [
         {
@@ -36,4 +36,23 @@ export default {
         resolve(),
         commonjs()
     ]
-}
+}/*,
+    {
+        input: {
+            DateTimePicker: "src/components/DateTimePicker/index.js",
+
+        },
+        output: [
+            {
+                dir: "cjs",
+                format: 'cjs',
+                sourcemap: true
+            },
+            {
+                dir: "es",
+                format: 'es',
+                sourcemap: true
+            }
+        ]
+    }*/
+]
