@@ -70,7 +70,7 @@ const styles = theme => ({
 });
 
 function EditProfile(props) {
-    let {classes, uploadable = true, notifications = true, publicFields = publicFields, adminFields: adminFieldsGiven = adminFields, privateFields} = props;
+    let {classes, uploadable = true, notifications = true, publicFields = publicFields, adminFields: adminFieldsGiven = adminFields} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -158,7 +158,7 @@ function EditProfile(props) {
                 deleteFile: userData.public.image
             });
         }
-        const {url: imageSaved, metadata} = publishing;
+        const {url: imageSaved} = publishing;
 
         if (isAdminAllowed) await saveUserByAdmin();
 
@@ -442,7 +442,7 @@ function EditProfile(props) {
             WARNING! This action will be proceeded immediately!
         </ConfirmComponent>}
     </Grid>
-};
+}
 
 export default withStyles(styles)(EditProfile);
 

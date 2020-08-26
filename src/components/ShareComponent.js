@@ -54,7 +54,6 @@ export const copyToClipboard = async text => {
         setTimeout(() => {
             document.body.removeChild(inputNode);
         }, 100)
-        console.log("copied", copied, text)
         if(copied) notifySnackbar("Copied to the clipboard");
         else notifySnackbar(new Error("Failed copy to clipboard"));
     }
