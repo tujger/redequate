@@ -14,13 +14,13 @@ const styles = theme => ({
     },
 });
 
-function Chats
-({
-     daemon,
-     textComponent = text => text,
-     userComponent = userData => userData.name,
-     ...rest
- }) {
+function Chats(
+    {
+        daemon,
+        textComponent = text => text,
+        userComponent = userData => userData.name,
+        ...rest
+    }) {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -30,12 +30,14 @@ function Chats
         // eslint-disable-next-line
     }, []);
 
-    if (daemon) return <ChatsDaemon
-        {...rest}
-        daemon={daemon}
-        textComponent={textComponent}
-        userComponent={userComponent}
-    />
+    if (daemon) {
+        return <ChatsDaemon
+            {...rest}
+            daemon={daemon}
+            textComponent={textComponent}
+            userComponent={userComponent}
+        />
+    }
     return <LazyListComponent
         cache={"chats"}
         itemComponent={item => <ChatsItem
@@ -58,6 +60,6 @@ function Chats
         })}
         placeholder={<ChatsItem skeleton/>}
     />
-};
+}
 
 export default withStyles(styles)(Chats);

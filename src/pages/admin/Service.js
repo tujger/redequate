@@ -6,12 +6,11 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
 import InfoIcon from "@material-ui/icons/Info";
 import MaintenanceIcon from "@material-ui/icons/Settings";
-import {useHistory} from "react-router-dom";
 import {useCurrentUserData} from "../../controllers/UserData";
 import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar, useFirebase, useStore, useTechnicalInfo} from "../../controllers";
+import {notifySnackbar, useFirebase, useTechnicalInfo} from "../../controllers";
 import LoadingComponent from "../../components/LoadingComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
 
@@ -19,9 +18,7 @@ const styles = theme => ({});
 
 const Service = (props) => {
     const dispatch = useDispatch();
-    const store = useStore();
     const firebase = useFirebase();
-    const history = useHistory();
     const currentUserData = useCurrentUserData();
     const {maintenance: maintenanceGiven} = useTechnicalInfo();
     const [state, setState] = React.useState({
@@ -95,16 +92,18 @@ const Service = (props) => {
             </Grid>
         </Grid>
         <Box m={1}/>
-        {givenTimestamp && <React.Fragment><Grid container spacing={1} alignItems={"center"}>
-            <Grid item>
-                <InfoIcon/>
+        {givenTimestamp && <React.Fragment>
+            <Grid container spacing={1} alignItems={"center"}>
+                <Grid item>
+                    <InfoIcon/>
+                </Grid>
+                <Grid item xs>
+                    Maintenance set up by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
+                </Grid>
             </Grid>
-            <Grid item xs>
-                Maintenance set up by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
-            </Grid>
-        </Grid>
-            <Box m={1}/></React.Fragment>}
-        <Grid container spacing={1} alignItems="center">
+            <Box m={1}/>
+        </React.Fragment>}
+        <Grid container spacing={1} alignItems={"center"}>
             <Grid item>
                 <MaintenanceIcon/>
             </Grid>
@@ -145,4 +144,3 @@ const Service = (props) => {
 };
 
 export default withStyles(styles)(Service);
-

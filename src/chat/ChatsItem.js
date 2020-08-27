@@ -1,20 +1,14 @@
-import React from 'react';
-import {withStyles,} from "@material-ui/core";
-import PropTypes from 'prop-types';
+import React from "react";
+import {withStyles} from "@material-ui/core";
 import {Link, useHistory} from "react-router-dom";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
-import {
-    cacheDatas,
-    notifySnackbar, Role,
-    toDateString,
-    useCurrentUserData,
-    useFirebase,
-    usePages,
-    UserData
-} from "../controllers";
+import {notifySnackbar} from "../controllers/Notifications";
+import {cacheDatas, useFirebase, usePages} from "../controllers/General";
+import {useCurrentUserData, UserData} from "../controllers/UserData";
+import {toDateString} from "../controllers/DateFormat";
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
@@ -34,9 +28,9 @@ const stylesChat = theme => ({
         marginLeft: theme.spacing(1),
         marginRight: theme.spacing(1),
         [theme.breakpoints.up("md")]: {
-            height: theme.spacing(.5),
-            marginBottom: theme.spacing(.5),
-            width: theme.spacing(.5),
+            height: theme.spacing(0.5),
+            marginBottom: theme.spacing(0.5),
+            width: theme.spacing(0.5),
         },
         [theme.breakpoints.down("sm")]: {
             height: theme.spacing(1),
@@ -46,6 +40,7 @@ const stylesChat = theme => ({
 });
 
 function ChatsItem(props) {
+    // eslint-disable-next-line react/prop-types
     const {id, classes, skeleton, label, userComponent, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
@@ -53,7 +48,7 @@ function ChatsItem(props) {
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
-    const {shown, userData, chatMeta, online, timestamp} = state;
+    const {shown, userData, chatMeta, online} = state;
 
     const fetchIsNew = () => {
         const latestVisit = chatMeta.lastVisit(currentUserData.id);
@@ -81,7 +76,8 @@ function ChatsItem(props) {
                     isMounted && setState(state => ({...state, chatMeta}));
                 });
                 chatMeta.watchOnline({
-                    uid: userData.id, onChange: ({online, timestamp}) => {
+                    uid: userData.id,
+                    onChange: ({online, timestamp}) => {
                         isMounted && setState(state => ({...state, online, timestamp}));
                     }
                 });
@@ -144,8 +140,7 @@ function ChatsItem(props) {
                         </Grid>}
                     </Grid>}
                     subheader={<Grid container>
-                        <Grid item xs
-                              className={isNew ? classes.unread : classes.read}>
+                        <Grid item xs className={isNew ? classes.unread : classes.read}>
                             {textComponent((cacheDatas.get(chatMeta.lastMessage.uid) || {}).name
                                 + ": " + chatMeta.lastMessage.text)}
                         </Grid>
@@ -155,10 +150,6 @@ function ChatsItem(props) {
         </Card>
     </React.Fragment>
 }
-
-ChatsItem.propTypes = {
-    onSwipe: PropTypes.func
-};
 
 export default withStyles((theme) => ({
     ...stylesList(theme),

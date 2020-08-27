@@ -5,7 +5,7 @@ import "firebase/functions";
 import "firebase/storage";
 // import "firebase/analytics";
 if (process.env.NODE_ENV !== "development") {
-require("firebase/messaging");
+    require("firebase/messaging");
 }
 
 export const firebaseMessaging = firebase;
@@ -70,7 +70,7 @@ export const fetchCallable = firebase => (name, options) => new Promise((resolve
     }
 });
 
-export const checkIfConnected = database => new Promise((resolve, reject) =>{
+export const checkIfConnected = database => new Promise((resolve, reject) => {
     return database.ref(".info").once("value").then(snapshot => {
         console.log(snapshot, snapshot.val());
         resolve();

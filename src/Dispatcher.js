@@ -9,7 +9,8 @@ import PropTypes from "prop-types";
 import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
 import {
-    cacheDatas, checkIfCompatible,
+    cacheDatas,
+    checkIfCompatible,
     fetchDeviceId,
     Layout,
     useFirebase,
@@ -25,6 +26,8 @@ import {hasNotifications, setupReceivingNotifications} from "./controllers/Notif
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import TechnicalInfoView from "./components/TechnicalInfoView";
+import {Pages} from "./proptypes/Pages";
+import {Page} from "./proptypes";
 
 const BottomToolbarLayout = React.lazy(() => import(/* webpackChunkName: 'bottom' */"./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import(/* webpackChunkName: 'responsive' */"./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -56,20 +59,20 @@ const isIncompatible = !checkIfCompatible();
 let oldWidth;
 
 function Dispatcher(props) {
-    const {copyright, firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
+    const {firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
     useStore(store);
     useFirebase(firebase);
     usePages(pages);
     useTechnicalInfo(state => ({...state, title: title, maintenance: null, refreshed: new Date().getTime()}));
-    const windowData = useWindowData({
+    useWindowData({
         breakpoint: width,
         isNarrow: () => width === "xs" || width === "sm",
     });
 
     React.useEffect(() => {
-        if(isIncompatible) return;
+        if (isIncompatible) return;
         let maintenanceRef;
         (async () => {
             try {
@@ -124,13 +127,15 @@ function Dispatcher(props) {
         // eslint-disable-next-line
     }, []);
 
-    if (isIncompatible) return <ThemeProvider theme={theme}><TechnicalInfoView
-        message={<React.Fragment>
-            <Typography>Oops, we have detected that your browser is outdated and cannot be supported
-                by {title} :(</Typography>
-            <Typography>We'll be happy to see you back using {title} with up-to-date browser!</Typography>
-        </React.Fragment>}
-    /></ThemeProvider>
+    if (isIncompatible) {
+        return <ThemeProvider theme={theme}><TechnicalInfoView
+            message={<React.Fragment>
+                <Typography>Oops, we have detected that your browser is outdated and cannot be supported
+                    by {title} :(</Typography>
+                <Typography>We'll be happy to see you back using {title} with up-to-date browser!</Typography>
+            </React.Fragment>}
+        /></ThemeProvider>
+    }
 
     if (!store || !firebase) return <LoadingComponent/>;
 
@@ -167,6 +172,7 @@ function Dispatcher(props) {
 let widthPoint;
 
 function _DispatcherRoutedBody(props) {
+    // eslint-disable-next-line react/prop-types
     const {pages, menu, width, copyright, headerComponent, layout, title, logo, random} = props;
     const dispatch = useDispatch();
     const history = useHistory();
@@ -211,7 +217,8 @@ function _DispatcherRoutedBody(props) {
             <Route
                 path={"/*"}
                 children={<React.Suspense fallback={<LoadingComponent/>}>
-                    {layout ? <layout.type
+                    {layout
+                        ? <layout.type
                             {...layout.props}
                             copyright={copyright}
                             headerComponent={headerComponent}
@@ -219,8 +226,9 @@ function _DispatcherRoutedBody(props) {
                             menu={menu}
                             title={title}
                         />
-                        : ((["xs", "sm", "md"].indexOf(width) >= 0) ?
-                            (iOS ? <BottomToolbarLayout
+                        : ((["xs", "sm", "md"].indexOf(width) >= 0)
+                            ? (iOS
+                                ? <BottomToolbarLayout
                                     copyright={copyright}
                                     headerComponent={headerComponent}
                                     menu={menu}
@@ -258,6 +266,11 @@ function _DispatcherRoutedBody(props) {
     </React.Fragment>
 }
 
+_DispatcherRoutedBody.propTypes = {
+    layout: PropTypes.any,
+    pages: PropTypes.objectOf(Pages).isRequired,
+};
+
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
 
 const DispatcherRoutedBody = connect(mapStateToProps)(_DispatcherRoutedBody);
@@ -265,14 +278,14 @@ const DispatcherRoutedBody = connect(mapStateToProps)(_DispatcherRoutedBody);
 Dispatcher.propTypes = {
     copyright: PropTypes.any,
     firebaseConfig: PropTypes.any.isRequired,
-    headerImage: PropTypes.string,
     layout: PropTypes.any,
-    menu: PropTypes.array.isRequired,
+    menu: PropTypes.arrayOf(PropTypes.arrayOf(Page)).isRequired,
     logo: PropTypes.any,
-    title: PropTypes.string,
-    pages: PropTypes.object.isRequired,
+    title: PropTypes.string.isRequired,
+    pages: PropTypes.objectOf(Pages).isRequired,
     reducers: PropTypes.object,
     theme: PropTypes.any,
+    width: PropTypes.string,
 };
 
 export default withWidth()(Dispatcher);

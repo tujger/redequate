@@ -1,10 +1,11 @@
 import React from "react";
 import {Button, ButtonGroup} from "@material-ui/core";
-import {Restore as StartIcon, Schedule as TimeIcon, Update as EndIcon,} from "@material-ui/icons";
+import {Restore as StartIcon, Schedule as TimeIcon, Update as EndIcon} from "@material-ui/icons";
 
+// eslint-disable-next-line react/prop-types
 export const ClockButtons = ({show, range, date, start, end, onClick}) => {
     if (!show) return null;
-    return <ButtonGroup variant="text" fullWidth>
+    return <ButtonGroup variant={"text"} fullWidth>
         {!range && date && <Button
             children={date.format("HH:mm")}
             onClick={date ? () => onClick("date") : null}

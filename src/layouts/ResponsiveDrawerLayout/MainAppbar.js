@@ -52,8 +52,8 @@ const styles = theme => ({
         fontWeight: "bolder",
         justifyContent: "center",
         height: theme.spacing(2),
-        left: theme.spacing(.5),
-        top: theme.spacing(.5),
+        left: theme.spacing(0.5),
+        top: theme.spacing(0.5),
         width: theme.spacing(2),
     },
     hamburger: {
@@ -68,43 +68,41 @@ function MainAppbar(props) {
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
-    return <AppBar position="fixed" className={className}>
+    return <AppBar position={"fixed"} className={className}>
         <Toolbar>
-            {onHamburgerClick ?
-                <Hidden mdUp implementation="css">
+            {onHamburgerClick
+                ? <Hidden mdUp implementation={"css"}>
                     <IconButton
-                        aria-label="open drawer"
+                        aria-label={"open drawer"}
                         className={classes.hamburger}
-                        color="inherit"
-                        edge="start"
+                        color={"inherit"}
+                        edge={"start"}
                         onClick={onHamburgerClick}>
                         <Menu/>
                         {badge && badge !== 0 ? <span className={classes.badge}/> : null}
-                        {/*
-                        {badge && badge !== 0 ? <span
-                            className={[classes.badge, badge !== true ? classes.badgeWithText : ""].join(" ")}>{badge !== true ? badge : ""}</span> : null}
-*/}
                     </IconButton>
                 </Hidden>
                 : null}
-            <Typography variant="h6" noWrap className={classes.title}>
+            <Typography variant={"h6"} noWrap className={classes.title}>
                 <Switch>
-                    {itemsFlat.map((item, index) => <Route
+                    {itemsFlat.map((item, index) => (
+                        <Route
                             exact={true}
                             key={index}
                             path={item._route}
                         >
                             <Link to={pages.home.route} className={classes.label}>
-                                {logo ? <div className={classes.logo}>
+                                {logo
+                                    ? <div className={classes.logo}>
                                         <img className={classes.logoImage} src={logo} alt={""}/>
-                                    </div> :
-                                    (label || (needAuth(item.roles, currentUserData)
+                                    </div>
+                                    : (label || (needAuth(item.roles, currentUserData)
                                         ? pages.login.title || pages.login.label : (matchRole(item.roles, currentUserData)
                                             ? item.title || item.label : pages.notfound.title || pages.notfound.label)))
                                 }
                             </Link>
                         </Route>
-                    )}
+                    ))}
                     <Route path={pages.notfound.route}>
                         <Link to={pages.home.route} className={classes.label}>
                             {pages.notfound.title || pages.notfound.label}

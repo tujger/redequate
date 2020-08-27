@@ -7,26 +7,25 @@ import {Observer} from "./Observer";
 import {Scroller} from "./Scroller";
 import {forceFirebaseReinit} from "../../controllers/Firebase";
 
-function LazyListComponent
-({
-     cache = false,
-     containerRef,
-     disableProgress,
-     itemComponent = (item) => <div key={item.key}>
-         {item.key} - {JSON.stringify(item.value)}
-     </div>,
-     itemTransform = item => item,
-     live = false,
-     noItemsComponent,
-     pageTransform = items => items,
-     pagination: sourcePagination,
-     placeholder,
-     placeholders = 1,
-     random,
-     reverse = false,
-     ["LazyListComponent_" + cache]: cacheData = {},
-     ...props
- }) {
+function LazyListComponent(
+    {
+        cache = false,
+        containerRef,
+        disableProgress,
+        itemComponent = (item) => <div key={item.key}>
+            {item.key} - {JSON.stringify(item.value)}
+        </div>,
+        itemTransform = item => item,
+        live = false,
+        noItemsComponent,
+        pageTransform = items => items,
+        pagination: sourcePagination,
+        placeholder,
+        placeholders = 1,
+        random,
+        reverse = false,
+        ["LazyListComponent_" + cache]: cacheData = {},
+    }) {
     const dispatch = useDispatch();
     const [state, setState] = React.useState({});
     const givenPagination = sourcePagination instanceof Function ? sourcePagination() : sourcePagination;

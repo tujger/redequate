@@ -1,8 +1,9 @@
 import React from "react";
 import moment from "moment";
 import {Divider, IconButton, Menu, MenuItem} from "@material-ui/core";
-import {MoreVert as MenuIcon,} from "@material-ui/icons";
+import {MoreVert as MenuIcon} from "@material-ui/icons";
 
+// eslint-disable-next-line react/prop-types
 export const Extras = ({show, range, onSelect}) => {
     const [state, setState] = React.useState({anchor: null});
     const {anchor} = state;
@@ -15,7 +16,8 @@ export const Extras = ({show, range, onSelect}) => {
 
     const items = {
         "today": {
-            label: "Today", onSelect: () => {
+            label: "Today",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss"),
                     moment("00:00", "HH:ss").add(1, "day").subtract(1, "second"),
@@ -23,7 +25,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "tomorrow": {
-            label: "Tomorrow", onSelect: () => {
+            label: "Tomorrow",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").add(1, "day"),
                     moment("00:00", "HH:ss").add(2, "day").subtract(1, "second"),
@@ -31,7 +34,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "yesterday": {
-            label: "Yesterday", onSelect: () => {
+            label: "Yesterday",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").subtract(1, "day"),
                     moment("00:00", "HH:ss").subtract(1, "second"),
@@ -39,7 +43,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "week": {
-            label: "This week", onSelect: () => {
+            label: "This week",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").weekday(0),
                     moment("00:00", "HH:ss").weekday(0).add(1, "week").subtract(1, "second"),
@@ -47,7 +52,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "nextweek": {
-            label: "Next week", onSelect: () => {
+            label: "Next week",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").weekday(0).add(1, "week"),
                     moment("00:00", "HH:ss").weekday(0).add(2, "week").subtract(1, "second"),
@@ -55,7 +61,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "lastweek": {
-            label: "Last week", onSelect: () => {
+            label: "Last week",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").weekday(0).subtract(1, "week"),
                     moment("00:00", "HH:ss").weekday(0).subtract(1, "second"),
@@ -63,7 +70,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "month": {
-            label: "This month", onSelect: () => {
+            label: "This month",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").date(1),
                     moment("00:00", "HH:ss").date(1).add(1, "month").subtract(1, "second"),
@@ -71,7 +79,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "nextmonth": {
-            label: "Next month", onSelect: () => {
+            label: "Next month",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").date(1).add(1, "month"),
                     moment("00:00", "HH:ss").date(1).add(2, "month").subtract(1, "second"),
@@ -79,7 +88,8 @@ export const Extras = ({show, range, onSelect}) => {
             }
         },
         "lastmonth": {
-            label: "Last month", onSelect: () => {
+            label: "Last month",
+            onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").date(1).subtract(1, "month"),
                     moment("00:00", "HH:ss").date(1).subtract(1, "second"),
@@ -103,8 +113,11 @@ export const Extras = ({show, range, onSelect}) => {
             open={Boolean(anchor)}
         >
             {menu.map((group, index) => <div key={index}>
-                {group.map((item) => <MenuItem id={item} key={item}
-                                               onClick={onItemClick}>{items[item].label}</MenuItem>)}
+                {group.map((item) => <MenuItem
+                    id={item}
+                    key={item}
+                    onClick={onItemClick}
+                >{items[item].label}</MenuItem>)}
                 {(index < menu.length - 1) && <Divider/>}
             </div>)}
         </Menu>

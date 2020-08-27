@@ -135,10 +135,10 @@ function ListItemComponent(props) {
         })}
         <div
             {...bind_()}
-            onContextMenu={onContextMenu ? (evt => {
+            onContextMenu={onContextMenu ? evt => {
                 onContextMenu(evt);
                 setState({...state, random: Math.random()})
-            }) : null}
+            } : null}
             onClickCapture={onClickCapture || (event => {
                 if (dragging) {
                     event.stopPropagation();
@@ -158,12 +158,10 @@ function ListItemComponent(props) {
 
 ListItemComponent.propTypes = {
     children: PropTypes.any,
-    leftButton: PropTypes.func,
-    leftButtonLabel: PropTypes.string,
+    leftAction: PropTypes.func,
     onClickCapture: PropTypes.func,
     onContextMenu: PropTypes.func,
-    rightButton: PropTypes.element,
-    rightButtonLabel: PropTypes.string,
+    rightAction: PropTypes.element,
 };
 
 export default withStyles(styles)(ListItemComponent);

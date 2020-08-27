@@ -3,17 +3,17 @@ import PropTypes from "prop-types";
 
 function LoadingComponent(props) {
     const {text = "Loading..."} = props;
-    return <div className="progress-loading">
+    return <div className={"progress-loading"}>
         {text}
-        <svg className="progress-circular">
+        <svg className={"progress-circular"}>
             <circle
-                className="progress-path"
-                cx="40"
-                cy="40"
-                fill="none"
-                r="20"
-                strokeWidth="2"
-                strokeMiterlimit="10"
+                className={"progress-path"}
+                cx={"40"}
+                cy={"40"}
+                fill={"none"}
+                r={"20"}
+                strokeWidth={"2"}
+                strokeMiterlimit={"10"}
             />
         </svg>
     </div>;

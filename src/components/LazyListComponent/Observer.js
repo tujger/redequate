@@ -1,10 +1,12 @@
 import React from "react";
 import {InView} from "react-intersection-observer";
 
+// eslint-disable-next-line react/prop-types
 export const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders}) => {
     if (finished) return null;
     return <React.Fragment>
         <InView
+            children={null}
             onChange={(inView) => {
                 if (inView) loadNextPage();
             }}

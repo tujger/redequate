@@ -30,9 +30,9 @@ const SimpleSnackbar = props => {
         message={message}
         action={
             <React.Fragment>
-                <Button color="primary" size="small" onClick={onButtonClick} children={buttonText}/>
-                <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose}>
-                    <CloseIcon fontSize="small"/>
+                <Button color={"primary"} size={"small"} onClick={onButtonClick} children={buttonText}/>
+                <IconButton size={"small"} aria-label={"close"} color={"inherit"} onClick={handleClose}>
+                    <CloseIcon fontSize={"small"}/>
                 </IconButton>
             </React.Fragment>
         }
@@ -42,7 +42,12 @@ const SimpleSnackbar = props => {
 SimpleSnackbar.SHOW = "snackbar_Show";
 SimpleSnackbar.HIDE = {type: "snackbar_Hide"};
 
-export const snackbarReducer = (state = {open: false, buttonText: "Close", message: "Snackbar text", error: ""}, action) => {
+export const snackbarReducer = (state = {
+    open: false,
+    buttonText: "Close",
+    message: "Snackbar text",
+    error: ""
+}, action) => {
     switch (action.type) {
         case SimpleSnackbar.SHOW:
             let newState = {open: true};

@@ -32,8 +32,7 @@ const styles = theme => ({
         color: theme.palette.warning.contrastText,
     },
 
-    snackbarContent: {
-    }
+    snackbarContent: {}
 });
 
 const RichSnackbarContent = withStyles(styles)(React.forwardRef((props, ref) => {
@@ -42,40 +41,42 @@ const RichSnackbarContent = withStyles(styles)(React.forwardRef((props, ref) => 
     const {expanded} = state;
 
     try {
-        const customAction = (color) => <Button aria-label={buttonLabel}
-            size="small" aria-label="close" color={color}
+        const customAction = (color) => <Button
+            aria-label={buttonLabel}
+            children={buttonLabel}
+            size={"small"}
+            color={color}
             onClickCapture={((evt) => {
                 evt.stopPropagation();
-                if(onButtonClick) {
-                    if(onButtonClick(evt) === true) closeHandler();
+                if (onButtonClick) {
+                    if (onButtonClick(evt) === true) closeHandler();
                     else closeHandler();
                 }
-            })}>
-            {buttonLabel}
-        </Button>;
+            })}
+        />;
         const expandAction = () => <IconButton
-            size="small" aria-label="close" color="inherit"
+            size={"small"} aria-label={"close"} color={"inherit"}
             onClickCapture={(evt) => {
                 evt.stopPropagation();
                 setState({...state, expanded: true});
             }}>
-            <ExpandIcon fontSize="small"/>
+            <ExpandIcon fontSize={"small"}/>
         </IconButton>;
         const collapseAction = () => <IconButton
-            size="small" aria-label="close" color="inherit"
+            size={"small"} aria-label={"close"} color={"inherit"}
             onClickCapture={(evt) => {
                 evt.stopPropagation();
                 setState({...state, expanded: false});
             }}>
-            <CollapseIcon fontSize="small"/>
+            <CollapseIcon fontSize={"small"}/>
         </IconButton>;
         const closeAction = () => <IconButton
-            size="small" aria-label="close" color="inherit"
+            size={"small"} aria-label={"close"} color={"inherit"}
             onClickCapture={(evt) => {
                 evt.stopPropagation();
                 closeHandler();
             }}>
-            <CloseIcon fontSize="small"/>
+            <CloseIcon fontSize={"small"}/>
         </IconButton>;
         const clickHandler = evt => {
             onClick && onClick(evt);
@@ -96,7 +97,7 @@ const RichSnackbarContent = withStyles(styles)(React.forwardRef((props, ref) => 
                 </React.Fragment>}
                 onClick={onClick}
             />
-            {cardExists && <Collapse in={cardShown} timeout="auto" unmountOnExit>
+            {cardExists && <Collapse in={cardShown} timeout={"auto"} unmountOnExit>
                 <Card raised>
                     <CardActionArea style={{display: "flex", alignItems: "stretch"}} onClick={clickHandler}>
                         {image && <CardMedia

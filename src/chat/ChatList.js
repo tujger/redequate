@@ -1,9 +1,10 @@
-import React from 'react';
+import React from "react";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import ChatItem from "./ChatItem";
 import {useFirebase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 
+// eslint-disable-next-line react/prop-types
 const ChatList = ({chatKey, chatMeta, containerRef, textComponent}) => {
     const firebase = useFirebase();
     return <LazyListComponent
@@ -16,7 +17,7 @@ const ChatList = ({chatKey, chatMeta, containerRef, textComponent}) => {
             textComponent={textComponent}
         />}
         itemTransform={item => {
-            if(item.key === "!meta") return null;
+            if (item.key === "!meta") return null;
             return item
         }}
         live

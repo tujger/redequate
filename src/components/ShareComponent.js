@@ -4,7 +4,6 @@ import {notifySnackbar} from "../controllers/Notifications";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 
 const ShareComponent = ({title, text, url, component = <Button/>}) => {
-
     const handleShare = () => {
         share({title, text, url});
     }
@@ -18,7 +17,7 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
 export default ShareComponent;
 
-export async function share({title, text, url}) {
+export function share({title, text, url}) {
     if (!navigator.share && !hasWrapperControlInterface()) {
         copyToClipboard(url);
     } else {
@@ -27,7 +26,7 @@ export async function share({title, text, url}) {
                 wrapperControlCall({method: "shareText", title, text, url})
                     .catch(notifySnackbar);
             } else {
-                navigator.share({ text, title, url })
+                navigator.share({text, title, url})
                     .catch(notifySnackbar)
             }
         } catch (error) {
@@ -37,7 +36,7 @@ export async function share({title, text, url}) {
 }
 
 export async function copyToClipboard(text) {
-    if(navigator.clipboard) {
+    if (navigator.clipboard) {
         return navigator.clipboard.writeText(text)
             .then(() => notifySnackbar("Copied to the clipboard"))
             .catch(notifySnackbar)
@@ -54,8 +53,7 @@ export async function copyToClipboard(text) {
         setTimeout(() => {
             document.body.removeChild(inputNode);
         }, 100)
-        if(copied) notifySnackbar("Copied to the clipboard");
+        if (copied) notifySnackbar("Copied to the clipboard");
         else notifySnackbar(new Error("Failed copy to clipboard"));
     }
-
 }

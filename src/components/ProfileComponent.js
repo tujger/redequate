@@ -73,7 +73,8 @@ const ProfileComponent = (props) => {
     return <Grid container style={{position: "relative"}}>
         <Grid container spacing={1} className={classes.imagerow}>
             <Grid item>
-                {userData.image ? <AvatarView
+                {userData.image
+                    ? <AvatarView
                         className={classes.image}
                         image={userData.image}
                         initials={userData.initials}
@@ -86,9 +87,6 @@ const ProfileComponent = (props) => {
                 if (!userData.public[field.id] && !field.viewComponent) return null;
                 return <React.Fragment key={field.id}>
                     <Grid container spacing={1} className={classes.inforow}>
-                        {/*<Grid item>
-                            {field.icon}
-                        </Grid>*/}
                         <Grid item>
                             {field.viewComponent
                                 ? field.viewComponent(userData)
@@ -101,13 +99,13 @@ const ProfileComponent = (props) => {
         </Grid>
         {provider && <Grid item className={classes.signWith}>
             {userData.public.provider && userData.public.provider === "google.com" && <React.Fragment>
-                <Grid container justify="flex-end">
-                    <img src={GoogleLogo} width={40} height={40} alt=""/>
+                <Grid container justify={"flex-end"}>
+                    <img src={GoogleLogo} width={40} height={40} alt={""}/>
                 </Grid>
                 <Typography variant={"body2"}>Signed with Google</Typography>
             </React.Fragment>}
             {userData.public.provider && userData.public.provider === "password" && <React.Fragment>
-                <Grid container justify="flex-end">
+                <Grid container justify={"flex-end"}>
                     <UserIcon/>
                 </Grid>
                 <Typography variant={"body2"}>Signed with e-mail</Typography>

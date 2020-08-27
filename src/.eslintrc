@@ -3,13 +3,34 @@
         "jest": true
     },
     "rules": {
+        "comma-dangle": [
+            0
+        ],
         "indent": [
             "error",
-            4
+            4,
+            { "SwitchCase": 1 }
+        ],
+        "operator-linebreak": [
+            1
         ],
         "quotes": [
             "error",
             "double"
+        ],
+        "react/jsx-indent-props": [
+            1,
+            4
+        ],
+        "react/jsx-indent": [
+            1,
+            4
+        ],
+        "react/jsx-tag-spacing": [
+            0
+        ],
+        "semi": [
+            0
         ]
     }
 }

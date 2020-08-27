@@ -29,11 +29,6 @@ const Errors = (props) => {
         dispatch({type: Errors.MODE, mode: evt.target.value, filter});
     }
 
-    const handleFilter = evt => {
-        dispatch({type: LazyListComponent.RESET});
-        dispatch({type: Errors.MODE, filter: evt.target.value});
-    }
-
     const handleConfirmDeletion = evt => {
         dispatch(ProgressView.SHOW);
         firebase.database().ref("errors").set(null)
@@ -47,7 +42,7 @@ const Errors = (props) => {
         return () => {
             dispatch(ProgressView.HIDE);
         }
-// eslint-disable-next-line
+        // eslint-disable-next-line
     }, [mode]);
 
     let pagination;
@@ -56,6 +51,7 @@ const Errors = (props) => {
         case "all":
             pagination = new Pagination({
                 child: filter ? "uid" : undefined,
+                // eslint-disable-next-line no-unneeded-ternary
                 equals: filter ? filter : undefined,
                 order: "desc",
                 ref: firebase.database().ref("errors"),
@@ -79,8 +75,12 @@ const Errors = (props) => {
             </Select>
             <Grid item xs>
                 {mode === "all" && filteredUserData && <Chip
-                    avatar={<AvatarView alt="" image={filteredUserData.image} initials={filteredUserData.name}
-                                        verified={true}/>}
+                    avatar={<AvatarView
+                        alt={"Avatar"}
+                        image={filteredUserData.image}
+                        initials={filteredUserData.name}
+                        verified={true}
+                    />}
                     label={filteredUserData.name}
                     onDelete={() => {
                         dispatch({type: Errors.MODE, mode, filter: ""});

@@ -136,7 +136,7 @@ const styles = theme => ({
     },
 })
 
-const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, facingMode:givenFacingMode}) => {
+const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, facingMode: givenFacingMode}) => {
     const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
     const {uppy, facingMode} = state;
 
@@ -149,7 +149,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
             autoProceed: true,
             locale: {
                 strings: {
-                    dropPasteImport: ""//"Drop files here",
+                    dropPasteImport: "" // "Drop files here",
                 }
             },
             restrictions: {
@@ -160,7 +160,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
         })
         uppy.on("file-added", (result) => {
             if (!maxWidth) return;
-            if(maxSize && maxSize > result.size) return;
+            if (maxSize && maxSize > result.size) return;
             const quality = limits ? limits.quality || 75 : 75;
             const type = result.type === "image/png" ? "PNG" : "JPEG";
             console.log(result)
@@ -179,26 +179,21 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                 },
                 "blob"
             )
-            // console.log("failed files:", result.failed);
         });
         uppy.on("complete", (result) => {
-            // console.log("successful files:", result);
-            // console.log("failed files:", result.failed);
         });
         uppy.on("error", (error) => {
             console.error(error);
-            // console.log("successful files:", result.successful)
-            // console.log("failed files:", result.failed);
         });
         uppy.on("dashboard:modal-open", () => {
             console.log("Modal is open", uppy);
-            if(camera) return;
+            if (camera) return;
             setTimeout(() => {
                 try {
                     const dashboard = uppy.getPlugin("Dashboard");
                     const browseButton = dashboard.el.getElementsByClassName("uppy-Dashboard-browse")[0];
                     browseButton.click();
-                } catch(e) {
+                } catch (e) {
                     console.error(e);
                 }
             }, 0);
@@ -206,10 +201,10 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
         uppy.on("state-update", (options) => {
             setTimeout(() => {
                 const webcam = uppy.getPlugin("Webcam");
-                if(webcam && webcam.el) {
+                if (webcam && webcam.el) {
                     const pictureButton = webcam.el.getElementsByClassName("uppy-Webcam-button--picture")[0];
                     const switchButton = webcam.el.getElementsByClassName("uppy-Webcam-button--switch")[0];
-                    if(pictureButton && !switchButton) {
+                    if (pictureButton && !switchButton) {
                         const node = document.createElement("div");
                         pictureButton.parentElement.insertBefore(node, pictureButton);
                         ReactDOM.render(<button
@@ -220,7 +215,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                                     console.log(webcam);
                                     const currentFacingMode = webcam.opts.facingMode;
                                     const newMode = {};
-                                    if(currentFacingMode === "user") {
+                                    if (currentFacingMode === "user") {
                                         newMode.facingMode = "environment";
                                         newMode.mirror = false;
                                     } else {
@@ -228,10 +223,10 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                                         newMode.mirror = true;
                                     }
                                     webcam.setOptions(newMode);
-                                    if(webcam.stream) webcam._stop();
+                                    if (webcam.stream) webcam._stop();
                                     webcam.setPluginState();
                                     webcam._start();
-                                } catch(error) {
+                                } catch (error) {
                                     notifySnackbar(error);
                                 }
                             }}
@@ -239,7 +234,6 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                         />, node);
                     }
                 }
-
             }, 0)
             // console.log("Modal is open", uppy)
         });
@@ -273,12 +267,12 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
         }).use(ProgressBar, {
             target: Dashboard
         });
-        if(camera) {
+        if (camera) {
             uppy.use(Webcam, {
                 facingMode: facingMode,
                 locale: {
                     strings: {
-                        allowAccessDescription: ""//"Drop files here",
+                        allowAccessDescription: "" // "Drop files here",
                     }
                 },
                 modes: [
@@ -299,8 +293,8 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
     }
 
     return <React.Fragment>
-        {button ?
-            <button.type {...button.props} ref={refButton} onClick={(event) => {
+        {button
+            ? <button.type {...button.props} ref={refButton} onClick={(event) => {
                 uppy && uppy.reset();
                 button.props.onClick && button.props.onClick(event);
             }}/>
@@ -331,7 +325,7 @@ export function uploadComponentPublish(firebase) {
             if (uppy._uris && uppy._uris[file.id]) {
                 return uppy._uris[file.id];
             }
-            return fetch(file.uploadURL).then(response => {
+            return window.fetch(file.uploadURL).then(response => {
                 return response.blob();
             })
         }
@@ -341,6 +335,7 @@ export function uploadComponentPublish(firebase) {
 
         console.log("[Upload] uploaded", file, fileRef);
         return fetchImage().then(blob => {
+            // eslint-disable-next-line promise/param-names
             return new Promise((resolve1, reject1) => {
                 const uploadTask = fileRef.put(blob, {
                     contentType: file.type,
@@ -388,7 +383,7 @@ export function uploadComponentPublish(firebase) {
 export function uploadComponentClean(uppy) {
     if (uppy) {
         const file = uppy.getFiles()[0];
-        if(file) {
+        if (file) {
             uppy.removeFile(file.id);
             console.log("[UploadComponent] file removed", file.uploadURL);
         }

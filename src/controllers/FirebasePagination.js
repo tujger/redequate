@@ -89,7 +89,7 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
             for (let ss of children) {
                 if (lastKey && ss.key === lastKey) continue;
                 const value = ss.val();
-                if(child && value[child] === undefined) continue;
+                if (child && value[child] === undefined) continue;
                 if (update) {
                     const newValue = await update(ss.key, value);
                     if (newValue !== undefined && newValue !== value) {
@@ -174,11 +174,12 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
             return toString();
         },
         get term() {
-            return `${ref.path}|${child ? child : ""}|${start ? start : ""}|${end ? end : ""}|${equals ? equals : ""}|${value ? value :""}`;
+            return `${ref.path}|${child || ""}|${start || ""}|${end || ""}|${equals || ""}|${value || ""}`;
         },
         next: next,
         reset: reset,
         toString: toString,
     }
 }
+
 export default Pagination;

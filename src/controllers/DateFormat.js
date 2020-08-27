@@ -5,7 +5,7 @@ export const toDateString = (millis) => {
     const dateString = given.toLocaleDateString();
     const timeString = given.toLocaleTimeString().replace(/^.*?\s\d/, "").replace(/:\d+\s/, " ");
 
-    if((now.getFullYear() !== given.getFullYear())
+    if ((now.getFullYear() !== given.getFullYear())
         || (now.getMonth() !== given.getMonth())
         || (now.getDate() !== given.getDate())) {
         return dateString + " " + timeString;

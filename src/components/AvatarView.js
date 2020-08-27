@@ -25,7 +25,7 @@ const useStyles = bgcolor => makeStyles(theme => ({
 }));
 
 const calculateBgColor = (image, initials) => {
-    if(image || !initials) return null;
+    if (image || !initials) return null;
     let hash = 0
     for (let i = 0; i < initials.length; i++) {
         hash = initials.charCodeAt(i) + ((hash << 5) - hash);
@@ -47,7 +47,7 @@ const AvatarView = ({admin, className, image, icon, initials, onclick, verified}
         onClick={onclick}
         title={verified ? (admin ? "Administrator" : null) : "Not verified"}
     >
-        {image && <img src={image} alt="" className={classes.avatarImage}/>}
+        {image && <img src={image} alt={"Avatar"} className={classes.avatarImage}/>}
         {!image && icon}
         {!image && !icon && initials && initials.substr(0, 2).toUpperCase()}
     </Avatar>

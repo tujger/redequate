@@ -97,7 +97,7 @@ export const Picker = props => {
 
     const onExtraSelect = (start, end) => {
         onChange(start, end);
-        setState({...state, start: undefined, end: undefined,});
+        setState({...state, start: undefined, end: undefined});
     };
 
     const startSelected = start === undefined ? startGiven : start;

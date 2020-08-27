@@ -9,8 +9,8 @@ export const useStyles = theme => makeStyles({
         color: "#ff0000",
         fontSize: "small",
         fontWeight: "bolder",
-        marginBottom: theme.spacing(.5),
-        marginLeft: theme.spacing(.5),
+        marginBottom: theme.spacing(0.5),
+        marginLeft: theme.spacing(0.5),
         verticalAlign: "super",
     }
 })

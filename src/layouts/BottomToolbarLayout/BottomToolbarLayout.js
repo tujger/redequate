@@ -35,7 +35,7 @@ function BottomToolbarLayout(props) {
 }
 
 BottomToolbarLayout.propTypes = {
-    container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
+    container: PropTypes.any,
     copyright: PropTypes.any,
     firebase: PropTypes.any,
     headerImage: PropTypes.string,

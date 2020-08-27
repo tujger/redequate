@@ -35,6 +35,7 @@ const styles = theme => ({
     },
 });
 
+// eslint-disable-next-line react/prop-types
 const ChatInputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) => {
     const windowData = useWindowData()
     const [state, setState] = React.useState({value: ""});
@@ -59,7 +60,7 @@ const ChatInputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) =
                 fullWidth
                 onChange={handleChange}
                 onKeyUp={event => {
-                    if (event.key === "Enter"/* && event.ctrlKey*/) {
+                    if (event.key === "Enter" /* && event.ctrlKey */) {
                         handleSend();
                     } else if (event && event.key === "Escape") {
                         handleChange({target: {value: ""}});
@@ -70,7 +71,7 @@ const ChatInputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) =
             />
         </Grid>
         <Grid item>
-            <IconButton aria-label="send message" onClick={handleSend}>
+            <IconButton aria-label={"send message"} onClick={handleSend}>
                 <SendIcon/>
             </IconButton>
         </Grid>

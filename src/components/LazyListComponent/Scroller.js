@@ -2,6 +2,7 @@ import React from "react";
 import {useWindowData} from "../../controllers/General";
 import {InView} from "react-intersection-observer";
 
+// eslint-disable-next-line react/prop-types
 export const Scroller = ({live, placeholder}) => {
     const windowData = useWindowData();
     const [scrolled, setScrolled] = React.useState(false);

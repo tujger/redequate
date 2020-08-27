@@ -67,7 +67,7 @@ const BottomToolbar = withStyles(styles)(props => {
         showLabels
         value={location.pathname}>
         {items.map((list, index) => {
-            const [first, ...menu] = list;
+            const [first] = list;
             if (!matchRole(first.roles, currentUserData) || first.disabled) return null;
             const currentItem = list.filter(item => isCurrent(item._route))[0] || first;
 
@@ -83,6 +83,7 @@ const BottomToolbar = withStyles(styles)(props => {
             />
         })}
         {items.map((list, index) => {
+            // eslint-disable-next-line no-unused-vars
             const [first, ...menu] = list;
             const currentItem = list.filter(item => isCurrent(item._route))[0];
             if (!currentItem) return;

@@ -1,7 +1,7 @@
 export const styles = theme => {
     currentStyles = {
         calendar: {
-            backgroundColor: "transparent",//grey[300],
+            backgroundColor: "transparent", // grey[300],
             display: "flex !important",
             flexDirection: "column",
             lineHeight: "1.7rem",
@@ -25,7 +25,7 @@ export const styles = theme => {
             color: theme.palette.getContrastText(theme.palette.background.default),
         },
         header: {
-            backgroundColor: "transparent",//grey[300],
+            backgroundColor: "transparent", // grey[300],
             borderBottomWidth: 1,
             borderBottomStyle: "solid",
             borderBottomColor: theme.palette.grey[500],

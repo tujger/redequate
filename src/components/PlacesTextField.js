@@ -13,7 +13,7 @@ const PlacesTextField = props => {
     const {options, loading, task} = state;
 
     const handleChange = (ev, val) => {
-        if(!ev) return;
+        if (!ev) return;
         // const val = ev.currentTarget.value;
         clearTimeout(task);
         const newTask = setTimeout(() => {
@@ -76,10 +76,10 @@ const PlacesTextField = props => {
             />
         )}
     />
-
 };
 
 PlacesTextField.propTypes = {
+    disabled: PropTypes.bool,
     onChange: PropTypes.func,
     type: PropTypes.oneOf(["lng", "lat", "latlng", "formatted", "short_usps", "short_ru", "name", "postalCode", "road", "city", "state", "citystate", "country"]),
     value: PropTypes.string,

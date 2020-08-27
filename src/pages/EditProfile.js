@@ -29,7 +29,7 @@ import {
     useStore,
     wrapperControlCall
 } from "../controllers";
-import {adminFields, publicFields} from "./Profile";
+import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";
 import ConfirmComponent from "../components/ConfirmComponent";
@@ -70,7 +70,8 @@ const styles = theme => ({
 });
 
 function EditProfile(props) {
-    let {classes, uploadable = true, notifications = true, publicFields = publicFields, adminFields: adminFieldsGiven = adminFields} = props;
+    // eslint-disable-next-line react/prop-types
+    let {classes, uploadable = true, notifications = true, publicFields = publicFieldsDefault, adminFields: adminFieldsGiven = adminFields} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -148,11 +149,11 @@ function EditProfile(props) {
 
         let publishing = {};
 
-        if(currentUserData.image && image !== currentUserData.image) {
+        if (currentUserData.image && image !== currentUserData.image) {
             console.log("[EditProfile] delete", currentUserData.image)
             try {
                 await firebase.storage().refFromURL(currentUserData.image).delete();
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
             }
         }
@@ -166,7 +167,7 @@ function EditProfile(props) {
                 },
                 deleteFile: userData.public.image
             });
-        } else if(image) {
+        } else if (image) {
         }
         const {url: imageSaved} = publishing;
         if (isAdminAllowed) await saveUserByAdmin();
@@ -313,7 +314,7 @@ function EditProfile(props) {
     }
 
     const isAdminAllowed = matchRole([Role.ADMIN], currentUserData);
-    const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
+    // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const fields = [...publicFields, ...(isAdminAllowed ? adminFieldsGiven : [])];
     const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
 
@@ -321,7 +322,7 @@ function EditProfile(props) {
         <Box m={0.5}/>
         <Grid item className={classes.photo}>
             <Grid container>
-                {image ? <img src={image} alt="" className={classes.image}/>
+                {image ? <img src={image} alt={"User photo"} className={classes.image}/>
                     : <EmptyAvatar className={classes.image}/>}
                 <IconButton className={classes.clearPhoto} onClick={() => {
                     setState({...state, image: "", uppy: null});
@@ -337,18 +338,9 @@ function EditProfile(props) {
                 onerror={handleUploadPhotoError}
                 variant={"contained"}
             />}
-            {/*<AvatarEdit
-                width={390}
-                cropRadius={1}
-                height={295}
-                onCrop={onCrop}
-                onClose={onClose}
-                onBeforeFileLoad={onBeforeFileLoad}
-                src={image}
-            />*/}
         </Grid>
         <Grid item xs>
-            <Grid container spacing={1} alignItems="flex-end">
+            <Grid container spacing={1} alignItems={"flex-end"}>
                 <Grid item>
                     <MailIcon/>
                 </Grid>
@@ -357,7 +349,7 @@ function EditProfile(props) {
                         color={"secondary"}
                         disabled
                         fullWidth
-                        label="E-mail"
+                        label={"E-mail"}
                         value={userData.email || ""}
                     />
                 </Grid>
@@ -369,7 +361,7 @@ function EditProfile(props) {
                 const uniqueRequired = uniqueError.indexOf(field.id) >= 0;
                 return <React.Fragment key={field.id}>
                     <Box m={1}/>
-                    <Grid container spacing={1} wrap={"nowrap"} alignItems="flex-end">
+                    <Grid container spacing={1} wrap={"nowrap"} alignItems={"flex-end"}>
                         <Grid item>
                             {field.icon}
                         </Grid>
@@ -387,8 +379,8 @@ function EditProfile(props) {
                                     },
                                     required: field.required,
                                     value: state[field.id] || ""
-                                }) :
-                                <editComponent.type
+                                })
+                                : <editComponent.type
                                     {...editComponent.props}
                                     color={"secondary"}
                                     disabled={disabled}
@@ -401,8 +393,9 @@ function EditProfile(props) {
                                     required={field.required}
                                     value={state[field.id] || ""}
                                 />}
-                            {missedRequired || uniqueRequired ? <FormHelperText error>{missedRequired ? "Please enter value"
-                                : (uniqueRequired ? "This name is already taken" : null)}</FormHelperText> : null}
+                            {missedRequired || uniqueRequired
+                                ? <FormHelperText error>{missedRequired ? "Please enter value"
+                                    : (uniqueRequired ? "This name is already taken" : null)}</FormHelperText> : null}
                         </Grid>
                     </Grid>
                 </React.Fragment>
@@ -421,8 +414,13 @@ function EditProfile(props) {
                 /></Grid>
             </React.Fragment>}
             <Box m={2}/>
-            <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth
-                         disabled={disabled}>
+            <ButtonGroup
+                color={"secondary"}
+                disabled={disabled}
+                fullWidth
+                size={"large"}
+                variant={"contained"}
+            >
                 <Button onClick={saveUser}>
                     Save
                 </Button>
@@ -454,4 +452,3 @@ function EditProfile(props) {
 }
 
 export default withStyles(styles)(EditProfile);
-

@@ -18,7 +18,7 @@ import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifi
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
-import {forceFirebaseReinit, TextMaskEmail, UserData} from "../controllers";
+import {TextMaskEmail, UserData} from "../controllers";
 import ConfirmComponent from "../components/ConfirmComponent";
 
 function Login(props) {
@@ -96,7 +96,9 @@ function Login(props) {
         }
         return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
             .then(() => ud.fetchPrivate(fetchDeviceId(), true))
-            .then(() => {if(!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true})
+            .then(() => {
+                if (!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true
+            })
             .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName, agreement: true}))
             .then(() => ud.savePrivate())
             .then(() => {
@@ -135,8 +137,8 @@ function Login(props) {
     };
 
     const checkFirstLogin = async response => {
-        if(!response || !response.user) throw Error("Login cancelled");
-        if (!Boolean(agreementComponent)) return response;
+        if (!response || !response.user) throw Error("Login cancelled");
+        if (!agreementComponent) return response;
         const deviceId = fetchDeviceId();
         const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
         await ud.fetchPrivate(deviceId, true);
@@ -191,106 +193,123 @@ function Login(props) {
     />
 }
 
-const LoginLayout =
-    ({
-         agreementComponent,
-         disabled,
-         email,
-         logo,
-         onAgree,
-         onChangeEmail,
-         onChangePassword,
-         onDecline,
-         onRequestGoogle,
-         onRequestLogin,
-         password,
-         signup = true
-     }) => {
-        const pages = usePages();
-        const history = useHistory();
+const LoginLayout = (
+    {
+        agreementComponent,
+        disabled,
+        email,
+        logo,
+        onAgree,
+        onChangeEmail,
+        onChangePassword,
+        onDecline,
+        onRequestGoogle,
+        onRequestLogin,
+        password,
+        signup = true
+    }) => {
+    const pages = usePages();
+    const history = useHistory();
 
-        return <Grid container>
-            {logo}
-            <Box m={1}/>
-            <Grid container spacing={1} alignItems="flex-end">
-                <Grid item>
-                    <UserIcon/>
-                </Grid>
-                <Grid item xs>
-                    <TextField
-                        color={"secondary"}
-                        disabled={disabled}
-                        fullWidth
-                        label="E-mail"
-                        onChange={onChangeEmail}
-                        value={email}
-                        InputProps={{
-                            inputComponent: TextMaskEmail
-                        }}
-                    />
-                </Grid>
+    return <Grid container>
+        {logo}
+        <Box m={1}/>
+        <Grid container spacing={1} alignItems={"flex-end"}>
+            <Grid item>
+                <UserIcon/>
             </Grid>
-            <Box m={1}/>
-            <Grid container spacing={1} alignItems="flex-end">
-                <Grid item>
-                    <Lock/>
-                </Grid>
-                <Grid item xs>
-                    <PasswordField
-                        color={"secondary"}
-                        disabled={disabled}
-                        label={"Password"}
-                        onChange={onChangePassword}
-                        value={password}
-                    />
-                </Grid>
-            </Grid>
-            <Box m={2}/>
-            <Grid container spacing={1} alignItems="center">
-                <Button disabled={disabled} onClick={onRequestLogin} variant={"contained"} color={"secondary"}
-                        size="large"
-                        fullWidth>
-                    Continue
-                </Button>
-            </Grid>
-            <Box m={1}/>
-            <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size="large" fullWidth>
-                {signup && <Button onClick={() => history.push(pages.signup.route)}>
-                    Create account
-                </Button>}
-                <Button onClick={() => history.push(pages.restore.route)}>
-                    Forgot password?
-                </Button>}
-            </ButtonGroup>
-            <Box m={1}/>
-            <Grid container justify="center">
-                <Button disabled={disabled} onClick={onRequestGoogle}>
-                    <img src={GoogleLogo} width={20} height={20} alt={""}/>
-                    <Box m={0.5}/>
-                    Log in with Google
-                </Button>
-            </Grid>
-            {agreementComponent && <ConfirmComponent
-                confirmLabel={"Agree"}
-                modal
-                onCancel={onDecline}
-                onConfirm={onAgree}
-                title={"User Agreement"}
-            >
-                <agreementComponent.type
-                    {...agreementComponent.props}
+            <Grid item xs>
+                <TextField
+                    color={"secondary"}
+                    disabled={disabled}
+                    fullWidth
+                    label={"E-mail"}
+                    onChange={onChangeEmail}
+                    value={email}
+                    InputProps={{
+                        inputComponent: TextMaskEmail
+                    }}
                 />
-            </ConfirmComponent>}
+            </Grid>
         </Grid>
-    }
+        <Box m={1}/>
+        <Grid container spacing={1} alignItems={"flex-end"}>
+            <Grid item>
+                <Lock/>
+            </Grid>
+            <Grid item xs>
+                <PasswordField
+                    color={"secondary"}
+                    disabled={disabled}
+                    label={"Password"}
+                    onChange={onChangePassword}
+                    value={password}
+                />
+            </Grid>
+        </Grid>
+        <Box m={2}/>
+        <Grid container spacing={1} alignItems={"center"}>
+            <Button
+                disabled={disabled} onClick={onRequestLogin} variant={"contained"} color={"secondary"}
+                size={"large"}
+                fullWidth>
+                Continue
+            </Button>
+        </Grid>
+        <Box m={1}/>
+        <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"large"} fullWidth>
+            {signup && <Button onClick={() => history.push(pages.signup.route)}>
+                Create account
+            </Button>}
+            <Button onClick={() => history.push(pages.restore.route)}>
+                Forgot password?
+            </Button>}
+        </ButtonGroup>
+        <Box m={1}/>
+        <Grid container justify={"center"}>
+            <Button disabled={disabled} onClick={onRequestGoogle}>
+                <img src={GoogleLogo} width={20} height={20} alt={""}/>
+                <Box m={0.5}/>
+                Log in with Google
+            </Button>
+        </Grid>
+        {agreementComponent && <ConfirmComponent
+            confirmLabel={"Agree"}
+            modal
+            onCancel={onDecline}
+            onConfirm={onAgree}
+            title={"User Agreement"}
+        >
+            <agreementComponent.type
+                {...agreementComponent.props}
+            />
+        </ConfirmComponent>}
+    </Grid>
+}
 
 Login.propTypes = {
-    layout: PropTypes.element,
+    agreementComponent: PropTypes.element,
+    layout: PropTypes.objectOf(LoginLayout),
     logo: PropTypes.any,
     onLogin: PropTypes.func,
     popup: PropTypes.bool,
     signup: PropTypes.bool,
     transformUserData: PropTypes.func,
+};
+
+LoginLayout.propTypes = {
+    agreementComponent: PropTypes.element,
+    disabled: PropTypes.bool,
+    email: PropTypes.string,
+    logo: PropTypes.any,
+    onAgree: PropTypes.func,
+    onChangeEmail: PropTypes.func,
+    onChangePassword: PropTypes.func,
+    onDecline: PropTypes.func,
+    onRequestGoogle: PropTypes.func,
+    onRequestLogin: PropTypes.func,
+    password: PropTypes.any,
+    signup: PropTypes.bool
 };
 
 export default withRouter(Login);

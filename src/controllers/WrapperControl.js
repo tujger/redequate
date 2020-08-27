@@ -1,23 +1,23 @@
-import React from "react";
 import Uuid from "react-uuid";
 import {forceFirebaseReinit} from "./Firebase";
 
 const callQueue = {};
 
 export const installWrapperControl = (firebase) => {
-    if(hasWrapperControlInterface()) {
+    if (hasWrapperControlInterface()) {
         window.wrapperControlCallback = (message) => {
             console.log(`[WC] message [${message}]`);
             let call;
             try {
                 const json = JSON.parse(message);
+                // eslint-disable-next-line no-unused-vars
                 const {id, method, args, timestamp, error, status, response = null} = json;
-                if(id === "_on_resume") {
+                if (id === "_on_resume") {
                     console.log("[WC] off => on firebase.database triggered");
                     firebase.database().goOffline();
                     firebase.database().goOnline();
                     return;
-                } else if(id === "_on_refresh") {
+                } else if (id === "_on_refresh") {
                     console.log("[WC] reinit firebase and refresh");
                     forceFirebaseReinit();
                     return;
@@ -33,8 +33,8 @@ export const installWrapperControl = (firebase) => {
                     call.resolve(response);
                 }
                 delete callQueue[id];
-            } catch(error) {
-                if(call && call.reject) {
+            } catch (error) {
+                if (call && call.reject) {
                     call.reject(error);
                 } else {
                     console.error(error);
@@ -49,11 +49,11 @@ export const hasWrapperControlInterface = () => {
 }
 
 export const wrapperControlCall = ({method = "log", timeout = 1000, ...args}) => new Promise((resolve, reject) => {
-    if(!hasWrapperControlInterface()) {
+    if (!hasWrapperControlInterface()) {
         reject(new Error("WrapperControlInterface is not defined."));
         return;
     }
-    if(!window.wrapperControlCallback) {
+    if (!window.wrapperControlCallback) {
         reject(new Error("WrapperControl is not installed."));
         console.warn("WrapperControl is not installed, use 'installWrapperControl'.");
         return;
@@ -68,7 +68,7 @@ export const wrapperControlCall = ({method = "log", timeout = 1000, ...args}) =>
         resolve: resolve,
         timeout: timeout
     }
-    window.WrapperControlInterface.postMessage(JSON.stringify({id, method, arguments:args}));
+    window.WrapperControlInterface.postMessage(JSON.stringify({id, method, arguments: args}));
     setTimeout(() => {
         reject(new Error("Task failed by timeout"));
         delete callQueue[id];

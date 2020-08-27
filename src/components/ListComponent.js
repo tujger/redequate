@@ -11,11 +11,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import Button from "@material-ui/core/Button";
-import {
-    DoneAll as CheckAllIcon,
-    Clear as ClearIcon,
-    Sort as SortIcon,
-} from "@material-ui/icons";
+import {Clear as ClearIcon, DoneAll as CheckAllIcon, Sort as SortIcon,} from "@material-ui/icons";
 import PropTypes from "prop-types";
 import ListItemComponent from "./ListItemComponent";
 import ListAction from "./ListAction";
@@ -88,8 +84,7 @@ const ListComponent = props => {
     };
 
     const recalculateSelected = () => {
-        const count = items.filter(item => item.selected).length;
-        return count;
+        return items.filter(item => item.selected).length;
     };
 
     const selectAll = () => {

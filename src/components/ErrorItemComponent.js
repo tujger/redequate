@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import CardHeader from "@material-ui/core/CardHeader";
@@ -55,9 +55,9 @@ function ErrorItemComponent(props) {
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
             .then(() => isMounted && setState(state => ({...state, userData})))
             .catch(() => {
-                if(!isMounted) return;
+                if (!isMounted) return;
                 userData.public.name = data.value.uid === "anonymous" ? "Anonymous" : "User deleted";
-                if(data.value.uid !== "anonymous") console.log("[Error] user deleted", data.value.uid);
+                if (data.value.uid !== "anonymous") console.log("[Error] user deleted", data.value.uid);
                 setState(state => ({...state, userData}))
             })
         return () => {
@@ -65,7 +65,7 @@ function ErrorItemComponent(props) {
         }
     }, [])
 
-    if(removed) return null;
+    if (removed) return null;
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
     if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes}/>
 
@@ -88,7 +88,7 @@ function ErrorItemComponent(props) {
                 className={[classes.cardHeader, classes.post].join(" ")}
                 subheader={<React.Fragment>
                     <Grid container>
-                        {JSON.stringify(data.value.error).substr(0, 100)}
+                        {(JSON.stringify(data.value.error) || "").substr(0, 100)}
                     </Grid>
                 </React.Fragment>}
                 title={<Grid container>
@@ -108,7 +108,6 @@ function ErrorItemComponent(props) {
             onConfirm={handleConfirm}
             title={"Error stacktrace"}
         >
-            {/*<pre style={{whiteSpace: "pre-wrap"}}>{JSON.stringify(data.value.error, null, "   ")}</pre>*/}
             <pre style={{whiteSpace: "pre-wrap"}}>{
                 typeof data.value.error === "object"
                     ? JSON.stringify(data.value.error, null, "   ")

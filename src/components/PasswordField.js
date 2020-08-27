@@ -35,9 +35,9 @@ const PasswordField = props => {
             value={values.password}
             error={!!helper}
             endAdornment={
-                <InputAdornment position="end">
+                <InputAdornment position={"end"}>
                     <IconButton
-                        aria-label="toggle password visibility"
+                        aria-label={"toggle password visibility"}
                         onClick={handleClickShow}
                         onMouseDown={event => event.preventDefault()}
                     >

@@ -109,7 +109,7 @@ const Signup = ({signup = true, additional}) => {
 
     return <Grid container>
         <Box m={0.5}/>
-        {!requestPasswordFor && <Grid container spacing={1} alignItems="flex-end">
+        {!requestPasswordFor && <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
                 <UserIcon/>
             </Grid>
@@ -117,7 +117,7 @@ const Signup = ({signup = true, additional}) => {
                 <TextField
                     color={"secondary"}
                     disabled={requesting}
-                    label="E-mail"
+                    label={"E-mail"}
                     fullWidth
                     onChange={ev => {
                         setState({...state, email: ev.target.value});
@@ -130,11 +130,11 @@ const Signup = ({signup = true, additional}) => {
             </Grid>
         </Grid>}
         {!requestPasswordFor && <Box m={1}/>}
-        {requestPasswordFor && <Grid container spacing={1} alignItems="flex-end">
+        {requestPasswordFor && <Grid container spacing={1} alignItems={"flex-end"}>
             <h4>Please create password for your account.</h4>
         </Grid>}
         {!requestPasswordFor && <Box m={1}/>}
-        <Grid container spacing={1} alignItems="flex-end">
+        <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
                 <Lock/>
             </Grid>
@@ -142,7 +142,7 @@ const Signup = ({signup = true, additional}) => {
                 <PasswordField
                     color={"secondary"}
                     disabled={requesting}
-                    label="Password"
+                    label={"Password"}
                     onChange={ev => {
                         setState({...state, password: ev.target.value});
                     }}
@@ -151,7 +151,7 @@ const Signup = ({signup = true, additional}) => {
             </Grid>
         </Grid>
         <Box m={1}/>
-        <Grid container spacing={1} alignItems="flex-end">
+        <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
                 <Lock/>
             </Grid>
@@ -159,7 +159,7 @@ const Signup = ({signup = true, additional}) => {
                 <PasswordField
                     color={"secondary"}
                     disabled={requesting}
-                    label="Confirm password"
+                    label={"Confirm password"}
                     onChange={ev => {
                         setState({...state, confirm: ev.target.value});
                     }}
@@ -169,7 +169,7 @@ const Signup = ({signup = true, additional}) => {
         </Grid>
         {additional}
         <Box m={2}/>
-        <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth disabled={requesting}>
+        <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth disabled={requesting}>
             <Button
                 onClick={requestSignupPassword}
             >

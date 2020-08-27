@@ -110,8 +110,9 @@ Page options are:
     route: String, // based on 'react-router-dom'
     label: String,
     icon: React.Component,
-    component: React.Component,
-    pullToRefresh: Boolean, // if 'false' then disables pull-to-refresh in mobile wrapper
+    component?: React.Component,
+    onClick?: Function,
+    pullToRefresh?: Boolean, // if 'false' then disables pull-to-refresh in mobile wrapper
     roles?: Array,
     adornment?: (userData) => React.Component, // will be added to menu item
     daemon?: Boolean, // if 'true' then component will be mandatory called with 'daemon' argument

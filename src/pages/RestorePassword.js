@@ -43,7 +43,7 @@ const RestorePassword = (props) => {
 
     return <Grid container>
         <Box m={0.5}/>
-        <Grid container spacing={1} alignItems="flex-end">
+        <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
                 <UserIcon/>
             </Grid>
@@ -51,7 +51,7 @@ const RestorePassword = (props) => {
                 <TextField
                     color={"secondary"}
                     disabled={requesting}
-                    label="E-mail"
+                    label={"E-mail"}
                     fullWidth
                     onChange={ev => setState({...state, email: ev.target.value})}
                     value={email}
@@ -59,7 +59,7 @@ const RestorePassword = (props) => {
             </Grid>
         </Grid>
         <Box m={2}/>
-        <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth>
+        <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth>
             <Button aria-label={"Restore bassword"} onClick={requestRestorePassword}>
                 Restore
             </Button>

@@ -30,16 +30,16 @@ const Logout = (props) => {
         }
     }, [])
 
-    if(immediate) return null;
+    if (immediate) return null;
     return <Grid container>
         <Box m={0.5}/>
-        <Grid container spacing={1} alignItems="flex-end">
+        <Grid container spacing={1} alignItems={"flex-end"}>
             Do you want to log out?
         </Grid>
         <Box m={1}/>
-        <Grid container spacing={1} alignItems="flex-end">
+        <Grid container spacing={1} alignItems={"flex-end"}>
             <Button
-                size="large"
+                size={"large"}
                 color={"secondary"}
                 onClick={() => {
                     doLogout();
@@ -54,7 +54,6 @@ const Logout = (props) => {
 
 Logout.propTypes = {
     immediate: PropTypes.bool,
-    pages: PropTypes.object,
 };
 
 export default connect()(withRouter(Logout));

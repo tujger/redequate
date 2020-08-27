@@ -16,9 +16,9 @@ const styles = theme => ({
         backgroundColor: "#ff0000",
         borderRadius: theme.spacing(1),
         height: theme.spacing(1),
-        right: theme.spacing(.5),
+        right: theme.spacing(0.5),
         position: "absolute",
-        top: theme.spacing(.5),
+        top: theme.spacing(0.5),
         width: theme.spacing(1)
     },
     header: {
@@ -36,7 +36,7 @@ const styles = theme => ({
     topmenu: {
         ...theme.typography.button,
         alignItems: "center",
-        backgroundColor: "transparent", //theme.palette.background.paper,
+        backgroundColor: "transparent",
         display: "flex",
         // position: "fixed",
         // left: 0,
@@ -54,7 +54,7 @@ const styles = theme => ({
     },
     profileitem: {
         // marginLeft: "auto",
-        margin: theme.spacing(.5),
+        margin: theme.spacing(0.5),
     }
 });
 
@@ -95,34 +95,36 @@ const MenuSection = withStyles(styles)(props => {
             <Paper>
                 <MenuList
                     className={classes.menusection}
-                >{menu.map((item, index) => {
-                    if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
-                    const child = <MenuItem
-                        button
-                        children={<React.Fragment>
-                            {item.label}
-                            {item.adornment && currentUserData && item.adornment(currentUserData)}
-                        </React.Fragment>}
-                        className={[classes.label, classes.menuitem].join(" ")}
-                        key={index}
-                        onClickCapture={item.onClick}
-                    />;
-                    if (item.component) {
-                        return <Link
-                            children={child}
+                >
+                    {menu.map((item, index) => {
+                        if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
+                        const child = <MenuItem
+                            button
+                            children={<React.Fragment>
+                                {item.label}
+                                {item.adornment && currentUserData && item.adornment(currentUserData)}
+                            </React.Fragment>}
+                            className={[classes.label, classes.menuitem].join(" ")}
                             key={index}
-                            className={classes.label}
-                            onClick={(event) => {
-                                setState({...state, anchor: null});
-                                event && event.stopPropagation();
-                                // event && event.preventDefault();
-                            }}
-                            to={item.route}
-                        />
-                    } else {
-                        return child
-                    }
-                })}</MenuList>
+                            onClickCapture={item.onClick}
+                        />;
+                        if (item.component) {
+                            return <Link
+                                children={child}
+                                key={index}
+                                className={classes.label}
+                                onClick={(event) => {
+                                    setState({...state, anchor: null});
+                                    event && event.stopPropagation();
+                                    // event && event.preventDefault();
+                                }}
+                                to={item.route}
+                            />
+                        } else {
+                            return child
+                        }
+                    })}
+                </MenuList>
             </Paper>
         </Popper>
     </Button>
@@ -139,8 +141,12 @@ const TopMenu = props => {
         {currentUserData.id && <Link
             to={pages.profile.route}
             className={[classes.label, classes.profileitem].join(" ")}>
-            <AvatarView image={currentUserData.image} initials={currentUserData.initials}
-                        verified={currentUserData.verified} admin={currentRole(currentUserData) === Role.ADMIN}/>
+            <AvatarView
+                admin={currentRole(currentUserData) === Role.ADMIN}
+                image={currentUserData.image}
+                initials={currentUserData.initials}
+                verified={currentUserData.verified}
+            />
         </Link>}
     </div>
 };

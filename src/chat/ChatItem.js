@@ -1,6 +1,5 @@
-import React from 'react';
-import {withStyles,} from "@material-ui/core";
-import PropTypes from 'prop-types';
+import React from "react";
+import {withStyles} from "@material-ui/core";
 import {InView} from "react-intersection-observer";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
@@ -32,7 +31,7 @@ const stylesChat = theme => ({
         marginBottom: theme.spacing(1),
     },
     timestamp: {
-        bottom: theme.spacing(.5),
+        bottom: theme.spacing(0.5),
         color: "#888888",
         fontSize: theme.spacing(1.25),
         position: "absolute",
@@ -41,6 +40,7 @@ const stylesChat = theme => ({
 });
 
 const ChatItem = React.forwardRef((props, ref) => {
+    // eslint-disable-next-line react/prop-types
     const {data, chatMeta = {}, classes, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const firebase = useFirebase();
@@ -71,44 +71,44 @@ const ChatItem = React.forwardRef((props, ref) => {
 
     if (skeleton) return <ItemPlaceholderComponent classes={{avatar: classes.avatarChat}}/>;
 
-    const isNew = fetchIsNew() && !shown;
+    // const isNew = fetchIsNew() && !shown;
     const isItemOut = currentUserData.id === data.uid;
 
     if (!authorData) return null;
     return <Card ref={ref} className={[
         classes.root,
-            classes.card,
+        classes.card,
         classes.chatItem,
-            isItemOut ? classes.chatItemOut : classes.chatItemIn
-        ].join(" ")}>
-            <CardHeader
-                classes={{content: classes.cardContent}}
-                className={[classes.cardHeader, classes.post].join(" ")}
-                avatar={<AvatarView
-                    className={[classes.avatar, classes.avatarChat].join(" ")}
-                    image={authorData.image}
-                    initials={authorData.initials}
-                    verified={true}
-                />}
-                title={<Grid container>
-                    {/*<Grid item className={classes.userName}>
+        isItemOut ? classes.chatItemOut : classes.chatItemIn
+    ].join(" ")}>
+        <CardHeader
+            classes={{content: classes.cardContent}}
+            className={[classes.cardHeader, classes.post].join(" ")}
+            avatar={<AvatarView
+                className={[classes.avatar, classes.avatarChat].join(" ")}
+                image={authorData.image}
+                initials={authorData.initials}
+                verified={true}
+            />}
+            title={<Grid container>
+                {/* <Grid item className={classes.userName}>
                         <UserNameComponent
                             className={[classes.label].join(" ")}
                             id={data.uid}
                             prefix={"@"}
                             // needVerify={user.uid()}
                         />
-                    </Grid>*/}
-                    {/*<Grid item className={classes.date} title={new Date(data.created).toLocaleString()}>
+                    </Grid> */}
+                {/* <Grid item className={classes.date} title={new Date(data.created).toLocaleString()}>
                         {toDateString(data.created)}
-                    </Grid>*/}
-                </Grid>}
-                subheader={<Grid container className={classes.text}>
-                    <Grid item xs>{textComponent(data.text)}</Grid>
-                    <Grid className={classes.timestamp}>{toDateString(data.created)}</Grid>
-                </Grid>}
-            />
-        </Card>
+                    </Grid> */}
+            </Grid>}
+            subheader={<Grid container className={classes.text}>
+                <Grid item xs>{textComponent(data.text)}</Grid>
+                <Grid className={classes.timestamp}>{toDateString(data.created)}</Grid>
+            </Grid>}
+        />
+    </Card>
 
     return <li>
         {isNew && <InView
@@ -125,10 +125,6 @@ const ChatItem = React.forwardRef((props, ref) => {
         ><b>NEW</b></InView>}
     </li>
 })
-
-ChatItem.propTypes = {
-    onSwipe: PropTypes.func
-};
 
 export default withStyles((theme) => ({
     ...stylesList(theme),

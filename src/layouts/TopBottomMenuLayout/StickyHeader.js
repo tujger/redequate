@@ -3,7 +3,8 @@ import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
 import ProgressView from "../../components/ProgressView";
 
-const styles = theme => ({
+// noinspection JSUnusedLocalSymbols
+const styles = (theme) => ({
     container: {
         position: "relative",
     },
@@ -26,8 +27,6 @@ const StickyHeader = props => {
 
 StickyHeader.propTypes = {
     children: PropTypes.any,
-    headerImage: PropTypes.string,
 };
 
 export default withStyles(styles)(StickyHeader);
-

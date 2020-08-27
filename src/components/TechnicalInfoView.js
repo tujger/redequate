@@ -17,8 +17,8 @@ const TechnicalInfoView = ({classes, message}) => {
     const technical = useTechnicalInfo();
     const {maintenance} = technical;
 
-    if(!maintenance && !message) return null;
-    const {message:maintenanceMessage = "Sorry, the service is temporarily unavailable."} = maintenance || {};
+    if (!maintenance && !message) return null;
+    const {message: maintenanceMessage = "Sorry, the service is temporarily unavailable."} = maintenance || {};
     return <React.Fragment>
         <Grid container spacing={2} className={classes.root}>
             <h4>{message || maintenanceMessage}</h4>

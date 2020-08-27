@@ -1,12 +1,11 @@
-import React from "react";
 const DeviceUUID = require("device-uuid");
 
 export const fetchDeviceId = () => {
-    if (!localStorage.getItem("device_id")) {
+    if (!window.localStorage.getItem("device_id")) {
         const uuid = new DeviceUUID.DeviceUUID().get();
-        localStorage.setItem("device_id", uuid);
+        window.localStorage.setItem("device_id", uuid);
     }
-    return localStorage.getItem("device_id");
+    return window.localStorage.getItem("device_id");
 };
 
 export const checkIfCompatible = () => {
@@ -31,34 +30,34 @@ let windowDataInstance = {};
 let technicalInfoInstance;
 
 export const useFirebase = firebase => {
-    if(firebase) firebaseInstance = firebase;
+    if (firebase) firebaseInstance = firebase;
     return firebaseInstance;
 }
 
 export const usePages = pages => {
-    if(pages) pagesInstance = pages;
+    if (pages) pagesInstance = pages;
     // if(pages && pagesInstance) console.warn("Attempted to redefine pages")
     return pagesInstance;
 }
 
 export const useStore = initial => {
-    if(initial) storeInstance = initial || {};
+    if (initial) storeInstance = initial || {};
     return storeInstance;
 }
 
 export const useWindowData = initial => {
-    if(initial) windowDataInstance = initial || {};
+    if (initial) windowDataInstance = initial || {};
     return windowDataInstance;
 }
 
 export const useTechnicalInfo = (initial) => {
-    if(initial instanceof Function) {
+    if (initial instanceof Function) {
         technicalInfoInstance = initial(technicalInfoInstance);
-    } else if(initial) technicalInfoInstance = initial || {};
+    } else if (initial) technicalInfoInstance = initial || {};
     return technicalInfoInstance;
 }
 
-const CacheDatas = function() {
+const CacheDatas = function () {
     let _cache = {};
     let _count = 0;
     let _max = 1000;
@@ -71,7 +70,7 @@ const CacheDatas = function() {
         },
         set max(length) {
             _max = length;
-            if(_count > _max) {
+            if (_count > _max) {
                 _count = 1;
                 _cache = {};
             }
@@ -80,13 +79,13 @@ const CacheDatas = function() {
             return _cache[id];
         },
         put: (id, data) => {
-            if(!id) throw new Error("[Cache] data id is not defined");
-            if(_cache[id]) {
+            if (!id) throw new Error("[Cache] data id is not defined");
+            if (_cache[id]) {
                 return _cache[id];
             }
-            if(!data) throw new Error("[Cache] data is not defined");
+            if (!data) throw new Error("[Cache] data is not defined");
             _count++;
-            if(_count > _max) {
+            if (_count > _max) {
                 _count = 1;
                 _cache = {};
             }

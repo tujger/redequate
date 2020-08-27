@@ -10,9 +10,9 @@ import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {
     try {
         // Safari case
-        //https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html#//apple_ref/doc/uid/TP40013225-CH3-SW1
+        // https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html#//apple_ref/doc/uid/TP40013225-CH3-SW1
         const messaging = firebase.messaging();
-        Notification.requestPermission().then(permission => {
+        window.Notification.requestPermission().then(permission => {
             if (permission === "granted") {
                 return messaging.getToken();
             } else {
@@ -22,7 +22,7 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
             messaging.onMessage(payload => {
                 console.log("[Notifications] incoming " + JSON.stringify(payload));
                 const data = payload.notification || payload.data;
-                if(onMessage) {
+                if (onMessage) {
                     onMessage({
                         ...data,
                         from: payload.from,
@@ -38,13 +38,13 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                         title: data.body,
                     })
                 }
-                //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
-                //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
+                // https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
+                // https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
                 // registration.showNotification(payload.notification.title, payload.notification);
             });
             resolve(token);
         }).catch(error => {
-            if(onMessage) onMessage({title: error.message});
+            if (onMessage) onMessage({title: error.message});
             else notifySnackbar(error);
             reject(error);
         });
@@ -57,8 +57,6 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                       token = await messaging.getToken();
                       localStorage.setItem("notification-token", token);
                     }
-
-
                   } else {
                     if(!navigator.serviceWorker || !navigator.serviceWorker.controller) {
                       reject(new Error("Subscribing failed: ServiceWorker is inactive"));
@@ -99,10 +97,10 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                   console.error(error);
                   (onMessage || notifySnackbar)({title: error.message});
                   reject(error);
-                });*/
+                }); */
     } catch (error) {
-        if(error.code === "messaging/unsupported-browser") {
-            if(hasWrapperControlInterface()) {
+        if (error.code === "messaging/unsupported-browser") {
+            if (hasWrapperControlInterface()) {
                 wrapperControlCall({method: "subscribeNotifications", timeout: 30000}).then((response) => {
                     console.log("[Notifications] token " + JSON.stringify(response));
                     resolve(response);
@@ -129,8 +127,8 @@ export const NotificationsSnackbar = () => {
         style={{display: "none"}}
         onClick={evt => {
             let {system, ...payload} = evt.currentTarget.payload;
-            if(system && !document.hasFocus()) {
-                Notification.requestPermission().then(permission => {
+            if (system && !document.hasFocus()) {
+                window.Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
                         const node = document.createElement("div");
                         ReactDOM.render(<React.Fragment>{payload.title}</React.Fragment>, node, () => {
@@ -149,16 +147,16 @@ export const NotificationsSnackbar = () => {
                                     renotify: true,
                                     // requireInteraction: true,
                                 };
-                                /*navigator.serviceWorker.ready.then(reg => {
+                                /* navigator.serviceWorker.ready.then(reg => {
                                     reg.showNotification(title, {...options,
                                     actions: [
                                         {title: "Open", action: onclick}
                                     ]})
-                                })*/
+                                }) */
                                 console.log(`[Notification] ${title}: ${JSON.stringify(options)}`);
-                                const notification = new Notification(title, options);
+                                const notification = new window.Notification(title, options);
                                 notification.onclick = onclick;
-                            } catch(error) {
+                            } catch (error) {
                                 console.error(error)
                             }
                         });
@@ -198,7 +196,7 @@ export const notifySnackbar = props => {
     const snackbar = document.getElementById("__edeqa_pwa_service_worker_snackbar");
     const error = props.error || props;
     if (!snackbar) {
-        if(error) console.error(error);
+        if (error) console.error(error);
         else console.log(`[Notifications] ${JSON.stringify(props)}`);
         console.error("Cannot notify push notifications due to control element is unavailable. Please set up " +
             "\"import {NotificationsSnackbar} from 'redequate'\" and <NotificationsSnackbar/> in your file.");
@@ -213,7 +211,7 @@ export const notifySnackbar = props => {
             priority: "high",
             variant: "error"
         }
-    } else if(props.constructor.name === "String") {
+    } else if (props.constructor.name === "String") {
         snackbar.payload = {title: props};
     } else {
         snackbar.payload = props;

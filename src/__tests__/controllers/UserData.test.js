@@ -11,7 +11,7 @@ import {
     currentUserData,
     sendVerificationEmail,
     sendInvitationEmail
-} from '../../controllers/UserData';
+} from "../../controllers/UserData";
 import {firebase, store} from "../common";
 import React from "react";
 

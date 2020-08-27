@@ -8,19 +8,11 @@ import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
 import ProfileComponent, {default as ProfileComponentOrigin} from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {
-    logoutUser,
-    matchRole,
-    Role,
-    sendVerificationEmail,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
+import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {refreshAll} from "../controllers/Store";
 import {notifySnackbar} from "../controllers/Notifications";
-import {useFirebase, usePages, useStore} from "../controllers/General";
+import {useFirebase, usePages} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
@@ -28,7 +20,6 @@ import {fetchCallable} from "../controllers/Firebase";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import LoadingComponent from "../components/LoadingComponent";
 import IconButton from "@material-ui/core/IconButton";
-import BackIcon from "@material-ui/icons/ArrowBack";
 import EditIcon from "@material-ui/icons/Edit";
 import PlacesTextField from "../components/PlacesTextField";
 import InfoIcon from "@material-ui/icons/Info";
@@ -98,8 +89,8 @@ export const adminFields = [
         id: "updated",
         label: "",
         icon: <InfoIcon/>,
-        editComponent: props => <div>
-            User data updated: {new Date(props.value).toLocaleString()}
+        editComponent: ({value}) => <div>
+            User data updated: {new Date(value).toLocaleString()}
         </div>
     },
     {
@@ -123,15 +114,19 @@ export const adminFields = [
     },
 ]
 
-const Profile = ({
-                     publicFields = publicFields, privateFields, classes, ProfileComponent =
-        <ProfileComponentOrigin/>, provider, ...rest
-                 }) => {
+const Profile = (
+    {
+        publicFields = publicFields,
+        privateFields,
+        classes,
+        ProfileComponent =
+            <ProfileComponentOrigin/>,
+        provider,
+    }) => {
     const [state, setState] = React.useState({disabled: false});
     const {userData, disabled} = state;
     const history = useHistory();
     const pages = usePages();
-    const store = useStore();
     const firebase = useFirebase();
     const dispatch = useDispatch();
     const currentUserData = useCurrentUserData();
@@ -140,7 +135,6 @@ const Profile = ({
     const handleChatClick = () => {
         history.push(pages.chat.route + userData.id);
     }
-
 
     const fixErrors = () => {
         fetchCallable(firebase)("fixUser", {
@@ -217,17 +211,9 @@ const Profile = ({
             className={classes.buttons}
             color={"secondary"}
             disabled={disabled}
-            size="large"
-            variant="contained"
+            size={"large"}
+            variant={"contained"}
         >
-            {/*{isSameUser && <Button
-                children={"Logout"}
-                className={classes.logout}
-                onClick={() => {
-                    logoutUser(firebase, store)()
-                        .then(() => refreshAll(store));
-                }}
-            />}*/}
             {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
                 children={"Resend verification"}
                 className={classes.resendVerification}
@@ -241,8 +227,12 @@ const Profile = ({
             />}
         </ButtonGroup>
         {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <Tooltip title={"Start chat"}>
-            <Fab aria-label={"Start chat"} color={"primary"} className={classes.fab}
-                 onClick={handleChatClick}>
+            <Fab
+                aria-label={"Start chat"}
+                color={"primary"}
+                className={classes.fab}
+                onClick={handleChatClick}
+            >
                 <ChatIcon/>
             </Fab>
         </Tooltip>}

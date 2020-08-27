@@ -56,12 +56,9 @@ const styles = theme => ({
 });
 
 const Search = ({toolbar, content, modal, ...props}) => {
-    const [state, setState] = React.useState({disabled: false});
-
-    console.warn("SEARCH")
-    if(content) return <SearchContent {...props}/>
-    if(modal) return <SearchModal {...props}/>
-    if(toolbar) return <SearchToolbar {...props}/>
+    if (content) return <SearchContent {...props}/>
+    if (modal) return <SearchModal {...props}/>
+    if (toolbar) return <SearchToolbar {...props}/>
 
     return <SearchContent {...props}/>
 };
@@ -75,12 +72,16 @@ export const SearchModal = ({open, onClose, classes, handleSearch, ...props}) =>
                 }}>
                     <BackIcon/>
                 </IconButton>
-                <Button onClick={handleSearch} variant={"contained"} color={"secondary"}
-                        className={classes.button}>Search</Button>
+                <Button
+                    onClick={handleSearch}
+                    variant={"contained"}
+                    color={"secondary"}
+                    className={classes.button}
+                >Search</Button>
             </Grid>
         </Hidden>
         <Hidden smDown>
-            <DialogTitle id="alert-dialog-title">Reply</DialogTitle>
+            <DialogTitle id={"alert-dialog-title"}>Reply</DialogTitle>
         </Hidden>
         <DialogContent classes={{root: classes.content}}>
             <Grid container>
@@ -113,7 +114,15 @@ export const SearchContent = () => {
 
 export default withStyles(styles)(Search);
 
-export const SearchToolbar = withStyles(styles)(({classes, open = false, onOpen, transformSearch, onChange, Input = <InputOrigin/>}) => {
+export const SearchToolbar = withStyles(styles)((
+    {
+        classes,
+        open = false,
+        onOpen,
+        transformSearch,
+        onChange,
+        Input = <InputOrigin/>
+    }) => {
     const pages = usePages();
     const history = useHistory();
     const [state, setState] = React.useState({});
@@ -128,7 +137,7 @@ export const SearchToolbar = withStyles(styles)(({classes, open = false, onOpen,
     const handleSearch = () => {
         if (!searchValue) return;
         closeSearch();
-        if(Input.props.onApply) {
+        if (Input.props.onApply) {
             Input.props.onApply(searchValue);
         } else {
             history.push(pages.search.route + "?q=" + encodeURIComponent(searchValue));
@@ -139,32 +148,33 @@ export const SearchToolbar = withStyles(styles)(({classes, open = false, onOpen,
         setState(state => ({...state, search: open}));
     }, [open])
 
-    if (!search) return <IconButton
-        onClick={() => {
-            const unblock = history.block(() => {
-                setState(state => ({...state, search: false, unblock: null}));
-                unblock();
-                delete history.unblock;
-                return false;
-            })
-            history.unblock = unblock;
-            setState({...state, search: true, unblock})
-            onOpen && onOpen();
-        }}
-        title={"Search"}
-        variant={"text"}
-        children={pages.search.icon}/>
+    if (!search) {
+        return <IconButton
+            onClick={() => {
+                const unblock = history.block(() => {
+                    setState(state => ({...state, search: false, unblock: null}));
+                    unblock();
+                    delete history.unblock;
+                    return false;
+                })
+                history.unblock = unblock;
+                setState({...state, search: true, unblock})
+                onOpen && onOpen();
+            }}
+            title={"Search"}
+            variant={"text"}
+            children={pages.search.icon}/>
+    }
 
     return <Toolbar color={"secondary"} className={classes.searchbar}>
         <IconButton
             children={<BackIcon/>}
-            color="inherit"
-            edge="start"
+            color={"inherit"}
+            edge={"start"}
             onClick={closeSearch}
             title={"Cancel search"}
         />
-        {/*{Input}*/}
-        {<Input.type
+        <Input.type
             autoFocus={true}
             classes={{root: classes.searchfield, input: classes.inputfield}}
             color={"secondary"}
@@ -192,11 +202,11 @@ export const SearchToolbar = withStyles(styles)(({classes, open = false, onOpen,
             {...Input.props}
             onChange={evt => {
                 let searchValue = (evt.currentTarget || evt.target).value;
-                if(transformSearch) searchValue = transformSearch(searchValue);
+                if (transformSearch) searchValue = transformSearch(searchValue);
                 setState({...state, searchValue});
                 Input.props.onChange && Input.props.onChange(searchValue);
             }}
-        />}
+        />
         <IconButton
             children={pages.search.icon}
             onClick={handleSearch}

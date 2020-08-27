@@ -1,4 +1,3 @@
-import React from "react";
 import * as serviceWorker from "../serviceWorker";
 import {notifySnackbar} from "./Notifications";
 import {firebaseMessaging} from "./Firebase";
@@ -7,7 +6,7 @@ import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 const activateUpdate = registration => {
     registration.waiting.postMessage({type: "SKIP_WAITING"});
     try {
-        if(firebaseMessaging.messaging && firebaseMessaging.messaging().swRegistration) {
+        if (firebaseMessaging.messaging && firebaseMessaging.messaging().swRegistration) {
             console.log("[SWC] activate update");
             firebaseMessaging.messaging().swRegistration.update().then(() => {
                 console.log("[SWC] update finished, reloading");

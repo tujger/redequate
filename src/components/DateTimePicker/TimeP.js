@@ -2,6 +2,7 @@ import React from "react";
 import Button from "@material-ui/core/Button";
 import TimeKeeper from "react-timekeeper";
 
+// eslint-disable-next-line react/prop-types
 export const TimeP = ({classes, time, onSelect, style}) => <React.Fragment>
     <TimeKeeper
         className={[classes._clock, classes.clock].join(" ")}

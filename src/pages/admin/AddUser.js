@@ -11,14 +11,14 @@ import {TextMaskEmail} from "../../controllers/TextMasks";
 import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {notifySnackbar, useFirebase, usePages, useStore} from "../../controllers";
+import {useFirebase, usePages} from "../../controllers/General";
+import {notifySnackbar} from "../../controllers/Notifications";
 
 const AddUser = (props) => {
     const [state, setState] = React.useState({requesting: false, error: ""});
     const {email = "", requesting, error = ""} = state;
     const pages = usePages();
     const dispatch = useDispatch();
-    const store = useStore();
     const firebase = useFirebase();
     const history = useHistory();
 
@@ -43,7 +43,7 @@ const AddUser = (props) => {
 
     return <Grid container>
         <Box m={0.5}/>
-        <Grid container spacing={1} alignItems="flex-end">
+        <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
                 <MailIcon/>
             </Grid>
@@ -52,7 +52,7 @@ const AddUser = (props) => {
                     autoFocus={true}
                     color={"secondary"}
                     disabled={requesting}
-                    label="E-mail"
+                    label={"E-mail"}
                     fullWidth
                     InputProps={{
                         inputComponent: TextMaskEmail
@@ -69,7 +69,7 @@ const AddUser = (props) => {
             {error}
         </FormHelperText>
         <Box m={2}/>
-        <ButtonGroup variant="contained" color={"secondary"} size="large" fullWidth>
+        <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth>
             <Button
                 onClick={addUser}
             >

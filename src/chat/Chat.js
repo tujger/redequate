@@ -49,11 +49,6 @@ const Chat = (props) => {
 
     const db = firebase.database();
 
-    const fetchChatKey = () => {
-        return [id, currentUserData.id].sort().join("_");
-    }
-    const chatKey = fetchChatKey();
-
     const handleSend = (value) => {
         dispatch(ProgressView.SHOW);
         const uid = currentUserData.id;
@@ -77,12 +72,13 @@ const Chat = (props) => {
         chatMeta.getOrCreateFor(currentUserData.id, id, history.location.state && history.location.state.meta)
             // .then(console.log)
             .catch(error => {
-                if(error.code === "PERMISSION_DENIED") return;
+                if (error.code === "PERMISSION_DENIED") return;
                 notifySnackbar(error);
             })
             .then(() => {
-                if(chatMeta.redirect) {
+                if (chatMeta.redirect) {
                     history.replace(pages.chat.route + chatMeta.id, {meta: chatMeta.meta});
+                    // eslint-disable-next-line no-throw-literal
                     throw "redirect";
                 }
             })
@@ -92,7 +88,7 @@ const Chat = (props) => {
             .then(userData => isMounted && setState(state => ({...state, chatMeta, userData})))
             .then(() => chatMeta.updateVisit(currentUserData.id))
             .catch(error => {
-                if(error === "redirect") return;
+                if (error === "redirect") return;
                 notifySnackbar(error);
                 history.goBack();
             })
@@ -103,12 +99,6 @@ const Chat = (props) => {
         }
         // eslint-disable-next-line
     }, [id]);
-
-    /*React.useEffect(() => {
-        const chatMeta = ChatMeta(firebase);
-        const chats = chatMeta.getOrCreateFor(currentUserData.id, id);
-
-    }, [])*/
 
     if (!chatMeta || !userData) return <LoadingComponent/>
     return <React.Fragment>
@@ -156,4 +146,3 @@ const Chat = (props) => {
 };
 
 export default withStyles(styles)(Chat);
-

@@ -73,10 +73,10 @@ function TopBottomMenuLayout(props) {
         menuClassName={classes.stickytop}
     >
         <MainContent classes={{content: classes.content}}/>
-        <Grid container justify="center">
+        <Grid container justify={"center"}>
             <BottomMenu items={menu} className={classes.footer}/>
-            <Grid container justify="center" className={classes.version}>
-                <Typography variant="caption">{copyright}</Typography>
+            <Grid container justify={"center"} className={classes.version}>
+                <Typography variant={"caption"}>{copyright}</Typography>
             </Grid>
         </Grid>
         <div className={[classes.stickyBottom].join(" ")}>{null}</div>

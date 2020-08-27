@@ -1,6 +1,6 @@
 import React from "react";
 import Fab from "@material-ui/core/Fab";
-import AddIcon from '@material-ui/icons/Add';
+import AddIcon from "@material-ui/icons/Add";
 import {Link} from "react-router-dom";
 import {connect, useDispatch} from "react-redux";
 import {Clear} from "@material-ui/icons";
@@ -21,6 +21,7 @@ import {styles} from "../../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
 
 function Users(props) {
+    // eslint-disable-next-line react/prop-types
     const {classes, mode = "all", filter, invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
@@ -43,7 +44,7 @@ function Users(props) {
             // dispatch({type: LazyListComponent.RESET, cache: "users"});
             dispatch(ProgressView.HIDE);
         }
-// eslint-disable-next-line
+        // eslint-disable-next-line
     }, [mode]);
 
     let pagination;
@@ -94,6 +95,7 @@ function Users(props) {
                 size: 10
             })
             itemTransform = item => item;
+            break;
         default:
     }
 
@@ -169,7 +171,7 @@ function Users(props) {
             placeholder={<UserItemComponent skeleton={true}/>}
             noItemsComponent={<UserItemComponent label={"No users found"}/>}
         />
-        {/*<ListComponent
+        {/* <ListComponent
             items={items}
             leftAction={listAction({
                 action: (selectedItems) => {
@@ -212,15 +214,17 @@ function Users(props) {
             })}
             emptyComponent={<ServiceComponent text={loading ? "Loading..." : "No users"}/>}
             itemComponent={<UserComponent pages={pages} store={store} firebase={firebase}/>}
-        />*/}
-        {invitation && <Link to={pages.adduser.route}
-                             key={pages.adduser.route}>
+        /> */}
+        {invitation && <Link
+            key={pages.adduser.route}
+            to={pages.adduser.route}
+        >
             <Fab aria-label={"Add"} color={"primary"} className={classes.fab}>
                 <AddIcon/>
             </Fab>
         </Link>}
     </React.Fragment>
-};
+}
 
 Users.MODE = "users_Mode";
 
@@ -242,6 +246,7 @@ const mapStateToProps = ({users}) => ({
 export default connect(mapStateToProps)(withStyles(styles)(Users));
 
 function UsersPagination({firebase, start}) {
+    // eslint-disable-next-line one-var
     let count = 0, countTotal = 0, finished = false, started = true, names = [], emails = [],
         order = "asc", added = [];
 

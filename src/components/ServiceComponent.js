@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 
 const ServiceComponent = props => {
     const {text} = props;
-    return <ListItem alignItems="flex-start" disableGutters={true}>
+    return <ListItem alignItems={"flex-start"} disableGutters={true}>
         <Card raised>
             <CardHeader
                 subheader={text}

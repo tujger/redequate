@@ -53,7 +53,7 @@ function MainMenu(props) {
                             return null;
                         }
                         hasItems = true;
-                        const activeItem = item.route === location.pathname;
+                        const activeItem = item.route === window.location.pathname;
 
                         const child = <ListItem
                             button

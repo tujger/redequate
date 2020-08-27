@@ -5,11 +5,12 @@ import {TodayButton} from "./TodayButton";
 import {Extras} from "./Extras";
 import moment from "moment";
 import {Button, ButtonGroup, Grid} from "@material-ui/core";
-import {ChevronLeft as LeftIcon, ChevronRight as RightIcon,} from "@material-ui/icons";
+import {ChevronLeft as LeftIcon, ChevronRight as RightIcon} from "@material-ui/icons";
 import DatePicker from "react-datepicker-t";
 import "react-datepicker-t/dist/react-datepicker.css";
 
 export const DateP = props => {
+    // eslint-disable-next-line react/prop-types
     const {classes, style, range, date, start, end, onSelect, extras = true, onClockClick, onDateClick, onExtraSelect} = props;
     const [state, setState] = React.useState({monthPicker: false, toDate: null});
     const {monthPicker, toDate} = state;
@@ -58,6 +59,7 @@ export const DateP = props => {
         setState({...state, monthPicker: false, toDate: moment(value)});
     };
 
+    // eslint-disable-next-line react/prop-types
     const CustomDateHeader = ({date, changeYear, decreaseMonth, increaseMonth, prevMonthButtonDisabled, nextMonthButtonDisabled}) => {
         return <Grid container alignItems={"center"}>
             <Grid item><Button
@@ -109,8 +111,8 @@ export const DateP = props => {
         selectsStart={!start}
         showMonthYearPicker={monthPicker}
         startDate={start && start.toDate()}
-        timeCaption="time"
-        timeFormat="HH:mm"
+        timeCaption={"time"}
+        timeFormat={"HH:mm"}
         timeIntervals={15}
     >
         <DateButtons {...props} onClick={onDateClick}/>
@@ -119,9 +121,13 @@ export const DateP = props => {
             <TodayButton onClick={onTodayClick} show={showToday()}/>
             <Extras onSelect={onExtraSelect} show={showToday() && extras}/>
         </ButtonGroup>}
-        {range &&
-        <ClockButtons end={end} onClick={onClockClick} range show={!monthPicker && range}
-                      start={start}/>}
+        {range && <ClockButtons
+            end={end}
+            onClick={onClockClick}
+            range
+            show={!monthPicker && range}
+            start={start}
+        />}
         {range && <Grid container alignItems={"center"}>
             <Grid item xs><TodayButton onClick={onTodayClick} show={showToday()}/></Grid>
             <Extras onSelect={onExtraSelect} range show={showToday() && extras}/>

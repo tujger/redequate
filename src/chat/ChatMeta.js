@@ -1,6 +1,5 @@
 import Pagination from "../controllers/FirebasePagination";
-import {notifySnackbar, UserData} from "../controllers";
-import ProgressView from "../components/ProgressView";
+import {UserData} from "../controllers";
 
 const ONLINE_TIMEOUT = 60000;
 
@@ -14,6 +13,7 @@ Meta:
 */
 
 export function ChatMeta(firebase) {
+    // eslint-disable-next-line one-var
     let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef,
         _redirect, _activeUids = [];
     const indexRef = firebase.database().ref("_chats");
@@ -69,7 +69,7 @@ export function ChatMeta(firebase) {
 
             const tasks = [];
             _activeUids = [];
-            if(_persisted) {
+            if (_persisted) {
                 for (let uid in _meta.members) {
                     tasks.push(new Promise((resolve, reject) => {
                         indexRef.child(uid).child(_id).once("value")
@@ -78,25 +78,16 @@ export function ChatMeta(firebase) {
                                     _activeUids.push(uid);
                                 }
                                 resolve();
-                            }).catch(() => {
-                            _activeUids.push(uid);
-                            resolve();
-                        })
+                            })
+                            .catch(() => {
+                                _activeUids.push(uid);
+                                resolve();
+                            })
                     }));
                 }
             } else {
                 _activeUids = Object.keys(_meta.members || {});
             }
-            // tasks.push(new Promise((resolve, reject) => {
-            //     indexRef.child(_id).child("!meta").once("value")
-            //         .then(snapshot => {
-            //             if (snapshot.exists()) {
-            //                 _persisted = true;
-            //                 _meta = snapshot.val();
-            //             }
-            //             resolve();
-            //         }).catch(reject)
-            // }));
             tasks.push(new Promise((resolve, reject) => {
                 chatsRef.child(_id).orderByChild("created").limitToLast(1).once("value")
                     .then(snap => {
@@ -125,28 +116,28 @@ export function ChatMeta(firebase) {
                     equals: oppositeUid,
                     size: 10
                 }).next();
-                for (let i = chats.length - 1; i >=0; i--) {
+                for (let i = chats.length - 1; i >= 0; i--) {
                     let chat = chats[i];
                     const snapshot = await chatsRef.child(chat.key).child("!meta").once("value");
                     chat.redirect = true;
                     chat.meta = snapshot.val();
 
-                    if(chat.meta && chat.meta.members) {
+                    if (chat.meta && chat.meta.members) {
                         let remove = false;
-                        for(let uid in chat.meta.members) {
+                        for (let uid in chat.meta.members) {
                             try {
                                 const snapshot = await indexRef.child(uid).child(chat.key).once("value");
-                                if(!snapshot.exists()) {
+                                if (!snapshot.exists()) {
                                     remove = true;
                                     break;
                                 }
-                            } catch(e) {
+                            } catch (e) {
                                 console.error(e)
                                 remove = true;
                                 break;
                             }
                         }
-                        if(remove) {
+                        if (remove) {
                             chats.splice(i, 1);
                         }
                     }
@@ -207,9 +198,9 @@ export function ChatMeta(firebase) {
             // updates[`chats/${_id}/!meta/members/${uid}`] = null;
             updates[`_chats/${uid}/${_id}`] = null;
             delete _meta.members[uid];
-            if(_activeUids.indexOf(uid) >= 0) _activeUids.splice(_activeUids.indexOf(uid),1);
+            if (_activeUids.indexOf(uid) >= 0) _activeUids.splice(_activeUids.indexOf(uid), 1);
             console.log(`[ChatMeta] remove uid ${uid} from ${_id}`);
-            if(!_activeUids.length) {
+            if (!_activeUids.length) {
                 console.log(`[ChatMeta] chat is empty! removing entirely: ${_id}`);
                 updates[`chats/${_id}`] = null;
             }
@@ -244,7 +235,7 @@ export function ChatMeta(firebase) {
             const updatesIndex = {};
             await _body.forEachUid(async uid => {
                 const snapshot = await indexRef.child(uid).child(_id).once("value");
-                if(!snapshot.exists()) return;
+                if (!snapshot.exists()) return;
                 updatesIndex[`${uid}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
             });
             await indexRef.update(updatesIndex);
@@ -262,11 +253,11 @@ export function ChatMeta(firebase) {
             _onlineRef && _onlineRef._listener && _onlineRef.off("value", _onlineRef._listener);
             _onlineRef = null;
         },
-        updateVisit: async uid => {
+        updateVisit: uid => {
             if (!_persisted) return;
-            if(!_activeUids.indexOf(uid) < 0) return;
+            if (!_activeUids.indexOf(uid) < 0) return;
             console.log(`[ChatMeta] update visit for ${_id}`);
-            return await chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
+            return chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = snapshot => {

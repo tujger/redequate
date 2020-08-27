@@ -63,31 +63,34 @@ function Titlebar(props) {
 
     const label = itemsFlat.filter(item => item.route === location.pathname).map((item, index) => {
         return needAuth(item.roles, currentUserData)
-            ? pages.login.title || pages.login.label :
-            (matchRole(item.roles, currentUserData)
+            ? pages.login.title || pages.login.label
+            : (matchRole(item.roles, currentUserData)
                 ? item.title || item.label : pages.notfound.title || pages.notfound.label)
     }).filter(item => !!item)[0];
 
-    return <AppBar position="fixed" className={[classes.appbar, className || ""].join(" ")}>
+    return <AppBar position={"fixed"} className={[classes.appbar, className || ""].join(" ")}>
         <Toolbar className={classes.toolbar}>
             {location.pathname !== pages.home.route ?
                 <Button
                     className={classes.back}
-                    color="inherit"
-                    aria-label="go back"
-                    edge="start"
+                    color={"inherit"}
+                    aria-label={"go back"}
+                    edge={"start"}
                     onClick={() => {
                         history.goBack();
                     }}>
                     <BackIcon/>
                     Back
                 </Button> : null}
-            <Typography variant="h6" noWrap className={classes.title}>
+            <Typography variant={"h6"} noWrap className={classes.title}>
                 {label}
             </Typography>
             {currentUserData.id &&
             <Link to={pages.profile.route} className={[classes.label, classes.avatarContainer].join(" ")}>
-                <AvatarView image={currentUserData.image} initials={currentUserData.initials} verified={currentUserData.verified}/>
+                <AvatarView
+                    image={currentUserData.image}
+                    initials={currentUserData.initials}
+                    verified={currentUserData.verified}/>
             </Link>}
         </Toolbar>
         <ProgressView/>
@@ -96,7 +99,6 @@ function Titlebar(props) {
 
 Titlebar.propTypes = {
     title: PropTypes.string,
-    pages: PropTypes.object,
     onHamburgerClick: PropTypes.func
 };
 

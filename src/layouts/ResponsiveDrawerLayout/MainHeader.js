@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import Grid from "@material-ui/core/Grid";
 import withStyles from "@material-ui/styles/withStyles";
 import {Link} from "react-router-dom";
@@ -36,6 +35,7 @@ const styles = theme => ({
 });
 
 const MainHeader = props => {
+    // eslint-disable-next-line react/prop-types
     const {classes, title, image} = props;
     const pages = usePages();
 
@@ -50,11 +50,6 @@ const MainHeader = props => {
             </Link>
         </Grid>
     </div>
-};
-
-MainHeader.propTypes = {
-    items: PropTypes.array,
-    onClick: PropTypes.func
 };
 
 export default withStyles(styles)(MainHeader);

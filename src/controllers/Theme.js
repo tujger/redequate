@@ -89,7 +89,7 @@ export const createTheme = ({colors}) => createMuiTheme({
     }
 })
 
-const theme = createTheme({colors:colors()});
+const theme = createTheme({colors: colors()});
 
 export default theme;
 
@@ -133,8 +133,8 @@ export const styles = theme => ({
         color: "#ff0000",
         fontSize: "small",
         fontWeight: "bolder",
-        marginBottom: theme.spacing(.5),
-        marginLeft: theme.spacing(.5),
+        marginBottom: theme.spacing(0.5),
+        marginLeft: theme.spacing(0.5),
         verticalAlign: "super",
     },
 })
@@ -176,7 +176,7 @@ export const stylesList = theme => ({
         paddingTop: theme.spacing(0),
         [theme.breakpoints.up("md")]: {
             justifyContent: "flex-end",
-            marginTop: theme.spacing(-.5),
+            marginTop: theme.spacing(-0.5),
             paddingLeft: theme.spacing(1),
             "& .MuiSvgIcon-root": {
                 height: theme.spacing(2.5),
@@ -198,7 +198,7 @@ export const stylesList = theme => ({
         paddingTop: theme.spacing(0),
         [theme.breakpoints.up("md")]: {
             justifyContent: "flex-end",
-            marginTop: theme.spacing(-.5),
+            marginTop: theme.spacing(-0.5),
             paddingLeft: theme.spacing(1),
             "& .MuiSvgIcon-root": {
                 height: theme.spacing(2),
@@ -216,7 +216,7 @@ export const stylesList = theme => ({
     cardHeader: {
         alignItems: "flex-start",
         paddingBottom: theme.spacing(1.5),
-        paddingLeft: theme.spacing(.5),
+        paddingLeft: theme.spacing(0.5),
         paddingRight: theme.spacing(2),
         paddingTop: theme.spacing(1.5),
     },
@@ -246,7 +246,7 @@ export const stylesList = theme => ({
     },
     date: {
         color: "#888888",
-        marginRight: theme.spacing(.5),
+        marginRight: theme.spacing(0.5),
         [theme.breakpoints.down("sm")]: {
             fontSize: theme.spacing(1.5),
         },
@@ -288,7 +288,7 @@ export const stylesList = theme => ({
     },
     showMore: {
         color: "#452187",
-        marginTop: theme.spacing(.5),
+        marginTop: theme.spacing(0.5),
     },
     since: {
         alignItems: "flex-end",
@@ -308,8 +308,8 @@ export const stylesList = theme => ({
     },
     userName: {
         fontWeight: "bolder",
-        marginBottom: theme.spacing(.5),
-        marginRight: theme.spacing(.5),
+        marginBottom: theme.spacing(0.5),
+        marginRight: theme.spacing(0.5),
         [theme.breakpoints.down("sm")]: {
             flex: 1,
         },

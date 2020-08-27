@@ -2,7 +2,7 @@ import React from "react";
 import Grid from "@material-ui/core/Grid";
 import {IconButton, withStyles} from "@material-ui/core";
 import {Link, useHistory} from "react-router-dom";
-import {notifySnackbar, toDateString, useCurrentUserData, useFirebase, usePages} from "../controllers";
+import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
@@ -37,12 +37,11 @@ const stylesHeader = theme => ({
 
 const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
     const currentUserData = useCurrentUserData();
-    const firebase = useFirebase();
+    const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
     const {online, timestamp, deleteOpen} = state;
-    const dispatch = useDispatch();
 
     const handleConfirmDeletion = evt => {
         dispatch(ProgressView.SHOW);
@@ -69,7 +68,8 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
         //     }
         // });
         chatMeta.watchOnline({
-            uid: userData.id, onChange: ({online, timestamp, removed}) => {
+            uid: userData.id,
+            onChange: ({online, timestamp, removed}) => {
                 if (removed) {
                     dispatch({type: LazyListComponent.RESET, cache: "chats"});
                     history.goBack();
@@ -104,13 +104,18 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
                     {userComponent(userData)}
                 </Grid>
                 <Grid item>
-                    <div className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
-                         title={online ? "Online" : "Offline"}/>
+                    <div
+                        className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
+                        title={online ? "Online" : "Offline"}
+                    />
                 </Grid>
                 {timestamp > 0 && <Grid item className={classes.date}>
                     {toDateString(timestamp)}
                 </Grid>}
-                {chatMeta.readonly && <Grid item className={classes.date} title={`${userData.name} has removed this chat at his side, so you can not chat here anymore`}>
+                {chatMeta.readonly && <Grid
+                    item className={classes.date}
+                    title={`${userData.name} has removed this chat at his side, so you can not chat here anymore`}
+                >
                     Read-only
                 </Grid>}
             </Grid>
@@ -130,4 +135,3 @@ export default withStyles((theme) => ({
     ...stylesList(theme),
     ...stylesHeader(theme),
 }))(ChatHeader);
-

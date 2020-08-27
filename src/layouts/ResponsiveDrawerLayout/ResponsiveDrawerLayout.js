@@ -67,10 +67,10 @@ function ResponsiveDrawerLayout(props) {
     }
 
     return <React.Fragment><CssBaseline/>
-        {windowData.isNarrow() ?
-            <SwipeableDrawer
+        {windowData.isNarrow()
+            ? <SwipeableDrawer
                 container={container}
-                variant="temporary"
+                variant={"temporary"}
                 anchor={"left"}
                 open={mobileOpen}
                 onClose={handleDrawerToggle}
@@ -84,7 +84,7 @@ function ResponsiveDrawerLayout(props) {
                     narrow
                     title={title}
                 />
-                <Hidden mdUp implementation="css" className={classes.headerMenu}>
+                <Hidden mdUp implementation={"css"} className={classes.headerMenu}>
                     <IconButton onClick={() => setState({...state, mobileOpen: false})}>
                         <ChevronLeft/>
                     </IconButton>
@@ -94,12 +94,11 @@ function ResponsiveDrawerLayout(props) {
                     // dispatch(ProgressView.SHOW);
                     setState({...state, mobileOpen: false})
                 }}/>
-                <Grid container justify="center">
-                    <Typography variant="caption">{copyright}</Typography>
+                <Grid container justify={"center"}>
+                    <Typography variant={"caption"}>{copyright}</Typography>
                 </Grid>
             </SwipeableDrawer>
-            :
-            <Drawer variant="permanent" open>
+            : <Drawer variant={"permanent"} open>
                 <headerComponent.type
                     {...headerComponent.props}
                     narrow
@@ -110,8 +109,8 @@ function ResponsiveDrawerLayout(props) {
                     // dispatch(ProgressView.SHOW);
                     setState({...state, mobileOpen: false})
                 }}/>
-                <Grid container justify="center">
-                    <Typography variant="caption">{copyright}</Typography>
+                <Grid container justify={"center"}>
+                    <Typography variant={"caption"}>{copyright}</Typography>
                 </Grid>
             </Drawer>
         }

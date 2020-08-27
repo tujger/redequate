@@ -22,6 +22,7 @@ const styles = theme => ({
 });
 
 const MainContent = props => {
+    // eslint-disable-next-line react/prop-types
     const {classes} = props;
     const pages = usePages();
     const technical = useTechnicalInfo();
@@ -47,8 +48,11 @@ const MainContent = props => {
                                         children={null}
                                         onChange={(inView) => {
                                             let swipeable = inView;
-                                            if(item.pullToRefresh === false) swipeable = false;
-                                            wrapperControlCall({method: "swipeable", value: swipeable}).catch(notifySnackbar)
+                                            if (item.pullToRefresh === false) swipeable = false;
+                                            wrapperControlCall({
+                                                method: "swipeable",
+                                                value: swipeable
+                                            }).catch(notifySnackbar)
                                         }}
                                     />}
                                     <item.component.type {...props} classes={{}} {...item.component.props} />

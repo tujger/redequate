@@ -1,13 +1,7 @@
-import {
-    cacheDatas,
-    MenuBadge,
-    notifySnackbar,
-    useCurrentUserData,
-    useFirebase,
-    usePages,
-    UserData
-} from "../controllers";
 import React from "react";
+import {notifySnackbar} from "../controllers/Notifications";
+import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
+import {useCurrentUserData, UserData} from "../controllers/UserData";
 import Pagination from "../controllers/FirebasePagination";
 import {ChatMeta} from "./ChatMeta";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";

@@ -9,7 +9,7 @@ const styles = (theme) => ({
     },
     progress: {
         [theme.breakpoints.down("sm")]: {
-            bottom: theme.spacing(-.5),
+            bottom: theme.spacing(-0.5),
             left: 0,
             position: "absolute",
             right: 0,
@@ -19,7 +19,7 @@ const styles = (theme) => ({
 
 const ProgressView = ({show, value = null, classes, className}) => {
     return <LinearProgress
-        color="secondary"
+        color={"secondary"}
         variant={value === null ? "indeterminate" : "determinate"}
         value={value}
         className={[classes.progress, show ? "" : classes.invisibleProgress, className].join(" ")}/>

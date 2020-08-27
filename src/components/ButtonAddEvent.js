@@ -45,6 +45,7 @@ const styles = theme => ({
 
 let anchor;
 
+// eslint-disable-next-line react/prop-types
 const Dropdown = ({children, classes, isOpen, onRequestClose}) => {
     return <Menu open={isOpen} anchorEl={anchor} onClose={onRequestClose}>
         {children.map((item, index) => {
@@ -56,6 +57,7 @@ const Dropdown = ({children, classes, isOpen, onRequestClose}) => {
 };
 
 const CButton = (props) => {
+    // eslint-disable-next-line react/prop-types
     const {children, childrenalt, ...otherprops} = props;
     return <Button {...otherprops} children={childrenalt || children}/>
 };

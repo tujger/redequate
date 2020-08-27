@@ -128,8 +128,8 @@ export function currentUserData(state = {
 
 // new stuff
 export function UserData(firebase) {
-    let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp,
-        _error, _loaded = {}, _persisted;
+    // eslint-disable-next-line one-var
+    let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp, _loaded = {}, _persisted;
 
     const _dateFormatted = date => {
         if (!date) return "";
@@ -146,7 +146,7 @@ export function UserData(firebase) {
 
     const _fetch = async ref => {
         // try {
-        return await ref.once("value");
+        return ref.once("value");
         // } catch (error) {
         //     console.error(error);
         //     _error = error;
@@ -197,6 +197,7 @@ export function UserData(firebase) {
 
     const _body = {
         get asString() {
+            // eslint-disable-next-line no-control-regex
             return _body.toString().replace(/\x1b\[\d+m/g, "");
         },
         get created() {
@@ -219,9 +220,9 @@ export function UserData(firebase) {
         },
         get initials() {
             if (_public.name) {
-                const tokens = _public.name.split(/[\W]/, 2);//.split(/[^A-Za-z]/, 2);
+                const tokens = _public.name.split(/[\W]/, 2);// .split(/[^A-Za-z]/, 2);
                 let result = tokens.map(token => token.substr(0, 1).toUpperCase()).join("");
-                if(!result) result = _public.name.trim().substr(0, 1);
+                if (!result) result = _public.name.trim().substr(0, 1);
                 return result;
             }
             return null;
@@ -404,8 +405,7 @@ export function UserData(firebase) {
                 }))
                 _loading = {..._loading, email: true};
             }
-            const res = await Promise.all(tasks);
-            // if(res.length) console.warn("[UserData] resolved", res);
+            await Promise.all(tasks);
             _public._sort_name = fetchSortName();
             _requestedTimestamp = new Date().getTime();
             return _body;
@@ -516,7 +516,7 @@ export function UserData(firebase) {
         toString: () => {
             return `id: \x1b[34m${_id}\x1b[30m, name: \x1b[34m${_public.name}\x1b[30m, role: \x1b[34m${_role}\x1b[30m, public: ${JSON.stringify(_public)}`
         },
-        update: (key = data, data) => {
+        update: (data, key = data) => {
             if (key === data) {
                 key = null;
             }
@@ -560,6 +560,6 @@ export const normalizeSortName = text => {
     if (!text || !(text.constructor.name === "String")) return text;
     return (text || "")
         .trim()
-        .replace(/[~`!@#$%^&*()\-_=+\[\]{}|\\;:'",<.>\/?\s™®～]+/g, '')
+        .replace(/[~`!@#$%^&*()\-_=+[\]{}|\\;:'",<.>/?\s™®～]+/g, "")
         .toLowerCase();
 }

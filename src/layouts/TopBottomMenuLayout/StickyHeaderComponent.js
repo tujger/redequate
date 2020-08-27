@@ -48,7 +48,7 @@ export const StickyHeaderComponent = withStyles(styles)(({classes, content, imag
     const refObserver = React.createRef();
 
     React.useEffect(() => {
-        const observer = new IntersectionObserver((entries) => {
+        const observer = new window.IntersectionObserver((entries) => {
             entries.map(entry => {
                 setState(state => ({...state, collapsed: !entry.isIntersecting}));
                 return null;
@@ -68,8 +68,9 @@ export const StickyHeaderComponent = withStyles(styles)(({classes, content, imag
             className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
         <div className={classes.content} style={{backgroundImage: `url(${image})`}}>{content}</div>
         <div ref={refObserver} className={classes.observer}/>
-        <div className={[classes.sticky, collapsed ? classes.stickycollapsed : null].join(" ")}
-             style={collapsed ? {backgroundImage: `url(${image})`} : null}
+        <div
+            className={[classes.sticky, collapsed ? classes.stickycollapsed : null].join(" ")}
+            style={collapsed ? {backgroundImage: `url(${image})`} : null}
         >
             {menuComponent}
         </div>

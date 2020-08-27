@@ -22,7 +22,13 @@ export const lazyListComponentReducer = (state = {}, action) => {
                 if (pagination) pagination.reset();
                 return {
                     ...state,
-                    ["LazyListComponent_" + cache]: {...cachedData, random: Math.random(), items: [], loading: false, finished: false}
+                    ["LazyListComponent_" + cache]: {
+                        ...cachedData,
+                        random: Math.random(),
+                        items: [],
+                        loading: false,
+                        finished: false
+                    }
                 };
             } else {
                 return {...state, random: Math.random()};
