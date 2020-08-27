@@ -1,10 +1,10 @@
 {
-    "name": "edeqa-pwa-react-core",
+    "name": "redequate",
     "version": "1.0.0",
-    "description": "Edeqa PWA React core",
+    "description": "Redequate - React PWA core by Edeqa",
     "author": "tujger",
     "license": "MIT",
-    "repository": "tujger/edeqa-pwa-react-core",
+    "repository": "tujger/redequate",
     "main": "dist/index.js",
     "examples_main": "dist/examples/index.js",
     "module": "dist/index.es.js",

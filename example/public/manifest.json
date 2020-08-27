@@ -1,6 +1,6 @@
 {
-  "short_name": "edeqa-pwa-react-core",
-  "name": "edeqa-pwa-react-core",
+  "short_name": "redequate",
+  "name": "redequate",
   "start_url": "./index.html",
   "display": "standalone",
   "theme_color": "#000000",

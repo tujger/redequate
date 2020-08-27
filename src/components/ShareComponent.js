@@ -18,7 +18,7 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
 export default ShareComponent;
 
-export const share = ({title, text, url}) => {
+export async function share({title, text, url}) {
     if (!navigator.share && !hasWrapperControlInterface()) {
         copyToClipboard(url);
     } else {
@@ -36,7 +36,7 @@ export const share = ({title, text, url}) => {
     }
 }
 
-export const copyToClipboard = async text => {
+export async function copyToClipboard(text) {
     if(navigator.clipboard) {
         return navigator.clipboard.writeText(text)
             .then(() => notifySnackbar("Copied to the clipboard"))

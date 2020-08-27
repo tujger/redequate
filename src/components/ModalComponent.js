@@ -5,10 +5,10 @@ import {useHistory} from "react-router-dom";
 
 const styles = theme => ({
     modal: {
-        [theme.breakpoints.up("md")]: {
+        [theme.breakpoints.up("sm")]: {
             width: "60%",
         },
-        [theme.breakpoints.down("sm")]: {
+        [theme.breakpoints.down("xs")]: {
             borderRadius: 0,
             bottom: 0,
             left: 0,

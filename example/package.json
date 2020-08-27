@@ -1,6 +1,6 @@
 {
-  "name": "edeqa-pwa-react-core-example",
-  "homepage": "https://tujger.github.io/edeqa-pwa-react-core",
+  "name": "redequate-example",
+  "homepage": "https://tujger.github.io/redequate",
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
@@ -9,7 +9,7 @@
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "react-scripts": "^1.1.4",
-    "edeqa-pwa-react-core": "file:.."
+    "redequate": "file:.."
   },
   "scripts": {
     "start": "react-scripts start",

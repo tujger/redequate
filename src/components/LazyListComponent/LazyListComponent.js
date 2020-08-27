@@ -5,6 +5,7 @@ import {connect, useDispatch} from "react-redux";
 import PropTypes from "prop-types";
 import {Observer} from "./Observer";
 import {Scroller} from "./Scroller";
+import {forceFirebaseReinit} from "../../controllers/Firebase";
 
 function LazyListComponent
 ({
@@ -85,7 +86,10 @@ function LazyListComponent
                 notifySnackbar({
                     buttonLabel: "Refresh",
                     error: error,
-                    onButtonClick: () => window.location.reload(),
+                    onButtonClick: () => {
+                        forceFirebaseReinit();
+                        window.location.reload()
+                    },
                 });
                 return {
                     finished: true,
@@ -167,11 +171,11 @@ function LazyListComponent
             liveRemoveRef.on("child_removed", liveRemoveListener);
         }
         return () => {
-            isMounted = false;
             liveAddRef && liveAddRef.off("child_added", liveAddListener);
             liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
             if (!disableProgress) dispatch(ProgressView.HIDE);
             if (!cache) pagination.reset();
+            isMounted = false;
         }
     }, [pagination.term, givenPagination.term]);
 

@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import ExampleComponent from 'edeqa-pwa-react-core'
+import ExampleComponent from 'redequate'
 
 export default class App extends Component {
   render () {

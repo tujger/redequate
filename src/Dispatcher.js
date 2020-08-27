@@ -8,7 +8,7 @@ import PropTypes from "prop-types";
 import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
 import {
-    cacheDatas,
+    cacheDatas, checkIfCompatible,
     fetchDeviceId,
     Layout,
     useFirebase,
@@ -24,9 +24,9 @@ import {hasNotifications, setupReceivingNotifications} from "./controllers/Notif
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
 
-const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
-const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
-const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout/TopBottomMenuLayout"));
+const BottomToolbarLayout = React.lazy(() => import(/* webpackChunkName: 'bottom' */"./layouts/BottomToolbarLayout/BottomToolbarLayout"));
+const ResponsiveDrawerLayout = React.lazy(() => import(/* webpackChunkName: 'responsive' */"./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
+const TopBottomMenuLayout = React.lazy(() => import(/* webpackChunkName: 'topmenu' */"./layouts/TopBottomMenuLayout/TopBottomMenuLayout"));
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -48,6 +48,8 @@ console.error = function(...args) {
         origin.call(this, error);
     }
 }
+
+const isIncompatible = !checkIfCompatible();
 
 let oldWidth;
 function Dispatcher(props) {
@@ -229,7 +231,7 @@ function _DispatcherRoutedBody(props) {
             />
         </Switch>
         {itemsFlat.map((item, index) => {
-            if (!item.daemon || !item.component || item.disabled) return null;
+            if (!item.daemon || !item.component || item.disabled || isIncompatible) return null;
             if (!matchRole(item.roles, currentUserData)) return null;
             return <item.component.type
                 key={item.route}

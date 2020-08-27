@@ -148,18 +148,27 @@ function EditProfile(props) {
 
         let publishing = {};
 
+        if(currentUserData.image && image !== currentUserData.image) {
+            console.log("[EditProfile] delete", currentUserData.image)
+            try {
+                await firebase.storage().refFromURL(currentUserData.image).delete();
+            } catch(e) {
+                console.error(e);
+            }
+        }
         if (uppy) {
             publishing = await uploadComponentPublish(firebase)({
                 auth: userData.id,
                 uppy,
+                name: "profile",
                 onprogress: progress => {
                     dispatch({...ProgressView.SHOW, value: progress});
                 },
                 deleteFile: userData.public.image
             });
+        } else if(image) {
         }
         const {url: imageSaved} = publishing;
-
         if (isAdminAllowed) await saveUserByAdmin();
 
         const additionalPublic = {};

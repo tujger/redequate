@@ -201,7 +201,7 @@ export const notifySnackbar = props => {
         if(error) console.error(error);
         else console.log(`[Notifications] ${JSON.stringify(props)}`);
         console.error("Cannot notify push notifications due to control element is unavailable. Please set up " +
-            "\"import {NotificationsSnackbar} from 'edeqa-pwa-react-core'\" and <NotificationsSnackbar/> in your file.");
+            "\"import {NotificationsSnackbar} from 'redequate'\" and <NotificationsSnackbar/> in your file.");
         return;
     }
     if (error && (error instanceof Error || error.constructor.name === "FirebaseStorageError")) {

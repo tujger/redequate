@@ -145,7 +145,6 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
 
     React.useEffect(() => {
         const uppy = Uppy({
-            debug: true,
             allowMultipleUploads: false,
             autoProceed: true,
             locale: {

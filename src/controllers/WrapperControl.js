@@ -1,5 +1,6 @@
 import React from "react";
 import Uuid from "react-uuid";
+import {forceFirebaseReinit} from "./Firebase";
 
 const callQueue = {};
 
@@ -15,6 +16,8 @@ export const installWrapperControl = (firebase) => {
                     console.log("[WC] off => on firebase.database triggered");
                     firebase.database().goOffline();
                     firebase.database().goOnline();
+                    // console.log("[WC] firebase reinit");
+                    // forceFirebaseReinit();
                     return;
                 }
                 if (!id || !callQueue[id]) {

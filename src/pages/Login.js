@@ -18,7 +18,7 @@ import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifi
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
-import {TextMaskEmail, UserData} from "../controllers";
+import {forceFirebaseReinit, TextMaskEmail, UserData} from "../controllers";
 import ConfirmComponent from "../components/ConfirmComponent";
 
 function Login(props) {

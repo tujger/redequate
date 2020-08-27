@@ -11,7 +11,9 @@ require("firebase/messaging");
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
     try {
+        console.log("[Firebase] init")
         firebase.initializeApp(firebaseConfig);
+        firebase.config = firebaseConfig;
     } catch (e) {
         console.error(e);
     }
@@ -27,6 +29,15 @@ const Firebase = firebaseConfig => {
 };
 
 export default Firebase;
+
+export const forceFirebaseReinit = () => {
+    console.log("[Firebase] reinit", firebase.config)
+    return firebase.app().delete().then(() => {
+        firebase.initializeApp(firebase.config);
+        window.location.reload(); // FIXME
+        return firebase;
+    });
+}
 
 export const fetchFunction = firebase => (name, options) => new Promise((resolve, reject) => {
     try {

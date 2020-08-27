@@ -9,6 +9,20 @@ export const fetchDeviceId = () => {
     return localStorage.getItem("device_id");
 };
 
+export const checkIfCompatible = () => {
+    try {
+        const deviceUUID = new DeviceUUID.DeviceUUID();
+        const deviceMeta = deviceUUID.parse();
+        const browser = deviceMeta.browser.toLowerCase();
+        const version = parseInt(deviceMeta.version);
+        if (browser === "edge" && version < 18) return false;
+    } catch (e) {
+        console.error(e);
+        return false;
+    }
+    return true;
+}
+
 let firebaseInstance;
 let pagesInstance;
 let storeInstance = {};
