@@ -16,8 +16,10 @@ export const installWrapperControl = (firebase) => {
                     console.log("[WC] off => on firebase.database triggered");
                     firebase.database().goOffline();
                     firebase.database().goOnline();
-                    // console.log("[WC] firebase reinit");
-                    // forceFirebaseReinit();
+                    return;
+                } else if(id === "_on_refresh") {
+                    console.log("[WC] reinit firebase and refresh");
+                    forceFirebaseReinit();
                     return;
                 }
                 if (!id || !callQueue[id]) {

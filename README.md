@@ -49,7 +49,7 @@ There is important to define two variables: `pages` and `menu`;
 
         about: {route: "/about", label: "About", icon: <AboutIcon/>, component: <About/>},
 
-        chat: {route: "/chat/:id", label: "Chat", icon: <ChatsIcon/>, component: <Chat/>, roles: [Role.ADMIN, Role.USER]},
+        chat: {route: "/chat/:id", label: "Chat", icon: <ChatsIcon/>, component: <Chat/>, pullToRefresh: false, roles: [Role.ADMIN, Role.USER]},
 
         chats: {route: "/chats", label: "Chats", icon: <ChatsIcon/>, component: <Chats/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <ChatsCounter/>},
 
@@ -111,6 +111,7 @@ Page options are:
     label: String,
     icon: React.Component,
     component: React.Component,
+    pullToRefresh: Boolean, // if 'false' then disables pull-to-refresh in mobile wrapper
     roles?: Array,
     adornment?: (userData) => React.Component, // will be added to menu item
     daemon?: Boolean, // if 'true' then component will be mandatory called with 'daemon' argument

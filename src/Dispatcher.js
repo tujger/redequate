@@ -108,7 +108,7 @@ function Dispatcher(props) {
                         }
                         return useTechnicalInfo();
                     });
-                })
+                });
                 setState({...state, firebase, store});
             } catch(e) {
                 console.error(e);

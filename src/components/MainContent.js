@@ -6,6 +6,9 @@ import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../cont
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages, useTechnicalInfo, checkIfCompatible} from "../controllers/General";
 import TechnicalInfoView from "./TechnicalInfoView";
+import {InView} from "react-intersection-observer";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
+import {notifySnackbar} from "../controllers/Notifications";
 
 const DeviceUUID = require("device-uuid");
 
@@ -54,7 +57,17 @@ const MainContent = props => {
                         return needAuth(item.roles, currentUserData)
                             ? <pages.login.component.type {...props} {...pages.login.component.props} />
                             : (matchRole(item.roles, currentUserData) && !item.disabled && item.component
-                                ? <item.component.type {...props} classes={{}} {...item.component.props} />
+                                ? <React.Fragment>
+                                    {hasWrapperControlInterface() && <InView
+                                        children={null}
+                                        onChange={(inView) => {
+                                            let swipeable = inView;
+                                            if(item.pullToRefresh === false) swipeable = false;
+                                            wrapperControlCall({method: "swipeable", value: swipeable}).catch(notifySnackbar)
+                                        }}
+                                    />}
+                                    <item.component.type {...props} classes={{}} {...item.component.props} />
+                                </React.Fragment>
                                 : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)
                     }}
                 />
