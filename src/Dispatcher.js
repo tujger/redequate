@@ -4,6 +4,7 @@ import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import withWidth from "@material-ui/core/withWidth";
+import Typography from "@material-ui/core/Typography";
 import PropTypes from "prop-types";
 import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
@@ -23,6 +24,7 @@ import {default as defaultTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
+import TechnicalInfoView from "./components/TechnicalInfoView";
 
 const BottomToolbarLayout = React.lazy(() => import(/* webpackChunkName: 'bottom' */"./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import(/* webpackChunkName: 'responsive' */"./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -31,20 +33,20 @@ const TopBottomMenuLayout = React.lazy(() => import(/* webpackChunkName: 'topmen
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 const origin = console.error;
-console.error = function(...args) {
+console.error = function (...args) {
     origin.call(this, ...args);
-    if(args.length > 1) return;
+    if (args.length > 1) return;
     // return;
     try {
         const firebase = useFirebase();
         const currentUserData = useCurrentUserData();
-        if(!firebase || !firebase.database) return;
+        if (!firebase || !firebase.database) return;
         firebase.database().ref("errors").push({
             error: args[0].stack || args[0],
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             uid: currentUserData.id || "anonymous"
         });
-    } catch(error) {
+    } catch (error) {
         origin.call(this, error);
     }
 }
@@ -52,6 +54,7 @@ console.error = function(...args) {
 const isIncompatible = !checkIfCompatible();
 
 let oldWidth;
+
 function Dispatcher(props) {
     const {copyright, firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
@@ -66,6 +69,7 @@ function Dispatcher(props) {
     });
 
     React.useEffect(() => {
+        if(isIncompatible) return;
         let maintenanceRef;
         (async () => {
             try {
@@ -110,7 +114,7 @@ function Dispatcher(props) {
                     });
                 });
                 setState({...state, firebase, store});
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
             }
         })();
@@ -119,6 +123,14 @@ function Dispatcher(props) {
         }
         // eslint-disable-next-line
     }, []);
+
+    if (isIncompatible) return <ThemeProvider theme={theme}><TechnicalInfoView
+        message={<React.Fragment>
+            <Typography>Oops, we have detected that your browser is outdated and cannot be supported
+                by {title} :(</Typography>
+            <Typography>We'll be happy to see you back using {title} with up-to-date browser!</Typography>
+        </React.Fragment>}
+    /></ThemeProvider>
 
     if (!store || !firebase) return <LoadingComponent/>;
 
@@ -153,6 +165,7 @@ function Dispatcher(props) {
 }
 
 let widthPoint;
+
 function _DispatcherRoutedBody(props) {
     const {pages, menu, width, copyright, headerComponent, layout, title, logo, random} = props;
     const dispatch = useDispatch();

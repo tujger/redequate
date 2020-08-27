@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import Box from "@material-ui/core/Box";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Divider from "@material-ui/core/Divider";
 import Drawer from "@material-ui/core/Drawer";
@@ -96,7 +95,6 @@ function ResponsiveDrawerLayout(props) {
                     setState({...state, mobileOpen: false})
                 }}/>
                 <Grid container justify="center">
-                    <Box m={1}/>
                     <Typography variant="caption">{copyright}</Typography>
                 </Grid>
             </SwipeableDrawer>
@@ -113,7 +111,6 @@ function ResponsiveDrawerLayout(props) {
                     setState({...state, mobileOpen: false})
                 }}/>
                 <Grid container justify="center">
-                    <Box m={1}/>
                     <Typography variant="caption">{copyright}</Typography>
                 </Grid>
             </Drawer>

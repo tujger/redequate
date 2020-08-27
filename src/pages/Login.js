@@ -245,7 +245,7 @@ const LoginLayout =
                     />
                 </Grid>
             </Grid>
-            <Box m={1}/>
+            <Box m={2}/>
             <Grid container spacing={1} alignItems="center">
                 <Button disabled={disabled} onClick={onRequestLogin} variant={"contained"} color={"secondary"}
                         size="large"

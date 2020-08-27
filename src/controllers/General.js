@@ -16,6 +16,7 @@ export const checkIfCompatible = () => {
         const browser = deviceMeta.browser.toLowerCase();
         const version = parseInt(deviceMeta.version);
         if (browser === "edge" && version < 18) return false;
+        // if (browser === "chrome") return false;
     } catch (e) {
         console.error(e);
         return false;
