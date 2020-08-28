@@ -1,5 +1,6 @@
 import React from "react";
-import {Button, ButtonGroup} from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
 
 // eslint-disable-next-line react/prop-types
 export const DateButtons = ({classes, date, start, end, onClick}) => {

@@ -7,7 +7,7 @@ import {UserData} from "../controllers/UserData";
 import {cacheDatas, useFirebase} from "../controllers/General";
 import AvatarView from "./AvatarView";
 import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
-import {withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
 import ConfirmComponent from "./ConfirmComponent";
 import {toDateString} from "../controllers/DateFormat";
 import {notifySnackbar} from "../controllers/Notifications";

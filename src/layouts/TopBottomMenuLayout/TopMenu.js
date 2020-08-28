@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {MenuItem, withStyles} from "@material-ui/core";
+import MenuItem from "@material-ui/core/MenuItem";
+import withStyles from "@material-ui/styles/withStyles";
 import {currentRole, matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {Link, useHistory} from "react-router-dom";
 import Paper from "@material-ui/core/Paper";

@@ -15,12 +15,12 @@ export default [{
             file: pkg.main,
             format: 'cjs',
             sourcemap: true
-        },
+        }/*,
         {
             file: pkg.module,
             format: 'es',
             sourcemap: true
-        }
+        }*/
     ],
     plugins: [
         external(),
@@ -30,29 +30,49 @@ export default [{
         url(),
         svgr(),
         babel({
-            exclude: ['node_modules/**', 'src/lib/geo-coder/**'],
+            exclude: ['node_modules/**'],
             plugins: ['external-helpers']
         }),
         resolve(),
         commonjs()
     ]
-}/*,
+},
     {
         input: {
-            DateTimePicker: "src/components/DateTimePicker/index.js",
-
+            index: 'src/index.js',
+            Chat: 'src/chat/Chat.js',
+            Chats: 'src/chat/Chats.js',
+            ChatsCounter: 'src/chat/ChatsCounter.js',
+            Dispatcher: 'src/Dispatcher.js',
+            EditProfile: 'src/pages/EditProfile.js',
+            Login: 'src/pages/Login.js',
+            UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
+            Users: 'src/pages/admin/Users.js',
+            DateTimePicker: 'src/components/DateTimePicker/index.js'
         },
         output: [
             {
-                dir: "cjs",
+                dir: 'dist',
+                exports: 'named',
                 format: 'cjs',
                 sourcemap: true
-            },
+            }/*,
             {
-                dir: "es",
+                dir: 'dist/es',
+                exports: 'named',
                 format: 'es',
                 sourcemap: true
-            }
+            }*/
+        ],
+        plugins: [
+            external(),
+            url(),
+            babel({
+                exclude: ['node_modules/**'],
+                plugins: ['external-helpers']
+            }),
+            resolve(),
+            commonjs()
         ]
-    }*/
+    }
 ]

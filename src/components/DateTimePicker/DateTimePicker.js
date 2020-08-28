@@ -1,5 +1,5 @@
 import React from "react";
-import {withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
 import PropTypes from "prop-types";
 import {Picker} from "./Picker";
 import {InputPicker} from "./InputPicker";

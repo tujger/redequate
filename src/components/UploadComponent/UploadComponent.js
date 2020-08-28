@@ -6,17 +6,16 @@ import Tus from "@uppy/tus"
 import ProgressBar from "@uppy/progress-bar";
 import Webcam from "@uppy/webcam";
 import Dashboard from "@uppy/dashboard";
-import Uuid from "react-uuid";
-import "@uppy/core/dist/style.css"
-import "@uppy/progress-bar/dist/style.css"
-import "@uppy/dashboard/dist/style.css"
-import "@uppy/webcam/dist/style.css"
 import {connect} from "react-redux";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
 import Resizer from "react-image-file-resizer";
 import ReactDOM from "react-dom";
-import {notifySnackbar} from "../controllers";
+import {notifySnackbar} from "../../controllers/Notifications";
+import "@uppy/core/dist/style.css";
+import "@uppy/progress-bar/dist/style.css";
+import "@uppy/dashboard/dist/style.css";
+import "@uppy/webcam/dist/style.css";
 
 const MAX_FILE_SIZE = 20 * 1024;
 
@@ -312,80 +311,3 @@ UploadComponent.propTypes = {
 };
 
 export default connect()(withStyles(styles)(UploadComponent));
-
-export function uploadComponentPublish(firebase) {
-    return ({uppy, name, metadata, onprogress, auth, deleteFile}) => new Promise((resolve, reject) => {
-        if (!uppy) {
-            resolve();
-            return;
-        }
-        const file = uppy.getFiles()[0];
-
-        const fetchImage = async () => {
-            if (uppy._uris && uppy._uris[file.id]) {
-                return uppy._uris[file.id];
-            }
-            return window.fetch(file.uploadURL).then(response => {
-                return response.blob();
-            })
-        }
-
-        const uuid = Uuid();
-        const fileRef = firebase.storage().ref().child(auth + "/images/" + (name ? name + "-" : "") + uuid + "-" + file.name);
-
-        console.log("[Upload] uploaded", file, fileRef);
-        return fetchImage().then(blob => {
-            // eslint-disable-next-line promise/param-names
-            return new Promise((resolve1, reject1) => {
-                const uploadTask = fileRef.put(blob, {
-                    contentType: file.type,
-                    customMetadata: {
-                        ...metadata,
-                        uid: auth,
-                        // message: Uuid(),
-                        filename: file.name
-                    }
-                });
-                uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-                    let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
-                    onprogress && onprogress(progressValue);
-                }, error => {
-                    reject(error);
-                }, () => {
-                    resolve1(uploadTask.snapshot.ref);
-                });
-            });
-        }).then(ref => {
-            uploadComponentClean(uppy);
-            if (deleteFile) {
-                try {
-                    console.log("[Upload] delete old file", deleteFile);
-                    firebase.storage().refFromURL(deleteFile).delete();
-                } catch (e) {
-                    console.error("[Upload]", e);
-                }
-            }
-            return ref;
-        }).then(ref => {
-            ref.getDownloadURL().then(url => {
-                ref.getMetadata().then(metadata => {
-                    resolve({url: url, metadata: metadata});
-                }).catch(error => {
-                    reject(error);
-                })
-            }).catch(error => {
-                reject(error);
-            })
-        });
-    });
-}
-
-export function uploadComponentClean(uppy) {
-    if (uppy) {
-        const file = uppy.getFiles()[0];
-        if (file) {
-            uppy.removeFile(file.id);
-            console.log("[UploadComponent] file removed", file.uploadURL);
-        }
-    }
-}

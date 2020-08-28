@@ -29,7 +29,7 @@ import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
-import {withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import {styles} from "../controllers/Theme";

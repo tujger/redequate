@@ -11,12 +11,14 @@ import MainAppbar from "./MainAppbar";
 import MainContent from "../../components/MainContent";
 import MainMenu from "./MainMenu";
 import Snackbar from "../../components/Snackbar";
-import {NotificationsSnackbar} from "../../controllers/Notifications";
+import {NotificationsSnackbar, notifySnackbar} from "../../controllers/Notifications";
 import {useWindowData} from "../../controllers/General";
 import IconButton from "@material-ui/core/IconButton";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
 import Hidden from "@material-ui/core/Hidden";
 import HeaderComponent from "../../components/HeaderComponent";
+import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers";
+import {InView} from "react-intersection-observer";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -54,6 +56,7 @@ function ResponsiveDrawerLayout(props) {
     const handleDrawerToggle = () => {
         setState({...state, mobileOpen: !mobileOpen});
     };
+
     if (mobileOpen) {
         onpopstateBackup = window.onpopstate;
         window.onpopstate = () => {
@@ -65,6 +68,10 @@ function ResponsiveDrawerLayout(props) {
         window.onpopstate = onpopstateBackup;
         onpopstateBackup = null;
     }
+    hasWrapperControlInterface() && wrapperControlCall({
+        method: "swipeable",
+        value: !mobileOpen
+    }).catch(notifySnackbar);
 
     return <React.Fragment><CssBaseline/>
         {windowData.isNarrow()

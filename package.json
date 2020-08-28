@@ -7,9 +7,6 @@
     "repository": "tujger/redequate",
     "main": "dist/index.js",
     "examples_main": "dist/examples/index.js",
-    "module": "dist/index.es.js",
-    "examples_module": "dist/examples/index.es.js",
-    "jsnext:main": "dist/index.es.js",
     "engines": {
         "node": ">=8",
         "npm": ">=5"

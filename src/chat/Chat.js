@@ -2,7 +2,7 @@ import React from "react";
 import {useDispatch} from "react-redux";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
-import {withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
 import {useHistory, useParams} from "react-router-dom";
 import {InView} from "react-intersection-observer";
 import {cacheDatas, notifySnackbar, useCurrentUserData, useFirebase, usePages, UserData} from "../controllers";

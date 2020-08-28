@@ -1,5 +1,5 @@
 import React from "react";
-import {withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
 import {InView} from "react-intersection-observer";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";

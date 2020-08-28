@@ -1,6 +1,7 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
-import {IconButton, withStyles} from "@material-ui/core";
+import withStyles from "@material-ui/styles/withStyles";
+import IconButton from "@material-ui/core/IconButton";
 import {Link, useHistory} from "react-router-dom";
 import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";

@@ -3,7 +3,7 @@ import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import {Link} from "react-router-dom";
 import {connect, useDispatch} from "react-redux";
-import {Clear} from "@material-ui/icons";
+import Clear from "@material-ui/icons/Clear";
 import IconButton from "@material-ui/core/IconButton";
 import Input from "@material-ui/core/Input";
 import Select from "@material-ui/core/Select";

@@ -1,7 +1,10 @@
 import React from "react";
 import moment from "moment";
-import {Divider, IconButton, Menu, MenuItem} from "@material-ui/core";
-import {MoreVert as MenuIcon} from "@material-ui/icons";
+import Divider from "@material-ui/core/Divider";
+import IconButton from "@material-ui/core/IconButton";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import MenuIcon from "@material-ui/icons/MoreVert";
 
 // eslint-disable-next-line react/prop-types
 export const Extras = ({show, range, onSelect}) => {

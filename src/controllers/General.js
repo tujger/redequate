@@ -89,8 +89,14 @@ const CacheDatas = function () {
                 _count = 1;
                 _cache = {};
             }
-            _cache[id] = data;
-            return data;
+            let result;
+            if (data instanceof Function) {
+                result = data();
+            } else {
+                result = data;
+            }
+            _cache[id] = result;
+            return result;
         },
         remove: id => {
             delete _cache[id];

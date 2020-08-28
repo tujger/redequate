@@ -1,5 +1,5 @@
 import Pagination from "../controllers/FirebasePagination";
-import {UserData} from "../controllers";
+import {UserData} from "../controllers/UserData";
 
 const ONLINE_TIMEOUT = 60000;
 

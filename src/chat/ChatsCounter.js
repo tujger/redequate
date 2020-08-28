@@ -1,6 +1,6 @@
 import React from "react";
 import {connect} from "react-redux";
-import {useTheme} from "@material-ui/styles";
+import useTheme from "@material-ui/styles/useTheme";
 import {makeStyles} from "@material-ui/core/styles";
 import {Layout} from "../controllers/General";
 

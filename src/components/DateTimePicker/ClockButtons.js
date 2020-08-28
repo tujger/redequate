@@ -1,6 +1,9 @@
 import React from "react";
-import {Button, ButtonGroup} from "@material-ui/core";
-import {Restore as StartIcon, Schedule as TimeIcon, Update as EndIcon} from "@material-ui/icons";
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
+import StartIcon from "@material-ui/icons/Restore";
+import TimeIcon from "@material-ui/icons/Schedule";
+import EndIcon from "@material-ui/icons/Update";
 
 // eslint-disable-next-line react/prop-types
 export const ClockButtons = ({show, range, date, start, end, onClick}) => {

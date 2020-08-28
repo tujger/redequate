@@ -16,7 +16,6 @@ import {matchRole, Role, useCurrentUserData, UserData} from "../controllers/User
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
-import UploadComponent, {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent";
 import withStyles from "@material-ui/styles/withStyles";
 import {
     cacheDatas,
@@ -33,6 +32,8 @@ import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";
 import ConfirmComponent from "../components/ConfirmComponent";
+import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import UploadComponent from "../components/UploadComponent/UploadComponent";
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
