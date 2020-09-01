@@ -150,24 +150,29 @@ function EditProfile(props) {
 
         let publishing = {};
 
-        if (currentUserData.image && image !== currentUserData.image) {
-            console.log("[EditProfile] delete", currentUserData.image)
+        if (userData.image && image !== userData.image) {
+            console.log("[EditProfile] delete", userData.image)
             try {
-                await firebase.storage().refFromURL(currentUserData.image).delete();
+                await firebase.storage().refFromURL(userData.image).delete();
             } catch (e) {
                 console.error(e);
             }
         }
         if (uppy) {
-            publishing = await uploadComponentPublish(firebase)({
-                auth: userData.id,
-                uppy,
-                name: "profile",
-                onprogress: progress => {
-                    dispatch({...ProgressView.SHOW, value: progress});
-                },
-                deleteFile: userData.public.image
-            });
+            try {
+                publishing = await uploadComponentPublish(firebase)({
+                    auth: userData.id,
+                    uppy,
+                    name: "profile",
+                    onprogress: progress => {
+                        dispatch({...ProgressView.SHOW, value: progress});
+                    },
+                    deleteFile: userData.public.image
+                });
+            } catch (error) {
+                onerror(error);
+                return;
+            }
         } else if (image) {
         }
         const {url: imageSaved} = publishing;
@@ -175,7 +180,7 @@ function EditProfile(props) {
 
         const additionalPublic = {};
         publicFields.forEach(field => {
-            if (state[field.id]) {
+            if (state[field.id] !== undefined) {
                 additionalPublic[field.id] = state[field.id];
             }
         })

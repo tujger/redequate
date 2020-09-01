@@ -62,17 +62,25 @@ function Dispatcher(props) {
     const {firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
-    useStore(store);
     useFirebase(firebase);
     usePages(pages);
-    useTechnicalInfo(state => ({...state, title: title, maintenance: null, refreshed: new Date().getTime()}));
+    useStore(store);
+    useTechnicalInfo(state => ({
+        ...state,
+        maintenance: null,
+        refreshed: new Date().getTime(),
+        title: title,
+    }));
     useWindowData({
         breakpoint: width,
-        isNarrow: () => width === "xs" || width === "sm",
+        isNarrow: () => width === "xs" || width === "sm"
     });
 
     React.useEffect(() => {
         if (isIncompatible) return;
+        window.addEventListener("beforeunload", event => {
+            window.localStorage.setItem(title + "_last", new Date().getTime());
+        })
         let maintenanceRef;
         (async () => {
             try {
@@ -93,6 +101,7 @@ function Dispatcher(props) {
                         const userData = new UserData(firebase).fromJSON(savedUserData.userData);
                         await userData.fetch([UserData.ROLE]);
                         await userData.fetchPrivate(fetchDeviceId());
+                        userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
                         useCurrentUserData(userData);
                         cacheDatas.put(userData.id, userData);
                     }

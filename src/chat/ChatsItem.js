@@ -48,7 +48,7 @@ function ChatsItem(props) {
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
-    const {shown, userData, chatMeta, online} = state;
+    const {shown, userData, chatMeta, online, removed} = state;
 
     const fetchIsNew = () => {
         const latestVisit = chatMeta.lastVisit(currentUserData.id);
@@ -83,7 +83,11 @@ function ChatsItem(props) {
                 });
                 isMounted && setState({...state, userData, chatMeta});
             })
-            .catch(notifySnackbar)
+            .catch(error => {
+                console.error(error)
+                isMounted && setState({...state, removed: true})
+            });
+
         return () => {
             chatMeta.unwatch();
             chatMeta.unwatchOnline();
@@ -92,6 +96,7 @@ function ChatsItem(props) {
         // eslint-disable-next-line
     }, []);
 
+    if (removed) return null;
     if (label) return <ItemPlaceholderComponent label={label}/>;
     if (skeleton || !chatMeta || !userData) return <ItemPlaceholderComponent/>;
 

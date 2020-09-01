@@ -186,12 +186,21 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
         });
         uppy.on("dashboard:modal-open", () => {
             console.log("Modal is open", uppy);
-            if (camera) return;
+            if (camera === true) return;
             setTimeout(() => {
                 try {
                     const dashboard = uppy.getPlugin("Dashboard");
                     const browseButton = dashboard.el.getElementsByClassName("uppy-Dashboard-browse")[0];
                     browseButton.click();
+
+                    // const nodes = dashboard.el.getElementsByClassName("uppy-Dashboard-input");
+                    // for (let node of nodes) {
+                    //     if(!node.addEventListener) continue;
+                    //     node.addEventListener("click", evt => {
+                    //         debugger;
+                    //         console.log(this, evt)
+                    //     })
+                    // }
                 } catch (e) {
                     console.error(e);
                 }
@@ -266,7 +275,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
         }).use(ProgressBar, {
             target: Dashboard
         });
-        if (camera) {
+        if (camera === true) {
             uppy.use(Webcam, {
                 facingMode: facingMode,
                 locale: {

@@ -52,11 +52,13 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
                     // ref = ref.startAt(start).endAt(start + "\uf8ff").limitToLast(size);
                     ref = ref.equalTo(equals).limitToLast(size);
                 }
-            } else if (start) {
+            } else if (start !== undefined) {
                 if (order === "asc") {
-                    ref = ref.startAt(start).endAt((end || start) + "\uf8ff").limitToFirst(size);
+                    let endAt = start && start.constructor.name === "string" ? ((end || start) + "\uf8ff") : (end || Number.MAX_SAFE_INTEGER);
+                    ref = ref.startAt(start).endAt(endAt).limitToFirst(size);
                 } else {
-                    ref = ref.startAt(start).endAt(start + "\uf8ff").limitToLast(size);
+                    let endAt = start && start.constructor.name === "string" ? (start + "\uf8ff") : Number.MAX_SAFE_INTEGER;
+                    ref = ref.startAt(start).endAt(endAt).limitToLast(size);
                 }
             } else {
                 if (order === "asc") {

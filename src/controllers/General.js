@@ -23,6 +23,12 @@ export const checkIfCompatible = () => {
     return true;
 }
 
+export const delay = millis => new Promise((resolve) => {
+    setTimeout(() => {
+        resolve();
+    }, millis);
+})
+
 let firebaseInstance;
 let pagesInstance;
 let storeInstance = {};
