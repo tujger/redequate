@@ -3,6 +3,7 @@ import "firebase/auth";
 import "firebase/database";
 import "firebase/functions";
 import "firebase/storage";
+import "firebase/analytics";
 // import "firebase/analytics";
 if (process.env.NODE_ENV !== "development") {
     require("firebase/messaging");
@@ -14,6 +15,7 @@ const Firebase = firebaseConfig => {
         console.log("[Firebase] init")
         firebase.initializeApp(firebaseConfig);
         firebase.config = firebaseConfig;
+        firebase.analytics();
     } catch (e) {
         console.error(e);
     }
