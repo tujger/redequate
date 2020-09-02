@@ -54,10 +54,10 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
                 }
             } else if (start !== undefined) {
                 if (order === "asc") {
-                    let endAt = start && start.constructor.name === "string" ? ((end || start) + "\uf8ff") : (end || Number.MAX_SAFE_INTEGER);
+                    let endAt = start !== null && start.constructor.name === "String" ? ((end || start) + "\uf8ff") : (end || Number.MAX_SAFE_INTEGER);
                     ref = ref.startAt(start).endAt(endAt).limitToFirst(size);
                 } else {
-                    let endAt = start && start.constructor.name === "string" ? (start + "\uf8ff") : Number.MAX_SAFE_INTEGER;
+                    let endAt = start !== null && start.constructor.name === "String" ? (start + "\uf8ff") : Number.MAX_SAFE_INTEGER;
                     ref = ref.startAt(start).endAt(endAt).limitToLast(size);
                 }
             } else {
