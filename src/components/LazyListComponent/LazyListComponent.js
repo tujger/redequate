@@ -28,18 +28,17 @@ function LazyListComponent(
     }) {
     const dispatch = useDispatch();
     const [state, setState] = React.useState({});
-    const givenPagination = sourcePagination instanceof Function ? sourcePagination() : sourcePagination;
     const {
         finished: cachedFinished = false,
         items: cachedItems = [],
         loading: cachedLoading = true,
-        pagination: cachedPagination = givenPagination
+        pagination: cachedPagination = sourcePagination instanceof Function ? sourcePagination() : sourcePagination
     } = cacheData;
     const {
         finished = cache !== undefined ? cachedFinished : false,
         items = cache !== undefined ? cachedItems : [],
         loading = cache !== undefined ? cachedLoading : true,
-        pagination = cache !== undefined ? cachedPagination : givenPagination
+        pagination = cachedPagination
     } = state;
 
     const ascending = pagination.order === "asc";
@@ -58,13 +57,18 @@ function LazyListComponent(
         return pagination.next()
             .then(async newitems => {
                 newitems = newitems.map(async (item, index) => {
+                    let transformed;
                     try {
-                        const transformed = await itemTransform(item, index);
-                        if (transformed) {
-                            return itemComponent(transformed, index);
-                        }
+                        transformed = await itemTransform(item, index);
                     } catch (error) {
                         console.error(error);
+                    }
+                    if (transformed) {
+                        try {
+                            return itemComponent(transformed, index);
+                        } catch (error) {
+                            console.error(error);
+                        }
                     }
                 });
                 return Promise.all(newitems);
@@ -131,7 +135,7 @@ function LazyListComponent(
         let lastKey = null;
         const liveAddListener = async snapshot => {
             if (!isMounted) return;
-            if (!lastKey && !givenPagination.finished) {
+            if (!lastKey && !cachedPagination.finished) {
                 lastKey = snapshot.key;
                 return;
             }
@@ -176,23 +180,23 @@ function LazyListComponent(
             if (!cache) pagination.reset();
             isMounted = false;
         }
-    }, [pagination.term, givenPagination.term]);
+    }, [pagination.term, cachedPagination.term]);
 
     React.useEffect(() => {
         if (cache) return;
-        givenPagination.reset();
+        cachedPagination.reset();
         const update = {
             finished: false,
             items: [],
             loading: true,
-            pagination: givenPagination,
+            pagination: cachedPagination,
             reverse
         }
         setState(state => ({
             ...state,
             ...update,
         }))
-    }, [random, pagination.term, givenPagination.term])
+    }, [random, pagination.term, cachedPagination.term])
 
     if (reverse === true && !containerRef) {
         throw new Error("[Lazy] 'containerRef' must be defined due to 'reverse'=true")
