@@ -81,6 +81,10 @@ const CacheDatas = function () {
                 _cache = {};
             }
         },
+        clear: () => {
+            _count = 1;
+            _cache = {};
+        },
         get: id => {
             return _cache[id];
         },

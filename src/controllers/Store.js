@@ -9,7 +9,7 @@ import {topMenuReducer} from "../layouts/TopBottomMenuLayout/TopMenu";
 import {chatsCounterReducer} from "../chat/ChatsCounter";
 import {errorsReducer} from "../pages/admin/Errors";
 import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/MainAppbar";
-import {Layout, MenuBadge} from "./General";
+import {cacheDatas, Layout, MenuBadge} from "./General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 
 const Store = (name, reducers) => {
@@ -50,6 +50,7 @@ export default Store;
 
 export const refreshAll = store => {
     console.warn("[Store] refresh");
+    cacheDatas.clear();
     store.dispatch({type: Layout.REFRESH});
     store.dispatch({type: LazyListComponent.RESET});
     store.dispatch({type: LazyListComponent.RESET, cache: "chats"});
