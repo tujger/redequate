@@ -226,9 +226,9 @@ const LoginLayout = (
                     label={"E-mail"}
                     onChange={onChangeEmail}
                     value={email}
-                    InputProps={{
-                        inputComponent: TextMaskEmail
-                    }}
+                    // InputProps={{
+                    //     inputComponent: TextMaskEmail
+                    // }}
                 />
             </Grid>
         </Grid>

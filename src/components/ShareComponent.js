@@ -17,21 +17,19 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
 export default ShareComponent;
 
-export function share({title, text, url}) {
-    if (!navigator.share && !hasWrapperControlInterface()) {
-        copyToClipboard(url);
-    } else {
+export function share({title = "Share", text = "Share", url = ""}) {
+    if (hasWrapperControlInterface()) {
+        wrapperControlCall({method: "shareText", title, text, url})
+            .catch(notifySnackbar);
+    } else if (navigator.share) {
         try {
-            if (hasWrapperControlInterface()) {
-                wrapperControlCall({method: "shareText", title, text, url})
-                    .catch(notifySnackbar);
-            } else {
-                navigator.share({text, title, url})
-                    .catch(notifySnackbar)
-            }
+            navigator.share({text, title, url})
+                .catch(notifySnackbar)
         } catch (error) {
             notifySnackbar(error);
         }
+    } else {
+        copyToClipboard(url);
     }
 }
 

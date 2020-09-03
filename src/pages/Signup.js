@@ -123,9 +123,9 @@ const Signup = ({signup = true, additional}) => {
                         setState({...state, email: ev.target.value});
                     }}
                     value={email}
-                    InputProps={{
-                        inputComponent: TextMaskEmail
-                    }}
+                    // InputProps={{
+                    //     inputComponent: TextMaskEmail
+                    // }}
                 />
             </Grid>
         </Grid>}
