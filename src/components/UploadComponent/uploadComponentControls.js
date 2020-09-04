@@ -5,7 +5,7 @@ export function uploadComponentClean(uppy) {
         const file = uppy.getFiles()[0];
         if (file) {
             uppy.removeFile(file.id);
-            console.log("[UploadComponent] file removed", file.uploadURL);
+            console.log("[UploadComponent] file removed", file);
         }
     }
 }

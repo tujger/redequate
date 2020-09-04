@@ -1,8 +1,7 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
 import FlipIcon from "@material-ui/icons/FlipCameraAndroid";
-import Uppy from "@uppy/core"
-import Tus from "@uppy/tus"
+import Uppy from "@uppy/core";
 import ProgressBar from "@uppy/progress-bar";
 import Webcam from "@uppy/webcam";
 import Dashboard from "@uppy/dashboard";
@@ -158,8 +157,8 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
             },
         })
         uppy.on("file-added", (result) => {
-            if (!maxWidth) return;
-            if (maxSize && maxSize > result.size) return;
+            // if (!maxWidth) return;
+            // if (maxSize && maxSize > result.size) return;
             const quality = limits ? limits.quality || 75 : 75;
             const type = result.type === "image/png" ? "PNG" : "JPEG";
             console.log(result)
@@ -172,9 +171,27 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                 quality,
                 0,
                 uri => {
+                    const file = uppy.getFiles()[0];
                     uppy._uris = uppy._uris || {};
                     uppy._uris[result.id] = uri;
-                    setState(state => ({...state, uppy}))
+                    Resizer.imageFileResizer(
+                        result.data,
+                        maxWidth,
+                        maxHeight,
+                        type,
+                        quality,
+                        0,
+                        uri => {
+                            file.uploadURL = uri;
+                            setState(state => ({...state, uppy}));
+                            uppy.emit("upload-success", file, {
+                                status: "complete",
+                                body: null,
+                                uploadURL: file.uploadURL
+                            })
+                        },
+                        "base64"
+                    )
                 },
                 "blob"
             )
@@ -269,12 +286,25 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
             },
             note: `Images up to ${MAX_FILE_SIZE} kb${maxWidth ? ` (will be resized to ${maxWidth}x${maxHeight} max)` : ""}`,
             theme: "auto",
-        }).use(Tus, {
-            endpoint: "https://master.tus.io/files/",
-            removeFingerprintOnSuccess: true
-        }).use(ProgressBar, {
-            target: Dashboard
         });
+        uppy.use(ProgressBar, {
+            target: Dashboard,
+            fixed: false,
+            hideAfterFinish: true
+        })
+        // uppy.use(Tus, {
+        //     endpoint: "https://master.tus.io/files/",
+        //     removeFingerprintOnSuccess: true
+        // }).use(ProgressBar, {
+        //     target: Dashboard
+        // });
+        // uppy.use(FileInput, {
+        //     target: Dashboard,
+        //     pretty: true,
+        //     inputName: "files[]",
+        //     locale: {
+        //     }
+        // })
         if (camera === true) {
             uppy.use(Webcam, {
                 facingMode: facingMode,
