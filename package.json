@@ -45,8 +45,6 @@
         "@material-ui/styles": "latest",
         "@uppy/core": "latest",
         "@uppy/dashboard": "latest",
-        "@uppy/drag-drop": "latest",
-        "@uppy/file-input": "latest",
         "@uppy/xhr-upload": "latest",
         "@uppy/tus": "latest",
         "@uppy/transloadit": "latest",
