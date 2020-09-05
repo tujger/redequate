@@ -18,7 +18,7 @@ import ChevronLeft from "@material-ui/icons/ChevronLeft";
 import Hidden from "@material-ui/core/Hidden";
 import HeaderComponent from "../../components/HeaderComponent";
 import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers/WrapperControl";
-import {matchRole, Role} from "../../controllers/UserData";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -52,8 +52,10 @@ function ResponsiveDrawerLayout(props) {
     const {container, menu, classes, title, headerComponent = <HeaderComponent/>, copyright} = props;
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
+    const currentUserData = useCurrentUserData();
     const store = useStore();
     const windowData = useWindowData();
+    let counter = 0;
 
     const handleDrawerToggle = () => {
         setState({...state, mobileOpen: !mobileOpen});
@@ -74,6 +76,21 @@ function ResponsiveDrawerLayout(props) {
         method: "swipeable",
         value: !mobileOpen
     }).catch(notifySnackbar);
+
+    const copyrightElement = <Grid container justify={"center"} onClick={event => {
+        if (!matchRole(Role.ADMIN, currentUserData)) return;
+        counter++;
+        if(counter === 3) {
+            const count = enableDisabledPages();
+            if (count) {
+                event.preventDefault();
+                refreshAll(store);
+                notifySnackbar(`Temporarily enabled ${count} hidden page(s)`)
+            }
+        }
+    }}>
+        <Typography variant={"caption"}>{copyright}</Typography>
+    </Grid>;
 
     return <React.Fragment><CssBaseline/>
         {windowData.isNarrow()
@@ -103,9 +120,7 @@ function ResponsiveDrawerLayout(props) {
                     // dispatch(ProgressView.SHOW);
                     setState({...state, mobileOpen: false})
                 }}/>
-                <Grid container justify={"center"}>
-                    <Typography variant={"caption"}>{copyright}</Typography>
-                </Grid>
+                {copyrightElement}
             </SwipeableDrawer>
             : <Drawer variant={"permanent"} open>
                 <headerComponent.type
@@ -118,17 +133,7 @@ function ResponsiveDrawerLayout(props) {
                     // dispatch(ProgressView.SHOW);
                     setState({...state, mobileOpen: false})
                 }}/>
-                <Grid container justify={"center"} onContextMenu={event => {
-                    if (!matchRole(Role.ADMIN, currentUserData)) return;
-                    const count = enableDisabledPages();
-                    if (count) {
-                        event.preventDefault();
-                        refreshAll(store);
-                        notifySnackbar(`Temporarily emabled ${count} hidden page(s)`)
-                    }
-                }}>
-                    <Typography variant={"caption"}>{copyright}</Typography>
-                </Grid>
+                {copyrightElement}
             </Drawer>
         }
         <MainAppbar

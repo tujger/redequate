@@ -60,6 +60,7 @@ function TopBottomMenuLayout(props) {
     const currentUserData = useCurrentUserData();
     const pages = usePages();
     const store = useStore();
+    let counter = 0;
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
@@ -79,13 +80,16 @@ function TopBottomMenuLayout(props) {
         <MainContent classes={{content: classes.content}}/>
         <Grid container justify={"center"}>
             <BottomMenu items={menu} className={classes.footer}/>
-            <Grid container justify={"center"} className={classes.version} onContextMenu={event => {
+            <Grid container justify={"center"} className={classes.version} onClick={event => {
                 if (!matchRole(Role.ADMIN, currentUserData)) return;
-                const count = enableDisabledPages();
-                if (count) {
-                    event.preventDefault();
-                    refreshAll(store);
-                    notifySnackbar(`Temporarily emabled ${count} hidden page(s)`)
+                counter++;
+                if(counter === 3) {
+                    const count = enableDisabledPages();
+                    if (count) {
+                        event.preventDefault();
+                        refreshAll(store);
+                        notifySnackbar(`Temporarily enabled ${count} hidden page(s)`)
+                    }
                 }
             }}>
                 <Typography variant={"caption"}>{copyright}</Typography>
