@@ -9,22 +9,27 @@ const styles = theme => ({})
 
 const NavigationToolbar = (
     {
-        backButton = <IconButton
-            aria-label={"Back"}
-            children={<BackIcon/>}
-            /* eslint-disable-next-line no-undef */
-            onClick={() => history.goBack()}
-            title={"Back"}
-        />,
+        backButton,
         children,
         rightButton,
         mediumButton
     }) => {
-    // eslint-disable-next-line no-unused-vars
     const history = useHistory();
+
+    const button = backButton || <IconButton
+        aria-label={"Back"}
+        children={<BackIcon/>}
+        /* eslint-disable-next-line no-undef */
+        onClick={() => {
+            history.goBack()
+            // window.history.go(-1)
+        }}
+        title={"Back"}
+    />;
+
     return <Grid container alignItems={"center"}>
         <Grid item>
-            {backButton}
+            {button}
         </Grid>
         <Grid item xs>
             {children}

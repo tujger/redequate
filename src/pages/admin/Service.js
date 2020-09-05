@@ -82,17 +82,8 @@ const Service = (props) => {
     }, [])
 
     if (maintenance === undefined) return <LoadingComponent/>;
-    return <React.Fragment>
-        <Grid container spacing={1} alignItems={"center"}>
-            <Grid item>
-                <InfoIcon/>
-            </Grid>
-            <Grid item xs>
-                Technical information
-            </Grid>
-        </Grid>
-        <Box m={1}/>
-        {givenTimestamp && <React.Fragment>
+    return <>
+        {givenTimestamp && <>
             <Grid container spacing={1} alignItems={"center"}>
                 <Grid item>
                     <InfoIcon/>
@@ -102,7 +93,7 @@ const Service = (props) => {
                 </Grid>
             </Grid>
             <Box m={1}/>
-        </React.Fragment>}
+        </>}
         <Grid container spacing={1} alignItems={"center"}>
             <Grid item>
                 <MaintenanceIcon/>
@@ -140,7 +131,7 @@ const Service = (props) => {
                 value={message}
             />
         </ConfirmComponent>}
-    </React.Fragment>
+    </>
 };
 
 export default withStyles(styles)(Service);

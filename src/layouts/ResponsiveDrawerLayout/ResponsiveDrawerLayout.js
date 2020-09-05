@@ -12,13 +12,14 @@ import MainContent from "../../components/MainContent";
 import MainMenu from "./MainMenu";
 import Snackbar from "../../components/Snackbar";
 import {NotificationsSnackbar, notifySnackbar} from "../../controllers/Notifications";
-import {useWindowData} from "../../controllers/General";
+import {enableDisabledPages, useStore, useWindowData} from "../../controllers/General";
 import IconButton from "@material-ui/core/IconButton";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
 import Hidden from "@material-ui/core/Hidden";
 import HeaderComponent from "../../components/HeaderComponent";
-import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers";
-import {InView} from "react-intersection-observer";
+import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers/WrapperControl";
+import {matchRole, Role} from "../../controllers/UserData";
+import {refreshAll} from "../../controllers/Store";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -51,6 +52,7 @@ function ResponsiveDrawerLayout(props) {
     const {container, menu, classes, title, headerComponent = <HeaderComponent/>, copyright} = props;
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
+    const store = useStore();
     const windowData = useWindowData();
 
     const handleDrawerToggle = () => {
@@ -116,7 +118,15 @@ function ResponsiveDrawerLayout(props) {
                     // dispatch(ProgressView.SHOW);
                     setState({...state, mobileOpen: false})
                 }}/>
-                <Grid container justify={"center"}>
+                <Grid container justify={"center"} onContextMenu={event => {
+                    if (!matchRole(Role.ADMIN, currentUserData)) return;
+                    const count = enableDisabledPages();
+                    if (count) {
+                        event.preventDefault();
+                        refreshAll(store);
+                        notifySnackbar(`Temporarily emabled ${count} hidden page(s)`)
+                    }
+                }}>
                     <Typography variant={"caption"}>{copyright}</Typography>
                 </Grid>
             </Drawer>

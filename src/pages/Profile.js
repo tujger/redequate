@@ -6,7 +6,7 @@ import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
 import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
-import ProfileComponent, {default as ProfileComponentOrigin} from "../components/ProfileComponent";
+import ProfileComponentOrigin from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
 import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";

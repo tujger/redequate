@@ -1,8 +1,10 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
+import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
-import {useTechnicalInfo} from "../controllers";
+import {useTechnicalInfo} from "../controllers/General";
+import {useCurrentUserData, matchRole, Role} from "../controllers/UserData";
 
 const styles = theme => ({
     root: {
@@ -16,15 +18,21 @@ const styles = theme => ({
 const TechnicalInfoView = ({classes, message}) => {
     const technical = useTechnicalInfo();
     const {maintenance} = technical;
+    // const currentUserData = useCurrentUserData();
+    // const isAdmin = matchRole(Role.ADMIN, currentUserData);
 
     if (!maintenance && !message) return null;
-    const {message: maintenanceMessage = "Sorry, the service is temporarily unavailable."} = maintenance || {};
-    return <React.Fragment>
+    const {message: maintenanceMessage = "Sorry, the service is temporarily unavailable.", person = {}, timestamp} = maintenance || {};
+    const {name, email} = person;
+    return <>
         <Grid container spacing={2} className={classes.root}>
             <h4>{message || maintenanceMessage}</h4>
+            <Typography variant={"caption"}>
+                Maintenance has been established by <a href={"mailto:" + email} style={{color: "inherit"}}>{name}</a> at {new Date(timestamp).toLocaleString()}
+            </Typography>
         </Grid>
         <Box m={2}/>
-    </React.Fragment>
+    </>
 };
 
 export default withStyles(styles)(TechnicalInfoView);

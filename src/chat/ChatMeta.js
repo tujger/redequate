@@ -1,5 +1,7 @@
 import Pagination from "../controllers/FirebasePagination";
 import {UserData} from "../controllers/UserData";
+import {fetchCallable, notifySnackbar} from "../controllers";
+import ProgressView from "../components/ProgressView";
 
 const ONLINE_TIMEOUT = 60000;
 
@@ -203,6 +205,8 @@ export function ChatMeta(firebase) {
             if (!_activeUids.length) {
                 console.log(`[ChatMeta] chat is empty! removing entirely: ${_id}`);
                 updates[`chats/${_id}`] = null;
+                _persisted = false;
+                _activeUids = [];
             }
             return firebase.database().ref().update(updates);
         },
@@ -211,7 +215,7 @@ export function ChatMeta(firebase) {
                 if (userId === uid) continue;
                 if (userId) return userId;
             }
-            throw Error("Other uid not found");
+            throw Error(`Other uid not found within chat ${_id}`);
         },
         update: async () => {
             const updatesMeta = {};

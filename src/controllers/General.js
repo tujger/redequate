@@ -63,6 +63,23 @@ export const useTechnicalInfo = (initial) => {
     return technicalInfoInstance;
 }
 
+export const enableDisabledPages = () => {
+    let enabled = 0;
+    try {
+        for (const x in pagesInstance) {
+            const page = pagesInstance[x];
+            if (page.disabled) {
+                console.log(`[General] enable page ${x}`);
+                page.disabled = false;
+                enabled++;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return enabled;
+}
+
 const CacheDatas = function () {
     let _cache = {};
     let _count = 0;

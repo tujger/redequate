@@ -9,9 +9,11 @@ import Snackbar from "../../components/Snackbar";
 import StickyHeader from "./StickyHeader";
 import TopMenu from "./TopMenu";
 import {Route, Switch} from "react-router-dom";
-import {NotificationsSnackbar} from "../../controllers/Notifications";
-import {usePages} from "../../controllers/General";
+import {NotificationsSnackbar, notifySnackbar} from "../../controllers/Notifications";
+import {enableDisabledPages, usePages, useStore} from "../../controllers/General";
 import HeaderComponent from "../../components/HeaderComponent";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {refreshAll} from "../../controllers/Store";
 
 const styles = theme => ({
     indent: {
@@ -55,7 +57,9 @@ const styles = theme => ({
 
 function TopBottomMenuLayout(props) {
     const {menu, classes, title, headerComponent = <HeaderComponent/>, random, copyright} = props;
+    const currentUserData = useCurrentUserData();
     const pages = usePages();
+    const store = useStore();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
@@ -75,7 +79,15 @@ function TopBottomMenuLayout(props) {
         <MainContent classes={{content: classes.content}}/>
         <Grid container justify={"center"}>
             <BottomMenu items={menu} className={classes.footer}/>
-            <Grid container justify={"center"} className={classes.version}>
+            <Grid container justify={"center"} className={classes.version} onContextMenu={event => {
+                if (!matchRole(Role.ADMIN, currentUserData)) return;
+                const count = enableDisabledPages();
+                if (count) {
+                    event.preventDefault();
+                    refreshAll(store);
+                    notifySnackbar(`Temporarily emabled ${count} hidden page(s)`)
+                }
+            }}>
                 <Typography variant={"caption"}>{copyright}</Typography>
             </Grid>
         </Grid>
@@ -90,7 +102,7 @@ TopBottomMenuLayout.propTypes = {
     copyright: PropTypes.any,
     menu: PropTypes.array,
     pages: PropTypes.object,
-    headerImage: PropTypes.string,
+    headerComponent: PropTypes.element,
     title: PropTypes.string,
 };
 

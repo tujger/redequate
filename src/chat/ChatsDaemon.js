@@ -8,6 +8,7 @@ import LazyListComponent from "../components/LazyListComponent/LazyListComponent
 import ChatsCounter from "./ChatsCounter";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
+import {fetchCallable} from "../controllers";
 
 export const ChatsDaemon = ({clearText = text => text}) => {
     const currentUserData = useCurrentUserData();
@@ -78,8 +79,12 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 })
                 metas[meta.id] = meta;
             }).catch(error => {
-                console.error(error);
                 console.error(`[ChatsDaemon] failed for ${currentUserData.id}`)
+                console.error(error);
+                fetchCallable(firebase)("fixChat", {id, uid: currentUserData.id})
+                    .then(console.log)
+                    .catch(console.error);
+
             });
 
         // pagination.next()

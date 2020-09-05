@@ -9,7 +9,12 @@
         "indent": [
             "error",
             4,
-            { "SwitchCase": 1 }
+            {
+                "SwitchCase": 1
+            }
+        ],
+        "object-curly-spacing": [
+            1
         ],
         "operator-linebreak": [
             1
@@ -17,6 +22,15 @@
         "quotes": [
             "error",
             "double"
+        ],
+        "react/jsx-closing-bracket-location": [
+            1
+        ],
+        "react/jsx-closing-tag-location": [
+            1
+        ],
+        "react/jsx-curly-brace-presence": [
+            1
         ],
         "react/jsx-indent-props": [
             1,
