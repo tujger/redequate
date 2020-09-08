@@ -5,13 +5,13 @@ import IconButton from "@material-ui/core/IconButton";
 import {Link, useHistory} from "react-router-dom";
 import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ClearIcon from "@material-ui/icons/Clear";
 import ConfirmComponent from "../components/ConfirmComponent";
-import ProgressView from "../components/ProgressView";
+import {lazyListReducer} from "../reducers/lazyListReducer";
+import {progressViewReducer} from "../reducers/progressViewReducer";
 
 const stylesHeader = theme => ({
     presence: {
@@ -45,13 +45,13 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
     const {online, timestamp, deleteOpen} = state;
 
     const handleConfirmDeletion = evt => {
-        dispatch(ProgressView.SHOW);
+        dispatch(progressViewReducer.SHOW);
         console.log(chatMeta.toString());
         chatMeta.removeUid(currentUserData.id)
             .then(() => history.goBack())
             .catch(notifySnackbar)
             .finally(() => {
-                dispatch(ProgressView.HIDE);
+                dispatch(progressViewReducer.HIDE);
                 setState({...state, deleteOpen: false});
             })
     }
@@ -64,7 +64,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
         }
         // chatMeta.watch(({removed}) => {
         //     if (removed) {
-        //         dispatch({type: LazyListComponent.RESET, cache: "chats"});
+        //         dispatch({type: lazyListReducer.RESET, cache: "chats"});
         //         history.goBack();
         //     }
         // });
@@ -72,7 +72,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
             uid: userData.id,
             onChange: ({online, timestamp, removed}) => {
                 if (removed) {
-                    dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                    dispatch({type: lazyListReducer.RESET, cache: "chats"});
                     history.goBack();
                 }
                 isMounted && setState(state => ({...state, online, timestamp}));

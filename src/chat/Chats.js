@@ -7,6 +7,7 @@ import LazyListComponent from "../components/LazyListComponent/LazyListComponent
 import Pagination from "../controllers/FirebasePagination";
 import ChatsItem from "./ChatsItem";
 import {ChatsDaemon} from "./ChatsDaemon";
+import {lazyListReducer} from "../reducers/lazyListReducer";
 
 const styles = theme => ({
     observer: {
@@ -27,7 +28,7 @@ function Chats(
     const firebase = useFirebase();
 
     React.useEffect(() => {
-        dispatch({type: LazyListComponent.RESET, cache: "chats"});
+        dispatch({type: lazyListReducer.RESET, cache: "chats"});
         // eslint-disable-next-line
     }, []);
 

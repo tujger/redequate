@@ -9,6 +9,8 @@ import ChatsCounter from "./ChatsCounter";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {fetchCallable} from "../controllers";
+import {chatsCounterReducer} from "../reducers/chatsCounterReducer";
+import {lazyListReducer} from "../reducers/lazyListReducer";
 
 export const ChatsDaemon = ({clearText = text => text}) => {
     const currentUserData = useCurrentUserData();
@@ -57,9 +59,9 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 if (live) newMessage(meta.lastMessage, id);
                 if (chatsWithNewMessages.indexOf(id) >= 0) return;
                 chatsWithNewMessages.push(id);
-                dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                dispatch({type: lazyListReducer.RESET, cache: "chats"});
                 dispatch({type: MenuBadge.INCREASE, page: pages.chats});
-                dispatch({type: ChatsCounter.COUNTER, counter: chatsWithNewMessages.length});
+                dispatch({type: chatsCounterReducer.COUNTER, counter: chatsWithNewMessages.length});
                 meta.watch(update => {
                     if (update.type === "visit") {
                         if (update.uid !== currentUserData.id) return;
@@ -69,9 +71,9 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                             }
                             meta.unwatch();
                             delete metas[meta.id];
-                            dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                            dispatch({type: lazyListReducer.RESET, cache: "chats"});
                             dispatch({type: MenuBadge.DECREASE, page: pages.chats});
-                            dispatch({type: ChatsCounter.COUNTER, counter: chatsWithNewMessages.length});
+                            dispatch({type: chatsCounterReducer.COUNTER, counter: chatsWithNewMessages.length});
                         }
                     } else {
                         // newMessage(update, id);

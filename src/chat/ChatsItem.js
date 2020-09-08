@@ -5,16 +5,15 @@ import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
-import {notifySnackbar} from "../controllers/Notifications";
 import {cacheDatas, useFirebase, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import {toDateString} from "../controllers/DateFormat";
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
+import {lazyListReducer} from "../reducers/lazyListReducer";
 
 const stylesChat = theme => ({
     offline: {
@@ -70,7 +69,7 @@ function ChatsItem(props) {
             .then(userData => {
                 chatMeta.watch(({removed}) => {
                     if (removed) {
-                        dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                        dispatch({type: lazyListReducer.RESET, cache: "chats"});
                         history.goBack();
                     }
                     isMounted && setState(state => ({...state, chatMeta}));

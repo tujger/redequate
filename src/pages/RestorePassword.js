@@ -1,7 +1,6 @@
 import React from "react";
 import {useCurrentUserData} from "../controllers/UserData";
 import {Redirect, useHistory} from "react-router-dom";
-import ProgressView from "../components/ProgressView";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
@@ -10,6 +9,7 @@ import Grid from "@material-ui/core/Grid";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
 import {notifySnackbar, useFirebase, usePages} from "../controllers";
+import {progressViewReducer} from "../reducers/progressViewReducer";
 
 const RestorePassword = (props) => {
     const [state, setState] = React.useState({
@@ -24,7 +24,7 @@ const RestorePassword = (props) => {
     const currentUserData = useCurrentUserData();
 
     const requestRestorePassword = () => {
-        dispatch(ProgressView.SHOW);
+        dispatch(progressViewReducer.SHOW);
         setState({...state, requesting: true});
         firebase.auth().sendPasswordResetEmail(email).then(() => {
             notifySnackbar("Instructions have been sent to e-mail.");
@@ -32,7 +32,7 @@ const RestorePassword = (props) => {
         }).catch(error => {
             notifySnackbar(error);
         }).finally(() => {
-            dispatch(ProgressView.HIDE);
+            dispatch(progressViewReducer.HIDE);
             setState({...state, requesting: false});
         });
     };

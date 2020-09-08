@@ -1,16 +1,15 @@
-import ProgressView, {progressViewReducer} from "../components/ProgressView";
-import {snackbarReducer} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
-import {usersReducer} from "../pages/admin/Users";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {topMenuReducer} from "../layouts/TopBottomMenuLayout/TopMenu";
-import {chatsCounterReducer} from "../chat/ChatsCounter";
-import {errorsReducer} from "../pages/admin/Errors";
-import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/MainAppbar";
 import {cacheDatas, Layout, MenuBadge} from "./General";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {lazyListReducer} from "../reducers/lazyListReducer";
+import {chatsCounterReducer} from "../reducers/chatsCounterReducer";
+import {mainAppbarReducer} from "../reducers/mainAppbarReducer";
+import {topMenuReducer} from "../reducers/topMenuReducer";
+import {errorsReducer} from "../reducers/errorsReducer";
+import {usersReducer} from "../reducers/usersReducer";
+import {snackbarReducer} from "../reducers/snackbarReducer";
+import {progressViewReducer} from "../reducers/progressViewReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -19,7 +18,7 @@ const Store = (name, reducers) => {
         currentUserData,
         dispatcherRoutedBodyReducer,
         errors: errorsReducer,
-        lazyListComponentReducer,
+        lazyListReducer,
         mainAppbarReducer,
         progressView: progressViewReducer,
         snackbar: snackbarReducer,
@@ -52,10 +51,10 @@ export const refreshAll = store => {
     console.warn("[Store] refresh");
     cacheDatas.clear();
     store.dispatch({type: Layout.REFRESH});
-    store.dispatch({type: LazyListComponent.RESET});
-    store.dispatch({type: LazyListComponent.RESET, cache: "chats"});
+    store.dispatch({type: lazyListReducer.RESET});
+    store.dispatch({type: lazyListReducer.RESET, cache: "chats"});
     store.dispatch({type: MenuBadge.RESET});
-    store.dispatch(ProgressView.HIDE);
+    store.dispatch(progressViewReducer.HIDE);
 };
 
 // moved here from ../Dispatcher.js due to circular dependencies alert

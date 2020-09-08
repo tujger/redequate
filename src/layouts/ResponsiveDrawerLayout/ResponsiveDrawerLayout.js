@@ -117,7 +117,7 @@ function ResponsiveDrawerLayout(props) {
                 </Hidden>
                 <Divider/>
                 <MainMenu items={menu} onClick={() => {
-                    // dispatch(ProgressView.SHOW);
+                    // dispatch(progressViewReducer.SHOW);
                     setState({...state, mobileOpen: false})
                 }}/>
                 {copyrightElement}
@@ -130,7 +130,7 @@ function ResponsiveDrawerLayout(props) {
                 />
                 <Divider/>
                 <MainMenu items={menu} onClick={(ev) => {
-                    // dispatch(ProgressView.SHOW);
+                    // dispatch(progressViewReducer.SHOW);
                     setState({...state, mobileOpen: false})
                 }}/>
                 {copyrightElement}

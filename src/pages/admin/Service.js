@@ -7,12 +7,12 @@ import Switch from "@material-ui/core/Switch";
 import InfoIcon from "@material-ui/icons/Info";
 import MaintenanceIcon from "@material-ui/icons/Settings";
 import {useCurrentUserData} from "../../controllers/UserData";
-import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
 import {notifySnackbar, useFirebase, useTechnicalInfo} from "../../controllers";
 import LoadingComponent from "../../components/LoadingComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
+import {progressViewReducer} from "../../reducers/progressViewReducer";
 
 const styles = theme => ({});
 
@@ -30,7 +30,7 @@ const Service = (props) => {
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
     const finallyCallback = () => {
-        dispatch(ProgressView.HIDE);
+        dispatch(progressViewReducer.HIDE);
         setState(state => ({...state, disabled: false}));
     };
 
@@ -44,7 +44,7 @@ const Service = (props) => {
 
     const switchMaintenance = (value) => {
         const updates = {};
-        dispatch(ProgressView.SHOW);
+        dispatch(progressViewReducer.SHOW);
         setState(state => ({...state, disabled: true, maintenanceOpen: false}));
 
         if (value) {

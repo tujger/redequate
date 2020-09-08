@@ -1,11 +1,12 @@
 import React from "react";
 import {notifySnackbar} from "../../controllers/Notifications";
-import ProgressView from "../ProgressView";
 import {connect, useDispatch} from "react-redux";
 import PropTypes from "prop-types";
 import {Observer} from "./Observer";
 import {Scroller} from "./Scroller";
 import {forceFirebaseReinit} from "../../controllers/Firebase";
+import {lazyListReducer} from "../../reducers/lazyListReducer";
+import {progressViewReducer} from "../../reducers/progressViewReducer";
 
 function LazyListComponent(
     {
@@ -47,7 +48,7 @@ function LazyListComponent(
         if (finished) {
             return;
         }
-        if (!disableProgress) dispatch(ProgressView.SHOW);
+        if (!disableProgress) dispatch(progressViewReducer.SHOW);
 
         let before = null;
         if (reverse && containerRef && containerRef.current) {
@@ -105,7 +106,7 @@ function LazyListComponent(
             .then(update => {
                 if (cache) {
                     dispatch({
-                        type: LazyListComponent.UPDATE,
+                        type: lazyListReducer.UPDATE,
                         cache: cache,
                         ["LazyListComponent_" + cache]: update
                     });
@@ -123,7 +124,7 @@ function LazyListComponent(
                         containerRef.current.scrollBy({left: 0, top: after - before});
                     }
                 }, 100)
-                if (!disableProgress) dispatch(ProgressView.HIDE);
+                if (!disableProgress) dispatch(progressViewReducer.HIDE);
             });
     };
 
@@ -149,7 +150,7 @@ function LazyListComponent(
             }
             if (cache) {
                 dispatch({
-                    type: LazyListComponent._ADD,
+                    type: lazyListReducer._ADD,
                     cache: cache,
                     item: transformed
                 });
@@ -165,8 +166,8 @@ function LazyListComponent(
 
         const liveRemoveListener = async snapshot => {
             if (!isMounted) return;
-            if (cache) dispatch({type: LazyListComponent.RESET, cache});
-            else dispatch({type: LazyListComponent.RESET});
+            if (cache) dispatch({type: lazyListReducer.RESET, cache});
+            else dispatch({type: lazyListReducer.RESET});
         }
 
         if (live) {
@@ -176,7 +177,7 @@ function LazyListComponent(
         return () => {
             liveAddRef && liveAddRef.off("child_added", liveAddListener);
             liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
-            if (!disableProgress) dispatch(ProgressView.HIDE);
+            if (!disableProgress) dispatch(progressViewReducer.HIDE);
             if (!cache) pagination.reset();
             isMounted = false;
         }
@@ -226,11 +227,6 @@ function LazyListComponent(
     </React.Fragment>
 }
 
-LazyListComponent._ADD = "LazyListComponent_add";
-LazyListComponent.EXIT = "LazyListComponent_exit";
-LazyListComponent.RESET = "LazyListComponent_reset";
-LazyListComponent.UPDATE = "LazyListComponent_update";
-
 LazyListComponent.propTypes = {
     cache: PropTypes.string,
     disableProgress: PropTypes.bool,
@@ -247,8 +243,8 @@ LazyListComponent.propTypes = {
     reverse: PropTypes.bool,
 }
 
-const mapStateToProps = ({lazyListComponentReducer}) => {
-    return {...lazyListComponentReducer};
+const mapStateToProps = ({lazyListReducer}) => {
+    return {...lazyListReducer};
 }
 
 export default connect(mapStateToProps)(LazyListComponent)

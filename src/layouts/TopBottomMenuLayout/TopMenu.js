@@ -9,7 +9,7 @@ import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
 import AvatarView from "../../components/AvatarView";
-import {MenuBadge, usePages} from "../../controllers/General";
+import {usePages} from "../../controllers/General";
 import {connect} from "react-redux";
 
 const styles = theme => ({
@@ -158,24 +158,6 @@ TopMenu.propTypes = {
     items: PropTypes.array,
     pages: PropTypes.object,
 };
-
-export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
-    switch (action.type) {
-        case MenuBadge.INCREASE:
-            const id = action.page.route;
-            return {...state, badge: {...state.badge, [id]: (state.badge[id] || 0) + 1}};
-        case MenuBadge.DECREASE:
-            const id1 = action.page.route;
-            return {...state, badge: {...state.badge, [id1]: (state.badge[id1] || 0) - 1}};
-        case MenuBadge.RESET:
-            const id2 = action.page && action.page.route;
-            if (id2) return {...state, badge: {...state.badge, [id2]: 0}};
-            else return {...state, badge: {}};
-        default:
-            return state;
-    }
-};
-topMenuReducer.skipStore = true;
 
 const mapStateToProps = ({topMenuReducer}) => ({
     badge: topMenuReducer.badge,

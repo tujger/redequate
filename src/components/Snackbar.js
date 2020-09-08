@@ -4,19 +4,20 @@ import Snackbar from "@material-ui/core/Snackbar";
 import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
 import {connect} from "react-redux";
+import {snackbarReducer} from "../reducers/snackbarReducer";
 
 const SimpleSnackbar = props => {
     const {open, message, buttonText, dispatch} = props;
 
     const onButtonClick = () => {
-        dispatch(SimpleSnackbar.HIDE);
+        dispatch(snackbarReducer.HIDE);
     };
 
     const handleClose = (event, reason) => {
         if (reason === "clickaway") {
             return;
         }
-        dispatch(SimpleSnackbar.HIDE);
+        dispatch(snackbarReducer.HIDE);
     };
 
     return <Snackbar
@@ -39,29 +40,6 @@ const SimpleSnackbar = props => {
     />
 };
 
-SimpleSnackbar.SHOW = "snackbar_Show";
-SimpleSnackbar.HIDE = {type: "snackbar_Hide"};
-
-export const snackbarReducer = (state = {
-    open: false,
-    buttonText: "Close",
-    message: "Snackbar text",
-    error: ""
-}, action) => {
-    switch (action.type) {
-        case SimpleSnackbar.SHOW:
-            let newState = {open: true};
-            if (action.message) newState.message = action.message;
-            if (action.buttonText) newState.buttonText = action.buttonText;
-            if (action.onButtonClick) newState.onButtonClick = action.onButtonClick;
-            if (action.error) newState.error = action.error;
-            return {...state, ...newState};
-        case SimpleSnackbar.HIDE.type:
-            return {...state, open: false};
-        default:
-            return state;
-    }
-};
 
 const mapStateToProps = ({snackbar}) => ({
     open: snackbar.open,
