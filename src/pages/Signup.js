@@ -3,6 +3,7 @@ import {Redirect, useHistory, useParams} from "react-router-dom";
 import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
+import ProgressView from "../components/ProgressView";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
@@ -12,7 +13,6 @@ import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
 import {notifySnackbar, refreshAll, TextMaskEmail, useFirebase, usePages, useStore} from "../controllers";
-import {progressViewReducer} from "../reducers/progressViewReducer";
 
 const Signup = ({signup = true, additional}) => {
     const [state, setState] = React.useState({
@@ -47,7 +47,7 @@ const Signup = ({signup = true, additional}) => {
             return;
         }
 
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         if (requestPasswordFor) {
             const user = firebase.auth().currentUser;
@@ -61,13 +61,13 @@ const Signup = ({signup = true, additional}) => {
                 .catch(signupError)
                 .finally(() => {
                     setState({...state, requesting: false});
-                    dispatch(progressViewReducer.HIDE);
+                    dispatch(ProgressView.HIDE);
                 });
         } else {
             firebase.auth().createUserWithEmailAndPassword(email, password)
                 .then(signupVerification)
                 .catch(signupError)
-                .finally(() => dispatch(progressViewReducer.HIDE));
+                .finally(() => dispatch(ProgressView.HIDE));
         }
     };
 
@@ -90,7 +90,7 @@ const Signup = ({signup = true, additional}) => {
 
     if (!requestPasswordFor && firebase.auth().isSignInWithEmailLink(window.location.href)) {
         let email = params.email;
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
 
         console.log("[Signup] with link for", email)
         if (!email) {
@@ -100,7 +100,7 @@ const Signup = ({signup = true, additional}) => {
         firebase.auth().signInWithEmailLink(email, window.location.href)
             .then(() => setState({...state, requestPasswordFor: email}))
             .catch(signupError)
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
 
         return <LoadingComponent/>
     } else if (currentUserData.id) {

@@ -1,5 +1,3 @@
-// jest.mock("@material-ui/styles/withStyles");
-
 import {
     matchRole,
     Role,
@@ -18,6 +16,7 @@ import {firebase, store} from "../common";
 import React from "react";
 
 // jest.enableAutomock();
+
 // jest.mock('notistack');
 
 beforeAll(() => {

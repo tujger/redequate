@@ -25,6 +25,24 @@ const ProgressView = ({show, value = null, classes, className}) => {
         className={[classes.progress, show ? "" : classes.invisibleProgress, className].join(" ")}/>
 };
 
+ProgressView.SHOW = {type: "progressView_Show"};
+ProgressView.HIDE = {type: "progressView_Hide"};
+
+export const progressViewReducer = (state = {show: false, value: null}, action) => {
+    switch (action.type) {
+        case ProgressView.SHOW.type:
+            if (action.value) {
+                return {show: true, value: +action.value};
+            } else {
+                return {show: true, value: null};
+            }
+        case ProgressView.HIDE.type:
+            return {show: false, value: null};
+        default:
+            return state;
+    }
+};
+
 const mapStateToProps = ({progressView}) => ({
     show: progressView.show,
     value: progressView.value

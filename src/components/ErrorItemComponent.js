@@ -12,10 +12,10 @@ import ConfirmComponent from "./ConfirmComponent";
 import {toDateString} from "../controllers/DateFormat";
 import {notifySnackbar} from "../controllers/Notifications";
 import {fetchCallable} from "../controllers/Firebase";
+import ProgressView from "./ProgressView";
 import {useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
 import {stylesList} from "../controllers/Theme";
-import {progressViewReducer} from "../reducers/progressViewReducer";
 
 function ErrorItemComponent(props) {
     const {data, classes, skeleton, label, onUserClick} = props;
@@ -27,7 +27,7 @@ function ErrorItemComponent(props) {
     const handleClick = (event) => onUserClick(event, userData.id);
 
     const handleConfirm = () => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         setState({...state, alert: false});
         console.log("[Error] try to fix", data);
         fetchCallable(firebase)("fixError", {
@@ -37,15 +37,15 @@ function ErrorItemComponent(props) {
             .then(() => firebase.database().ref("errors").child(data.key).set(null))
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
     }
 
     const handleRemove = () => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         firebase.database().ref("errors").child(data.key).set(null)
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
     }
 
     React.useEffect(() => {

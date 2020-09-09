@@ -7,6 +7,7 @@ import Grid from "@material-ui/core/Grid";
 import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
 import ProfileComponentOrigin from "../components/ProfileComponent";
+import ProgressView from "../components/ProgressView";
 import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
@@ -33,7 +34,6 @@ import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import {styles} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
-import ProgressView from "../components/ProgressView";
 
 const stylesProfile = theme => ({
     root: {
@@ -142,7 +142,7 @@ const Profile = (
         })
             .then(({result = "Complete"}) => notifySnackbar(result))
             .catch(notifySnackbar)
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
     }
 
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
@@ -218,11 +218,11 @@ const Profile = (
                 children={"Resend verification"}
                 className={classes.resendVerification}
                 onClick={() => {
-                    dispatch(progressViewReducer.SHOW);
+                    dispatch(ProgressView.SHOW);
                     console.log(currentUserData)
                     sendVerificationEmail(firebase)
                         .catch(notifySnackbar)
-                        .finally(() => dispatch(progressViewReducer.HIDE));
+                        .finally(() => dispatch(ProgressView.HIDE));
                 }}
             />}
         </ButtonGroup>

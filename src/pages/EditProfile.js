@@ -13,6 +13,7 @@ import MailIcon from "@material-ui/icons/Mail";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, useHistory, useParams} from "react-router-dom";
 import {matchRole, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import withStyles from "@material-ui/styles/withStyles";
@@ -33,7 +34,6 @@ import Pagination from "../controllers/FirebasePagination";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
-import {progressViewReducer} from "../reducers/progressViewReducer";
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
@@ -139,12 +139,12 @@ function EditProfile(props) {
     const saveUser = async () => {
         if (!requiredFilled()) return;
 
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         setState(state => ({...state, requiredError: [], uniqueError: [], disabled: true}));
         const unique = await checkUnique();
         if (!unique) {
             setState(state => ({...state, disabled: false}));
-            dispatch(progressViewReducer.HIDE);
+            dispatch(ProgressView.HIDE);
             return;
         }
 
@@ -165,7 +165,7 @@ function EditProfile(props) {
                     uppy,
                     name: "profile",
                     onprogress: progress => {
-                        dispatch({...progressViewReducer.SHOW, value: progress});
+                        dispatch({...ProgressView.SHOW, value: progress});
                     },
                     deleteFile: userData.public.image
                 });
@@ -207,7 +207,7 @@ function EditProfile(props) {
                 }
             })
             .catch(onerror)
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
     };
 
     const saveUserByAdmin = () => {
@@ -238,7 +238,7 @@ function EditProfile(props) {
     }
 
     const deleteUser = () => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, deleteOpen: false}));
         console.log("delete user by admin", userData.id)
 
@@ -249,11 +249,11 @@ function EditProfile(props) {
                 history.goBack();
             })
             .catch(notifySnackbar)
-            .finally(() => dispatch(progressViewReducer.HIDE))
+            .finally(() => dispatch(ProgressView.HIDE))
     }
 
     const handleNotifications = (evt, enable) => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         setState({...state, disabled: true});
         if (enable) {
             setupReceivingNotifications(firebase)
@@ -264,7 +264,7 @@ function EditProfile(props) {
                 .then(() => notifySnackbar("Subscribed"))
                 .catch(notifySnackbar)
                 .finally(() => {
-                    dispatch(progressViewReducer.HIDE);
+                    dispatch(ProgressView.HIDE);
                     setState({...state, disabled: false});
                 });
         } else {
@@ -282,7 +282,7 @@ function EditProfile(props) {
                 .then(() => notifySnackbar("Unsubscribed"))
                 .catch(notifySnackbar)
                 .finally(() => {
-                    dispatch(progressViewReducer.HIDE);
+                    dispatch(ProgressView.HIDE);
                     setState({...state, disabled: false});
                 });
             notifySnackbar({title: "Unsubscribed"});
@@ -293,7 +293,7 @@ function EditProfile(props) {
 
     React.useEffect(() => {
         let isMounted = true;
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         let userData;
         if (!id || id === ":id") {
             userData = currentUserData;
@@ -307,7 +307,7 @@ function EditProfile(props) {
                 notifySnackbar(error);
                 history.goBack();
             })
-            .finally(() => dispatch(progressViewReducer.HIDE))
+            .finally(() => dispatch(ProgressView.HIDE))
         return () => {
             uploadComponentClean(uppy);
             isMounted = false;

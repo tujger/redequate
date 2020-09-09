@@ -16,11 +16,9 @@ import UserItemComponent from "../../components/UserItemComponent";
 import Pagination from "../../controllers/FirebasePagination";
 import {normalizeSortName, UserData} from "../../controllers/UserData";
 import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
+import ProgressView from "../../components/ProgressView";
 import {styles} from "../../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
-import {usersReducer} from "../../reducers/usersReducer";
-import {lazyListReducer} from "../../reducers/lazyListReducer";
-import {progressViewReducer} from "../../reducers/progressViewReducer";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
@@ -31,20 +29,20 @@ function Users(props) {
 
     const handleMode = evt => {
         // setState({...state, mode: evt.target.value});
-        dispatch({type: lazyListReducer.RESET});
-        dispatch({type: usersReducer.MODE, mode: evt.target.value, filter});
+        dispatch({type: LazyListComponent.RESET});
+        dispatch({type: Users.MODE, mode: evt.target.value, filter});
     }
 
     const handleFilter = evt => {
-        dispatch({type: lazyListReducer.RESET});
-        dispatch({type: usersReducer.MODE, mode, filter: evt.target.value});
+        dispatch({type: LazyListComponent.RESET});
+        dispatch({type: Users.MODE, mode, filter: evt.target.value});
     }
 
     React.useEffect(() => {
-        // dispatch(progressViewReducer.SHOW);
+        // dispatch(ProgressView.SHOW);
         return () => {
-            // dispatch({type: lazyListReducer.RESET, cache: "users"});
-            dispatch(progressViewReducer.HIDE);
+            // dispatch({type: LazyListComponent.RESET, cache: "users"});
+            dispatch(ProgressView.HIDE);
         }
         // eslint-disable-next-line
     }, [mode]);
@@ -101,7 +99,7 @@ function Users(props) {
         default:
     }
 
-    return <>
+    return <React.Fragment>
         <Hidden smDown>
             <Toolbar disableGutters>
                 <Select
@@ -120,8 +118,8 @@ function Users(props) {
                     endAdornment={filter ? <IconButton
                         children={<Clear/>}
                         onClick={() => {
-                            dispatch({type: usersReducer.MODE, mode, filter: ""});
-                            dispatch({type: lazyListReducer.RESET});
+                            dispatch({type: Users.MODE, mode, filter: ""});
+                            dispatch({type: LazyListComponent.RESET});
                         }}
                         size={"small"}
                         title={"Clear"}
@@ -142,8 +140,8 @@ function Users(props) {
                         endAdornment={filter ? <IconButton
                             children={<Clear/>}
                             onClick={() => {
-                                dispatch({type: usersReducer.MODE, filter: ""});
-                                dispatch({type: lazyListReducer.RESET});
+                                dispatch({type: Users.MODE, filter: ""});
+                                dispatch({type: LazyListComponent.RESET});
                             }}
                             size={"small"}
                             title={"Clear"}
@@ -192,7 +190,7 @@ function Users(props) {
             })}
             rightAction={listAction({
                 action: (selectedItems) => {
-                    dispatch(progressViewReducer.SHOW);
+                    dispatch(ProgressView.SHOW);
                     for(let item of selectedItems) {
                         let index = items.indexOf(item);
                         console.log("left", items.length, index, item);
@@ -200,7 +198,7 @@ function Users(props) {
                         notifySnackbar({title: "Removed: " + item.public.name});
                     }
                     setState({...state, items});
-                    dispatch(progressViewReducer.HIDE);
+                    dispatch(ProgressView.HIDE);
                 },
                 itemButton: {
                     label: "Delete this",
@@ -225,10 +223,19 @@ function Users(props) {
                 <AddIcon/>
             </Fab>
         </Link>}
-    </>
+    </React.Fragment>
 }
 
+Users.MODE = "users_Mode";
 
+export const usersReducer = (state = {filter: "", mode: "all"}, action) => {
+    switch (action.type) {
+        case Users.MODE:
+            return {...state, filter: action.filter, mode: action.mode};
+        default:
+            return state;
+    }
+};
 // gamesReducer.skipStore = true;
 
 const mapStateToProps = ({users}) => ({

@@ -11,13 +11,11 @@ import Toolbar from "@material-ui/core/Toolbar";
 import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas, useFirebase} from "../../controllers/General";
+import ProgressView from "../../components/ProgressView";
 import ErrorItemComponent from "../../components/ErrorItemComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import {notifySnackbar} from "../../controllers/Notifications";
 import AvatarView from "../../components/AvatarView";
-import {errorsReducer} from "../../reducers/errorsReducer";
-import {lazyListReducer} from "../../reducers/lazyListReducer";
-import {progressViewReducer} from "../../reducers/progressViewReducer";
 
 const Errors = (props) => {
     const {mode = "all", filter} = props;
@@ -27,22 +25,22 @@ const Errors = (props) => {
     const {deleteOpen, random} = state;
 
     const handleMode = evt => {
-        dispatch({type: lazyListReducer.RESET});
-        dispatch({type: errorsReducer.MODE, mode: evt.target.value, filter});
+        dispatch({type: LazyListComponent.RESET});
+        dispatch({type: Errors.MODE, mode: evt.target.value, filter});
     }
 
     const handleConfirmDeletion = evt => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         firebase.database().ref("errors").set(null)
-            .then(() => dispatch({type: lazyListReducer.RESET}))
+            .then(() => dispatch({type: LazyListComponent.RESET}))
             .then(() => setState({...state, deleteOpen: false}))
             .catch(notifySnackbar)
-            .finally(() => dispatch(progressViewReducer.HIDE))
+            .finally(() => dispatch(ProgressView.HIDE))
     }
 
     React.useEffect(() => {
         return () => {
-            dispatch(progressViewReducer.HIDE);
+            dispatch(ProgressView.HIDE);
         }
         // eslint-disable-next-line
     }, [mode]);
@@ -85,8 +83,8 @@ const Errors = (props) => {
                     />}
                     label={filteredUserData.name}
                     onDelete={() => {
-                        dispatch({type: errorsReducer.MODE, mode, filter: ""});
-                        dispatch({type: lazyListReducer.RESET});
+                        dispatch({type: Errors.MODE, mode, filter: ""});
+                        dispatch({type: LazyListComponent.RESET});
                     }}
                 />}
             </Grid>
@@ -104,7 +102,7 @@ const Errors = (props) => {
                 key={item.key}
                 onUserClick={(event, filter) => {
                     event && event.stopPropagation();
-                    dispatch({type: errorsReducer.MODE, mode: "all", filter});
+                    dispatch({type: Errors.MODE, mode: "all", filter});
                 }}
             />}
             itemTransform={itemTransform}
@@ -123,6 +121,17 @@ const Errors = (props) => {
     </React.Fragment>
 };
 
+Errors.MODE = "errors_Mode";
+
+export const errorsReducer = (state = {filter: "", mode: "all"}, action) => {
+    switch (action.type) {
+        case Errors.MODE:
+            return {...state, filter: action.filter, mode: action.mode};
+        default:
+            return state;
+    }
+};
+errorsReducer.skipStore = true;
 
 const mapStateToProps = ({errors}) => ({
     filter: errors.filter,

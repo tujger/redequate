@@ -2,6 +2,7 @@ import React from "react";
 import {logoutUser, sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
+import ProgressView from "../components/ProgressView";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -19,7 +20,6 @@ import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 import {TextMaskEmail, UserData} from "../controllers";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {progressViewReducer} from "../reducers/progressViewReducer";
 
 function Login(props) {
     const {popup = true, agreementComponent = null, onLogin, transformUserData, layout = <LoginLayout/>} = props;
@@ -46,11 +46,11 @@ function Login(props) {
 
     const finallyCallback = () => {
         setState(state => ({...state, requesting: false}));
-        dispatch(progressViewReducer.HIDE);
+        dispatch(ProgressView.HIDE);
     }
 
     const requestLoginGoogle = () => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         logoutUser(firebase, store)()
             .then(() => {
                 const provider = new firebase.auth.GoogleAuthProvider();
@@ -68,7 +68,7 @@ function Login(props) {
     };
 
     const requestLoginPassword = () => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         firebase.auth().signInWithEmailAndPassword(email, password)
             .then(loginSuccess)
@@ -165,7 +165,7 @@ function Login(props) {
             .then(checkFirstLogin)
             .then(loginSuccess)
             .catch(errorCallback)
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
         return <LoadingComponent/>;
     }
 

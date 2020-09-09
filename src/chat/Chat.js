@@ -6,13 +6,13 @@ import withStyles from "@material-ui/styles/withStyles";
 import {useHistory, useParams} from "react-router-dom";
 import {InView} from "react-intersection-observer";
 import {cacheDatas, notifySnackbar, useCurrentUserData, useFirebase, usePages, UserData} from "../controllers";
+import ProgressView from "../components/ProgressView";
 import LoadingComponent from "../components/LoadingComponent";
 import ChatList from "./ChatList";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
-import {lazyListReducer} from "../reducers/lazyListReducer";
-import {progressViewReducer} from "../reducers/progressViewReducer";
 
 const styles = theme => ({
     messageboxFixed: {
@@ -50,7 +50,7 @@ const Chat = (props) => {
     const db = firebase.database();
 
     const handleSend = (value) => {
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
         const uid = currentUserData.id;
         db.ref("chats").child(chatMeta.id).push({
             created: firebase.database.ServerValue.TIMESTAMP,
@@ -59,15 +59,15 @@ const Chat = (props) => {
         })
             .then(() => chatMeta.update())
             .then(() => chatMeta.updateVisit(currentUserData.id))
-            .then(() => dispatch({type: lazyListReducer.RESET, cache: "chats"}))
+            .then(() => dispatch({type: LazyListComponent.RESET, cache: "chats"}))
             .catch(notifySnackbar)
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
     }
 
     React.useEffect(() => {
         let isMounted = true;
-        dispatch(progressViewReducer.SHOW);
-        dispatch({type: lazyListReducer.RESET, cache: "chats"});
+        dispatch(ProgressView.SHOW);
+        dispatch({type: LazyListComponent.RESET, cache: "chats"});
         const chatMeta = ChatMeta(firebase);
         chatMeta.getOrCreateFor(currentUserData.id, id, history.location.state && history.location.state.meta)
             // .then(console.log)
@@ -92,7 +92,7 @@ const Chat = (props) => {
                 notifySnackbar(error);
                 history.goBack();
             })
-            .finally(() => dispatch(progressViewReducer.HIDE));
+            .finally(() => dispatch(ProgressView.HIDE));
         return () => {
             isMounted = false;
             chatMeta.updateVisit(currentUserData.id);

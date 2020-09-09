@@ -8,11 +8,11 @@ import Grid from "@material-ui/core/Grid";
 import MailIcon from "@material-ui/icons/Mail";
 import {sendInvitationEmail} from "../../controllers/UserData";
 import {TextMaskEmail} from "../../controllers/TextMasks";
+import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {useFirebase, usePages} from "../../controllers/General";
 import {notifySnackbar} from "../../controllers/Notifications";
-import {progressViewReducer} from "../../reducers/progressViewReducer";
 
 const AddUser = (props) => {
     const [state, setState] = React.useState({requesting: false, error: ""});
@@ -28,7 +28,7 @@ const AddUser = (props) => {
             return;
         }
         setState({...state, requesting: true});
-        dispatch(progressViewReducer.SHOW);
+        dispatch(ProgressView.SHOW);
 
         sendInvitationEmail(firebase)({email: email})
             .then(() => {
@@ -37,7 +37,7 @@ const AddUser = (props) => {
             .catch(notifySnackbar)
             .finally(() => {
                 setState({...state, requesting: false});
-                dispatch(progressViewReducer.HIDE);
+                dispatch(ProgressView.HIDE);
             });
     };
 
