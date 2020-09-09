@@ -15,7 +15,9 @@ const Firebase = firebaseConfig => {
         console.log("[Firebase] init")
         firebase.initializeApp(firebaseConfig);
         firebase.config = firebaseConfig;
-        firebase.analytics();
+        if (firebaseConfig.measurementId) {
+            firebase.analytics();
+        }
     } catch (e) {
         console.error(e);
     }
@@ -36,6 +38,9 @@ export const forceFirebaseReinit = () => {
     console.log("[Firebase] reinit", firebase.config)
     return firebase.app().delete().then(() => {
         firebase.initializeApp(firebase.config);
+        if (firebase.config.measurementId) {
+            firebase.analytics();
+        }
         window.location.reload(); // FIXME
         return firebase;
     });
