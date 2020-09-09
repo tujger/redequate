@@ -3,8 +3,7 @@
 
 import React from "react";
 
-const Mock = style => component => {
-    // const classes = typeof style === 'function' ? style() : style;
+const Mock = props => component => {
     component.defaultProps = { ...component.defaultProps };
     return component;
 };
@@ -14,6 +13,12 @@ function __setMockFiles(newMockFiles) {
 }
 
 Mock.__setMockFiles = __setMockFiles;
-Mock.default = event => event => event;
+Mock.combineReducers = value => {
+
+}
+Mock.createStore = value => ({
+    subscribe: () => {},
+    dispatch: () => {}
+})
 
 module.exports = Mock;
