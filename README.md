@@ -1,6 +1,6 @@
 # redequate
 
-> Edeqa PWA React core
+> Former **Edeqa PWA React core**
 
 [![NPM](https://img.shields.io/npm/v/edeqa-pwa-react-core.svg)](https://www.npmjs.com/package/redequate) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
@@ -114,7 +114,7 @@ Page options are:
     onClick?: Function,
     pullToRefresh?: Boolean, // if 'false' then disables pull-to-refresh in mobile wrapper
     roles?: Array,
-    adornment?: (userData) => React.Component, // will be added to menu item
+    adornment?: (UserData) => React.Component, // will be added to menu item
     daemon?: Boolean, // if 'true' then component will be mandatory called with 'daemon' argument
     disabled?: Boolean, // set 'true' to temporarily disable item
 
@@ -123,7 +123,7 @@ Roles are:
     AUTH - need to be logged in to access this page,
     ADMIN - administrator has higher priority access,
     DISABLED - user is suspended, has access to profile but no ability to edit,
-    LOGIN -
+    LOGIN - user not logged in,
     USER - regular user,
     USER_NOT_VERIFIED - user that did not verify his e-mail yet
 

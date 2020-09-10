@@ -42,9 +42,11 @@ export default [{
             Chat: 'src/chat/Chat.js',
             Chats: 'src/chat/Chats.js',
             ChatsCounter: 'src/chat/ChatsCounter.js',
+            Errors: 'src/pages/admin/Errors.js',
             Dispatcher: 'src/Dispatcher.js',
             EditProfile: 'src/pages/EditProfile.js',
             Login: 'src/pages/Login.js',
+            Profile: 'src/pages/Profile.js',
             UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
             Users: 'src/pages/admin/Users.js',
             DateTimePicker: 'src/components/DateTimePicker/index.js'

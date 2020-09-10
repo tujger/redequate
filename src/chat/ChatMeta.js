@@ -1,7 +1,5 @@
 import Pagination from "../controllers/FirebasePagination";
 import {UserData} from "../controllers/UserData";
-import {fetchCallable, notifySnackbar} from "../controllers";
-import ProgressView from "../components/ProgressView";
 
 const ONLINE_TIMEOUT = 60000;
 
