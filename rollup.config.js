@@ -45,6 +45,7 @@ export default [{
             Errors: 'src/pages/admin/Errors.js',
             Dispatcher: 'src/Dispatcher.js',
             EditProfile: 'src/pages/EditProfile.js',
+            LoadingComponent: 'src/components/LoadingComponent.js',
             Login: 'src/pages/Login.js',
             Profile: 'src/pages/Profile.js',
             UploadComponent: 'src/components/UploadComponent/UploadComponent.js',

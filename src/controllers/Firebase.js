@@ -38,9 +38,9 @@ export const forceFirebaseReinit = () => {
     console.log("[Firebase] reinit", firebase.config)
     return firebase.app().delete().then(() => {
         firebase.initializeApp(firebase.config);
-        if (firebase.config && firebase.config.measurementId) {
-            firebase.analytics();
-        }
+        // if (firebase.config && firebase.config.measurementId) {
+        //     firebase.analytics();
+        // }
         window.location.reload(); // FIXME
         return firebase;
     });

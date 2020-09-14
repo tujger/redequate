@@ -11,7 +11,6 @@ import ProgressView from "../components/ProgressView";
 import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {notifySnackbar} from "../controllers/Notifications";
 import {useFirebase, usePages} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
@@ -34,6 +33,7 @@ import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import {styles} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
+import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const stylesProfile = theme => ({
     root: {

@@ -10,12 +10,12 @@ import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
 import withStyles from "@material-ui/styles/withStyles";
 import ConfirmComponent from "./ConfirmComponent";
 import {toDateString} from "../controllers/DateFormat";
-import {notifySnackbar} from "../controllers/Notifications";
 import {fetchCallable} from "../controllers/Firebase";
 import ProgressView from "./ProgressView";
 import {useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
 import {stylesList} from "../controllers/Theme";
+import {notifySnackbar} from "../controllers/notifySnackbar";
 
 function ErrorItemComponent(props) {
     const {data, classes, skeleton, label, onUserClick} = props;

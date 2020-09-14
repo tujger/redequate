@@ -10,11 +10,11 @@ import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
 import Resizer from "react-image-file-resizer";
 import ReactDOM from "react-dom";
-import {notifySnackbar} from "../../controllers/Notifications";
 import "@uppy/core/dist/style.css";
 import "@uppy/progress-bar/dist/style.css";
 import "@uppy/dashboard/dist/style.css";
 import "@uppy/webcam/dist/style.css";
+import {notifySnackbar} from "../../controllers/notifySnackbar";
 
 const MAX_FILE_SIZE = 20 * 1024;
 

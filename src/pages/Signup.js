@@ -41,6 +41,11 @@ const Signup = ({signup = true, additional}) => {
             setState({...state, requesting: false});
             return;
         }
+        if (password.length < 8) {
+            notifySnackbar(new Error("Password must be at least 8 symbols"));
+            setState({...state, requesting: false});
+            return;
+        }
         if (password !== confirm) {
             notifySnackbar(new Error("Passwords not equal"));
             setState({...state, requesting: false});

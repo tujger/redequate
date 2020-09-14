@@ -1,7 +1,7 @@
 import * as serviceWorker from "../serviceWorker";
-import {notifySnackbar} from "./Notifications";
 import {firebaseMessaging} from "./Firebase";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
+import {notifySnackbar} from "./notifySnackbar";
 
 const activateUpdate = registration => {
     registration.waiting.postMessage({type: "SKIP_WAITING"});

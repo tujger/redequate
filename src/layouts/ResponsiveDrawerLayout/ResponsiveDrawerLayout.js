@@ -11,7 +11,7 @@ import MainAppbar from "./MainAppbar";
 import MainContent from "../../components/MainContent";
 import MainMenu from "./MainMenu";
 import Snackbar from "../../components/Snackbar";
-import {NotificationsSnackbar, notifySnackbar} from "../../controllers/Notifications";
+import {NotificationsSnackbar} from "../../controllers/Notifications";
 import {enableDisabledPages, useStore, useWindowData} from "../../controllers/General";
 import IconButton from "@material-ui/core/IconButton";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
@@ -20,6 +20,7 @@ import HeaderComponent from "../../components/HeaderComponent";
 import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers/WrapperControl";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
+import {notifySnackbar} from "../../controllers/notifySnackbar";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 

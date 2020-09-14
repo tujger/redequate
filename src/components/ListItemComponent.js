@@ -3,7 +3,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import PropTypes from "prop-types";
 import {useDrag} from "react-use-gesture";
 import {isMobile} from "react-device-detect";
-import {notifySnackbar} from "../controllers/Notifications";
+import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const styles = theme => ({
     root: {

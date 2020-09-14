@@ -7,7 +7,7 @@ import {usePages, useTechnicalInfo} from "../controllers/General";
 import TechnicalInfoView from "./TechnicalInfoView";
 import {InView} from "react-intersection-observer";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
-import {notifySnackbar} from "../controllers/Notifications";
+import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const styles = theme => ({
     content: {

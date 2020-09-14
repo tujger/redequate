@@ -9,11 +9,12 @@ import Snackbar from "../../components/Snackbar";
 import StickyHeader from "./StickyHeader";
 import TopMenu from "./TopMenu";
 import {Route, Switch} from "react-router-dom";
-import {NotificationsSnackbar, notifySnackbar} from "../../controllers/Notifications";
+import {NotificationsSnackbar} from "../../controllers/Notifications";
 import {enableDisabledPages, usePages, useStore} from "../../controllers/General";
 import HeaderComponent from "../../components/HeaderComponent";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
+import {notifySnackbar} from "../../controllers/notifySnackbar";
 
 const styles = theme => ({
     indent: {

@@ -1,5 +1,5 @@
-import {notifySnackbar} from "./Notifications";
 import {cacheDatas} from "./General";
+import {notifySnackbar} from "./notifySnackbar";
 
 export function watchUserChanged(firebase, store) {
     return new Promise((resolve, reject) => {

@@ -1,11 +1,11 @@
 import React from "react";
-import {notifySnackbar} from "../../controllers/Notifications";
 import ProgressView from "../ProgressView";
 import {connect, useDispatch} from "react-redux";
 import PropTypes from "prop-types";
 import {Observer} from "./Observer";
 import {Scroller} from "./Scroller";
 import {forceFirebaseReinit} from "../../controllers/Firebase";
+import {notifySnackbar} from "../../controllers/notifySnackbar";
 
 function LazyListComponent(
     {

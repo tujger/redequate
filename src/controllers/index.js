@@ -20,3 +20,4 @@ export {
     useCurrentUserData,
     normalizeSortName,
 } from "./UserData";
+export {notifySnackbar} from "./notifySnackbar";

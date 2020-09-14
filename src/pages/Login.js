@@ -14,12 +14,13 @@ import UserIcon from "@material-ui/icons/Mail";
 import GoogleLogo from "../images/google-logo.svg";
 import PropTypes from "prop-types";
 import {useDispatch} from "react-redux";
-import {notifySnackbar, setupReceivingNotifications} from "../controllers/Notifications";
+import {setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 import {TextMaskEmail, UserData} from "../controllers";
 import ConfirmComponent from "../components/ConfirmComponent";
+import {notifySnackbar} from "../controllers/notifySnackbar";
 
 function Login(props) {
     const {popup = true, agreementComponent = null, onLogin, transformUserData, layout = <LoginLayout/>} = props;

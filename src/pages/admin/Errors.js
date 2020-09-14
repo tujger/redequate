@@ -14,8 +14,8 @@ import {cacheDatas, useFirebase} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";
 import ErrorItemComponent from "../../components/ErrorItemComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
-import {notifySnackbar} from "../../controllers/Notifications";
 import AvatarView from "../../components/AvatarView";
+import {notifySnackbar} from "../../controllers/notifySnackbar";
 
 const Errors = (props) => {
     const {mode = "all", filter} = props;

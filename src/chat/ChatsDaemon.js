@@ -1,5 +1,4 @@
 import React from "react";
-import {notifySnackbar} from "../controllers/Notifications";
 import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import Pagination from "../controllers/FirebasePagination";
@@ -9,6 +8,7 @@ import ChatsCounter from "./ChatsCounter";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {fetchCallable} from "../controllers";
+import {notifySnackbar} from "../controllers/notifySnackbar";
 
 export const ChatsDaemon = ({clearText = text => text}) => {
     const currentUserData = useCurrentUserData();

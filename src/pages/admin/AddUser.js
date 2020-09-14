@@ -12,7 +12,7 @@ import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {useFirebase, usePages} from "../../controllers/General";
-import {notifySnackbar} from "../../controllers/Notifications";
+import {notifySnackbar} from "../../controllers/notifySnackbar";
 
 const AddUser = (props) => {
     const [state, setState] = React.useState({requesting: false, error: ""});
