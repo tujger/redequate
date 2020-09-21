@@ -3,13 +3,14 @@
 
 import React from "react";
 
-const Mock = () => () => {
-    console.log("AAAAAAAAAAAAA")
-    return <div>AAAAAAAAAAAAA</div>
-}
+const Mock = props => ({
+    getRedirectResult: async () => {},
+    signOut: async () => {},
+    sendSignInLinkToEmail: async () => {}
+});
 
 function __setMockFiles(newMockFiles) {
-    console.log("LINEARPROGRESS")
+    console.log("CARDMEDIA")
 }
 
 Mock.__setMockFiles = __setMockFiles;

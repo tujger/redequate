@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "axios": "latest",
+        "firebase": "latest",
         "geo-coder-t": "latest",
         "react-add-to-calendar-hoc": "latest",
         "react-device-detect": "latest",
@@ -50,7 +51,6 @@
         "@uppy/transloadit": "latest",
         "@uppy/webcam": "latest",
         "@uppy/progress-bar": "latest",
-        "firebase": "latest",
         "moment": "latest",
         "notistack": "latest",
         "prop-types": "latest",

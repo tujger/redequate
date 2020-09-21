@@ -7,7 +7,7 @@ import ThemeProvider from "@material-ui/styles/ThemeProvider";
 import {BrowserRouter} from "react-router-dom";
 import {Provider} from "react-redux";
 import {default as defaultTheme} from "../../controllers/Theme";
-import {progressViewReducer} from "../../../../bkp/restores/reducers/progressViewReducer";
+import {progressViewReducer} from '../../components/ProgressView';
 
 // jest.mock("@material-ui/styles/withStyles");
 
@@ -27,6 +27,7 @@ describe("ProgressView", () => {
             </Provider>, container);
             store.dispatch(progressViewReducer.SHOW);
         });
+        console.log(container)
         expect(container.firstChild.getAttribute("role")).toEqual("progressbar");
     });
     it("20%", () => {

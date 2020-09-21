@@ -3,13 +3,10 @@
 
 import React from "react";
 
-const Mock = props => component => {
-    component.defaultProps = { ...component.defaultProps };
-    return component;
-};
+const Mock = Object.create(null);//jest.createMockFromModule('notistack');
 
 function __setMockFiles(newMockFiles) {
-    console.log("CARDMEDIA")
+    console.log("POPPER")
 }
 
 Mock.__setMockFiles = __setMockFiles;

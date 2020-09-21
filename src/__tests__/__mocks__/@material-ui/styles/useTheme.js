@@ -3,20 +3,17 @@
 
 import React from "react";
 
-const Mock = props => component => {
+const Mock = style => component => {
+    // const classes = typeof style === 'function' ? style() : style;
     component.defaultProps = { ...component.defaultProps };
     return component;
 };
 
 function __setMockFiles(newMockFiles) {
-    console.log("CARDMEDIA")
+    console.log("USETHEME")
 }
 
 Mock.__setMockFiles = __setMockFiles;
-Mock.auth = () => ({
-    getRedirectResult: async () => {},
-    signOut: async () => {},
-    sendSignInLinkToEmail: async () => {}
-})
+Mock.default = event => event => event;
 
 module.exports = Mock;

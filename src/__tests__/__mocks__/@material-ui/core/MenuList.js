@@ -3,13 +3,10 @@
 
 import React from "react";
 
-const Mock = () => () => {
-    console.log("AAAAAAAAAAAAA")
-    return <div>AAAAAAAAAAAAA</div>
-}
+const Mock = Object.create(null);//jest.createMockFromModule('notistack');
 
 function __setMockFiles(newMockFiles) {
-    console.log("LINEARPROGRESS")
+    console.log("MENULIST")
 }
 
 Mock.__setMockFiles = __setMockFiles;

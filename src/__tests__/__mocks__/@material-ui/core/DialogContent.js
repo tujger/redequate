@@ -3,12 +3,10 @@
 
 import React from "react";
 
-const Mock = props => ({
-    signOut: () => {}
-});
+const Mock = Object.create(null);//jest.createMockFromModule('notistack');
 
 function __setMockFiles(newMockFiles) {
-    console.log("CARDMEDIA")
+    console.log("DIALOGCONTENT")
 }
 
 Mock.__setMockFiles = __setMockFiles;

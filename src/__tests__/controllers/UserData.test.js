@@ -1,5 +1,5 @@
 // jest.mock("@material-ui/styles/withStyles");
-
+import React from "react";
 import {
     matchRole,
     Role,
@@ -15,7 +15,6 @@ import {
     sendInvitationEmail
 } from "../../controllers/UserData";
 import {firebase, store} from "../common";
-import React from "react";
 
 // jest.enableAutomock();
 // jest.mock('notistack');
