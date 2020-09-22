@@ -4,10 +4,10 @@ import "firebase/database";
 import "firebase/functions";
 import "firebase/storage";
 import "firebase/analytics";
-// import "firebase/analytics";
-if (process.env.NODE_ENV !== "development") {
-    require("firebase/messaging");
-}
+import "firebase/messaging";
+// if (process.env.NODE_ENV !== "development") {
+//     require("firebase/messaging");
+// }
 
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
