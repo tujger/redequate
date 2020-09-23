@@ -1,6 +1,6 @@
 {
     "name": "redequate",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "description": "Redequate - React PWA core by Edeqa",
     "author": "tujger",
     "license": "MIT",
@@ -19,7 +19,8 @@
         "start core": "rollup -c -w",
         "prepare core": "npm run build",
         "predeploy core": "cd example && npm install && npm run build",
-        "deploy core": "gh-pages -d example/build"
+        "deploy core": "gh-pages -d example/build",
+        "publish": "npm publish"
     },
     "dependencies": {
         "axios": "latest",
