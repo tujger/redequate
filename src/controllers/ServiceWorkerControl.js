@@ -4,8 +4,8 @@ import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 import {notifySnackbar} from "./notifySnackbar";
 
 const activateUpdate = registration => {
-    registration.waiting.postMessage({type: "SKIP_WAITING"});
     try {
+        registration.waiting.postMessage({type: "SKIP_WAITING"});
         if (firebaseMessaging.messaging && firebaseMessaging.messaging().swRegistration) {
             console.log("[SWC] activate update");
             firebaseMessaging.messaging().swRegistration.update().then(() => {
