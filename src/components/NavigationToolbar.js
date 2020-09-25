@@ -16,7 +16,7 @@ const NavigationToolbar = (
     }) => {
     const history = useHistory();
 
-    const button = backButton || <IconButton
+    const button = backButton !== undefined ? backButton : <IconButton
         aria-label={"Back"}
         children={<BackIcon/>}
         /* eslint-disable-next-line no-undef */

@@ -12,7 +12,7 @@ import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
 import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import {connect} from "react-redux";
-import {Layout, MenuBadge, usePages} from "../../controllers/General";
+import {usePages} from "../../controllers/General";
 
 const styles = theme => ({
     label: {
@@ -129,22 +129,6 @@ MainAppbar.propTypes = {
     pages: PropTypes.object,
     onHamburgerClick: PropTypes.func
 };
-
-export const mainAppbarReducer = (state = {label: "", badge: 0}, action) => {
-    switch (action.type) {
-        case Layout.TITLE:
-            return {...state, label: action.label};
-        case MenuBadge.DECREASE:
-            return {...state, badge: (state.badge || 0) - 1};
-        case MenuBadge.INCREASE:
-            return {...state, badge: (state.badge || 0) + 1};
-        case MenuBadge.RESET:
-            return {...state, badge: 0};
-        default:
-            return state;
-    }
-};
-mainAppbarReducer.skipStore = true;
 
 const mapStateToProps = ({mainAppbarReducer}) => ({
     label: mainAppbarReducer.label,

@@ -5,13 +5,13 @@ import IconButton from "@material-ui/core/IconButton";
 import {Link, useHistory} from "react-router-dom";
 import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ClearIcon from "@material-ui/icons/Clear";
 import ConfirmComponent from "../components/ConfirmComponent";
 import ProgressView from "../components/ProgressView";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 
 const stylesHeader = theme => ({
     presence: {
@@ -64,7 +64,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
         }
         // chatMeta.watch(({removed}) => {
         //     if (removed) {
-        //         dispatch({type: LazyListComponent.RESET, cache: "chats"});
+        //         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
         //         history.goBack();
         //     }
         // });
@@ -72,7 +72,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
             uid: userData.id,
             onChange: ({online, timestamp, removed}) => {
                 if (removed) {
-                    dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                    dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
                     history.goBack();
                 }
                 isMounted && setState(state => ({...state, online, timestamp}));

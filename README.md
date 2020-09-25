@@ -120,10 +120,10 @@ Page options are:
 
 Roles are:
 
-    AUTH - need to be logged in to access this page,
+    AUTH - page can be shown to all users but user must be logged in to access the page,
     ADMIN - administrator has higher priority access,
-    DISABLED - user is suspended, has access to profile but no ability to edit,
-    LOGIN - user not logged in,
+    DISABLED - user is suspended, has access to profile but no ability to edit or do any actions,
+    LOGIN - user not logged in; show page only to that users,
     USER - regular user,
     USER_NOT_VERIFIED - user that did not verify his e-mail yet
 

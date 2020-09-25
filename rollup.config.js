@@ -24,7 +24,7 @@ export default [{
         }*/
     ],
     plugins: [
-        del({targets: ['dist/*']}),
+        del({targets: ['core/*']}),
         external(),
         postcss({
             modules: true
@@ -39,32 +39,57 @@ export default [{
     {
         input: {
             index: 'src/index.js',
+            Dispatcher: 'src/Dispatcher.js',
+
+            // controllers
+            DateFormat: 'src/controllers/DateFormat.js',
+            FirebasePagination: 'src/controllers/FirebasePagination.js',
+            General: 'src/controllers/General.js',
+            notifySnackbar: 'src/controllers/notifySnackbar.js',
+            UserData: 'src/controllers/UserData.js',
+            WrapperControl: 'src/controllers/WrapperControl.js',
+
+            // components
+            AvatarView: 'src/components/AvatarView.js',
+            ButtonAddEvent: 'src/components/ButtonAddEvent.js',
+            ConfirmComponent: 'src/components/ConfirmComponent.js',
+            DateTimePicker: 'src/components/DateTimePicker/index.js',
+            HeaderComponent: 'src/components/HeaderComponent.js',
+            ItemPlaceholderComponent: 'src/components/ItemPlaceholderComponent.js',
+            LazyListComponent: 'src/components/LazyListComponent/LazyListComponent.js',
+            LoadingComponent: 'src/components/LoadingComponent.js',
+            NavigationToolbar: 'src/components/NavigationToolbar.js',
+            PlacesTextField: 'src/components/PlacesTextField.js',
+            ProgressView: 'src/components/ProgressView.js',
+            ProfileComponent: 'src/components/ProfileComponent.js',
+            ShareComponent: 'src/components/ShareComponent.js',
+            TechnicalInfoView: 'src/components/TechnicalInfoView.js',
+            UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
+
+            // layouts
+            BottomToolbarLayout: 'src/layouts/BottomToolbarLayout/BottomToolbarLayout.js',
+            ResponsiveDrawerLayout: 'src/layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout.js',
+            TopBottomMenuLayout: 'src/layouts/TopBottomMenuLayout/TopBottomMenuLayout.js',
+
+            // pages
+            Admin: 'src/pages/admin/Admin.js',
+            Audit: 'src/pages/admin/Audit.js',
             Chat: 'src/chat/Chat.js',
             Chats: 'src/chat/Chats.js',
             ChatsCounter: 'src/chat/ChatsCounter.js',
-            Errors: 'src/pages/admin/Errors.js',
-            Dispatcher: 'src/Dispatcher.js',
             EditProfile: 'src/pages/EditProfile.js',
-            LoadingComponent: 'src/components/LoadingComponent.js',
+            Errors: 'src/pages/admin/Errors.js',
             Login: 'src/pages/Login.js',
             Profile: 'src/pages/Profile.js',
-            UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
-            Users: 'src/pages/admin/Users.js',
-            DateTimePicker: 'src/components/DateTimePicker/index.js'
+            Users: 'src/pages/admin/Users.js'
         },
         output: [
             {
-                dir: 'dist',
+                dir: 'core',
                 exports: 'named',
                 format: 'cjs',
                 sourcemap: true
-            }/*,
-            {
-                dir: 'dist/es',
-                exports: 'named',
-                format: 'es',
-                sourcemap: true
-            }*/
+            }
         ],
         plugins: [
             external(),

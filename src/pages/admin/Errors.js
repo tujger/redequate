@@ -3,11 +3,9 @@ import {connect, useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import IconButton from "@material-ui/core/IconButton";
-import Grid from "@material-ui/core/Grid";
 import Select from "@material-ui/core/Select";
 import Chip from "@material-ui/core/Chip";
 import MenuItem from "@material-ui/core/MenuItem";
-import Toolbar from "@material-ui/core/Toolbar";
 import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas, useFirebase} from "../../controllers/General";
@@ -16,6 +14,9 @@ import ErrorItemComponent from "../../components/ErrorItemComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import AvatarView from "../../components/AvatarView";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
+import {errorsReducer} from "../../reducers/errorsReducer";
+import NavigationToolbar from "../../components/NavigationToolbar";
+import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
 
 const Errors = (props) => {
     const {mode = "all", filter} = props;
@@ -25,14 +26,14 @@ const Errors = (props) => {
     const {deleteOpen, random} = state;
 
     const handleMode = evt => {
-        dispatch({type: LazyListComponent.RESET});
-        dispatch({type: Errors.MODE, mode: evt.target.value, filter});
+        dispatch({type: lazyListComponentReducer.RESET});
+        dispatch({type: errorsReducer.MODE, mode: evt.target.value, filter});
     }
 
     const handleConfirmDeletion = evt => {
         dispatch(ProgressView.SHOW);
         firebase.database().ref("errors").set(null)
-            .then(() => dispatch({type: LazyListComponent.RESET}))
+            .then(() => dispatch({type: lazyListComponentReducer.RESET}))
             .then(() => setState({...state, deleteOpen: false}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
@@ -64,8 +65,18 @@ const Errors = (props) => {
 
     const filteredUserData = filter ? cacheDatas.get(filter) : null;
 
-    return <React.Fragment>
-        <Toolbar disableGutters>
+    return <>
+        <NavigationToolbar
+            backButton={null}
+            mediumButton={<IconButton
+                children={<ClearIcon/>}
+                onClick={() => setState({...state, deleteOpen: true})}
+            />}
+            rightButton={<IconButton
+                children={<RefreshIcon/>}
+                onClick={() => setState({...state, random: Math.random()})}
+            />}
+        >
             <Select
                 color={"secondary"}
                 onChange={handleMode}
@@ -73,28 +84,20 @@ const Errors = (props) => {
             >
                 <MenuItem value={"all"}>All errors</MenuItem>
             </Select>
-            <Grid item xs>
-                {mode === "all" && filteredUserData && <Chip
-                    avatar={<AvatarView
-                        alt={"Avatar"}
-                        image={filteredUserData.image}
-                        initials={filteredUserData.name}
-                        verified={true}
-                    />}
-                    label={filteredUserData.name}
-                    onDelete={() => {
-                        dispatch({type: Errors.MODE, mode, filter: ""});
-                        dispatch({type: LazyListComponent.RESET});
-                    }}
+            {mode === "all" && filteredUserData && <Chip
+                avatar={<AvatarView
+                    alt={"Avatar"}
+                    image={filteredUserData.image}
+                    initials={filteredUserData.name}
+                    verified={true}
                 />}
-            </Grid>
-            <IconButton onClick={() => setState({...state, deleteOpen: true})}>
-                <ClearIcon/>
-            </IconButton>
-            <IconButton onClick={() => setState({...state, random: Math.random()})}>
-                <RefreshIcon/>
-            </IconButton>
-        </Toolbar>
+                label={filteredUserData.name}
+                onDelete={() => {
+                    dispatch({type: errorsReducer.MODE, mode, filter: ""});
+                    dispatch({type: lazyListComponentReducer.RESET});
+                }}
+            />}
+        </NavigationToolbar>
         <LazyListComponent
             key={random}
             itemComponent={item => <ErrorItemComponent
@@ -102,7 +105,7 @@ const Errors = (props) => {
                 key={item.key}
                 onUserClick={(event, filter) => {
                     event && event.stopPropagation();
-                    dispatch({type: Errors.MODE, mode: "all", filter});
+                    dispatch({type: errorsReducer.MODE, mode: "all", filter});
                 }}
             />}
             itemTransform={itemTransform}
@@ -118,20 +121,8 @@ const Errors = (props) => {
             onConfirm={handleConfirmDeletion}
             title={"Warning!"}
         />}
-    </React.Fragment>
+    </>
 };
-
-Errors.MODE = "errors_Mode";
-
-export const errorsReducer = (state = {filter: "", mode: "all"}, action) => {
-    switch (action.type) {
-        case Errors.MODE:
-            return {...state, filter: action.filter, mode: action.mode};
-        default:
-            return state;
-    }
-};
-errorsReducer.skipStore = true;
 
 const mapStateToProps = ({errors}) => ({
     filter: errors.filter,

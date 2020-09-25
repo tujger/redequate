@@ -19,6 +19,7 @@ import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import ProgressView from "../../components/ProgressView";
 import {styles} from "../../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
+import {usersReducer} from "../../reducers/usersReducer";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
@@ -30,12 +31,12 @@ function Users(props) {
     const handleMode = evt => {
         // setState({...state, mode: evt.target.value});
         dispatch({type: LazyListComponent.RESET});
-        dispatch({type: Users.MODE, mode: evt.target.value, filter});
+        dispatch({type: usersReducer.MODE, mode: evt.target.value, filter});
     }
 
     const handleFilter = evt => {
         dispatch({type: LazyListComponent.RESET});
-        dispatch({type: Users.MODE, mode, filter: evt.target.value});
+        dispatch({type: usersReducer.MODE, mode, filter: evt.target.value});
     }
 
     React.useEffect(() => {
@@ -99,7 +100,7 @@ function Users(props) {
         default:
     }
 
-    return <React.Fragment>
+    return <>
         <Hidden smDown>
             <Toolbar disableGutters>
                 <Select
@@ -118,7 +119,7 @@ function Users(props) {
                     endAdornment={filter ? <IconButton
                         children={<Clear/>}
                         onClick={() => {
-                            dispatch({type: Users.MODE, mode, filter: ""});
+                            dispatch({type: usersReducer.MODE, mode, filter: ""});
                             dispatch({type: LazyListComponent.RESET});
                         }}
                         size={"small"}
@@ -140,7 +141,7 @@ function Users(props) {
                         endAdornment={filter ? <IconButton
                             children={<Clear/>}
                             onClick={() => {
-                                dispatch({type: Users.MODE, filter: ""});
+                                dispatch({type: usersReducer.MODE, filter: ""});
                                 dispatch({type: LazyListComponent.RESET});
                             }}
                             size={"small"}
@@ -223,20 +224,8 @@ function Users(props) {
                 <AddIcon/>
             </Fab>
         </Link>}
-    </React.Fragment>
+    </>
 }
-
-Users.MODE = "users_Mode";
-
-export const usersReducer = (state = {filter: "", mode: "all"}, action) => {
-    switch (action.type) {
-        case Users.MODE:
-            return {...state, filter: action.filter, mode: action.mode};
-        default:
-            return state;
-    }
-};
-// gamesReducer.skipStore = true;
 
 const mapStateToProps = ({users}) => ({
     filter: users.filter,

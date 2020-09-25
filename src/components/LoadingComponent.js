@@ -1,8 +1,6 @@
 import React from "react";
-import PropTypes from "prop-types";
 
-function LoadingComponent(props) {
-    const {text = "Loading..."} = props;
+function LoadingComponent({text = "Loading..."}) {
     return <div className={"progress-loading"}>
         {text}
         <svg className={"progress-circular"}>
@@ -18,9 +16,5 @@ function LoadingComponent(props) {
         </svg>
     </div>;
 }
-
-LoadingComponent.propTypes = {
-    text: PropTypes.string,
-};
 
 export default LoadingComponent;

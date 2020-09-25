@@ -74,6 +74,7 @@ export function matchRole(roles, user) {
 
 export function needAuth(roles, user) {
     if (!roles) return false;
+    if (roles.indexOf(currentRole(user)) >= 0) return false;
     return currentRole(user) === Role.LOGIN;
 }
 

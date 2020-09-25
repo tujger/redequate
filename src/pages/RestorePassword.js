@@ -9,7 +9,8 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
-import {notifySnackbar, useFirebase, usePages} from "../controllers";
+import {notifySnackbar} from "../controllers/notifySnackbar";
+import {useFirebase, usePages} from "../controllers/General";
 
 const RestorePassword = (props) => {
     const [state, setState] = React.useState({

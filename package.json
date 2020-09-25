@@ -1,12 +1,12 @@
 {
     "name": "redequate",
-    "version": "1.0.3",
+    "version": "1.1.6",
     "description": "Redequate - React PWA core by Edeqa",
     "author": "tujger",
     "license": "MIT",
     "repository": "tujger/redequate",
-    "main": "dist/index.js",
-    "examples_main": "dist/examples/index.js",
+    "main": "core/index.js",
+    "examples_main": "core/examples/index.js",
     "engines": {
         "node": ">=8",
         "npm": ">=5"
@@ -20,7 +20,7 @@
         "prepare core": "npm run build",
         "predeploy core": "cd example && npm install && npm run build",
         "deploy core": "gh-pages -d example/build",
-        "publish": "npm publish"
+        "build and publish": "npm version patch --no-git-tag-version&&rollup -c && npm publish"
     },
     "dependencies": {
         "axios": "latest",
@@ -95,6 +95,6 @@
         "rollup-plugin-url": "latest"
     },
     "files": [
-        "dist"
+        "core"
     ]
 }

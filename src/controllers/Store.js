@@ -3,18 +3,21 @@ import {snackbarReducer} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
-import {usersReducer} from "../pages/admin/Users";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {topMenuReducer} from "../layouts/TopBottomMenuLayout/TopMenu";
 import {chatsCounterReducer} from "../chat/ChatsCounter";
-import {errorsReducer} from "../pages/admin/Errors";
-import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/MainAppbar";
 import {cacheDatas, Layout, MenuBadge} from "./General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {auditReducer} from "../reducers/auditReducer";
+import {errorsReducer} from "../reducers/errorsReducer";
+import {usersReducer} from "../reducers/usersReducer";
+import {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
+import {mainAppbarReducer} from "../reducers/mainAppbarReducer";
+import {topMenuReducer} from "../reducers/topMenuReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
     reducers = {
+        audit: auditReducer,
         chatsCounterReducer,
         currentUserData,
         dispatcherRoutedBodyReducer,
@@ -57,17 +60,6 @@ export const refreshAll = store => {
     store.dispatch({type: MenuBadge.RESET});
     store.dispatch(ProgressView.HIDE);
 };
-
-// moved here from ../Dispatcher.js due to circular dependencies alert
-export const dispatcherRoutedBodyReducer = (state = {random: 0}, action) => {
-    switch (action.type) {
-        case Layout.REFRESH:
-            return {...state, random: Math.random()};
-        default:
-            return state;
-    }
-};
-dispatcherRoutedBodyReducer.skipStore = true;
 
 // export const preferencesReducer = (state = {timestamp: 0}, action) => {
 //     console.log(action)

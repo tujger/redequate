@@ -28,9 +28,13 @@ import {installWrapperControl} from "./controllers/WrapperControl";
 import TechnicalInfoView from "./components/TechnicalInfoView";
 import {Pages} from "./proptypes/Pages";
 import {Page} from "./proptypes";
-import BottomToolbarLayout from "./layouts/BottomToolbarLayout/BottomToolbarLayout";
-import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout";
-import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout/TopBottomMenuLayout";
+// import BottomToolbarLayout from "./layouts/BottomToolbarLayout/BottomToolbarLayout";
+// import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout";
+// import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout/TopBottomMenuLayout";
+
+const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
+const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
+const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout/TopBottomMenuLayout"));
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 

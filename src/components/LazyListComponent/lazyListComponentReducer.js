@@ -1,21 +1,19 @@
-import LazyListComponent from "./LazyListComponent";
-
 export const lazyListComponentReducer = (state = {}, action) => {
     const cache = action.cache;
     const cacheData = action["LazyListComponent_" + cache];
     const savedCacheData = state["LazyListComponent_" + cache] || {};
 
     switch (action.type) {
-        case LazyListComponent._ADD:
+        case lazyListComponentReducer._ADD:
             const item = action.item;
             const {items, ascending, reverse} = savedCacheData;
             const newitems = ascending
                 ? (reverse ? [item, ...items] : [...items, item])
                 : (reverse ? [...items, item] : [item, ...items]);
             return {...state, ["LazyListComponent_" + cache]: {...savedCacheData, items: newitems}};
-        case LazyListComponent.EXIT:
+        case lazyListComponentReducer.EXIT:
             return {...state, ["LazyListComponent_" + cache]: {}};
-        case LazyListComponent.RESET:
+        case lazyListComponentReducer.RESET:
             if (cache) {
                 const cachedData = cacheData || savedCacheData;
                 const {pagination} = cachedData;
@@ -33,10 +31,15 @@ export const lazyListComponentReducer = (state = {}, action) => {
             } else {
                 return {...state, random: Math.random()};
             }
-        case LazyListComponent.UPDATE:
+        case lazyListComponentReducer.UPDATE:
             return {...state, ["LazyListComponent_" + cache]: cacheData};
         default:
             return state;
     }
 };
+lazyListComponentReducer._ADD = "LazyListComponent_add";
+lazyListComponentReducer.EXIT = "LazyListComponent_exit";
+lazyListComponentReducer.RESET = "LazyListComponent_reset";
+lazyListComponentReducer.UPDATE = "LazyListComponent_update";
+
 lazyListComponentReducer.skipStore = true;

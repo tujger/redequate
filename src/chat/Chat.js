@@ -9,10 +9,10 @@ import {cacheDatas, notifySnackbar, useCurrentUserData, useFirebase, usePages, U
 import ProgressView from "../components/ProgressView";
 import LoadingComponent from "../components/LoadingComponent";
 import ChatList from "./ChatList";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 
 const styles = theme => ({
     messageboxFixed: {
@@ -59,7 +59,7 @@ const Chat = (props) => {
         })
             .then(() => chatMeta.update())
             .then(() => chatMeta.updateVisit(currentUserData.id))
-            .then(() => dispatch({type: LazyListComponent.RESET, cache: "chats"}))
+            .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "chats"}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
     }
@@ -67,7 +67,7 @@ const Chat = (props) => {
     React.useEffect(() => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
-        dispatch({type: LazyListComponent.RESET, cache: "chats"});
+        dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
         const chatMeta = ChatMeta(firebase);
         chatMeta.getOrCreateFor(currentUserData.id, id, history.location.state && history.location.state.meta)
             // .then(console.log)

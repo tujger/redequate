@@ -4,7 +4,6 @@ import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import {useTechnicalInfo} from "../controllers/General";
-import {useCurrentUserData, matchRole, Role} from "../controllers/UserData";
 
 const styles = theme => ({
     root: {

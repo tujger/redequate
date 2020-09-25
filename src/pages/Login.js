@@ -18,7 +18,7 @@ import {setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {browserName, deviceType, osName, osVersion} from "react-device-detect";
-import {TextMaskEmail, UserData} from "../controllers";
+import {UserData} from "../controllers";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 
@@ -59,7 +59,9 @@ function Login(props) {
                 dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState({...state, requesting: true});
-                    return firebase.auth().signInWithPopup(provider).then(loginSuccess);
+                    return firebase.auth().signInWithPopup(provider)
+                        .then(loginSuccess)
+                        .then(finallyCallback);
                 } else {
                     window.localStorage.setItem(pages.login.route, provider.providerId);
                     return firebase.auth().signInWithRedirect(provider);

@@ -14,7 +14,6 @@ import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
-import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const stylesChat = theme => ({
     offline: {

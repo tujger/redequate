@@ -6,6 +6,7 @@ import {Observer} from "./Observer";
 import {Scroller} from "./Scroller";
 import {forceFirebaseReinit} from "../../controllers/Firebase";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
+import {lazyListComponentReducer} from "./lazyListComponentReducer";
 
 function LazyListComponent(
     {
@@ -105,7 +106,7 @@ function LazyListComponent(
             .then(update => {
                 if (cache) {
                     dispatch({
-                        type: LazyListComponent.UPDATE,
+                        type: lazyListComponentReducer.UPDATE,
                         cache: cache,
                         ["LazyListComponent_" + cache]: update
                     });
@@ -149,7 +150,7 @@ function LazyListComponent(
             }
             if (cache) {
                 dispatch({
-                    type: LazyListComponent._ADD,
+                    type: lazyListComponentReducer._ADD,
                     cache: cache,
                     item: transformed
                 });
@@ -225,11 +226,7 @@ function LazyListComponent(
         {!items.length && finished && noItemsComponent}
     </React.Fragment>
 }
-
-LazyListComponent._ADD = "LazyListComponent_add";
-LazyListComponent.EXIT = "LazyListComponent_exit";
-LazyListComponent.RESET = "LazyListComponent_reset";
-LazyListComponent.UPDATE = "LazyListComponent_update";
+LazyListComponent.RESET = lazyListComponentReducer.RESET;
 
 LazyListComponent.propTypes = {
     cache: PropTypes.string,

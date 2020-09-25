@@ -12,7 +12,9 @@ import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
-import {notifySnackbar, refreshAll, TextMaskEmail, useFirebase, usePages, useStore} from "../controllers";
+import {useFirebase, usePages, useStore} from "../controllers/General";
+import {refreshAll} from "../controllers/Store";
+import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const Signup = ({signup = true, additional}) => {
     const [state, setState] = React.useState({
