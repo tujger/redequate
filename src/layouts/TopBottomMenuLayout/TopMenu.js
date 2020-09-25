@@ -39,10 +39,6 @@ const styles = theme => ({
         alignItems: "center",
         backgroundColor: "transparent",
         display: "flex",
-        // position: "fixed",
-        // left: 0,
-        // right: 0,
-        // top: 0,
         zIndex: 1,
     },
     menusection: {
@@ -54,7 +50,6 @@ const styles = theme => ({
         fontSize: "inherit"
     },
     profileitem: {
-        // marginLeft: "auto",
         margin: theme.spacing(0.5),
     }
 });
@@ -80,14 +75,19 @@ const MenuSection = withStyles(styles)(props => {
         onClick={() => {
             history.push(first.route);
         }}
-        onMouseEnter={ev => setState({...state, anchor: ev.currentTarget})}
+        onMouseEnter={ev => {
+            const itemsAllowed = items.filter(item => !item.disabled && item.route !== first.route && matchRole(item.roles, currentUserData));
+            if (itemsAllowed.length) {
+                setState({...state, anchor: ev.currentTarget})
+            }
+        }}
         onMouseLeave={() => setState({...state, anchor: null})}
-        variant={"text"}>
+        variant={"text"}
+    >
         {first.label}
         {hasBadge && <span className={classes.badge}/>}
         <Popper
             anchorEl={anchor}
-            // className={classes.menusection}
             disablePortal
             onClose={() => setState({...state, anchor: null})}
             open={Boolean(anchor)}
@@ -101,12 +101,13 @@ const MenuSection = withStyles(styles)(props => {
                         if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
                         const child = <MenuItem
                             button
-                            children={<React.Fragment>
+                            children={<>
                                 {item.label}
                                 {item.adornment && currentUserData && item.adornment(currentUserData)}
-                            </React.Fragment>}
+                            </>}
                             className={[classes.label, classes.menuitem].join(" ")}
                             key={index}
+                            /* eslint-disable-next-line react/jsx-handler-names */
                             onClickCapture={item.onClick}
                         />;
                         if (item.component) {
@@ -141,7 +142,8 @@ const TopMenu = props => {
         {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
         {currentUserData.id && <Link
             to={pages.profile.route}
-            className={[classes.label, classes.profileitem].join(" ")}>
+            className={[classes.label, classes.profileitem].join(" ")}
+        >
             <AvatarView
                 admin={currentRole(currentUserData) === Role.ADMIN}
                 image={currentUserData.image}
@@ -153,7 +155,9 @@ const TopMenu = props => {
 };
 
 TopMenu.propTypes = {
+    badge: PropTypes.any,
     children: PropTypes.array,
+    classes: PropTypes.any,
     className: PropTypes.string,
     items: PropTypes.array,
     pages: PropTypes.object,
@@ -161,7 +165,6 @@ TopMenu.propTypes = {
 
 const mapStateToProps = ({topMenuReducer}) => ({
     badge: topMenuReducer.badge,
-    // page: topMenuReducer.page,
 });
 
 export default connect(mapStateToProps)(withStyles(styles)(TopMenu));

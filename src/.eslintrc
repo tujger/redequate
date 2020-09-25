@@ -14,7 +14,7 @@
             }
         ],
         "object-curly-spacing": [
-            1
+            0
         ],
         "operator-linebreak": [
             1
@@ -30,7 +30,7 @@
             1
         ],
         "react/jsx-curly-brace-presence": [
-            1
+            0
         ],
         "react/jsx-indent-props": [
             1,
