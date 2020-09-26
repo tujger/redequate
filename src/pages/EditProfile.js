@@ -34,6 +34,7 @@ import Pagination from "../controllers/FirebasePagination";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
+// const UploadComponent = React.lazy(() => import(/* webpackChunkName: 'upload' */"../components/UploadComponent/UploadComponent"));
 // import AvatarEdit from "react-avatar-edit";
 
 const styles = theme => ({
@@ -334,7 +335,7 @@ function EditProfile(props) {
                     setState({...state, image: "", uppy: null});
                 }}><ClearIcon/></IconButton>
             </Grid>
-            {uploadable && <UploadComponent
+            {uploadable && <React.Suspense fallback={<LoadingComponent/>}><UploadComponent
                 button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
                 camera={false}
                 color={"primary"}
@@ -343,7 +344,7 @@ function EditProfile(props) {
                 onsuccess={handleUploadPhotoSuccess}
                 onerror={handleUploadPhotoError}
                 variant={"contained"}
-            />}
+            /></React.Suspense>}
         </Grid>
         <Grid item xs>
             <Grid container spacing={1} alignItems={"flex-end"}>

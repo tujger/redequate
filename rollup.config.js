@@ -81,6 +81,7 @@ export default [{
             Errors: 'src/pages/admin/Errors.js',
             Login: 'src/pages/Login.js',
             Profile: 'src/pages/Profile.js',
+            Signup: 'src/pages/Signup.js',
             Users: 'src/pages/admin/Users.js'
         },
         output: [

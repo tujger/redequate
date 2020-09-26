@@ -37,3 +37,5 @@ notifySnackbar.propTypes = {
     title: PropTypes.any,
     variant: PropTypes.string,
 };
+
+export default notifySnackbar;

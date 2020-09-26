@@ -20,5 +20,5 @@ export {
     useCurrentUserData,
     normalizeSortName,
 } from "./UserData";
-export {notifySnackbar} from "./notifySnackbar";
+export * from "./notifySnackbar";
 export {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
