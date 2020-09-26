@@ -1,11 +1,11 @@
 import React from "react";
-import {TimeP} from "./TimeP";
-import {DateP} from "./DateP";
+import TimeP from "./TimeP";
+import DateP from "./DateP";
 import moment from "moment";
-import {normalizeDateInput} from "./normalizedDateInput";
+import normalizeDateInput from "./normalizedDateInput";
 import {currentStyles} from "./currentStyles";
 
-export const Picker = props => {
+export default props => {
     const {classes, onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;
     const date = normalizeDateInput(dateGiven);
     const startGiven = normalizeDateInput(startGiven1);

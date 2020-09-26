@@ -2,7 +2,7 @@ import React from "react";
 import Button from "@material-ui/core/Button";
 
 // eslint-disable-next-line react/prop-types
-export const TodayButton = ({show, todayButton = "Now", onClick}) => {
+export default ({show, todayButton = "Now", onClick}) => {
     if (!show) return null;
 
     return <Button

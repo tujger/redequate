@@ -7,9 +7,9 @@ import withStyles from "@material-ui/styles/withStyles";
 import {connect, useDispatch} from "react-redux";
 import Errors from "./Errors";
 import {styles} from "../../controllers/Theme";
-import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import {usePages} from "../../controllers/General";
 import {auditReducer} from "../../reducers/auditReducer";
+import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
 
 const Audit = (props) => {
     const {tabSelected, children = [<Errors/>]} = props;
@@ -18,7 +18,7 @@ const Audit = (props) => {
 
     const handleChange = (event, tabSelected) => {
         dispatch({type: auditReducer.SAVE, tabSelected});
-        dispatch({type: LazyListComponent.RESET});
+        dispatch({type: lazyListComponentReducer.RESET});
     }
 
     const selected = children[tabSelected] || children[0];

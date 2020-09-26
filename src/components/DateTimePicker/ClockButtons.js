@@ -6,7 +6,7 @@ import TimeIcon from "@material-ui/icons/Schedule";
 import EndIcon from "@material-ui/icons/Update";
 
 // eslint-disable-next-line react/prop-types
-export const ClockButtons = ({show, range, date, start, end, onClick}) => {
+export default ({show, range, date, start, end, onClick}) => {
     if (!show) return null;
     return <ButtonGroup variant={"text"} fullWidth>
         {!range && date && <Button

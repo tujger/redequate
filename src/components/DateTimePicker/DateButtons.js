@@ -3,7 +3,7 @@ import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 
 // eslint-disable-next-line react/prop-types
-export const DateButtons = ({classes, date, start, end, onClick}) => {
+export default ({classes, date, start, end, onClick}) => {
     if (!date && !start && !end) return null;
     if (date) {
         return <ButtonGroup variant={"text"} fullWidth>

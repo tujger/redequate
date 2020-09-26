@@ -166,8 +166,8 @@ function LazyListComponent(
 
         const liveRemoveListener = async snapshot => {
             if (!isMounted) return;
-            if (cache) dispatch({type: LazyListComponent.RESET, cache});
-            else dispatch({type: LazyListComponent.RESET});
+            if (cache) dispatch({type: lazyListComponentReducer.RESET, cache});
+            else dispatch({type: lazyListComponentReducer.RESET});
         }
 
         if (live) {
@@ -226,7 +226,6 @@ function LazyListComponent(
         {!items.length && finished && noItemsComponent}
     </React.Fragment>
 }
-LazyListComponent.RESET = lazyListComponentReducer.RESET;
 
 LazyListComponent.propTypes = {
     cache: PropTypes.string,

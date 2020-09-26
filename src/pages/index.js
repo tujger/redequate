@@ -1,4 +1,6 @@
 export {default as AddUser} from "./admin/AddUser";
+export {default as Admin} from "./admin/Admin";
+export {default as Audit} from "./admin/Audit";
 export {default as Login} from "./Login";
 export {default as Logout} from "./Logout";
 export {default as EditProfile} from "./EditProfile";

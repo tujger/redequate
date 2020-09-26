@@ -1,6 +1,6 @@
 import moment from "moment";
 
-export const normalizeDateInput = (date) => {
+export default (date) => {
     if (date) {
         if (date instanceof Date) {
             return moment(date);

@@ -3,12 +3,12 @@ import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/Gener
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import Pagination from "../controllers/FirebasePagination";
 import {ChatMeta} from "./ChatMeta";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import ChatsCounter from "./ChatsCounter";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {fetchCallable} from "../controllers";
 import {notifySnackbar} from "../controllers/notifySnackbar";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 
 export const ChatsDaemon = ({clearText = text => text}) => {
     const currentUserData = useCurrentUserData();
@@ -57,7 +57,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 if (live) newMessage(meta.lastMessage, id);
                 if (chatsWithNewMessages.indexOf(id) >= 0) return;
                 chatsWithNewMessages.push(id);
-                dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
                 dispatch({type: MenuBadge.INCREASE, page: pages.chats});
                 dispatch({type: ChatsCounter.COUNTER, counter: chatsWithNewMessages.length});
                 meta.watch(update => {
@@ -69,7 +69,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                             }
                             meta.unwatch();
                             delete metas[meta.id];
-                            dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                            dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
                             dispatch({type: MenuBadge.DECREASE, page: pages.chats});
                             dispatch({type: ChatsCounter.COUNTER, counter: chatsWithNewMessages.length});
                         }

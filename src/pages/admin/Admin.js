@@ -7,7 +7,7 @@ import {CardHeader} from "@material-ui/core";
 import {usePages} from "../../controllers/General";
 import {stylesList} from "../../controllers/Theme";
 
-const Admin = ({menu:menuFunc, classes}) => {
+const Admin = ({menu:menuFunc, classes = {}}) => {
     const history = useHistory();
     const menu = menuFunc();
     const pages = usePages();

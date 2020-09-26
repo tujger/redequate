@@ -7,7 +7,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import MenuIcon from "@material-ui/icons/MoreVert";
 
 // eslint-disable-next-line react/prop-types
-export const Extras = ({show, range, onSelect}) => {
+export default ({show, range, onSelect}) => {
     const [state, setState] = React.useState({anchor: null});
     const {anchor} = state;
     if (!show) return null;

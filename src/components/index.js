@@ -6,6 +6,7 @@ export {default as HeaderComponent} from "./HeaderComponent";
 export {default as ItemPlaceholderComponent} from "./ItemPlaceholderComponent";
 export {default as listAction} from "./ListAction";
 export {default as LazyListComponent} from "./LazyListComponent/LazyListComponent";
+export {lazyListComponentReducer} from "./LazyListComponent/lazyListComponentReducer";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";
 export {default as ModalComponent} from "./ModalComponent";

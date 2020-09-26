@@ -3,7 +3,6 @@ import {snackbarReducer} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {chatsCounterReducer} from "../chat/ChatsCounter";
 import {cacheDatas, Layout, MenuBadge} from "./General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
@@ -55,8 +54,8 @@ export const refreshAll = store => {
     console.warn("[Store] refresh");
     cacheDatas.clear();
     store.dispatch({type: Layout.REFRESH});
-    store.dispatch({type: LazyListComponent.RESET});
-    store.dispatch({type: LazyListComponent.RESET, cache: "chats"});
+    store.dispatch({type: lazyListComponentReducer.RESET});
+    store.dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
     store.dispatch({type: MenuBadge.RESET});
     store.dispatch(ProgressView.HIDE);
 };

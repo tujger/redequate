@@ -1,13 +1,13 @@
 import React from "react";
-import {Picker} from "./Picker";
+import Picker from "./Picker";
 import IconButton from "@material-ui/core/IconButton";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import Popover from "@material-ui/core/Popover";
 import TextField from "@material-ui/core/TextField";
 import Cancel from "@material-ui/icons/Cancel";
-import {normalizeDateInput} from "./normalizedDateInput";
+import normalizeDateInput from "./normalizedDateInput";
 
-export const InputPicker = props => {
+export default props => {
     // eslint-disable-next-line react/prop-types
     const {classes, disabled, label, format = "L LT", onChange, range, date: givenDate, start: givenStart, end: givenEnd, InputProps, PopoverProps, color = "primary"} = props;
     const [state, setState] = React.useState({anchor: null});

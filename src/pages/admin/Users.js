@@ -20,6 +20,7 @@ import ProgressView from "../../components/ProgressView";
 import {styles} from "../../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
 import {usersReducer} from "../../reducers/usersReducer";
+import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
@@ -30,19 +31,18 @@ function Users(props) {
 
     const handleMode = evt => {
         // setState({...state, mode: evt.target.value});
-        dispatch({type: LazyListComponent.RESET});
+        dispatch({type: lazyListComponentReducer.RESET});
         dispatch({type: usersReducer.MODE, mode: evt.target.value, filter});
     }
 
     const handleFilter = evt => {
-        dispatch({type: LazyListComponent.RESET});
+        dispatch({type: lazyListComponentReducer.RESET});
         dispatch({type: usersReducer.MODE, mode, filter: evt.target.value});
     }
 
     React.useEffect(() => {
         // dispatch(ProgressView.SHOW);
         return () => {
-            // dispatch({type: LazyListComponent.RESET, cache: "users"});
             dispatch(ProgressView.HIDE);
         }
         // eslint-disable-next-line
@@ -120,7 +120,7 @@ function Users(props) {
                         children={<Clear/>}
                         onClick={() => {
                             dispatch({type: usersReducer.MODE, mode, filter: ""});
-                            dispatch({type: LazyListComponent.RESET});
+                            dispatch({type: lazyListComponentReducer.RESET});
                         }}
                         size={"small"}
                         title={"Clear"}
@@ -142,7 +142,7 @@ function Users(props) {
                             children={<Clear/>}
                             onClick={() => {
                                 dispatch({type: usersReducer.MODE, filter: ""});
-                                dispatch({type: LazyListComponent.RESET});
+                                dispatch({type: lazyListComponentReducer.RESET});
                             }}
                             size={"small"}
                             title={"Clear"}

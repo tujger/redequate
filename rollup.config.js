@@ -46,6 +46,7 @@ export default [{
             FirebasePagination: 'src/controllers/FirebasePagination.js',
             General: 'src/controllers/General.js',
             notifySnackbar: 'src/controllers/notifySnackbar.js',
+            lazyListComponentReducer: 'src/components/LazyListComponent/lazyListComponentReducer.js',
             UserData: 'src/controllers/UserData.js',
             WrapperControl: 'src/controllers/WrapperControl.js',
 
@@ -82,7 +83,10 @@ export default [{
             Login: 'src/pages/Login.js',
             Profile: 'src/pages/Profile.js',
             Signup: 'src/pages/Signup.js',
-            Users: 'src/pages/admin/Users.js'
+            Users: 'src/pages/admin/Users.js',
+
+            // internal
+            __firebase: 'src/controllers/Firebase.js'
         },
         output: [
             {

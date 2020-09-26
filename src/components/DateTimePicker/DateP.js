@@ -1,8 +1,8 @@
 import React from "react";
-import {DateButtons} from "./DateButtons";
-import {ClockButtons} from "./ClockButtons";
-import {TodayButton} from "./TodayButton";
-import {Extras} from "./Extras";
+import DateButtons from "./DateButtons";
+import ClockButtons from "./ClockButtons";
+import TodayButton from "./TodayButton";
+import Extras from "./Extras";
 import moment from "moment";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -12,7 +12,7 @@ import RightIcon from "@material-ui/icons/ChevronRight";
 import DatePicker from "react-datepicker-t";
 import "react-datepicker-t/dist/react-datepicker.css";
 
-export const DateP = props => {
+export default props => {
     // eslint-disable-next-line react/prop-types
     const {classes, style, range, date, start, end, onSelect, extras = true, onClockClick, onDateClick, onExtraSelect} = props;
     const [state, setState] = React.useState({monthPicker: false, toDate: null});

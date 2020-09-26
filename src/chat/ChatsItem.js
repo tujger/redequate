@@ -11,9 +11,9 @@ import {toDateString} from "../controllers/DateFormat";
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 
 const stylesChat = theme => ({
     offline: {
@@ -69,7 +69,7 @@ function ChatsItem(props) {
             .then(userData => {
                 chatMeta.watch(({removed}) => {
                     if (removed) {
-                        dispatch({type: LazyListComponent.RESET, cache: "chats"});
+                        dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
                         history.goBack();
                     }
                     isMounted && setState(state => ({...state, chatMeta}));
