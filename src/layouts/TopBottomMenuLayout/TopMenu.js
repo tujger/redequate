@@ -68,15 +68,19 @@ const MenuSection = withStyles(styles)(props => {
         return menu.filter(item => !!badge[item.route]).length > 0;
     }
     const hasBadge = checkForBadge();
+    const itemsAllowed = items.filter(item => !item.disabled && item.route !== first.route && matchRole(item.roles, currentUserData));
 
     return <Button
         className={"MuiTopMenu-section"}
-        onClickCapture={ev => setState({...state, anchor: ev.currentTarget})}
+        onClickCapture={ev => {
+            if (itemsAllowed.length) {
+                setState({...state, anchor: ev.currentTarget})
+            }
+        }}
         onClick={() => {
             history.push(first.route);
         }}
         onMouseEnter={ev => {
-            const itemsAllowed = items.filter(item => !item.disabled && item.route !== first.route && matchRole(item.roles, currentUserData));
             if (itemsAllowed.length) {
                 setState({...state, anchor: ev.currentTarget})
             }
