@@ -41,12 +41,12 @@ function Login(props) {
     const errorCallback = error => {
         notifySnackbar(error);
         dispatch({type: "currentUserData", userData: null});
-        refreshAll(store);
+        setState(state => ({...state, requesting: false}));
+        // refreshAll(store);
         return logoutUser(firebase, store)();
     };
 
     const finallyCallback = () => {
-        setState(state => ({...state, requesting: false}));
         dispatch(ProgressView.HIDE);
     }
 

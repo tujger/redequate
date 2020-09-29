@@ -11,7 +11,7 @@ import ProgressView from "../components/ProgressView";
 import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {useFirebase, usePages} from "../controllers/General";
+import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
@@ -119,17 +119,17 @@ const Profile = (
         publicFields = publicFields,
         privateFields,
         classes,
-        ProfileComponent =
-            <ProfileComponentOrigin/>,
+        ProfileComponent = <ProfileComponentOrigin/>,
         provider,
     }) => {
     const [state, setState] = React.useState({disabled: false});
     const {userData, disabled} = state;
+    const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
+    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const firebase = useFirebase();
-    const dispatch = useDispatch();
-    const currentUserData = useCurrentUserData();
+    const windowData = useWindowData();
     const {id} = useParams();
 
     const handleChatClick = () => {
@@ -226,14 +226,19 @@ const Profile = (
                 }}
             />}
         </ButtonGroup>
-        {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <Tooltip title={"Start chat"}>
+        {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <Tooltip title={"Start private chat"}>
             <Fab
-                aria-label={"Start chat"}
+                aria-label={"Private chat"}
                 color={"primary"}
                 className={classes.fab}
                 onClick={handleChatClick}
+                variant={windowData.isNarrow() ? "round" : "extended"}
             >
                 <ChatIcon/>
+                {!windowData.isNarrow() && <>
+                    <Box m={0.5}/>
+                    Private chat
+                </>}
             </Fab>
         </Tooltip>}
     </div>;

@@ -1,5 +1,6 @@
 import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
+import ProgressView from "../../components/ProgressView";
 
 const styles = theme => ({
     sticky: {
@@ -63,7 +64,7 @@ export const StickyHeaderComponent = withStyles(styles)(({classes, content, imag
         // eslint-disable-next-line
     }, []);
 
-    return <React.Fragment>
+    return <>
         <div
             className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
         <div className={classes.content} style={{backgroundImage: `url(${image})`}}>{content}</div>
@@ -73,6 +74,7 @@ export const StickyHeaderComponent = withStyles(styles)(({classes, content, imag
             style={collapsed ? {backgroundImage: `url(${image})`} : null}
         >
             {menuComponent}
+            <ProgressView/>
         </div>
-    </React.Fragment>
+    </>
 })

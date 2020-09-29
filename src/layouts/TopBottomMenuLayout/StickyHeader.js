@@ -19,7 +19,6 @@ const StickyHeader = props => {
 
     return <div className={[classes.container, className].join(" ")}>
         {headerComponent}
-        <ProgressView/>
         {children}
         <div className={[classes.stickyBottom].join(" ")}>{stickyBottom}</div>
     </div>

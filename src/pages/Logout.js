@@ -7,7 +7,8 @@ import Grid from "@material-ui/core/Grid";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
-import {useFirebase, usePages, useStore} from "../controllers";
+import {useFirebase, usePages, useStore} from "../controllers/General";
+import LoadingComponent from "../components/LoadingComponent";
 
 const Logout = (props) => {
     const {immediate = true} = props;
@@ -30,7 +31,13 @@ const Logout = (props) => {
         }
     }, [])
 
-    if (immediate) return null;
+    if (immediate) {
+        return <Grid container>
+            <Box m={1}/>
+            <LoadingComponent text={"Logging out..."}/>
+            <Box m={1}/>
+        </Grid>;
+    }
     return <Grid container>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems={"flex-end"}>

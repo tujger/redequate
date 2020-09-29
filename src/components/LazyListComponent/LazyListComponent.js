@@ -204,7 +204,7 @@ function LazyListComponent(
     }
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
 
-    return <React.Fragment>
+    return <>
         {reverse && <Observer
             finished={finished}
             hasItems={items.length}
@@ -224,7 +224,7 @@ function LazyListComponent(
         />}
         <Scroller live={live && !ascending && reverse} placeholder={placeholder}/>
         {!items.length && finished && noItemsComponent}
-    </React.Fragment>
+    </>
 }
 
 LazyListComponent.propTypes = {
