@@ -5,8 +5,11 @@ import ProgressView from "../../components/ProgressView";
 const styles = theme => ({
     sticky: {
         display: "flex",
+        flexBasis: theme.mixins.toolbar.minHeight,
+        flexGrow: 0,
+        flexShrink: 0,
         justifyContent: "flex-end",
-        height: theme.mixins.toolbar.minHeight,
+        // height: theme.mixins.toolbar.minHeight,
         position: "sticky",
         top: 0,
         zIndex: 2
@@ -34,7 +37,10 @@ const styles = theme => ({
     content: {
         backgroundRepeat: "no-repeat",
         backgroundSize: "cover",
-        height: theme.spacing(16),
+        flexBasis: theme.spacing(16),
+        flexGrow: 0,
+        flexShrink: 0,
+        // height: theme.spacing(16),
         zIndex: 2,
     },
     observer: {

@@ -28,6 +28,7 @@ import {
     useStore,
     wrapperControlCall
 } from "../controllers";
+import {styles} from "../controllers/Theme";
 import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";
@@ -37,7 +38,7 @@ import UploadComponent from "../components/UploadComponent/UploadComponent";
 // const UploadComponent = React.lazy(() => import(/* webpackChunkName: 'upload' */"../components/UploadComponent/UploadComponent"));
 // import AvatarEdit from "react-avatar-edit";
 
-const styles = theme => ({
+const stylesCurrent = theme => ({
     image: {
         [theme.breakpoints.up("sm")]: {
             width: theme.spacing(18),
@@ -68,7 +69,9 @@ const styles = theme => ({
         right: 0,
         color: "white",
     },
-    content: {}
+    content: {
+        flexDirection: "row"
+    }
 });
 
 function EditProfile(props) {
@@ -115,7 +118,7 @@ function EditProfile(props) {
 
     const checkUnique = async () => {
         const uniqueError = [];
-        for (let field of publicFields) {
+        for (const field of publicFields) {
             if (field.unique) {
                 const values = await new Pagination({
                     ref: firebase.database().ref("users_public"),
@@ -123,7 +126,7 @@ function EditProfile(props) {
                     equals: (state[field.id] !== undefined && (state[field.id] || "").constructor.name === "String")
                         ? (state[field.id] || "").trim() : state[field.id]
                 }).next();
-                for (let value of (values || [])) {
+                for (const value of (values || [])) {
                     if (value.key && value.key !== userData.id) {
                         uniqueError.push(field.id);
                     }
@@ -325,123 +328,125 @@ function EditProfile(props) {
     const fields = [...publicFields, ...(isAdminAllowed ? adminFieldsGiven : [])];
     const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
 
-    return <Grid container spacing={1}>
+    return <Grid className={classes.center} container>
         <Box m={0.5}/>
-        <Grid item className={classes.photo}>
-            <Grid container>
-                {image ? <img src={image} alt={"User photo"} className={classes.image}/>
-                    : <EmptyAvatar className={classes.image}/>}
-                <IconButton className={classes.clearPhoto} onClick={() => {
-                    setState({...state, image: "", uppy: null});
-                }}><ClearIcon/></IconButton>
-            </Grid>
-            {uploadable && <React.Suspense fallback={<LoadingComponent/>}><UploadComponent
-                button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
-                camera={false}
-                color={"primary"}
-                firebase={firebase}
-                limits={{width: 300, height: 300}}
-                onsuccess={handleUploadPhotoSuccess}
-                onerror={handleUploadPhotoError}
-                variant={"contained"}
-            /></React.Suspense>}
-        </Grid>
-        <Grid item xs>
-            <Grid container spacing={1} alignItems={"flex-end"}>
-                <Grid item>
-                    <MailIcon/>
+        <Grid container spacing={1}>
+            <Grid item className={classes.photo}>
+                <Grid container>
+                    {image ? <img src={image} alt={"User photo"} className={classes.image}/>
+                        : <EmptyAvatar className={classes.image}/>}
+                    <IconButton className={classes.clearPhoto} onClick={() => {
+                        setState({...state, image: "", uppy: null});
+                    }}><ClearIcon/></IconButton>
                 </Grid>
-                <Grid item xs>
-                    <TextField
-                        color={"secondary"}
-                        disabled
-                        fullWidth
-                        label={"E-mail"}
-                        value={userData.email || ""}
-                    />
-                </Grid>
+                {uploadable && <React.Suspense fallback={<LoadingComponent/>}><UploadComponent
+                    button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
+                    camera={false}
+                    color={"primary"}
+                    firebase={firebase}
+                    limits={{width: 300, height: 300}}
+                    onsuccess={handleUploadPhotoSuccess}
+                    onerror={handleUploadPhotoError}
+                    variant={"contained"}
+                /></React.Suspense>}
             </Grid>
-            {userData.public && fields && fields.map(field => {
-                if (field.editComponent === null) return null;
-                const editComponent = field.editComponent || <TextField/>;
-                const missedRequired = requiredError.indexOf(field.id) >= 0;
-                const uniqueRequired = uniqueError.indexOf(field.id) >= 0;
-                return <React.Fragment key={field.id}>
-                    <Box m={1}/>
-                    <Grid container spacing={1} wrap={"nowrap"} alignItems={"flex-end"}>
-                        <Grid item>
-                            {field.icon}
-                        </Grid>
-                        <Grid item xs>
-                            {editComponent instanceof Function
-                                ? editComponent({
-                                    ...editComponent.props,
-                                    color: "secondary",
-                                    disabled,
-                                    error: missedRequired || uniqueRequired,
-                                    fullWidth: true,
-                                    label: field.label,
-                                    onChange: ev => {
-                                        setState({...state, [field.id]: ev.target.value || ""});
-                                    },
-                                    required: field.required,
-                                    value: state[field.id] || ""
-                                })
-                                : <editComponent.type
-                                    {...editComponent.props}
-                                    color={"secondary"}
-                                    disabled={disabled}
-                                    error={missedRequired || uniqueRequired}
-                                    fullWidth
-                                    label={field.label}
-                                    onChange={ev => {
-                                        setState({...state, [field.id]: ev.target.value || ""});
-                                    }}
-                                    required={field.required}
-                                    value={state[field.id] || ""}
-                                />}
-                            {missedRequired || uniqueRequired
-                                ? <FormHelperText error>{missedRequired ? "Please enter value"
-                                    : (uniqueRequired ? "This name is already taken" : null)}</FormHelperText> : null}
-                        </Grid>
+            <Grid item xs>
+                <Grid container spacing={1} alignItems={"flex-end"}>
+                    <Grid item>
+                        <MailIcon/>
                     </Grid>
-                </React.Fragment>
-            })}
-            {isNotificationsAvailable && <React.Fragment>
-                <Box m={1}/>
-                <Grid container><FormControlLabel
-                    control={
-                        <Switch
-                            disabled={disabled}
-                            checked={Boolean(userData.private[fetchDeviceId()] && userData.private[fetchDeviceId()].notification)}
-                            onChange={handleNotifications}
+                    <Grid item xs>
+                        <TextField
+                            color={"secondary"}
+                            disabled
+                            fullWidth
+                            label={"E-mail"}
+                            value={userData.email || ""}
                         />
-                    }
-                    label={"Get notifications"}
-                /></Grid>
-            </React.Fragment>}
-            <Box m={2}/>
-            <ButtonGroup
-                color={"secondary"}
-                disabled={disabled}
-                fullWidth
-                size={"large"}
-                variant={"contained"}
-            >
-                <Button onClick={saveUser}>
-                    Save
-                </Button>
-                <Button onClick={() => history.goBack()}>
-                    Cancel
-                </Button>
-            </ButtonGroup>
-            {isAdminAllowed && <React.Fragment>
-                <Box m={8}/>
-                <Grid container justify={"center"}>
-                    <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
-                        Delete user account
+                    </Grid>
+                </Grid>
+                {userData.public && fields && fields.map(field => {
+                    if (field.editComponent === null) return null;
+                    const editComponent = field.editComponent || <TextField/>;
+                    const missedRequired = requiredError.indexOf(field.id) >= 0;
+                    const uniqueRequired = uniqueError.indexOf(field.id) >= 0;
+                    return <React.Fragment key={field.id}>
+                        <Box m={1}/>
+                        <Grid container spacing={1} wrap={"nowrap"} alignItems={"flex-end"}>
+                            <Grid item>
+                                {field.icon}
+                            </Grid>
+                            <Grid item xs>
+                                {editComponent instanceof Function
+                                    ? editComponent({
+                                        ...editComponent.props,
+                                        color: "secondary",
+                                        disabled,
+                                        error: missedRequired || uniqueRequired,
+                                        fullWidth: true,
+                                        label: field.label,
+                                        onChange: ev => {
+                                            setState({...state, [field.id]: ev.target.value || ""});
+                                        },
+                                        required: field.required,
+                                        value: state[field.id] || ""
+                                    })
+                                    : <editComponent.type
+                                        {...editComponent.props}
+                                        color={"secondary"}
+                                        disabled={disabled}
+                                        error={missedRequired || uniqueRequired}
+                                        fullWidth
+                                        label={field.label}
+                                        onChange={ev => {
+                                            setState({...state, [field.id]: ev.target.value || ""});
+                                        }}
+                                        required={field.required}
+                                        value={state[field.id] || ""}
+                                    />}
+                                {missedRequired || uniqueRequired
+                                    ? <FormHelperText error>{missedRequired ? "Please enter value"
+                                        : (uniqueRequired ? "This name is already taken" : null)}</FormHelperText> : null}
+                            </Grid>
+                        </Grid>
+                    </React.Fragment>
+                })}
+                {isNotificationsAvailable && <>
+                    <Box m={1}/>
+                    <Grid container><FormControlLabel
+                        control={
+                            <Switch
+                                disabled={disabled}
+                                checked={Boolean(userData.private[fetchDeviceId()] && userData.private[fetchDeviceId()].notification)}
+                                onChange={handleNotifications}
+                            />
+                        }
+                        label={"Get notifications"}
+                    /></Grid>
+                </>}
+                <Box m={2}/>
+                <ButtonGroup
+                    color={"secondary"}
+                    disabled={disabled}
+                    fullWidth
+                    size={"large"}
+                    variant={"contained"}
+                >
+                    <Button onClick={saveUser}>
+                        Save
                     </Button>
-                </Grid></React.Fragment>}
+                    <Button onClick={() => history.goBack()}>
+                        Cancel
+                    </Button>
+                </ButtonGroup>
+                {isAdminAllowed && <>
+                    <Box m={8}/>
+                    <Grid container justify={"center"}>
+                        <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
+                            Delete user account
+                        </Button>
+                    </Grid></>}
+            </Grid>
         </Grid>
         {deleteOpen && <ConfirmComponent
             confirmLabel={"Delete"}
@@ -458,4 +463,7 @@ function EditProfile(props) {
     </Grid>
 }
 
-export default withStyles(styles)(EditProfile);
+export default withStyles(theme => ({
+    ...styles(theme),
+    ...stylesCurrent(theme)
+}))(EditProfile);

@@ -43,6 +43,15 @@ function LazyListComponent(
     } = state;
 
     const ascending = pagination.order === "asc";
+    const scrollHeight = (value) => {
+        if (value !== undefined) {
+            window.scrollTo(0, value);
+            return;
+            // ((containerRef && containerRef.current) || window).scrollTo(0, value);
+        }
+        if (containerRef && containerRef.current) return containerRef.current.scrollHeight;
+        return window.screenHeight;
+    }
 
     const loadNextPage = () => {
         if (finished) {
@@ -51,8 +60,8 @@ function LazyListComponent(
         if (!disableProgress) dispatch(ProgressView.SHOW);
 
         let before = null;
-        if (reverse && containerRef && containerRef.current) {
-            before = containerRef.current.scrollHeight;
+        if (reverse) {
+            before = scrollHeight();
         }
 
         return pagination.next()
@@ -118,12 +127,12 @@ function LazyListComponent(
                 }
             })
             .finally(() => {
-                setTimeout(() => {
-                    if (reverse && containerRef && containerRef.current) {
-                        const after = containerRef.current.scrollHeight;
-                        containerRef.current.scrollBy({left: 0, top: after - before});
-                    }
-                }, 100)
+                if (reverse) {
+                    setTimeout(() => {
+                        const after = scrollHeight();
+                        scrollHeight(after - before);
+                    }, 0)
+                }
                 if (!disableProgress) dispatch(ProgressView.HIDE);
             });
     };
@@ -143,7 +152,6 @@ function LazyListComponent(
             if (lastKey && lastKey > snapshot.key) return;
             lastKey = snapshot.key;
             const item = {key: snapshot.key, value: snapshot.val()};
-            const index = Math.random();
             let transformed = await itemTransform(item, snapshot.key);
             if (transformed) {
                 transformed = itemComponent(transformed, snapshot.key);
@@ -200,7 +208,7 @@ function LazyListComponent(
     }, [random, pagination.term, cachedPagination.term])
 
     if (reverse === true && !containerRef) {
-        throw new Error("[Lazy] 'containerRef' must be defined due to 'reverse'=true")
+        console.warn("[Lazy] 'containerRef' must be defined due to 'reverse'=true")
     }
     if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
 
@@ -223,7 +231,7 @@ function LazyListComponent(
             placeholders={placeholders}
         />}
         <Scroller live={live && !ascending && reverse} placeholder={placeholder}/>
-        {!items.length && finished && noItemsComponent}
+        {finished && !items.length && noItemsComponent}
     </>
 }
 

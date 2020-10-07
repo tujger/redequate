@@ -58,6 +58,15 @@ const styles = theme => ({
     },
     hamburger: {
         color: theme.palette.getContrastText(theme.palette.primary.main),
+    },
+    progress: {
+        bottom: 0,
+        left: 0,
+        position: "absolute",
+        right: 0,
+        [theme.breakpoints.up("md")]: {
+            left: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        },
     }
 });
 
@@ -68,8 +77,8 @@ function MainAppbar(props) {
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
-    return <AppBar position={"fixed"} className={className}>
-        <Toolbar>
+    return <AppBar position={"fixed"}>
+        <Toolbar className={className}>
             {onHamburgerClick
                 ? <Hidden mdUp implementation={"css"}>
                     <IconButton
@@ -120,7 +129,9 @@ function MainAppbar(props) {
                 />
             </Link>}
         </Toolbar>
-        <ProgressView/>
+        <div className={classes.progress}>
+            <ProgressView/>
+        </div>
     </AppBar>
 }
 

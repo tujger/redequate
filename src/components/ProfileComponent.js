@@ -90,32 +90,31 @@ const ProfileComponent = (props) => {
                         <Grid item>
                             {field.viewComponent
                                 ? field.viewComponent(userData)
-                                : <Typography variant={"body2"}>{userData.public[field.id]}</Typography>
-                            }
+                                : <Typography variant={"body2"}>{userData.public[field.id]}</Typography>}
                         </Grid>
                     </Grid>
                 </React.Fragment>
             })}
         </Grid>
         {provider && <Grid item className={classes.signWith}>
-            {userData.public.provider && userData.public.provider === "google.com" && <React.Fragment>
+            {userData.public.provider && userData.public.provider === "google.com" && <>
                 <Grid container justify={"flex-end"}>
                     <img src={GoogleLogo} width={40} height={40} alt={""}/>
                 </Grid>
                 <Typography variant={"body2"}>Signed with Google</Typography>
-            </React.Fragment>}
-            {userData.public.provider && userData.public.provider === "password" && <React.Fragment>
+            </>}
+            {userData.public.provider && userData.public.provider === "password" && <>
                 <Grid container justify={"flex-end"}>
                     <UserIcon/>
                 </Grid>
                 <Typography variant={"body2"}>Signed with e-mail</Typography>
                 {!userData.verified && <Typography variant={"body2"}>Not verified</Typography>}
-            </React.Fragment>}
+            </>}
             {userData.public.provider && userData.public.provider !== "password" && userData.public.provider !== "google.com" &&
-            <React.Fragment>
+            <>
                 <Typography variant={"body2"}>Signed with {userData.public.provider}</Typography>
                 {!userData.verified && <Typography variant={"body2"}>Not verified</Typography>}
-            </React.Fragment>}
+            </>}
         </Grid>}
     </Grid>
 };

@@ -1,13 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
+import withStyles from "@material-ui/styles/withStyles";
+import {styles} from "../controllers/Theme";
 
-const SimplePage = props => {
-    let body = props.body || "Content of simple page";
+const SimplePage = ({classes, body = "Content of simple page", title = "Simple page"}) => {
     if (body instanceof Array) {
         body = `<p>${body.join("</p>\n<p>")}</p>`;
     }
-    return <div>
-        <h1>{props.title || "Simple page"}</h1>
+    return <div className={classes.center}>
+        {title && <h1>{title}</h1>}
         <div dangerouslySetInnerHTML={{__html: body}}/>
     </div>;
 };
@@ -17,4 +18,4 @@ SimplePage.propTypes = {
     body: PropTypes.any,
 };
 
-export default SimplePage;
+export default withStyles(styles)(SimplePage);

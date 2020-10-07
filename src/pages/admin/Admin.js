@@ -5,9 +5,9 @@ import Card from "@material-ui/core/Card";
 import withStyles from "@material-ui/styles/withStyles";
 import {CardHeader} from "@material-ui/core";
 import {usePages} from "../../controllers/General";
-import {stylesList} from "../../controllers/Theme";
+import {styles, stylesList} from "../../controllers/Theme";
 
-const Admin = ({menu:menuFunc, classes = {}}) => {
+const Admin = ({menu: menuFunc, classes = {}}) => {
     const history = useHistory();
     const menu = menuFunc();
     const pages = usePages();
@@ -19,9 +19,9 @@ const Admin = ({menu:menuFunc, classes = {}}) => {
             return 0
         });
 
-    return <>
+    return <div className={classes.center}>
         {itemsFlat.map((item, index) => {
-            if(item.disabled) return null;
+            if (item.disabled) return null;
             if (item === pages.admin || !menu.filter(list => list[0] === pages.admin).filter(list => list.indexOf(item) >= 0).length) return null;
             return <Card key={index} className={[classes.root, classes.card].join(" ")}>
                 <CardActionArea onClick={() => {
@@ -31,7 +31,10 @@ const Admin = ({menu:menuFunc, classes = {}}) => {
                 </CardActionArea>
             </Card>
         })}
-    </>
+    </div>
 };
 
-export default withStyles(stylesList)(Admin);
+export default withStyles(theme => ({
+    ...styles(theme),
+    ...stylesList(theme)
+}))(Admin);

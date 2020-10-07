@@ -1,11 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
-import ProgressView from "../../components/ProgressView";
 
 // noinspection JSUnusedLocalSymbols
 const styles = (theme) => ({
     container: {
+        display: "flex",
+        flexDirection: "column",
         position: "relative",
     },
     stickyBottom: {

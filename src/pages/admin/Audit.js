@@ -1,8 +1,6 @@
 import React from "react";
 import {withRouter} from "react-router-dom";
-import Grid from "@material-ui/core/Grid";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
+import Button from "@material-ui/core/Button";
 import withStyles from "@material-ui/styles/withStyles";
 import {connect, useDispatch} from "react-redux";
 import Errors from "./Errors";
@@ -10,13 +8,14 @@ import {styles} from "../../controllers/Theme";
 import {usePages} from "../../controllers/General";
 import {auditReducer} from "../../reducers/auditReducer";
 import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
+import NavigationToolbar from "../../components/NavigationToolbar";
 
 const Audit = (props) => {
-    const {tabSelected, children = [<Errors/>]} = props;
+    const {classes, tabSelected, children = [<Errors key={Math.random()}/>]} = props;
     const dispatch = useDispatch();
     const pages = usePages();
 
-    const handleChange = (event, tabSelected) => {
+    const handleChange = tabSelected => event => {
         dispatch({type: auditReducer.SAVE, tabSelected});
         dispatch({type: lazyListComponentReducer.RESET});
     }
@@ -24,13 +23,11 @@ const Audit = (props) => {
     const selected = children[tabSelected] || children[0];
 
     return <>
-        <Tabs
-            // scrollButtons={"on"}
-            centered
-            indicatorColor={"secondary"}
-            onChange={handleChange}
-            value={tabSelected}
-            // variant={"scrollable"}
+        <NavigationToolbar
+            alignItems={"flex-end"}
+            justify={"center"}
+            backButton={null}
+            className={classes.topSticky}
         >
             {children.map((child, index) => {
                 let label = "";
@@ -41,16 +38,23 @@ const Audit = (props) => {
                     }
                 }
                 try {
-                    label = label || child.type.WrappedComponent.name;
+                    label = label
+                        || (child.type.WrappedComponent.Naked && child.type.WrappedComponent.Naked.name)
+                        || (child.type.WrappedComponent && child.type.WrappedComponent.name);
                 } catch (e) {
                     console.error(e);
                 }
-                return <Tab key={index} label={label}/>
+                return <Button
+                    children={label}
+                    className={[classes.tabButton, tabSelected === index ? classes.tabButtonSelected : ""].join(" ")}
+                    color={"default"}
+                    key={index}
+                    onClick={handleChange(index)}
+                    variant={"text"}
+                />
             })}
-        </Tabs>
-        <Grid container alignItems={"flex-start"}>
-            <selected.type {...props} {...selected.props}/>
-        </Grid>
+        </NavigationToolbar>
+        <selected.type {...props} {...selected.props}/>
     </>
 };
 

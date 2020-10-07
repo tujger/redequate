@@ -59,10 +59,10 @@ export const publicFields = [
         id: "created",
         label: "Date since",
         editComponent: null,
-        viewComponent: userData => <React.Fragment>
+        viewComponent: userData => <>
             <Typography variant={"caption"}>Since {userData.created}</Typography>
             <Box m={1}/>
-        </React.Fragment>
+        </>
     },
     {
         id: "address",
@@ -173,8 +173,9 @@ const Profile = (
     }, [id]);
 
     if (!userData) return <LoadingComponent/>;
-    return <div className={classes.root}>
+    return <>
         <NavigationToolbar
+            className={classes.top}
             mediumButton={isCurrentUserAdmin && <IconButton
                 aria-label={"Fix possible errors"}
                 children={<FixIcon/>}
@@ -190,42 +191,44 @@ const Profile = (
                 title={"Edit"}
             />}
         />
-        {userData.disabled && <Grid container>
-            <InputLabel error>
-                <h4>Account is suspended. Please contact with administrator.</h4>
-            </InputLabel>
-        </Grid>}
-        {!userData.verified && <Grid container>
-            <InputLabel error>
-                <h4>You have still not verified email. Some features will not
-                    be available. If you were already verified please log out and log in again.</h4>
-            </InputLabel>
-        </Grid>}
-        <ProfileComponent.type
-            {...ProfileComponent.props}
-            provider={provider}
-            publicFields={publicFields}
-            userData={userData}
-        />
-        <ButtonGroup
-            className={classes.buttons}
-            color={"secondary"}
-            disabled={disabled}
-            size={"large"}
-            variant={"contained"}
-        >
-            {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
-                children={"Resend verification"}
-                className={classes.resendVerification}
-                onClick={() => {
-                    dispatch(ProgressView.SHOW);
-                    console.log(currentUserData)
-                    sendVerificationEmail(firebase)
-                        .catch(notifySnackbar)
-                        .finally(() => dispatch(ProgressView.HIDE));
-                }}
-            />}
-        </ButtonGroup>
+        <Grid container className={classes.center}>
+            {userData.disabled && <Grid container>
+                <InputLabel error>
+                    <h4>Account is suspended. Please contact with administrator.</h4>
+                </InputLabel>
+            </Grid>}
+            {!userData.verified && <Grid container>
+                <InputLabel error>
+                    <h4>You have still not verified email. Some features will not
+                        be available. If you were already verified please log out and log in again.</h4>
+                </InputLabel>
+            </Grid>}
+            <ProfileComponent.type
+                {...ProfileComponent.props}
+                provider={provider}
+                publicFields={publicFields}
+                userData={userData}
+            />
+            <ButtonGroup
+                className={classes.buttons}
+                color={"secondary"}
+                disabled={disabled}
+                size={"large"}
+                variant={"contained"}
+            >
+                {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
+                    children={"Resend verification"}
+                    className={classes.resendVerification}
+                    onClick={() => {
+                        dispatch(ProgressView.SHOW);
+                        console.log(currentUserData)
+                        sendVerificationEmail(firebase)
+                            .catch(notifySnackbar)
+                            .finally(() => dispatch(ProgressView.HIDE));
+                    }}
+                />}
+            </ButtonGroup>
+        </Grid>
         {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <Tooltip title={"Start private chat"}>
             <Fab
                 aria-label={"Private chat"}
@@ -241,7 +244,7 @@ const Profile = (
                 </>}
             </Fab>
         </Tooltip>}
-    </div>;
+    </>;
 };
 
 export default withStyles((theme) => ({

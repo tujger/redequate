@@ -21,6 +21,8 @@ import {browserName, deviceType, osName, osVersion} from "react-device-detect";
 import {UserData} from "../controllers";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {notifySnackbar} from "../controllers/notifySnackbar";
+import withStyles from "@material-ui/styles/withStyles";
+import {styles} from "../controllers/Theme";
 
 function Login(props) {
     const {popup = true, agreementComponent = null, onLogin, transformUserData, layout = <LoginLayout/>} = props;
@@ -199,6 +201,7 @@ function Login(props) {
 const LoginLayout = (
     {
         agreementComponent,
+        classes,
         disabled,
         email,
         logo,
@@ -214,7 +217,7 @@ const LoginLayout = (
     const pages = usePages();
     const history = useHistory();
 
-    return <Grid container>
+    return <Grid container className={classes.center}>
         {logo}
         <Box m={1}/>
         <Grid container spacing={1} alignItems={"flex-end"}>
@@ -315,4 +318,4 @@ LoginLayout.propTypes = {
     signup: PropTypes.bool
 };
 
-export default withRouter(Login);
+export default withRouter(withStyles(styles)(Login));

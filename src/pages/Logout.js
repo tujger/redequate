@@ -9,9 +9,11 @@ import {connect} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import {useFirebase, usePages, useStore} from "../controllers/General";
 import LoadingComponent from "../components/LoadingComponent";
+import withStyles from "@material-ui/styles/withStyles";
+import {styles} from "../controllers/Theme";
 
 const Logout = (props) => {
-    const {immediate = true} = props;
+    const {classes, immediate = true} = props;
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
@@ -38,7 +40,7 @@ const Logout = (props) => {
             <Box m={1}/>
         </Grid>;
     }
-    return <Grid container>
+    return <Grid container className={classes.center}>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems={"flex-end"}>
             Do you want to log out?
@@ -63,4 +65,4 @@ Logout.propTypes = {
     immediate: PropTypes.bool,
 };
 
-export default connect()(withRouter(Logout));
+export default connect()(withRouter(withStyles(styles)(Logout)));

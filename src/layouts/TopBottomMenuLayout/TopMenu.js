@@ -39,12 +39,13 @@ const styles = theme => ({
         alignItems: "center",
         backgroundColor: "transparent",
         display: "flex",
-        zIndex: 1,
+        zIndex: 2,
     },
     menusection: {
         backgroundColor: theme.palette.background.default,
         color: theme.palette.getContrastText(theme.palette.background.default),
         boxShadow: theme.shadows[2],
+        zIndex: 2,
     },
     menuitem: {
         fontSize: "inherit"
@@ -70,6 +71,10 @@ const MenuSection = withStyles(styles)(props => {
     const hasBadge = checkForBadge();
     const itemsAllowed = items.filter(item => !item.disabled && item.route !== first.route && matchRole(item.roles, currentUserData));
 
+    const handleMouseLeave = event => {
+        setState({...state, anchor: null})
+    }
+
     return <Button
         className={"MuiTopMenu-section"}
         onClickCapture={ev => {
@@ -85,22 +90,22 @@ const MenuSection = withStyles(styles)(props => {
                 setState({...state, anchor: ev.currentTarget})
             }
         }}
-        onMouseLeave={() => setState({...state, anchor: null})}
+        onMouseLeave={handleMouseLeave}
         variant={"text"}
     >
         {first.label}
         {hasBadge && <span className={classes.badge}/>}
         <Popper
             anchorEl={anchor}
-            disablePortal
+            className={classes.menusection}
+            // disablePortal
             onClose={() => setState({...state, anchor: null})}
             open={Boolean(anchor)}
+            onMouseLeave={handleMouseLeave}
             placement={"bottom-end"}
             role={undefined}>
             <Paper>
-                <MenuList
-                    className={classes.menusection}
-                >
+                <MenuList>
                     {menu.map((item, index) => {
                         if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
                         const child = <MenuItem
@@ -109,7 +114,7 @@ const MenuSection = withStyles(styles)(props => {
                                 {item.label}
                                 {item.adornment && currentUserData && item.adornment(currentUserData)}
                             </>}
-                            className={[classes.label, classes.menuitem].join(" ")}
+                            className={["MuiButtonBase-root MuiButton-root MuiButton-text", classes.label, classes.menuitem].join(" ")}
                             key={index}
                             /* eslint-disable-next-line react/jsx-handler-names */
                             onClickCapture={item.onClick}

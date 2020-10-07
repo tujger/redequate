@@ -44,6 +44,6 @@ export const Scroller = ({live, placeholder}) => {
                 }, 500);
             }
         }} style={{opacity: 0}}>
-        {windowData.isNarrow() ? placeholder : null}
+        {/*{windowData.isNarrow() ? placeholder : null}*/}
     </InView>
 }

@@ -44,7 +44,7 @@ export function uploadComponentPublish(firebase) {
                     }
                 });
                 uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-                    let progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
+                    const progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
                     onprogress && onprogress(progressValue);
                 }, error => {
                     reject(error);

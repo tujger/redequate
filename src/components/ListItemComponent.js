@@ -53,7 +53,7 @@ const styles = theme => ({
 });
 
 const calculateOpacityIndent = () => {
-    let indent = 100;
+    let indent;
     if (isMobile) {
         indent = window.innerWidth / 3;
     } else {
@@ -108,7 +108,7 @@ function ListItemComponent(props) {
     }, []);
 
     if (removing) {
-        let sizes = ref.current.getBoundingClientRect();
+        const sizes = ref.current.getBoundingClientRect();
         ref.current.style.height = sizes.height + "px";
         ref.current.style.overflowY = "hidden";
         setTimeout(() => {

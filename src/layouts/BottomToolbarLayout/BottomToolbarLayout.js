@@ -10,7 +10,7 @@ import Snackbar from "../../components/Snackbar";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 
 const styles = theme => ({
-    content: {
+    center: {
         ...theme.mixins.toolbar,
     },
     indent: {
@@ -21,17 +21,25 @@ const styles = theme => ({
 function BottomToolbarLayout(props) {
     const {menu, classes} = props;
 
-    return <React.Fragment><CssBaseline/>
+    return <><CssBaseline/>
         <Titlebar
             {...props}
         />
         <Typography className={classes.indent}/>
-        <MainContent classes={{content: classes.content}}/>
+        <MainContent classes={{
+            bottom: classes.bottom,
+            bottomSticky: classes.bottomSticky,
+            center: classes.center,
+            left: classes.left,
+            right: classes.right,
+            topSticky: classes.topSticky,
+            top: classes.top
+        }}/>
         <Typography className={classes.indent}/>
         <BottomToolbar items={menu}/>
         <Snackbar/>
         <NotificationsSnackbar/>
-    </React.Fragment>
+    </>
 }
 
 BottomToolbarLayout.propTypes = {

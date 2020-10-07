@@ -16,6 +16,9 @@ export const lazyListComponentReducer = (state = {}, action) => {
         case lazyListComponentReducer.RESET:
             if (cache) {
                 const cachedData = cacheData || savedCacheData;
+                if (action.pagination) {
+                    cachedData.pagination = action.pagination;
+                }
                 const {pagination} = cachedData;
                 if (pagination) pagination.reset();
                 return {

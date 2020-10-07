@@ -1,4 +1,4 @@
-import {Layout, MenuBadge} from "../controllers/General";
+import {Layout, MenuBadge} from "../../controllers/General";
 
 export const mainAppbarReducer = (state = {label: "", badge: 0}, action) => {
     switch (action.type) {

@@ -40,14 +40,14 @@ function UserItemComponent({data, classes, skeleton, label}) {
                         {userData.email}
                     </Grid>
                 </Grid>}
-                subheader={<React.Fragment>
+                subheader={<>
                     <Grid container>
                         {userData.name}
                     </Grid>
                     <Grid container>
                         {userData.public.address}
                     </Grid>
-                </React.Fragment>}
+                </>}
             />
         </CardActionArea>
     </Card>

@@ -3,21 +3,25 @@ import {snackbarReducer} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
-import {chatsCounterReducer} from "../chat/ChatsCounter";
 import {cacheDatas, Layout, MenuBadge} from "./General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {auditReducer} from "../reducers/auditReducer";
 import {errorsReducer} from "../reducers/errorsReducer";
 import {usersReducer} from "../reducers/usersReducer";
 import {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
-import {mainAppbarReducer} from "../reducers/mainAppbarReducer";
-import {topMenuReducer} from "../reducers/topMenuReducer";
+import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/mainAppbarReducer";
+import {topMenuReducer} from "../layouts/TopBottomMenuLayout/topMenuReducer";
+import {chatsCounterReducer} from "../chat/chatsCounterReducer";
+import {alertsVisitReducer} from "../alerts/alertsVisitReducer";
+import {alertsCounterReducer} from "../alerts/alertsCounterReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
     reducers = {
+        alertsCounter: alertsCounterReducer,
+        alertsVisit: alertsVisitReducer,
         audit: auditReducer,
-        chatsCounterReducer,
+        chatsCounter: chatsCounterReducer,
         currentUserData,
         dispatcherRoutedBodyReducer,
         errors: errorsReducer,
@@ -33,7 +37,7 @@ const Store = (name, reducers) => {
 
     store.subscribe(() => {
         const saveable = {};
-        for (let x in store.getState()) {
+        for (const x in store.getState()) {
             if (reducers[x] && !reducers[x].skipStore) {
                 saveable[x] = store.getState()[x];
             }
@@ -51,7 +55,7 @@ Store.propTypes = {
 export default Store;
 
 export const refreshAll = store => {
-    console.warn("[Store] refresh");
+    console.warn("[Store] refresh all");
     cacheDatas.clear();
     store.dispatch({type: Layout.REFRESH});
     store.dispatch({type: lazyListComponentReducer.RESET});

@@ -8,8 +8,10 @@ import Pagination from "../controllers/FirebasePagination";
 import ChatsItem from "./ChatsItem";
 import {ChatsDaemon} from "./ChatsDaemon";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import Grid from "@material-ui/core/Grid";
+import {styles} from "../controllers/Theme";
 
-const styles = theme => ({
+const stylesCurrent = theme => ({
     observer: {
         height: 0,
         width: "100%",
@@ -18,6 +20,7 @@ const styles = theme => ({
 
 function Chats(
     {
+        classes,
         daemon,
         textComponent = text => text,
         userComponent = userData => userData.name,
@@ -40,28 +43,33 @@ function Chats(
             userComponent={userComponent}
         />
     }
-    return <LazyListComponent
-        cache={"chats"}
-        itemComponent={item => <ChatsItem
-            id={item.key}
-            key={item.key}
-            lastMessageTimestamp={item.value.timestamp}
-            textComponent={textComponent}
-            userComponent={userComponent}
-        />}
-        itemTransform={async item => {
-            if (item.key === "!meta") return null;
-            return item
-        }}
-        noItemsComponent={<ChatsItem label={"No chats found"}/>}
-        pagination={() => new Pagination({
-            child: "timestamp",
-            order: "desc",
-            ref: firebase.database().ref("_chats").child(currentUserData.id),
-            size: 10,
-        })}
-        placeholder={<ChatsItem skeleton/>}
-    />
+    return <Grid container className={classes.center}>
+        <LazyListComponent
+            cache={"chats"}
+            itemComponent={item => <ChatsItem
+                id={item.key}
+                key={item.key}
+                lastMessageTimestamp={item.value.timestamp}
+                textComponent={textComponent}
+                userComponent={userComponent}
+            />}
+            itemTransform={async item => {
+                if (item.key === "!meta") return null;
+                return item
+            }}
+            noItemsComponent={<ChatsItem label={"No chats found"}/>}
+            pagination={() => new Pagination({
+                child: "timestamp",
+                order: "desc",
+                ref: firebase.database().ref("_chats").child(currentUserData.id),
+                size: 10,
+            })}
+            placeholder={<ChatsItem skeleton/>}
+        />
+    </Grid>
 }
 
-export default withStyles(styles)(Chats);
+export default withStyles(theme => ({
+    ...styles(theme),
+    ...stylesCurrent(theme)
+}))(Chats);

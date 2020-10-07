@@ -10,13 +10,13 @@ import {useCurrentUserData} from "../../controllers/UserData";
 import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar, useFirebase, useTechnicalInfo} from "../../controllers";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {useFirebase, useTechnicalInfo} from "../../controllers/General";
 import LoadingComponent from "../../components/LoadingComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
+import {styles} from "../../controllers/Theme";
 
-const styles = theme => ({});
-
-const Service = (props) => {
+const Service = ({classes}) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const currentUserData = useCurrentUserData();
@@ -82,7 +82,7 @@ const Service = (props) => {
     }, [])
 
     if (maintenance === undefined) return <LoadingComponent/>;
-    return <>
+    return <Grid container className={classes.center}>
         {givenTimestamp && <>
             <Grid container spacing={1} alignItems={"center"}>
                 <Grid item>
@@ -131,7 +131,7 @@ const Service = (props) => {
                 value={message}
             />
         </ConfirmComponent>}
-    </>
+    </Grid>
 };
 
 export default withStyles(styles)(Service);

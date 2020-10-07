@@ -1,5 +1,5 @@
 function Pagination({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 30000}) {
-    let baseRef = ref;
+    const baseRef = ref;
     let lastKey = null;
     let lastValue = null;
     let countTotal = 0;
@@ -54,10 +54,10 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
                 }
             } else if (start !== undefined) {
                 if (order === "asc") {
-                    let endAt = start !== null && start.constructor.name === "String" ? ((end || start) + "\uf8ff") : (end || Number.MAX_SAFE_INTEGER);
+                    const endAt = start !== null && start.constructor.name === "String" ? ((end || start) + "\uf8ff") : (end || Number.MAX_SAFE_INTEGER);
                     ref = ref.startAt(start).endAt(endAt).limitToFirst(size);
                 } else {
-                    let endAt = start !== null && start.constructor.name === "String" ? (start + "\uf8ff") : Number.MAX_SAFE_INTEGER;
+                    const endAt = start !== null && start.constructor.name === "String" ? (start + "\uf8ff") : Number.MAX_SAFE_INTEGER;
                     ref = ref.startAt(start).endAt(endAt).limitToLast(size);
                 }
             } else {
@@ -88,7 +88,7 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
             snap.forEach(child => {
                 children.push(child)
             });
-            for (let ss of children) {
+            for (const ss of children) {
                 if (lastKey && ss.key === lastKey) continue;
                 const value = ss.val();
                 if (child && value[child] === undefined) continue;

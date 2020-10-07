@@ -322,15 +322,14 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
         setState({...state, uppy: uppy});
     }, [])
 
-    let maxWidth, maxHeight, maxSize;
+    let maxWidth, maxHeight;
     if (limits) {
-        maxSize = limits.size;
         maxHeight = limits.height;
         maxWidth = limits.width || maxHeight;
         maxHeight = maxHeight || maxWidth;
     }
 
-    return <React.Fragment>
+    return <>
         {button
             ? <button.type {...button.props} ref={refButton} onClick={(event) => {
                 uppy && uppy.reset();
@@ -341,7 +340,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
             }} ref={refButton} children={"Upload"}/>
         }
         <div ref={refDashboard}/>
-    </React.Fragment>
+    </>
 }
 
 UploadComponent.propTypes = {

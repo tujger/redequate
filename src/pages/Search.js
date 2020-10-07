@@ -98,18 +98,18 @@ export const SearchModal = ({open, onClose, classes, handleSearch, ...props}) =>
     </ModalComponent>
 }
 
-export const SearchContent = () => {
+export const SearchContent = ({classes}) => {
     const history = useHistory();
 
     const args = new URLSearchParams(history.location.search.replace(/^\?/, ""));
-    return <React.Fragment>
+    return <div className={classes.center}>
         <Grid container>
             Search value: {args.get("q")}
         </Grid>
         <Grid container>
             Search is not yet implemented
         </Grid>
-    </React.Fragment>
+    </div>
 }
 
 export default withStyles(styles)(Search);

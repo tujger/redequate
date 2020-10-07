@@ -13,8 +13,10 @@ import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {useFirebase, usePages} from "../../controllers/General";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
+import {styles} from "../../controllers/Theme";
+import withStyles from "@material-ui/styles/withStyles";
 
-const AddUser = (props) => {
+const AddUser = ({classes}) => {
     const [state, setState] = React.useState({requesting: false, error: ""});
     const {email = "", requesting, error = ""} = state;
     const pages = usePages();
@@ -41,7 +43,7 @@ const AddUser = (props) => {
             });
     };
 
-    return <Grid container>
+    return <Grid container className={classes.center}>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
@@ -82,4 +84,4 @@ const AddUser = (props) => {
     </Grid>
 };
 
-export default AddUser;
+export default withStyles(styles)(AddUser);

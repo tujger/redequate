@@ -3,13 +3,13 @@ import {connect} from "react-redux";
 import {styles} from "../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
 
-const ChatsCounter = ({counter, classes}) => {
+const AlertsCounter = ({counter, classes}) => {
     if (!counter) return null;
     return <span className={classes.badge}>{counter}</span>
 }
 
-const mapStateToProps = ({chatsCounter}) => ({
-    counter: chatsCounter.counter,
+const mapStateToProps = ({alertsCounter}) => ({
+    counter: alertsCounter.counter,
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(ChatsCounter));
+export default connect(mapStateToProps)(withStyles(styles)(AlertsCounter));

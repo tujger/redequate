@@ -5,7 +5,7 @@ import TextField from "@material-ui/core/TextField";
 import withStyles from "@material-ui/styles/withStyles";
 import {useHistory, useParams} from "react-router-dom";
 import {InView} from "react-intersection-observer";
-import {cacheDatas, notifySnackbar, useCurrentUserData, useFirebase, usePages, UserData} from "../controllers";
+import {useCurrentUserData, UserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import LoadingComponent from "../components/LoadingComponent";
 import ChatList from "./ChatList";
@@ -13,19 +13,9 @@ import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-
-const styles = theme => ({
-    messageboxFixed: {
-        bottom: theme.spacing(1),
-        position: "fixed",
-    },
-    messagesList: {
-        overflow: "auto",
-        [theme.breakpoints.up("lg")]: {
-            height: window.innerHeight - theme.spacing(16) - theme.spacing(16),
-        },
-    },
-});
+import {styles} from "../controllers/Theme";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {cacheDatas, useFirebase, usePages} from "../controllers/General";
 
 const Chat = (props) => {
     const {
@@ -101,16 +91,16 @@ const Chat = (props) => {
     }, [id]);
 
     if (!chatMeta || !userData) return <LoadingComponent/>
-    return <React.Fragment>
+    return <>
         <ChatHeader
+            className={classes.topSticky}
             chatMeta={chatMeta}
-            classes={null}
             id={id}
             userComponent={userComponent}
             userData={userData}
         />
         <Grid
-            className={classes.messagesList}
+            className={classes.center}
             container
             direction={"column"}
             ref={containerRef}
@@ -123,26 +113,39 @@ const Chat = (props) => {
                 containerRef={containerRef}
                 textComponent={textComponent}/>
         </Grid>
-        <InView
-            children={<div/>}
+        {/*<InView
+            children={<div id={"inview"}/>}
             onChange={(inView) => {
                 if (inputRef.current) {
                     if (inView) {
-                        const tokens = classes.messageboxFixed.split(/\s+/);
-                        for (let token of tokens) {
+                        const tokens = [];//classes.messageboxFixed.split(/\s+/);
+                        for (const token of tokens) {
                             inputRef.current.classList.remove(token);
                         }
                     } else {
                         const sizes = inputRef.current.getBoundingClientRect();
-                        inputRef.current.style.left = sizes.left + "px";
-                        inputRef.current.style.width = sizes.width + "px";
+                        const containerSizes = containerRef.current.getBoundingClientRect();
+                        // inputRef.current.style.left = sizes.left + "px";
+                        inputRef.current.style.width = containerSizes.width + "px";
                         inputRef.current.classList.add(classes.messageboxFixed);
                     }
                 }
             }}
-        />
-        {!chatMeta.readonly && <ChatInputBox inputComponent={inputComponent} ref={inputRef} onSend={handleSend}/>}
-    </React.Fragment>
+        />*/}
+        {!chatMeta.readonly && <>
+            <ChatInputBox
+                className={classes.bottomSticky}
+                style={{position: "relative", opacity: 0}}
+                inputComponent={inputComponent}
+            />
+            <ChatInputBox
+                className={classes.bottomSticky}
+                inputComponent={inputComponent}
+                onSend={handleSend}
+                ref={inputRef}
+            />
+        </>}
+    </>
 };
 
 export default withStyles(styles)(Chat);

@@ -11,8 +11,10 @@ import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 import {useFirebase, usePages} from "../controllers/General";
+import withStyles from "@material-ui/styles/withStyles";
+import {styles} from "../controllers/Theme";
 
-const RestorePassword = (props) => {
+const RestorePassword = ({classes}) => {
     const [state, setState] = React.useState({
         email: "",
         requesting: false
@@ -42,7 +44,7 @@ const RestorePassword = (props) => {
         return <Redirect to={pages.profile.route}/>
     }
 
-    return <Grid container>
+    return <Grid container className={classes.center}>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
@@ -71,4 +73,4 @@ const RestorePassword = (props) => {
     </Grid>
 };
 
-export default RestorePassword;
+export default withStyles(styles)(RestorePassword);

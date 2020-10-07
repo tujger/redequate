@@ -21,7 +21,7 @@ import {
 } from "./controllers/General";
 import LoadingComponent from "./components/LoadingComponent";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
-import defaultTheme from "./controllers/Theme";
+import {colors, createTheme, customizedDefault} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
@@ -41,9 +41,18 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 const origin = console.error;
 console.error = function (...args) {
     origin.call(this, ...args);
-    if (args.length > 1) return;
     // return;
     try {
+        if (!args.length || args.length > 1) return;
+        if (args[0].indexOf("provided to the classes prop") > 1) {
+            return;
+        }
+        if (args[0].indexOf("`styles` argument provided") > 1) {
+            return;
+        }
+        if (args[0].indexOf("no such file or directory") > 1) {
+            return;
+        }
         const firebase = useFirebase();
         const currentUserData = useCurrentUserData();
         if (!firebase || !firebase.database) return;
@@ -62,7 +71,7 @@ const isIncompatible = !checkIfCompatible();
 let oldWidth;
 
 function Dispatcher(props) {
-    const {firebaseConfig, title, theme = defaultTheme, reducers, pages, width} = props;
+    const {firebaseConfig, title, theme = createTheme({colors: colors(), customized: customizedDefault}), reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
     useFirebase(firebase);
@@ -141,11 +150,11 @@ function Dispatcher(props) {
 
     if (isIncompatible) {
         return <ThemeProvider theme={theme}><TechnicalInfoView
-            message={<React.Fragment>
+            message={<>
                 <Typography>Oops, we have detected that your browser is outdated and cannot be supported
                     by {title} :(</Typography>
                 <Typography>We'll be happy to see you back using {title} with up-to-date browser!</Typography>
-            </React.Fragment>}
+            </>}
         /></ThemeProvider>
     }
 

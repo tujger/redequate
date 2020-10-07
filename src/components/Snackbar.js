@@ -28,14 +28,12 @@ const SimpleSnackbar = props => {
         autoHideDuration={6000}
         onClose={handleClose}
         message={message}
-        action={
-            <React.Fragment>
-                <Button color={"primary"} size={"small"} onClick={onButtonClick} children={buttonText}/>
-                <IconButton size={"small"} aria-label={"close"} color={"inherit"} onClick={handleClose}>
-                    <CloseIcon fontSize={"small"}/>
-                </IconButton>
-            </React.Fragment>
-        }
+        action={<>
+            <Button color={"primary"} size={"small"} onClick={onButtonClick} children={buttonText}/>
+            <IconButton size={"small"} aria-label={"close"} color={"inherit"} onClick={handleClose}>
+                <CloseIcon fontSize={"small"}/>
+            </IconButton>
+        </>}
     />
 };
 
@@ -50,7 +48,7 @@ export const snackbarReducer = (state = {
 }, action) => {
     switch (action.type) {
         case SimpleSnackbar.SHOW:
-            let newState = {open: true};
+            const newState = {open: true};
             if (action.message) newState.message = action.message;
             if (action.buttonText) newState.buttonText = action.buttonText;
             if (action.onButtonClick) newState.onButtonClick = action.onButtonClick;

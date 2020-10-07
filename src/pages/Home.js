@@ -11,9 +11,9 @@ const Home = (props) => {
         // eslint-disable-next-line
     }, []);
 
-    return <React.Fragment>
+    return <>
         {props.children}
-    </React.Fragment>
+    </>
 };
 
 export default Home;

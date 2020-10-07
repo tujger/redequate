@@ -15,8 +15,10 @@ import {useDispatch} from "react-redux";
 import {useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {notifySnackbar} from "../controllers/notifySnackbar";
+import withStyles from "@material-ui/styles/withStyles";
+import {styles} from "../controllers/Theme";
 
-const Signup = ({signup = true, additional}) => {
+const Signup = ({classes, signup = true, additional}) => {
     const [state, setState] = React.useState({
         email: "",
         password: "",
@@ -114,7 +116,7 @@ const Signup = ({signup = true, additional}) => {
         return <Redirect to={pages.profile.route}/>
     }
 
-    return <Grid container>
+    return <Grid container className={classes.center}>
         <Box m={0.5}/>
         {!requestPasswordFor && <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
@@ -191,4 +193,4 @@ const Signup = ({signup = true, additional}) => {
     </Grid>
 };
 
-export default Signup;
+export default withStyles(styles)(Signup);

@@ -89,7 +89,7 @@ export const Role = {
 
 export function sendInvitationEmail(firebase) {
     return options => new Promise((resolve, reject) => {
-        let actionCodeSettings = {
+        const actionCodeSettings = {
             url: window.location.origin + "/signup/" + options.email,
             handleCodeInApp: true,
         };
@@ -137,9 +137,9 @@ export function UserData(firebase) {
         if (date === firebase.database.ServerValue.TIMESTAMP) return _dateFormatted(new Date().getTime());
         const _date = new Date(date);
         const now = new Date();
-        if (now.getUTCFullYear() === _date.getUTCFullYear()
-            && now.getUTCMonth() === _date.getUTCMonth()
-            && now.getUTCDate() === _date.getUTCDate()) {
+        if (now.getUTCFullYear() === _date.getUTCFullYear() &&
+            now.getUTCMonth() === _date.getUTCMonth() &&
+            now.getUTCDate() === _date.getUTCDate()) {
             return _date.toLocaleTimeString();
         }
         return _date.toLocaleDateString();
@@ -160,7 +160,7 @@ export function UserData(firebase) {
         if (includePublic) {
             if (!_public) throw new Error("[UserData] public section is not ready");
             _public._sort_name = fetchSortName();
-            for (let x in _public) {
+            for (const x in _public) {
                 if (_public[x] !== undefined) {
                     if (_public[x] !== undefined && (_public[x] || "").constructor.name === "String") {
                         _public[x] = (_public[x] || "").trim();
@@ -172,8 +172,8 @@ export function UserData(firebase) {
         }
         if (includePrivate) {
             if (!_private) throw new Error("[UserData] private section is not ready");
-            for (let deviceId in _private) {
-                for (let x in _private[deviceId]) {
+            for (const deviceId in _private) {
+                for (const x in _private[deviceId]) {
                     if (_private[deviceId][x] !== undefined) {
                         if (_private[deviceId][x] !== undefined && (_private[deviceId][x] || "").constructor.name === "String") {
                             _private[deviceId][x] = (_private[deviceId][x] || "").trim();
@@ -291,18 +291,18 @@ export function UserData(firebase) {
             }
             if (!_id) throw new Error("Can't fetch unidentified user data");
             if (!options) options = [UserData.PUBLIC];
-            let fetchFull = options.indexOf(UserData.FULL) >= 0;
-            let fetchEmail = options.indexOf(UserData.EMAIL) >= 0;
-            let fetchImage = options.indexOf(UserData.IMAGE) >= 0;
-            let fetchName = options.indexOf(UserData.NAME) >= 0;
-            let fetchRole = options.indexOf(UserData.ROLE) >= 0;
-            let fetchPublic = options.indexOf(UserData.PUBLIC) >= 0;
-            let fetchPrivate = options.indexOf(UserData.PRIVATE) >= 0;
-            let fetchUpdated = options.indexOf(UserData.UPDATED) >= 0;
-            let force = options.indexOf(UserData.FORCE) >= 0;
+            const fetchFull = options.indexOf(UserData.FULL) >= 0;
+            const fetchEmail = options.indexOf(UserData.EMAIL) >= 0;
+            const fetchImage = options.indexOf(UserData.IMAGE) >= 0;
+            const fetchName = options.indexOf(UserData.NAME) >= 0;
+            const fetchRole = options.indexOf(UserData.ROLE) >= 0;
+            const fetchPublic = options.indexOf(UserData.PUBLIC) >= 0;
+            const fetchPrivate = options.indexOf(UserData.PRIVATE) >= 0;
+            const fetchUpdated = options.indexOf(UserData.UPDATED) >= 0;
+            const force = options.indexOf(UserData.FORCE) >= 0;
 
             let _loading = {..._loaded};
-            let ref = firebase.database().ref("users_public");
+            const ref = firebase.database().ref("users_public");
 
             const tasks = [];
             if ((!_loading.public || force) && (fetchPublic || fetchFull)) {

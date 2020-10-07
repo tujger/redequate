@@ -3,12 +3,12 @@ import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/Gener
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import Pagination from "../controllers/FirebasePagination";
 import {ChatMeta} from "./ChatMeta";
-import ChatsCounter from "./ChatsCounter";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import {fetchCallable} from "../controllers";
+import {fetchCallable} from "../controllers/Firebase";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {chatsCounterReducer} from "./chatsCounterReducer";
 
 export const ChatsDaemon = ({clearText = text => text}) => {
     const currentUserData = useCurrentUserData();
@@ -59,7 +59,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 chatsWithNewMessages.push(id);
                 dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
                 dispatch({type: MenuBadge.INCREASE, page: pages.chats});
-                dispatch({type: ChatsCounter.COUNTER, counter: chatsWithNewMessages.length});
+                dispatch({type: chatsCounterReducer.COUNTER, counter: chatsWithNewMessages.length});
                 meta.watch(update => {
                     if (update.type === "visit") {
                         if (update.uid !== currentUserData.id) return;
@@ -71,7 +71,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                             delete metas[meta.id];
                             dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
                             dispatch({type: MenuBadge.DECREASE, page: pages.chats});
-                            dispatch({type: ChatsCounter.COUNTER, counter: chatsWithNewMessages.length});
+                            dispatch({type: chatsCounterReducer.COUNTER, counter: chatsWithNewMessages.length});
                         }
                     } else {
                         // newMessage(update, id);
@@ -84,7 +84,6 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 fetchCallable(firebase)("fixChat", {id, uid: currentUserData.id})
                     .then(console.log)
                     .catch(console.error);
-
             });
 
         // pagination.next()

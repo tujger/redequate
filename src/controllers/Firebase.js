@@ -50,9 +50,9 @@ export const fetchFunction = firebase => (name, options) => new Promise((resolve
     try {
         firebase.auth().onAuthStateChanged(data => {
             data.getIdToken().then(token => {
-                let config = {
+                const config = {
                     headers: {
-                        "Authorization": "Bearer " + token
+                        Authorization: "Bearer " + token
                     }
                 };
                 const namedFunction = firebaseMessaging.functions().httpsCallable(name, config);

@@ -53,7 +53,7 @@ const styles = theme => ({
 });
 
 function Titlebar(props) {
-    const {classes, className, onHamburgerClick} = props;
+    const {classes, className} = props;
     const pages = usePages();
     const location = useLocation();
     const history = useHistory();
@@ -99,7 +99,6 @@ function Titlebar(props) {
 
 Titlebar.propTypes = {
     title: PropTypes.string,
-    onHamburgerClick: PropTypes.func
 };
 
 export default withRouter(withStyles(styles)(Titlebar));

@@ -36,7 +36,7 @@ const stylesHeader = theme => ({
     },
 });
 
-const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
+const ChatHeader = ({chatMeta, classes, className, id, userComponent, userData}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const history = useHistory();
@@ -86,8 +86,9 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
         // eslint-disable-next-line
     }, [id]);
 
-    return <React.Fragment>
+    return <>
         <NavigationToolbar
+            className={className}
             rightButton={<IconButton onClick={() => setState({...state, deleteOpen: true})}>
                 <ClearIcon/>
             </IconButton>}
@@ -129,7 +130,7 @@ const ChatHeader = ({chatMeta, classes, id, userComponent, userData}) => {
             onConfirm={handleConfirmDeletion}
             title={"Delete chat"}
         />}
-    </React.Fragment>
+    </>
 };
 
 export default withStyles((theme) => ({

@@ -31,7 +31,7 @@ const calculateBgColor = (image, initials) => {
         hash = initials.charCodeAt(i) + ((hash << 5) - hash);
         hash = hash & hash;
     }
-    let rgb = [0, 0, 0];
+    const rgb = [0, 0, 0];
     for (let i = 0; i < 3; i++) {
         rgb[i] = (hash >> (i * 8)) & 255;
     }

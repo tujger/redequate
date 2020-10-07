@@ -1,6 +1,5 @@
 import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
-import {InView} from "react-intersection-observer";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import Grid from "@material-ui/core/Grid";
@@ -39,24 +38,24 @@ const stylesChat = theme => ({
     },
 });
 
-const ChatItem = React.forwardRef((props, ref) => {
+const ChatItem = (props) => {
     // eslint-disable-next-line react/prop-types
-    const {data, chatMeta = {}, classes, skeleton, textComponent} = props;
+    const {data, classes, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
-    const {shown, authorData} = state;
+    const {authorData} = state;
 
-    const fetchIsNew = () => {
+    /*const fetchIsNew = () => {
         const latestVisit = chatMeta[currentUserData.id + "_visit"] || 0;
         // const latestIncoming = meta[currentUserData.id] || 0;
         return data.created > latestVisit;
-    }
+    }*/
 
     React.useEffect(() => {
         if (skeleton) return;
         let isMounted = true;
-        let authorData = cacheDatas.put(data.uid, UserData(firebase));
+        const authorData = cacheDatas.put(data.uid, UserData(firebase));
         authorData.fetch(data.uid, [UserData.IMAGE, UserData.NAME])
             .then(() => isMounted && setState({...state, authorData}))
 
@@ -75,7 +74,7 @@ const ChatItem = React.forwardRef((props, ref) => {
     const isItemOut = currentUserData.id === data.uid;
 
     if (!authorData) return null;
-    return <Card ref={ref} className={[
+    return <Card className={[
         classes.root,
         classes.card,
         classes.chatItem,
@@ -110,7 +109,7 @@ const ChatItem = React.forwardRef((props, ref) => {
         />
     </Card>
 
-    return <li>
+    /*return <li>
         {isNew && <InView
             onChange={(inView) => {
                 if (inView) setState({...state, shown: true});
@@ -123,8 +122,8 @@ const ChatItem = React.forwardRef((props, ref) => {
             }}
             style={{display: "none"}}
         ><b>NEW</b></InView>}
-    </li>
-})
+    </li>*/
+}
 
 export default withStyles((theme) => ({
     ...stylesList(theme),

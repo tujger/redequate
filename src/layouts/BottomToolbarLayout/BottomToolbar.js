@@ -101,10 +101,10 @@ const BottomToolbar = withStyles(styles)(props => {
                     if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
                     const child = <MenuItem
                         button
-                        children={<React.Fragment>
+                        children={<>
                             {item.label}
                             {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
-                        </React.Fragment>}
+                        </>}
                         className={[classes.label, classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
                         onClickCapture={item.onClick}
                     />;

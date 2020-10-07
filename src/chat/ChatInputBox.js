@@ -14,29 +14,31 @@ const styles = theme => ({
         overflowX: "auto",
     },
     messagebox: {
-        backgroundColor: theme.palette.background.default,
-        flexWrap: "nowrap",
+        // backgroundColor: theme.palette.background.default,
+        // flexWrap: "nowrap",
+        paddingBottom: theme.spacing(1),
         [theme.breakpoints.up("md")]: {
-            bottom: theme.spacing(-1),
-            marginBottom: theme.spacing(-1),
-            paddingBottom: theme.spacing(1),
-            position: "sticky",
-            width: "100%",
+            // marginBottom: theme.spacing(-1),
+            // width: "100%",
         },
         [theme.breakpoints.down("md")]: {
-            bottom: iOS ? theme.spacing(7) : 0,
-            left: 0,
-            margin: 0,
-            padding: theme.spacing(1),
-            paddingRight: 0,
-            position: "fixed",
-            right: 0,
+            // bottom: iOS ? theme.spacing(7) : 0,
+            // left: 0,
+            // margin: 0,
+            // padding: theme.spacing(1),
+            // paddingRight: 0,
+            // position: "fixed",
+            // right: 0,
+            // zIndex: 1200,
+            // [theme.breakpoints.up("md")]: {
+            //     marginLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+            // }
         },
     },
 });
 
 // eslint-disable-next-line react/prop-types
-const ChatInputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) => {
+const ChatInputBox = React.forwardRef(({classes, className, inputComponent, style={}, onSend}, ref) => {
     const windowData = useWindowData()
     const [state, setState] = React.useState({value: ""});
     const {value} = state;
@@ -51,7 +53,7 @@ const ChatInputBox = React.forwardRef(({classes, inputComponent, onSend}, ref) =
         setState({...state, value: ""})
     }
 
-    return <Grid container ref={ref} className={classes.messagebox}>
+    return <Grid container ref={ref} className={[className, classes.messagebox].join(" ")} style={style}>
         <Grid item xs className={classes.inputfield}>
             <inputComponent.type
                 {...inputComponent.props}

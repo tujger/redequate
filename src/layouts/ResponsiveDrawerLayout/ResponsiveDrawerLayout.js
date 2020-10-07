@@ -27,25 +27,84 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 let onpopstateBackup;
 
 const styles = theme => ({
-    content: {
-        ...theme.mixins.toolbar,
-        [theme.breakpoints.up("md")]: {
-            marginLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
-        },
+    container: {
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
     },
+    // center: {
+    //     ...theme.mixins.toolbar,
+    //     [theme.breakpoints.up("md")]: {
+    //         marginLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+    //     },
+    // },
     indent: {
         ...theme.mixins.toolbar,
         height: theme.mixins.toolbar.minHeight,
     },
     appbar: {
         [theme.breakpoints.up("md")]: {
-            width: `calc(100% - ${theme.drawerWidth}px)`,
+            // width: `calc(100% - ${theme.drawerWidth}px)`,
             marginLeft: theme.drawerWidth,
         }
     },
     headerMenu: {
         position: "absolute",
         right: 0,
+    },
+
+    bottom: {
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+        },
+    },
+    bottomSticky: {
+        backgroundColor: theme.palette.background.default,
+        bottom: 0,
+        position: "fixed",
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+        },
+    },
+    center: {
+        display: "flex",
+        flex: "1 1 auto",
+        flexDirection: "column",
+        maxWidth: "100%",
+        padding: theme.spacing(1),
+        // paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        position: "relative",
+        overflow: "auto",
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+        },
+    },
+    left: {},
+    right: {},
+    top: {
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+            paddingTop: theme.spacing(1),
+        },
+    },
+    topSticky: {
+        backgroundColor: theme.palette.background.default,
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        position: "sticky",
+        top: theme.mixins.toolbar.minHeight,
+        zIndex: 2,
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+            // paddingTop: theme.spacing(1),
+            top: (theme.mixins.toolbar["@media (min-width:600px)"] || {}).minHeight,
+        },
     }
 });
 
@@ -81,7 +140,7 @@ function ResponsiveDrawerLayout(props) {
     const copyrightElement = <Grid container justify={"center"} onClick={event => {
         if (!matchRole(Role.ADMIN, currentUserData)) return;
         counter++;
-        if(counter === 3) {
+        if (counter === 3) {
             const count = enableDisabledPages();
             if (count) {
                 event.preventDefault();
@@ -93,7 +152,8 @@ function ResponsiveDrawerLayout(props) {
         <Typography variant={"caption"}>{copyright}</Typography>
     </Grid>;
 
-    return <React.Fragment><CssBaseline/>
+    return <div className={classes.container}>
+        <CssBaseline/>
         {windowData.isNarrow()
             ? <SwipeableDrawer
                 container={container}
@@ -102,7 +162,7 @@ function ResponsiveDrawerLayout(props) {
                 open={mobileOpen}
                 onClose={handleDrawerToggle}
                 ModalProps={{
-                    keepMounted: true, // Better open performance on mobile.
+                    // keepMounted: true, // Better open performance on mobile.
                 }}
                 disableBackdropTransition={!iOS} disableDiscovery={iOS}
                 onOpen={handleDrawerToggle}>
@@ -144,13 +204,22 @@ function ResponsiveDrawerLayout(props) {
             onHamburgerClick={handleDrawerToggle}
         />
         <Typography className={classes.indent}/>
-        <MainContent classes={{content: classes.content}}/>
+        <MainContent classes={{
+            bottom: classes.bottom,
+            bottomSticky: classes.bottomSticky,
+            center: classes.center,
+            left: classes.left,
+            right: classes.right,
+            topSticky: classes.topSticky,
+            top: classes.top
+        }}/>
         <Snackbar/>
         <NotificationsSnackbar/>
-    </React.Fragment>
+    </div>
 }
 
 ResponsiveDrawerLayout.propTypes = {
+    classes: PropTypes.any,
     container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
     copyright: PropTypes.any,
     firebase: PropTypes.any,

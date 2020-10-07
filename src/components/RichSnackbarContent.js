@@ -90,11 +90,11 @@ const RichSnackbarContent = withStyles(styles)(React.forwardRef((props, ref) => 
             <SnackbarContent
                 message={message}
                 className={["", classes[variant]].join(" ")}
-                action={<React.Fragment>
+                action={<>
                     {buttonLabel && !cardShown ? customAction("inherit") : null}
                     {cardExists ? (cardShown ? collapseAction() : expandAction()) : null}
                     {buttonLabel ? (onButtonClick ? closeAction() : null) : closeAction()}
-                </React.Fragment>}
+                </>}
                 onClick={onClick}
             />
             {cardExists && <Collapse in={cardShown} timeout={"auto"} unmountOnExit>

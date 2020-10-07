@@ -43,6 +43,9 @@
         "react/jsx-tag-spacing": [
             0
         ],
+        "react/prop-types": [
+            1
+        ],
         "semi": [
             0
         ]

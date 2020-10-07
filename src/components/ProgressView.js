@@ -3,17 +3,18 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 import {connect} from "react-redux"
 import withStyles from "@material-ui/styles/withStyles";
 
-const styles = (theme) => ({
+const styles = theme => ({
     invisibleProgress: {
         opacity: 0,
     },
     progress: {
-        [theme.breakpoints.down("sm")]: {
-            bottom: theme.spacing(-0.5),
-            left: 0,
-            position: "absolute",
-            right: 0,
-        }
+        // bottom: theme.spacing(-0.5),
+        bottom: 0,
+        left: 0,
+        position: "absolute",
+        right: 0,
+        // [theme.breakpoints.down("sm")]: {
+        // }
     }
 });
 

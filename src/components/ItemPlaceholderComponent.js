@@ -22,7 +22,7 @@ const ItemPlaceholderComponent = ({classes, label}) => (
                     variant={"circle"}
                 />}
             className={[classes.cardHeader, "", label ? classes.cardHeaderWithLabel : ""].join(" ")}
-            subheader={!label && <React.Fragment>
+            subheader={!label && <>
                 <Skeleton
                     animation={"wave"}
                     height={12}
@@ -39,7 +39,7 @@ const ItemPlaceholderComponent = ({classes, label}) => (
                         width={"100%"}
                     />
                 </Grid>
-            </React.Fragment>}
+            </>}
             title={label || <Skeleton
                 animation={"wave"}
                 height={12}

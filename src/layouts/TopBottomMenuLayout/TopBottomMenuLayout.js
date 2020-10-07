@@ -40,8 +40,12 @@ const styles = theme => ({
         margin: theme.spacing(1),
     },
     footer: {
-        position: "sticky",
-        bottom: 0,
+        flexBasis: theme.mixins.toolbar.minHeight,
+        flexGrow: 0,
+        flexShrink: 0,
+
+        // position: "sticky",
+        // bottom: 0,
     },
     version: {
         backgroundColor: theme.palette.background.default,
@@ -54,6 +58,39 @@ const styles = theme => ({
         bottom: 0
     },
 
+    bottom: {},
+    bottomSticky: {
+        backgroundColor: theme.palette.background.default,
+        bottom: 0,
+        paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        position: "sticky",
+    },
+    center: {
+        display: "flex",
+        flex: "1 1 auto",
+        flexDirection: "column",
+        maxWidth: "100%",
+        padding: theme.spacing(1),
+        paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        position: "relative",
+        overflow: "auto"
+    },
+    left: {},
+    right: {},
+    top: {
+        paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+    },
+    topSticky: {
+        backgroundColor: theme.palette.background.default,
+        paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        position: "sticky",
+        top: theme.fetchOverride(theme => theme.customized.topBottomLayout.topSticky.top),
+        zIndex: 2,
+    }
 });
 
 function TopBottomMenuLayout(props) {
@@ -78,13 +115,21 @@ function TopBottomMenuLayout(props) {
         />}
         menuClassName={classes.stickytop}
     >
-        <MainContent classes={{content: classes.content}}/>
-        <Grid container justify={"center"}>
-            <BottomMenu items={menu} className={classes.footer}/>
+        <MainContent classes={{
+            bottom: classes.bottom,
+            bottomSticky: classes.bottomSticky,
+            center: classes.center,
+            left: classes.left,
+            right: classes.right,
+            topSticky: classes.topSticky,
+            top: classes.top
+        }}/>
+        <Grid container className={classes.footer} justify={"center"}>
+            <BottomMenu items={menu}/>
             <Grid container justify={"center"} className={classes.version} onClick={event => {
                 if (!matchRole(Role.ADMIN, currentUserData)) return;
                 counter++;
-                if(counter === 3) {
+                if (counter === 3) {
                     const count = enableDisabledPages();
                     if (count) {
                         event.preventDefault();

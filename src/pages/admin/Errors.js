@@ -5,6 +5,7 @@ import RefreshIcon from "@material-ui/icons/Refresh";
 import IconButton from "@material-ui/core/IconButton";
 import Select from "@material-ui/core/Select";
 import Chip from "@material-ui/core/Chip";
+import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
 import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
@@ -17,9 +18,11 @@ import {notifySnackbar} from "../../controllers/notifySnackbar";
 import {errorsReducer} from "../../reducers/errorsReducer";
 import NavigationToolbar from "../../components/NavigationToolbar";
 import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
+import withStyles from "@material-ui/styles/withStyles";
+import {styles} from "../../controllers/Theme";
 
 const Errors = (props) => {
-    const {mode = "all", filter} = props;
+    const {classes, mode = "all", filter} = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
@@ -68,6 +71,7 @@ const Errors = (props) => {
     return <>
         <NavigationToolbar
             backButton={null}
+            className={classes.topSticky}
             mediumButton={<IconButton
                 children={<ClearIcon/>}
                 onClick={() => setState({...state, deleteOpen: true})}
@@ -98,21 +102,23 @@ const Errors = (props) => {
                 }}
             />}
         </NavigationToolbar>
-        <LazyListComponent
-            key={random}
-            itemComponent={item => <ErrorItemComponent
-                data={item}
-                key={item.key}
-                onUserClick={(event, filter) => {
-                    event && event.stopPropagation();
-                    dispatch({type: errorsReducer.MODE, mode: "all", filter});
-                }}
-            />}
-            itemTransform={itemTransform}
-            noItemsComponent={<ErrorItemComponent label={"No errors found"}/>}
-            pagination={pagination}
-            placeholder={<ErrorItemComponent skeleton={true}/>}
-        />
+        <Grid container className={classes.center}>
+            <LazyListComponent
+                key={random}
+                itemComponent={item => <ErrorItemComponent
+                    data={item}
+                    key={item.key}
+                    onUserClick={(event, filter) => {
+                        event && event.stopPropagation();
+                        dispatch({type: errorsReducer.MODE, mode: "all", filter});
+                    }}
+                />}
+                itemTransform={itemTransform}
+                noItemsComponent={<ErrorItemComponent label={"No errors found"}/>}
+                pagination={pagination}
+                placeholder={<ErrorItemComponent skeleton={true}/>}
+            />
+        </Grid>
         {deleteOpen && <ConfirmComponent
             children={"Errors log will be cleared."}
             confirmLabel={"Clear"}
@@ -129,4 +135,4 @@ const mapStateToProps = ({errors}) => ({
     mode: errors.mode,
 });
 
-export default connect(mapStateToProps)(Errors);
+export default connect(mapStateToProps)(withStyles(styles)(Errors));

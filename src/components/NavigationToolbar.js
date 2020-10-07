@@ -5,12 +5,20 @@ import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import {useHistory} from "react-router-dom";
 
-const styles = theme => ({})
+const styles = theme => ({
+    toolbar: {
+        height: theme.spacing(6)
+    }
+})
 
 const NavigationToolbar = (
     {
+        alignItems = "center",
         backButton,
         children,
+        classes,
+        className,
+        justify,
         rightButton,
         mediumButton
     }) => {
@@ -27,12 +35,14 @@ const NavigationToolbar = (
         title={"Back"}
     />;
 
-    return <Grid container alignItems={"center"}>
+    return <Grid container className={[classes.toolbar, className].join(" ")} alignItems={alignItems}>
         <Grid item>
             {button}
         </Grid>
         <Grid item xs>
-            {children}
+            <Grid container alignItems={alignItems} justify={justify}>
+                {children}
+            </Grid>
         </Grid>
         {mediumButton && <Grid item>
             {mediumButton}

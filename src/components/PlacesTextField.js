@@ -24,12 +24,12 @@ const PlacesTextField = props => {
                 formatted: []
             }[type] || type;
             geoCode.geolookup(val).then(result => {
-                let accum = {};
+                const accum = {};
                 let items = result.map(item => {
                     item = {...item, latlng: item.lat + "," + item.lng};
                     item.address.city = item.address.city || item.raw.address.locality;
                     item.citystate = [item.address.city, item.address.state].filter(item => !!item).join(", ");
-                    let tokens = [
+                    const tokens = [
                         item.raw.address.house_number,
                         item.raw.address.road,
                         item.raw.address.locality,

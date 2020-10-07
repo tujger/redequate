@@ -30,70 +30,102 @@ export const colors = ({primary, secondary} = {}) => {
     ][month];
 };
 
-export const createTheme = ({colors}) => createMuiTheme({
-    drawerWidth: drawerWidth,
-    overrides: {
-        MuiDrawer: {
-            paperAnchorLeft: {
-                width: drawerWidth
-            }
-        },
-        MuiFab: {
-            primary: {
-                position: "fixed",
-                bottom: 16,
-                right: 16,
-            }
-        },
-        MuiCard: {
-            root: {
-                width: "100%"
-            }
-        },
-    },
-    palette: {
-        background: {
-            paper: "#efefef",
-            default: "#ffffff",
-        },
-        primary: {
-            main: colors.primary,
-            // contrastText: "#000000",
-            // "&:focus": {
-            //     main: "#006600",
-            // },
-            // "&:hover": {
-            //     main: "#006600",
-            // },
-            // // light,
-            // // dark
-        },
-        secondary: {
-            main: colors.secondary,
-            // contrastText: "#ffffff",
-            "&:focus": {
-                main: colors.secondary,
+export const createTheme = ({colors, customized = customizedDefault}) => {
+    const theme = createMuiTheme({
+        drawerWidth: drawerWidth,
+        overrides: {
+            MuiDrawer: {
+                paperAnchorLeft: {
+                    width: drawerWidth
+                }
             },
-            "&:hover": {
-                main: colors.secondary,
-            }
+            MuiFab: {
+                primary: {
+                    position: "fixed",
+                    bottom: 16,
+                    right: 16,
+                }
+            },
+            MuiCard: {
+                root: {
+                    width: "100%"
+                }
+            },
         },
-        // background: {
-        //     paper: colors.paper,
-        //     default: colors.default,
-        // }
-    },
-    typography: {
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', sans-serif",
-        fontSize: 15,
-    }
-})
-
-const theme = createTheme({colors: colors()});
-
-export default theme;
+        palette: {
+            background: {
+                paper: "#efefef",
+                default: "#ffffff",
+            },
+            primary: {
+                main: colors.primary,
+                // contrastText: "#000000",
+                // "&:focus": {
+                //     main: "#006600",
+                // },
+                // "&:hover": {
+                //     main: "#006600",
+                // },
+                // // light,
+                // // dark
+            },
+            secondary: {
+                main: colors.secondary,
+                // contrastText: "#ffffff",
+                "&:focus": {
+                    main: colors.secondary,
+                },
+                "&:hover": {
+                    main: colors.secondary,
+                }
+            },
+            // background: {
+            //     paper: colors.paper,
+            //     default: colors.default,
+            // }
+        },
+        typography: {
+            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', sans-serif",
+            fontSize: 15,
+        },
+        customized
+    });
+    theme.fetchOverride = (callback, defaultValue) => {
+        try {
+            if (callback) {
+                while (callback instanceof Function) {
+                    callback = callback(theme);
+                }
+            }
+            return callback;
+        } catch (e) {
+            console.error(e);
+        }
+        return defaultValue;
+    };
+    console.warn("B")
+    return theme;
+}
 
 export const styles = theme => ({
+    badge: {
+        color: "#ff0000",
+        fontSize: "small",
+        fontWeight: "bolder",
+        marginBottom: theme.spacing(0.5),
+        marginLeft: theme.spacing(0.5),
+        verticalAlign: "super",
+    },
+    tabButton: {
+        borderBottomColor: "transparent",
+        borderBottomStyle: "solid",
+        borderBottomWidth: theme.spacing(0.25),
+        borderRadius: 0,
+        whiteSpace: "nowrap",
+    },
+    tabButtonSelected: {
+        borderBottomColor: theme.palette.secondary.main,
+    },
     fab: {
         backgroundColor: theme.palette.secondary.main,
         color: theme.palette.getContrastText(theme.palette.secondary.main),
@@ -137,7 +169,26 @@ export const styles = theme => ({
         marginLeft: theme.spacing(0.5),
         verticalAlign: "super",
     },
+
+    header: {},
+    footer: {},
+    bottom: {},
+    bottomSticky: {},
+    center: {},
+    left: {},
+    right: {},
+    top: {},
+    topSticky: {},
+
 })
+
+export const customizedDefault = {
+    topBottomLayout: {
+        topSticky: {
+            top: theme => theme.mixins.toolbar.minHeight,
+        }
+    }
+}
 
 export const stylesList = theme => ({
     avatar: {
@@ -315,3 +366,7 @@ export const stylesList = theme => ({
         },
     },
 });
+
+// const theme = createTheme({colors: colors(), customized: customizedDefault});
+//
+// export default theme;

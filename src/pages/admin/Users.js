@@ -21,6 +21,7 @@ import {styles} from "../../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
 import {usersReducer} from "../../reducers/usersReducer";
 import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
+import NavigationToolbar from "../../components/NavigationToolbar";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
@@ -102,7 +103,10 @@ function Users(props) {
 
     return <>
         <Hidden smDown>
-            <Toolbar disableGutters>
+            <NavigationToolbar
+                backButton={null}
+                className={classes.topSticky}
+            >
                 <Select
                     color={"secondary"}
                     onChange={handleMode}
@@ -130,30 +134,13 @@ function Users(props) {
                     placeholder={"Search"}
                     value={filter}
                 />}
-            </Toolbar>
+            </NavigationToolbar>
         </Hidden>
         <Hidden mdUp>
-            <Toolbar disableGutters style={{justifyContent: "space-between"}}>
-                <Grid item xs>
-                    {mode === "all" && <Input
-                        autoFocus
-                        color={"secondary"}
-                        endAdornment={filter ? <IconButton
-                            children={<Clear/>}
-                            onClick={() => {
-                                dispatch({type: usersReducer.MODE, filter: ""});
-                                dispatch({type: lazyListComponentReducer.RESET});
-                            }}
-                            size={"small"}
-                            title={"Clear"}
-                            variant={"text"}
-                        /> : null}
-                        onChange={handleFilter}
-                        placeholder={"Search"}
-                        value={filter}
-                    />}
-                </Grid>
-                <Select
+            <NavigationToolbar
+                backButton={null}
+                className={classes.topSticky}
+                rightButton={<Select
                     color={"secondary"}
                     onChange={handleMode}
                     value={mode}
@@ -162,16 +149,37 @@ function Users(props) {
                     <MenuItem value={"admins"}>Administrators</MenuItem>
                     <MenuItem value={"disabled"}>Disabled users</MenuItem>
                     <MenuItem value={"notVerified"}>Users not verified</MenuItem>
-                </Select>
-            </Toolbar>
+                </Select>}
+            >
+                {mode === "all" && <Input
+                    autoFocus
+                    color={"secondary"}
+                    endAdornment={filter ? <IconButton
+                        children={<Clear/>}
+                        onClick={() => {
+                            dispatch({type: usersReducer.MODE, filter: ""});
+                            dispatch({type: lazyListComponentReducer.RESET});
+                        }}
+                        size={"small"}
+                        title={"Clear"}
+                        variant={"text"}
+                    /> : null}
+                    onChange={handleFilter}
+                    placeholder={"Search"}
+                    value={filter}
+                />}
+            </NavigationToolbar>
         </Hidden>
-        <LazyListComponent
-            pagination={pagination}
-            itemTransform={itemTransform}
-            itemComponent={item => <UserItemComponent key={item.key} data={item}/>}
-            placeholder={<UserItemComponent skeleton={true}/>}
-            noItemsComponent={<UserItemComponent label={"No users found"}/>}
-        />
+        <Grid container className={classes.center}>
+            <LazyListComponent
+                className={classes.center}
+                pagination={pagination}
+                itemTransform={itemTransform}
+                itemComponent={item => <UserItemComponent key={item.key} data={item}/>}
+                placeholder={<UserItemComponent skeleton={true}/>}
+                noItemsComponent={<UserItemComponent label={"No users found"}/>}
+            />
+        </Grid>
         {/* <ListComponent
             items={items}
             leftAction={listAction({

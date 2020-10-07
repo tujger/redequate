@@ -126,12 +126,12 @@ export const NotificationsSnackbar = () => {
         id={"__edeqa_pwa_service_worker_snackbar"}
         style={{display: "none"}}
         onClick={evt => {
-            let {system, ...payload} = evt.currentTarget.payload;
+            const {system, ...payload} = evt.currentTarget.payload;
             if (system && !document.hasFocus()) {
                 window.Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
                         const node = document.createElement("div");
-                        ReactDOM.render(<React.Fragment>{payload.title}</React.Fragment>, node, () => {
+                        ReactDOM.render(<>{payload.title}</>, node, () => {
                             try {
                                 const title = technicalInfo.title;
                                 const onclick = () => {

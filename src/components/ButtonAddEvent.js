@@ -11,7 +11,7 @@ const styles = theme => ({
         cursor: "default",
         textDecoration: "none",
     },
-    "default": {
+    default: {
         backgroundColor: theme.palette.grey[300],
         color: theme.palette.getContrastText(theme.palette.grey[300]),
         display: "flex",

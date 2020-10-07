@@ -10,15 +10,27 @@ import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/Wra
 import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const styles = theme => ({
-    content: {
-        display: "flex",
-        flex: "1 1 auto",
-        flexDirection: "column",
-        maxWidth: "100%",
-        padding: theme.spacing(1),
-        position: "relative",
-        overflow: "auto"
+    /*center: {
+        // display: "flex",
+        // flex: "1 1 auto",
+        // flexDirection: "column",
+        // maxWidth: "100%",
+        // padding: theme.spacing(1),
+        // position: "relative",
+        // overflow: "auto"
     },
+    top: {
+
+    },
+    topSticky: {
+    }*/
+    bottom: {},
+    bottomSticky: {},
+    center: {},
+    left: {},
+    right: {},
+    top: {},
+    topSticky: {},
 });
 
 const MainContent = props => {
@@ -31,7 +43,7 @@ const MainContent = props => {
 
     const isDisabled = technical && technical.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
-    return <main className={[classes.content].join(" ")}>
+    return <>
         <TechnicalInfoView/>
         {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
@@ -43,7 +55,7 @@ const MainContent = props => {
                         return needAuth(item.roles, currentUserData)
                             ? <pages.login.component.type {...props} {...pages.login.component.props} />
                             : (matchRole(item.roles, currentUserData) && !item.disabled && item.component
-                                ? <React.Fragment>
+                                ? <>
                                     {hasWrapperControlInterface() && <InView
                                         children={null}
                                         onChange={(inView) => {
@@ -55,8 +67,11 @@ const MainContent = props => {
                                             }).catch(notifySnackbar)
                                         }}
                                     />}
-                                    <item.component.type {...props} classes={{}} {...item.component.props} />
-                                </React.Fragment>
+                                    <item.component.type
+                                        {...props}
+                                        classes={classes}
+                                        {...item.component.props} />
+                                </>
                                 : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)
                     }}
                 />
@@ -71,12 +86,15 @@ const MainContent = props => {
                     path={item._route}
                     render={() => {
                         if (item !== pages.login && item !== pages.logout) return null;
-                        return <item.component.type {...props} classes={{}} {...item.component.props} />
+                        return <item.component.type
+                            {...props}
+                            classes={classes}
+                            {...item.component.props} />
                     }}
                 />
             })}</Switch>
         </React.Suspense>}
-    </main>
+    </>
 };
 
 export default withStyles(styles)(MainContent);

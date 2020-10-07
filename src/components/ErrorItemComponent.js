@@ -69,7 +69,7 @@ function ErrorItemComponent(props) {
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
     if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes}/>
 
-    return <React.Fragment>
+    return <>
         <CardActionArea onClick={() => {
             setState({...state, alert: true});
         }}>
@@ -83,14 +83,13 @@ function ErrorItemComponent(props) {
                         initials={userData.name}
                         onclick={(event) => onUserClick(event, userData.id)}
                         verified={true}
-                    /></div>}
+                    />
+                </div>}
                 classes={{content: classes.cardContent}}
                 className={[classes.cardHeader, classes.post].join(" ")}
-                subheader={<React.Fragment>
-                    <Grid container>
-                        {(JSON.stringify(data.value.error) || "").substr(0, 100)}
-                    </Grid>
-                </React.Fragment>}
+                subheader={<Grid container>
+                    {(JSON.stringify(data.value.error) || "").substr(0, 100)}
+                </Grid>}
                 title={<Grid container>
                     <Grid item className={classes.userName}>
                         <div onClickCapture={handleClick}>
@@ -114,7 +113,7 @@ function ErrorItemComponent(props) {
                     : data.value.error
             }</pre>
         </ConfirmComponent>}
-    </React.Fragment>
+    </>
 }
 
 export default withStyles(stylesList)(ErrorItemComponent);

@@ -4,7 +4,7 @@ import {InView} from "react-intersection-observer";
 // eslint-disable-next-line react/prop-types
 export const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders}) => {
     if (finished) return null;
-    return <React.Fragment>
+    return <>
         <InView
             children={null}
             onChange={(inView) => {
@@ -25,5 +25,5 @@ export const Observer = ({finished, hasItems, loadNextPage, placeholder, placeho
             }
             return a;
         })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
-    </React.Fragment>
+    </>
 }

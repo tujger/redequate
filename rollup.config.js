@@ -9,33 +9,34 @@ import del from 'rollup-plugin-delete'
 
 import pkg from './package.json'
 
-export default [{
-    input: 'src/index.js',
-    output: [
-        {
-            file: pkg.main,
-            format: 'cjs',
-            sourcemap: true
-        }/*,
+export default [
+    {
+        input: 'src/index.js',
+        output: [
+            {
+                file: pkg.main,
+                format: 'cjs',
+                sourcemap: true
+            }/*,
         {
             file: pkg.module,
             format: 'es',
             sourcemap: true
         }*/
-    ],
-    plugins: [
-        del({targets: ['core/*']}),
-        external(),
-        postcss({
-            modules: true
-        }),
-        url(),
-        svgr(),
-        babel(),
-        resolve(),
-        commonjs()
-    ]
-},
+        ],
+        plugins: [
+            del({targets: ['core/*']}),
+            external(),
+            postcss({
+                modules: true
+            }),
+            url(),
+            svgr(),
+            babel(),
+            resolve(),
+            commonjs()
+        ]
+    },
     {
         input: {
             index: 'src/index.js',
@@ -49,6 +50,7 @@ export default [{
             lazyListComponentReducer: 'src/components/LazyListComponent/lazyListComponentReducer.js',
             UserData: 'src/controllers/UserData.js',
             WrapperControl: 'src/controllers/WrapperControl.js',
+            Theme: 'src/controllers/Theme.js',
 
             // components
             AvatarView: 'src/components/AvatarView.js',
@@ -73,6 +75,8 @@ export default [{
             TopBottomMenuLayout: 'src/layouts/TopBottomMenuLayout/TopBottomMenuLayout.js',
 
             // pages
+            Alerts: 'src/alerts/Alerts.js',
+            AlertsCounter: 'src/alerts/AlertsCounter.js',
             Admin: 'src/pages/admin/Admin.js',
             Audit: 'src/pages/admin/Audit.js',
             Chat: 'src/chat/Chat.js',
