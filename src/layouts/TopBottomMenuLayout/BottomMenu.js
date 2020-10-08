@@ -44,11 +44,16 @@ const MenuSection = props => {
         </Typography>
         <MenuList>{menu.map((item, index) => {
             if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
+            if (item instanceof Array) {
+                console.error("BottomMenu doesn't support hierarchy yet")
+                return;
+            }
             const child = <MenuItem
                 button
                 children={item.label}
                 className={[classes.label, classes.menuitem].join(" ")}
                 key={index}
+                /* eslint-disable-next-line react/jsx-handler-names */
                 onClickCapture={item.onClick}
             />;
             if (item.component) {
@@ -65,8 +70,7 @@ const MenuSection = props => {
     </Grid>
 };
 
-const TopMenu = withStyles(styles)(props => {
-    const {items, classes, className} = props;
+const TopMenu = ({items, classes, className}) => {
     return <Grid
         className={["MuiBottomMenu-root", classes.bottommenu, className].join(" ")}
         container
@@ -74,10 +78,6 @@ const TopMenu = withStyles(styles)(props => {
     >
         {items.map((list, index) => <MenuSection key={index} classes={classes} items={list}/>)}
     </Grid>
-});
-
-TopMenu.propTypes = {
-    children: PropTypes.array,
 };
 
-export default TopMenu;
+export default withStyles(styles)(TopMenu);

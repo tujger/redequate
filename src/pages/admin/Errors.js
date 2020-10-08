@@ -59,7 +59,6 @@ const Errors = (props) => {
                 equals: filter ? filter : undefined,
                 order: "desc",
                 ref: firebase.database().ref("errors"),
-                size: 20
             })
             itemTransform = item => item;
             break;

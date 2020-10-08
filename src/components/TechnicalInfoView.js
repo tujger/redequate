@@ -9,8 +9,10 @@ const styles = theme => ({
     root: {
         backgroundColor: "#880000",
         color: "#ffffff",
+        flexDirection: "column",
         justifyContent: "center",
         padding: theme.spacing(1),
+        textAlign: "center",
     }
 })
 
@@ -26,9 +28,9 @@ const TechnicalInfoView = ({classes, message}) => {
     return <>
         <Grid container spacing={2} className={classes.root}>
             <h4>{message || maintenanceMessage}</h4>
-            <Typography variant={"caption"}>
-                Maintenance has been established by <a href={"mailto:" + email} style={{color: "inherit"}}>{name}</a> at {new Date(timestamp).toLocaleString()}
-            </Typography>
+            {timestamp && <Typography variant={"caption"}>
+                    Maintenance has been established by <a href={"mailto:" + email} style={{color: "inherit"}}>{name}</a> at {new Date(timestamp).toLocaleString()}
+            </Typography>}
         </Grid>
         <Box m={2}/>
     </>

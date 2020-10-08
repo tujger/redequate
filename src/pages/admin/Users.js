@@ -9,7 +9,6 @@ import Input from "@material-ui/core/Input";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import Grid from "@material-ui/core/Grid";
-import Toolbar from "@material-ui/core/Toolbar";
 import Hidden from "@material-ui/core/Hidden";
 import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import UserItemComponent from "../../components/UserItemComponent";
@@ -53,7 +52,7 @@ function Users(props) {
     let itemTransform;
     switch (mode) {
         case "all":
-            pagination = new UsersPagination({
+            pagination = new AllUsersPagination({
                 firebase: firebase,
                 start: filter
             })
@@ -64,7 +63,6 @@ function Users(props) {
                 ref: firebase.database().ref("roles"),
                 value: true,
                 equals: "admin",
-                size: 10
             })
             itemTransform = async (item) => {
                 const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key);
@@ -82,7 +80,6 @@ function Users(props) {
                 ref: firebase.database().ref("roles"),
                 value: true,
                 equals: "disabled",
-                size: 10
             })
             itemTransform = async (item) => {
                 const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key);
@@ -94,7 +91,6 @@ function Users(props) {
                 ref: firebase.database().ref("users_public"),
                 child: "emailVerified",
                 equals: false,
-                size: 10
             })
             itemTransform = item => item;
             break;
@@ -242,12 +238,13 @@ const mapStateToProps = ({users}) => ({
 
 export default connect(mapStateToProps)(withStyles(styles)(Users));
 
-function UsersPagination({firebase, start}) {
+function AllUsersPagination({firebase, start}) {
     // eslint-disable-next-line one-var
-    let count = 0, countTotal = 0, finished = false, started = true, names = [], emails = [],
-        order = "asc", added = [];
+    let count = 0, countTotal = 0, finished = false, started = true, names = [], emails = [];
+    const order = "asc";
+    const added = [];
 
-    const maxItems = 10;
+    const maxItems = 25;
 
     const namesPagination = new Pagination({
         child: "_sort_name",

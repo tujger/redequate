@@ -62,7 +62,6 @@ function Chats(
                 child: "timestamp",
                 order: "desc",
                 ref: firebase.database().ref("_chats").child(currentUserData.id),
-                size: 10,
             })}
             placeholder={<ChatsItem skeleton/>}
         />

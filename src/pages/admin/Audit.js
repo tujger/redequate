@@ -11,11 +11,11 @@ import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyL
 import NavigationToolbar from "../../components/NavigationToolbar";
 
 const Audit = (props) => {
-    const {classes, tabSelected, children = [<Errors key={Math.random()}/>]} = props;
-    const dispatch = useDispatch();
     const pages = usePages();
+    const {classes, tabSelected, children = [(pages.errors && pages.errors.component) || <Errors/>]} = props;
+    const dispatch = useDispatch();
 
-    const handleChange = tabSelected => event => {
+    const handleChange = tabSelected => () => {
         dispatch({type: auditReducer.SAVE, tabSelected});
         dispatch({type: lazyListComponentReducer.RESET});
     }

@@ -17,7 +17,6 @@ const AlertsList = ({fetchAlertContent}) => {
         pagination={() => new Pagination({
             ref: firebase.database().ref("alerts").child(currentUserData.id),
             order: "desc",
-            size: 25
         })}
         placeholder={<AlertItem skeleton/>}
         placeholders={1}
