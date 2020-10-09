@@ -7,7 +7,7 @@ import {cacheDatas, Layout, MenuBadge} from "./General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {auditReducer} from "../reducers/auditReducer";
 import {errorsReducer} from "../reducers/errorsReducer";
-import {usersReducer} from "../reducers/usersReducer";
+import {usersReducer} from "../pages/admin/users/usersReducer";
 import {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
 import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/mainAppbarReducer";
 import {topMenuReducer} from "../layouts/TopBottomMenuLayout/topMenuReducer";

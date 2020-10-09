@@ -5,14 +5,14 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import withStyles from "@material-ui/styles/withStyles";
-import {UserData} from "../controllers/UserData";
-import {useFirebase, usePages} from "../controllers/General";
-import AvatarView from "./AvatarView";
-import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
-import {stylesList} from "../controllers/Theme";
+import {UserData} from "../../../controllers/UserData";
+import {useFirebase, usePages} from "../../../controllers/General";
+import AvatarView from "../../../components/AvatarView";
+import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
+import {stylesList} from "../../../controllers/Theme";
 
 // eslint-disable-next-line react/prop-types
-function UserItemComponent({data, classes, skeleton, label}) {
+function UserItem({data, classes, skeleton, label}) {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
@@ -53,4 +53,4 @@ function UserItemComponent({data, classes, skeleton, label}) {
     </Card>
 }
 
-export default withStyles(stylesList)(UserItemComponent);
+export default withStyles(stylesList)(UserItem);

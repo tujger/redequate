@@ -116,16 +116,6 @@ export const styles = theme => ({
         marginLeft: theme.spacing(0.5),
         verticalAlign: "super",
     },
-    tabButton: {
-        borderBottomColor: "transparent",
-        borderBottomStyle: "solid",
-        borderBottomWidth: theme.spacing(0.25),
-        borderRadius: 0,
-        whiteSpace: "nowrap",
-    },
-    tabButtonSelected: {
-        borderBottomColor: theme.palette.secondary.main,
-    },
     fab: {
         backgroundColor: theme.palette.secondary.main,
         color: theme.palette.getContrastText(theme.palette.secondary.main),
@@ -136,30 +126,80 @@ export const styles = theme => ({
             color: theme.palette.getContrastText(theme.palette.secondary.main),
         }
     },
-    inforows: {
-        [theme.breakpoints.up("sm")]: {
-            flex: 1,
-            marginLeft: theme.spacing(4),
-            width: "auto",
-        },
-        [theme.breakpoints.down("sm")]: {
-            justifyContent: "center",
-            marginBottom: theme.spacing(3),
-            textAlign: "center",
-        },
-    },
-    inforow: {
-        [theme.breakpoints.down("sm")]: {
-            alignItems: "center",
-            justifyContent: "center",
-        },
-    },
     label: {
         color: "#000000",
         textDecoration: "none",
     },
     nounderline: {
         textDecoration: "none",
+    },
+    profileFields: {
+        [theme.breakpoints.up("sm")]: {
+            flex: 1,
+            marginLeft: theme.spacing(4),
+            width: "auto",
+        },
+        [theme.breakpoints.down("sm")]: {
+            marginBottom: theme.spacing(3),
+        },
+    },
+    profileField: {
+        [theme.breakpoints.down("sm")]: {
+            alignItems: "center",
+            justifyContent: "center",
+        },
+    },
+    profileImage: {
+        [theme.breakpoints.up("sm")]: {
+            width: theme.spacing(18),
+            height: theme.spacing(18),
+            maxHeight: theme.spacing(18),
+            maxWidth: theme.spacing(30),
+        },
+        [theme.breakpoints.down("sm")]: {
+            width: theme.spacing(15),
+            height: theme.spacing(15),
+            maxHeight: theme.spacing(15),
+            maxWidth: theme.spacing(30),
+        },
+        color: "darkgray",
+        objectFit: "cover"
+    },
+    profileImageContainer: {
+        [theme.breakpoints.up("sm")]: {
+            width: "auto",
+        },
+        [theme.breakpoints.down("sm")]: {
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: theme.spacing(3),
+        },
+    },
+    searchIcon: {
+    },
+    searchToolbar: {
+        backgroundColor: theme.palette.background.default,
+        position: "absolute",
+        right: 0,
+        zIndex: 1,
+        [theme.breakpoints.up("md")]: {
+            paddingRight: theme.spacing(2),
+        },
+        [theme.breakpoints.down("sm")]: {
+            bottom: 0,
+            left: 0,
+            paddingRight: theme.spacing(1),
+            top: 0,
+        }
+    },
+    searchToolbarBack: {
+    },
+    searchToolbarIcon: {
+    },
+    searchToolbarInput: {
+        [theme.breakpoints.up("md")]: {
+            width: theme.spacing(32),
+        },
     },
     superIndex: {
         color: "#ff0000",
@@ -168,6 +208,16 @@ export const styles = theme => ({
         marginBottom: theme.spacing(0.5),
         marginLeft: theme.spacing(0.5),
         verticalAlign: "super",
+    },
+    tabButton: {
+        borderBottomColor: "transparent",
+        borderBottomStyle: "solid",
+        borderBottomWidth: theme.spacing(0.25),
+        borderRadius: 0,
+        whiteSpace: "nowrap",
+    },
+    tabButtonSelected: {
+        borderBottomColor: theme.palette.secondary.main,
     },
 
     header: {},

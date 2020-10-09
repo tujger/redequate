@@ -7,52 +7,15 @@ import EmptyAvatar from "@material-ui/icons/Person";
 import GoogleLogo from "../images/google-logo.svg"
 import UserIcon from "@material-ui/icons/Mail";
 import AvatarView from "./AvatarView";
+import {styles} from "../controllers/Theme";
 
-const styles = theme => ({
-    image: {
-        [theme.breakpoints.up("sm")]: {
-            width: theme.spacing(18),
-            height: theme.spacing(18),
-        },
-        [theme.breakpoints.down("sm")]: {
-            width: theme.spacing(15),
-            height: theme.spacing(15),
-        },
-        color: "darkgray",
-        objectFit: "cover"
-    },
+const stylesCurrent = theme => ({
     label: {
         color: "inherit",
         cursor: "default",
         textDecoration: "none",
     },
-    imagerow: {
-        [theme.breakpoints.up("sm")]: {
-            width: "auto",
-        },
-        [theme.breakpoints.down("sm")]: {
-            alignItems: "center",
-            justifyContent: "center",
-            marginTop: theme.spacing(3),
-        },
-    },
-    inforows: {
-        [theme.breakpoints.up("sm")]: {
-            flex: 1,
-            marginLeft: theme.spacing(4),
-            width: "auto",
-        },
-        [theme.breakpoints.down("sm")]: {
-            marginBottom: theme.spacing(3),
-        },
-    },
-    inforow: {
-        [theme.breakpoints.down("sm")]: {
-            alignItems: "center",
-            justifyContent: "center",
-        },
-    },
-    signWith: {
+    signedWith: {
         alignItems: "flex-end",
         display: "flex",
         justifyContent: "flex-end",
@@ -71,22 +34,22 @@ const ProfileComponent = (props) => {
     const {classes, userData, publicFields, provider = true} = props;
 
     return <Grid container style={{position: "relative"}}>
-        <Grid container spacing={1} className={classes.imagerow}>
+        <Grid container spacing={1} className={classes.profileImageContainer}>
             <Grid item>
                 {userData.image
                     ? <AvatarView
-                        className={classes.image}
+                        className={classes.profileImage}
                         image={userData.image}
                         initials={userData.initials}
                         verified={userData.verified}/>
-                    : <EmptyAvatar className={classes.image}/>}
+                    : <EmptyAvatar className={classes.profileImage}/>}
             </Grid>
         </Grid>
-        <Grid container className={classes.inforows}>
+        <Grid container className={classes.profileFields}>
             {publicFields && publicFields.map(field => {
                 if (!userData.public[field.id] && !field.viewComponent) return null;
                 return <React.Fragment key={field.id}>
-                    <Grid container spacing={1} className={classes.inforow}>
+                    <Grid container spacing={1} className={classes.profileField}>
                         <Grid item>
                             {field.viewComponent
                                 ? field.viewComponent(userData)
@@ -96,7 +59,7 @@ const ProfileComponent = (props) => {
                 </React.Fragment>
             })}
         </Grid>
-        {provider && <Grid item className={classes.signWith}>
+        {provider && <Grid item className={classes.signedWith}>
             {userData.public.provider && userData.public.provider === "google.com" && <>
                 <Grid container justify={"flex-end"}>
                     <img src={GoogleLogo} width={40} height={40} alt={""}/>
@@ -119,4 +82,7 @@ const ProfileComponent = (props) => {
     </Grid>
 };
 
-export default withRouter(withStyles(styles)(ProfileComponent));
+export default withRouter(withStyles(theme => ({
+    ...styles(theme),
+    ...stylesCurrent(theme)
+}))(ProfileComponent));

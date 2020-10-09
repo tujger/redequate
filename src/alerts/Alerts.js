@@ -17,6 +17,7 @@ import notifySnackbar from "../controllers/notifySnackbar";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {styles} from "../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
+import NavigationToolbar from "../components/NavigationToolbar";
 
 const Alerts = ({daemon, fetchAlertContent, classes}) => {
     const currentUserData = useCurrentUserData();
@@ -84,25 +85,22 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
     if (daemon) return <AlertsDaemon fetchAlertContent={fetchAlertContent}/>;
 
     return <>
-        <Grid container className={classes.topSticky}>
-            <Grid item xs/>
-            <Grid item>
-                <IconButton
-                    aria-label={"Clear"}
-                    children={<Clear/>}
-                    onClick={handleClear}
-                    title={"Clear"}
-                />
-            </Grid>
-            <Grid item>
-                <IconButton
-                    aria-label={"All read"}
-                    children={<AllReadIcon/>}
-                    onClick={handleAllRead}
-                    title={"All read"}
-                />
-            </Grid>
-        </Grid>
+        <NavigationToolbar
+            className={classes.topSticky}
+            backButton={null}
+            mediumButton={<IconButton
+                aria-label={"Clear"}
+                children={<Clear/>}
+                onClick={handleClear}
+                title={"Clear"}
+            />}
+            rightButton={<IconButton
+                aria-label={"All read"}
+                children={<AllReadIcon/>}
+                onClick={handleAllRead}
+                title={"All read"}
+            />}
+        />
         <Grid container className={classes.center}>
             <AlertsList fetchAlertContent={fetchAlertContent}/>
         </Grid>

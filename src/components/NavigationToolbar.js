@@ -7,7 +7,7 @@ import {useHistory} from "react-router-dom";
 
 const styles = theme => ({
     toolbar: {
-        height: theme.spacing(6)
+        minHeight: theme.spacing(6)
     }
 })
 

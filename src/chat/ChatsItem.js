@@ -101,58 +101,54 @@ function ChatsItem(props) {
 
     const isNew = fetchIsNew() && !shown;
 
-    return <React.Fragment>
-        <Card className={[
-            classes.card,
-        ].join(" ")}>
-            <CardActionArea onClick={(event) => {
-                event.stopPropagation();
-                history.push(pages.chat.route + chatMeta.id);
-            }}>
-                <CardHeader
-                    avatar={<Link
-                        className={classes.nounderline}
-                        onClick={evt => evt.stopPropagation()}
-                        to={pages.user.route + userData.id}
+    return <Card className={classes.card}>
+        <CardActionArea onClick={(event) => {
+            event.stopPropagation();
+            history.push(pages.chat.route + chatMeta.id);
+        }}>
+            <CardHeader
+                avatar={<Link
+                    className={classes.nounderline}
+                    onClick={evt => evt.stopPropagation()}
+                    to={pages.user.route + userData.id}
+                >
+                    <AvatarView
+                        className={classes.avatar}
+                        image={userData.image}
+                        initials={userData.initials}
+                        verified={true}/>
+                </Link>}
+                classes={{content: classes.cardContent}}
+                className={[classes.cardHeader, classes.post].join(" ")}
+                title={<Grid container alignItems={"baseline"}>
+                    <Grid item className={[classes.userName, isNew ? classes.unread : classes.read].join(" ")}>
+                        {userComponent(userData)}
+                    </Grid>
+                    <Grid item>
+                        <div
+                            className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
+                            title={online ? "Online" : "Offline"}/>
+                    </Grid>
+                    <Grid
+                        className={classes.date}
+                        item
+                        title={new Date(chatMeta.lastMessage.created).toLocaleString()}
                     >
-                        <AvatarView
-                            className={classes.avatar}
-                            image={userData.image}
-                            initials={userData.initials}
-                            verified={true}/>
-                    </Link>}
-                    classes={{content: classes.cardContent}}
-                    className={[classes.cardHeader, classes.post].join(" ")}
-                    title={<Grid container alignItems={"baseline"}>
-                        <Grid item className={[classes.userName, isNew ? classes.unread : classes.read].join(" ")}>
-                            {userComponent(userData)}
-                        </Grid>
-                        <Grid item>
-                            <div
-                                className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
-                                title={online ? "Online" : "Offline"}/>
-                        </Grid>
-                        <Grid
-                            className={classes.date}
-                            item
-                            title={new Date(chatMeta.lastMessage.created).toLocaleString()}
-                        >
-                            {toDateString(chatMeta.lastMessage.created)}
-                        </Grid>
-                        {chatMeta.readonly && <Grid item className={classes.date}>
-                            Read-only
-                        </Grid>}
+                        {toDateString(chatMeta.lastMessage.created)}
+                    </Grid>
+                    {chatMeta.readonly && <Grid item className={classes.date}>
+                        Read-only
                     </Grid>}
-                    subheader={<Grid container>
-                        <Grid item xs className={isNew ? classes.unread : classes.read}>
-                            {textComponent((cacheDatas.get(chatMeta.lastMessage.uid) || {}).name
-                                + ": " + chatMeta.lastMessage.text)}
-                        </Grid>
-                    </Grid>}
-                />
-            </CardActionArea>
-        </Card>
-    </React.Fragment>
+                </Grid>}
+                subheader={<Grid container>
+                    <Grid item xs className={isNew ? classes.unread : classes.read}>
+                        {textComponent((cacheDatas.get(chatMeta.lastMessage.uid) || {}).name
+                            + ": " + chatMeta.lastMessage.text)}
+                    </Grid>
+                </Grid>}
+            />
+        </CardActionArea>
+    </Card>
 }
 
 export default withStyles((theme) => ({

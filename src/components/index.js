@@ -19,6 +19,5 @@ export {default as RichSnackbarContent} from "./RichSnackbarContent";
 export {default as ServiceComponent} from "./ServiceComponent";
 export {default as ShareComponent, share, copyToClipboard} from "./ShareComponent";
 export {default as Snackbar} from "./Snackbar";
-export {default as UserItemComponent} from "./UserItemComponent";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
 export {uploadComponentClean, uploadComponentPublish} from "./UploadComponent/uploadComponentControls";

@@ -87,7 +87,7 @@ export default [
             Login: 'src/pages/Login.js',
             Profile: 'src/pages/Profile.js',
             Signup: 'src/pages/Signup.js',
-            Users: 'src/pages/admin/Users.js',
+            Users: 'src/pages/admin/users/Users.js',
 
             // internal
             __firebase: 'src/controllers/Firebase.js'
