@@ -124,7 +124,20 @@ export const styles = theme => ({
         "&:hover": {
             backgroundColor: theme.palette.secondary.main,
             color: theme.palette.getContrastText(theme.palette.secondary.main),
+        },
+        "& ~ $fabUpper": {
+            marginBottom: iOS ? theme.spacing(17) : theme.spacing(10),
         }
+    },
+    fabUpper: {
+        backgroundColor: theme.palette.secondary.main,
+        color: theme.palette.getContrastText(theme.palette.secondary.main),
+        zIndex: 1,
+        bottom: iOS ? theme.spacing(9) : theme.spacing(2),
+        "&:hover": {
+            backgroundColor: theme.palette.secondary.main,
+            color: theme.palette.getContrastText(theme.palette.secondary.main),
+        },
     },
     label: {
         color: "#000000",
@@ -409,8 +422,8 @@ export const stylesList = theme => ({
     },
     userName: {
         fontWeight: "bolder",
-        marginBottom: theme.spacing(0.5),
         marginRight: theme.spacing(0.5),
+        textDecoration: "none",
         [theme.breakpoints.down("sm")]: {
             flex: 1,
         },

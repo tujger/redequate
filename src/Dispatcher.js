@@ -44,13 +44,13 @@ console.error = function (...args) {
     // return;
     try {
         if (!args.length || args.length > 1) return;
-        if (args[0].indexOf("provided to the classes prop") > 1) {
+        if (args[0].toString().indexOf("provided to the classes prop") > 1) {
             return;
         }
-        if (args[0].indexOf("`styles` argument provided") > 1) {
+        if (args[0].toString().indexOf("`styles` argument provided") > 1) {
             return;
         }
-        if (args[0].indexOf("no such file or directory") > 1) {
+        if (args[0].toString().indexOf("no such file or directory") > 1) {
             return;
         }
         const firebase = useFirebase();

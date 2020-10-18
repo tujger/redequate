@@ -2,22 +2,21 @@ import React from "react";
 import {InView} from "react-intersection-observer";
 
 // eslint-disable-next-line react/prop-types
-export const Observer = ({finished, hasItems, loadNextPage, placeholder, placeholders}) => {
+export const Observer = ({active = true, finished, loadNextPage, placeholder, placeholders}) => {
     if (finished) return null;
+    const [state = active, setState] = React.useState();
+
     return <>
-        <InView
+        {state && <InView
             children={null}
             onChange={(inView) => {
-                if (inView) loadNextPage();
+                if (inView) {
+                    loadNextPage();
+                    setState(false);
+                }
             }}
-            ref={ref => {
-                if (!ref) return;
-                setTimeout(() => {
-                    if (ref && ref.node) ref.node.style.display = "";
-                }, hasItems ? 1500 : 0)
-            }}
-            style={{width: "100%", display: "none"}}
-        />
+            style={{width: "100%"}}
+        />}
         {(() => {
             const a = [];
             for (let i = 0; i < placeholders; i++) {

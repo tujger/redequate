@@ -97,6 +97,7 @@ function Login(props) {
                 title: "Your account is not yet verified.",
                 variant: "warning",
             })
+            setState({...state, requesting: true});
             return;
         }
         return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])

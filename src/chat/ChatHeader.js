@@ -29,11 +29,6 @@ const stylesHeader = theme => ({
         alignItems: "center",
         flex: "0 0 auto",
     },
-    userName: {
-        color: "inherit",
-        fontWeight: "bolder",
-        textDecoration: "none",
-    },
 });
 
 const ChatHeader = ({chatMeta, classes, className, id, userComponent, userData}) => {

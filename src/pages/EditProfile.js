@@ -6,6 +6,7 @@ import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
+import Hidden from "@material-ui/core/Hidden";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import Grid from "@material-ui/core/Grid";
 import ClearIcon from "@material-ui/icons/Clear";
@@ -17,17 +18,10 @@ import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import withStyles from "@material-ui/styles/withStyles";
-import {
-    cacheDatas,
-    fetchDeviceId,
-    hasWrapperControlInterface,
-    notifySnackbar,
-    setupReceivingNotifications,
-    useFirebase,
-    usePages,
-    useStore,
-    wrapperControlCall
-} from "../controllers";
+import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {setupReceivingNotifications} from "../controllers/Notifications";
 import {styles} from "../controllers/Theme";
 import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
@@ -40,16 +34,17 @@ import UploadComponent from "../components/UploadComponent/UploadComponent";
 
 const stylesCurrent = theme => ({
     image: {
+        color: "darkgray",
+        marginBottom: theme.spacing(1),
+        objectFit: "cover",
         [theme.breakpoints.up("sm")]: {
-            width: theme.spacing(18),
             height: theme.spacing(18),
+            width: theme.spacing(18),
         },
         [theme.breakpoints.down("sm")]: {
-            width: theme.spacing(24),
             height: theme.spacing(24),
+            width: theme.spacing(24),
         },
-        color: "darkgray",
-        objectFit: "cover"
     },
     label: {
         color: "inherit",
@@ -57,17 +52,23 @@ const stylesCurrent = theme => ({
         textDecoration: "none",
     },
     photo: {
-        position: "relative",
+        alignItems: "center",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "start"
+        justifyContent: "start",
+        position: "relative",
+        [theme.breakpoints.down("sm")]: {
+            width: "100%",
+        },
     },
     clearPhoto: {
         backgroundColor: "transparent",
         position: "absolute",
-        top: 0,
         right: 0,
-        color: "white",
+        top: 0,
+        [theme.breakpoints.up("sm")]: {
+            color: "white",
+        },
     },
     content: {
         flexDirection: "row"
@@ -332,23 +333,45 @@ function EditProfile(props) {
         <Box m={0.5}/>
         <Grid container spacing={1}>
             <Grid item className={classes.photo}>
-                <Grid container>
-                    {image ? <img src={image} alt={"User photo"} className={classes.image}/>
-                        : <EmptyAvatar className={classes.image}/>}
-                    <IconButton className={classes.clearPhoto} onClick={() => {
-                        setState({...state, image: "", uppy: null});
-                    }}><ClearIcon/></IconButton>
-                </Grid>
-                {uploadable && <React.Suspense fallback={<LoadingComponent/>}><UploadComponent
-                    button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
-                    camera={false}
-                    color={"primary"}
-                    firebase={firebase}
-                    limits={{width: 300, height: 300}}
-                    onsuccess={handleUploadPhotoSuccess}
-                    onerror={handleUploadPhotoError}
-                    variant={"contained"}
-                /></React.Suspense>}
+                {image ? <img src={image} alt={"User photo"} className={classes.image}/>
+                    : <EmptyAvatar className={classes.image}/>}
+                {image && <Hidden smDown>
+                    <IconButton
+                        aria-label={"Clear"}
+                        children={<ClearIcon/>}
+                        className={classes.clearPhoto}
+                        onClick={() => {
+                            setState({...state, image: "", uppy: null});
+                        }}
+                        title={"Clear"}
+                    />
+                </Hidden>}
+                <ButtonGroup>
+                    {uploadable && <React.Suspense fallback={<LoadingComponent/>}>
+                        <UploadComponent
+                            button={<Button children={"Change"} variant={"contained"} color={"secondary"}/>}
+                            camera={false}
+                            color={"primary"}
+                            firebase={firebase}
+                            limits={{width: 300, height: 300}}
+                            onsuccess={handleUploadPhotoSuccess}
+                            onerror={handleUploadPhotoError}
+                            variant={"contained"}
+                        />
+                    </React.Suspense>}
+                    {image && <Hidden mdUp>
+                        <Button
+                            aria-label={"Clear"}
+                            children={"Clear"}
+                            color={"secondary"}
+                            onClick={() => {
+                                setState({...state, image: "", uppy: null});
+                            }}
+                            title={"Clear"}
+                            variant={"contained"}
+                        />
+                    </Hidden>}
+                </ButtonGroup>
             </Grid>
             <Grid item xs>
                 <Grid container spacing={1} alignItems={"flex-end"}>

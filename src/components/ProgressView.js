@@ -13,6 +13,7 @@ const styles = theme => ({
         left: 0,
         position: "absolute",
         right: 0,
+        zIndex: 2,
         // [theme.breakpoints.down("sm")]: {
         // }
     }

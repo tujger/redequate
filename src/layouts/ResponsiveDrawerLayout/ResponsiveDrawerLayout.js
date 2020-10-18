@@ -74,11 +74,12 @@ const styles = theme => ({
         display: "flex",
         flex: "1 1 auto",
         flexDirection: "column",
+        flexWrap: "nowrap",
         maxWidth: "100%",
         padding: theme.spacing(1),
         // paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
-        position: "relative",
         overflow: "auto",
+        position: "relative",
         [theme.breakpoints.up("md")]: {
             paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
         },

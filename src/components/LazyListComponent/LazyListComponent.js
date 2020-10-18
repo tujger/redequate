@@ -7,9 +7,11 @@ import {Scroller} from "./Scroller";
 import {forceFirebaseReinit} from "../../controllers/Firebase";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
 import {lazyListComponentReducer} from "./lazyListComponentReducer";
+import {useHistory} from "react-router-dom";
 
 function LazyListComponent(
     {
+        autoRefresh = true,
         cache = false,
         containerRef,
         disableProgress,
@@ -28,12 +30,14 @@ function LazyListComponent(
         ["LazyListComponent_" + cache]: cacheData = {},
     }) {
     const dispatch = useDispatch();
+    const history = useHistory();
     const [state, setState] = React.useState({});
     const {
         finished: cachedFinished = false,
         items: cachedItems = [],
         loading: cachedLoading = true,
-        pagination: cachedPagination = sourcePagination instanceof Function ? sourcePagination() : sourcePagination
+        pagination: cachedPagination = sourcePagination instanceof Function ? sourcePagination() : sourcePagination,
+        refresh
     } = cacheData;
     const {
         finished = cache !== undefined ? cachedFinished : false,
@@ -85,16 +89,21 @@ function LazyListComponent(
             })
             .then(newitems => pageTransform(newitems))
             .then(newitems => newitems.filter(item => item !== undefined))
-            .then(newitems => ({
-                ascending,
-                finished: pagination.finished,
-                items: ascending
-                    ? (reverse ? [...newitems.reverse(), ...items] : [...items, ...newitems])
-                    : (reverse ? [...newitems, ...items] : [...items, ...newitems.reverse()]),
-                loading: false,
-                pagination,
-                reverse
-            }))
+            .then(newitems => {
+                console.log(`[Lazy] loaded ${refresh ? 0 : items.length}+${newitems.length} items${cache ? " on " + cache : ""}`);
+                return {
+                    ascending,
+                    finished: pagination.finished,
+                    random: Math.random(),
+                    items: ascending
+                        ? (reverse ? [...newitems.reverse(), ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems])
+                        : (reverse ? [...newitems, ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems.reverse()]),
+                    loading: false,
+                    pagination,
+                    refresh: null,
+                    reverse
+                };
+            })
             .catch(error => {
                 notifySnackbar({
                     buttonLabel: "Refresh",
@@ -192,6 +201,7 @@ function LazyListComponent(
     }, [pagination.term, cachedPagination.term]);
 
     React.useEffect(() => {
+        if (items.length) console.log(`[Lazy] cached ${items.length} items${cache ? " on " + cache : ""}`);
         if (cache) return;
         cachedPagination.reset();
         const update = {
@@ -205,17 +215,32 @@ function LazyListComponent(
             ...state,
             ...update,
         }))
-    }, [random, pagination.term, cachedPagination.term])
+    }, [random, pagination.term, cachedPagination.term, reverse])
+
+    React.useEffect(() => {
+        if (!cache || !autoRefresh) return;
+        if (history.action === "POP") {
+            history.action = "PUSH";
+            return;
+        }
+        console.log(`[Lazy] reset list ${cache}`);
+        if (!reverse) scrollHeight(0);
+        dispatch({type: lazyListComponentReducer.REFRESH, ...(cache ? {cache} : {})});
+    }, [cache, autoRefresh, reverse]);
+
+    React.useEffect(() => {
+        if (!refresh) return;
+        loadNextPage();
+    }, [cache, refresh]);
 
     if (reverse === true && !containerRef) {
         console.warn("[Lazy] 'containerRef' must be defined due to 'reverse'=true")
     }
-    if (items.length) console.log(`[Lazy] loaded ${items.length} items${cache ? " on " + cache : ""}`);
 
     return <>
         {reverse && <Observer
             finished={finished}
-            hasItems={items.length}
+            active={!refresh}
             key={items.length}
             loadNextPage={loadNextPage}
             placeholder={placeholder}
@@ -223,8 +248,8 @@ function LazyListComponent(
         />}
         {items}
         {!reverse && <Observer
+            active={!refresh}
             finished={finished}
-            hasItems={items.length}
             key={items.length}
             loadNextPage={loadNextPage}
             placeholder={placeholder}
