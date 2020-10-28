@@ -1,10 +1,8 @@
 import React from "react";
-import {useWindowData} from "../../controllers/General";
 import {InView} from "react-intersection-observer";
 
 // eslint-disable-next-line react/prop-types
-export const Scroller = ({live, placeholder}) => {
-    const windowData = useWindowData();
+export const Scroller = ({live, className}) => {
     const [scrolled, setScrolled] = React.useState(false);
 
     const scrollerShown = React.useRef();
@@ -37,6 +35,7 @@ export const Scroller = ({live, placeholder}) => {
         ref={ref => {
             clearTimeout(taskRef.current);
             if (ref && !scrolled) {
+                ref.node && ref.node.classList.add(className);
                 taskRef.current = setTimeout(() => {
                     if (!ref.node) return;
                     if (ref.node.scrollIntoViewIfNeeded) ref.node.scrollIntoViewIfNeeded(false);
@@ -44,6 +43,5 @@ export const Scroller = ({live, placeholder}) => {
                 }, 500);
             }
         }} style={{opacity: 0}}>
-        {/*{windowData.isNarrow() ? placeholder : null}*/}
     </InView>
 }

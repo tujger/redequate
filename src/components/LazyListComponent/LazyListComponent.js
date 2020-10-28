@@ -27,6 +27,7 @@ function LazyListComponent(
         placeholders = 1,
         random,
         reverse = false,
+        scrollerClassName,
         ["LazyListComponent_" + cache]: cacheData = {},
     }) {
     const dispatch = useDispatch();
@@ -255,7 +256,7 @@ function LazyListComponent(
             placeholder={placeholder}
             placeholders={placeholders}
         />}
-        <Scroller live={live && !ascending && reverse} placeholder={placeholder}/>
+        <Scroller live={live && !ascending && reverse} className={scrollerClassName}/>
         {finished && !items.length && noItemsComponent}
     </>
 }

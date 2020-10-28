@@ -5,22 +5,40 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import withStyles from "@material-ui/styles/withStyles";
-import {UserData} from "../../../controllers/UserData";
-import {useFirebase, usePages} from "../../../controllers/General";
+import {usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import {stylesList} from "../../../controllers/Theme";
+import {toDateString} from "../../../controllers/DateFormat";
+import makeStyles from "@material-ui/core/styles/makeStyles";
+
+const stylesCurrent = makeStyles(theme => ({
+    admin: {
+        borderColor: "#00ff00",
+        borderStyle: "solid",
+        borderWidth: 2,
+    },
+    disabled: {
+        borderColor: "#ff0000",
+        borderStyle: "solid",
+        borderWidth: 2,
+    },
+    notVerified: {
+        borderColor: "#ffff00",
+        borderStyle: "solid",
+        borderWidth: 2,
+    },
+}));
 
 // eslint-disable-next-line react/prop-types
 function UserItem({data, classes, skeleton, label}) {
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
+    const classesCurrent = stylesCurrent();
+    const {value: userData} = data || {};
 
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
     if (skeleton) return <ItemPlaceholderComponent classes={classes}/>
-
-    const userData = UserData(firebase).create(data.key, data.value);
 
     return <Card className={[classes.root, classes.card].join(" ")}>
         <CardActionArea onClick={() => {
@@ -30,14 +48,23 @@ function UserItem({data, classes, skeleton, label}) {
                 classes={{content: classes.cardContent}}
                 className={[classes.cardHeader, classes.post].join(" ")}
                 avatar={<AvatarView
-                    className={classes.avatar}
+                    className={[
+                        classes.avatar,
+                        // userData.role,
+                        userData.role === "userNotVerified" ? classesCurrent.notVerified : "",
+                        userData.role === "admin" ? classesCurrent.admin : "",
+                        userData.role === "disabled" ? classesCurrent.disabled : "",
+                    ].join(" ")}
                     image={userData.image}
                     initials={userData.initials}
-                    verified={userData.verified}
+                    verified={true}
                 />}
                 title={<Grid container>
                     <Grid item className={classes.userName}>
                         {userData.email}
+                    </Grid>
+                    <Grid item className={classes.date}>
+                        {toDateString(data._date || userData.public.created)}
                     </Grid>
                 </Grid>}
                 subheader={<>

@@ -22,6 +22,8 @@ export default ({classes, filter, handleChange, mode}) => {
                     <MenuItem value={"all"}>All users</MenuItem>
                     <MenuItem value={"admins"}>Administrators</MenuItem>
                     <MenuItem value={"disabled"}>Disabled users</MenuItem>
+                    <MenuItem value={"active"}>Recently active</MenuItem>
+                    <MenuItem value={"recent"}>Recently registered</MenuItem>
                     <MenuItem value={"notVerified"}>Users not verified</MenuItem>
                 </Select>
                 {mode === "all" && <Input
@@ -52,6 +54,8 @@ export default ({classes, filter, handleChange, mode}) => {
                     <MenuItem value={"all"}>All users</MenuItem>
                     <MenuItem value={"admins"}>Administrators</MenuItem>
                     <MenuItem value={"disabled"}>Disabled users</MenuItem>
+                    <MenuItem value={"active"}>Recently active</MenuItem>
+                    <MenuItem value={"recent"}>Recently registered</MenuItem>
                     <MenuItem value={"notVerified"}>Users not verified</MenuItem>
                 </Select>}
             >

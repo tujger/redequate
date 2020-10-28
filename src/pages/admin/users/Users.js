@@ -43,15 +43,25 @@ function Users(props) {
         // eslint-disable-next-line
     }, [mode]);
 
+    const fetchUserData = async item => {
+        const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
+        return {key: item.key, value: data};
+    }
+
     let pagination;
     let itemTransform;
     switch (mode) {
-        case "all":
-            pagination = new AllUsersPagination({
-                firebase: firebase,
-                start: filter
+        case "active":
+            pagination = new Pagination({
+                ref: firebase.database().ref("users_public"),
+                child: "lastLogin",
+                order: "desc",
             })
-            itemTransform = item => item;
+            itemTransform = async item => {
+                const res = await fetchUserData(item);
+                res._date = res.value && res.value.public && res.value.public.lastLogin;
+                return res;
+            }
             break;
         case "admins":
             pagination = new Pagination({
@@ -59,16 +69,7 @@ function Users(props) {
                 value: true,
                 equals: "admin",
             })
-            itemTransform = async (item) => {
-                const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key);
-                return {key: item.key, value: data};
-            }
-            /*
-                        itemTransform = async (item) => {
-                            const data = await new UserData(firebase).fetch(item.key);
-                            return {key: item.key, value: data};
-                        }
-            */
+            itemTransform = item => fetchUserData(item);
             break;
         case "disabled":
             pagination = new Pagination({
@@ -76,10 +77,7 @@ function Users(props) {
                 value: true,
                 equals: "disabled",
             })
-            itemTransform = async (item) => {
-                const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key);
-                return {key: item.key, value: data};
-            }
+            itemTransform = item => fetchUserData(item);
             break;
         case "notVerified":
             pagination = new Pagination({
@@ -87,9 +85,24 @@ function Users(props) {
                 child: "emailVerified",
                 equals: false,
             })
-            itemTransform = item => item;
+            itemTransform = item => fetchUserData(item);
             break;
+        case "recent":
+            pagination = new Pagination({
+                ref: firebase.database().ref("users_public"),
+                child: "created",
+                order: "desc",
+            })
+            itemTransform = item => fetchUserData(item);
+            break;
+        case "all":
         default:
+            pagination = new AllUsersPagination({
+                firebase: firebase,
+                start: filter
+            })
+            itemTransform = item => fetchUserData(item);
+            break;
     }
 
     return <>

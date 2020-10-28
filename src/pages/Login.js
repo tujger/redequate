@@ -114,7 +114,7 @@ function Login(props) {
                 }
                 return ud;
             })
-            .then(ud => isFirstLogin ? ud.savePublic() : ud)
+            .then(ud => isFirstLogin ? ud.savePublic() : ud.updateLoginTimestamp())
             .then(ud => {
                 useCurrentUserData(ud);
                 dispatch({type: "currentUserData", userData: ud});

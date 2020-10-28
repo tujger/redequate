@@ -13,7 +13,7 @@ import ConfirmComponent from "../components/ConfirmComponent";
 import ProgressView from "../components/ProgressView";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 
-const stylesHeader = theme => ({
+const stylesCurrent = theme => ({
     presence: {
         borderRadius: theme.spacing(1),
         height: theme.spacing(1),
@@ -130,5 +130,5 @@ const ChatHeader = ({chatMeta, classes, className, id, userComponent, userData})
 
 export default withStyles((theme) => ({
     ...stylesList(theme),
-    ...stylesHeader(theme),
+    ...stylesCurrent(theme),
 }))(ChatHeader);

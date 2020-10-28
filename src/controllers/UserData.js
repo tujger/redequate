@@ -270,7 +270,6 @@ export function UserData(firebase) {
             }
         },
         delete: async () => {
-            console.log("delete", _body);
             const updates = {};
             updates[`users_public/${_id}`] = null;
             updates[`roles/${_id}`] = null;
@@ -309,7 +308,6 @@ export function UserData(firebase) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id))
                         .then(snap => {
-                            if (snap.exists() && snap.val().email) _persisted = true;
                             _public = {..._public, ...(snap.val() || {})};
                             if (!_public.email) {
                                 cacheDatas.remove(_id);
@@ -392,7 +390,6 @@ export function UserData(firebase) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("email"))
                         .then(snap => {
-                            if (snap.exists()) _persisted = true;
                             _public.email = snap.val();
                             if (!_public.email) {
                                 cacheDatas.remove(_id);
@@ -407,6 +404,7 @@ export function UserData(firebase) {
                 _loading = {..._loading, email: true};
             }
             await Promise.all(tasks);
+            if (_public._sort_name && _persisted === undefined) _persisted = true;
             _public._sort_name = fetchSortName();
             _requestedTimestamp = new Date().getTime();
             return _body;
@@ -534,6 +532,12 @@ export function UserData(firebase) {
             } else {
                 console.log("[UserData] still ignoring", key, data);
             }
+        },
+        updateLoginTimestamp: () => {
+            if (_persisted) {
+                firebase.database().ref("users_public").child(_id).child("lastLogin").set(firebase.database.ServerValue.TIMESTAMP);
+            }
+            return _body;
         },
         _userData: true,
     }

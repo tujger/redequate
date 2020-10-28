@@ -4,7 +4,7 @@ import "firebase/database";
 import "firebase/functions";
 import "firebase/storage";
 import "firebase/analytics";
-// import "firebase/messaging";
+import "firebase/messaging";
 
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
@@ -24,7 +24,7 @@ const Firebase = firebaseConfig => {
         console.error(error);
     })
     if (process.env.NODE_ENV === "development") {
-        firebase.functions().useFunctionsEmulator("http://localhost:5001");
+        // firebase.functions().useFunctionsEmulator("http://localhost:5001");
     }
     return firebase;
 };

@@ -7,14 +7,19 @@ import {useHistory} from "react-router-dom";
 
 const styles = theme => ({
     toolbar: {
-        minHeight: theme.spacing(6)
+        minHeight: theme.spacing(5)
     }
 })
 
 const NavigationToolbar = (
     {
         alignItems = "center",
-        backButton,
+        backButton = <IconButton
+            aria-label={"Back"}
+            children={<BackIcon/>}
+            /* eslint-disable-next-line no-undef */
+            title={"Back"}
+        />,
         children,
         classes,
         className,
@@ -24,17 +29,12 @@ const NavigationToolbar = (
     }) => {
     const history = useHistory();
 
-    const button = backButton !== undefined ? backButton : <IconButton
-        aria-label={"Back"}
-        children={<BackIcon/>}
-        /* eslint-disable-next-line no-undef */
-        onClick={() => {
-            history.goBack()
-            // window.history.go(-1)
-        }}
-        title={"Back"}
+    const button = backButton && <backButton.type
+        className={classes.buttonBack}
+        onClick={() => history.goBack()}
+        {...backButton.props}
     />;
-
+console.log(classes)
     return <Grid container className={[classes.toolbar, className].join(" ")} alignItems={alignItems}>
         <Grid item>
             {button}

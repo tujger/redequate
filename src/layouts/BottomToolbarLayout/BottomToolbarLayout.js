@@ -10,20 +10,85 @@ import Snackbar from "../../components/Snackbar";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 
 const styles = theme => ({
-    center: {
-        ...theme.mixins.toolbar,
+    buttonBack: {
+        backgroundColor: "red",
+    },
+    container: {
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
     },
     indent: {
         ...theme.mixins.toolbar,
+        minHeight: theme.spacing(5),
     },
+
+    bottom: {
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+        },
+    },
+    bottomSticky: {
+        backgroundColor: theme.palette.background.default,
+        bottom: theme.mixins.toolbar.minHeight,
+        position: "fixed",
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+        },
+    },
+    center: {
+        display: "flex",
+        flex: "1 0 auto",
+        flexDirection: "column",
+        flexWrap: "nowrap",
+        maxWidth: "100%",
+        padding: theme.spacing(1),
+        // paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
+        overflow: "auto",
+        position: "relative",
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+        },
+    },
+    left: {},
+    right: {},
+    top: {
+        flex: 0,
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+            paddingTop: theme.spacing(1),
+        },
+    },
+    topSticky: {
+        flex: "1 0 auto",
+        backgroundColor: theme.palette.background.default,
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        position: "sticky",
+        top: theme.spacing(5),
+        zIndex: 2,
+        [theme.breakpoints.up("md")]: {
+            paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width + theme.spacing(1),
+            // paddingTop: theme.spacing(1),
+            top: (theme.mixins.toolbar["@media (min-width:600px)"] || {}).minHeight,
+        },
+    }
 });
 
 function BottomToolbarLayout(props) {
     const {menu, classes} = props;
 
-    return <><CssBaseline/>
+    return <div className={classes.container}>
+        <CssBaseline/>
         <Titlebar
             {...props}
+            classes={{}}
         />
         <Typography className={classes.indent}/>
         <MainContent classes={{
@@ -35,11 +100,10 @@ function BottomToolbarLayout(props) {
             topSticky: classes.topSticky,
             top: classes.top
         }}/>
-        <Typography className={classes.indent}/>
         <BottomToolbar items={menu}/>
         <Snackbar/>
         <NotificationsSnackbar/>
-    </>
+    </div>
 }
 
 BottomToolbarLayout.propTypes = {

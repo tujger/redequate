@@ -31,6 +31,7 @@
         "react-image-file-resizer": "latest",
         "react-intersection-observer": "latest",
         "react-ios-pwa-prompt": "latest",
+        "react-mentions-t": "0.0.28",
         "react-text-mask": "latest",
         "react-use-web-share": "latest",
         "react-uuid": "latest",

@@ -44,7 +44,7 @@ const MenuSection = withStyles(styles)(props => {
     const {anchor} = state;
     const currentUserData = useCurrentUserData();
     const history = useHistory();
-    const buttonRef = React.useRef();
+    // const buttonRef = React.useRef();
 
     if (!matchRole(first.roles, currentUserData)) return null;
 
@@ -56,7 +56,7 @@ const MenuSection = withStyles(styles)(props => {
 
     const handleMouseLeave = event => {
         // console.log(event.target, buttonRef.current, anchor)
-        if (event.relatedTarget === buttonRef.current) return;
+        if (event.relatedTarget === anchor) return;
         setState({...state, anchor: null})
     }
 
@@ -78,7 +78,6 @@ const MenuSection = withStyles(styles)(props => {
             }
         }}
         onMouseLeave={handleMouseLeave}
-        ref={buttonRef}
         variant={"text"}
     >
         {first.label}

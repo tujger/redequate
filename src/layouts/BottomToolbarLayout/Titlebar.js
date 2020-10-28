@@ -9,7 +9,7 @@ import BackIcon from "@material-ui/icons/ChevronLeft";
 import {Link, useHistory, useLocation, withRouter} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
-import {matchRole, needAuth, useCurrentUserData} from "../../controllers/UserData";
+import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import {usePages} from "../../controllers/General";
 
 const styles = theme => ({
@@ -45,6 +45,8 @@ const styles = theme => ({
         right: theme.spacing(1),
     },
     toolbar: {
+        height: theme.spacing(5),
+        minHeight: theme.spacing(5),
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),
     },
@@ -88,6 +90,8 @@ function Titlebar(props) {
             {currentUserData.id &&
             <Link to={pages.profile.route} className={[classes.label, classes.avatarContainer].join(" ")}>
                 <AvatarView
+                    admin={currentRole(currentUserData) === Role.ADMIN}
+                    className={classes.avatar}
                     image={currentUserData.image}
                     initials={currentUserData.initials}
                     verified={currentUserData.verified}/>

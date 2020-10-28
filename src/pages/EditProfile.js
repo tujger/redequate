@@ -18,7 +18,7 @@ import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import withStyles from "@material-ui/styles/withStyles";
-import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
+import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {setupReceivingNotifications} from "../controllers/Notifications";
@@ -84,6 +84,7 @@ function EditProfile(props) {
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
+    const windowData = useWindowData();
     const {id} = useParams();
     const [state, setState] = React.useState({
         error: null,
@@ -346,10 +347,17 @@ function EditProfile(props) {
                         title={"Clear"}
                     />
                 </Hidden>}
-                <ButtonGroup>
+                <Grid container justify={"center"}>
                     {uploadable && <React.Suspense fallback={<LoadingComponent/>}>
                         <UploadComponent
-                            button={<Button children={"Change"} variant={"contained"} color={"secondary"}/>}
+                            button={<Button
+                                aria-label={"Change"}
+                                children={"Change"}
+                                color={"secondary"}
+                                fullWidth={!windowData.isNarrow()}
+                                title={"Change"}
+                                variant={"contained"}
+                            />}
                             camera={false}
                             color={"primary"}
                             firebase={firebase}
@@ -371,7 +379,7 @@ function EditProfile(props) {
                             variant={"contained"}
                         />
                     </Hidden>}
-                </ButtonGroup>
+                </Grid>
             </Grid>
             <Grid item xs>
                 <Grid container spacing={1} alignItems={"flex-end"}>

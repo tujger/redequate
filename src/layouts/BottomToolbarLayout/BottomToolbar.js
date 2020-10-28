@@ -13,8 +13,10 @@ const styles = theme => ({
     bottomtoolbar: {
         bottom: 0,
         left: 0,
+        height: theme.spacing(5),
         position: "fixed",
-        right: 0
+        right: 0,
+        zIndex: 2,
     },
     label: {
         color: "inherit",
@@ -25,6 +27,7 @@ const styles = theme => ({
         backgroundColor: theme.palette.background.paper,
         color: theme.palette.getContrastText(theme.palette.background.paper),
         boxShadow: theme.shadows[4],
+        zIndex: 2,
     },
     menuitem: {
         fontSize: "inherit"
@@ -33,10 +36,22 @@ const styles = theme => ({
         backgroundColor: theme.palette.secondary.light,
         color: theme.palette.getContrastText(theme.palette.secondary.light),
     },
+    placeholder: {
+        opacity: 0,
+        position: "relative"
+    }
 });
 
-const BottomToolbar = withStyles(styles)(props => {
-    const {items, classes} = props;
+const BottomToolbar = props => {
+
+    return <>
+        <_BottomToolbar {...props} className={props.classes.placeholder}/>
+        <_BottomToolbar {...props}/>
+    </>
+}
+
+const _BottomToolbar = props => {
+    const {items, classes, className} = props;
     const [state, setState] = React.useState({anchor: null});
     const {anchor, current} = state;
     const currentUserData = useCurrentUserData();
@@ -61,40 +76,42 @@ const BottomToolbar = withStyles(styles)(props => {
         }
     };
 
-    return <BottomNavigation
-        className={classes.bottomtoolbar}
-        onChange={handleChange}
-        showLabels
-        value={location.pathname}>
-        {items.map((list, index) => {
-            const [first] = list;
-            if (!matchRole(first.roles, currentUserData) || first.disabled) return null;
-            const currentItem = list.filter(item => isCurrent(item._route))[0] || first;
+    return <>
+        <BottomNavigation
+            className={[classes.bottomtoolbar, className].join(" ")}
+            onChange={handleChange}
+            showLabels
+            value={location.pathname}>
+            {items.map((list, index) => {
+                const [first] = list;
+                if (!matchRole(first.roles, currentUserData) || first.disabled) return null;
+                const currentItem = list.filter(item => isCurrent(item._route))[0] || first;
 
-            return <BottomNavigationAction
-                icon={currentItem.icon}
-                key={index}
-                label={currentItem.label}
-                value={currentItem.route}
-                onContextMenu={event => {
-                    event.preventDefault();
-                    setState({...state, current: first, anchor: event.currentTarget})
-                }}
-            />
-        })}
-        {items.map((list, index) => {
+                return <BottomNavigationAction
+                    icon={currentItem.icon}
+                    key={first.route + index}
+                    // label={currentItem.label}
+                    value={currentItem.route}
+                    onContextMenu={event => {
+                        event.preventDefault();
+                        setState({...state, current: first, anchor: event.currentTarget})
+                    }}
+                />
+            })}
+        </BottomNavigation>
+        {anchor && items.map((list, index) => {
             // eslint-disable-next-line no-unused-vars
             const [first, ...menu] = list;
             const currentItem = list.filter(item => isCurrent(item._route))[0];
             if (!currentItem) return;
             return <Popper
-                key={index}
+                key={"" + index + Math.random()}
                 anchorEl={anchor}
                 className={classes.menusection}
-                disablePortal
+                // disablePortal
                 onClose={() => setState({...state, current: null, anchor: null})}
                 onMouseLeave={() => setState({...state, current: null, anchor: null})}
-                open={Boolean(anchor)}
+                open={true}
                 placement={"top"}
                 role={undefined}>
                 <MenuList>{menu.map((item, index) => {
@@ -106,13 +123,14 @@ const BottomToolbar = withStyles(styles)(props => {
                             {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
                         </>}
                         className={[classes.label, classes.menuitem, isCurrent(item._route) ? classes.menuitemSelected : ""].join(" ")}
+                        key={"" + index + Math.random()}
                         onClickCapture={item.onClick}
                     />;
                     if (item.component) {
                         return <Link
                             children={child}
                             className={classes.label}
-                            key={index}
+                            key={"" + index + Math.random()}
                             onClick={() => {
                                 setState({...state, current: null, anchor: null})
                             }}
@@ -124,11 +142,11 @@ const BottomToolbar = withStyles(styles)(props => {
                 })}</MenuList>
             </Popper>
         })}
-    </BottomNavigation>
-});
+    </>
+};
 
 BottomToolbar.propTypes = {
     children: PropTypes.array,
 };
 
-export default BottomToolbar;
+export default withStyles(styles)(BottomToolbar);

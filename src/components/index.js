@@ -3,6 +3,7 @@ export {default as ButtonAddEvent} from "./ButtonAddEvent";
 export {default as ConfirmComponent} from "./ConfirmComponent";
 export {default as DateTimePicker} from "./DateTimePicker";
 export {default as HeaderComponent} from "./HeaderComponent";
+export {default as InfoComponent} from "./InfoComponent";
 export {default as ItemPlaceholderComponent} from "./ItemPlaceholderComponent";
 export {default as listAction} from "./ListAction";
 export {default as LazyListComponent} from "./LazyListComponent/LazyListComponent";
@@ -21,3 +22,5 @@ export {default as ShareComponent, share, copyToClipboard} from "./ShareComponen
 export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
 export {uploadComponentClean, uploadComponentPublish} from "./UploadComponent/uploadComponentControls";
+export {default as MentionsComponent} from "./MentionsComponent";
+export {mentionUsers} from "../controllers/mentionTypes";

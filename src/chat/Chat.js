@@ -13,9 +13,15 @@ import {ChatMeta} from "./ChatMeta";
 import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import {styles} from "../controllers/Theme";
+import {styles, stylesList} from "../controllers/Theme";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {cacheDatas, useFirebase, usePages} from "../controllers/General";
+
+const stylesCurrent = theme => ({
+    indent: {
+        marginTop: theme.spacing(10),
+    },
+});
 
 const Chat = (props) => {
     const {
@@ -111,6 +117,7 @@ const Chat = (props) => {
                 chatMeta={chatMeta}
                 classes={null}
                 containerRef={containerRef}
+                scrollerClassName={classes.indent}
                 textComponent={textComponent}/>
         </Grid>
         {/*<InView
@@ -148,4 +155,7 @@ const Chat = (props) => {
     </>
 };
 
-export default withStyles(styles)(Chat);
+export default withStyles((theme) => ({
+    ...styles(theme),
+    ...stylesCurrent(theme),
+}))(Chat);

@@ -116,6 +116,9 @@ export const styles = theme => ({
         marginLeft: theme.spacing(0.5),
         verticalAlign: "super",
     },
+    buttonBack: {
+        backgroundColor: "red"
+    },
     fab: {
         backgroundColor: theme.palette.secondary.main,
         color: theme.palette.getContrastText(theme.palette.secondary.main),
@@ -255,6 +258,7 @@ export const customizedDefault = {
 
 export const stylesList = theme => ({
     avatar: {
+        boxSizing: "border-box",
         height: theme.spacing(7),
         textDecoration: "none",
         width: theme.spacing(7),
@@ -342,8 +346,11 @@ export const stylesList = theme => ({
     },
     cardImage: {
         marginTop: theme.spacing(1),
+        flex: 1,
+        height: "auto",
         objectFit: "contain",
         objectPosition: "left",
+        width: "auto",
         [theme.breakpoints.up("md")]: {
             marginTop: theme.spacing(1),
             maxHeight: 200,
