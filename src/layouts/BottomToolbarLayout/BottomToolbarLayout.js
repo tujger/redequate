@@ -10,9 +10,6 @@ import Snackbar from "../../components/Snackbar";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 
 const styles = theme => ({
-    buttonBack: {
-        backgroundColor: "red",
-    },
     container: {
         display: "flex",
         flexDirection: "column",
@@ -88,7 +85,7 @@ function BottomToolbarLayout(props) {
         <CssBaseline/>
         <Titlebar
             {...props}
-            classes={{}}
+            // classes={{}}
         />
         <Typography className={classes.indent}/>
         <MainContent classes={{

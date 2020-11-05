@@ -11,6 +11,7 @@ import pkg from './package.json'
 
 export default [
     {
+        inlineDynamicImports: true,
         input: 'src/index.js',
         output: [
             {
@@ -46,11 +47,13 @@ export default [
             DateFormat: 'src/controllers/DateFormat.js',
             FirebasePagination: 'src/controllers/FirebasePagination.js',
             General: 'src/controllers/General.js',
-            notifySnackbar: 'src/controllers/notifySnackbar.js',
             lazyListComponentReducer: 'src/components/LazyListComponent/lazyListComponentReducer.js',
+            mentionTypes: 'src/controllers/mentionTypes.js',
+            notifySnackbar: 'src/controllers/notifySnackbar.js',
             UserData: 'src/controllers/UserData.js',
             WrapperControl: 'src/controllers/WrapperControl.js',
             Theme: 'src/controllers/Theme.js',
+            uploadComponentControls: 'src/components/UploadComponent/uploadComponentControls',
 
             // components
             AvatarView: 'src/components/AvatarView.js',
@@ -61,10 +64,12 @@ export default [
             ItemPlaceholderComponent: 'src/components/ItemPlaceholderComponent.js',
             LazyListComponent: 'src/components/LazyListComponent/LazyListComponent.js',
             LoadingComponent: 'src/components/LoadingComponent.js',
-            // MentionsComponent: 'src/components/MentionsComponent/MentionsComponent.js',
+            MentionedTextComponent: 'src/components/MentionedTextComponent.js',
+            MentionsComponent: 'src/components/MentionsComponent/MentionsComponent.js',
             MutualComponent: 'src/components/MutualComponent/MutualComponent.js',
             MutualList: 'src/components/MutualComponent/MutualList.js',
             NavigationToolbar: 'src/components/NavigationToolbar.js',
+            NewPostComponent: 'src/components/NewPostComponent/NewPostComponent.js',
             PlacesTextField: 'src/components/PlacesTextField.js',
             ProgressView: 'src/components/ProgressView.js',
             ProfileComponent: 'src/components/ProfileComponent.js',
@@ -93,7 +98,25 @@ export default [
             Users: 'src/pages/admin/users/Users.js',
 
             // internal
-            __firebase: 'src/controllers/Firebase.js'
+            __alertsVisitReducer: 'src/alerts/alertsVisitReducer.js',
+            __alertsCounterReducer: 'src/alerts/alertsCounterReducer.js',
+            __auditReducer: 'src/reducers/auditReducer.js',
+            __chatsCounterReducer: 'src/chat/chatsCounterReducer.js',
+            __chatMeta: 'src/chat/ChatMeta.js',
+            __dateTimePicker: 'src/components/DateTimePicker/DateTimePicker.js',
+            __errorsReducer: 'src/reducers/errorsReducer.js',
+            __firebase: 'src/controllers/Firebase.js',
+            __lazyMentionsComponent: 'src/components/MentionsComponent/LazyMentionsComponent.js',
+            __mainContent: 'src/components/MainContent.js',
+            __mutualComponentControls: 'src/components/MutualComponent/mutualComponentControls.js',
+            __mutualConstants: 'src/components/MutualComponent/MutualConstants.js',
+            __newPostComponentReducer: 'src/components/NewPostComponent/newPostComponentReducer.js',
+            __notifications: 'src/controllers/Notifications.js',
+            __passwordField: 'src/components/PasswordField.js',
+            __richSnackbarContent: 'src/components/RichSnackbarContent.js',
+            __serviceWorker: 'src/serviceWorker.js',
+            __snackbar: 'src/components/Snackbar.js',
+            __store: 'src/controllers/Store.js'
         },
         output: [
             {

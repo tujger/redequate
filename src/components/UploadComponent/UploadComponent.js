@@ -331,13 +331,23 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
 
     return <>
         {button
-            ? <button.type {...button.props} ref={refButton} onClick={(event) => {
-                uppy && uppy.reset();
-                button.props.onClick && button.props.onClick(event);
-            }}/>
-            : <Button onClick={() => {
-                uppy && uppy.reset();
-            }} ref={refButton} children={"Upload"}/>
+            ? <button.type
+                {...button.props}
+                onClick={evt => {
+                    evt && evt.stopPropagation();
+                    uppy && uppy.reset();
+                    button.props.onClick && button.props.onClick(evt);
+                }}
+                ref={refButton}
+            />
+            : <Button
+                children={"Upload"}
+                onClick={evt => {
+                    evt && evt.stopPropagation();
+                    uppy && uppy.reset();
+                }}
+                ref={refButton}
+            />
         }
         <div ref={refDashboard}/>
     </>

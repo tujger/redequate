@@ -46,9 +46,9 @@ const MutualListComponent = (
             })
         } else if (mode === MutualListMode.SELF) {
             return () => new Pagination({
-                ref: firebase.database().ref(typeId),
-                child: "uid",
-                equals: mutualId,
+                ref: firebase.database().ref("mutualstamps").child("_my").child(mutualId),
+                // child: "uid",
+                // equals: mutualId,
                 order,
             })
         } else if (mode === MutualListMode.SUBSCRIBES) {

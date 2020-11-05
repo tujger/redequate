@@ -1,5 +1,6 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
+import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
@@ -34,14 +35,16 @@ const NavigationToolbar = (
         onClick={() => history.goBack()}
         {...backButton.props}
     />;
-console.log(classes)
+
+    const isChildrenLabel = children && children.constructor.name === "String";
+
     return <Grid container className={[classes.toolbar, className].join(" ")} alignItems={alignItems}>
         <Grid item>
             {button}
         </Grid>
         <Grid item xs>
             <Grid container alignItems={alignItems} justify={justify}>
-                {children}
+                {isChildrenLabel ? <Typography variant={"h6"}>{children}</Typography> : children}
             </Grid>
         </Grid>
         {mediumButton && <Grid item>

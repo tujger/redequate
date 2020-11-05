@@ -4,7 +4,8 @@ import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/Wra
 import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const ShareComponent = ({title, text, url, component = <Button/>}) => {
-    const handleShare = () => {
+    const handleShare = (evt) => {
+        evt && evt.stopPropagation();
         share({title, text, url});
     }
 

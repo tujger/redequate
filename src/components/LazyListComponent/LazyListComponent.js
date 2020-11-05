@@ -92,19 +92,26 @@ function LazyListComponent(
             .then(newitems => newitems.filter(item => item !== undefined))
             .then(newitems => {
                 console.log(`[Lazy] loaded ${refresh ? 0 : items.length}+${newitems.length} items${cache ? " on " + cache : ""}`);
-                return {
-                    ascending,
-                    finished: pagination.finished,
-                    random: Math.random(),
-                    items: ascending
-                        ? (reverse ? [...newitems.reverse(), ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems])
-                        : (reverse ? [...newitems, ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems.reverse()]),
-                    loading: false,
-                    pagination,
-                    refresh: null,
-                    reverse
-                };
+                return ascending
+                    ? (reverse ? [...newitems.reverse(), ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems])
+                    : (reverse ? [...newitems, ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems.reverse()])
             })
+            .then(newitems => newitems.filter(item => {
+                newitems._cmp = newitems._cmp || {};
+                if (newitems._cmp[item.key]) return false;
+                newitems._cmp[item.key] = true;
+                return true;
+            }))
+            .then(items => ({
+                ascending,
+                finished: pagination.finished,
+                random: Math.random(),
+                items,
+                loading: false,
+                pagination,
+                refresh: null,
+                reverse
+            }))
             .catch(error => {
                 notifySnackbar({
                     buttonLabel: "Refresh",
@@ -224,7 +231,7 @@ function LazyListComponent(
             history.action = "PUSH";
             return;
         }
-        console.log(`[Lazy] reset list ${cache}`);
+        console.log(`[Lazy] refresh list ${cache}`);
         if (!reverse) scrollHeight(0);
         dispatch({type: lazyListComponentReducer.REFRESH, ...(cache ? {cache} : {})});
     }, [cache, autoRefresh, reverse]);

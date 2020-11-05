@@ -11,14 +11,15 @@ import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
 import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import {usePages} from "../../controllers/General";
+// import {styles} from "../../controllers/Theme";
 
-const styles = theme => ({
+const stylesCurrent = theme => ({
     appbar: {
-        backgroundColor: theme.palette.background.default,
-        color: theme.palette.getContrastText(theme.palette.background.default),
+        // backgroundColor: theme.palette.background.default,
+        // color: theme.palette.getContrastText(theme.palette.background.default),
     },
     back: {
-        color: theme.palette.primary.main,
+        color: theme.palette.secondary.main,
         paddingLeft: 0,
         paddingRight: 0,
         zIndex: 1
@@ -105,4 +106,7 @@ Titlebar.propTypes = {
     title: PropTypes.string,
 };
 
-export default withRouter(withStyles(styles)(Titlebar));
+export default withRouter(withStyles(theme => ({
+    ...stylesCurrent(theme),
+    // ...styles(theme),
+}))(Titlebar));

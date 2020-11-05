@@ -7,7 +7,7 @@ import Grid from "@material-ui/core/Grid";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import UserItem from "./UserItem";
 import Pagination from "../../../controllers/FirebasePagination";
-import {UserData} from "../../../controllers/UserData";
+import {currentUserData, useCurrentUserData, UserData} from "../../../controllers/UserData";
 import {cacheDatas, useFirebase, usePages} from "../../../controllers/General";
 import ProgressView from "../../../components/ProgressView";
 import {styles} from "../../../controllers/Theme";
@@ -23,6 +23,7 @@ function Users(props) {
     const pages = usePages();
     const dispatch = useDispatch();
     const firebase = useFirebase();
+    const currentUserData = useCurrentUserData();
 
     const handleHeaderChange = type => evt => {
         if (type === "clear") {
@@ -44,7 +45,8 @@ function Users(props) {
     }, [mode]);
 
     const fetchUserData = async item => {
-        const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
+        // const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
+        const data = await UserData(firebase).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
         return {key: item.key, value: data};
     }
 
@@ -54,12 +56,12 @@ function Users(props) {
         case "active":
             pagination = new Pagination({
                 ref: firebase.database().ref("users_public"),
-                child: "lastLogin",
+                child: "visit",
                 order: "desc",
             })
             itemTransform = async item => {
                 const res = await fetchUserData(item);
-                res._date = res.value && res.value.public && res.value.public.lastLogin;
+                res._date = res.value && res.value.public && res.value.public.visit;
                 return res;
             }
             break;

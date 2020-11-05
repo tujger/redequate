@@ -49,29 +49,31 @@ There is important to define two variables: `pages` and `menu`;
 
         about: {route: "/about", label: "About", icon: <AboutIcon/>, component: <About/>},
 
+        alerts: {route: "/alerts", label: "Alerts", icon: <AlertsIcon/>, component: <Alerts fetchAlertContent={fetchAlertContent}/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <AlertsCounter/>},
+
         chat: {route: "/chat/:id", label: "Chat", icon: <ChatsIcon/>, component: <Chat/>, pullToRefresh: false, roles: [Role.ADMIN, Role.USER]},
 
         chats: {route: "/chats", label: "Chats", icon: <ChatsIcon/>, component: <Chats/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <ChatsCounter/>},
 
         contacts: {route: "/contacts", label: "Contacts", icon: <ContactsIcon/>, component: <Contacts/>},
 
-        editprofile: {route: "/edit/profile/*", label: "Edit profile", icon: <EditProfileIcon/>, component: <EditProfile uploadable={false} publicFields={publicFields}/>, roles: [Role.ADMIN, Role.USER]},
+        editprofile: {route: "/edit/profile/*", label: "Edit profile", icon: <EditProfileIcon/>, component: <EditProfile uploadable={true} publicFields={publicFields}/>, roles: [Role.ADMIN, Role.USER]},
 
         home: {route: "/", label: "Home", icon: <HomeIcon/>, component: <Home/>},
 
-        login: {route: "/login", label: "Login", icon: <LoginIcon/>, component: <Login signup={true} popup={false}/>, roles: [Role.LOGIN]},
+        login: {route: "/login", label: "Login", icon: <LoginIcon/>, component: <Login signup={true} popup={true}/>, roles: [Role.LOGIN]},
 
         logout: {route: "/logout", label: "Logout", icon: <LogoutIcon/>, component: <Logout immediate={true}/>, roles: [Role.ADMIN, Role.USER, Role.USER_NOT_VERIFIED, Role.DISABLED]},
 
         main: {route: "/", label: "Home", icon: <HomeIcon/>, component: <Home/>},
 
-        profile: {route: "/profile/*", label: "Profile", icon: <ProfileIcon/>, component: <Profile/>, roles: [Role.ADMIN, Role.USER, Role.USER_NOT_VERIFIED, Role.DISABLED]},
+        profile: {route: "/profile/*", label: "Profile", icon: <ProfileIcon/>, component: <Profile/>, roles: [Role.ADMIN, Role.USER, Role.DISABLED]},
 
         restore: {route: "/user/restore", label: "Restore password", icon: <RestorePasswordIcon/>, component: <RestorePassword/>},
 
         search: {route: "/search", label: "Search", icon: <SearchIcon/>, component: <Search/>},
 
-        signup: {route: "/signup", label: "Sign up", icon: <LoginIcon/>, component: <Signup signup={true}/>},
+        signup: {route: "/signup", label: "Sign up", icon: <LoginIcon/>, component: <Signup signup={true} additional={<Agreement/>}/>},
 
         signupFinish: {route: "/signup/:email", label: "Sign up", icon: <LoginIcon/>, component: <Signup signup={true}/>},
 
@@ -79,15 +81,21 @@ There is important to define two variables: `pages` and `menu`;
 
         // generic admin cases
 
+        admin: {route: "/admin", label: "Admin", icon: <OnlyAdminIcon/>, component: <Admin menu={() => menu}/>, roles: [Role.ADMIN]},
+
         adduser: {route: "/admin/add", label: "Add user", icon: <AddUserIcon/>, component: <AddUser/>, roles: [Role.ADMIN]},
 
         adminservice: {route: "/admin/service", label: "Service", icon: <ServiceIcon/>, component: <Service/>, roles: [Role.ADMIN]},
 
-        edituser: {route: "/edit/user/:id", label: "Edit profile", icon: <EditProfileIcon/>, component: <EditProfile uploadable={false} publicFields={publicFields}/>, roles: [Role.ADMIN]},
+        audit: {route: "/admin/audit", label: "Audit", icon: <ErrorsIcon/>, component: <Audit/>, roles: [Role.ADMIN]},
 
-        users: {route: "/admin/users", label: "Users", icon: <UsersIcon/>, component: <AdminUsers invitation={false}/>, roles: [Role.ADMIN]},
+        edituser: {route: "/edit/user/:id", label: "Edit profile", icon: <EditProfileIcon/>, component: <EditProfile uploadable={true}/>, roles: [Role.ADMIN]},
 
-        widgets: {route: "/widgets", label: "Widgets", icon: <WatchlistIcon/>, component: <Widgets/>, roles: [Role.ADMIN]},
+        errors: {route: "/admin/errors", label: "Errors", icon: <ErrorsIcon/>, component: <Errors/>, roles: [Role.ADMIN]},
+
+        users: {route: "/admin/users", label: "Users", icon: <UsersIcon/>, component: <Users invitation={false}/>, roles: [Role.ADMIN]},
+
+        widgets: {route: "/widgets", label: "Widgets", icon: <WidgetsIcon/>, component: <Widgets/>, roles: [Role.ADMIN]},
 
         // example use cases
 
@@ -97,15 +105,15 @@ There is important to define two variables: `pages` and `menu`;
 
         needauth: {route: "/needauth", label: "Need auth", icon: <NeedAuthIcon/>, component: <SimplePage title={resources.needauth.title} body={resources.needauth.body}/>, roles: [Role.AUTH]},
 
-        onlyuser: {route: "/onlyuser", label: "Only user", icon: <OnlyUserIcon/>, component: <SimplePage title={resources.onlyuser.title} body={resources.onlyuser.body}/>, roles: [Role.USER, Role.USER_NOT_VERIFIED]},
+        onlyuser: {route: "/onlyuser", label: "Only user", icon: <OnlyUserIcon/>, component: <SimplePage title={resources.onlyuser.title} body={resources.onlyuser.body}/>, roles: [Role.USER, Role.USER_NOT_VERIFIED, Role.DISABLED]},
 
-        // here project related pages
+        // here are project related pages
 
         // notfound must be always at the last position
         notfound: {route: "/:path", label: "Not found", icon: <NotFoundIcon/>, component: <NotFound/>},
     };
 
-Page options are:
+Page common options are:
 
     route: String, // based on 'react-router-dom'
     label: String,
@@ -127,11 +135,13 @@ Roles are:
     USER - regular user,
     USER_NOT_VERIFIED - user that did not verify his e-mail yet
 
-Menu can contain all or some of items from `pages`. First item in each section is applied as a main element in `top menu` and ignored in `responsive drawer`. Also, if first item is not shown then section will not be shown as well.
+Menu can contain all or some of the items from `pages`. First item in each section is applied as a main element in `top menu` and ignored in `responsive drawer`. Also, if first item is not shown then section will not be shown as well.
 
     export const menu = [[
         pages.main,
         pages.home,
+        pages.alerts,
+        pages.chats,
     ], [
         pages.login,
         pages.login,
@@ -140,16 +150,20 @@ Menu can contain all or some of items from `pages`. First item in each section i
         pages.profile,
         pages.logout,
     ], [
-        pages.onlyadmin,
+        pages.admin,
         pages.adminservice,
         pages.users,
-        pages.games,
+        pages.audit,
         pages.widgets,
     ], [
         pages.about,
         pages.contacts,
         pages.about,
     ]];
+
+## Simple pages
+
+
 
 ## Set up functions
 
@@ -178,6 +192,62 @@ Add .env.production:
     GENERATE_SOURCEMAP=false
     INLINE_RUNTIME_CHUNK=false
     IMAGE_INLINE_SIZE_LIMIT=1024
+
+
+## Database structure
+
+    _chats
+        uid/chat_id
+            private? - opposite uid
+            timestamp - last update
+    _counters
+        id/counter: number
+    alerts
+        uid/alert_id
+    chats
+        chat_id
+            !meta
+                members
+                    member_id: last visit timestamp
+                timestamp: last change timestamp
+            message_id
+                created
+                text
+                uid
+    errors
+        error_id
+            error - text
+            timestamp
+            uid
+    mutual
+        type/item_id
+            id - mutual object id
+            id_uid - mixed key
+            uid - subject id
+            uid_id - mixed key
+            timestamp
+    mutualstamps
+        _/uid - all items for uid
+        _my/uid - all posts of uid
+        _my_type/uid - all posts of uid in type
+        _re/uid - all replies of uid
+        _re_type/uid - all replies of uid in type
+        type/uid - all items for uid in type
+            post_id/author_uid
+    posts
+        post_id
+            created
+            images
+            root?
+            text
+            to?
+            uid
+    roles
+        uid/role
+    users_private
+        uid/device_id/options
+    users_public
+        uid/options
 
 
 ## License

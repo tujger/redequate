@@ -10,8 +10,10 @@ export {default as LazyListComponent} from "./LazyListComponent/LazyListComponen
 export {lazyListComponentReducer} from "./LazyListComponent/lazyListComponentReducer";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";
+export {default as MentionedTextComponent, tokenizeText} from "./MentionedTextComponent";
 export {default as ModalComponent} from "./ModalComponent";
 export {default as NavigationToolbar} from "./NavigationToolbar";
+export {default as NewPostComponent} from "./NewPostComponent/NewPostComponent";
 export {default as PasswordField} from "./PasswordField";
 export {default as PlacesTextField} from "./PlacesTextField";
 export {default as ProfileComponent} from "./ProfileComponent";
@@ -22,5 +24,5 @@ export {default as ShareComponent, share, copyToClipboard} from "./ShareComponen
 export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
 export {uploadComponentClean, uploadComponentPublish} from "./UploadComponent/uploadComponentControls";
-export {default as MentionsComponent} from "./MentionsComponent";
+export {default as MentionsComponent} from "./MentionsComponent/MentionsComponent";
 export {mentionUsers} from "../controllers/mentionTypes";

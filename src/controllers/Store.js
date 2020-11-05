@@ -14,6 +14,7 @@ import {topMenuReducer} from "../layouts/TopBottomMenuLayout/topMenuReducer";
 import {chatsCounterReducer} from "../chat/chatsCounterReducer";
 import {alertsVisitReducer} from "../alerts/alertsVisitReducer";
 import {alertsCounterReducer} from "../alerts/alertsCounterReducer";
+import {newPostComponentReducer} from "../components/NewPostComponent/newPostComponentReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -27,6 +28,7 @@ const Store = (name, reducers) => {
         errors: errorsReducer,
         lazyListComponentReducer,
         mainAppbarReducer,
+        newPostComponentReducer,
         progressView: progressViewReducer,
         snackbar: snackbarReducer,
         topMenuReducer,

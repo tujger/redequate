@@ -203,12 +203,12 @@ function _DispatcherRoutedBody(props) {
     const updateTitle = (location) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
         console.log("[Dispatcher]", JSON.stringify(location));
+        try {
+            if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
+        } catch (error) {
+            console.error(error);
+        }
         if (current) {
-            try {
-                if (currentUserData && currentUserData.id) currentUserData.updateLoginTimestamp();
-            } catch (error) {
-                console.error(error);
-            }
             const label = needAuth(current.roles, currentUserData)
                 ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
                     ? current.title || current.label : pages.notfound.title || pages.notfound.label);

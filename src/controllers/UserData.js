@@ -533,9 +533,9 @@ export function UserData(firebase) {
                 console.log("[UserData] still ignoring", key, data);
             }
         },
-        updateLoginTimestamp: () => {
+        updateVisitTimestamp: () => {
             if (_persisted) {
-                firebase.database().ref("users_public").child(_id).child("lastLogin").set(firebase.database.ServerValue.TIMESTAMP);
+                firebase.database().ref("users_public").child(_id).child("visit").set(firebase.database.ServerValue.TIMESTAMP);
             }
             return _body;
         },

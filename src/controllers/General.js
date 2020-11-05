@@ -84,7 +84,7 @@ const CacheDatas = function () {
     let _cache = {};
     let _count = 0;
     let _max = 1000;
-    return {
+    const _body = {
         get length() {
             return _count;
         },
@@ -104,6 +104,13 @@ const CacheDatas = function () {
         },
         get: id => {
             return _cache[id];
+        },
+        fetch: async (id, resolveData) => {
+            let cached = _body.get(id);
+            if (cached) return cached;
+            cached = await resolveData(id);
+            if (!cached) return null;
+            return _body.put(id, cached);
         },
         put: (id, data) => {
             if (!id) throw new Error("[Cache] data id is not defined");
@@ -129,7 +136,8 @@ const CacheDatas = function () {
             delete _cache[id];
             _count--;
         },
-    }
+    };
+    return _body;
 }
 export const cacheDatas = new CacheDatas();
 

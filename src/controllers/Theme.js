@@ -71,6 +71,7 @@ export const createTheme = ({colors, customized = customizedDefault}) => {
             },
             secondary: {
                 main: colors.secondary,
+
                 // contrastText: "#ffffff",
                 "&:focus": {
                     main: colors.secondary,
@@ -103,11 +104,15 @@ export const createTheme = ({colors, customized = customizedDefault}) => {
         }
         return defaultValue;
     };
-    console.warn("B")
     return theme;
 }
 
 export const styles = theme => ({
+    appbar: {
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.getContrastText(theme.palette.primary.main),
+    },
+
     badge: {
         color: "#ff0000",
         fontSize: "small",
@@ -129,7 +134,7 @@ export const styles = theme => ({
             color: theme.palette.getContrastText(theme.palette.secondary.main),
         },
         "& ~ $fabUpper": {
-            marginBottom: iOS ? theme.spacing(17) : theme.spacing(10),
+            marginBottom: iOS ? theme.spacing(17) : theme.spacing(8),
         }
     },
     fabUpper: {
@@ -144,6 +149,10 @@ export const styles = theme => ({
     },
     label: {
         color: "#000000",
+        textDecoration: "none",
+    },
+    link: {
+        color: "#452187",
         textDecoration: "none",
     },
     nounderline: {
@@ -235,6 +244,9 @@ export const styles = theme => ({
     tabButtonSelected: {
         borderBottomColor: theme.palette.secondary.main,
     },
+    text: {
+        textDecoration: "none",
+    },
 
     header: {},
     footer: {},
@@ -245,7 +257,6 @@ export const styles = theme => ({
     right: {},
     top: {},
     topSticky: {},
-
 })
 
 export const customizedDefault = {
@@ -272,9 +283,6 @@ export const stylesList = theme => ({
         height: theme.spacing(3),
         textDecoration: "none",
         width: theme.spacing(3),
-    },
-    body: {
-        color: "#101010",
     },
     card: {
         backgroundColor: "transparent",
@@ -341,6 +349,9 @@ export const stylesList = theme => ({
     cardHeaderWithLabel: {
         alignItems: "center",
     },
+    cardSubheader: {
+        color: "#101010",
+    },
     cardContent: {
         overflow: "auto"
     },
@@ -395,6 +406,10 @@ export const stylesList = theme => ({
         color: "#000000",
         textDecoration: "none",
     },
+    link: {
+        color: "#452187",
+        textDecoration: "none",
+    },
     nounderline: {
         textDecoration: "none",
     },
@@ -422,6 +437,15 @@ export const stylesList = theme => ({
         [theme.breakpoints.down("sm")]: {
             fontSize: theme.spacing(1.5),
         },
+    },
+    text: {
+        textDecoration: "none",
+        "&:empty": {
+            borderWidth: 0,
+            height: 0,
+            margin: 0,
+            padding: 0,
+        }
     },
     unread: {
         color: "#000000",

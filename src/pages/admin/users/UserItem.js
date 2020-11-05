@@ -35,7 +35,7 @@ function UserItem({data, classes, skeleton, label}) {
     const history = useHistory();
     const pages = usePages();
     const classesCurrent = stylesCurrent();
-    const {value: userData} = data || {};
+    const {value: userData, _date} = data || {};
 
     if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
     if (skeleton) return <ItemPlaceholderComponent classes={classes}/>
@@ -64,7 +64,7 @@ function UserItem({data, classes, skeleton, label}) {
                         {userData.email}
                     </Grid>
                     <Grid item className={classes.date}>
-                        {toDateString(data._date || userData.public.created)}
+                        {toDateString(_date || userData.public.created)}
                     </Grid>
                 </Grid>}
                 subheader={<>
