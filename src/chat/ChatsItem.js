@@ -40,7 +40,7 @@ const stylesChat = theme => ({
 
 function ChatsItem(props) {
     // eslint-disable-next-line react/prop-types
-    const {id, classes, skeleton, label, userComponent, textComponent} = props;
+    const {id, classes, skeleton, label, onClick, userComponent, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -104,7 +104,7 @@ function ChatsItem(props) {
     return <Card className={classes.card}>
         <CardActionArea onClick={(event) => {
             event.stopPropagation();
-            history.push(pages.chat.route + chatMeta.id);
+            onClick ? onClick(chatMeta.id) : history.push(pages.chat.route + chatMeta.id);
         }}>
             <CardHeader
                 avatar={<Link
@@ -129,7 +129,7 @@ function ChatsItem(props) {
                             className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
                             title={online ? "Online" : "Offline"}/>
                     </Grid>
-                    <Grid
+                    {/*<Grid
                         className={classes.date}
                         item
                         title={new Date(chatMeta.lastMessage.created).toLocaleString()}
@@ -138,7 +138,7 @@ function ChatsItem(props) {
                     </Grid>
                     {chatMeta.readonly && <Grid item className={classes.date}>
                         Read-only
-                    </Grid>}
+                    </Grid>}*/}
                 </Grid>}
                 subheader={<Grid container>
                     <Grid item xs className={isNew ? classes.unread : classes.read}>

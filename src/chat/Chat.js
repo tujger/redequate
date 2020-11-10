@@ -26,6 +26,7 @@ const stylesCurrent = theme => ({
 const Chat = (props) => {
     const {
         classes,
+        id: idFromProps,
         inputComponent = <TextField
             placeholder={"Type message"}
         />,
@@ -37,12 +38,13 @@ const Chat = (props) => {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const {id} = useParams();
+    const {id: idFromParams} = useParams();
     const [state, setState] = React.useState({});
     const {userData, chatMeta} = state;
     const inputRef = React.useRef();
     const containerRef = React.useRef();
 
+    const id = idFromProps || idFromParams;
     const db = firebase.database();
 
     const handleSend = (value) => {
@@ -61,6 +63,7 @@ const Chat = (props) => {
     }
 
     React.useEffect(() => {
+        if (!id) return;
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
@@ -96,15 +99,16 @@ const Chat = (props) => {
         // eslint-disable-next-line
     }, [id]);
 
+    if (!id) return <LoadingComponent/>
     if (!chatMeta || !userData) return <LoadingComponent/>
     return <>
-        <ChatHeader
+        {idFromParams && <ChatHeader
             className={classes.topSticky}
             chatMeta={chatMeta}
             id={id}
             userComponent={userComponent}
             userData={userData}
-        />
+        />}
         <Grid
             className={classes.center}
             container

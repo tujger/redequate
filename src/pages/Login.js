@@ -255,22 +255,30 @@ const LoginLayout = (
             </Grid>
         </Grid>
         <Box m={2}/>
-        <Grid container spacing={1} alignItems={"center"}>
+        <ButtonGroup disabled={disabled} variant={"contained"} color={"secondary"} size={"large"} fullWidth>
             <Button
-                disabled={disabled} onClick={onRequestLogin} variant={"contained"} color={"secondary"}
-                size={"large"}
-                fullWidth>
-                Continue
-            </Button>
-        </Grid>
+                children={"Continue"}
+                fullWidth
+                onClick={onRequestLogin}
+            />
+            <Button
+                children={"Cancel"}
+                fullWidth
+                onClick={() => history.goBack()}
+            />
+        </ButtonGroup>
         <Box m={1}/>
         <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"large"} fullWidth>
-            {signup && <Button onClick={() => history.push(pages.signup.route)}>
-                Create account
-            </Button>}
-            <Button onClick={() => history.push(pages.restore.route)}>
-                Forgot password?
-            </Button>}
+            {signup && <Button
+                children={"Create account"}
+                fullWidth
+                onClick={() => history.push(pages.signup.route)}
+            />}
+            <Button
+                children={"Forgot password?"}
+                fullWidth
+                onClick={() => history.push(pages.restore.route)}
+            />
         </ButtonGroup>
         <Box m={1}/>
         <Grid container justify={"center"}>

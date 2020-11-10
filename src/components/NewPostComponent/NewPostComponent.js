@@ -25,7 +25,7 @@ import ModalComponent from "../ModalComponent";
 import NavigationToolbar from "../NavigationToolbar";
 import LoadingComponent from "../LoadingComponent";
 import UploadComponent from "../UploadComponent/UploadComponent";
-import MentionsComponent from "../MentionsComponent/MentionsComponent";
+import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
 import {useHistory} from "react-router-dom";
 
 const stylesCurrent = theme => ({
@@ -239,13 +239,13 @@ const NewPostComponent = (
             <DialogContent classes={{root: classes.content}}>
                 {infoComponent}
                 <React.Suspense fallback={<LoadingComponent/>}>
-                    <MentionsComponent
+                    <MentionsInputComponent
                         autofocus={true}
                         className={classes.messagebox}
                         color={"secondary"}
                         disabled={disabled}
                         firebase={firebase}
-                        mentionsParams={mentions.map(item => item(firebase))}
+                        mentionsParams={mentions}
                         multiline={true}
                         onChange={handleChange}
                         onKeyUp={handleKeyUp}

@@ -209,7 +209,9 @@ function LazyListComponent(
     }, [pagination.term, cachedPagination.term]);
 
     React.useEffect(() => {
-        if (items.length) console.log(`[Lazy] cached ${items.length} items${cache ? " on " + cache : ""}`);
+        if (items.length) {
+            console.log(`[Lazy] cached ${items.length} items${cache ? " on " + cache : ""}`);
+        }
         if (cache) return;
         cachedPagination.reset();
         const update = {

@@ -24,10 +24,12 @@ import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} fro
 import {colors, createTheme, customizedDefault} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
-import {installWrapperControl} from "./controllers/WrapperControl";
+import {hasWrapperControlInterface, installWrapperControl, wrapperControlCall} from "./controllers/WrapperControl";
 import TechnicalInfoView from "./components/TechnicalInfoView";
 import {Pages} from "./proptypes/Pages";
 import {Page} from "./proptypes";
+import {InView} from "react-intersection-observer";
+import {notifySnackbar} from "./controllers";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout/BottomToolbarLayout";
 // import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout";
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout/TopBottomMenuLayout";
@@ -151,8 +153,7 @@ function Dispatcher(props) {
     if (isIncompatible) {
         return <ThemeProvider theme={theme}><TechnicalInfoView
             message={<>
-                <Typography>Oops, we have detected that your browser is outdated and cannot be supported
-                    by {title} :(</Typography>
+                <Typography>Oops, we have detected that your browser is outdated and cannot be supported by {title} :(</Typography>
                 <Typography>We'll be happy to see you back using {title} with up-to-date browser!</Typography>
             </>}
         /></ThemeProvider>
@@ -202,16 +203,15 @@ function _DispatcherRoutedBody(props) {
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
-        console.log("[Dispatcher]", JSON.stringify(location));
+        console.log("[Dispatcher]", JSON.stringify(location), current);
         try {
             if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
         } catch (error) {
             console.error(error);
         }
         if (current) {
-            const label = needAuth(current.roles, currentUserData)
-                ? pages.login.title || pages.login.label : (matchRole(current.roles, currentUserData)
-                    ? current.title || current.label : pages.notfound.title || pages.notfound.label);
+            const allowed = needAuth(current.roles, currentUserData) ? pages.login : (matchRole(current.roles, currentUserData) && !current.disabled && current.component) ? current : pages.notfound;
+            const label = allowed.title || allowed.label;
             document.title = label + (title ? " - " + title : "");
             dispatch({type: Layout.TITLE, label});
         }

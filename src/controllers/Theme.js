@@ -153,7 +153,6 @@ export const styles = theme => ({
     },
     link: {
         color: "#452187",
-        textDecoration: "none",
     },
     nounderline: {
         textDecoration: "none",
@@ -408,7 +407,6 @@ export const stylesList = theme => ({
     },
     link: {
         color: "#452187",
-        textDecoration: "none",
     },
     nounderline: {
         textDecoration: "none",

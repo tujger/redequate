@@ -16,6 +16,9 @@ export {default as NavigationToolbar} from "./NavigationToolbar";
 export {default as NewPostComponent} from "./NewPostComponent/NewPostComponent";
 export {default as PasswordField} from "./PasswordField";
 export {default as PlacesTextField} from "./PlacesTextField";
+export {default as PostComponent} from "./PostComponent/PostComponent";
+export {default as postItemTransform} from "./PostComponent/postItemTransform";
+export * from "./PostComponent/PostData";
 export {default as ProfileComponent} from "./ProfileComponent";
 export {default as ProgressView} from "./ProgressView";
 export {default as RichSnackbarContent} from "./RichSnackbarContent";
@@ -24,5 +27,5 @@ export {default as ShareComponent, share, copyToClipboard} from "./ShareComponen
 export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
 export {uploadComponentClean, uploadComponentPublish} from "./UploadComponent/uploadComponentControls";
-export {default as MentionsComponent} from "./MentionsComponent/MentionsComponent";
+export {default as MentionsInputComponent} from "./MentionsInputComponent/MentionsInputComponent";
 export {mentionUsers} from "../controllers/mentionTypes";

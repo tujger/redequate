@@ -4,11 +4,19 @@ import {normalizeSortName} from "./UserData";
 import {usePages} from "./General";
 import {Link} from "react-router-dom";
 
-export const mentionUsers = firebase => ({
+const Component = ({children, display, id, ...rest}) => {
+    const pages = usePages();
+    return <Link
+        to={pages.user.route + id}
+        {...rest}
+    >@{display || children}</Link>
+}
+
+export const mentionUsers = {
     className: "Mentions-user-name",
     displayTransform: (a, b) => "@" + b,
     markup: "$[user:__id__:__display__]",
-    pagination: (start) => new Pagination({
+    pagination: (start, firebase) => new Pagination({
         ref: firebase.database().ref("users_public"),
         child: "_sort_name",
         size: 10,
@@ -19,13 +27,6 @@ export const mentionUsers = firebase => ({
     transform: item => ({id: item.key, display: item.value.name}),
     trigger: "@",
     type: "user",
-    component: <UserTextComponent/>
-});
+    component: <Component/>
+};
 
-const UserTextComponent = ({children, className = "", display, id}) => {
-    const pages = usePages();
-    return <Link
-        to={pages.user.route + id}
-        className={className}
-    >@{display || children}</Link>
-}

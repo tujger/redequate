@@ -9,41 +9,48 @@ const MentionedTextComponent = (
         tokens,
         classes = {text: "", link: ""},
         className = "",
-        mentions = [mentionUsers()]
+        mentions = [mentionUsers]
     }) => {
-
     return <>
         {tokens.map((token, index) => {
             const mention = mentions.filter(item => item.type === token.type)[0];
             if (mention) {
                 const component = mention.component;
                 return <component.type
-                    className={[classes.text, className].join(" ")}
+                    {...component.props}
+                    className={[classes.text, classes.link, className].join(" ")}
                     display={token.value}
                     id={token.id}
                     key={index}
+                    style={mention.style}
                 />
             } else if (token.type === "cr") {
                 return <p className={[classes.text, className].join(" ")} key={index}/>
             } else {
-                return <span key={index} className={[classes.text, className].join(" ")}><Linkify
-                    componentDecorator={(decoratedHref, decoratedText, key) => {
-                        return <a href={decoratedHref}
-                                  className={classes.link}
-                                  key={key}
-                                  rel={"noopener noreferrer"}
-                                  target={"_blank"}
-                        >
-                            {decoratedText}
-                        </a>
-                    }}
-                    textDecorator={text => {
-                        if (text.length > 50) {
-                            return text.substr(0, 50) + "...";
-                        }
-                        return text;
-                    }}
-                >{token.value}</Linkify></span>
+                return <span
+                    key={index}
+                    className={[classes.text, className].join(" ")}
+                >
+                    <Linkify
+                        componentDecorator={(decoratedHref, decoratedText, key) => {
+                            return <a
+                                href={decoratedHref}
+                                className={[classes.text, classes.link].join(" ")}
+                                key={key}
+                                rel={"noopener noreferrer"}
+                                target={"_blank"}
+                            >
+                                {decoratedText}
+                            </a>
+                        }}
+                        textDecorator={text => {
+                            if (text.length > 50) {
+                                return text.substr(0, 50) + "...";
+                            }
+                            return text;
+                        }}
+                    >{token.value}</Linkify>
+                </span>
             }
         })}
     </>

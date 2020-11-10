@@ -1,6 +1,6 @@
 import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
-import {Route, Switch} from "react-router-dom";
+import {Route, Switch, useHistory} from "react-router-dom";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages, useTechnicalInfo} from "../controllers/General";
@@ -10,20 +10,6 @@ import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/Wra
 import {notifySnackbar} from "../controllers/notifySnackbar";
 
 const styles = theme => ({
-    /*center: {
-        // display: "flex",
-        // flex: "1 1 auto",
-        // flexDirection: "column",
-        // maxWidth: "100%",
-        // padding: theme.spacing(1),
-        // position: "relative",
-        // overflow: "auto"
-    },
-    top: {
-
-    },
-    topSticky: {
-    }*/
     bottom: {},
     bottomSticky: {},
     center: {},
@@ -36,10 +22,11 @@ const styles = theme => ({
 const MainContent = props => {
     // eslint-disable-next-line react/prop-types
     const {classes} = props;
+    const currentUserData = useCurrentUserData();
+    const history = useHistory();
     const pages = usePages();
     const technical = useTechnicalInfo();
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
-    const currentUserData = useCurrentUserData();
 
     const isDisabled = technical && technical.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
@@ -52,27 +39,40 @@ const MainContent = props => {
                     key={index}
                     path={item._route}
                     render={() => {
-                        return needAuth(item.roles, currentUserData)
-                            ? <pages.login.component.type {...props} {...pages.login.component.props} />
-                            : (matchRole(item.roles, currentUserData) && !item.disabled && item.component
-                                ? <>
-                                    {hasWrapperControlInterface() && <InView
-                                        children={null}
-                                        onChange={(inView) => {
-                                            let swipeable = inView;
-                                            if (item.pullToRefresh === false) swipeable = false;
-                                            wrapperControlCall({
-                                                method: "swipeable",
-                                                value: swipeable
-                                            }).catch(notifySnackbar)
-                                        }}
-                                    />}
-                                    <item.component.type
-                                        {...props}
-                                        classes={classes}
-                                        {...item.component.props} />
-                                </>
-                                : <pages.notfound.component.type {...props} {...pages.notfound.component.props} />)
+                        if (needAuth(item.roles, currentUserData)) {
+                            return <pages.login.component.type
+                                {...props}
+                                {...pages.login.component.props}
+                                onLogin={(isFirstLogin) => {
+                                    if (!isFirstLogin) history.push(window.location.pathname)
+                                }}
+                            />
+                        }
+                        if (matchRole(item.roles, currentUserData)
+                            && !item.disabled && item.component) {
+                            return <>
+                                {hasWrapperControlInterface() && <InView
+                                    children={null}
+                                    onChange={(inView) => {
+                                        let swipeable = inView;
+                                        if (item.pullToRefresh === false) swipeable = false;
+                                        wrapperControlCall({
+                                            method: "swipeable",
+                                            value: swipeable
+                                        }).catch(notifySnackbar)
+                                    }}
+                                />}
+                                <item.component.type
+                                    {...props}
+                                    classes={classes}
+                                    {...item.component.props}
+                                />
+                            </>
+                        }
+                        return <pages.notfound.component.type
+                            {...props}
+                            {...pages.notfound.component.props}
+                        />
                     }}
                 />
             })}</Switch>
