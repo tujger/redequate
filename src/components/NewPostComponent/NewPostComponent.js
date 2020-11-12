@@ -6,6 +6,7 @@ import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import ImageIcon from "@material-ui/icons/InsertPhoto";
+import ImageAddIcon from "@material-ui/icons/AddPhotoAlternate";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Hidden from "@material-ui/core/Hidden";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -75,6 +76,7 @@ const NewPostComponent = (
         title = replyTo ? "New reply" : "New post",
         tooltip,
         type = "posts",
+        UploadProps = {}
     }) => {
     const currentUserData = useCurrentUserData();
     const firebase = useFirebase();
@@ -82,7 +84,8 @@ const NewPostComponent = (
     const pages = usePages();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
-    const {disabled, uppy, file, open} = state;
+    const {disabled, uppy, open} = state;
+    const {camera = true, multi = true} = UploadProps;
 
     const text = context === _savedContext ? _savedText : initialText;
 
@@ -101,7 +104,8 @@ const NewPostComponent = (
     }
 
     const publishImage = async () => {
-        if (file) {
+        let urls = null;
+        if (uppy) {
             const publish = await uploadComponentPublish(firebase)({
                 auth: currentUserData.id,
                 uppy,
@@ -109,10 +113,9 @@ const NewPostComponent = (
                     dispatch({...ProgressView.SHOW, value: progress});
                 },
             });
-            const {url} = publish;
-            return url;
+            urls = publish.map(item => item.url);
         }
-        return null;
+        return urls;
     }
 
     const handleSend = () => {
@@ -121,9 +124,9 @@ const NewPostComponent = (
             dispatch(ProgressView.SHOW);
             const uid = currentUserData.id;
             publishImage()
-                .then(image => ({
+                .then(images => ({
                     created: firebase.database.ServerValue.TIMESTAMP,
-                    ...(image ? {images: [image]} : {}),
+                    images,
                     ...(replyTo ? {to: replyTo} : {}),
                     text,
                     uid,
@@ -169,19 +172,18 @@ const NewPostComponent = (
     }
 
     const handleUploadPhotoSuccess = ({uppy}) => {
-        const file = uppy.getFiles()[0];
-        console.log("[NewPost] upload", file, uppy);
-        setState(state => ({...state, uppy, file}));
+        console.log("[NewPost] upload", uppy);
+        setState(state => ({...state, uppy}));
     }
 
     const handleUploadPhotoError = (error) => {
         console.error("[NewPost] upload", error);
-        handleImageRemove();
+        handleImageRemove()();
     }
 
-    const handleImageRemove = () => {
-        uploadComponentClean(uppy);
-        setState(state => ({...state, uppy: null, file: null}));
+    const handleImageRemove = key => () => {
+        uploadComponentClean(uppy, key);
+        setState(state => ({...state, uppy}));
     }
 
     React.useEffect(() => {
@@ -193,20 +195,22 @@ const NewPostComponent = (
     const uploadComponent = <UploadComponent
         button={windowData.isNarrow()
             ? <IconButton
-                children={<ImageIcon/>}
+                children={multi ? <ImageAddIcon/> : <ImageIcon/>}
                 disabled={disabled}
             />
             : <IconButton
-                children={<ImageIcon/>}
+                children={multi ? <ImageAddIcon/> : <ImageIcon/>}
                 color={"secondary"}
                 disabled={disabled}
                 size={"small"}
             />}
-        camera={false}
+        camera={true}
         firebase={firebase}
         limits={{width: 1000, height: 1000, size: 100000}}
+        multi={true}
         onsuccess={handleUploadPhotoSuccess}
         onerror={handleUploadPhotoError}
+        {...UploadProps}
     />
 
     return <>
@@ -256,20 +260,25 @@ const NewPostComponent = (
                 <Hidden mdUp>
                     <Box m={1}/>
                     <Grid container justify={"center"}>
-                        {file && file.uploadURL && <img
-                            alt={file.name}
-                            className={classes._preview}
-                            src={file.uploadURL}
-                            title={file.name}
-                        />}
-                        {file && <Grid item><IconButton
-                            children={<ClearIcon/>}
-                            color={"secondary"}
-                            disabled={disabled}
-                            onClick={handleImageRemove}
-                            size={"small"}
-                            title={"Remove image"}
-                        /></Grid>}
+                        {uppy && Object.keys(uppy._uris).map((key) => {
+                            const file = uppy._uris[key];
+                            return <Grid item key={key}>
+                                <img
+                                    alt={file.name}
+                                    className={classes._preview}
+                                    src={file.uploadURL}
+                                    title={file.name}
+                                />
+                                <IconButton
+                                    children={<ClearIcon/>}
+                                    color={"secondary"}
+                                    disabled={disabled}
+                                    onClick={handleImageRemove(key)}
+                                    size={"small"}
+                                    title={"Remove image"}
+                                />
+                            </Grid>
+                        })}
                     </Grid>
                 </Hidden>
             </DialogContent>
@@ -277,21 +286,26 @@ const NewPostComponent = (
                 <DialogActions>
                     <Grid item xs>
                         <Grid container>
-                            {!file && <Grid item>{uploadComponent}</Grid>}
-                            {file && file.uploadURL && <img
-                                alt={file.name}
-                                className={classes._preview}
-                                src={file.uploadURL}
-                                title={file.name}
-                            />}
-                            {file && <Grid item><IconButton
-                                children={<ClearIcon/>}
-                                color={"secondary"}
-                                disabled={disabled}
-                                onClick={handleImageRemove}
-                                size={"small"}
-                                title={"Remove image"}
-                            /></Grid>}
+                            <Grid item>{uploadComponent}</Grid>
+                            {uppy && Object.keys(uppy._uris).map((key) => {
+                                const file = uppy._uris[key];
+                                return <Grid item key={key}>
+                                    <img
+                                        alt={file.name}
+                                        className={classes._preview}
+                                        src={file.uploadURL}
+                                        title={file.name}
+                                    />
+                                    <IconButton
+                                        children={<ClearIcon/>}
+                                        color={"secondary"}
+                                        disabled={disabled}
+                                        onClick={handleImageRemove(key)}
+                                        size={"small"}
+                                        title={"Remove image"}
+                                    />
+                                </Grid>
+                            })}
                         </Grid>
                     </Grid>
                     <Button onClick={handleCancel} color={"secondary"} disabled={disabled}>Cancel</Button>

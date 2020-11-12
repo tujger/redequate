@@ -22,7 +22,7 @@ import ShareComponent from "../ShareComponent";
 import ConfirmComponent from "../ConfirmComponent";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
-export default ({allowedExtras, postData, userData, classes = {}, showRepliesCounter = true, mentions, onChange, onDelete, isReply = false, type}) => {
+export default ({allowedExtras, postData, userData, classes = {}, showRepliesCounter = true, mentions, onChange, onDelete, isReply = false, type, UploadProps}) => {
     const [state, setState] = React.useState({});
     const {
         deletePost,
@@ -145,6 +145,7 @@ export default ({allowedExtras, postData, userData, classes = {}, showRepliesCou
                     onError={notifySnackbar}
                     replyTo={postData.id}
                     text={`$[user:${postData.uid}:${userData.name}] `}
+                    UploadProps={UploadProps}
                 />
             </Grid>
             {!isReply && <Grid item>

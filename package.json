@@ -61,6 +61,7 @@
         "react-linkify": "latest",
         "react-redux": "latest",
         "react-router-dom": "latest",
+        "reactive-blueimp-gallery": "latest",
         "redux": "latest"
     },
     "devDependencies": {

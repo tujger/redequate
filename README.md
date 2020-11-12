@@ -193,6 +193,55 @@ Add .env.production:
     INLINE_RUNTIME_CHUNK=false
     IMAGE_INLINE_SIZE_LIMIT=1024
 
+# Components
+
+## Mentions
+
+
+## MentionsInputComponent
+
+## NewPostComponent
+
+Props:
+
+    UploadProps: UploadComponent#options
+
+## PostComponent
+
+Props:
+
+    allowedExtras?: ["like"]
+    classes?: {}
+    className?
+    collapsible?: true
+    disableClick?: false
+    disableButtons?: false
+    label?: string - if defined then shows only skeleton with label
+    mentions?: [Mentions#mentionUsers]
+    onChange?: postData => {}
+    onDelete?: postData => {}
+    postData: PostData
+    showRepliesCounter?: true
+    type?: "posts"
+    skeleton?: false - if true then shows only skeleton as a progress
+    UploadProps: UploadComponent#props
+    userData: UserData
+
+## UploadComponent
+
+Props:
+
+    button?
+    camera?: true
+    facingMode?: "user"
+    limits?:
+        height?: 1000
+        size?: 100000
+        quality?: 75
+        width?: 1000
+    multi?: true - if true then anyway limited to 10 files
+    onsuccess: ({uppy, file, snapshot}) => {}
+    onerror?: error => {}
 
 ## Database structure
 

@@ -14,7 +14,7 @@ const stylesCurrent = makeStyles(theme => ({
     },
 }));
 
-export default ({allowedExtras, level, postId, classes = {}, onChange, onDelete, type}) => {
+export default ({allowedExtras, level, postId, classes = {}, onChange, onDelete, type, UploadProps}) => {
     const firebase = useFirebase();
     const windowData = useWindowData();
     const currentUserData = useCurrentUserData();
@@ -43,13 +43,14 @@ export default ({allowedExtras, level, postId, classes = {}, onChange, onDelete,
                     }}
                     collapsible={false}
                     disableClick
+                    isReply={true}
                     key={item.id}
                     level={level + 1}
                     onChange={onChange}
                     postData={item}
                     showRepliesCounter={false}
                     userData={item._userData}
-                    isReply={true}
+                    UploadProps={UploadProps}
                 />}
                 placeholder={<PostComponent skeleton={true}/>}
             />

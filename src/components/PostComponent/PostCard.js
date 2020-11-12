@@ -10,6 +10,7 @@ import PostBody from "./PostBody";
 import {cacheDatas, usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
+import PostMedia from "./PostMedia";
 
 export default (
     {
@@ -17,7 +18,7 @@ export default (
         classes = {},
         className,
         collapsible = true,
-        disableClick,
+        disableClick = false,
         disableButtons,
         isReply = false,
         level,
@@ -27,6 +28,7 @@ export default (
         postData,
         showRepliesCounter = true,
         type = "posts",
+        UploadProps,
         userData,
     }) => {
     const history = useHistory();
@@ -84,20 +86,27 @@ export default (
                             mentions={mentions}
                             postData={postData}
                         />
-                        {!disableButtons && <PostButtons
-                            allowedExtras={allowedExtras}
-                            classes={classes}
-                            isReply={isReply}
-                            mentions={mentions}
-                            onChange={handleChange}
-                            onDelete={handleDelete}
-                            postData={postData}
-                            showRepliesCounter={showRepliesCounter}
-                            type={type}
-                            userData={userData}
-                        />}
+                        {postData.images && <Grid
+                            className={classes.cardImage}
+                            container
+                        >
+                            <PostMedia images={postData.images} viewer={disableClick}/>
+                        </Grid>}
                     </>}
                 />
+                {!disableButtons && <PostButtons
+                    allowedExtras={allowedExtras}
+                    classes={classes}
+                    isReply={isReply}
+                    mentions={mentions}
+                    onChange={handleChange}
+                    onDelete={handleDelete}
+                    postData={postData}
+                    showRepliesCounter={showRepliesCounter}
+                    type={type}
+                    UploadProps={UploadProps}
+                    userData={userData}
+                />}
             </Wrapper.type>
         </Card>
         {level !== undefined && <RepliesTree
@@ -108,6 +117,7 @@ export default (
             onChange={handleChange}
             onDelete={handleDelete}
             type={type}
+            UploadProps={UploadProps}
         />}
     </>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])

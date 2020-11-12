@@ -15,6 +15,7 @@ import "@uppy/progress-bar/dist/style.css";
 import "@uppy/dashboard/dist/style.css";
 import "@uppy/webcam/dist/style.css";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
+import {uploadComponentClean} from "./uploadComponentControls";
 
 const MAX_FILE_SIZE = 20 * 1024;
 
@@ -134,16 +135,18 @@ const styles = theme => ({
     },
 })
 
-const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, facingMode: givenFacingMode}) => {
+const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, facingMode: givenFacingMode, multi = true}) => {
     const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
     const {uppy, facingMode} = state;
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
 
+    const {width = 1000, height = 1000, size = 100000, quality = 75} = limits || {};
+
     React.useEffect(() => {
         const uppy = Uppy({
-            allowMultipleUploads: false,
+            allowMultipleUploads: multi,
             autoProceed: true,
             locale: {
                 strings: {
@@ -151,7 +154,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                 }
             },
             restrictions: {
-                maxNumberOfFiles: 1,
+                maxNumberOfFiles: multi ? 10 : 1,
                 maxFileSize: MAX_FILE_SIZE * 1024,
                 allowedFileTypes: ["image/*"]
             },
@@ -159,10 +162,17 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
         uppy.on("file-added", (result) => {
             // if (!maxWidth) return;
             // if (maxSize && maxSize > result.size) return;
-            const quality = limits ? limits.quality || 75 : 75;
             const type = result.type === "image/png" ? "PNG" : "JPEG";
-            console.log(result)
+
+            uppy._uris = uppy._uris || {};
+            if (!multi) {
+                Object.keys(uppy._uris).map(item => {
+                    uploadComponentClean(uppy, item.id);
+                })
+            }
+
             console.log(`[UploadComponent] resize ${result.name} to ${maxWidth}x${maxHeight} with quality ${quality}`);
+
             Resizer.imageFileResizer(
                 result.data,
                 maxWidth,
@@ -171,29 +181,27 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                 quality,
                 0,
                 uri => {
-                    const file = uppy.getFiles()[0];
-                    uppy._uris = uppy._uris || {};
-                    uppy._uris[result.id] = uri;
-                    Resizer.imageFileResizer(
-                        result.data,
-                        maxWidth,
-                        maxHeight,
-                        type,
-                        quality,
-                        0,
-                        uri => {
-                            file.uploadURL = uri;
-                            setState(state => ({...state, uppy}));
-                            uppy.emit("upload-success", file, {
-                                status: "complete",
-                                body: null,
-                                uploadURL: file.uploadURL
-                            })
-                        },
-                        "base64"
-                    )
+                    uppy._uris[result.id] = result;
+                    result.uploadURL = uri;
+                    setState(state => ({...state, uppy}));
+                    uppy.emit("upload-success", result, {
+                        status: "complete",
+                        body: null,
+                        uploadURL: uri
+                    })
+                    // Resizer.imageFileResizer(
+                    //     result.data,
+                    //     maxWidth,
+                    //     maxHeight,
+                    //     type,
+                    //     quality,
+                    //     0,
+                    //     uri => {
+                    //     },
+                    //     "base64"
+                    // )
                 },
-                "blob"
+                "base64"
             )
         });
         uppy.on("complete", (result) => {
@@ -202,7 +210,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
             console.error(error);
         });
         uppy.on("dashboard:modal-open", () => {
-            console.log("Modal is open", uppy);
+            console.log("[UploadComponent] popup is open", uppy);
             if (camera === true) return;
             setTimeout(() => {
                 try {
@@ -324,8 +332,8 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
 
     let maxWidth, maxHeight;
     if (limits) {
-        maxHeight = limits.height;
-        maxWidth = limits.width || maxHeight;
+        maxHeight = height;
+        maxWidth = width || maxHeight;
         maxHeight = maxHeight || maxWidth;
     }
 
@@ -335,7 +343,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                 {...button.props}
                 onClick={evt => {
                     evt && evt.stopPropagation();
-                    uppy && uppy.reset();
+                    uppy && !multi && uppy.reset();
                     button.props.onClick && button.props.onClick(evt);
                 }}
                 ref={refButton}
@@ -344,7 +352,7 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                 children={"Upload"}
                 onClick={evt => {
                     evt && evt.stopPropagation();
-                    uppy && uppy.reset();
+                    uppy && !multi && uppy.reset();
                 }}
                 ref={refButton}
             />
