@@ -84,7 +84,8 @@ export default withStyles(stylesCurrent)((props) => {
             }}
             source={images}
             withControls
+            // inlineCarousel
         />
-        {!viewer && <div className={classes._postMediaGalleryDisabled}/>}
+        {/*{!viewer && <div className={classes._postMediaGalleryDisabled}/>}*/}
     </>
 });

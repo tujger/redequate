@@ -20,7 +20,7 @@ export default ({allowedExtras, level, postId, classes = {}, onChange, onDelete,
     const currentUserData = useCurrentUserData();
     const classesCurrent = stylesCurrent();
 
-    const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 1 : 10;
+    const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
     return <Grid container>
         {level > 0 && level < MAX_INDENTING_LEVELS && <Grid className={classesCurrent.indent}/>}
