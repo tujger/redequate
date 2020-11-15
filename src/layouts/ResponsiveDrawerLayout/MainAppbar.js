@@ -136,7 +136,7 @@ function MainAppbar(props) {
 }
 
 MainAppbar.propTypes = {
-    title: PropTypes.string,
+    title: PropTypes.any,
     pages: PropTypes.object,
     onHamburgerClick: PropTypes.func
 };

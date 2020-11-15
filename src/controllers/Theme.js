@@ -30,7 +30,22 @@ export const colors = ({primary, secondary} = {}) => {
     ][month];
 };
 
-export const createTheme = ({colors, customized = customizedDefault}) => {
+export const createTheme = ({colors, customized}) => {
+    const customizedDefault = {
+        topBottomLayout: {
+            title: {
+            },
+            topSticky: {
+                top: () => theme.mixins.toolbar.minHeight,
+            }
+        }
+    }
+    if (customized) {
+        for (const x in customized) {
+            customizedDefault[x] = {...customizedDefault[x], ...customized[x]};
+        }
+    }
+
     const theme = createMuiTheme({
         drawerWidth: drawerWidth,
         overrides: {
@@ -89,7 +104,7 @@ export const createTheme = ({colors, customized = customizedDefault}) => {
             fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', sans-serif",
             fontSize: 15,
         },
-        customized
+        customized: {...customizedDefault},
     });
     theme.fetchOverride = (callback, defaultValue) => {
         try {
@@ -101,6 +116,7 @@ export const createTheme = ({colors, customized = customizedDefault}) => {
             return callback;
         } catch (e) {
             console.error(e);
+            console.log("using default", defaultValue)
         }
         return defaultValue;
     };
@@ -199,10 +215,10 @@ export const styles = theme => ({
             marginTop: theme.spacing(3),
         },
     },
-    searchIcon: {
-    },
+    searchIcon: {},
     searchToolbar: {
         backgroundColor: theme.palette.background.default,
+        color: theme.palette.getContrastText(theme.palette.background.default),
         position: "absolute",
         right: 0,
         zIndex: 1,
@@ -216,10 +232,8 @@ export const styles = theme => ({
             top: 0,
         }
     },
-    searchToolbarBack: {
-    },
-    searchToolbarIcon: {
-    },
+    searchToolbarBack: {},
+    searchToolbarIcon: {},
     searchToolbarInput: {
         [theme.breakpoints.up("md")]: {
             width: theme.spacing(32),
@@ -258,14 +272,6 @@ export const styles = theme => ({
     topSticky: {},
 })
 
-export const customizedDefault = {
-    topBottomLayout: {
-        topSticky: {
-            top: theme => theme.mixins.toolbar.minHeight,
-        }
-    }
-}
-
 export const stylesList = theme => ({
     avatar: {
         boxSizing: "border-box",
@@ -301,7 +307,7 @@ export const stylesList = theme => ({
         paddingTop: theme.spacing(0),
         [theme.breakpoints.up("md")]: {
             justifyContent: "flex-end",
-            marginTop: theme.spacing(-0.5),
+            // marginTop: theme.spacing(-0.5),
             paddingLeft: theme.spacing(1),
             "& .MuiSvgIcon-root": {
                 height: theme.spacing(2.5),
@@ -368,8 +374,7 @@ export const stylesList = theme => ({
         [theme.breakpoints.up("md")]: {
             marginTop: theme.spacing(1),
         },
-        [theme.breakpoints.down("sm")]: {
-        },
+        [theme.breakpoints.down("sm")]: {},
     },
     counter: {
         fontSize: theme.spacing(1.5),

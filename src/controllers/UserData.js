@@ -308,6 +308,7 @@ export function UserData(firebase) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id))
                         .then(snap => {
+                            if (snap.exists()) _persisted = true;
                             _public = {..._public, ...(snap.val() || {})};
                             if (!_public.email) {
                                 cacheDatas.remove(_id);
@@ -325,6 +326,7 @@ export function UserData(firebase) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(firebase.database().ref("users_private").child(_id))
                         .then(snap => {
+                            if (snap.exists()) _persisted = true;
                             _private = {..._private, ...(snap.val() || {})};
                             _loaded = {..._loaded, private: true};
                             // console.warn("[UserData] private", _id, _private);
@@ -361,6 +363,7 @@ export function UserData(firebase) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("name"))
                         .then(snap => {
+                            if (snap.exists()) _persisted = true;
                             _public.name = snap.val();
                             if (!_public.name) {
                                 cacheDatas.remove(_id);
@@ -378,6 +381,7 @@ export function UserData(firebase) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("image"))
                         .then(snap => {
+                            if (snap.exists()) _persisted = true;
                             _public.image = snap.val();
                             // console.warn("[UserData] image", _id, _public.image);
                             _loaded = {..._loaded, image: true};
@@ -390,6 +394,7 @@ export function UserData(firebase) {
                 tasks.push(new Promise((resolve, reject) => {
                     _fetch(ref.child(_id).child("email"))
                         .then(snap => {
+                            if (snap.exists()) _persisted = true;
                             _public.email = snap.val();
                             if (!_public.email) {
                                 cacheDatas.remove(_id);
@@ -404,7 +409,6 @@ export function UserData(firebase) {
                 _loading = {..._loading, email: true};
             }
             await Promise.all(tasks);
-            if (_public._sort_name && _persisted === undefined) _persisted = true;
             _public._sort_name = fetchSortName();
             _requestedTimestamp = new Date().getTime();
             return _body;

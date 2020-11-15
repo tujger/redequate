@@ -26,6 +26,7 @@ const styles = theme => ({
         top: theme.spacing(1),
         transition: "150ms",
         zIndex: 3,
+        ...theme.fetchOverride(theme => theme.customized.topBottomLayout.title),
     },
     titlecollapsed: {
         alignItems: "center",

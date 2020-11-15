@@ -112,6 +112,7 @@ function Login(props) {
                     isFirstLogin = true;
                     if (transformUserData) return transformUserData(ud);
                 }
+                console.log(isFirstLogin, ud && ud.persisted)
                 return ud;
             })
             .then(ud => isFirstLogin ? ud.savePublic() : ud.updateVisitTimestamp())

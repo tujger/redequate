@@ -48,6 +48,7 @@ const stylesCurrent = theme => ({
     toolbar: {
         ...theme.mixins.toolbar,
         backgroundColor: theme.palette.primary.main,
+        color: theme.palette.getContrastText(theme.palette.primary.main),
     },
     "@global": {
         [theme.breakpoints.down("xs")]: {
@@ -127,7 +128,7 @@ const NewPostComponent = (
                 .then(images => ({
                     created: firebase.database.ServerValue.TIMESTAMP,
                     images,
-                    ...(replyTo ? {to: replyTo} : {}),
+                    to: replyTo || 0,
                     text,
                     uid,
                 }))
@@ -197,6 +198,7 @@ const NewPostComponent = (
             ? <IconButton
                 children={multi ? <ImageAddIcon/> : <ImageIcon/>}
                 disabled={disabled}
+                style={{color: "inherit"}}
             />
             : <IconButton
                 children={multi ? <ImageAddIcon/> : <ImageIcon/>}
@@ -233,6 +235,7 @@ const NewPostComponent = (
                         aria-label={"Send"}
                         children={<SendIcon/>}
                         onClick={handleSend}
+                        style={{color: "inherit"}}
                         title={"Send"}
                     />}
                 />

@@ -16,7 +16,7 @@ import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
 
-const styles = theme => ({
+const stylesCurrent = theme => ({
     indent: {
         ...theme.typography.button,
         height: "2.5rem",
@@ -89,8 +89,8 @@ const styles = theme => ({
         paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
         paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
         position: "sticky",
-        top: theme.fetchOverride(theme => theme.customized.topBottomLayout.topSticky.top),
         zIndex: 2,
+        ...theme.fetchOverride(theme => theme.customized.topBottomLayout.topSticky),
     }
 });
 
@@ -154,7 +154,7 @@ TopBottomMenuLayout.propTypes = {
     menu: PropTypes.array,
     pages: PropTypes.object,
     headerComponent: PropTypes.element,
-    title: PropTypes.string,
+    title: PropTypes.any,
 };
 
-export default withStyles(styles)(TopBottomMenuLayout);
+export default withStyles(stylesCurrent)(TopBottomMenuLayout);

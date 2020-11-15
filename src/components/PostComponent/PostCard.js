@@ -92,21 +92,21 @@ export default (
                         >
                             <PostMedia images={postData.images} viewer={disableClick}/>
                         </Grid>}
+                        {!disableButtons && <PostButtons
+                            allowedExtras={allowedExtras}
+                            classes={classes}
+                            isReply={isReply}
+                            mentions={mentions}
+                            onChange={handleChange}
+                            onDelete={handleDelete}
+                            postData={postData}
+                            showRepliesCounter={showRepliesCounter}
+                            type={type}
+                            UploadProps={UploadProps}
+                            userData={userData}
+                        />}
                     </>}
                 />
-                {!disableButtons && <PostButtons
-                    allowedExtras={allowedExtras}
-                    classes={classes}
-                    isReply={isReply}
-                    mentions={mentions}
-                    onChange={handleChange}
-                    onDelete={handleDelete}
-                    postData={postData}
-                    showRepliesCounter={showRepliesCounter}
-                    type={type}
-                    UploadProps={UploadProps}
-                    userData={userData}
-                />}
             </Wrapper.type>
         </Card>
         {level !== undefined && <RepliesTree

@@ -21,7 +21,7 @@ import {
 } from "./controllers/General";
 import LoadingComponent from "./components/LoadingComponent";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
-import {colors, createTheme, customizedDefault} from "./controllers/Theme";
+import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {hasWrapperControlInterface, installWrapperControl, wrapperControlCall} from "./controllers/WrapperControl";
@@ -73,7 +73,7 @@ const isIncompatible = !checkIfCompatible();
 let oldWidth;
 
 function Dispatcher(props) {
-    const {firebaseConfig, title, theme = createTheme({colors: colors(), customized: customizedDefault}), reducers, pages, width} = props;
+    const {firebaseConfig, title, theme = createTheme({colors: colors()}), reducers, pages, width} = props;
     const [state, setState] = React.useState({store: null});
     const {store, firebase} = state;
     useFirebase(firebase);

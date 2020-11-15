@@ -33,6 +33,7 @@ const NavigationToolbar = (
     const button = backButton && <backButton.type
         className={classes.buttonBack}
         onClick={() => history.goBack()}
+        style={{color: "inherit"}}
         {...backButton.props}
     />;
 
