@@ -25,6 +25,7 @@ const MutualComponent = (
         messageComponent = <InfoComponent/>,
         mutualId,
         mutualMode = MutualMode.SIMPLEX_QUIET,
+        mutualType = "users_public",
         pendingLabel = "Waiting for response",
         pendingComponent = <ActionComponent label={pendingLabel}/>,
         rejectLabel = "Reject",
@@ -55,7 +56,8 @@ const MutualComponent = (
             id: mutualId,
             uid_id: uidId,
             id_uid: idUid,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            type: mutualType,
         };
         if (mutualMode === MutualMode.SIMPLEX_QUIET) {
             ref = ref.child("mutual").child(typeId);

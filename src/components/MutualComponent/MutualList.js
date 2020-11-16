@@ -10,6 +10,7 @@ import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentRe
 import Pagination from "../../controllers/FirebasePagination";
 import {UserData} from "../../controllers/UserData";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import notifySnackbar from "../../controllers/notifySnackbar";
 
 const MutualListComponent = (
     {
@@ -92,6 +93,8 @@ const MutualListComponent = (
                     refreshList();
                     onChanged();
                 }}
+                type={item.value.type}
+                typeId={typeId}
                 unsubscribeLabel={unsubscribeLabel}
             />
         } else if (mode === MutualListMode.STAMPS) {
@@ -127,6 +130,11 @@ const MutualListComponent = (
             throw Error("'itemTransform' is not defined")
         }
         return item => item
+    }
+
+    if (!typeId || !mutualId) {
+        console.error(Error(`Some of arguments are not defined: typeId=${typeId}, mutualId=${mutualId}`));
+        return noItemsComponent;
     }
 
     return <LazyListComponent

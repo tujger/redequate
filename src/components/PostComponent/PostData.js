@@ -1,5 +1,3 @@
-// import {GameData} from "./GameData";
-
 import {tokenizeText} from "../MentionedTextComponent";
 import {cacheDatas} from "../../controllers/General";
 
@@ -266,6 +264,20 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
         _updateCounter: (path, change, cache) => {
             return _body._updateVal("_counters", path, change, cache);
         },
+        // updateTokens: tokens => {
+        //     _tokens = tokens || [];
+        //     _text = _tokens.map(token => {
+        //         if (token.type === "cr") {
+        //             return "\n";
+        //         } else if (token.type === "text") {
+        //             return token.value;
+        //         } else if (token.type) {
+        //             return `$[${token.type}:${token.id}:${token.value}]`;
+        //         } else {
+        //             return token;
+        //         }
+        //     }).join("");
+        // },
         toString: () => {
             return `[PostData] id: \x1b[34m${
                 _id}\x1b[30m, uid: \x1b[34m${

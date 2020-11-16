@@ -1,7 +1,7 @@
 import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
 import Linkify from "react-linkify";
-import {mentionUsers} from "../controllers/mentionTypes";
+import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {styles} from "../controllers/Theme";
 
 const MentionedTextComponent = (
@@ -9,7 +9,7 @@ const MentionedTextComponent = (
         tokens,
         classes = {text: "", link: ""},
         className = "",
-        mentions = [mentionUsers]
+        mentions = [mentionTags, mentionUsers]
     }) => {
     return <>
         {tokens.map((token, index) => {

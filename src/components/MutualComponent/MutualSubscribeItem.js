@@ -8,7 +8,7 @@ import {useHistory} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import Hidden from "@material-ui/core/Hidden";
-import {useFirebase, usePages} from "../../controllers/General";
+import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import ProgressView from "../ProgressView";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -26,6 +26,7 @@ const MutualRequestItem = (
         typeId,
         onDelete = () => {
         },
+        type = "users_public",
         unsubscribeLabel = "Unsubscribe"
     }) => {
     const pages = usePages();
@@ -35,14 +36,16 @@ const MutualRequestItem = (
     const history = useHistory();
     const [state, setState] = React.useState({});
     const {disabled} = state;
-    const {key, userData, value} = data;
+    const {key, userData = {}, value} = data;
 
     const handleUnsubscribe = evt => {
-        console.log("handleUnsubscribe", key, currentUserData.id, value);
+        console.log("handleUnsubscribe", key, typeId, currentUserData.id, value);
         evt.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true});
-        firebase.database().ref("mutual").child(key).set(null)
+        cacheDatas.remove(key);
+        cacheDatas.remove(value.id);
+        firebase.database().ref("mutual").child(typeId).child(key).set(null)
             .then(() => onDelete({key, value}))
             .catch(error => {
                 if (error && error.code === "PERMISSION_DENIED") {
@@ -67,8 +70,10 @@ const MutualRequestItem = (
         disabled: disabled,
         onClick: handleUnsubscribe,
         size: "small",
+        style: isSameUser ? undefined : {backgroundColor: "red"},
         title: buttonLabel,
-        variant: isSameUser ? "contained" : "outlined",
+        // variant: isSameUser ? "contained" : "outlined",
+        variant: "contained",
     }
 
     if (label) return <ItemPlaceholderComponent label={label} classes={classes}/>
@@ -79,7 +84,11 @@ const MutualRequestItem = (
             <CardActionArea
                 disabled={disabled}
                 onClick={evt => {
-                    history.push(pages.user.route + userData.id);
+                    if (!type || type === "users_public") {
+                        history.push(pages.user.route + userData.id);
+                    } else {
+                        history.push(pages[type].route + value.id);
+                    }
                 }}
             >
                 <CardHeader

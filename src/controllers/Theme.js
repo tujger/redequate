@@ -174,6 +174,7 @@ export const styles = theme => ({
         textDecoration: "none",
     },
     profileFields: {
+        alignItems: "center",
         [theme.breakpoints.up("sm")]: {
             flex: 1,
             marginLeft: theme.spacing(4),

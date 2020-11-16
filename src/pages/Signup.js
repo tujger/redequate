@@ -185,7 +185,7 @@ const Signup = ({classes, signup = true, additional}) => {
                 Sign up
             </Button>
             <Button
-                onClick={() => history.push(pages.login.route)}
+                onClick={() => history.goBack()}
             >
                 Cancel
             </Button>

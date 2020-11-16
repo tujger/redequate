@@ -28,4 +28,4 @@ export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
 export {uploadComponentClean, uploadComponentPublish} from "./UploadComponent/uploadComponentControls";
 export {default as MentionsInputComponent} from "./MentionsInputComponent/MentionsInputComponent";
-export {mentionUsers} from "../controllers/mentionTypes";
+export {mentionUsers, mentionTags} from "../controllers/mentionTypes";

@@ -15,7 +15,7 @@ import ClearIcon from "@material-ui/icons/Clear";
 import Box from "@material-ui/core/Box";
 import {newPostComponentReducer} from "./newPostComponentReducer";
 import SendIcon from "@material-ui/icons/Send";
-import {mentionUsers} from "../../controllers/mentionTypes";
+import {mentionUsers, mentionTags} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
@@ -28,6 +28,9 @@ import LoadingComponent from "../LoadingComponent";
 import UploadComponent from "../UploadComponent/UploadComponent";
 import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
 import {useHistory} from "react-router-dom";
+import {tokenizeText} from "../MentionedTextComponent";
+import {normalizeSortName} from "../../controllers/UserData";
+import Pagination from "../../controllers/FirebasePagination";
 
 const stylesCurrent = theme => ({
     content: {
@@ -67,15 +70,15 @@ const NewPostComponent = (
         classes,
         context,
         dispatch,
+        hint = "Type message, use @ to mention other users and # for tags.",
         infoComponent,
-        mentions = [mentionUsers],
+        mentions = [mentionTags, mentionUsers],
         onError = error => notifySnackbar(error),
         onClose = () => console.log("[NewPost] onClose()"),
         onComplete = data => console.log("[NewPost] onComplete(data)", data),
         replyTo,
         text: initialText,
         title = replyTo ? "New reply" : "New post",
-        tooltip,
         type = "posts",
         UploadProps = {}
     }) => {
@@ -119,19 +122,54 @@ const NewPostComponent = (
         return urls;
     }
 
+    const parseTokens = async () => {
+        const newtokens = [];
+        const tokens = tokenizeText(text);
+        tokens.forEach(token => {
+            if (token.type !== "text") {
+                newtokens.push(token);
+            } else {
+                const tokens = token.value.split(/(#[\w]+)/);
+                tokens.map(newtoken => {
+                    if (newtoken.indexOf("#") === 0) {
+                        newtoken = newtoken.replace(/^#/, "");
+                        const normalizedToken = normalizeSortName(newtoken);
+                        newtokens.push({type: "tag", value: newtoken, id: normalizedToken});
+                    } else {
+                        newtokens.push({type: "text", value: newtoken});
+                    }
+                })
+            }
+        })
+        const newtext = newtokens.map(token => {
+            if (token.type === "cr") {
+                return "\n";
+            } else if (token.type === "text") {
+                return token.value;
+            } else if (token.type) {
+                return `$[${token.type}:${token.id}:${token.value}]`;
+            } else {
+                return token;
+            }
+        }).join("");
+        return newtext;
+    }
+
     const handleSend = () => {
         if (text && text.length) {
             setState(state => ({...state, disabled: true}));
             dispatch(ProgressView.SHOW);
             const uid = currentUserData.id;
-            publishImage()
-                .then(images => ({
-                    created: firebase.database.ServerValue.TIMESTAMP,
-                    images,
-                    to: replyTo || 0,
-                    text,
-                    uid,
-                }))
+            parseTokens()
+                .then(text => publishImage()
+                    .then(images => ({
+                        created: firebase.database.ServerValue.TIMESTAMP,
+                        images,
+                        to: replyTo || 0,
+                        text,
+                        uid,
+                    }))
+                )
                 .then(data => firebase.database().ref().child(type).push(data))
                 .then(snapshot => {
                     dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: context});
@@ -161,6 +199,7 @@ const NewPostComponent = (
     }
 
     const handleCancel = evt => {
+        handleImageRemove()();
         dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: undefined});
         handleClose(evt);
         onClose();
@@ -256,7 +295,7 @@ const NewPostComponent = (
                         multiline={true}
                         onChange={handleChange}
                         onKeyUp={handleKeyUp}
-                        placeholder={"Type message, use @ to tag other users and # for games."}
+                        placeholder={hint}
                         value={text}
                     />
                 </React.Suspense>
