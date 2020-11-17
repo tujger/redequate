@@ -181,8 +181,9 @@ function EditProfile(props) {
             }
         } else if (image) {
         }
-        const {url: imageSaved} = publishing;
+        const {url: imageSaved} = (publishing[0] || {});
         if (isAdminAllowed) await saveUserByAdmin();
+        console.log(imageSaved, publishing);
 
         const additionalPublic = {};
         publicFields.forEach(field => {

@@ -11,8 +11,7 @@ export default (
         fetchItemId = item => item.key,
         currentUserData,
         firebase,
-        onItemError = error => {
-        },
+        onItemError,
         type
     }) => async item => {
 
@@ -31,20 +30,29 @@ export default (
         // console.log(postData)
         return postData;
     } catch (error) {
-        console.error(error);
-        if (error && error.message && error.message.indexOf("Post not found") >= 0) {
-            onItemError(error, {code: MutualError.NOT_FOUND, id: item.key, uid: currentUserData.id})
-            fetchCallable(firebase)("fixPost", currentUserData && currentUserData.id
-                ? {
-                    id: item.key,
-                    uid: currentUserData.id
-                } : {
-                    id: item.key,
-                }
-            ).then(console.log)
-                .catch(console.error);
+        console.error(item, type, error);
+        let code = null;
+        if (error && error.message && error.message.indexOf("Post not found") >= 0) code = MutualError.NOT_FOUND;
+
+        if (onItemError) {
+            return onItemError(error, {code, id: item.key, uid: currentUserData.id});
         } else {
-            throw error;
+            if (code === MutualError.NOT_FOUND) {
+                fetchCallable(firebase)("fixPost", currentUserData && currentUserData.id
+                    ? {
+                        code,
+                        id: item.key,
+                        uid: currentUserData.id
+                    } : {
+                        code,
+                        id: item.key,
+                    }
+                )
+                    .then(console.log)
+                    .catch(console.error);
+            } else {
+                throw error;
+            }
         }
     }
 }

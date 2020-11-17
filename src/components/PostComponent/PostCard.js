@@ -60,7 +60,10 @@ export default (
                 <CardHeader
                     classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
                     className={[classes.cardHeader, classes.post].join(" ")}
-                    avatar={<Link className={classes.avatar} to={pages.user.route + postData.uid}>
+                    avatar={<Link
+                        className={classes.avatar}
+                        to={!disableClick ? "#" : pages.user.route + postData.uid}
+                    >
                         <AvatarView
                             className={classes.avatar}
                             image={userData.image}
@@ -71,7 +74,7 @@ export default (
                     title={<Grid container>
                         <Grid item className={classes.userName}>
                             <Link
-                                to={pages.user.route + userData.id}
+                                to={!disableClick ? "#" : pages.user.route + userData.id}
                                 className={[classes.label].join(" ")}
                             >{userData.name}</Link>
                         </Grid>
@@ -83,6 +86,7 @@ export default (
                         <PostBody
                             classes={classes}
                             collapsible={collapsible}
+                            disableClick={!disableClick}
                             mentions={mentions}
                             postData={postData}
                         />

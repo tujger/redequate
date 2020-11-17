@@ -6,11 +6,19 @@ import {styles} from "../controllers/Theme";
 
 const MentionedTextComponent = (
     {
-        tokens,
         classes = {text: "", link: ""},
         className = "",
-        mentions = [mentionTags, mentionUsers]
+        disableClick,
+        mentions = [mentionTags, mentionUsers],
+        text,
+        tokens,
     }) => {
+
+    if (text && !tokens) {
+        tokens = tokenizeText(text);
+    }
+
+    if (!tokens) return null;
     return <>
         {tokens.map((token, index) => {
             const mention = mentions.filter(item => item.type === token.type)[0];
@@ -19,6 +27,7 @@ const MentionedTextComponent = (
                 return <component.type
                     {...component.props}
                     className={[classes.text, classes.link, className].join(" ")}
+                    disableClick={disableClick}
                     display={token.value}
                     id={token.id}
                     key={index}
@@ -34,7 +43,7 @@ const MentionedTextComponent = (
                     <Linkify
                         componentDecorator={(decoratedHref, decoratedText, key) => {
                             return <a
-                                href={decoratedHref}
+                                href={disableClick ? "#" : decoratedHref}
                                 className={[classes.text, classes.link].join(" ")}
                                 key={key}
                                 rel={"noopener noreferrer"}

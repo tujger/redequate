@@ -4,18 +4,18 @@ import {normalizeSortName} from "./UserData";
 import {usePages} from "./General";
 import {Link} from "react-router-dom";
 
-const ComponentUser = ({children, display, label, id, ...rest}) => {
+const ComponentUser = ({children, disableClick, display, label, id, ...rest}) => {
     const pages = usePages();
     return <Link
-        to={pages.user.route + id}
+        to={disableClick ? "#" : pages.user.route + id}
         {...rest}
     >@{display || label || children}</Link>
 }
 
-const ComponentTag = ({children, display, label, id, ...rest}) => {
+const ComponentTag = ({children, disableClick, display, label, id, ...rest}) => {
     const pages = usePages();
     return <Link
-        to={pages.tag.route + id}
+        to={disableClick ? "#" : pages.tag.route + id}
         {...rest}
     >#{display || label || children}</Link>
 }

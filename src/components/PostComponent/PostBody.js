@@ -5,7 +5,7 @@ import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
 import PostMedia from "./PostMedia";
 
-export default ({classes, collapsible:givenCollapsible, mentions, postData}) => {
+export default ({classes, collapsible:givenCollapsible, disableClick, mentions, postData}) => {
     const [state, setState] = React.useState({});
     const {
         collapsible = givenCollapsible,
@@ -30,6 +30,7 @@ export default ({classes, collapsible:givenCollapsible, mentions, postData}) => 
             unmountOnExit
         >
             <MentionedTextComponent
+                disableClick={disableClick}
                 mentions={mentions}
                 tokens={postData.tokensByLength(collapseLength)}
             />
@@ -50,6 +51,7 @@ export default ({classes, collapsible:givenCollapsible, mentions, postData}) => 
             unmountOnExit
         >
             <MentionedTextComponent
+                disableClick={disableClick}
                 className={classes.text}
                 mentions={mentions}
                 tokens={postData.tokens}
