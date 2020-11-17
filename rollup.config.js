@@ -94,10 +94,13 @@ export default [
             Chats: 'src/chat/Chats.js',
             // ChatsCounter: 'src/chat/ChatsCounter.js',
             EditProfile: 'src/pages/EditProfile.js',
+            EditTag: 'src/pages/admin/EditTag.js',
             Errors: 'src/pages/admin/Errors.js',
             Login: 'src/pages/Login.js',
             Profile: 'src/pages/Profile.js',
             Signup: 'src/pages/Signup.js',
+            Tag: 'src/pages/Tag.js',
+            Tags: 'src/pages/admin/Tags.js',
             Users: 'src/pages/admin/users/Users.js',
 
             // internal
