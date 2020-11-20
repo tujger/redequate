@@ -10,7 +10,6 @@ import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentRe
 import Pagination from "../../controllers/FirebasePagination";
 import {UserData} from "../../controllers/UserData";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
-import notifySnackbar from "../../controllers/notifySnackbar";
 
 const MutualListComponent = (
     {
@@ -79,7 +78,7 @@ const MutualListComponent = (
         if (mode === MutualListMode.REQUESTS) {
             return item => <MutualRequestItem
                 data={item}
-                key={item.key}
+                key={item.key + "_" + mixedId}
                 onDelete={() => {
                     refreshList();
                     onChanged();
@@ -88,7 +87,7 @@ const MutualListComponent = (
         } else if (mode === MutualListMode.SUBSCRIBERS || mode === MutualListMode.SUBSCRIBES) {
             return item => <MutualSubscribeItem
                 data={item}
-                key={item.key}
+                key={item.key + "_" + mixedId}
                 onDelete={() => {
                     refreshList();
                     onChanged();
@@ -102,7 +101,7 @@ const MutualListComponent = (
         }
         return item => <Grid
             children={JSON.stringify(item, null, " ")}
-            container key={item.key}
+            container key={item.key + "_" + mixedId}
             style={{whiteSpace: "pre-wrap", marginBottom: "16px", borderBottom: "solid lightgray 1px"}}/>
     }
 
@@ -131,6 +130,10 @@ const MutualListComponent = (
         }
         return item => item
     }
+
+    React.useEffect(() => {
+        refreshList();
+    }, [mixedId, cached]);
 
     if (!typeId || !mutualId) {
         console.error(Error(`Some of arguments are not defined: typeId=${typeId}, mutualId=${mutualId}`));

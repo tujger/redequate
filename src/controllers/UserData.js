@@ -130,7 +130,7 @@ export function currentUserData(state = {
 // new stuff
 export function UserData(firebase) {
     // eslint-disable-next-line one-var
-    let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp, _loaded = {}, _persisted;
+    let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp, _loaded = {}, _persisted, _lastVisitUpdate = 0;
 
     const _dateFormatted = date => {
         if (!date) return "";
@@ -417,10 +417,12 @@ export function UserData(firebase) {
             if (!_loaded.private || force) {
                 if (!deviceId) {
                     const snap = await _fetch(firebase.database().ref("users_private").child(_id));
+                    if (snap.exists()) _persisted = true;
                     _private = {..._private, ...(snap.val() || {})}
                     _loaded = {..._loaded, private: true};
                 } else {
                     const snap = await _fetch(firebase.database().ref("users_private").child(_id).child(deviceId));
+                    if (snap.exists()) _persisted = true;
                     _private[deviceId] = {..._private[deviceId], ...(snap.val() || {})};
                     _loaded = {..._loaded, private: true};
                 }
@@ -538,8 +540,10 @@ export function UserData(firebase) {
             }
         },
         updateVisitTimestamp: () => {
-            if (_persisted) {
+            const now = new Date().getTime();
+            if (_persisted && (now - _lastVisitUpdate) > 60000) {
                 firebase.database().ref("users_public").child(_id).child("visit").set(firebase.database.ServerValue.TIMESTAMP);
+                _lastVisitUpdate = now;
             }
             return _body;
         },

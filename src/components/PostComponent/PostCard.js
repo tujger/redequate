@@ -1,16 +1,9 @@
 import React from "react";
-import {Link, useHistory} from "react-router-dom";
-import CardHeader from "@material-ui/core/CardHeader";
-import Card from "@material-ui/core/Card";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import RepliesTree from "./RepliesTree";
-import PostButtons from "./PostButtons";
-import PostBody from "./PostBody";
+import {useHistory} from "react-router-dom";
+import Hidden from "@material-ui/core/Hidden";
 import {cacheDatas, usePages} from "../../controllers/General";
-import AvatarView from "../AvatarView";
-import {toDateString} from "../../controllers/DateFormat";
-import PostMedia from "./PostMedia";
+import PostCardLayoutNarrow from "./PostCardLayoutNarrow";
+import PostCardLayoutWide from "./PostCardLayoutWide";
 
 export default (
     {
@@ -48,81 +41,31 @@ export default (
         history.push(pages.post.route + postData.id)
     }
 
-    const Wrapper = disableClick ? <></> : <CardActionArea
-        component={"div"}
-        onClick={handleClickPost}
-    />
+    const componentProps = {
+        allowedExtras,
+        classes,
+        className,
+        collapsible,
+        disableClick,
+        isReply,
+        level,
+        handleChange,
+        handleClickPost,
+        handleDelete,
+        mentions,
+        postData,
+        showRepliesCounter,
+        type,
+        userData,
+        UploadProps,
+    }
 
-    // return React.useMemo(() => {
     return <>
-        <Card className={[classes.root, classes.card, className].join(" ")}>
-            <Wrapper.type {...Wrapper.props}>
-                <CardHeader
-                    classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
-                    className={[classes.cardHeader, classes.post].join(" ")}
-                    avatar={<Link
-                        className={classes.avatar}
-                        to={!disableClick ? "#" : pages.user.route + postData.uid}
-                    >
-                        <AvatarView
-                            className={classes.avatar}
-                            image={userData.image}
-                            initials={userData.initials}
-                            verified={true}
-                        />
-                    </Link>}
-                    title={<Grid container>
-                        <Grid item className={classes.userName}>
-                            <Link
-                                to={!disableClick ? "#" : pages.user.route + userData.id}
-                                className={[classes.label].join(" ")}
-                            >{userData.name}</Link>
-                        </Grid>
-                        <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
-                            {toDateString(postData.created)}
-                        </Grid>
-                    </Grid>}
-                    subheader={<>
-                        <PostBody
-                            classes={classes}
-                            collapsible={collapsible}
-                            disableClick={!disableClick}
-                            mentions={mentions}
-                            postData={postData}
-                        />
-                        {postData.images && <Grid
-                            className={classes.cardImage}
-                            container
-                        >
-                            <PostMedia images={postData.images} viewer={disableClick}/>
-                        </Grid>}
-                        {!disableButtons && <PostButtons
-                            allowedExtras={allowedExtras}
-                            classes={classes}
-                            isReply={isReply}
-                            mentions={mentions}
-                            onChange={handleChange}
-                            onDelete={handleDelete}
-                            postData={postData}
-                            showRepliesCounter={showRepliesCounter}
-                            type={type}
-                            UploadProps={UploadProps}
-                            userData={userData}
-                        />}
-                    </>}
-                />
-            </Wrapper.type>
-        </Card>
-        {level !== undefined && <RepliesTree
-            allowedExtras={allowedExtras}
-            level={level}
-            postId={postData.id}
-            classes={classes}
-            onChange={handleChange}
-            onDelete={handleDelete}
-            type={type}
-            UploadProps={UploadProps}
-        />}
+        <Hidden mdUp>
+            <PostCardLayoutNarrow {...componentProps}/>
+        </Hidden>
+        <Hidden smDown>
+            <PostCardLayoutWide {...componentProps}/>
+        </Hidden>
     </>
-    // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

@@ -24,12 +24,10 @@ import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} fro
 import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
-import {hasWrapperControlInterface, installWrapperControl, wrapperControlCall} from "./controllers/WrapperControl";
+import {installWrapperControl} from "./controllers/WrapperControl";
 import TechnicalInfoView from "./components/TechnicalInfoView";
 import {Pages} from "./proptypes/Pages";
 import {Page} from "./proptypes";
-import {InView} from "react-intersection-observer";
-import {notifySnackbar} from "./controllers";
 // import BottomToolbarLayout from "./layouts/BottomToolbarLayout/BottomToolbarLayout";
 // import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout";
 // import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout/TopBottomMenuLayout";
@@ -114,7 +112,7 @@ function Dispatcher(props) {
                     if (savedUserData && savedUserData.userData) {
                         const userData = new UserData(firebase).fromJSON(savedUserData.userData);
                         await userData.fetch([UserData.ROLE]);
-                        await userData.fetchPrivate(fetchDeviceId());
+                        await userData.fetchPrivate(fetchDeviceId(), true);
                         userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
                         useCurrentUserData(userData);
                         cacheDatas.put(userData.id, userData);
@@ -203,7 +201,7 @@ function _DispatcherRoutedBody(props) {
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location) => {
         const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
-        console.log("[Dispatcher]", JSON.stringify(location), current);
+        console.log("[Dispatcher]", JSON.stringify(location));
         try {
             if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
         } catch (error) {

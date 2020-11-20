@@ -12,19 +12,19 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
 import withStyles from "@material-ui/styles/withStyles";
-import GameIcon from "@material-ui/icons/LocalBar";
-import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
-import ProgressView from "../../components/ProgressView";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import {uploadComponentClean, uploadComponentPublish} from "../../components/UploadComponent/uploadComponentControls";
-import LoadingComponent from "../../components/LoadingComponent";
-import UploadComponent from "../../components/UploadComponent/UploadComponent";
-import MentionsInputComponent from "../../components/MentionsInputComponent/MentionsInputComponent";
-import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
-import ConfirmComponent from "../../components/ConfirmComponent";
-import {styles} from "../../controllers/Theme";
-import Pagination from "../../controllers/FirebasePagination";
-import {normalizeSortName} from "../../controllers/UserData";
+import TagIcon from "@material-ui/icons/Label";
+import {cacheDatas, useFirebase, usePages} from "../controllers/General";
+import ProgressView from "../components/ProgressView";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import LoadingComponent from "../components/LoadingComponent";
+import UploadComponent from "../components/UploadComponent/UploadComponent";
+import MentionsInputComponent from "../components/MentionsInputComponent/MentionsInputComponent";
+import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import ConfirmComponent from "../components/ConfirmComponent";
+import {styles} from "../controllers/Theme";
+import Pagination from "../controllers/FirebasePagination";
+import {currentUserData, normalizeSortName, useCurrentUserData} from "../controllers/UserData";
 
 const stylesCurrent = theme => ({
     image: {
@@ -66,14 +66,16 @@ const stylesCurrent = theme => ({
     content: {},
 });
 
-const EditTag = ({new: isNew, classes, ...rest}) => {
-    const history = useHistory();
-    const firebase = useFirebase();
+const EditTag = ({classes, ...rest}) => {
+    const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
-    const pages = usePages();
+    const firebase = useFirebase();
+    const history = useHistory();
     const [state, setState] = React.useState({});
-    const {tag, disabled, hideTagOpen, image, uppy, showTagOpen, deleteTagOpen} = state;
+    const {tag, disabled, hideTagOpen, image, uppy, showTagOpen, deleteTagOpen, newId} = state;
     const {id} = useParams();
+
+    const isNew = id === undefined;
 
     const saveTag = async () => {
         dispatch(ProgressView.SHOW);
@@ -111,10 +113,16 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
         const {url: imageSaved} = (publishing[0] || {});
 
         tag.image = imageSaved || image || null;
+        tag.id = tag.id || normalizeSortName(tag.label);
+        tag.timestamp = tag.timestamp || firebase.database.ServerValue.TIMESTAMP;
+        tag.uid = tag.uid || currentUserData.id;
+        if (!tag.hidden) {
+            tag._sort_name = tag._sort_name || tag.id;
+        }
 
-        firebase.database().ref("tag").child(id).set(tag)
+        firebase.database().ref("tag").child(id || newId).set(tag)
             .then(() => history.goBack())
-            .then(() => cacheDatas.remove(id))
+            .then(() => cacheDatas.remove(id || newId))
             .catch(notifySnackbar)
             .finally(() => {
                 dispatch(ProgressView.HIDE);
@@ -123,25 +131,25 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
         console.log("[EditTag] save", tag)
     }
 
-    const adjustValue = (text, plain, separator = ",;") => {
-        console.log(text)
-        let tokens = (text || "")
-            .split(new RegExp("[" + separator + "]\\s*"))
-            .filter(token => !!token.trim())
-            .map((token) => {
-                if (token.trim()) {
-                    if (plain) {
-                        return token.trim();
-                    } else {
-                        return token.trim();
-                        // return `$[item:${token.toLowerCase()}:${token}]`;
-                    }
-                } else {
-                    return token;
-                }
-            })
-        return tokens.join("; ");
-    }
+    // const adjustValue = (text, plain, separator = ",;") => {
+    //     console.log(text)
+    //     let tokens = (text || "")
+    //         .split(new RegExp("[" + separator + "]\\s*"))
+    //         .filter(token => !!token.trim())
+    //         .map((token) => {
+    //             if (token.trim()) {
+    //                 if (plain) {
+    //                     return token.trim();
+    //                 } else {
+    //                     return token.trim();
+    //                     // return `$[item:${token.toLowerCase()}:${token}]`;
+    //                 }
+    //             } else {
+    //                 return token;
+    //             }
+    //         })
+    //     return tokens.join("; ");
+    // }
 
     const toggleTag = (event, value) => {
         if (value && !tag.hidden) {
@@ -160,7 +168,6 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
         setState(state => ({...state, disabled: true, hideTagOpen: false}));
 
         const updates = {};
-        // updates[`_game_scores/${game.id}`] = null;
         updates[`tag/${id}/hidden`] = true;
         updates[`tag/${id}/_sort_name`] = null;
         console.log("[EditTag] updates", updates)
@@ -168,7 +175,7 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
             .then(() => {
                 tag.hidden = true;
                 notifySnackbar({
-                    title: `Tag ${tag.label} and all related resources have been hidden.`,
+                    title: `Tag ${tag.label} have been hidden.`,
                     variant: "warning"
                 });
             })
@@ -187,17 +194,16 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
         setState(state => ({...state, disabled: true, showTagOpen: false}));
 
         const updates = {};
-        // updates[`_game_scores/${game.id}`] = null;
         delete tag.hidden;
         updates[`tag/${id}/hidden`] = null;
+        tag._sort_name = tag.id;
         updates[`tag/${id}/_sort_name`] = tag._sort_name;
-        // updates[`_game_scores/${game.id}/score`] = 0.001;
         console.log("[EditTag] updates", updates)
 
         firebase.database().ref().update(updates)
             .then(() => {
                 notifySnackbar({
-                    title: `Tag ${tag.label} is visible now. Score will be recalculated during an hour.`,
+                    title: `Tag ${tag.label} is visible now.`,
                     variant: "warning"
                 });
             })
@@ -219,20 +225,20 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, deleteTagOpen: false}));
         let updates = {};
-        let updatesLength = 0;
-        const addUpdate = async (path, value) => {
-            updates[path] = value || null;
-            updatesLength++;
-            if (updatesLength > 1000) await updateUpdates();
-        }
+        // let updatesLength = 0;
+        // const addUpdate = async (path, value) => {
+        //     updates[path] = value || null;
+        //     updatesLength++;
+        //     if (updatesLength > 1000) await updateUpdates();
+        // }
 
-        const updateUpdates = () => {
-            console.log("[FU]", updatesLength, updates);
-            const upds = updates;
-            updates = {};
-            updatesLength = 0;
-            return firebase.database().ref().update(upds);
-        }
+        // const updateUpdates = () => {
+        //     console.log("[EditTag]", updatesLength, updates);
+        //     const upds = updates;
+        //     updates = {};
+        //     updatesLength = 0;
+        //     return firebase.database().ref().update(upds);
+        // }
 
         updates[`tag/${id}`] = null;
         updates[`_tag/${id}`] = null;
@@ -298,14 +304,14 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
     }
 
     React.useEffect(() => {
-        if (isNew) {
-            // const tagRef = firebase.database().ref("tag").push();
-            // const tag = new GameData(firebase).create({id: gameRef.key});
-            // setState(state => ({...state, game, gameRef}));
+        if (!id) {
+            const tagRef = firebase.database().ref("tag").push();
+            const tag = {};
+            setState(state => ({...state, tag, newId: tagRef.key}));
         } else if (id) {
             firebase.database().ref("tag").child(id).once("value")
                 .then(snapshot => {
-                    if(snapshot.exists()) return snapshot.val();
+                    if (snapshot.exists()) return snapshot.val();
                     throw Error("Tag not found");
                 })
                 .then(tag => setState(state => ({...state, tag, image: tag && tag.image})))
@@ -325,8 +331,8 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
         <Grid container spacing={1} alignItems={"flex-start"}>
             <Grid item className={classes.photo}>
                 <Grid container>
-                    {image ? <img src={image} alt="" className={classes.image}/>
-                        : <GameIcon className={classes.image}/>}
+                    {image ? <img src={image} alt={""} className={classes.image}/>
+                        : <TagIcon className={classes.image}/>}
                     <IconButton
                         children={<ClearIcon/>}
                         className={classes.clearPhoto}
@@ -347,13 +353,13 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
                 </React.Suspense>
             </Grid>
             <Grid item xs>
-                <Grid container alignItems="flex-end">
+                <Grid container alignItems={"flex-end"}>
                     <TextField
                         color={"secondary"}
                         disabled={disabled}
                         required
                         fullWidth
-                        label="Name"
+                        label={"Name"}
                         onChange={ev => {
                             tag.label = ev.target.value;
                             setState({...state, tag, random: Math.random()});
@@ -362,7 +368,7 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
                     />
                 </Grid>
                 <Box m={1}/>
-                <Grid container alignItems="flex-end">
+                <Grid container alignItems={"flex-end"}>
                     <MentionsInputComponent
                         className={classes._description}
                         color={"secondary"}
@@ -383,13 +389,13 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
                         focused={true}/>
                 </Grid>
                 <Box m={1}/>
-                {!uppy && <React.Fragment>
-                    <Grid container alignItems="flex-end">
+                {!uppy && <>
+                    <Grid container alignItems={"flex-end"}>
                         <TextField
                             color={"secondary"}
                             disabled={disabled}
                             fullWidth
-                            label="Image URL"
+                            label={"Image URL"}
                             onChange={ev => {
                                 const image = ev.target.value;
                                 setState({...state, image, random: Math.random()});
@@ -397,7 +403,7 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
                             value={image || ""}
                         />
                     </Grid>
-                    <Grid container alignItems="flex-end">
+                    <Grid container alignItems={"flex-end"}>
                         {!disabled && <Typography variant={"subtitle2"}>
                             <a
                                 href={`https://www.google.com/search?q=${tag.label} &source=lnms&tbm=isch&sa=X`}
@@ -406,37 +412,39 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
                         </Typography>}
                     </Grid>
                     <Box m={1}/>
-                </React.Fragment>}
-                {!isNew && <React.Fragment><Grid container alignItems="flex-end">
-                    <FormControlLabel
-                        control={<Switch
-                            checked={tag.hidden || false}
-                            disabled={disabled}
-                            onChange={toggleTag}
-                        />}
-                        label="Deactivate this tag"
-                        style={{color: "#ff0000"}}
-                    />
-                </Grid>
+                </>}
+                {!isNew && <>
+                    <Grid container alignItems={"flex-end"}>
+                        <FormControlLabel
+                            control={<Switch
+                                checked={tag.hidden || false}
+                                disabled={disabled}
+                                onChange={toggleTag}
+                            />}
+                            label={"Deactivate this tag"}
+                            style={{color: "#ff0000"}}
+                        />
+                    </Grid>
                     <Box m={1}/>
-                </React.Fragment>}
+                </>}
                 <ButtonGroup
                     color={"secondary"}
                     disabled={disabled}
                     fullWidth
-                    size="large"
-                    variant="contained"
+                    size={"large"}
+                    variant={"contained"}
                 >
                     <Button onClick={saveTag}>Save</Button>
                     <Button onClick={() => history.goBack()}>Cancel</Button>
                 </ButtonGroup>
-                {!isNew && <React.Fragment>
+                {!isNew && <>
                     <Box m={4}/>
                     <Grid container justify={"center"}>
                         <Button onClick={handleClickDelete} style={{color: "#ff0000"}}>
                             Permanently remove tag
                         </Button>
-                    </Grid></React.Fragment>}
+                    </Grid>
+                </>}
             </Grid>
             {hideTagOpen && <ConfirmComponent
                 confirmLabel={"Hide"}
@@ -446,7 +454,7 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
                 title={"Hide tag?"}
             >
                 The tag <b>{tag.label}</b> will be hidden, unavailable for view, not presented in suggestions. All
-                posts in followings and watchlist will be available.
+                related posts will be available.
                 <br/>
                 WARNING! This action will be proceeded immediately!
             </ConfirmComponent>}
@@ -468,8 +476,7 @@ const EditTag = ({new: isNew, classes, ...rest}) => {
                 onConfirm={deleteTag}
                 title={"Delete tag?"}
             >
-                The tag <b>{tag.label}</b>, all its posts, replies, watchlist items will be deleted and can not be
-                restored.
+                The tag <b>{tag.label}</b> will be deleted and can not be restored.
                 <br/>
                 WARNING! This action will be proceeded immediately!
             </ConfirmComponent>}

@@ -31,7 +31,7 @@
         "react-image-file-resizer": "latest",
         "react-intersection-observer": "latest",
         "react-ios-pwa-prompt": "latest",
-        "react-mentions-t": "0.0.31",
+        "react-mentions-t": "latest",
         "react-text-mask": "latest",
         "react-use-web-share": "latest",
         "react-uuid": "latest",
@@ -61,7 +61,7 @@
         "react-linkify": "latest",
         "react-redux": "latest",
         "react-router-dom": "latest",
-        "reactive-blueimp-gallery": "latest",
+        "reactive-blueimp-gallery-t": "latest",
         "redux": "latest"
     },
     "devDependencies": {

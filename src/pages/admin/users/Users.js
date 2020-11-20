@@ -7,8 +7,8 @@ import Grid from "@material-ui/core/Grid";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import UserItem from "./UserItem";
 import Pagination from "../../../controllers/FirebasePagination";
-import {currentUserData, useCurrentUserData, UserData} from "../../../controllers/UserData";
-import {cacheDatas, useFirebase, usePages} from "../../../controllers/General";
+import {UserData} from "../../../controllers/UserData";
+import {useFirebase, usePages} from "../../../controllers/General";
 import ProgressView from "../../../components/ProgressView";
 import {styles} from "../../../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
@@ -19,11 +19,10 @@ import UsersHeader from "./UsersHeader";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
-    const {classes, mode = "all", filter, invitation = true} = props;
+    const {classes, mode = "all", filter = "", invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
     const firebase = useFirebase();
-    const currentUserData = useCurrentUserData();
 
     const handleHeaderChange = type => evt => {
         if (type === "clear") {

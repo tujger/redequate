@@ -276,6 +276,7 @@ export const styles = theme => ({
 export const stylesList = theme => ({
     avatar: {
         boxSizing: "border-box",
+        color: "lightgray",
         height: theme.spacing(7),
         textDecoration: "none",
         width: theme.spacing(7),

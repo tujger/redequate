@@ -69,6 +69,7 @@ export const lazyListComponentReducer = (state = {}, action) => {
 };
 lazyListComponentReducer._ADD = "LazyListComponent_add";
 lazyListComponentReducer.EXIT = "LazyListComponent_exit";
+lazyListComponentReducer.FLUSH = "LazyListComponent_flush";
 lazyListComponentReducer.REFRESH = "LazyListComponent_refresh";
 lazyListComponentReducer.RESET = "LazyListComponent_reset";
 lazyListComponentReducer.UPDATE = "LazyListComponent_update";

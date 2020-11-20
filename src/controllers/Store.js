@@ -15,6 +15,7 @@ import {chatsCounterReducer} from "../chat/chatsCounterReducer";
 import {alertsVisitReducer} from "../alerts/alertsVisitReducer";
 import {alertsCounterReducer} from "../alerts/alertsCounterReducer";
 import {newPostComponentReducer} from "../components/NewPostComponent/newPostComponentReducer";
+import {tagsReducer} from "../tags/tagsReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -31,6 +32,7 @@ const Store = (name, reducers) => {
         newPostComponentReducer,
         progressView: progressViewReducer,
         snackbar: snackbarReducer,
+        tags: tagsReducer,
         topMenuReducer,
         users: usersReducer,
         ...reducers

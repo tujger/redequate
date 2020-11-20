@@ -7,10 +7,8 @@ import IconButton from "@material-ui/core/IconButton";
 import FixIcon from "@material-ui/icons/BugReport";
 import {useDispatch} from "react-redux";
 import Button from "@material-ui/core/Button";
-import Tooltip from "@material-ui/core/Tooltip";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
-import RefreshIcon from "@material-ui/icons/Refresh";
 import EditIcon from "@material-ui/icons/Edit";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {fetchCallable} from "../controllers/Firebase";
@@ -31,8 +29,8 @@ import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import {styles} from "../controllers/Theme";
 import InfoComponent from "../components/InfoComponent";
 
-const stylesGame = theme => ({
-    gameImage: {
+const stylesCurrent = theme => ({
+    tagImage: {
         width: "auto"
     },
     follow: {
@@ -48,7 +46,7 @@ const Tag = ({classes}) => {
     const history = useHistory();
     const pages = usePages()
     const [state, setState] = React.useState({disabled: false});
-    const {disabled, watchers = 0, tabSelected = 0, random, tag, following} = state;
+    const {tabSelected = 0, tag} = state;
     const dispatch = useDispatch();
     const db = firebase.database();
     const currentUserData = useCurrentUserData();
@@ -56,7 +54,6 @@ const Tag = ({classes}) => {
     const {id: itemId} = useParams();
 
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
-    const isFollowAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
 
     const buttonProps = (index) => {
         return {
@@ -91,8 +88,8 @@ const Tag = ({classes}) => {
                 }).next().then(items => items[0])
             })
             .then(tag => {
-                history.replace(pages.tag.route + tag.value.id);
-                setState(state => ({...state, tag}))
+                if (!tag.value.hidden) history.replace(pages.tag.route + tag.value.id);
+                isMounted && setState(state => ({...state, tag}))
             })
             .catch(error => {
                 console.error(itemId, error);
@@ -131,8 +128,11 @@ const Tag = ({classes}) => {
             <Grid container>
                 {tag.value.image && <Grid container spacing={1} className={classes.profileImageContainer}>
                     <Grid item>
-                        <img className={[classes.profileImage, classes.gameImage].join(" ")} src={tag.value.image}
-                             alt={""}/>
+                        <img
+                            alt={""}
+                            className={[classes.profileImage, classes.tagImage].join(" ")}
+                            src={tag.value.image}
+                        />
                     </Grid>
                 </Grid>}
                 <Grid container className={classes.profileFields}>
@@ -170,10 +170,10 @@ const Tag = ({classes}) => {
         >
             <Button
                 {...buttonProps(0)}
-                children={<React.Fragment>
+                children={<>
                     Posts
                     {/*<CounterComponent path={`${tag.key}/total`} prefix={" ("} suffix={")"}/>*/}
-                </React.Fragment>}/>
+                </>}/>
         </NavigationToolbar>
         <Grid container className={classes.center}>
             <LazyListComponent
@@ -242,5 +242,5 @@ const Tag = ({classes}) => {
 
 export default withStyles((theme) => ({
     ...styles(theme),
-    ...stylesGame(theme),
+    ...stylesCurrent(theme),
 }))(Tag);
