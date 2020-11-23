@@ -5,15 +5,16 @@ import withStyles from "@material-ui/styles/withStyles";
 import {connect, useDispatch} from "react-redux";
 import Errors from "./Errors";
 import {styles} from "../../controllers/Theme";
-import {usePages} from "../../controllers/General";
+import {usePages, useWindowData} from "../../controllers/General";
 import {auditReducer} from "../../reducers/auditReducer";
 import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../../components/NavigationToolbar";
 
 const Audit = (props) => {
-    const pages = usePages();
-    const {classes, tabSelected, children = [(pages.errors && pages.errors.component) || <Errors/>]} = props;
     const dispatch = useDispatch();
+    const pages = usePages();
+    const windowData = useWindowData();
+    const {classes, tabSelected, children = [(pages.errors && pages.errors.component) || <Errors/>]} = props;
 
     const handleChange = tabSelected => () => {
         dispatch({type: auditReducer.SAVE, tabSelected});
@@ -28,6 +29,7 @@ const Audit = (props) => {
             justify={"center"}
             backButton={null}
             className={classes.topSticky}
+            style={windowData.isNarrow() ? {padding: 0} : undefined}
         >
             {children.map((child, index) => {
                 let label = "";

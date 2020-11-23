@@ -1,16 +1,28 @@
 import React from "react";
-import ReactGallery from "reactive-blueimp-gallery-t";
+import ReactGallery from "reactive-blueimp-gallery-tt";
 import withStyles from "@material-ui/styles/withStyles";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import {useHistory} from "react-router-dom";
+import SmartGallery from "react-smart-gallery";
 
-const stylesCurrentModal = makeStyles(theme => ({
-    _postMediaGallery: {
+const stylesCurrent = makeStyles(theme => ({
+    _postMediaGalleryModal: {
+        "& > .carousel > .slides > .slide": {
+            visibility: "visible",
+        },
+        "& > .controls > a": {
+            fontSize: 0,
+        },
+        "& > .controls > .indicator > li": {
+            backgroundSize: "cover",
+            borderRadius: 2,
+            height: 50,
+            width: 50,
+        },
         "& > .thumbnails": {
             display: "flex",
             flexDirection: "row",
             justifyContent: "center",
-
             position: "relative",
         },
         "& > .thumbnails > a": {
@@ -26,34 +38,21 @@ const stylesCurrentModal = makeStyles(theme => ({
             height: "100%",
             verticalAlign: "middle",
             textAlign: "center",
-
             objectFit: "cover",
             width: "100%",
         },
-        "& > .controls > .indicator > li": {
-            borderRadius: 2,
-            height: 50,
-            width: 50,
-        },
-        "& > .carousel > .slides > .slide": {
-            visibility: ""
-        }
     },
-    _postMediaGalleryDisabled: {
-        bottom: 0,
-        left: 0,
-        opacity: 0,
-        position: "absolute",
-        right: 0,
-        top: 0,
-    }
-}));
-
-const stylesCurrentInline = makeStyles(theme => ({
-    _postMediaGallery: {
+    _postMediaGalleryInline: {
         maxHeight: 300,
         position: "relative",
         width: "100%",
+        "& > .carousel": {
+            backgroundColor: "transparent",
+            margin: 0,
+        },
+        "& > .controls > a": {
+            fontSize: 0,
+        },
         "& > .thumbnails": {
             display: "none",
             flexDirection: "row",
@@ -72,10 +71,6 @@ const stylesCurrentInline = makeStyles(theme => ({
             verticalAlign: "middle",
             textAlign: "center",
         },
-        "& > .carousel": {
-            backgroundColor: "transparent",
-            margin: 0,
-        },
     },
     _postMediaGalleryDisabled: {
         bottom: 0,
@@ -84,14 +79,21 @@ const stylesCurrentInline = makeStyles(theme => ({
         position: "absolute",
         right: 0,
         top: 0,
+    },
+    _postMediaGalleryMosaic: {
+        "& > .thumbnails": {
+            display: "none",
+        },
     }
 }));
 
 export default withStyles()((props) => {
-    const {images: imagesGiven, inlineCarousel = false, clickable = true} = props;
+    const {images: imagesGiven, inlineCarousel = false, clickable = true, mosaic = false} = props;
     const history = useHistory();
     const ref = React.useRef({});
-    const classesCurrent = inlineCarousel ? stylesCurrentInline() : stylesCurrentModal();
+    const classesCurrent = stylesCurrent();
+    const [state, setState] = React.useState({});
+    const {selected = null, gallery} = state;
 
     const images = (imagesGiven || []).map(image => {
         let value = {href: image, thumbnail: image};
@@ -103,7 +105,8 @@ export default withStyles()((props) => {
                     ...value,
                     type: "text/html",
                     "data-youtube": id,
-                    thumbnail: `https://img.youtube.com/vi/${id}/maxresdefault.jpg`
+                    thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+                    poster: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
                 }
             }
         } catch (error) {
@@ -114,12 +117,28 @@ export default withStyles()((props) => {
 
     if (!images.length) return null;
     return <>
-        <ReactGallery
-            className={classesCurrent._postMediaGallery}
+        {mosaic && <SmartGallery
+            rootStyle={{backgroundColor: "transparent"}}
+            images={images.map(image => {
+                return image.href;
+            })}
+            onImageSelect={(evt, src, selected) => {
+                if (gallery && gallery.list && gallery.list[selected]) {
+                    gallery.list[selected].click();
+                } else {
+                    setState(state => ({...state, selected}))
+                }
+            }}
+            width={"100%"}
+        />}
+        {(!mosaic || selected !== null) && <ReactGallery
+            className={[
+                inlineCarousel ? classesCurrent._postMediaGalleryInline : classesCurrent._postMediaGalleryModal,
+                mosaic ? classesCurrent._postMediaGalleryMosaic : "",
+            ].join(" ")}
             options={{
                 onclosed: evt => {
                     if (!clickable || inlineCarousel) return;
-                    console.log("close", evt);
                     if (ref.current) {
                         ref.current();
                         ref.current = null;
@@ -133,16 +152,40 @@ export default withStyles()((props) => {
                             ref.current();
                             ref.current = null;
                         }
+                        if (mosaic) {
+                            setState(state => ({...state, selected: null, gallery: null}));
+                        }
                         return false;
                     })
                 },
-
-                youTubeClickToPlay: false,
+                onslide: (index, slide) => {
+                    if (images[index] && images[index]["data-youtube"]) {
+                        try {
+                            const button = slide.getElementsByTagName("a")[0];
+                            button.addEventListener("click", event => {
+                                slide.firstChild.classList.add("video-playing");
+                            }, {once: true});
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                },
+                emulateTouchEvents: true,
+                youTubeClickToPlay: true,
                 startSlideshow: false,
             }}
             inlineCarousel={inlineCarousel}
+            onrender={slides => {
+                if (mosaic && slides.childNodes[selected]) {
+                    slides.childNodes[selected].click();
+                }
+            }}
+            oninit={evt => {
+                setState(state => ({...state, gallery: evt}));
+            }}
             source={images}
-        />
-        {!clickable && <div className={classesCurrent._postMediaGalleryDisabled}/>}
+            withControls={inlineCarousel}
+        />}
+        {!mosaic && !clickable && <div className={classesCurrent._postMediaGalleryDisabled}/>}
     </>
 });

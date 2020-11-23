@@ -82,7 +82,8 @@ export default (
             >
                 <PostMedia
                     images={postData.images}
-                    inlineCarousel={!disableClick}
+                    // inlineCarousel={!disableClick}
+                    mosaic
                 />
             </Grid>}
             {!disableButtons && <PostButtons

@@ -254,6 +254,9 @@ export const styles = theme => ({
         borderBottomWidth: theme.spacing(0.25),
         borderRadius: 0,
         whiteSpace: "nowrap",
+        [theme.breakpoints.down("sm")]: {
+            flex: "1 0 auto",
+        },
     },
     tabButtonSelected: {
         borderBottomColor: theme.palette.secondary.main,

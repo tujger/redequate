@@ -25,8 +25,9 @@ const NavigationToolbar = (
         classes,
         className,
         justify,
+        mediumButton,
         rightButton,
-        mediumButton
+        style,
     }) => {
     const history = useHistory();
 
@@ -39,7 +40,12 @@ const NavigationToolbar = (
 
     const isChildrenLabel = children && children.constructor.name === "String";
 
-    return <Grid container className={[classes.toolbar, className].join(" ")} alignItems={alignItems}>
+    return <Grid
+        alignItems={alignItems}
+        className={[classes.toolbar, className].join(" ")}
+        container
+        style={style}
+    >
         <Grid item>
             {button}
         </Grid>
