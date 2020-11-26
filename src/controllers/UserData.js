@@ -573,6 +573,7 @@ export const normalizeSortName = text => {
     if (!text || !(text.constructor.name === "String")) return text;
     return (text || "")
         .trim()
-        .replace(/[~`!@#$%^&*()\-_=+[\]{}|\\;:'",<.>/?\s™®～]+/g, "")
+        .replace(/[^\wа-яА-Я]/g, "")
+        // .replace(/[~`!@#$%^&*()\-_=+[\]{}|\\;:'",<.>/?\s™®～]+/g, "")
         .toLowerCase();
 }

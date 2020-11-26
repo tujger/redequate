@@ -7,10 +7,16 @@ import AvatarView from "./AvatarView";
 import withStyles from "@material-ui/styles/withStyles";
 import {stylesList} from "../controllers/Theme";
 
-const ItemPlaceholderComponent = ({classes, label}) => (
-    <Card className={[classes.card].join(" ")}>
+const ItemPlaceholderComponent = ({avatar, classes, label, flat, cloud, onClick, transparent}) => (
+    <Card
+        className={[
+            classes.card,
+            flat ? classes.cardFlat : cloud ? classes.cardCloud : transparent ? classes.cardTransparent : ""
+        ].join(" ")}
+        onClick={onClick}
+    >
         <CardHeader
-            avatar={label
+            avatar={avatar || (label
                 ? <AvatarView
                     className={classes.avatar}
                     initials={label}
@@ -20,7 +26,7 @@ const ItemPlaceholderComponent = ({classes, label}) => (
                     animation={label ? false : "wave"}
                     className={classes.avatar}
                     variant={"circle"}
-                />}
+                />)}
             className={[classes.cardHeader, "", label ? classes.cardHeaderWithLabel : ""].join(" ")}
             subheader={!label && <>
                 <Skeleton

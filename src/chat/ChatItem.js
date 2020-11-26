@@ -9,12 +9,8 @@ import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import {stylesList} from "../controllers/Theme";
 
 const stylesChat = theme => ({
-    avatarChat: {
-        height: theme.spacing(3),
-        width: theme.spacing(3),
-    },
     chatItem: {
-        borderRadius: theme.spacing(2),
+        marginBottom: 0,
         width: "90%"
     },
     chatItemOut: {
@@ -22,16 +18,13 @@ const stylesChat = theme => ({
         marginLeft: "10%",
     },
     chatItemIn: {
-        backgroundColor: "#f1f0f0",
         marginRight: "10%",
     },
-    text: {
-        color: "#101010",
+    _text: {
         marginBottom: theme.spacing(1),
     },
     timestamp: {
         bottom: theme.spacing(0.5),
-        color: "#888888",
         fontSize: theme.spacing(1.25),
         position: "absolute",
         right: theme.spacing(1),
@@ -77,6 +70,7 @@ const ChatItem = (props) => {
     return <Card className={[
         classes.root,
         classes.card,
+        classes.cardCloud,
         classes.chatItem,
         isItemOut ? classes.chatItemOut : classes.chatItemIn
     ].join(" ")}>
@@ -84,7 +78,7 @@ const ChatItem = (props) => {
             classes={{content: classes.cardContent}}
             className={[classes.cardHeader, classes.post].join(" ")}
             avatar={<AvatarView
-                className={[classes.avatar, classes.avatarChat].join(" ")}
+                className={[classes.avatar, classes.avatarSmallest].join(" ")}
                 image={authorData.image}
                 initials={authorData.initials}
                 verified={true}
@@ -102,9 +96,9 @@ const ChatItem = (props) => {
                         {toDateString(data.created)}
                     </Grid> */}
             </Grid>}
-            subheader={<Grid container className={classes.text}>
+            subheader={<Grid container className={classes._text}>
                 <Grid item xs>{textComponent(data.text)}</Grid>
-                <Grid className={classes.timestamp}>{toDateString(data.created)}</Grid>
+                <Grid className={[classes.date, classes.timestamp].join(" ")}>{toDateString(data.created)}</Grid>
             </Grid>}
         />
     </Card>

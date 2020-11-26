@@ -32,7 +32,7 @@ const TopMenu = props => {
     const currentUserData = useCurrentUserData();
 
     return <div className={["MuiTopMenu-root", classes.topmenu, className].join(" ")}>
-        {items.map((list, index) => <MenuSection key={index} badge={badge} items={list}/>)}
+        {items.map((list, index) => <MenuSection className={classes.label} key={index} badge={badge} items={list}/>)}
         {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
         {currentUserData.id && <Link
             to={pages.profile.route}

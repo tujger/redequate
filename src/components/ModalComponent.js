@@ -27,10 +27,13 @@ const ModalComponent = ({onClose, classes, children}) => {
     React.useEffect(() => {
         const unblock = history.block(() => {
             onClose();
+            history.unblock = null;
             return false;
         })
+        history.unblock = unblock;
         return () => {
             unblock();
+            history.unblock = null;
         }
     })
 

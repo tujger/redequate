@@ -85,7 +85,7 @@ const stylesCurrent = theme => ({
         paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
     },
     topSticky: {
-        backgroundColor: theme.palette.background.default,
+        backgroundColor: "inherit",
         paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
         paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,
         position: "sticky",

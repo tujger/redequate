@@ -76,12 +76,13 @@ const MutualRequestItem = (
         variant: "contained",
     }
 
-    if (label) return <ItemPlaceholderComponent label={label} classes={classes}/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes}/>;
+    if (label) return <ItemPlaceholderComponent label={label} classes={classes} flat/>
+    if (skeleton) return <ItemPlaceholderComponent classes={classes} flat/>;
 
     return <>
-        <Card className={classes.card}>
+        <Card className={[classes.card, classes.cardFlat].join(" ")}>
             <CardActionArea
+                className={classes.root}
                 disabled={disabled}
                 onClick={evt => {
                     history.push(pages.user.route + userData.id);

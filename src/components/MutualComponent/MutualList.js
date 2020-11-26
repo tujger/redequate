@@ -18,12 +18,12 @@ const MutualListComponent = (
         itemTransform,
         mode = MutualListMode.SUBSCRIBES,
         mutualId,
-        noItemsComponent = <ItemPlaceholderComponent label={"Items not found."}/>,
+        noItemsComponent = <ItemPlaceholderComponent label={"Items not found."} flat/>,
         onChanged = () => {
         },
         order = "desc",
         pageTransform = items => items,
-        placeholder = <ItemPlaceholderComponent skeleton={true}/>,
+        placeholder = <ItemPlaceholderComponent skeleton={true} flat/>,
         typeId,
         unsubscribeLabel,
     }) => {

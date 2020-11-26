@@ -37,11 +37,13 @@ function UserItem({data, classes, skeleton, label}) {
     const classesCurrent = stylesCurrent();
     const {value: userData, _date} = data || {};
 
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes}/>
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label} flat/>
+    if (skeleton) return <ItemPlaceholderComponent classes={classes} flat/>
 
-    return <Card className={[classes.root, classes.card].join(" ")}>
-        <CardActionArea onClick={() => {
+    return <Card className={[classes.card, classes.cardFlat].join(" ")}>
+        <CardActionArea
+            className={classes.root}
+            onClick={() => {
             history.push(pages.user.route + userData.id);
         }}>
             <CardHeader

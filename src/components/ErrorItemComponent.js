@@ -1,6 +1,7 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
+import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import IconButton from "@material-ui/core/IconButton";
 import {UserData} from "../controllers/UserData";
@@ -66,13 +67,15 @@ function ErrorItemComponent(props) {
     }, [])
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label}/>
-    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes}/>
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label} flat/>
+    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} flat/>
 
-    return <>
-        <CardActionArea onClick={() => {
-            setState({...state, alert: true});
-        }}>
+    return <Card className={[classes.card, classes.cardFlat].join(" ")}>
+        <CardActionArea
+            className={classes.root}
+            onClick={() => {
+                setState({...state, alert: true});
+            }}>
             <CardHeader
                 action={<IconButton component={"div"} onClick={handleRemove}>
                     <ClearIcon/>
@@ -113,7 +116,7 @@ function ErrorItemComponent(props) {
                     : data.value.error
             }</pre>
         </ConfirmComponent>}
-    </>
+    </Card>
 }
 
 export default withStyles(stylesList)(ErrorItemComponent);

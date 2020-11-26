@@ -58,6 +58,7 @@
         "prop-types": "latest",
         "react": "latest",
         "react-dom": "latest",
+        "react-image-lightbox": "latest",
         "react-linkify": "latest",
         "react-redux": "latest",
         "react-router-dom": "latest",

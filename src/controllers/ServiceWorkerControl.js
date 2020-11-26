@@ -85,7 +85,7 @@ export const checkForUpdate = () => new Promise((resolve, reject) => {
             } else if (!registration.installing && !registration.waiting) {
                 notifySnackbar({title: "You already use the latest version"});
                 resolve("latest");
-                window.location.reload();
+                // window.location.reload();
             } else if (registration.waiting) {
                 notifySnackbar({
                     buttonLabel: "Activate",

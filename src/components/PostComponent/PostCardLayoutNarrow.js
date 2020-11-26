@@ -1,25 +1,29 @@
 import React from "react";
 import {Link} from "react-router-dom";
 import CardHeader from "@material-ui/core/CardHeader";
+import TextField from "@material-ui/core/TextField";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
-import RepliesTree from "./RepliesTree";
-import PostButtons from "./PostButtons";
 import PostBody from "./PostBody";
-import {usePages} from "../../controllers/General";
+import {cacheDatas, usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
 import PostCardWrapper from "./PostCardWrapper";
+import PostButtonsAlt from "./PostButtonsAlt";
+import NewPostComponent from "../NewPostComponent/NewPostComponent";
+import notifySnackbar from "../../controllers/notifySnackbar";
 
 export default (
     {
         allowedExtras = ["like"],
         classes = {},
         className,
+        cloud,
         collapsible = true,
         disableClick = false,
         disableButtons,
+        flat,
         handleChange,
         handleClickPost,
         handleDelete,
@@ -30,6 +34,7 @@ export default (
         onDelete = postData => console.log("onDelete", postData),
         postData,
         showRepliesCounter = true,
+        transparent,
         type = "posts",
         UploadProps,
         userData,
@@ -38,14 +43,15 @@ export default (
 
     // return React.useMemo(() => {
     return <>
-        <Card className={[classes.root, classes.card, className].join(" ")}>
-            <PostCardWrapper disableClick={disableClick} handleClickPost={handleClickPost}>
+        <Card className={[classes.card, flat ? classes.cardFlat : cloud ? classes.cardCloud : transparent ? classes.cardTransparent : "", className].join(" ")}>
+            <PostCardWrapper classes={classes} disableClick={disableClick} handleClickPost={handleClickPost}>
                 <CardHeader
                     classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
                     className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post].join(" ")}
                     avatar={<Link
                         className={classes.avatarSmall}
-                        to={!disableClick ? "#" : pages.user.route + postData.uid}
+                        onClick={evt => evt.stopPropagation()}
+                        to={pages.user.route + postData.uid}
                     >
                         <AvatarView
                             className={classes.avatarSmall}
@@ -55,9 +61,14 @@ export default (
                         />
                     </Link>}
                     title={<Grid container>
-                        <Grid item className={classes.userName}>
+                        <Grid
+                            className={classes.userName}
+                            item
+                            // onClick={evt => evt.stopPropagation()}
+                        >
                             <Link
-                                to={!disableClick ? "#" : pages.user.route + userData.id}
+                                to={pages.user.route + userData.id}
+                                onClick={evt => evt.stopPropagation()}
                                 className={[classes.label].join(" ")}
                             >{userData.name}</Link>
                         </Grid>
@@ -86,7 +97,7 @@ export default (
                     mosaic
                 />
             </Grid>}
-            {!disableButtons && <PostButtons
+            {!disableButtons && <PostButtonsAlt
                 allowedExtras={allowedExtras}
                 classes={classes}
                 isReply={isReply}
@@ -100,16 +111,6 @@ export default (
                 userData={userData}
             />}
         </Card>
-        {level !== undefined && <RepliesTree
-            allowedExtras={allowedExtras}
-            level={level}
-            postId={postData.id}
-            classes={classes}
-            onChange={handleChange}
-            onDelete={handleDelete}
-            type={type}
-            UploadProps={UploadProps}
-        />}
     </>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

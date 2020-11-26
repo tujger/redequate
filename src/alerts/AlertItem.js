@@ -55,16 +55,16 @@ const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
     }, []);
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent label={label} classes={null}/>
-    if (skeleton || !type) return <ItemPlaceholderComponent classes={null}/>;
+    if (label) return <ItemPlaceholderComponent label={label} classes={null} flat/>
+    if (skeleton || !type) return <ItemPlaceholderComponent classes={null} flat/>;
 
     return <>
-        <Card className={classes.card}>
+        <Card className={[classes.card, classes.cardFlat].join(" ")}>
             <CardActionArea className={classes.root} onClick={handleClick}>
                 <CardHeader
                     classes={{content: classes.cardContent}}
                     className={[classes.cardHeader, classes.post].join(" ")}
-                    avatar={<AvatarView className={classes.avatar} icon={avatar} initials={type} verified={true}/>}
+                    avatar={<AvatarView className={classes.avatarSmall} icon={avatar} initials={type} verified={true}/>}
                     title={<Grid container>
                         <Grid item className={[classes.userName, isNew ? classes.unread : classes.read].join(" ")}>
                             {title}

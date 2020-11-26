@@ -1,11 +1,18 @@
 import React from "react";
-import ReactGallery from "reactive-blueimp-gallery-tt";
+// import ReactGallery from "reactive-blueimp-gallery-tt";
 import withStyles from "@material-ui/styles/withStyles";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import {useHistory} from "react-router-dom";
 import SmartGallery from "react-smart-gallery";
+import Lightbox from "react-image-lightbox";
+import "react-image-lightbox/style.css";
 
 const stylesCurrent = makeStyles(theme => ({
+    _postMediaLightboxPortal: {
+        backgroundColor: "transparent",
+        position: "fixed",
+        zIndex: 1100,
+    },
     _postMediaGalleryModal: {
         "& > .carousel > .slides > .slide": {
             visibility: "visible",
@@ -116,13 +123,16 @@ export default withStyles()((props) => {
     })
 
     if (!images.length) return null;
+
     return <>
-        {mosaic && <SmartGallery
+        <SmartGallery
             rootStyle={{backgroundColor: "transparent"}}
             images={images.map(image => {
                 return image.href;
             })}
             onImageSelect={(evt, src, selected) => {
+                evt && evt.stopPropagation();
+                console.log(evt, src, selected)
                 if (gallery && gallery.list && gallery.list[selected]) {
                     gallery.list[selected].click();
                 } else {
@@ -130,8 +140,39 @@ export default withStyles()((props) => {
                 }
             }}
             width={"100%"}
+        />
+        {selected !== null && <Lightbox
+            imagePadding={0}
+            mainSrc={images[selected].href}
+            nextSrc={images.length > 1 ? images[(selected + 1) % images.length].href : undefined}
+            prevSrc={images.length > 1 ? images[(selected + images.length - 1) % images.length].href : undefined}
+            onAfterOpen={() => {
+                console.log("open", window.scrollTop)
+                ref.current = history.block(() => {
+                    console.log("unblock")
+                    ref.current();
+                    ref.current = null;
+                    setState(state => ({...state, selected: null}));
+                    return false;
+                })
+            }}
+            onCloseRequest={() => {
+                console.log("close", window.scrollTop)
+                if (ref.current) {
+                    ref.current();
+                    ref.current = null;
+                }
+                setState(state => ({...state, selected: null}));
+            }}
+            onMovePrevRequest={() => {
+                setState(state => ({...state, selected: (selected + images.length - 1) % images.length}))
+            }}
+            onMoveNextRequest={() => {
+                setState(state => ({...state, selected: (selected + 1) % images.length}))
+            }}
+            reactModalProps={{portalClassName: classesCurrent._postMediaLightboxPortal}}
         />}
-        {(!mosaic || selected !== null) && <ReactGallery
+        {/*{(!mosaic || selected !== null) && <ReactGallery
             className={[
                 inlineCarousel ? classesCurrent._postMediaGalleryInline : classesCurrent._postMediaGalleryModal,
                 mosaic ? classesCurrent._postMediaGalleryMosaic : "",
@@ -143,6 +184,7 @@ export default withStyles()((props) => {
                         ref.current();
                         ref.current = null;
                     }
+                    document.body.style.zoom = 1;
                 },
                 onopen: (evt) => {
                     if (!clickable || inlineCarousel) return;
@@ -186,6 +228,6 @@ export default withStyles()((props) => {
             source={images}
             withControls={inlineCarousel}
         />}
-        {!mosaic && !clickable && <div className={classesCurrent._postMediaGalleryDisabled}/>}
+        {!mosaic && !clickable && <div className={classesCurrent._postMediaGalleryDisabled}/>}*/}
     </>
 });

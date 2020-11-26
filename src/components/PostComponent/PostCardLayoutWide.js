@@ -1,9 +1,8 @@
 import React from "react";
-import {Link} from "react-router-dom";
+import {Link, useHistory} from "react-router-dom";
 import CardHeader from "@material-ui/core/CardHeader";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
-import RepliesTree from "./RepliesTree";
 import PostButtons from "./PostButtons";
 import PostBody from "./PostBody";
 import {usePages} from "../../controllers/General";
@@ -17,9 +16,11 @@ export default (
         allowedExtras = ["like"],
         classes = {},
         className,
+        cloud,
         collapsible = true,
         disableClick = false,
         disableButtons,
+        flat,
         handleChange,
         handleClickPost,
         handleDelete,
@@ -30,6 +31,7 @@ export default (
         onDelete = postData => console.log("onDelete", postData),
         postData,
         showRepliesCounter = true,
+        transparent,
         type = "posts",
         UploadProps,
         userData,
@@ -38,14 +40,16 @@ export default (
 
     // return React.useMemo(() => {
     return <>
-        <Card className={[classes.root, classes.card, className].join(" ")}>
-            <PostCardWrapper disableClick={disableClick} handleClickPost={handleClickPost}>
+        <Card
+            className={[classes.card, flat ? classes.cardFlat : cloud ? classes.cardCloud : transparent ? classes.cardTransparent : "", className].join(" ")}>
+            <PostCardWrapper classes={classes} disableClick={disableClick} handleClickPost={handleClickPost}>
                 <CardHeader
                     classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
                     className={[classes.cardHeader, classes.post].join(" ")}
                     avatar={<Link
                         className={classes.avatar}
-                        to={!disableClick ? "#" : pages.user.route + postData.uid}
+                        onClick={evt => evt.stopPropagation()}
+                        to={pages.user.route + postData.uid}
                     >
                         <AvatarView
                             className={classes.avatar}
@@ -55,10 +59,14 @@ export default (
                         />
                     </Link>}
                     title={<Grid container>
-                        <Grid item className={classes.userName}>
+                        <Grid
+                            className={classes.userName}
+                            item
+                        >
                             <Link
-                                to={!disableClick ? "#" : pages.user.route + userData.id}
                                 className={[classes.label].join(" ")}
+                                onClick={evt => evt.stopPropagation()}
+                                to={pages.user.route + userData.id}
                             >{userData.name}</Link>
                         </Grid>
                         <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
@@ -100,16 +108,6 @@ export default (
                 />
             </PostCardWrapper>
         </Card>
-        {level !== undefined && <RepliesTree
-            allowedExtras={allowedExtras}
-            level={level}
-            postId={postData.id}
-            classes={classes}
-            onChange={handleChange}
-            onDelete={handleDelete}
-            type={type}
-            UploadProps={UploadProps}
-        />}
     </>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

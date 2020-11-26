@@ -4,7 +4,7 @@ import "firebase/database";
 import "firebase/functions";
 import "firebase/storage";
 import "firebase/analytics";
-import "firebase/messaging";
+// import "firebase/messaging";
 
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {

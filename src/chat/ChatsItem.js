@@ -96,13 +96,15 @@ function ChatsItem(props) {
     }, []);
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent label={label}/>;
-    if (skeleton || !chatMeta || !userData) return <ItemPlaceholderComponent/>;
+    if (label) return <ItemPlaceholderComponent label={label} flat/>;
+    if (skeleton || !chatMeta || !userData) return <ItemPlaceholderComponent skeleton flat/>;
 
     const isNew = fetchIsNew() && !shown;
 
-    return <Card className={classes.card}>
-        <CardActionArea onClick={(event) => {
+    return <Card className={[classes.card, classes.cardFlat].join(" ")}>
+        <CardActionArea
+            className={classes.root}
+            onClick={(event) => {
             event.stopPropagation();
             onClick ? onClick(chatMeta.id) : history.push(pages.chat.route + chatMeta.id);
         }}>

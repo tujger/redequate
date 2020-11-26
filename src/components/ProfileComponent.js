@@ -34,27 +34,23 @@ const ProfileComponent = (props) => {
     const {classes, userData, publicFields, provider = true} = props;
 
     return <Grid container style={{position: "relative"}}>
-        <Grid container spacing={1} className={classes.profileImageContainer}>
-            <Grid item>
-                {userData.image
-                    ? <AvatarView
-                        className={classes.profileImage}
-                        image={userData.image}
-                        initials={userData.initials}
-                        verified={userData.verified}/>
-                    : <EmptyAvatar className={classes.profileImage}/>}
-            </Grid>
+        <Grid item className={classes.profileImageContainer}>
+            {userData.image
+                ? <AvatarView
+                    className={classes.profileImage}
+                    image={userData.image}
+                    initials={userData.initials}
+                    verified={userData.verified}/>
+                : <EmptyAvatar className={classes.profileImage}/>}
         </Grid>
-        <Grid container className={classes.profileFields}>
+        <Grid item className={classes.profileFields}>
             {publicFields && publicFields.map(field => {
                 if (!userData.public[field.id] && !field.viewComponent) return null;
                 return <React.Fragment key={field.id}>
-                    <Grid container spacing={1} className={classes.profileField}>
-                        <Grid item>
-                            {field.viewComponent
-                                ? field.viewComponent(userData)
-                                : <Typography variant={"body2"}>{userData.public[field.id]}</Typography>}
-                        </Grid>
+                    <Grid container className={classes.profileField}>
+                        {field.viewComponent
+                            ? field.viewComponent(userData)
+                            : <Typography variant={"body2"}>{userData.public[field.id]}</Typography>}
                     </Grid>
                 </React.Fragment>
             })}

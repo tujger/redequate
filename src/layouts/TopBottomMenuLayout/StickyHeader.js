@@ -5,6 +5,7 @@ import withStyles from "@material-ui/styles/withStyles";
 // noinspection JSUnusedLocalSymbols
 const styles = (theme) => ({
     container: {
+        backgroundColor: theme.palette.background.default,
         display: "flex",
         flexDirection: "column",
         position: "relative",

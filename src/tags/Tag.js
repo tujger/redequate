@@ -2,6 +2,7 @@ import React from "react";
 import {useHistory, useParams} from "react-router-dom";
 import withStyles from "@material-ui/styles/withStyles";
 import Grid from "@material-ui/core/Grid";
+import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import IconButton from "@material-ui/core/IconButton";
 import FixIcon from "@material-ui/icons/BugReport";
@@ -126,16 +127,14 @@ const Tag = ({classes}) => {
         />
         <Grid container className={classes.center}>
             <Grid container>
-                {tag.value.image && <Grid container spacing={1} className={classes.profileImageContainer}>
-                    <Grid item>
-                        <img
-                            alt={""}
-                            className={[classes.profileImage, classes.tagImage].join(" ")}
-                            src={tag.value.image}
-                        />
-                    </Grid>
+                {tag.value.image && <Grid item className={classes.profileImageContainer}>
+                    <img
+                        alt={""}
+                        className={[classes.profileImage, classes.tagImage].join(" ")}
+                        src={tag.value.image}
+                    />
                 </Grid>}
-                <Grid container className={classes.profileFields}>
+                <Grid item className={classes.profileFields}>
                     <Grid container className={classes.profileField}>
                         <Grid item>
                             <Typography variant={"h6"}>{tag.value.label}</Typography>
@@ -149,6 +148,7 @@ const Tag = ({classes}) => {
                             />
                         </Grid>
                     </Grid>
+                    <Box m={1}/>
                     <Grid container spacing={1} className={classes.profileField}>
                         <MutualComponent
                             counterComponent={<InfoComponent suffix={"follower(s)"}/>}
@@ -162,7 +162,7 @@ const Tag = ({classes}) => {
                 </Grid>
             </Grid>
         </Grid>
-        <NavigationToolbar
+        {/*<NavigationToolbar
             alignItems={"flex-end"}
             justify={"center"}
             backButton={null}
@@ -172,9 +172,9 @@ const Tag = ({classes}) => {
                 {...buttonProps(0)}
                 children={<>
                     Posts
-                    {/*<CounterComponent path={`${tag.key}/total`} prefix={" ("} suffix={")"}/>*/}
+                    <CounterComponent path={`${tag.key}/total`} prefix={" ("} suffix={")"}/>
                 </>}/>
-        </NavigationToolbar>
+        </NavigationToolbar>*/}
         <Grid container className={classes.center}>
             <LazyListComponent
                 itemComponent={item => <PostComponent

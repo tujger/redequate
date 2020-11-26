@@ -1,6 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
 import IconButton from "@material-ui/core/IconButton";
+import Button from "@material-ui/core/Button";
 import LikeEmptyIcon from "@material-ui/icons/ThumbUpOutlined";
 import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
 import LikeFilledIcon from "@material-ui/icons/ThumbUp";
@@ -20,6 +21,26 @@ import ShareComponent from "../ShareComponent";
 import ConfirmComponent from "../ConfirmComponent";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 import useTheme from "@material-ui/styles/useTheme";
+import makeStyles from "@material-ui/core/styles/makeStyles";
+
+const stylesCurrent = makeStyles(theme => ({
+    cardActions: {
+        "&$cardActionsSmall": {
+            [theme.breakpoints.down("sm")]: {
+                marginLeft: theme.spacing(-1),
+            }
+        },
+    },
+    cardActionsSmall: {
+
+    },
+    replyButton: {
+        marginLeft: theme.spacing(1.5),
+        padding: 0,
+        textTransform: "none",
+    }
+}));
+
 
 export default ({allowedExtras, postData, userData, classes = {}, showRepliesCounter = true, mentions, onChange, onDelete, isReply = false, type, UploadProps}) => {
     const [state, setState] = React.useState({});
@@ -33,6 +54,7 @@ export default ({allowedExtras, postData, userData, classes = {}, showRepliesCou
     const dispatch = useDispatch();
     const theme = useTheme();
     const currentUserData = useCurrentUserData();
+    const classesCurrent = stylesCurrent();
 
     const handleClickExtra = extraType => evt => {
         evt && evt.stopPropagation();
@@ -84,7 +106,7 @@ export default ({allowedExtras, postData, userData, classes = {}, showRepliesCou
 
     // return React.useMemo(() => {
     return <>
-        <Grid className={classes.cardActions}>
+        <Grid className={[classes.cardActions, classesCurrent.cardActions, classesCurrent.cardActionsSmall].join(" ")}>
             {allowedExtras.indexOf("like") >= 0 && <Grid item>
                 <IconButton
                     aria-label={"Like"}
@@ -122,12 +144,14 @@ export default ({allowedExtras, postData, userData, classes = {}, showRepliesCou
             </Grid>}
             <Grid item>
                 <NewPostComponent
-                    buttonComponent={<IconButton
+                    buttonComponent={<Button
                         aria-label={"Reply"}
-                        children={<ReplyIcon/>}
+                        children={"Reply"}
+                        className={classesCurrent.replyButton}
                         component={"div"}
                         size={"small"}
                         title={"Reply"}
+                        variant={"text"}
                     />}
                     context={postData.id}
                     // infoComponent={<InfoComponent style={{maxHeight: 100, overflow: "auto"}}
@@ -150,6 +174,7 @@ export default ({allowedExtras, postData, userData, classes = {}, showRepliesCou
                     UploadProps={UploadProps}
                 />
             </Grid>
+            <Grid item xs/>
             {!isReply && <Grid item>
                 <ShareComponent
                     component={<IconButton

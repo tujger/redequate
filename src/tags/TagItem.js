@@ -18,13 +18,15 @@ const TagItem = ({data, classes, skeleton, label}) => {
     const pages = usePages();
     const history = useHistory();
 
-    if (label) return <ItemPlaceholderComponent label={label} classes={classes}/>
-    if (skeleton || !data) return <ItemPlaceholderComponent classes={classes}/>
+    if (label) return <ItemPlaceholderComponent label={label} classes={classes} flat/>
+    if (skeleton || !data) return <ItemPlaceholderComponent classes={classes} flat/>
     if (!data) return null;
 
     return <>
-        <Card className={[classes.root, classes.card].join(" ")}>
-            <CardActionArea onClick={() => {
+        <Card className={[classes.card, classes.cardFlat].join(" ")}>
+            <CardActionArea
+                className={classes.root}
+                onClick={() => {
                 history.push(pages.tag.route + data.key);
             }}>
                 <CardHeader

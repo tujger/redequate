@@ -18,6 +18,12 @@ const styles = theme => ({
         right: 0,
         zIndex: 2,
     },
+    buttonSelected: {
+        color: theme.palette.secondary.main,
+        "&.Mui-selected": {
+            color: theme.palette.secondary.main,
+        }
+    },
     label: {
         color: "inherit",
         cursor: "default",
@@ -86,10 +92,11 @@ const _BottomToolbar = props => {
                 const [first] = list;
                 if (!matchRole(first.roles, currentUserData) || first.disabled) return null;
                 const currentItem = list.filter(item => isCurrent(item._route))[0] || first;
-
+console.log(location.pathname === currentItem.route)
                 return <BottomNavigationAction
                     icon={currentItem.icon}
                     key={first.route + index}
+                    className={location.pathname === currentItem.route ? classes.buttonSelected : ""}
                     // label={currentItem.label}
                     value={currentItem.route}
                     onContextMenu={event => {

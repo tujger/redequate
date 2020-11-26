@@ -12,7 +12,8 @@ export default (
         currentUserData,
         firebase,
         onItemError,
-        type
+        type,
+        typeId,
     }) => async item => {
 
     currentUserData = currentUserData || useCurrentUserData();
@@ -38,6 +39,8 @@ export default (
             return onItemError(error, {code, id: item.key, uid: currentUserData.id});
         } else {
             if (code === MutualError.NOT_FOUND) {
+                console.log(type, item.key, item.value, currentUserData.id)
+
                 fetchCallable(firebase)("fixPost", currentUserData && currentUserData.id
                     ? {
                         code,
@@ -48,6 +51,15 @@ export default (
                         id: item.key,
                     }
                 )
+                    .then(console.log)
+                    .catch(console.error);
+
+                fetchCallable(firebase)("fixMutual", {
+                    code,
+                    id: item.key,
+                    uid: item.value,
+                    typeId
+                })
                     .then(console.log)
                     .catch(console.error);
             } else {

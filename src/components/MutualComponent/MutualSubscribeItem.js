@@ -17,7 +17,7 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {toDateString} from "../../controllers/DateFormat";
 import {stylesList} from "../../controllers/Theme";
 
-const MutualRequestItem = (
+const MutualSubscribeItem = (
     {
         classes,
         data,
@@ -76,12 +76,13 @@ const MutualRequestItem = (
         variant: "contained",
     }
 
-    if (label) return <ItemPlaceholderComponent label={label} classes={classes}/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes}/>;
+    if (label) return <ItemPlaceholderComponent label={label} classes={classes} flat/>
+    if (skeleton) return <ItemPlaceholderComponent classes={classes} flat/>;
 
     return <>
-        <Card className={classes.card}>
+        <Card className={[classes.card, classes.cardFlat].join(" ")}>
             <CardActionArea
+                className={classes.root}
                 disabled={disabled}
                 onClick={evt => {
                     if (!type || type === "users_public") {
@@ -130,4 +131,4 @@ const MutualRequestItem = (
         </Card>
     </>
 }
-export default withStyles(stylesList)(MutualRequestItem);
+export default withStyles(stylesList)(MutualSubscribeItem);

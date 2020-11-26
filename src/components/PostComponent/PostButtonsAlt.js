@@ -1,6 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
 import IconButton from "@material-ui/core/IconButton";
+import Button from "@material-ui/core/Button";
 import LikeEmptyIcon from "@material-ui/icons/ThumbUpOutlined";
 import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
 import LikeFilledIcon from "@material-ui/icons/ThumbUp";
@@ -120,11 +121,11 @@ export default ({allowedExtras, postData, userData, classes = {}, showRepliesCou
                     <span className={classes.counter}>{postData.counter("replied")}</span>
                 </IconButton>
             </Grid>}
-            <Grid item>
+            {/*<Grid item>
                 <NewPostComponent
-                    buttonComponent={<IconButton
+                    buttonComponent={<Button
                         aria-label={"Reply"}
-                        children={<ReplyIcon/>}
+                        children={"Reply"}
                         component={"div"}
                         size={"small"}
                         title={"Reply"}
@@ -149,7 +150,7 @@ export default ({allowedExtras, postData, userData, classes = {}, showRepliesCou
                     text={`$[user:${postData.uid}:${userData.name}] `}
                     UploadProps={UploadProps}
                 />
-            </Grid>
+            </Grid>*/}
             {!isReply && <Grid item>
                 <ShareComponent
                     component={<IconButton

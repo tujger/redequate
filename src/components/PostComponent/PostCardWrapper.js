@@ -1,10 +1,11 @@
 import React from "react";
 import CardActionArea from "@material-ui/core/CardActionArea";
 
-export default ({disableClick, handleClickPost, children}) => {
+export default ({classes, disableClick, handleClickPost, children}) => {
     return disableClick ? <>
         {children}
     </> : <CardActionArea
+        className={classes.root}
         component={"div"}
         onClick={handleClickPost}
     >

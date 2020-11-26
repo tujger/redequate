@@ -3,7 +3,6 @@ import Collapse from "@material-ui/core/Collapse";
 import Grid from "@material-ui/core/Grid";
 import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
-import PostMedia from "./PostMedia";
 
 export default ({classes, collapsible:givenCollapsible, disableClick, mentions, postData}) => {
     const [state, setState] = React.useState({});
@@ -18,7 +17,7 @@ export default ({classes, collapsible:givenCollapsible, disableClick, mentions, 
         setState(state => ({...state, collapsed: !collapsed}));
     }
 
-    const collapseLength = windowData.isNarrow() ? 1000 : 2000;
+    const collapseLength = windowData.isNarrow() ? 260 : 2000;
     const shortened = postData.length > collapseLength;
 
     return <>
