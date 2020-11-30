@@ -2,7 +2,7 @@ import {tokenizeText} from "../MentionedTextComponent";
 import {cacheDatas} from "../../controllers/General";
 
 export const PostData = function ({firebase, type = "posts", allowedExtras = ["like"]}) {
-    let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root;
+    let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root, _targetTag;
     const refRoot = firebase.database().ref();
 
     const _body = {
@@ -18,6 +18,10 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
         get id() {
             return _id
         },
+        set id(id) {
+            if (_id && _id !== id) throw new Error("Post id is already defined");
+            _id = id;
+        },
         get image() {
             return _images ? _images[0] : undefined;
         },
@@ -26,16 +30,6 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
         },
         get isRoot() {
             return !_replyTo;
-        },
-        get replyTo() {
-            return _replyTo
-        },
-        get root() {
-            return _root
-        },
-        set id(id) {
-            if (_id && _id !== id) throw new Error("Post id is already defined");
-            _id = id;
         },
         get length() {
             if (_tokens) {
@@ -64,8 +58,17 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
             }
             return text;
         },
+        get replyTo() {
+            return _replyTo
+        },
+        get root() {
+            return _root
+        },
         get text() {
             return _text
+        },
+        get targetTag() {
+            return _targetTag;
         },
         get tokens() {
             return _tokens
@@ -86,6 +89,16 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
             _replyTo = replyTo;
             _root = root;
             if (image) _images = [image];
+            try {
+                const matches = text.match(String.fromCharCode(1) + "(.*?)" + String.fromCharCode(2));
+                if (matches) {
+                    text = text.replace(String.fromCharCode(1) + matches[1] + String.fromCharCode(2), "");
+                    const toks = tokenizeText(matches[1]);
+                    _targetTag = toks[0];
+                }
+            } catch (e) {
+                console.error(e);
+            }
             _tokens = tokenizeText(text);
             if (_id) cacheDatas.put(_id, _body);
             return _body;

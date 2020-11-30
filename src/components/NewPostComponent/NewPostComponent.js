@@ -73,6 +73,7 @@ const NewPostComponent = (
         hint = "Type message, use @ to mention other users and # for tags.",
         infoComponent,
         mentions = [mentionTags, mentionUsers],
+        onBeforePublish = async data => data,
         onError = error => notifySnackbar(error),
         onClose = () => console.log("[NewPost] onClose()"),
         onComplete = data => console.log("[NewPost] onComplete(data)", data),
@@ -92,7 +93,6 @@ const NewPostComponent = (
     const {camera = true, multi = true} = UploadProps;
 
     const text = context === _savedContext ? _savedText : initialText;
-
     const handleOpen = evt => {
         evt && evt.stopPropagation();
         if (!currentUserData || !currentUserData.id) {
@@ -122,7 +122,7 @@ const NewPostComponent = (
         return urls;
     }
 
-    const parseTokens = async () => {
+    const parseTokens = async (text) => {
         const newtokens = [];
         const tokens = tokenizeText(text);
         tokens.forEach(token => {
@@ -160,7 +160,7 @@ const NewPostComponent = (
             setState(state => ({...state, disabled: true}));
             dispatch(ProgressView.SHOW);
             const uid = currentUserData.id;
-            parseTokens()
+            parseTokens(text)
                 .then(text => publishImage()
                     .then(images => ({
                         created: firebase.database.ServerValue.TIMESTAMP,
@@ -170,9 +170,10 @@ const NewPostComponent = (
                         uid,
                     }))
                 )
+                .then(onBeforePublish)
                 .then(data => firebase.database().ref().child(type).push(data))
                 .then(snapshot => {
-                    dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: context});
+                    dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: undefined});
                     setState(state => ({...state, disabled: false, open: false}));
                     onComplete(snapshot.key);
                 })
@@ -245,7 +246,7 @@ const NewPostComponent = (
                 disabled={disabled}
                 size={"small"}
             />}
-        camera={true}
+        camera={camera}
         firebase={firebase}
         limits={{width: 1000, height: 1000, size: 100000}}
         multi={true}

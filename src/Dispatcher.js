@@ -1,6 +1,9 @@
 import React from "react";
 import ThemeProvider from "@material-ui/styles/ThemeProvider";
-import {BrowserRouter, Route, Switch, useHistory} from "react-router-dom";
+// import BottomToolbarLayout from "./layouts/BottomToolbarLayout/BottomToolbarLayout";
+// import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout";
+// import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout/TopBottomMenuLayout";
+import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import withWidth from "@material-ui/core/withWidth";
@@ -28,9 +31,6 @@ import {installWrapperControl} from "./controllers/WrapperControl";
 import TechnicalInfoView from "./components/TechnicalInfoView";
 import {Pages} from "./proptypes/Pages";
 import {Page} from "./proptypes";
-// import BottomToolbarLayout from "./layouts/BottomToolbarLayout/BottomToolbarLayout";
-// import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout";
-// import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout/TopBottomMenuLayout";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -200,15 +200,18 @@ function _DispatcherRoutedBody(props) {
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
     const updateTitle = (location) => {
-        const current = (itemsFlat.filter(item => item.route === location.pathname) || [])[0];
         console.log("[Dispatcher]", JSON.stringify(location));
         try {
             if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
         } catch (error) {
             console.error(error);
         }
-        if (current) {
-            const allowed = needAuth(current.roles, currentUserData) ? pages.login : (matchRole(current.roles, currentUserData) && !current.disabled && current.component) ? current : pages.notfound;
+        const currentPage = (itemsFlat.filter(item => matchPath(location.pathname, {
+            exact: true,
+            path: item._route,
+        })) || [])[0];
+        if (currentPage) {
+            const allowed = needAuth(currentPage.roles, currentUserData) ? pages.login : (matchRole(currentPage.roles, currentUserData) && !currentPage.disabled && currentPage.component) ? currentPage : pages.notfound;
             const label = allowed.title || allowed.label;
             document.title = label + (title ? " - " + title : "");
             dispatch({type: Layout.TITLE, label});

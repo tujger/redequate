@@ -5,6 +5,7 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
+import Hidden from "@material-ui/core/Hidden";
 import Box from "@material-ui/core/Box";
 import {useDispatch} from "react-redux";
 import Switch from "@material-ui/core/Switch";
@@ -13,7 +14,7 @@ import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
 import withStyles from "@material-ui/styles/withStyles";
 import TagIcon from "@material-ui/icons/Label";
-import {cacheDatas, useFirebase, usePages} from "../controllers/General";
+import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import ProgressView from "../components/ProgressView";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
@@ -24,20 +25,29 @@ import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {styles} from "../controllers/Theme";
 import Pagination from "../controllers/FirebasePagination";
-import {currentUserData, normalizeSortName, useCurrentUserData} from "../controllers/UserData";
+import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {tokenizeText} from "../components";
+import MentionedTextComponent from "../components/MentionedTextComponent";
 
 const stylesCurrent = theme => ({
     image: {
+        color: "darkgray",
+        marginBottom: theme.spacing(1),
+        objectFit: "cover",
         [theme.breakpoints.up("sm")]: {
-            width: theme.spacing(18),
             height: theme.spacing(18),
+            width: theme.spacing(18),
         },
         [theme.breakpoints.down("sm")]: {
-            width: theme.spacing(24),
             height: theme.spacing(24),
+            width: theme.spacing(24),
         },
-        color: "darkgray",
-        objectFit: "cover"
+    },
+    _image: {
+        [theme.breakpoints.down("sm")]: {
+            borderRadius: theme.spacing(2),
+            width: "100%"
+        },
     },
     label: {
         color: "inherit",
@@ -45,20 +55,23 @@ const stylesCurrent = theme => ({
         textDecoration: "none",
     },
     photo: {
-        position: "relative",
+        alignItems: "center",
         display: "flex",
         flexDirection: "column",
         justifyContent: "start",
+        position: "relative",
         [theme.breakpoints.down("sm")]: {
-            marginRight: 100,
+            width: "100%",
         },
     },
     clearPhoto: {
         backgroundColor: "transparent",
         position: "absolute",
-        top: 0,
         right: 0,
-        color: "white",
+        top: 0,
+        [theme.breakpoints.up("sm")]: {
+            color: "white",
+        },
     },
     _description: {
         height: 120
@@ -66,34 +79,66 @@ const stylesCurrent = theme => ({
     content: {},
 });
 
-const EditTag = ({classes, ...rest}) => {
+const EditTag = ({classes, allowOwner = true, ...rest}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
+    const pages = usePages();
+    const windowData = useWindowData();
     const [state, setState] = React.useState({});
-    const {tag, disabled, hideTagOpen, image, uppy, showTagOpen, deleteTagOpen, newId} = state;
+    const {tag, disabled, hideTagOpen, image, uppy, showTagOpen, deleteTagOpen, changeOwnerOpen, newId, owner = ""} = state;
     const {id} = useParams();
 
     const isNew = id === undefined;
+    const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
+
+    const handleBeforeSaveTag = () => {
+        const ownerToken = tokenizeText(owner)[0];
+        const ownerUid = (ownerToken && ownerToken.type === "user" && ownerToken.id) || "";
+        if (isNew) {
+            tag.uid = currentUserData.id;
+        } else if (tag.uid !== ownerUid) {
+            setState(state => ({...state, changeOwnerOpen: true}));
+            return;
+        }
+        saveTag();
+    }
 
     const saveTag = async () => {
         dispatch(ProgressView.SHOW);
-        setState(state => ({...state, disabled: true}));
+        setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
         // for (let x in {"developer": 1, "genres": 1, "platforms": 1, "publisher": 1}) {
         //     tag.data[x] = adjustValue(tag.data[x], true);
         // }
-        if (!tag.label) {
-            notifySnackbar(new Error("Can not save tag, name isn't defined"));
-            dispatch(ProgressView.HIDE);
-            setState(state => ({...state, disabled: false}));
-            return;
-        }
 
-        let publishing = {};
-        if (uppy) {
-            console.log("[EditTag] publish image", uppy)
-            try {
+        const checkIfLabelNotEmpty = async () => {
+            if (!tag.label) {
+                throw Error("Can not save item, label isn't defined");
+            }
+        }
+        const updateIdIfChanged = async () => {
+            const updatedId = normalizeSortName(tag.label);
+            if (!isNew && updatedId !== tag.id) {
+                throw Error("Label has been changed too significantly");
+            }
+
+            const existed = await new Pagination({
+                ref: firebase.database().ref("tag"),
+                child: "id",
+                equals: updatedId,
+            }).next();
+
+            if (existed.filter(item => item.key !== id).length) {
+                console.error(`[EditTag] not unique '${updatedId}' from '${tag.label}' for '${id}, found: ${JSON.stringify(existed)}`);
+                throw Error("Label is not unique");
+            }
+            tag.id = updatedId;
+        }
+        const publishImageIfChanged = async () => {
+            let publishing = {};
+            if (uppy) {
+                console.log("[EditTag] publish image", uppy)
                 publishing = await uploadComponentPublish(firebase)({
                     auth: ".main",//currentUserData.id,
                     uppy,
@@ -103,31 +148,59 @@ const EditTag = ({classes, ...rest}) => {
                     },
                     deleteFile: tag.image
                 });
-            } catch (error) {
-                notifySnackbar(error);
-                dispatch(ProgressView.HIDE);
-                setState(state => ({...state, disabled: false}));
-                return;
+            }
+            const {url: imageSaved} = (publishing[0] || {});
+            tag.image = imageSaved || image || null;
+        }
+        const updateTimestamp = async () => {
+            tag.timestamp = tag.timestamp || firebase.database.ServerValue.TIMESTAMP;
+        }
+        const updateUid = async () => {
+            tag.uid = tag.uid !== undefined ? tag.uid : currentUserData.id;
+            if (changeOwnerOpen) {
+                const ownerToken = tokenizeText(owner)[0];
+                if (ownerToken && ownerToken.type === "user") {
+                    tag.uid = ownerToken.id;
+                } else {
+                    tag.uid = "0";
+                }
+                console.log(ownerToken, tag.uid)
             }
         }
-        const {url: imageSaved} = (publishing[0] || {});
-
-        tag.image = imageSaved || image || null;
-        tag.id = tag.id || normalizeSortName(tag.label);
-        tag.timestamp = tag.timestamp || firebase.database.ServerValue.TIMESTAMP;
-        tag.uid = tag.uid || currentUserData.id;
-        if (!tag.hidden) {
-            tag._sort_name = tag._sort_name || tag.id;
+        const updateSortName = async () => {
+            if (!tag.hidden) {
+                tag._sort_name = tag._sort_name || tag.id;
+            }
+        }
+        const publishTag = async () => {
+            return firebase.database().ref("tag").child(id || newId).set(tag);
+        }
+        const removeCachedTag = async () => {
+            cacheDatas.remove(id || newId);
+        }
+        const onPublishSuccess = async () => {
+            if (tag.hidden) {
+                history.push(pages.home.route);
+            } else {
+                history.push(pages.tag.route + tag.id)
+            }
         }
 
-        firebase.database().ref("tag").child(id || newId).set(tag)
-            .then(() => history.goBack())
-            .then(() => cacheDatas.remove(id || newId))
+        checkIfLabelNotEmpty()
+            .then(updateIdIfChanged)
+            .then(publishImageIfChanged)
+            .then(updateTimestamp)
+            .then(updateUid)
+            .then(updateSortName)
+            .then(publishTag)
+            .then(removeCachedTag)
+            .then(onPublishSuccess)
             .catch(notifySnackbar)
             .finally(() => {
                 dispatch(ProgressView.HIDE);
                 setState(state => ({...state, disabled: false}));
             })
+
         console.log("[EditTag] save", tag)
     }
 
@@ -160,7 +233,7 @@ const EditTag = ({classes, ...rest}) => {
     }
 
     const handleCancelAction = () => {
-        setState(state => ({...state, hideTagOpen: false, showTagOpen: false, deleteTagOpen: false}));
+        setState(state => ({...state, hideTagOpen: false, showTagOpen: false, deleteTagOpen: false, changeOwnerOpen: false}));
     }
 
     const hideTag = () => {
@@ -175,7 +248,7 @@ const EditTag = ({classes, ...rest}) => {
             .then(() => {
                 tag.hidden = true;
                 notifySnackbar({
-                    title: `Tag ${tag.label} have been hidden.`,
+                    title: `${tag.label} has been hidden.`,
                     variant: "warning"
                 });
             })
@@ -203,7 +276,7 @@ const EditTag = ({classes, ...rest}) => {
         firebase.database().ref().update(updates)
             .then(() => {
                 notifySnackbar({
-                    title: `Tag ${tag.label} is visible now.`,
+                    title: `${tag.label} is visible now.`,
                     variant: "warning"
                 });
             })
@@ -294,13 +367,13 @@ const EditTag = ({classes, ...rest}) => {
     }
 
     const handleUploadPhotoSuccess = ({uppy, snapshot}) => {
-        setState({...state, uppy, image: snapshot.uploadURL});
+        setState(state => ({...state, uppy, image: snapshot.uploadURL}));
     }
 
     const handleUploadPhotoError = (error) => {
         console.error("[EditTag] upload", error)
         uploadComponentClean(uppy);
-        setState({...state, uppy: null});
+        setState(state => ({...state, uppy: null}));
     }
 
     React.useEffect(() => {
@@ -312,7 +385,15 @@ const EditTag = ({classes, ...rest}) => {
             firebase.database().ref("tag").child(id).once("value")
                 .then(snapshot => {
                     if (snapshot.exists()) return snapshot.val();
-                    throw Error("Tag not found");
+                    throw Error(`${id} is not found`);
+                })
+                .then(tag => {
+                    if (isCurrentUserAdmin) {
+                        return tag;
+                    } else if (allowOwner && tag.uid === currentUserData.id) {
+                        return tag;
+                    }
+                    throw Error(`You can not manage ${tag.label}`);
                 })
                 .then(tag => setState(state => ({...state, tag, image: tag && tag.image})))
                 .catch(error => {
@@ -326,31 +407,65 @@ const EditTag = ({classes, ...rest}) => {
         // eslint-disable-next-line
     }, [id]);
 
+    React.useEffect(() => {
+        if (!tag || !tag.uid || tag.uid === "0") return;
+        UserData(firebase).fetch(tag.uid)
+            .then(userData => {
+                setState(state => ({...state, owner: `$[user:${tag.uid}:${userData.name}]`}));
+            })
+            .catch(notifySnackbar);
+    }, [tag])
+
     if (!tag) return <LoadingComponent/>;
     return <Grid container className={classes.center}>
-        <Grid container spacing={1} alignItems={"flex-start"}>
+        <Grid container spacing={1}>
             <Grid item className={classes.photo}>
-                <Grid container>
-                    {image ? <img src={image} alt={""} className={classes.image}/>
-                        : <TagIcon className={classes.image}/>}
+                {image ? <img src={image} alt={""} className={[classes.profileImage, classes._image].join(" ")}/>
+                    : <TagIcon className={classes.profileImage}/>}
+                {image && <Hidden smDown>
                     <IconButton
+                        aria-label={"Clear"}
                         children={<ClearIcon/>}
                         className={classes.clearPhoto}
-                        onClick={() => setState(state => ({...state, image: "", uppy: null}))}
+                        onClick={() => {
+                            setState({...state, image: "", uppy: null});
+                        }}
+                        title={"Clear"}
                     />
+                </Hidden>}
+                <Grid container justify={"center"}>
+                    <React.Suspense fallback={<LoadingComponent/>}>
+                        <UploadComponent
+                            button={<Button
+                                aria-label={"Change"}
+                                children={"Change"}
+                                color={"secondary"}
+                                fullWidth={!windowData.isNarrow()}
+                                title={"Change"}
+                                variant={"contained"}
+                            />}
+                            camera={false}
+                            color={"primary"}
+                            firebase={firebase}
+                            limits={{width: 800, height: 600, size: 200000}}
+                            onsuccess={handleUploadPhotoSuccess}
+                            onerror={handleUploadPhotoError}
+                            variant={"contained"}
+                        />
+                    </React.Suspense>
+                    {image && <Hidden mdUp>
+                        <Button
+                            aria-label={"Clear"}
+                            children={"Clear"}
+                            color={"secondary"}
+                            onClick={() => {
+                                setState({...state, image: "", uppy: null});
+                            }}
+                            title={"Clear"}
+                            variant={"contained"}
+                        />
+                    </Hidden>}
                 </Grid>
-                <React.Suspense fallback={<LoadingComponent/>}>
-                    <UploadComponent
-                        button={<Button variant={"contained"} color={"secondary"} children={"Change"}/>}
-                        camera={false}
-                        color={"primary"}
-                        firebase={firebase}
-                        limits={{width: 800, height: 600, size: 200000}}
-                        onsuccess={handleUploadPhotoSuccess}
-                        onerror={handleUploadPhotoError}
-                        variant={"contained"}
-                    />
-                </React.Suspense>
             </Grid>
             <Grid item xs>
                 <Grid container alignItems={"flex-end"}>
@@ -415,13 +530,42 @@ const EditTag = ({classes, ...rest}) => {
                 </>}
                 {!isNew && <>
                     <Grid container alignItems={"flex-end"}>
+                        <MentionsInputComponent
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            mentionsParams={[
+                                {
+                                    ...mentionUsers,
+                                    trigger: "",
+                                    displayTransform: (id, display) => display
+                                }
+                            ]}
+                            onApply={(value) => console.log(value)}
+                            onChange={(ev, a, b, tokens) => {
+                                // console.log(ev.target.value, a, b, c)
+                                tokens = tokens || [];
+                                let text = ev.target.value;
+                                if (tokens.length) {
+                                    const token = tokens[tokens.length - 1];
+                                    text = token ? `$[user:${token.id}:${token.display}]` : "";
+                                }
+                                setState(state => ({...state, owner: text}));
+                            }}
+                            label={"Change owner"}
+                            value={owner}/>
+                    </Grid>
+                    <Box m={1}/>
+                </>}
+                {!isNew && <>
+                    <Grid container alignItems={"flex-end"}>
                         <FormControlLabel
                             control={<Switch
                                 checked={tag.hidden || false}
                                 disabled={disabled}
                                 onChange={toggleTag}
                             />}
-                            label={"Deactivate this tag"}
+                            label={"Deactivate"}
                             style={{color: "#ff0000"}}
                         />
                     </Grid>
@@ -434,14 +578,14 @@ const EditTag = ({classes, ...rest}) => {
                     size={"large"}
                     variant={"contained"}
                 >
-                    <Button onClick={saveTag}>Save</Button>
+                    <Button onClick={handleBeforeSaveTag}>Save</Button>
                     <Button onClick={() => history.goBack()}>Cancel</Button>
                 </ButtonGroup>
                 {!isNew && <>
                     <Box m={4}/>
                     <Grid container justify={"center"}>
                         <Button onClick={handleClickDelete} style={{color: "#ff0000"}}>
-                            Permanently remove tag
+                            Permanently remove
                         </Button>
                     </Grid>
                 </>}
@@ -451,9 +595,9 @@ const EditTag = ({classes, ...rest}) => {
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={hideTag}
-                title={"Hide tag?"}
+                title={"Hide item?"}
             >
-                The tag <b>{tag.label}</b> will be hidden, unavailable for view, not presented in suggestions. All
+                <b>{tag.label}</b> will be hidden, unavailable for view, not presented in suggestions. All
                 related posts will be available.
                 <br/>
                 WARNING! This action will be proceeded immediately!
@@ -463,9 +607,9 @@ const EditTag = ({classes, ...rest}) => {
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={showTag}
-                title={"Show tag?"}
+                title={"Show item?"}
             >
-                The hidden tag <b>{tag.label}</b> will be restored to show.
+                The hidden <b>{tag.label}</b> will be restored to show.
                 <br/>
                 WARNING! This action will be proceeded immediately!
             </ConfirmComponent>}
@@ -476,9 +620,21 @@ const EditTag = ({classes, ...rest}) => {
                 onConfirm={deleteTag}
                 title={"Delete tag?"}
             >
-                The tag <b>{tag.label}</b> will be deleted and can not be restored.
+                <b>{tag.label}</b> will be deleted and can not be restored.
                 <br/>
                 WARNING! This action will be proceeded immediately!
+            </ConfirmComponent>}
+            {changeOwnerOpen && <ConfirmComponent
+                confirmLabel={"Continue"}
+                critical
+                onCancel={handleCancelAction}
+                onConfirm={saveTag}
+                title={"Change owner?"}
+            >
+                <MentionedTextComponent
+                    mentions={[{...mentionUsers, displayTransform: (id, display) => display}]}
+                    text={`You are going to ${owner ? `change owner to ${owner}` : "remove owner"}.${isCurrentUserAdmin ? "" : `\nWARNING! You will not be able to manage ${tag.label} anymore!`}`}
+                />
             </ConfirmComponent>}
         </Grid>
     </Grid>

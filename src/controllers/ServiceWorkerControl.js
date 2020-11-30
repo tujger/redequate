@@ -2,6 +2,7 @@ import * as serviceWorker from "../serviceWorker";
 import {firebaseMessaging} from "./Firebase";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 import {notifySnackbar} from "./notifySnackbar";
+import notifyConfirm from "./notifyConfirm";
 
 const activateUpdate = registration => {
     try {
@@ -30,7 +31,7 @@ export const serviceWorkerRegister = () => {
         skipWaiting: true,
         onUpdate: registration => {
             if (registration && registration.waiting) {
-                notifySnackbar({
+                /*notifySnackbar({
                     buttonLabel: "Update",
                     onButtonClick: () => {
                         activateUpdate(registration);
@@ -38,12 +39,21 @@ export const serviceWorkerRegister = () => {
                     priority: "high",
                     title: "New version available",
                     variant: "warning"
+                });*/
+                notifyConfirm({
+                    cancelLabel: null,
+                    confirmLabel: "Continue",
+                    onConfirm: () => {
+                        activateUpdate(registration);
+                    },
+                    modal: true,
+                    message: "Thank you for your loyalty and feedback. We've made some improvements and fixed some bugs.\nPlease continue to enjoy our friendly community.",
                 });
             }
         },
         onInit: registration => {
             if (registration && registration.waiting) {
-                notifySnackbar({
+                /*notifySnackbar({
                     buttonLabel: "Activate",
                     onButtonClick: () => {
                         activateUpdate(registration);
@@ -51,6 +61,15 @@ export const serviceWorkerRegister = () => {
                     priority: "high",
                     title: "New version available",
                     variant: "warning"
+                });*/
+                notifyConfirm({
+                    cancelLabel: null,
+                    confirmLabel: "Continue",
+                    onConfirm: () => {
+                        activateUpdate(registration);
+                    },
+                    modal: true,
+                    message: "Thank you for your loyalty and feedbacks. We've made some improvements and fixed some bugs.\nPlease continue to enjoy our friendly community.",
                 });
             }
         },
@@ -87,7 +106,7 @@ export const checkForUpdate = () => new Promise((resolve, reject) => {
                 resolve("latest");
                 // window.location.reload();
             } else if (registration.waiting) {
-                notifySnackbar({
+                /*notifySnackbar({
                     buttonLabel: "Activate",
                     onButtonClick: () => {
                         activateUpdate(registration);
@@ -95,6 +114,15 @@ export const checkForUpdate = () => new Promise((resolve, reject) => {
                     priority: "high",
                     title: "New version available",
                     variant: "warning"
+                });*/
+                notifyConfirm({
+                    cancelLabel: null,
+                    confirmLabel: "Continue",
+                    onConfirm: () => {
+                        activateUpdate(registration);
+                    },
+                    modal: true,
+                    message: "Thank you for your loyalty and feedback. We've made some improvements and fixed bugs.\nPlease continue to enjoy our friendly community.",
                 });
                 resolve("waiting");
             } else {

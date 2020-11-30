@@ -7,7 +7,7 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {useCurrentUserData} from "../controllers/UserData";
-import {useFirebase, usePages} from "../controllers/General";
+import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import ProgressView from "../components/ProgressView";
 import notifySnackbar from "../controllers/notifySnackbar";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
@@ -21,6 +21,7 @@ const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
+    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {new: isNew, type, id, timestamp, avatar, title, text, removed, route} = state
 
@@ -69,6 +70,7 @@ const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
                         <Grid item className={[classes.userName, isNew ? classes.unread : classes.read].join(" ")}>
                             {title}
                         </Grid>
+                        {windowData.isNarrow() && <Grid item xs/>}
                         {timestamp && <Grid item className={classes.date} title={new Date(timestamp).toLocaleString()}>
                             {toDateString(timestamp)}
                         </Grid>}

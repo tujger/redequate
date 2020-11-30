@@ -10,13 +10,20 @@ import {stylesList} from "../controllers/Theme";
 
 const stylesChat = theme => ({
     chatItem: {
-        marginBottom: 0,
-        width: "90%"
+        marginBottom: theme.spacing(0.5),
+        width: "90%",
+        "& $cardHeader": {
+            padding: 0,
+        }
     },
     chatItemOut: {
-        backgroundColor: "#def6fc",
         marginLeft: "10%",
+        "& $cardContent": {
+            backgroundColor: "#def6fc",
+        }
     },
+    cardContent: {},
+    cardHeader: {},
     chatItemIn: {
         marginRight: "10%",
     },

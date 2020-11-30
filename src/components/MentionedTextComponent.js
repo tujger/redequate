@@ -24,11 +24,12 @@ const MentionedTextComponent = (
             const mention = mentions.filter(item => item.type === token.type)[0];
             if (mention) {
                 const component = mention.component;
+                if (!token.value) return null;
                 return <component.type
                     {...component.props}
-                    className={[classes.text, classes.link, className].join(" ")}
+                    className={[classes.text, classes.link, mention.className, className].join(" ")}
                     disableClick={disableClick}
-                    display={token.value}
+                    display={mention.displayTransform(token.id, token.value)}
                     id={token.id}
                     key={index}
                     style={mention.style}

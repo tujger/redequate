@@ -21,6 +21,9 @@ import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers/
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
+import ConfirmComponent from "../../components/ConfirmComponent";
+import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
+import StickyHeader from "../TopBottomMenuLayout/StickyHeader";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -216,6 +219,7 @@ function ResponsiveDrawerLayout(props) {
         }}/>
         <Snackbar/>
         <NotificationsSnackbar/>
+        <DispatchedConfirmComponent open={false}/>
     </div>
 }
 

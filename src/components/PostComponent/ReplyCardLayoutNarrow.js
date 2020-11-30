@@ -3,14 +3,12 @@ import {Link} from "react-router-dom";
 import CardHeader from "@material-ui/core/CardHeader";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
-import PostButtons from "./PostButtons";
 import PostBody from "./PostBody";
-import {usePages} from "../../controllers/General";
+import {usePages, useWindowData} from "../../controllers/General";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
-import ReplyButtons from "./ReplyButtons";
-import ReplyButtonsAlt from "./ReplyButtonsAlt";
+import ReplyButtonsNarrow from "./ReplyButtonsNarrow";
 
 export default (
     {
@@ -38,6 +36,7 @@ export default (
         userData,
     }) => {
     const pages = usePages();
+    const windowData = useWindowData();
 
     // return React.useMemo(() => {
     return <>
@@ -70,11 +69,12 @@ export default (
                             className={[classes.label].join(" ")}
                         >{userData.name}</Link>
                     </Grid>
-                </Grid>}
-                subheader={<>
+                    {windowData.isNarrow() && <Grid item xs/>}
                     <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
                         {toDateString(postData.created)}
                     </Grid>
+                </Grid>}
+                subheader={<>
                     <PostBody
                         classes={classes}
                         collapsible={collapsible}
@@ -92,7 +92,7 @@ export default (
                             mosaic
                         />
                     </Grid>}
-                    {!disableButtons && <ReplyButtonsAlt
+                    {!disableButtons && <ReplyButtonsNarrow
                         allowedExtras={allowedExtras}
                         classes={classes}
                         isReply={isReply}

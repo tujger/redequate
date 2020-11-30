@@ -77,7 +77,7 @@ const stylesCurrent = theme => ({
 
 function EditProfile(props) {
     // eslint-disable-next-line react/prop-types
-    let {classes, uploadable = true, notifications = true, publicFields = publicFieldsDefault, adminFields: adminFieldsGiven = adminFields} = props;
+    let {classes, uploadable = true, notifications = true, publicFields = publicFieldsDefault, adminFields: adminFieldsGiven = adminFields, isFirstLogin} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -457,7 +457,18 @@ function EditProfile(props) {
                     /></Grid>
                 </>}
                 <Box m={2}/>
-                <ButtonGroup
+                {isFirstLogin && <ButtonGroup
+                    color={"secondary"}
+                    disabled={disabled}
+                    fullWidth
+                    size={"large"}
+                    variant={"contained"}
+                >
+                    <Button onClick={saveUser}>
+                        Register
+                    </Button>
+                </ButtonGroup>}
+                {!isFirstLogin && <ButtonGroup
                     color={"secondary"}
                     disabled={disabled}
                     fullWidth
@@ -470,7 +481,7 @@ function EditProfile(props) {
                     <Button onClick={() => history.goBack()}>
                         Cancel
                     </Button>
-                </ButtonGroup>
+                </ButtonGroup>}
                 {isAdminAllowed && <>
                     <Box m={8}/>
                     <Grid container justify={"center"}>

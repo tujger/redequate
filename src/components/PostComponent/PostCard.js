@@ -5,8 +5,6 @@ import {cacheDatas, usePages} from "../../controllers/General";
 import PostCardLayoutNarrow from "./PostCardLayoutNarrow";
 import PostCardLayoutWide from "./PostCardLayoutWide";
 import RepliesTree from "./RepliesTree";
-import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import AvatarView from "../AvatarView";
 import ReplyCardLayoutNarrow from "./ReplyCardLayoutNarrow";
 
 export default (
@@ -71,16 +69,6 @@ export default (
     }
 
     return <>
-        {/*{onlyReplies && <ItemPlaceholderComponent
-            avatar={<AvatarView
-                className={classes.avatarSmall}
-                image={userData.image}
-                initials={userData.initials}
-                verified
-            />}
-            label={<span>Show original post</span>}
-            onClick={() => history.push(pages.post.route + postData.id)}
-        />}*/}
         {!onlyReplies && <>
             <Hidden mdUp>
                 {level > 0

@@ -11,10 +11,10 @@ const stylesCurrent = theme => ({
     }
 });
 
-const ActionComponent = ({classes, disabled, label, onClick}) => {
+const ActionComponent = ({classes, className = "", disabled, label, onClick}) => {
     return <Button
         children={label}
-        className={classes.follow}
+        className={[classes.follow, className].join(" ")}
         color={"secondary"}
         component={"div"}
         disabled={disabled}

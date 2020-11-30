@@ -28,6 +28,11 @@ const stylesCurrent = makeStyles(theme => ({
         borderStyle: "solid",
         borderWidth: 2,
     },
+    userName: {
+        [theme.breakpoints.down("sm")]: {
+            flex: 1,
+        }
+    }
 }));
 
 // eslint-disable-next-line react/prop-types
@@ -62,7 +67,7 @@ function UserItem({data, classes, skeleton, label}) {
                     verified={true}
                 />}
                 title={<Grid container>
-                    <Grid item className={classes.userName}>
+                    <Grid item className={[classes.userName, classesCurrent.userName].join(" ")}>
                         {userData.email}
                     </Grid>
                     <Grid item className={classes.date}>

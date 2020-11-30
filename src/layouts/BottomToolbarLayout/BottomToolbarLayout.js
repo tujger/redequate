@@ -8,6 +8,9 @@ import Titlebar from "./Titlebar";
 import MainContent from "../../components/MainContent";
 import Snackbar from "../../components/Snackbar";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
+import ConfirmComponent from "../../components/ConfirmComponent";
+import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
+import StickyHeader from "../TopBottomMenuLayout/StickyHeader";
 
 const styles = theme => ({
     container: {
@@ -100,6 +103,7 @@ function BottomToolbarLayout(props) {
         <BottomToolbar items={menu}/>
         <Snackbar/>
         <NotificationsSnackbar/>
+        <DispatchedConfirmComponent open={false}/>
     </div>
 }
 

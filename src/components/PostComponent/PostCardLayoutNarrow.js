@@ -1,18 +1,27 @@
 import React from "react";
 import {Link} from "react-router-dom";
 import CardHeader from "@material-ui/core/CardHeader";
-import TextField from "@material-ui/core/TextField";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
 import PostBody from "./PostBody";
-import {cacheDatas, usePages} from "../../controllers/General";
+import {usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
 import PostCardWrapper from "./PostCardWrapper";
-import PostButtonsAlt from "./PostButtonsAlt";
-import NewPostComponent from "../NewPostComponent/NewPostComponent";
-import notifySnackbar from "../../controllers/notifySnackbar";
+import MentionedTextComponent from "../MentionedTextComponent";
+import {mentionTags} from "../..";
+import PostButtonsNarrow from "./PostButtonsNarrow";
+import makeStyles from "@material-ui/core/styles/makeStyles";
+
+const stylesCurrent = makeStyles(theme => ({
+    inline: {
+        display: "inline",
+        "& > .MuiGrid-root": {
+            display: "inline",
+        }
+    },
+}));
 
 export default (
     {
@@ -39,6 +48,7 @@ export default (
         UploadProps,
         userData,
     }) => {
+    const classesCurrent = stylesCurrent();
     const pages = usePages();
 
     // return React.useMemo(() => {
@@ -60,7 +70,7 @@ export default (
                             verified={true}
                         />
                     </Link>}
-                    title={<Grid container>
+                    title={<Grid container alignItems={"baseline"} className={classesCurrent.inline}>
                         <Grid
                             className={classes.userName}
                             item
@@ -72,6 +82,15 @@ export default (
                                 className={[classes.label].join(" ")}
                             >{userData.name}</Link>
                         </Grid>
+                        {postData.targetTag && <Grid item xs >
+                            posted to <MentionedTextComponent
+                            mentions={[{
+                                ...mentionTags,
+                                displayTransform: (id, display) => display,
+                                style: {fontWeight: "bold"}
+                            }]}
+                            tokens={[postData.targetTag]}
+                        /></Grid>}
                     </Grid>}
                     subheader={<>
                         <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
@@ -97,7 +116,7 @@ export default (
                     mosaic
                 />
             </Grid>}
-            {!disableButtons && <PostButtonsAlt
+            {!disableButtons && <PostButtonsNarrow
                 allowedExtras={allowedExtras}
                 classes={classes}
                 isReply={isReply}

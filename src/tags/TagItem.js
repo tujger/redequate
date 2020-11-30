@@ -7,7 +7,7 @@ import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import CardActionArea from "@material-ui/core/CardActionArea";
-import {usePages} from "../controllers/General";
+import {usePages, useWindowData} from "../controllers/General";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import AvatarView from "../components/AvatarView";
 import {stylesList} from "../controllers/Theme";
@@ -17,6 +17,7 @@ import TagIcon from "@material-ui/icons/Label";
 const TagItem = ({data, classes, skeleton, label}) => {
     const pages = usePages();
     const history = useHistory();
+    const windowData = useWindowData();
 
     if (label) return <ItemPlaceholderComponent label={label} classes={classes} flat/>
     if (skeleton || !data) return <ItemPlaceholderComponent classes={classes} flat/>
@@ -33,8 +34,8 @@ const TagItem = ({data, classes, skeleton, label}) => {
                     classes={{content: classes.cardContent}}
                     className={[classes.cardHeader, classes.post].join(" ")}
                     avatar={data.value.image
-                        ? <AvatarView className={classes.avatar} image={data.value.image} verified={true}/>
-                        : <TagIcon className={classes.avatar}/>}
+                        ? <AvatarView className={[classes.avatar, windowData.isNarrow() ? classes.avatarSmall : ""].join(" ")} image={data.value.image} verified={true}/>
+                        : <TagIcon className={[classes.avatar, windowData.isNarrow() ? classes.avatarSmall : ""].join(" ")}/>}
                     title={<Grid container>
                         <Grid item className={classes.userName}>
                             {data.value.label}

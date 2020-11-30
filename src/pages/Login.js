@@ -137,7 +137,7 @@ function Login(props) {
                 if (onLogin) {
                     onLogin(isFirstLogin);
                 } else {
-                    if (isFirstLogin) history.replace(pages.editprofile.route);
+                    if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin: true});
                     else history.replace(pages.home.route);
                 }
             });

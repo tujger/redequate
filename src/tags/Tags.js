@@ -10,7 +10,7 @@ import AddIcon from "@material-ui/icons/Add";
 import Fab from "@material-ui/core/Fab";
 import Hidden from "@material-ui/core/Hidden";
 import Grid from "@material-ui/core/Grid";
-import {useFirebase, usePages} from "../controllers/General";
+import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import TagItem from "./TagItem";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {normalizeSortName} from "../controllers/UserData";
@@ -21,10 +21,13 @@ import {styles} from "../controllers/Theme";
 import {tagsReducer} from "./tagsReducer";
 import {Link} from "react-router-dom";
 
-const Tags = ({classes, mode = "all", filter}) => {
+const Tags = (props) => {
+    const {classes, forceMode, mode:inheritMode = "all", filter, equals, fabLabel = "Add tag", noItemsCoponent = <TagItem skeleton={true} label={"No tags found"}/>} = props;
     const firebase = useFirebase();
     const dispatch = useDispatch();
     const pages = usePages();
+    const windowData = useWindowData();
+    const mode = forceMode || inheritMode;
 
     const itemComponent = item => <TagItem key={item.key} data={item}/>
 
@@ -51,8 +54,9 @@ const Tags = ({classes, mode = "all", filter}) => {
             paginationOptions = {
                 ref: firebase.database().ref("tag"),
                 child: "_sort_name",
+                equals: equals,
             };
-            if (filter) {
+            if (filter && !equals) {
                 paginationOptions.start = normalizeSortName(filter);
                 paginationOptions.end = normalizeSortName(filter) + "\uf8ff";
             }
@@ -66,12 +70,23 @@ const Tags = ({classes, mode = "all", filter}) => {
             }
             itemTransform = item => item;
             break;
+        case "uid":
+            paginationOptions = {
+                ref: firebase.database().ref("tag"),
+                child: "uid",
+                equals: equals,
+            }
+            if (filter && !equals) {
+                paginationOptions.start = normalizeSortName(filter);
+                paginationOptions.end = normalizeSortName(filter) + "\uf8ff";
+            }
+            itemTransform = item => item;
+            break;
         default:
             break;
     }
-
     return <>
-        <Hidden smDown>
+        {!forceMode && <Hidden smDown>
             <NavigationToolbar
                 backButton={null}
                 className={classes.topSticky}
@@ -81,8 +96,8 @@ const Tags = ({classes, mode = "all", filter}) => {
                     onChange={handleMode}
                     value={mode}
                 >
-                    <MenuItem value={"all"}>All tags</MenuItem>
-                    <MenuItem value={"hidden"}>Hidden tags</MenuItem>
+                    <MenuItem value={"all"}>All</MenuItem>
+                    <MenuItem value={"hidden"}>Hidden</MenuItem>
                 </Select>
                 {mode === "all" ? <Input
                     color={"secondary"}
@@ -100,21 +115,21 @@ const Tags = ({classes, mode = "all", filter}) => {
                     value={filter}
                 /> : null}
             </NavigationToolbar>
-        </Hidden>
-        <Hidden mdUp>
+        </Hidden>}
+        {!forceMode && <Hidden mdUp>
             <NavigationToolbar
                 backButton={null}
                 className={classes.topSticky}
-                rightButton={<Select
+                rightButton={!equals && <Select
                     color={"secondary"}
                     onChange={handleMode}
                     value={mode}
                 >
-                    <MenuItem value={"all"}>All tags</MenuItem>
-                    <MenuItem value={"hidden"}>Hidden tags</MenuItem>
+                    <MenuItem value={"all"}>All</MenuItem>
+                    <MenuItem value={"hidden"}>Hidden</MenuItem>
                 </Select>}
             >
-                {mode === "all" ? <Input
+                {(mode === "all" && !equals) ? <Input
                     color={"secondary"}
                     endAdornment={filter ? <IconButton
                         children={<Clear/>}
@@ -130,13 +145,13 @@ const Tags = ({classes, mode = "all", filter}) => {
                     value={filter}
                 /> : null}
             </NavigationToolbar>
-        </Hidden>
+        </Hidden>}
         <Grid container className={classes.center}>
             <LazyListComponent
                 itemComponent={itemComponent}
                 itemTransform={itemTransform}
                 pagination={() => new Pagination(paginationOptions)}
-                noItemsComponent={<TagItem skeleton={true} label={"No tags found"}/>}
+                noItemsComponent={noItemsCoponent}
                 placeholder={<TagItem skeleton={true}/>}
                 // reverse
             />
@@ -208,8 +223,16 @@ const Tags = ({classes, mode = "all", filter}) => {
         <Link
             to={pages.newtag.route}
             key={pages.newtag.route}>
-            <Fab aria-label={"Add game"} color={"primary"} className={classes.fab}>
-                <AddIcon/>
+            <Fab
+                aria-label={fabLabel}
+                color={"primary"}
+                className={classes.fab}
+                // variant={windowData.isNarrow() ? "round" : "extended"}
+                variant={"extended"}
+            >
+                {/*<AddIcon/>*/}
+                {/*{!windowData.isNarrow() && fabLabel}*/}
+                {fabLabel}
             </Fab>
         </Link>
     </>

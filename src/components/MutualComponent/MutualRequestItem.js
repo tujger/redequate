@@ -9,7 +9,7 @@ import Button from "@material-ui/core/Button";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import Hidden from "@material-ui/core/Hidden";
 import {mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
-import {useFirebase, usePages} from "../../controllers/General";
+import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import ProgressView from "../ProgressView";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
@@ -30,6 +30,7 @@ const MutualRequestItem = (
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
+    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const {key, userData, value} = data;
@@ -101,6 +102,7 @@ const MutualRequestItem = (
                         <Grid item className={classes.userName}>
                             <b>{userData.name}</b>
                         </Grid>
+                        {windowData.isNarrow() && <Grid item xs/>}
                         <Grid item className={classes.date} title={new Date(value.timestamp).toLocaleString()}>
                             {toDateString(value.timestamp)}
                         </Grid>

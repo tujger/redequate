@@ -1,15 +1,17 @@
 import React from "react";
-import {Link, useHistory} from "react-router-dom";
+import {Link} from "react-router-dom";
 import CardHeader from "@material-ui/core/CardHeader";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
-import PostButtons from "./PostButtons";
 import PostBody from "./PostBody";
 import {usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
 import PostCardWrapper from "./PostCardWrapper";
+import MentionedTextComponent from "../MentionedTextComponent";
+import {mentionTags} from "../..";
+import PostButtonsWide from "./PostButtonsWide";
 
 export default (
     {
@@ -72,6 +74,15 @@ export default (
                         <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
                             {toDateString(postData.created)}
                         </Grid>
+                        {postData.targetTag && <Grid item>
+                            - posted to <MentionedTextComponent
+                            mentions={[{
+                                ...mentionTags,
+                                displayTransform: (id, display) => display,
+                                style: {fontWeight: "bold"}
+                            }]}
+                            tokens={[postData.targetTag]}
+                        /></Grid>}
                     </Grid>}
                     subheader={<>
                         <PostBody
@@ -91,7 +102,7 @@ export default (
                                 clickable={disableClick}
                             />
                         </Grid>}
-                        {!disableButtons && <PostButtons
+                        {!disableButtons && <PostButtonsWide
                             allowedExtras={allowedExtras}
                             classes={classes}
                             isReply={isReply}

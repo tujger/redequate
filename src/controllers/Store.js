@@ -16,6 +16,7 @@ import {alertsVisitReducer} from "../alerts/alertsVisitReducer";
 import {alertsCounterReducer} from "../alerts/alertsCounterReducer";
 import {newPostComponentReducer} from "../components/NewPostComponent/newPostComponentReducer";
 import {tagsReducer} from "../tags/tagsReducer";
+import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -24,6 +25,7 @@ const Store = (name, reducers) => {
         alertsVisit: alertsVisitReducer,
         audit: auditReducer,
         chatsCounter: chatsCounterReducer,
+        confirmComponentReducer,
         currentUserData,
         dispatcherRoutedBodyReducer,
         errors: errorsReducer,

@@ -180,7 +180,7 @@ export const styles = theme => ({
         textDecoration: "none",
     },
     link: {
-        color: "#452187",
+        color: "#3f51b5",
     },
     nounderline: {
         textDecoration: "none",
@@ -219,10 +219,10 @@ export const styles = theme => ({
             maxWidth: theme.spacing(30),
         },
         [theme.breakpoints.down("sm")]: {
-            width: theme.spacing(15),
-            height: theme.spacing(15),
-            maxHeight: theme.spacing(15),
-            maxWidth: theme.spacing(30),
+            width: theme.spacing(25),
+            height: theme.spacing(25),
+            maxHeight: theme.spacing(25),
+            maxWidth: "100%",
         },
         color: "darkgray",
         objectFit: "cover"
@@ -311,11 +311,13 @@ export const stylesList = theme => ({
     },
     avatarSmall: {
         height: theme.spacing(5),
+        fontSize: "1rem",
         textDecoration: "none",
         width: theme.spacing(5),
     },
     avatarSmallest: {
         height: theme.spacing(3),
+        fontSize: "0.8rem",
         textDecoration: "none",
         width: theme.spacing(3),
     },
@@ -333,7 +335,7 @@ export const stylesList = theme => ({
                 paddingTop: theme.spacing(1),
             },
             [theme.breakpoints.down("sm")]: {
-                paddingBottom: 0,
+                // paddingBottom: 0,
             },
         },
         "& $cardHeader": {
@@ -428,6 +430,7 @@ export const stylesList = theme => ({
     },
     cardHeaderWithLabel: {
         alignItems: "center",
+        whiteSpace: "pre-wrap",
     },
     cardSubheader: {
         color: "#101010",
@@ -485,7 +488,7 @@ export const stylesList = theme => ({
         textDecoration: "none",
     },
     link: {
-        color: "#452187",
+        color: "#3f51b5",
     },
     nounderline: {
         textDecoration: "none",
@@ -503,7 +506,7 @@ export const stylesList = theme => ({
         backgroundColor: theme.palette.background.default,
     },
     showMore: {
-        color: "#452187",
+        color: "#3f51b5",
         marginTop: theme.spacing(0.5),
     },
     since: {
@@ -538,7 +541,7 @@ export const stylesList = theme => ({
         marginRight: theme.spacing(0.5),
         textDecoration: "none",
         [theme.breakpoints.down("sm")]: {
-            flex: 1,
+            // flex: 0,
         },
     },
 });

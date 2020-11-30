@@ -15,6 +15,8 @@ import HeaderComponent from "../../components/HeaderComponent";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
+import ConfirmComponent from "../../components/ConfirmComponent";
+import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
 
 const stylesCurrent = theme => ({
     indent: {
@@ -145,6 +147,7 @@ function TopBottomMenuLayout(props) {
         <div className={[classes.stickyBottom].join(" ")}>{null}</div>
         <Snackbar/>
         <NotificationsSnackbar/>
+        <DispatchedConfirmComponent open={false}/>
     </StickyHeader>
 }
 

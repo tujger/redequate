@@ -29,10 +29,13 @@ import MutualComponent from "../components/MutualComponent/MutualComponent";
 import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import {styles} from "../controllers/Theme";
 import InfoComponent from "../components/InfoComponent";
+import ShareComponent from "../components/ShareComponent";
+import ActionComponent from "../components/MutualComponent/ActionComponent";
 
 const stylesCurrent = theme => ({
     tagImage: {
-        width: "auto"
+        borderRadius: theme.spacing(2),
+        width: "100%"
     },
     follow: {
         borderColor: theme.palette.secondary.main,
@@ -40,9 +43,35 @@ const stylesCurrent = theme => ({
         fontWeight: "initial",
         textTransform: "initial",
     },
+    _label: {
+        [theme.breakpoints.down("sm")]: {
+            fontSize: "125%",
+            fontWeight: "bold",
+            lineHeight: "normal",
+            marginBottom: theme.spacing(1),
+            marginTop: theme.spacing(1),
+        },
+    },
+    _description: {
+
+    },
+    _button: {
+        borderColor: theme.palette.secondary.main,
+        fontSize: theme.typography.caption.fontSize,
+        fontWeight: "initial",
+        textTransform: "initial",
+        [theme.breakpoints.down("sm")]: {
+            width: theme.spacing(10),
+            marginLeft: theme.spacing(0.5),
+            marginRight: theme.spacing(0.5),
+        }
+    },
+    _profileFields: {
+        marginBottom: 0,
+    }
 });
 
-const Tag = ({classes}) => {
+const Tag = ({classes, allowOwner = true}) => {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages()
@@ -55,6 +84,7 @@ const Tag = ({classes}) => {
     const {id: itemId} = useParams();
 
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
+    const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
 
     const buttonProps = (index) => {
         return {
@@ -107,6 +137,7 @@ const Tag = ({classes}) => {
     }, [itemId]);
 
     if (!tag) return <LoadingComponent/>
+
     return <>
         <NavigationToolbar
             alignItems={"flex-end"}
@@ -118,7 +149,7 @@ const Tag = ({classes}) => {
                 onClick={fixErrors}
                 title={"Fix possible errors"}
             />}
-            rightButton={isCurrentUserAdmin && <IconButton
+            rightButton={(isCurrentUserAdmin || isOwner) && <IconButton
                 aria-label={"Edit"}
                 children={<EditIcon/>}
                 onClick={() => history.push(pages.edittag.route + tag.key)}
@@ -134,29 +165,43 @@ const Tag = ({classes}) => {
                         src={tag.value.image}
                     />
                 </Grid>}
-                <Grid item className={classes.profileFields}>
+                <Grid item className={[classes.profileFields, classes._profileFields].join(" ")}>
                     <Grid container className={classes.profileField}>
-                        <Grid item>
-                            <Typography variant={"h6"}>{tag.value.label}</Typography>
+                        <Grid item className={classes._label}>
+                            {tag.value.label}
                         </Grid>
                     </Grid>
                     <Grid container className={classes.profileField}>
-                        <Grid item>
-                            <MentionedTextComponent
-                                mentions={[mentionTags, mentionUsers]}
-                                text={tag.value.description}
-                            />
-                        </Grid>
+                        <MentionedTextComponent
+                            className={classes._description}
+                            mentions={[mentionTags, mentionUsers]}
+                            text={tag.value.description}
+                        />
                     </Grid>
                     <Box m={1}/>
                     <Grid container spacing={1} className={classes.profileField}>
+                        <ShareComponent
+                            component={<ActionComponent
+                                className={classes._button}
+                                label={"Invite"}
+                            />}
+                            text={"Share"}
+                            title={"Share"}
+                            url={window.location.origin + pages.tag.route + tag.value.id}
+                        />
                         <MutualComponent
                             counterComponent={<InfoComponent suffix={"follower(s)"}/>}
                             mutualId={tag.key}
                             mutualType={"tag"}
                             typeId={"watching"}
-                            subscribeLabel={"Follow"}
-                            unsubscribeLabel={"Unfollow"}
+                            subscribeComponent={<ActionComponent
+                                className={classes._button}
+                                label={"Follow"}
+                            />}
+                            unsubscribeComponent={<ActionComponent
+                                className={classes._button}
+                                label={"Unfollow"}
+                            />}
                         />
                     </Grid>
                 </Grid>
@@ -216,13 +261,21 @@ const Tag = ({classes}) => {
             </Fab>}
             context={tag.value.id}
             mentions={[mentionTags, mentionUsers]}
+            onBeforePublish={async data => {
+                console.log("PUBLISH", data);
+                data.text += `${String.fromCharCode(1)}$[tag:${tag.value.id}:${tag.value.label}]${String.fromCharCode(2)}`
+                return data;
+            }}
             onComplete={key => {
+                console.log("COMPLETE", key)
+                dispatch({type: lazyListComponentReducer.RESET});
                 history.push(pages.post.route + key);
             }}
             onError={error => {
                 console.error(error)
             }}
-            text={`$[tag:${tag.value.id}:${tag.value.label}] `}
+            // text={`$[tag:${tag.value.id}:${tag.value.label}] `}
+            UploadProps={windowData.isNarrow() ? {camera: false} : undefined}
         />
         {/*<CounterComponent
             initialValue={random}

@@ -16,9 +16,10 @@ const ItemPlaceholderComponent = ({avatar, classes, label, flat, cloud, onClick,
         onClick={onClick}
     >
         <CardHeader
-            avatar={avatar || (label
+            avatar={avatar !== null && (avatar || (label
                 ? <AvatarView
                     className={classes.avatar}
+                    image={avatar}
                     initials={label}
                     verified={true}
                 />
@@ -26,8 +27,9 @@ const ItemPlaceholderComponent = ({avatar, classes, label, flat, cloud, onClick,
                     animation={label ? false : "wave"}
                     className={classes.avatar}
                     variant={"circle"}
-                />)}
+                />))}
             className={[classes.cardHeader, "", label ? classes.cardHeaderWithLabel : ""].join(" ")}
+            disableTypography
             subheader={!label && <>
                 <Skeleton
                     animation={"wave"}

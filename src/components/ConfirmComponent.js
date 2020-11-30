@@ -6,6 +6,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Button from "@material-ui/core/Button";
 import {useHistory} from "react-router-dom";
+import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
 
 const styles = theme => ({
     modal: {
@@ -35,7 +36,7 @@ const ConfirmComponent = (
         modal = false,
         onCancel,
         onConfirm,
-        title
+        title,
     }) => {
     const history = useHistory();
 
@@ -47,7 +48,7 @@ const ConfirmComponent = (
         return () => {
             unblock();
         }
-    })
+    }, []);
 
     return <Dialog
         disableBackdropClick={modal}
@@ -61,13 +62,13 @@ const ConfirmComponent = (
             {children}
         </DialogContent> : null}
         <DialogActions>
-            <Button
+            {cancelLabel && <Button
                 aria-label={cancelLabel}
                 autoFocus={!confirmLabel}
                 children={cancelLabel}
                 color={"secondary"}
                 onClick={onCancel}
-            />
+            />}
             {confirmLabel && <Button
                 aria-label={confirmLabel}
                 autoFocus
@@ -79,5 +80,7 @@ const ConfirmComponent = (
         </DialogActions>
     </Dialog>
 }
+ConfirmComponent.SHOW = confirmComponentReducer.SHOW;
+ConfirmComponent.HIDE = confirmComponentReducer.HIDE;
 
 export default withStyles(styles)(ConfirmComponent);
