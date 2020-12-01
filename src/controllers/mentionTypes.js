@@ -38,7 +38,10 @@ export const mentionUsers = {
         order: "asc"
     }),
     style: {color: "#3f51b5"},
-    transform: item => ({id: item.key, display: item.value.name}),
+    transform: item => {
+        console.log(item.value)
+        return ({id: item.key, display: item.value.name || item.value.email})
+    },
     trigger: "@",
     type: "user",
     component: <ComponentUser/>

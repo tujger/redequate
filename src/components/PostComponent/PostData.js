@@ -80,7 +80,7 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
             if (!_counters) throw new Error("Counters not available.");
             return _counters[type] || 0;
         },
-        create: ({uid, text, id, created, image, images, replyTo, root}) => {
+        create: async ({uid, text, id, created, image, images, replyTo, root}) => {
             _uid = uid;
             _id = id || _id;
             _created = created;
@@ -95,6 +95,18 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
                     text = text.replace(String.fromCharCode(1) + matches[1] + String.fromCharCode(2), "");
                     const toks = tokenizeText(matches[1]);
                     _targetTag = toks[0];
+                    if (_targetTag && _targetTag.type === "tag" && _targetTag.value) {
+                        _targetTag = await cacheDatas.fetch(_targetTag.value, id => {
+                            return firebase.database().ref("tag").child(_targetTag.value).once("value")
+                                .then(snapshot => {
+                                    if (snapshot.exists()) {
+                                        const val = snapshot.val();
+                                        _targetTag.value = (val || {}).label || _targetTag.value;
+                                    }
+                                    return _targetTag;
+                                });
+                        });
+                    }
                 }
             } catch (e) {
                 console.error(e);
@@ -128,12 +140,12 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
                 resolve(_body);
                 return;
             }
-            _body._refPosts.child(_id).once("value").then(snapshot => {
+            _body._refPosts.child(_id).once("value").then(async snapshot => {
                 if (snapshot.exists()) {
                     _body._lastSnapshot = snapshot;
                     const data = snapshot.val();
                     data.replyTo = data.to;
-                    _body.create(data);
+                    await _body.create(data);
                     _created = data.created;
                     cacheDatas.put(_id, _body);
                     resolve(_body);

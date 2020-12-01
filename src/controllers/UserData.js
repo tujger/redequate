@@ -130,7 +130,8 @@ export function currentUserData(state = {
 // new stuff
 export function UserData(firebase) {
     // eslint-disable-next-line one-var
-    let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp, _loaded = {}, _persisted, _lastVisitUpdate = 0;
+    let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp, _loaded = {}, _persisted,
+        _lastVisitUpdate = 0;
 
     const _dateFormatted = date => {
         if (!date) return "";
@@ -220,16 +221,16 @@ export function UserData(firebase) {
             return _public.image;
         },
         get initials() {
-            if (_public.name) {
-                const tokens = _public.name.split(/[\W]/, 2);// .split(/[^A-Za-z]/, 2);
+            // if (_public.name || _public.email || "Some user") {
+                const tokens = (_public.name || _public.email || "Some user").split(/[\W]/, 2);// .split(/[^A-Za-z]/, 2);
                 let result = tokens.map(token => token.substr(0, 1).toUpperCase()).join("");
                 if (!result) result = _public.name.trim().substr(0, 1);
                 return result;
-            }
-            return null;
+            // }
+            // return null;
         },
         get name() {
-            return _public.name || _public.email;
+            return _public.name || _public.email || "Some user";
         },
         get private() {
             return _private;
@@ -364,12 +365,12 @@ export function UserData(firebase) {
                     _fetch(ref.child(_id).child("name"))
                         .then(snap => {
                             if (snap.exists()) _persisted = true;
-                            _public.name = snap.val();
-                            if (!_public.name) {
-                                cacheDatas.remove(_id);
-                                _id = undefined;
-                                reject(new Error("User not found"));
-                            }
+                            _public.name = snap.val() || "";
+                            // if (!_public.name) {
+                            //     cacheDatas.remove(_id);
+                            //     _id = undefined;
+                            //     reject(new Error("User not found"));
+                            // }
                             // console.warn("[UserData] name", _id, _public.name);
                             _loaded = {..._loaded, name: true};
                             resolve(_public.name);
@@ -541,9 +542,13 @@ export function UserData(firebase) {
         },
         updateVisitTimestamp: () => {
             const now = new Date().getTime();
-            if (_persisted && (now - _lastVisitUpdate) > 60000) {
-                firebase.database().ref("users_public").child(_id).child("visit").set(firebase.database.ServerValue.TIMESTAMP);
-                _lastVisitUpdate = now;
+            if (_id && _persisted && (now - _lastVisitUpdate) > 60000) {
+                firebase.database().ref("users_public").child(_id).child("email").once("value")
+                    .then(snapshot => {
+                        if (!snapshot.exists()) return;
+                        firebase.database().ref("users_public").child(_id).child("visit").set(firebase.database.ServerValue.TIMESTAMP);
+                        _lastVisitUpdate = now;
+                    })
             }
             return _body;
         },

@@ -20,6 +20,7 @@ const Logout = (props) => {
     const store = useStore();
 
     const doLogout = () => {
+        window.localStorage.removeItem(pages.login.route);
         logoutUser(firebase, store)()
             .then(() => {
                 refreshAll(store);

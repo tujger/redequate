@@ -4,7 +4,7 @@ import ActionComponent from "./ActionComponent";
 import InfoComponent from "../InfoComponent";
 import TextField from "@material-ui/core/TextField";
 import {MutualMode} from "./MutualConstants";
-import {mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
+import {mutualRequest, mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
 import {useFirebase} from "../../controllers/General";
 import {useCurrentUserData, matchRole, Role} from "../../controllers/UserData";
 import ProgressView from "../ProgressView";
@@ -50,29 +50,13 @@ const MutualComponent = (
     const pushRequest = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: true});
-        let ref = firebase.database().ref();
-        let request = {
-            uid: currentUserData.id,
-            id: mutualId,
-            uid_id: uidId,
-            id_uid: idUid,
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            type: mutualType,
-        };
-        if (mutualMode === MutualMode.SIMPLEX_QUIET) {
-            ref = ref.child("mutual").child(typeId);
-        } else if (mutualMode === MutualMode.DUPLEX_APPROVE) {
-            ref = ref.child("mutualrequests").child(typeId);
-            request = {...request, typeId};
-            if (message) request = {...request, message};
-        }
-        ref.push(request)
-            .then(ref => {
+        mutualRequest({firebase, currentUserData, message, mutualId, mutualMode, mutualType, typeId})
+            .then(hasPending => {
                 if (mutualMode === MutualMode.DUPLEX_APPROVE) {
                     setState(state => ({
                         ...state,
                         messageOpen: false,
-                        hasPending: {key: ref.key, value: {...request, timestamp: new Date().getTime()}}
+                        hasPending
                     }))
                 }
             })

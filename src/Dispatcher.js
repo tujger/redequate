@@ -53,6 +53,9 @@ console.error = function (...args) {
         if (args[0].toString().indexOf("no such file or directory") > 1) {
             return;
         }
+        if (args[0].toString().indexOf("memory access out of bounds") > 1) {
+            return;
+        }
         const firebase = useFirebase();
         const currentUserData = useCurrentUserData();
         if (!firebase || !firebase.database) return;
@@ -137,7 +140,7 @@ function Dispatcher(props) {
                         return useTechnicalInfo();
                     });
                 });
-                setState({...state, firebase, store});
+                setState(state => ({...state, firebase, store}));
             } catch (e) {
                 console.error(e);
             }
@@ -151,7 +154,8 @@ function Dispatcher(props) {
     if (isIncompatible) {
         return <ThemeProvider theme={theme}><TechnicalInfoView
             message={<>
-                <Typography>Oops, we have detected that your browser is outdated and cannot be supported by {title} :(</Typography>
+                <Typography>Oops, we have detected that your browser is outdated and cannot be supported
+                    by {title} :(</Typography>
                 <Typography>We'll be happy to see you back using {title} with up-to-date browser!</Typography>
             </>}
         /></ThemeProvider>
@@ -199,26 +203,28 @@ function _DispatcherRoutedBody(props) {
     const currentUserData = useCurrentUserData();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
-    const updateTitle = (location) => {
-        console.log("[Dispatcher]", JSON.stringify(location));
-        try {
-            if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
-        } catch (error) {
-            console.error(error);
-        }
-        const currentPage = (itemsFlat.filter(item => matchPath(location.pathname, {
-            exact: true,
-            path: item._route,
-        })) || [])[0];
-        if (currentPage) {
-            const allowed = needAuth(currentPage.roles, currentUserData) ? pages.login : (matchRole(currentPage.roles, currentUserData) && !currentPage.disabled && currentPage.component) ? currentPage : pages.notfound;
-            const label = allowed.title || allowed.label;
-            document.title = label + (title ? " - " + title : "");
-            dispatch({type: Layout.TITLE, label});
-        }
-    }
 
     React.useEffect(() => {
+        const updateTitle = (location) => {
+            console.log("[Dispatcher]", JSON.stringify(location));
+            try {
+                if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
+            } catch (error) {
+                console.error(error);
+            }
+            const currentPage = (itemsFlat.filter(item => matchPath(location.pathname, {
+                exact: true,
+                path: item._route,
+            })) || [])[0];
+
+            if (currentPage) {
+                const allowed = needAuth(currentPage.roles, currentUserData) ? pages.login : (matchRole(currentPage.roles, currentUserData) && !currentPage.disabled && currentPage.component) ? currentPage : pages.notfound;
+                const label = allowed.title || allowed.label;
+                document.title = label + (title ? " - " + title : "");
+                dispatch({type: Layout.TITLE, label});
+            }
+        }
+
         updateTitle({pathname: window.location.pathname});
         const currentPathname = window.location.pathname;
         const currentSearch = window.location.search;
@@ -235,7 +241,7 @@ function _DispatcherRoutedBody(props) {
             unlisten();
         }
         // eslint-disable-next-line
-    }, []);
+    }, [currentUserData]);
 
     const background = history.location.state && history.location.state.background
 

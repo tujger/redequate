@@ -15,9 +15,9 @@ import ClearIcon from "@material-ui/icons/Clear";
 import Box from "@material-ui/core/Box";
 import {newPostComponentReducer} from "./newPostComponentReducer";
 import SendIcon from "@material-ui/icons/Send";
-import {mentionUsers, mentionTags} from "../../controllers/mentionTypes";
+import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {styles} from "../../controllers/Theme";
 import {uploadComponentClean, uploadComponentPublish} from "../UploadComponent/uploadComponentControls";
@@ -29,8 +29,6 @@ import UploadComponent from "../UploadComponent/UploadComponent";
 import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
 import {useHistory} from "react-router-dom";
 import {tokenizeText} from "../MentionedTextComponent";
-import {normalizeSortName} from "../../controllers/UserData";
-import Pagination from "../../controllers/FirebasePagination";
 
 const stylesCurrent = theme => ({
     content: {

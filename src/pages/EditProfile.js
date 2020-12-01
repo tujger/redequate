@@ -13,7 +13,7 @@ import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, useHistory, useParams} from "react-router-dom";
-import {matchRole, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {logoutUser, matchRole, Role, useCurrentUserData, UserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
@@ -77,7 +77,7 @@ const stylesCurrent = theme => ({
 
 function EditProfile(props) {
     // eslint-disable-next-line react/prop-types
-    let {classes, uploadable = true, notifications = true, publicFields = publicFieldsDefault, adminFields: adminFieldsGiven = adminFields, isFirstLogin} = props;
+    let {classes, uploadable = true, notifications = true, publicFields = publicFieldsDefault, adminFields: adminFieldsGiven = adminFields} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -90,16 +90,15 @@ function EditProfile(props) {
         error: null,
         disabled: false,
     });
-
     const {state: givenState = {}} = history.location;
-    const {tosuccessroute} = givenState;
+    const {tosuccessroute, isFirstLogin} = givenState;
 
     // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
     const {image, disabled, requiredError = [], uniqueError = [], userData, deleteOpen, role, uppy} = state;
 
     const onerror = error => {
-        setState({...state, disabled: false});
+        setState(state => ({...state, disabled: false}));
         notifySnackbar(error);
         refreshAll(store);
     };
@@ -154,6 +153,15 @@ function EditProfile(props) {
             return;
         }
 
+        const exists = await firebase.database().ref("users_public").child(userData.id).child("email").once("value").then(snapshot => snapshot.exists());
+        if (!exists) {
+            notifySnackbar(Error("Profile is not found, force log out"));
+            await logoutUser(firebase, store)();
+            refreshAll(store);
+            history.replace(pages.home.route);
+            return;
+        }
+
         let publishing = {};
 
         if (userData.image && image !== userData.image) {
@@ -203,7 +211,7 @@ function EditProfile(props) {
                 }
             })
             .then(() => {
-                setState({...state, disabled: false, uppy: null})
+                setState(state => ({...state, disabled: false, uppy: null}))
                 refreshAll(store);
                 if (isAdminAllowed) {
                     history.goBack();
@@ -231,13 +239,13 @@ function EditProfile(props) {
     }
 
     const handleUploadPhotoSuccess = ({uppy, snapshot}) => {
-        setState({...state, uppy, image: snapshot.uploadURL});
+        setState(state => ({...state, uppy, image: snapshot.uploadURL}));
     }
 
     const handleUploadPhotoError = (error) => {
         console.error("[EditProfile] upload", error)
         uploadComponentClean(uppy);
-        setState({...state, uppy: null});
+        setState(state => ({...state, uppy: null}));
     }
 
     const handleClickDelete = () => {
@@ -261,7 +269,7 @@ function EditProfile(props) {
 
     const handleNotifications = (evt, enable) => {
         dispatch(ProgressView.SHOW);
-        setState({...state, disabled: true});
+        setState(state => ({...state, disabled: true}));
         if (enable) {
             setupReceivingNotifications(firebase)
                 .then(token => {
@@ -272,7 +280,7 @@ function EditProfile(props) {
                 .catch(notifySnackbar)
                 .finally(() => {
                     dispatch(ProgressView.HIDE);
-                    setState({...state, disabled: false});
+                    setState(state => ({...state, disabled: false}));
                 });
         } else {
             userData.private[fetchDeviceId()].notification = null;
@@ -290,7 +298,7 @@ function EditProfile(props) {
                 .catch(notifySnackbar)
                 .finally(() => {
                     dispatch(ProgressView.HIDE);
-                    setState({...state, disabled: false});
+                    setState(state => ({...state, disabled: false}));
                 });
             notifySnackbar({title: "Unsubscribed"});
         }
@@ -309,7 +317,7 @@ function EditProfile(props) {
         }
         userData.fetch([UserData.PUBLIC, UserData.ROLE])
             .then(() => isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))
-            .then(() => isMounted && setState({...state, userData, ...userData.public, role: userData.role}))
+            .then(() => isMounted && setState(state => ({...state, userData, ...userData.public, role: userData.role})))
             .catch(error => {
                 notifySnackbar(error);
                 history.goBack();
@@ -323,7 +331,7 @@ function EditProfile(props) {
 
     if (!userData) return <LoadingComponent/>
     if (userData.id !== currentUserData.id && !matchRole([Role.ADMIN], currentUserData)) {
-        return <Redirect to={pages.editself.route}/>
+        return <Redirect to={pages.editprofile.route}/>
     }
 
     const isAdminAllowed = matchRole([Role.ADMIN], currentUserData);
@@ -343,7 +351,7 @@ function EditProfile(props) {
                         children={<ClearIcon/>}
                         className={classes.clearPhoto}
                         onClick={() => {
-                            setState({...state, image: "", uppy: null});
+                            setState(state => ({...state, image: "", uppy: null}));
                         }}
                         title={"Clear"}
                     />
@@ -374,7 +382,7 @@ function EditProfile(props) {
                             children={"Clear"}
                             color={"secondary"}
                             onClick={() => {
-                                setState({...state, image: "", uppy: null});
+                                setState(state => ({...state, image: "", uppy: null}));
                             }}
                             title={"Clear"}
                             variant={"contained"}
@@ -418,7 +426,7 @@ function EditProfile(props) {
                                         fullWidth: true,
                                         label: field.label,
                                         onChange: ev => {
-                                            setState({...state, [field.id]: ev.target.value || ""});
+                                            setState(state => ({...state, [field.id]: ev.target.value || ""}));
                                         },
                                         required: field.required,
                                         value: state[field.id] || ""
@@ -431,7 +439,7 @@ function EditProfile(props) {
                                         fullWidth
                                         label={field.label}
                                         onChange={ev => {
-                                            setState({...state, [field.id]: ev.target.value || ""});
+                                            setState(state => ({...state, [field.id]: ev.target.value || ""}));
                                         }}
                                         required={field.required}
                                         value={state[field.id] || ""}

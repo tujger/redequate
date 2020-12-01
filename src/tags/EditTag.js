@@ -28,6 +28,7 @@ import Pagination from "../controllers/FirebasePagination";
 import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
 import {tokenizeText} from "../components";
 import MentionedTextComponent from "../components/MentionedTextComponent";
+import {MutualMode, mutualRequest} from "../components/MutualComponent";
 
 const stylesCurrent = theme => ({
     image: {
@@ -106,32 +107,41 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     }
 
     const saveTag = async () => {
-        dispatch(ProgressView.SHOW);
-        setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
-        // for (let x in {"developer": 1, "genres": 1, "platforms": 1, "publisher": 1}) {
-        //     tag.data[x] = adjustValue(tag.data[x], true);
-        // }
-
         const checkIfLabelNotEmpty = async () => {
+            tag.label = (tag.label || "").trim();
             if (!tag.label) {
                 throw Error("Can not save item, label isn't defined");
             }
         }
-        const updateIdIfChanged = async () => {
-            const updatedId = normalizeSortName(tag.label);
-            if (!isNew && updatedId !== tag.id) {
-                throw Error("Label has been changed too significantly");
-            }
+        const checkIfIdValid = async () => {
+            const updatedId = tag.id || normalizeSortName(tag.label);
+            // if (!isNew && updatedId !== tag.id) {
+            //     throw Error("Label has been changed too significantly");
+            // }
 
-            const existed = await new Pagination({
+            const existing = await new Pagination({
                 ref: firebase.database().ref("tag"),
                 child: "id",
                 equals: updatedId,
             }).next();
-
-            if (existed.filter(item => item.key !== id).length) {
-                console.error(`[EditTag] not unique '${updatedId}' from '${tag.label}' for '${id}, found: ${JSON.stringify(existed)}`);
-                throw Error("Label is not unique");
+            const ids = existing.filter(item => item.key !== id);
+            if (ids.length) {
+                console.error(`[EditTag] already exists '${updatedId}' from '${tag.label}' for '${id}, found: ${JSON.stringify(existing)}`);
+                throw Error(`${tag.label} already exists, please modify.`);
+            }
+            return updatedId;
+        }
+        const checkIfLabelValid = async (updatedId) => {
+            const existing = await new Pagination({
+                ref: firebase.database().ref("tag"),
+                child: "label",
+                equals: tag.label,
+            }).next();
+            console.log(existing);
+            const labels = existing.filter(item => item.key !== id);
+            if (labels.length) {
+                console.error(`[EditTag] not available '${tag.label}' for '${updatedId}/${id}, found: ${JSON.stringify(existing)}`);
+                throw Error(`${tag.label} is not available, please modify.`);
             }
             tag.id = updatedId;
         }
@@ -169,7 +179,9 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         }
         const updateSortName = async () => {
             if (!tag.hidden) {
-                tag._sort_name = tag._sort_name || tag.id;
+                tag._sort_name = normalizeSortName(tag.label);
+            } else {
+                tag._sort_name = null;
             }
         }
         const publishTag = async () => {
@@ -178,51 +190,45 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         const removeCachedTag = async () => {
             cacheDatas.remove(id || newId);
         }
+        const subscribeToTag = async () => {
+            if (isNew) {
+                return mutualRequest({
+                    firebase,
+                    currentUserData,
+                    mutualId: id || newId,
+                    mutualType: "tag",
+                    typeId: "watching"
+                });
+            }
+        }
         const onPublishSuccess = async () => {
             if (tag.hidden) {
                 history.push(pages.home.route);
             } else {
-                history.push(pages.tag.route + tag.id)
+                history.replace(pages.tag.route + tag.id)
             }
         }
 
+        dispatch(ProgressView.SHOW);
+        setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
         checkIfLabelNotEmpty()
-            .then(updateIdIfChanged)
+            .then(checkIfIdValid)
+            .then(checkIfLabelValid)
             .then(publishImageIfChanged)
             .then(updateTimestamp)
             .then(updateUid)
             .then(updateSortName)
             .then(publishTag)
             .then(removeCachedTag)
+            .then(subscribeToTag)
             .then(onPublishSuccess)
             .catch(notifySnackbar)
             .finally(() => {
                 dispatch(ProgressView.HIDE);
                 setState(state => ({...state, disabled: false}));
             })
-
         console.log("[EditTag] save", tag)
     }
-
-    // const adjustValue = (text, plain, separator = ",;") => {
-    //     console.log(text)
-    //     let tokens = (text || "")
-    //         .split(new RegExp("[" + separator + "]\\s*"))
-    //         .filter(token => !!token.trim())
-    //         .map((token) => {
-    //             if (token.trim()) {
-    //                 if (plain) {
-    //                     return token.trim();
-    //                 } else {
-    //                     return token.trim();
-    //                     // return `$[item:${token.toLowerCase()}:${token}]`;
-    //                 }
-    //             } else {
-    //                 return token;
-    //             }
-    //         })
-    //     return tokens.join("; ");
-    // }
 
     const toggleTag = (event, value) => {
         if (value && !tag.hidden) {
@@ -233,7 +239,13 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     }
 
     const handleCancelAction = () => {
-        setState(state => ({...state, hideTagOpen: false, showTagOpen: false, deleteTagOpen: false, changeOwnerOpen: false}));
+        setState(state => ({
+            ...state,
+            hideTagOpen: false,
+            showTagOpen: false,
+            deleteTagOpen: false,
+            changeOwnerOpen: false
+        }));
     }
 
     const hideTag = () => {
@@ -504,7 +516,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                         focused={true}/>
                 </Grid>
                 <Box m={1}/>
-                {!uppy && <>
+                {!uppy && isCurrentUserAdmin && <>
                     <Grid container alignItems={"flex-end"}>
                         <TextField
                             color={"secondary"}
@@ -595,7 +607,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={hideTag}
-                title={"Hide item?"}
+                title={`Hide ${tag.label}?`}
             >
                 <b>{tag.label}</b> will be hidden, unavailable for view, not presented in suggestions. All
                 related posts will be available.
@@ -607,7 +619,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={showTag}
-                title={"Show item?"}
+                title={`Show ${tag.label}?`}
             >
                 The hidden <b>{tag.label}</b> will be restored to show.
                 <br/>
@@ -618,7 +630,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={deleteTag}
-                title={"Delete tag?"}
+                title={`Delete ${tag.label}?`}
             >
                 <b>{tag.label}</b> will be deleted and can not be restored.
                 <br/>

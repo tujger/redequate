@@ -44,6 +44,13 @@ const stylesCurrent = theme => ({
         textTransform: "initial",
     },
     _label: {
+        [theme.breakpoints.up("md")]: {
+            fontSize: "125%",
+            fontWeight: "bold",
+            lineHeight: "normal",
+            marginBottom: theme.spacing(1),
+            marginTop: theme.spacing(1),
+        },
         [theme.breakpoints.down("sm")]: {
             fontSize: "125%",
             fontWeight: "bold",
@@ -53,13 +60,17 @@ const stylesCurrent = theme => ({
         },
     },
     _description: {
-
+        [theme.breakpoints.up("md")]: {
+            flexFlow: "column",
+        },
     },
     _button: {
         borderColor: theme.palette.secondary.main,
         fontSize: theme.typography.caption.fontSize,
         fontWeight: "initial",
         textTransform: "initial",
+        [theme.breakpoints.up("md")]: {
+        },
         [theme.breakpoints.down("sm")]: {
             width: theme.spacing(10),
             marginLeft: theme.spacing(0.5),
@@ -76,7 +87,7 @@ const Tag = ({classes, allowOwner = true}) => {
     const history = useHistory();
     const pages = usePages()
     const [state, setState] = React.useState({disabled: false});
-    const {tabSelected = 0, tag} = state;
+    const {tag} = state;
     const dispatch = useDispatch();
     const db = firebase.database();
     const currentUserData = useCurrentUserData();
@@ -85,15 +96,6 @@ const Tag = ({classes, allowOwner = true}) => {
 
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
     const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
-
-    const buttonProps = (index) => {
-        return {
-            color: "default",
-            variant: "text",
-            className: [classes.tabButton, tabSelected === index ? classes.tabButtonSelected : ""].join(" "),
-            onClick: () => setState({...state, tabSelected: index})
-        }
-    }
 
     const fixErrors = () => {
         fetchCallable(firebase)("fixTag", {
@@ -113,7 +115,7 @@ const Tag = ({classes, allowOwner = true}) => {
                 if (snapshot.exists()) return {key: snapshot.key, value: snapshot.val()};
                 return Pagination({
                     ref: firebase.database().ref("tag"),
-                    child: "_sort_name",
+                    child: "id",
                     equals: itemId,
                     size: 1
                 }).next().then(items => items[0])
@@ -127,10 +129,7 @@ const Tag = ({classes, allowOwner = true}) => {
                 notifySnackbar(Error(`Cannot open "${itemId}" properties`));
                 history.goBack();
             })
-        // let currentRef = firebase.database().ref("_posts").orderByChild("gid").equalTo(itemId).limitToLast(1);
-        // currentRef.on("child_added", handleNewPosts);
         return () => {
-            // currentRef && currentRef.off();
             isMounted = false;
         }
         // eslint-disable-next-line
@@ -171,9 +170,8 @@ const Tag = ({classes, allowOwner = true}) => {
                             {tag.value.label}
                         </Grid>
                     </Grid>
-                    <Grid container className={classes.profileField}>
+                    <Grid container className={[classes.profileField, classes._description].join(" ")}>
                         <MentionedTextComponent
-                            className={classes._description}
                             mentions={[mentionTags, mentionUsers]}
                             text={tag.value.description}
                         />
@@ -207,19 +205,6 @@ const Tag = ({classes, allowOwner = true}) => {
                 </Grid>
             </Grid>
         </Grid>
-        {/*<NavigationToolbar
-            alignItems={"flex-end"}
-            justify={"center"}
-            backButton={null}
-            className={classes.topSticky}
-        >
-            <Button
-                {...buttonProps(0)}
-                children={<>
-                    Posts
-                    <CounterComponent path={`${tag.key}/total`} prefix={" ("} suffix={")"}/>
-                </>}/>
-        </NavigationToolbar>*/}
         <Grid container className={classes.center}>
             <LazyListComponent
                 itemComponent={item => <PostComponent
@@ -262,34 +247,18 @@ const Tag = ({classes, allowOwner = true}) => {
             context={tag.value.id}
             mentions={[mentionTags, mentionUsers]}
             onBeforePublish={async data => {
-                console.log("PUBLISH", data);
-                data.text += `${String.fromCharCode(1)}$[tag:${tag.value.id}:${tag.value.label}]${String.fromCharCode(2)}`
+                data.text += `${String.fromCharCode(1)}$[tag:${tag.value.id}:${tag.key}]${String.fromCharCode(2)}`
                 return data;
             }}
             onComplete={key => {
-                console.log("COMPLETE", key)
                 dispatch({type: lazyListComponentReducer.RESET});
                 history.push(pages.post.route + key);
             }}
             onError={error => {
                 console.error(error)
             }}
-            // text={`$[tag:${tag.value.id}:${tag.value.label}] `}
             UploadProps={windowData.isNarrow() ? {camera: false} : undefined}
         />
-        {/*<CounterComponent
-            initialValue={random}
-            path={`${tag.key}/total`}>
-            <Tooltip title={"Refresh posts"}>
-                <Fab aria-label={"Refresh"} color={"primary"} className={classes.fabUpper} style={{zIndex: 1}}
-                     onClick={() => {
-                         setState({...state, random: Math.random()})
-                         dispatch({type: lazyListComponentReducer.RESET});
-                     }}>
-                    <RefreshIcon/>
-                </Fab>
-            </Tooltip>
-        </CounterComponent>*/}
     </>
 };
 

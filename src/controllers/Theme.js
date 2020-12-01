@@ -201,6 +201,7 @@ export const styles = theme => ({
     },
     profileField: {
         [theme.breakpoints.up("sm")]: {
+            display: "inline",
             justifyContent: "flex-start",
             width: "auto",
         },
@@ -287,7 +288,17 @@ export const styles = theme => ({
         color: theme.palette.secondary.main,
     },
     text: {
+        overflowWrap: "break-word",
         textDecoration: "none",
+        wordWrap: "break-word",
+        "&:empty": {
+            margin: 0,
+            [theme.breakpoints.up("md")]: {
+                height: theme.spacing(1),
+            },
+            [theme.breakpoints.down("sm")]: {
+            },
+        }
     },
 
     header: {},
@@ -347,12 +358,16 @@ export const stylesList = theme => ({
         marginBottom: theme.spacing(1),
         "& $root, & > $cardHeader, & > .MuiCollapse-container": {
             boxSizing: "border-box",
+            padding: 0,
             "& > .MuiCollapse-container": {
                 paddingTop: theme.spacing(1),
             },
-            [theme.breakpoints.down("sm")]: {
-                padding: 0,
-            },
+            // [theme.breakpoints.up("md")]: {
+            //     padding: 0,
+            // },
+            // [theme.breakpoints.down("sm")]: {
+            //     padding: 0,
+            // },
         },
         "& $cardContent": {
             backgroundColor: theme.palette.background.paper,
@@ -523,7 +538,9 @@ export const stylesList = theme => ({
     },
     text: {
         color: "#101010",
+        overflowWrap: "break-word",
         textDecoration: "none",
+        wordWrap: "break-word",
         "&:empty": {
             borderWidth: 0,
             height: 0,

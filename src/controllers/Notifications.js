@@ -45,7 +45,7 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
             resolve(token);
         }).catch(error => {
             if (onMessage) onMessage({title: error.message});
-            else notifySnackbar(error);
+            else setTimeout(() => notifySnackbar(error), 10);
             reject(error);
         });
         /*      console.log(messaging);

@@ -9,6 +9,7 @@ import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import {Role} from "../../controllers";
 
 const stylesCurrent = makeStyles(theme => ({
     indent: {
@@ -46,7 +47,7 @@ export default ({allowedExtras, level, postId, classes = {}, onChange, onDelete,
         });
         const items = await pagination.next();
         if (items[0]) {
-            UserData(firebase).fetch(items[0].value.uid)
+            UserData(firebase).fetch(items[0].value.uid, [UserData.NAME, UserData.IMAGE])
                 .then(userData => {
                     setState(state => ({...state, pagination, repliesMin: items.length, userReplied: userData}));
                 })

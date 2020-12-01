@@ -25,26 +25,25 @@ import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
 
 function Login(props) {
-    const {popup = true, agreementComponent = null, onLogin, transformUserData, layout = <LoginLayout/>} = props;
-    const [state, setState] = React.useState({
-        email: "",
-        password: "",
-        requesting: false
-    });
-    const {showAgreement, email, password, requesting, response} = state;
-    const pages = usePages();
-    const dispatch = useDispatch();
-    const store = useStore();
-    const firebase = useFirebase();
-    const location = useLocation();
+    const {
+        popup = true, agreementComponent = null, onLogin, transformUserDataOnFirstLogin, layout = <LoginLayout/>
+    } = props;
     const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
+    const firebase = useFirebase();
     const history = useHistory();
+    const location = useLocation();
+    const pages = usePages();
+    const store = useStore();
+    const [state, setState] = React.useState({});
+    const {showAgreement = false, email = "", password = "", requesting = true, response = null} = state;
 
     const errorCallback = error => {
         notifySnackbar(error);
         dispatch({type: "currentUserData", userData: null});
         setState(state => ({...state, requesting: false}));
         // refreshAll(store);
+        window.localStorage.removeItem(pages.login.route);
         return logoutUser(firebase, store)();
     };
 
@@ -54,13 +53,14 @@ function Login(props) {
 
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
+        window.localStorage.removeItem(pages.login.route);
         logoutUser(firebase, store)()
             .then(() => {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.setCustomParameters({prompt: "select_account"});
                 dispatch({type: "currentUserData", userData: null});
                 if (popup) {
-                    setState({...state, requesting: true});
+                    setState(state => ({...state, requesting: true}));
                     return firebase.auth().signInWithPopup(provider)
                         .then(loginSuccess)
                         .then(finallyCallback);
@@ -74,7 +74,7 @@ function Login(props) {
 
     const requestLoginPassword = () => {
         dispatch(ProgressView.SHOW);
-        setState({...state, requesting: true});
+        setState(state => ({...state, requesting: true}));
         firebase.auth().signInWithEmailAndPassword(email, password)
             .then(loginSuccess)
             .catch(errorCallback)
@@ -97,7 +97,7 @@ function Login(props) {
                 title: "Your account is not yet verified.",
                 variant: "warning",
             })
-            setState({...state, requesting: true});
+            setState(state => ({...state, requesting: true}));
             return;
         }
         return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
@@ -110,9 +110,8 @@ function Login(props) {
             .then(() => {
                 if (!ud.persisted) {
                     isFirstLogin = true;
-                    if (transformUserData) return transformUserData(ud);
+                    if (transformUserDataOnFirstLogin) return transformUserDataOnFirstLogin(ud);
                 }
-                console.log(isFirstLogin, ud && ud.persisted)
                 return ud;
             })
             .then(ud => isFirstLogin ? ud.savePublic() : ud.updateVisitTimestamp())
@@ -125,10 +124,10 @@ function Login(props) {
                     return setupReceivingNotifications(firebase)
                         .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
                             .then(() => ud.savePrivate()))
-                        .then(() => {
-                            notifySnackbar({title: "Subscribed to notifications"});
-                            setState({...state, disabled: false});
-                        })
+                        .then(() => notifySnackbar({title: "Subscribed to notifications"}))
+                        .then(() => setTimeout(() => {
+                            setState(state => ({...state, disabled: false}))
+                        }, 10))
                         .catch(notifySnackbar)
                 }
             })
@@ -147,9 +146,9 @@ function Login(props) {
         if (!response || !response.user) throw Error("Login cancelled");
         if (!agreementComponent) return response;
         const deviceId = fetchDeviceId();
-        const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
-        await ud.fetchPrivate(deviceId, true);
-        const agreement = (ud.private[deviceId] || {}).agreement;
+        const userData = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+        await userData.fetchPrivate(deviceId, true);
+        const agreement = (userData.private[deviceId] || {}).agreement;
         if (agreement) return response;
         setState(state => ({...state, showAgreement: true, response}));
     }
@@ -166,15 +165,15 @@ function Login(props) {
         // history.push(pages.home.route);
     }
 
-    if (!popup && window.localStorage.getItem(pages.login.route)) {
-        window.localStorage.removeItem(pages.login.route);
-        firebase.auth().getRedirectResult()
-            .then(checkFirstLogin)
-            .then(loginSuccess)
-            .catch(errorCallback)
-            .finally(() => dispatch(ProgressView.HIDE));
-        return <LoadingComponent/>;
-    }
+    // if (!popup && window.localStorage.getItem(pages.login.route)) {
+    //     window.localStorage.removeItem(pages.login.route);
+    //     firebase.auth().getRedirectResult()
+    //         .then(checkFirstLogin)
+    //         .then(loginSuccess)
+    //         .catch(errorCallback)
+    //         .finally(() => dispatch(ProgressView.HIDE));
+    //     return <LoadingComponent/>;
+    // }
 
     if (currentUserData && currentUserData.id) {
         if (location.pathname === pages.login.route) {
@@ -184,6 +183,20 @@ function Login(props) {
         }
     }
 
+    React.useEffect(() => {
+        if (!popup && window.localStorage.getItem(pages.login.route)) {
+            window.localStorage.removeItem(pages.login.route);
+            firebase.auth().getRedirectResult()
+                .then(checkFirstLogin)
+                .then(loginSuccess)
+                .catch(errorCallback)
+                .finally(() => dispatch(ProgressView.HIDE));
+            // return <LoadingComponent/>;
+        } else {
+            setState(state => ({...state, requesting: false}));
+        }
+    }, [])
+
     return <layout.type
         {...props}
         {...layout.props}
@@ -191,8 +204,8 @@ function Login(props) {
         disabled={requesting}
         email={email}
         onAgree={handleAgree}
-        onChangeEmail={ev => setState({...state, email: ev.target.value})}
-        onChangePassword={ev => setState({...state, password: ev.target.value})}
+        onChangeEmail={ev => setState(state => ({...state, email: ev.target.value}))}
+        onChangePassword={ev => setState(state => ({...state, password: ev.target.value}))}
         onDecline={handleDecline}
         onRequestGoogle={requestLoginGoogle}
         onRequestLogin={requestLoginPassword}
@@ -310,7 +323,7 @@ Login.propTypes = {
     onLogin: PropTypes.func,
     popup: PropTypes.bool,
     signup: PropTypes.bool,
-    transformUserData: PropTypes.func,
+    transformUserDataOnFirstLogin: PropTypes.func,
 };
 
 LoginLayout.propTypes = {
