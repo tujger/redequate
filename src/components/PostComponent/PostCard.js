@@ -1,93 +1,53 @@
 import React from "react";
-import {useHistory} from "react-router-dom";
 import Hidden from "@material-ui/core/Hidden";
-import {cacheDatas, usePages} from "../../controllers/General";
 import PostCardLayoutNarrow from "./PostCardLayoutNarrow";
 import PostCardLayoutWide from "./PostCardLayoutWide";
-import RepliesTree from "./RepliesTree";
 import ReplyCardLayoutNarrow from "./ReplyCardLayoutNarrow";
 
-export default (
-    {
-        allowedExtras = ["like"],
-        classes = {},
-        className,
-        cloud,
-        collapsible = true,
-        disableClick = false,
-        disableButtons,
-        flat,
-        isReply = false,
-        level,
-        mentions,
-        onChange = postData => console.log("onChange", postData),
-        onDelete = postData => console.log("onDelete", postData),
-        postData,
-        showRepliesCounter = true,
-        type = "posts",
-        UploadProps,
-        userData,
-    }) => {
-    const history = useHistory();
-    const pages = usePages();
+export default (props) => {
+    const {level, postData, highlight} = props;
 
-    const handleChange = () => {
-        cacheDatas.remove(postData.id);
-        onChange(postData);
-    }
+    const ref = React.useRef();
+    const [state, setState] = React.useState({});
+    const {highlighted} = state;
 
-    const handleDelete = () => {
-        cacheDatas.remove(postData.id);
-        onDelete(postData);
-    }
+    React.useEffect(() => {
+        if (!highlight) return;
+        let isMounted = true;
+        if (postData.id === highlight) {
+            isMounted && setState(state => ({...state, highlighted: true}));
+            setTimeout(() => {
+                isMounted && setState(state => ({...state, highlighted: false}));
+            }, 1000);
+        }
+        return () => {
+            isMounted = false;
+        }
+    }, [highlight]);
 
-    const handleClickPost = () => {
-        history.push(pages.post.route + postData.id)
-    }
+    React.useEffect(() => {
+        if (!highlight) return;
+        if (ref.current) {
+            // console.log("SCROLLINTO", ref.current);
+            ref.current.scrollIntoViewIfNeeded();
+        }
+    }, [ref.current]);
 
-    const onlyReplies = level === 0 && history && history.location && history.location.state && history.location.state.onlyReplies;
-
-    const componentProps = {
-        allowedExtras,
-        classes,
-        className,
-        cloud,
-        collapsible,
-        disableClick,
-        flat,
-        isReply,
-        level,
-        handleChange,
-        handleClickPost,
-        handleDelete,
-        mentions,
-        postData,
-        showRepliesCounter,
-        type,
-        userData,
-        UploadProps,
+    const inheritProps = {
+        ...props,
+        highlight,
+        highlighted,
+        ref,
     }
 
     return <>
-        {!onlyReplies && <>
-            <Hidden mdUp>
-                {level > 0
-                    ? <ReplyCardLayoutNarrow {...componentProps} onlyReplies={onlyReplies}/>
-                    : <PostCardLayoutNarrow {...componentProps} onlyReplies={onlyReplies}/>}
-            </Hidden>
-            <Hidden smDown>
-                <PostCardLayoutWide {...componentProps} onlyReplies={onlyReplies}/>
-            </Hidden>
-        </>}
-        {level !== undefined && <RepliesTree
-            allowedExtras={allowedExtras}
-            level={level}
-            postId={postData.id}
-            classes={classes}
-            onChange={handleChange}
-            onDelete={handleDelete}
-            type={type}
-            UploadProps={UploadProps}
-        />}
+        <Hidden mdUp>
+            {level > 0
+                ? <ReplyCardLayoutNarrow {...inheritProps}/>
+                : <PostCardLayoutNarrow {...inheritProps}/>}
+        </Hidden>
+        <Hidden smDown>
+            <PostCardLayoutWide {...inheritProps}/>
+        </Hidden>
     </>
 }

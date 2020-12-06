@@ -1,13 +1,15 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
 import IconButton from "@material-ui/core/IconButton";
-import LikeEmptyIcon from "@material-ui/icons/ThumbUpOutlined";
-import LikeFilledIcon from "@material-ui/icons/ThumbUp";
+import LikeEmptyIcon from "@material-ui/icons/FavoriteBorder";
+import LikeFilledIcon from "@material-ui/icons/Favorite";
+import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import {delay, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import useTheme from "@material-ui/styles/useTheme";
+import CounterComponent from "../CounterComponent";
 
 export default ({postData, classes}) => {
     const [state, setState] = React.useState({});
@@ -43,14 +45,23 @@ export default ({postData, classes}) => {
     return <Grid item>
         <IconButton
             aria-label={"Like"}
+            className={classes.counter}
             component={"div"}
             onClick={handleClickExtra("like")}
             size={"small"}
             style={postData.extra("like") ? {color: theme.palette.secondary.main} : undefined}
             title={"Like"}
         >
-            {postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
-            <span className={classes.counter}>{postData.counter("like")}</span>
+            <CounterComponent
+                // path={`${postData.id}/replied`}
+                counter={postData.counter("like")}
+                prefix={<>
+                    {postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
+                    <Box m={0.5}/>
+                </>}
+                showZero
+                zeroPrefix={<><LikeEmptyIcon/><Box m={0.5}/></>}
+            />
         </IconButton>
     </Grid>
 }

@@ -2,6 +2,7 @@ export {default as AvatarView} from "./AvatarView";
 export {default as ButtonAddEvent} from "./ButtonAddEvent";
 export {default as ConfirmComponent} from "./ConfirmComponent";
 export {default as DateTimePicker} from "./DateTimePicker";
+export {default as FlexFabComponent} from "./FlexFabComponent";
 export {default as HeaderComponent} from "./HeaderComponent";
 export {default as InfoComponent} from "./InfoComponent";
 export {default as ItemPlaceholderComponent} from "./ItemPlaceholderComponent";

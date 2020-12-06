@@ -75,7 +75,7 @@ const styles = theme => ({
     },
     center: {
         display: "flex",
-        flex: "1 1 auto",
+        flex: "0 0 auto",
         flexDirection: "column",
         flexWrap: "nowrap",
         maxWidth: "100%",
@@ -90,6 +90,7 @@ const styles = theme => ({
     left: {},
     right: {},
     top: {
+        flex: "0 0 auto",
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),
         [theme.breakpoints.up("md")]: {
@@ -98,6 +99,7 @@ const styles = theme => ({
         },
     },
     topSticky: {
+        flex: "0 0 auto",
         backgroundColor: theme.palette.background.default,
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),

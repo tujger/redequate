@@ -11,114 +11,97 @@ import PostMedia from "./PostMedia";
 import PostCardWrapper from "./PostCardWrapper";
 import MentionedTextComponent from "../MentionedTextComponent";
 import {mentionTags} from "../..";
-import PostButtonsWide from "./PostButtonsWide";
+import PostButtons from "./PostButtons";
+import PostMenu from "./PostMenu";
 
-export default (
-    {
-        allowedExtras = ["like"],
+export default React.forwardRef((props, ref) => {
+    const {
         classes = {},
         className,
-        cloud,
-        collapsible = true,
-        disableClick = false,
+        disableClick,
         disableButtons,
-        flat,
-        handleChange,
         handleClickPost,
-        handleDelete,
-        isReply = false,
         level,
-        mentions,
-        onChange = postData => console.log("onChange", postData),
-        onDelete = postData => console.log("onDelete", postData),
+        pattern,
         postData,
-        showRepliesCounter = true,
-        transparent,
-        type = "posts",
-        UploadProps,
         userData,
-    }) => {
+        highlighted,
+    } = props;
     const pages = usePages();
 
     // return React.useMemo(() => {
-    return <>
-        <Card
-            className={[classes.card, flat ? classes.cardFlat : cloud ? classes.cardCloud : transparent ? classes.cardTransparent : "", className].join(" ")}>
-            <PostCardWrapper classes={classes} disableClick={disableClick} handleClickPost={handleClickPost}>
-                <CardHeader
-                    classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
-                    className={[classes.cardHeader, classes.post].join(" ")}
-                    avatar={<Link
-                        className={classes.avatar}
-                        onClick={evt => evt.stopPropagation()}
-                        to={pages.user.route + postData.uid}
+    return <Card
+        className={[
+            classes.card,
+            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
+            highlighted ? classes.cardHighlighted : "",
+            className
+        ].join(" ")}
+        ref={ref}
+    >
+        <PostCardWrapper classes={classes} disableClick={disableClick} handleClickPost={handleClickPost}>
+            <CardHeader
+                classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
+                className={[
+                    classes.cardHeader,
+                    classes.post,
+                ].join(" ")}
+                avatar={<Link
+                    className={classes.avatar}
+                    onClick={evt => evt.stopPropagation()}
+                    to={pages.user.route + postData.uid}
+                >
+                    <AvatarView
+                        className={level > 1 ? classes.avatarSmallest : classes.avatar}
+                        image={userData.image}
+                        initials={userData.initials}
+                        verified={true}
+                    />
+                </Link>}
+                title={<Grid container>
+                    <Grid
+                        className={classes.userName}
+                        item
                     >
-                        <AvatarView
-                            className={classes.avatar}
-                            image={userData.image}
-                            initials={userData.initials}
-                            verified={true}
+                        <Link
+                            className={[classes.label].join(" ")}
+                            onClick={evt => evt.stopPropagation()}
+                            to={pages.user.route + userData.id}
+                        >{userData.name}</Link>
+                    </Grid>
+                    <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
+                        {toDateString(postData.created)}
+                    </Grid>
+                    {postData.targetTag && <Grid item>
+                        - posted to <MentionedTextComponent
+                        mentions={[{
+                            ...mentionTags,
+                            displayTransform: (id, display) => display,
+                            style: {fontWeight: "bold"}
+                        }]}
+                        tokens={[postData.targetTag]}
+                    /></Grid>}
+                    <PostMenu {...props}/>
+                </Grid>}
+                subheader={<>
+                    <PostBody
+                        {...props}
+                        disableClick={!disableClick}
+                    />
+                    {postData.images && <Grid
+                        className={classes.cardImage}
+                        container
+                    >
+                        <PostMedia
+                            images={postData.images}
+                            inlineCarousel={false}
+                            clickable={disableClick}
                         />
-                    </Link>}
-                    title={<Grid container>
-                        <Grid
-                            className={classes.userName}
-                            item
-                        >
-                            <Link
-                                className={[classes.label].join(" ")}
-                                onClick={evt => evt.stopPropagation()}
-                                to={pages.user.route + userData.id}
-                            >{userData.name}</Link>
-                        </Grid>
-                        <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
-                            {toDateString(postData.created)}
-                        </Grid>
-                        {postData.targetTag && <Grid item>
-                            - posted to <MentionedTextComponent
-                            mentions={[{
-                                ...mentionTags,
-                                displayTransform: (id, display) => display,
-                                style: {fontWeight: "bold"}
-                            }]}
-                            tokens={[postData.targetTag]}
-                        /></Grid>}
                     </Grid>}
-                    subheader={<>
-                        <PostBody
-                            classes={classes}
-                            collapsible={collapsible}
-                            disableClick={!disableClick}
-                            mentions={mentions}
-                            postData={postData}
-                        />
-                        {postData.images && <Grid
-                            className={classes.cardImage}
-                            container
-                        >
-                            <PostMedia
-                                images={postData.images}
-                                inlineCarousel={false}
-                                clickable={disableClick}
-                            />
-                        </Grid>}
-                        {!disableButtons && <PostButtonsWide
-                            allowedExtras={allowedExtras}
-                            classes={classes}
-                            isReply={isReply}
-                            mentions={mentions}
-                            onChange={handleChange}
-                            onDelete={handleDelete}
-                            postData={postData}
-                            showRepliesCounter={showRepliesCounter}
-                            type={type}
-                            UploadProps={UploadProps}
-                            userData={userData}
-                        />}
-                    </>}
-                />
-            </PostCardWrapper>
-        </Card>
-    </>
+                    {!disableButtons && <PostButtons {...props}/>}
+                </>}
+            />
+        </PostCardWrapper>
+    </Card>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
-}
+});

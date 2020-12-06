@@ -21,7 +21,7 @@ export function watchUserChanged(firebase, store) {
                 if (currentUserDataInstance.role === Role.USER_NOT_VERIFIED && result.emailVerified) {
                     console.warn("[UserData] verified", currentUserDataInstance.id, result && result.toJSON());
                     changed = true;
-                } else if (currentUserDataInstance.verified !== result.emailVerified) {
+                } else if (result.emailVerified && currentUserDataInstance.verified !== result.emailVerified) {
                     console.warn("[UserData] changed", currentUserDataInstance.id, result && result.toJSON());
                     changed = true;
                 } else if (result && result.uid === currentUserDataInstance.id) {
@@ -221,13 +221,10 @@ export function UserData(firebase) {
             return _public.image;
         },
         get initials() {
-            // if (_public.name || _public.email || "Some user") {
-                const tokens = (_public.name || _public.email || "Some user").split(/[\W]/, 2);// .split(/[^A-Za-z]/, 2);
-                let result = tokens.map(token => token.substr(0, 1).toUpperCase()).join("");
-                if (!result) result = _public.name.trim().substr(0, 1);
-                return result;
-            // }
-            // return null;
+            const tokens = (_public.name || _public.email || "Some user").split(/[\W]/, 2);
+            let result = tokens.map(token => token.substr(0, 1).toUpperCase()).join("");
+            if (!result) result = _public.name.trim().substr(0, 1);
+            return result;
         },
         get name() {
             return _public.name || _public.email || "Some user";
@@ -433,13 +430,16 @@ export function UserData(firebase) {
         fromFirebaseAuth: json => {
             _id = json.uid;
             _role = null;
+            const providerItem = json.providerData[0];
+            const provider = providerItem ? providerItem.providerId : "anonymous";
+            const emailVerified = json.emailVerified || provider === "google.com" || provider === "facebook.com";
             _public = {
                 name: json.displayName,
-                email: json.email,
-                emailVerified: json.emailVerified,
+                email: json.email || providerItem.email,
+                emailVerified,
                 image: json.photoURL,
                 lastLogin: +json.lastLoginAt,
-                provider: json.providerData.map(item => item.providerId)[0],
+                provider,
                 // created: +json.createdAt,
             };
             _requestedTimestamp = new Date();

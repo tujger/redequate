@@ -8,12 +8,18 @@ import GoogleLogo from "../images/google-logo.svg"
 import UserIcon from "@material-ui/icons/Mail";
 import AvatarView from "./AvatarView";
 import {styles} from "../controllers/Theme";
+import FacebookLogo from "../images/facebook-logo.svg";
 
 const stylesCurrent = theme => ({
     label: {
         color: "inherit",
         cursor: "default",
         textDecoration: "none",
+    },
+    profileImage: {
+        [theme.breakpoints.down("sm")]: {
+            width: theme.spacing(25),
+        },
     },
     signedWith: {
         alignItems: "flex-end",
@@ -33,16 +39,16 @@ const stylesCurrent = theme => ({
 const ProfileComponent = (props) => {
     const {classes, userData, publicFields, provider = true} = props;
 
-    return <Grid container style={{position: "relative"}}>
-        <Grid item className={classes.profileImageContainer}>
-            {userData.image
-                ? <AvatarView
+    return <Grid container className={classes.profile} style={{position: "relative"}}>
+        {userData.image && <Grid item className={classes.profileImageContainer}>
+            <Grid item className={classes.profileFieldImage}>
+                <AvatarView
                     className={classes.profileImage}
                     image={userData.image}
                     initials={userData.initials}
                     verified={userData.verified}/>
-                : <EmptyAvatar className={classes.profileImage}/>}
-        </Grid>
+            </Grid>
+        </Grid>}
         <Grid item className={classes.profileFields}>
             {publicFields && publicFields.map(field => {
                 if (!userData.public[field.id] && !field.viewComponent) return null;
@@ -62,6 +68,12 @@ const ProfileComponent = (props) => {
                 </Grid>
                 <Typography variant={"body2"}>Signed with Google</Typography>
             </>}
+            {userData.public.provider && userData.public.provider === "facebook.com" && <>
+                <Grid container justify={"flex-end"}>
+                    <img src={FacebookLogo} width={40} height={40} alt={""}/>
+                </Grid>
+                <Typography variant={"body2"}>Signed with Facebook</Typography>
+            </>}
             {userData.public.provider && userData.public.provider === "password" && <>
                 <Grid container justify={"flex-end"}>
                     <UserIcon/>
@@ -69,7 +81,7 @@ const ProfileComponent = (props) => {
                 <Typography variant={"body2"}>Signed with e-mail</Typography>
                 {!userData.verified && <Typography variant={"body2"}>Not verified</Typography>}
             </>}
-            {userData.public.provider && userData.public.provider !== "password" && userData.public.provider !== "google.com" &&
+            {userData.public.provider && userData.public.provider !== "password" && userData.public.provider !== "google.com" && userData.public.provider !== "facebook.com" &&
             <>
                 <Typography variant={"body2"}>Signed with {userData.public.provider}</Typography>
                 {!userData.verified && <Typography variant={"body2"}>Not verified</Typography>}
@@ -78,7 +90,4 @@ const ProfileComponent = (props) => {
     </Grid>
 };
 
-export default withRouter(withStyles(theme => ({
-    ...styles(theme),
-    ...stylesCurrent(theme)
-}))(ProfileComponent));
+export default withStyles(stylesCurrent)(withStyles(styles)(ProfileComponent));

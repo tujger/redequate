@@ -42,8 +42,8 @@ function UserItem({data, classes, skeleton, label}) {
     const classesCurrent = stylesCurrent();
     const {value: userData, _date} = data || {};
 
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label} flat/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes} flat/>
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>
+    if (skeleton) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>
 
     return <Card className={[classes.card, classes.cardFlat].join(" ")}>
         <CardActionArea
@@ -54,6 +54,9 @@ function UserItem({data, classes, skeleton, label}) {
             <CardHeader
                 classes={{content: classes.cardContent}}
                 className={[classes.cardHeader, classes.post].join(" ")}
+                action={userData.public && <Grid item className={classes.date}>
+                        {userData.public.provider}
+                    </Grid>}
                 avatar={<AvatarView
                     className={[
                         classes.avatar,

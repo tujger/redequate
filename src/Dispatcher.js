@@ -53,6 +53,9 @@ console.error = function (...args) {
         if (args[0].toString().indexOf("no such file or directory") > 1) {
             return;
         }
+        if (args[0].toString().indexOf("Module not found") > 1) {
+            return;
+        }
         if (args[0].toString().indexOf("memory access out of bounds") > 1) {
             return;
         }
@@ -197,7 +200,7 @@ let widthPoint;
 
 function _DispatcherRoutedBody(props) {
     // eslint-disable-next-line react/prop-types
-    const {pages, menu, width, copyright, headerComponent, layout, title, logo, random} = props;
+    const {pages, menu, width, copyright, headerComponent, layout, title, logo, random, iosLayout = true} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
@@ -218,7 +221,10 @@ function _DispatcherRoutedBody(props) {
             })) || [])[0];
 
             if (currentPage) {
-                const allowed = needAuth(currentPage.roles, currentUserData) ? pages.login : (matchRole(currentPage.roles, currentUserData) && !currentPage.disabled && currentPage.component) ? currentPage : pages.notfound;
+                const allowed = needAuth(currentPage.roles, currentUserData)
+                    ? pages.login
+                    : (matchRole(currentPage.roles, currentUserData) && !currentPage.disabled && currentPage.component)
+                        ? currentPage : pages.notfound;
                 const label = allowed.title || allowed.label;
                 document.title = label + (title ? " - " + title : "");
                 dispatch({type: Layout.TITLE, label});
@@ -260,7 +266,7 @@ function _DispatcherRoutedBody(props) {
                             title={title}
                         />
                         : ((["xs", "sm", "md"].indexOf(width) >= 0)
-                            ? (iOS
+                            ? ((iOS && iosLayout)
                                 ? <BottomToolbarLayout
                                     copyright={copyright}
                                     headerComponent={headerComponent}

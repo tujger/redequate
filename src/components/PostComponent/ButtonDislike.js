@@ -4,9 +4,11 @@ import IconButton from "@material-ui/core/IconButton";
 import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
 import DislikeFilledIcon from "@material-ui/icons/ThumbDown";
 import Grid from "@material-ui/core/Grid";
+import Box from "@material-ui/core/Box";
 import {delay, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import CounterComponent from "../CounterComponent";
 
 export default ({postData, classes}) => {
     const [state, setState] = React.useState({});
@@ -42,13 +44,21 @@ export default ({postData, classes}) => {
     return <Grid item>
         <IconButton
             aria-label={"Dislike"}
+            className={classes.counter}
             component={"div"}
             onClick={handleClickExtra("dislike")}
             size={"small"}
             title={"Dislike"}
         >
-            {postData.extra("dislike") ? <DislikeFilledIcon/> : <DislikeEmptyIcon/>}
-            <span className={classes.counter}>{postData.counter("dislike")}</span>
+            <CounterComponent
+                counter={postData.counter("dislike")}
+                prefix={<>
+                    {postData.extra("like") ? <DislikeFilledIcon/> : <DislikeEmptyIcon/>}
+                    <Box m={0.5}/>
+                </>}
+                showZero
+                zeroPrefix={<><DislikeEmptyIcon/><Box m={0.5}/></>}
+            />
         </IconButton>
     </Grid>
 }

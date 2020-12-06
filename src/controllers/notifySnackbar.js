@@ -19,6 +19,9 @@ export const notifySnackbar = props => {
             priority: "high",
             variant: "error"
         }
+    } else if (!props) {
+        console.warn("Snackbar notified with empty props");
+        return;
     } else if (props.constructor.name === "String") {
         snackbar.payload = {title: props};
     } else {

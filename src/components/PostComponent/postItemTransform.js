@@ -34,13 +34,10 @@ export default (
         console.error(item, type, error);
         let code = null;
         if (error && error.message && error.message.indexOf("Post not found") >= 0) code = MutualError.NOT_FOUND;
-
         if (onItemError) {
             return onItemError(error, {code, id: item.key, uid: currentUserData.id});
         } else {
             if (code === MutualError.NOT_FOUND) {
-                console.log(type, item.key, item.value, currentUserData.id)
-
                 fetchCallable(firebase)("fixPost", currentUserData && currentUserData.id
                     ? {
                         code,
@@ -54,7 +51,7 @@ export default (
                     .then(console.log)
                     .catch(console.error);
 
-                fetchCallable(firebase)("fixMutual", {
+                fetchCallable(firebase)("fixMutualStamp", {
                     code,
                     id: item.key,
                     uid: item.value,

@@ -1,5 +1,4 @@
 import React from "react";
-import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import {Link} from "react-router-dom";
 import {connect, useDispatch} from "react-redux";
@@ -16,6 +15,7 @@ import {usersReducer} from "./usersReducer";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import AllUsersPagination from "./AllUsersPagination";
 import UsersHeader from "./UsersHeader";
+import FlexFabComponent from "../../../components/FlexFabComponent";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
@@ -166,9 +166,10 @@ function Users(props) {
             key={pages.adduser.route}
             to={pages.adduser.route}
         >
-            <Fab aria-label={"Add"} color={"primary"} className={classes.fab}>
-                <AddIcon/>
-            </Fab>
+            <FlexFabComponent
+                icon={<AddIcon/>}
+                label={"Add user"}
+            />
         </Link>}
     </>
 }

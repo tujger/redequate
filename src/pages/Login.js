@@ -1,6 +1,5 @@
 import React from "react";
 import {logoutUser, sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
-import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
@@ -12,6 +11,7 @@ import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
 import GoogleLogo from "../images/google-logo.svg";
+import FacebookLogo from "../images/facebook-logo.svg";
 import PropTypes from "prop-types";
 import {useDispatch} from "react-redux";
 import {setupReceivingNotifications} from "../controllers/Notifications";
@@ -165,6 +165,27 @@ function Login(props) {
         // history.push(pages.home.route);
     }
 
+    const requestLoginFacebook = () => {
+        dispatch(ProgressView.SHOW);
+        window.localStorage.removeItem(pages.login.route);
+        logoutUser(firebase, store)()
+            .then(() => {
+                const provider = new firebase.auth.FacebookAuthProvider();
+                provider.setCustomParameters({prompt: "select_account"});
+                dispatch({type: "currentUserData", userData: null});
+                if (popup) {
+                    setState(state => ({...state, requesting: true}));
+                    return firebase.auth().signInWithPopup(provider)
+                        .then(loginSuccess)
+                        .then(finallyCallback);
+                } else {
+                    window.localStorage.setItem(pages.login.route, provider.providerId);
+                    return firebase.auth().signInWithRedirect(provider);
+                }
+            })
+            .catch(errorCallback)
+    }
+
     // if (!popup && window.localStorage.getItem(pages.login.route)) {
     //     window.localStorage.removeItem(pages.login.route);
     //     firebase.auth().getRedirectResult()
@@ -208,6 +229,7 @@ function Login(props) {
         onChangePassword={ev => setState(state => ({...state, password: ev.target.value}))}
         onDecline={handleDecline}
         onRequestGoogle={requestLoginGoogle}
+        onRequestFacebook={requestLoginFacebook}
         onRequestLogin={requestLoginPassword}
         password={password}
     />
@@ -225,6 +247,7 @@ const LoginLayout = (
         onChangePassword,
         onDecline,
         onRequestGoogle,
+        onRequestFacebook,
         onRequestLogin,
         password,
         signup = true
@@ -287,21 +310,34 @@ const LoginLayout = (
                 children={"Create account"}
                 fullWidth
                 onClick={() => history.push(pages.signup.route)}
+                size={"small"}
             />}
             <Button
                 children={"Forgot password?"}
                 fullWidth
                 onClick={() => history.push(pages.restore.route)}
+                size={"small"}
             />
         </ButtonGroup>
-        <Box m={1}/>
-        <Grid container justify={"center"}>
-            <Button disabled={disabled} onClick={onRequestGoogle}>
+        <Box m={3}/>
+        <Grid container alignItems={"center"} justify={"center"} spacing={1}>
+        {/*<ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"small"} fullWidth>*/}
+            <Button disabled variant={"text"} color={"default"} size={"small"}>
+                Login with
+            </Button>
+            <Button disabled={disabled} variant={"text"} color={"default"} onClick={onRequestGoogle} size={"small"}>
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
                 <Box m={0.5}/>
-                Log in with Google
+                Google
             </Button>
+            <Button disabled={disabled} variant={"text"} color={"default"} onClick={onRequestFacebook} size={"small"}>
+                <img src={FacebookLogo} width={20} height={20} alt={""}/>
+                <Box m={0.5}/>
+                Facebook
+            </Button>
+        {/*</ButtonGroup>*/}
         </Grid>
+        <Box m={1}/>
         {agreementComponent && <ConfirmComponent
             confirmLabel={"Agree"}
             modal

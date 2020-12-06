@@ -6,7 +6,7 @@ import TextField from "@material-ui/core/TextField";
 import {MutualMode} from "./MutualConstants";
 import {mutualRequest, mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
 import {useFirebase} from "../../controllers/General";
-import {useCurrentUserData, matchRole, Role} from "../../controllers/UserData";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import ProgressView from "../ProgressView";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import Pagination from "../../controllers/FirebasePagination";
@@ -39,7 +39,17 @@ const MutualComponent = (
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
-    const {disabled = true, hasPending, subscribed, subscribers, subscribes, message, messageOpen, requestsCounter = null, hasRequest} = state;
+    const {
+        disabled = true,
+        hasPending,
+        subscribed,
+        subscribers,
+        subscribes,
+        message,
+        messageOpen,
+        requestsCounter = null,
+        hasRequest
+    } = state;
     const currentUserData = useCurrentUserData();
 
     const uidId = `${currentUserData.id}_${mutualId}`;
@@ -224,23 +234,25 @@ const MutualComponent = (
                 if (hasRequest && isMutualRequestsCheckMount) {
                     setState(state => ({...state, hasRequest}))
                 }
-            })
-        return () => isMutualRequestsCheckMount = false;
+            });
+        return () => {
+            isMutualRequestsCheckMount = false;
+        }
     }, [typeId, mutualMode, firebase, requestsCounter, idUid])
 
     // console.log(requestsCounter, subscribers, hasPending, hasRequest)
     return <>
         {isAllowed && currentUserData.id !== mutualId && <>
-            {hasPending && <pendingComponent.type
+            {hasPending && pendingComponent && <pendingComponent.type
                 {...pendingComponent.props}
                 disabled
             />}
-            {!hasPending && !hasRequest && !subscribed && <subscribeComponent.type
+            {!hasPending && !hasRequest && !subscribed && subscribeComponent && <subscribeComponent.type
                 {...subscribeComponent.props}
                 disabled={disabled}
                 onClick={handleSubscribe}
             />}
-            {hasRequest && <>
+            {hasRequest && acceptComponent && rejectComponent && <>
                 <acceptComponent.type
                     {...acceptComponent.props}
                     disabled={disabled}
@@ -251,28 +263,28 @@ const MutualComponent = (
                     disabled={disabled}
                     onClick={handleRequestResponse(false)}
                 />
-                {hasRequest.value && hasRequest.value.message && <messageComponent.type
+                {hasRequest.value && hasRequest.value.message && messageComponent && <messageComponent.type
                     {...messageComponent.props}
                     children={hasRequest.value.message}
                 />}
             </>}
-            {!hasPending && subscribed && <unsubscribeComponent.type
+            {!hasPending && subscribed && unsubscribeComponent && <unsubscribeComponent.type
                 {...unsubscribeComponent.props}
                 disabled={disabled}
                 onClick={handleUnsubscribe}
             />}
         </>}
-        {counter && (mutualMode === MutualMode.SIMPLEX_QUIET) && <counterComponent.type
+        {counter && (mutualMode === MutualMode.SIMPLEX_QUIET) && subscribed && counterComponent && <counterComponent.type
             suffix={`${typeId}(s)`}
             {...counterComponent.props}
             children={subscribers}
         />}
-        {counter && (mutualMode === MutualMode.DUPLEX_APPROVE) && <counterComponent.type
+        {counter && (mutualMode === MutualMode.DUPLEX_APPROVE) && counterComponent && <counterComponent.type
             suffix={`${typeId}(s)`}
             {...counterComponent.props}
             children={subscribes}
         />}
-        {isSameUser && requestsCounter && <counterRequestsComponent.type
+        {isSameUser && requestsCounter && counterRequestsComponent && <counterRequestsComponent.type
             suffix={"request(s)"}
             {...counterRequestsComponent.props}
             children={requestsCounter}

@@ -5,6 +5,7 @@ import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import Hidden from "@material-ui/core/Hidden";
@@ -24,6 +25,7 @@ const MutualRequestItem = (
         label,
         onDelete = () => {
         },
+        pattern,
         skeleton,
     }) => {
     const pages = usePages();
@@ -77,11 +79,14 @@ const MutualRequestItem = (
         variant: "contained",
     }
 
-    if (label) return <ItemPlaceholderComponent label={label} classes={classes} flat/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes} flat/>;
+    if (label) return <ItemPlaceholderComponent label={label} classes={classes} pattern={"flat"}/>
+    if (skeleton) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
 
     return <>
-        <Card className={[classes.card, classes.cardFlat].join(" ")}>
+        <Card className={[
+            classes.card,
+            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : classes.cardFlat
+        ].join(" ")}>
             <CardActionArea
                 className={classes.root}
                 disabled={disabled}
@@ -108,11 +113,9 @@ const MutualRequestItem = (
                         </Grid>
                     </Grid>}
                     subheader={<>
-                        <Grid container alignItems={"flex-end"}>
-                            <Grid item xs>
-                                {value.message}
-                            </Grid>
-                        </Grid>
+                        <Typography variant={"body2"}>
+                            {value.message}
+                        </Typography>
                         <Hidden smUp>
                             <Grid container justify={"flex-end"}>
                                 <Button

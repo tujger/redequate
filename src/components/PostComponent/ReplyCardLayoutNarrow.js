@@ -8,106 +8,85 @@ import {usePages, useWindowData} from "../../controllers/General";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
-import ReplyButtonsNarrow from "./ReplyButtonsNarrow";
+import PostButtons from "./PostButtons";
+import PostMenu from "./PostMenu";
 
-export default (
-    {
-        allowedExtras = ["like"],
+export default React.forwardRef((props, ref) => {
+    const {
         classes = {},
         className,
-        cloud,
-        collapsible = true,
-        disableClick = false,
+        disableClick,
         disableButtons,
-        flat,
-        handleChange,
-        handleClickPost,
-        handleDelete,
-        isReply = false,
         level,
-        mentions,
-        onChange = postData => console.log("onChange", postData),
-        onDelete = postData => console.log("onDelete", postData),
+        pattern,
         postData,
-        showRepliesCounter = true,
-        transparent,
-        type = "posts",
-        UploadProps,
         userData,
-    }) => {
+        highlighted,
+    } = props;
+
     const pages = usePages();
     const windowData = useWindowData();
 
     // return React.useMemo(() => {
-    return <>
-        <Card
-            className={[classes.card, flat ? classes.cardFlat : cloud ? classes.cardCloud : transparent ? classes.cardTransparent : "", className].join(" ")}>
-            <CardHeader
-                classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
-                className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post, classes.reply].join(" ")}
-                avatar={<Link
-                    className={classes.avatarSmall}
-                    onClick={evt => evt.stopPropagation()}
-                    to={pages.user.route + postData.uid}
+    return <Card
+        className={[
+            classes.card,
+            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
+            highlighted ? classes.cardHighlighted : "",
+            className
+        ].join(" ")}
+        ref={ref}>
+        <CardHeader
+            classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
+            className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post, classes.reply].join(" ")}
+            avatar={<Link
+                className={level > 1 ? classes.avatarSmallest : classes.avatarSmall}
+                onClick={evt => evt.stopPropagation()}
+                to={pages.user.route + postData.uid}
+            >
+                <AvatarView
+                    className={level > 1 ? classes.avatarSmallest : classes.avatarSmall}
+                    image={userData.image}
+                    initials={userData.initials}
+                    verified={true}
+                />
+            </Link>}
+            title={<Grid container>
+                <Grid
+                    className={classes.userName}
+                    item
+                    // onClick={evt => evt.stopPropagation()}
                 >
-                    <AvatarView
-                        className={classes.avatarSmall}
-                        image={userData.image}
-                        initials={userData.initials}
-                        verified={true}
+                    <Link
+                        to={pages.user.route + userData.id}
+                        onClick={evt => evt.stopPropagation()}
+                        className={[classes.label].join(" ")}
+                    >{userData.name}</Link>
+                </Grid>
+                {windowData.isNarrow() && <Grid item xs/>}
+                <PostMenu {...props}/>
+                <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
+                    {toDateString(postData.created)}
+                </Grid>
+            </Grid>}
+            subheader={<>
+                <PostBody
+                    {...props}
+                    disableClick={!disableClick}
+                />
+                {postData.images && <Grid
+                    className={classes.cardImage}
+                    container
+                >
+                    <PostMedia
+                        images={postData.images}
+                        // inlineCarousel={!disableClick}
+                        mosaic
                     />
-                </Link>}
-                title={<Grid container>
-                    <Grid
-                        className={classes.userName}
-                        item
-                        // onClick={evt => evt.stopPropagation()}
-                    >
-                        <Link
-                            to={pages.user.route + userData.id}
-                            onClick={evt => evt.stopPropagation()}
-                            className={[classes.label].join(" ")}
-                        >{userData.name}</Link>
-                    </Grid>
-                    {windowData.isNarrow() && <Grid item xs/>}
-                    <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
-                        {toDateString(postData.created)}
-                    </Grid>
                 </Grid>}
-                subheader={<>
-                    <PostBody
-                        classes={classes}
-                        collapsible={collapsible}
-                        disableClick={!disableClick}
-                        mentions={mentions}
-                        postData={postData}
-                    />
-                    {postData.images && <Grid
-                        className={classes.cardImage}
-                        container
-                    >
-                        <PostMedia
-                            images={postData.images}
-                            // inlineCarousel={!disableClick}
-                            mosaic
-                        />
-                    </Grid>}
-                    {!disableButtons && <ReplyButtonsNarrow
-                        allowedExtras={allowedExtras}
-                        classes={classes}
-                        isReply={isReply}
-                        mentions={mentions}
-                        onChange={handleChange}
-                        onDelete={handleDelete}
-                        postData={postData}
-                        showRepliesCounter={showRepliesCounter}
-                        type={type}
-                        UploadProps={UploadProps}
-                        userData={userData}
-                    />}
-                </>}
-            />
-        </Card>
-    </>
+                {!disableButtons && <PostButtons {...props}/>}
+            </>}
+        />
+    </Card>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
-}
+});

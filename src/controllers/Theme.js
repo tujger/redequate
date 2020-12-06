@@ -1,7 +1,8 @@
 import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
+import responsiveFontSizes from "@material-ui/core/styles/responsiveFontSizes";
 
 const drawerWidth = 240;
-const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const iOS = false;//process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 export const colors = ({primary, secondary, ...rest} = {}) => {
     const month = new Date().getUTCMonth();
@@ -39,6 +40,8 @@ export const createTheme = ({colors, customized}) => {
         topBottomLayout: {
             title: {
             },
+            topmenu: {
+            },
             topSticky: {
                 top: () => theme.mixins.toolbar.minHeight,
             }
@@ -50,7 +53,7 @@ export const createTheme = ({colors, customized}) => {
         }
     }
 
-    const theme = createMuiTheme({
+    const theme = responsiveFontSizes(createMuiTheme({
         drawerWidth: drawerWidth,
         overrides: {
             MuiDrawer: {
@@ -77,7 +80,7 @@ export const createTheme = ({colors, customized}) => {
                 label: {
                     color: "inherit",
                 }
-            }
+            },
         },
         palette: {
             background: {
@@ -113,11 +116,14 @@ export const createTheme = ({colors, customized}) => {
             // }
         },
         typography: {
-            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', sans-serif",
-            fontSize: colors.fontSize || 15,
+            fontFamily: "Roboto, Helvetica, Arial, sans-serif",
+            // fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, 'Helvetica Neue', sans-serif",
+            fontSize: colors.fontSize || 14,
+            fontWeight: 400,
         },
         customized: {...customizedDefault},
-    });
+    }));
+
     theme.fetchOverride = (callback, defaultValue) => {
         try {
             if (callback) {
@@ -181,9 +187,18 @@ export const styles = theme => ({
     },
     link: {
         color: "#3f51b5",
+        textDecoration: "none",
     },
     nounderline: {
         textDecoration: "none",
+    },
+    profile: {
+        [theme.breakpoints.up("sm")]: {
+            flexFlow: "nowrap"
+        },
+        [theme.breakpoints.down("sm")]: {
+            justifyContent: "center",
+        },
     },
     profileFields: {
         alignItems: "center",
@@ -200,66 +215,83 @@ export const styles = theme => ({
         },
     },
     profileField: {
+        "& .MuiTypography-root": {
+            maxWidth: "100%",
+        },
         [theme.breakpoints.up("sm")]: {
-            display: "inline",
             justifyContent: "flex-start",
             width: "auto",
         },
         [theme.breakpoints.down("sm")]: {
             alignItems: "center",
-            display: "inline",
             justifyContent: "center",
             textAlign: "center",
         },
     },
-    profileImage: {
-        [theme.breakpoints.up("sm")]: {
-            width: theme.spacing(18),
-            height: theme.spacing(18),
-            maxHeight: theme.spacing(18),
-            maxWidth: theme.spacing(30),
-        },
-        [theme.breakpoints.down("sm")]: {
-            width: theme.spacing(25),
-            height: theme.spacing(25),
-            maxHeight: theme.spacing(25),
-            maxWidth: "100%",
-        },
+    profileFieldImage: {
         color: "darkgray",
-        objectFit: "cover"
-    },
-    profileImageContainer: {
+        position: "relative",
         [theme.breakpoints.up("sm")]: {
+            boxSizing: "content-box",
+            justifyContent: "center",
+            // height: theme.spacing(18),
             marginRight: theme.spacing(2),
+            maxWidth: theme.spacing(30),
+            width: theme.spacing(18),
         },
         [theme.breakpoints.down("sm")]: {
-            alignItems: "center",
-            display: "flex",
-            justifyContent: "center",
+            // maxHeight: theme.spacing(25),
+            maxWidth: "100%",
+            // height: theme.spacing(25),
+            textAlign: "center",
             width: "100%",
-            // marginTop: theme.spacing(3),
         },
     },
-    searchIcon: {},
+    profileImage: {
+        objectFit: "cover",
+        [theme.breakpoints.up("sm")]: {
+            height: theme.spacing(18),
+            minHeight: theme.spacing(18),
+            width: "100%",
+        },
+        [theme.breakpoints.down("sm")]: {
+            height: theme.spacing(25),
+            minHeight: theme.spacing(25),
+            width: "100%",
+        },
+    },
+    searchIcon: {
+        color: "inherit",
+    },
     searchToolbar: {
-        backgroundColor: theme.palette.background.default,
-        color: theme.palette.getContrastText(theme.palette.background.default),
         position: "absolute",
         right: 0,
         zIndex: 1,
         [theme.breakpoints.up("md")]: {
+            backgroundColor: theme.palette.background.default,
+            color: theme.palette.getContrastText(theme.palette.background.default),
             paddingRight: theme.spacing(2),
         },
         [theme.breakpoints.down("sm")]: {
+            backgroundColor: theme.palette.primary.main,
             bottom: 0,
+            color: theme.palette.getContrastText(theme.palette.primary.main),
             left: 0,
             paddingRight: theme.spacing(1),
             top: 0,
         }
     },
-    searchToolbarBack: {},
-    searchToolbarIcon: {},
+    searchToolbarBack: {
+        color: "inherit",
+    },
+    searchToolbarIcon: {
+        color: "inherit",
+    },
     searchToolbarInput: {
+        color: "inherit",
+        "& .MuiInput-root, & .MuiInput-input": {
+            color: "inherit",
+        },
         [theme.breakpoints.up("md")]: {
             width: theme.spacing(32),
         },
@@ -292,9 +324,9 @@ export const styles = theme => ({
         textDecoration: "none",
         wordWrap: "break-word",
         "&:empty": {
-            margin: 0,
+            // margin: theme.spacing(0.5),
+            height: theme.spacing(0.5),
             [theme.breakpoints.up("md")]: {
-                height: theme.spacing(1),
             },
             [theme.breakpoints.down("sm")]: {
             },
@@ -336,32 +368,49 @@ export const stylesList = theme => ({
         backgroundColor: theme.palette.background.paper,
         borderWidth: 0,
         boxShadow: theme.shadows[8],
+        letterSpacing: theme.typography.body2.letterSpacing,
         marginBottom: theme.spacing(1.5),
         overflow: "initial",
         position: "relative",
-        "& $root, & > $cardHeader, & > .MuiCollapse-container": {
+        transition: "1s ease background-color",
+        "& $root": {
             boxSizing: "border-box",
-            padding: theme.spacing(1),
-            "& > .MuiCollapse-container": {
-                paddingTop: theme.spacing(1),
-            },
             [theme.breakpoints.down("sm")]: {
                 // paddingBottom: 0,
             },
         },
         "& $cardHeader": {
+            boxSizing: "border-box",
+            [theme.breakpoints.down("sm")]: {
+                "& .MuiSvgIcon-root": {
+                    height: theme.spacing(2.5),
+                }
+            },
         },
+        [theme.breakpoints.up("md")]: {
+            "& .MuiSvgIcon-root": {
+                height: theme.spacing(2.5),
+            }
+        },
+    },
+    cardBordered: {
+        borderColor: "rgb(0 0 0 / 0.25)",
+        borderStyle: "solid",
+        borderWidth: 1,
+        boxShadow: "none",
+        marginBottom: theme.spacing(0.5),
+        [theme.breakpoints.down("sm")]: {
+            left: theme.spacing(-0.5),
+            width: `calc(100% + ${theme.spacing(1)}px)`,
+        }
     },
     cardCloud: {
         backgroundColor: "transparent",
         boxShadow: "none",
         marginBottom: theme.spacing(1),
-        "& $root, & > $cardHeader, & > .MuiCollapse-container": {
+        "& $root, & > $cardHeader": {
             boxSizing: "border-box",
             padding: 0,
-            "& > .MuiCollapse-container": {
-                paddingTop: theme.spacing(1),
-            },
             // [theme.breakpoints.up("md")]: {
             //     padding: 0,
             // },
@@ -369,21 +418,52 @@ export const stylesList = theme => ({
             //     padding: 0,
             // },
         },
+        "&$cardHighlighted $cardContent": {
+            backgroundColor: "#b5b5b5",
+        },
         "& $cardContent": {
             backgroundColor: theme.palette.background.paper,
             borderRadius: theme.spacing(2),
             padding: theme.spacing(1),
             paddingLeft: theme.spacing(2),
             paddingRight: theme.spacing(2),
+            transition: "2s ease background-color",
         },
         "& .MuiCardHeader-avatar": {
             marginRight: theme.spacing(1.5),
         },
         "& $cardActions": {
-            marginLeft: 0,
-            marginRight: 0,
-            paddingBottom: 0,
-        }
+            [theme.breakpoints.up("md")]: {
+                marginRight: theme.spacing(-0.5),
+            },
+            [theme.breakpoints.down("sm")]: {
+                marginLeft: theme.spacing(-1),
+                padding: 0,
+            },
+        },
+        "& $cardBody": {
+            padding: 0,
+            paddingBottom: theme.spacing(1),
+            paddingTop: theme.spacing(1),
+        },
+        "& $date": {
+            [theme.breakpoints.up("md")]: {
+
+            },
+            [theme.breakpoints.down("sm")]: {
+                right: theme.spacing(2.5),
+                position: "absolute",
+                bottom: theme.spacing(1.5)
+            },
+        },
+        "& $cardMenuButton": {
+            [theme.breakpoints.up("md")]: {
+
+            },
+            [theme.breakpoints.down("sm")]: {
+                marginTop: theme.spacing(-1.25),
+            },
+        },
         // marginTop: theme.spacing(0.5),
     },
     cardFlat: {
@@ -391,11 +471,55 @@ export const stylesList = theme => ({
         borderRadius: 0,
         boxShadow: "none",
         marginBottom: 2,
+        "& $cardHeader": {
+            [theme.breakpoints.down("sm")]: {
+                // paddingBottom: theme.spacing(1),
+                // paddingTop: theme.spacing(1),
+            },
+        },
+        "& $date": {
+            alignItems: "center",
+            display: "flex",
+            marginRight: theme.spacing(3.5),
+        },
+        "& $cardMenuButton": {
+            [theme.breakpoints.up("md")]: {
+            },
+            [theme.breakpoints.down("sm")]: {
+                marginTop: theme.spacing(-0.5),
+            },
+        }
     },
     cardTransparent: {
         backgroundColor: "transparent",
         boxShadow: "none",
-        marginBottom: theme.spacing(0.5),
+        [theme.breakpoints.up("md")]: {
+            marginBottom: theme.spacing(1),
+        },
+        [theme.breakpoints.down("sm")]: {
+            marginBottom: theme.spacing(1),
+        },
+        "& $cardHeader": {
+            padding: 0,
+            [theme.breakpoints.up("md")]: {
+                // paddingBottom: 0,
+                // paddingTop: 0,
+            },
+            [theme.breakpoints.down("sm")]: {
+                // padding: 0,
+            },
+        }
+    },
+    cardHighlighted: {}, // DO NOT DELETE this class is important because of dependencies above
+    cardInvite: {
+        backgroundColor: "transparent",
+        bottom: 0,
+        boxShadow: "none",
+        display: "flex",
+        fontSize: "110%",
+        padding: theme.spacing(3),
+        position: "fixed",
+        top: 0,
     },
     cardActions: {
         display: "flex",
@@ -406,12 +530,16 @@ export const stylesList = theme => ({
             }
         },
         [theme.breakpoints.down("sm")]: {
-            justifyContent: "space-between",
-            marginLeft: theme.spacing(1),
-            marginRight: theme.spacing(1),
+            // justifyContent: "space-between",
+            // marginLeft: theme.spacing(1),
+            // marginRight: theme.spacing(1),
             // marginTop: theme.spacing(1),
-            paddingBottom: theme.spacing(1.2),
-            paddingTop: theme.spacing(1.2),
+            padding: theme.spacing(2),
+            paddingBottom: theme.spacing(1),
+            paddingLeft: theme.spacing(1),
+            paddingTop: theme.spacing(1),
+            // paddingBottom: theme.spacing(1.2),
+            // paddingTop: theme.spacing(1.2),
             "& .MuiSvgIcon-root": {
                 height: theme.spacing(2.5),
             }
@@ -425,12 +553,26 @@ export const stylesList = theme => ({
         },
         [theme.breakpoints.down("sm")]: {
             "& .MuiSvgIcon-root": {
+                height: theme.spacing(2.5),
             },
+        },
+    },
+    cardBody: {
+        padding: theme.spacing(2),
+        [theme.breakpoints.up("md")]: {
+            paddingBottom: theme.spacing(1),
+            paddingLeft: 0,
+            paddingRight: 0,
+            paddingTop: theme.spacing(1),
+        },
+        [theme.breakpoints.down("sm")]: {
+            paddingBottom: theme.spacing(1),
+            paddingTop: 0,
         },
     },
     cardHeader: {
         alignItems: "flex-start",
-        padding: 0,
+        // padding: 0,
         // paddingBottom: theme.spacing(1.5),
         // paddingLeft: theme.spacing(1),
         // paddingRight: theme.spacing(2),
@@ -441,7 +583,10 @@ export const stylesList = theme => ({
         // },
         "&$reply": {
             alignItems: "flex-start",
-        }
+        },
+        [theme.breakpoints.down("sm")]: {
+            // paddingBottom: theme.spacing(1),
+        },
     },
     cardHeaderWithLabel: {
         alignItems: "center",
@@ -468,8 +613,30 @@ export const stylesList = theme => ({
         },
         [theme.breakpoints.down("sm")]: {},
     },
+    cardMenuButton: {
+        [theme.breakpoints.up("md")]: {
+            position: "absolute",
+            right: 0,
+            top: theme.spacing(0.5),
+        },
+        [theme.breakpoints.down("sm")]: {
+            marginTop: theme.spacing(-1),
+            position: "absolute",
+            right: theme.spacing(0.5),
+            top: "initial",
+        }
+    },
+    cardTitle: {
+        [theme.breakpoints.down("sm")]: {
+            color: theme.palette.secondary.main,
+            fontSize: "95%",
+            "& .Mention-tag-label, & $userName": {
+                fontSize: "110%",
+            }
+        },
+    },
     counter: {
-        fontSize: theme.spacing(1.5),
+        fontSize: "80%",
         marginLeft: theme.spacing(1),
     },
     date: {
@@ -541,9 +708,12 @@ export const stylesList = theme => ({
         overflowWrap: "break-word",
         textDecoration: "none",
         wordWrap: "break-word",
+        "& a": {
+            textDecoration: "none",
+        },
         "&:empty": {
             borderWidth: 0,
-            height: 0,
+            height: theme.spacing(0.5),
             margin: 0,
             padding: 0,
         }
@@ -555,6 +725,7 @@ export const stylesList = theme => ({
     userName: {
         color: "#3f51b5",
         fontWeight: "bolder",
+        letterSpacing: theme.typography.body2.letterSpacing,
         marginRight: theme.spacing(0.5),
         textDecoration: "none",
         [theme.breakpoints.down("sm")]: {

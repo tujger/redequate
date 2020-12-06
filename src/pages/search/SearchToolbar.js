@@ -56,7 +56,6 @@ export default (
                 setState({...state, search: true, unblock})
                 onOpen && onOpen();
             }}
-            style={{color: "inherit"}}
             title={"Search"}
             variant={"text"}
         />
@@ -68,7 +67,6 @@ export default (
                     color={"inherit"}
                     edge={"start"}
                     onClick={closeSearch}
-                    style={{color: "inherit"}}
                     title={"Cancel search"}
                 />
                 <Input.type
@@ -109,7 +107,6 @@ export default (
                     children={pages.search.icon}
                     className={classes.searchToolbarIcon}
                     onClick={handleSearch}
-                    style={{color: "inherit"}}
                     title={"Search"}
                     variant={"text"}
                 />

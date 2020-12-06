@@ -94,7 +94,13 @@ const stylesCurrent = makeStyles(theme => ({
     }
 }));
 
-export default withStyles()((props) => {
+const replaceCommas = symbol => {
+    if (symbol === "(") return "%28";
+    else if (symbol === ")") return "%29";
+    return symbol;
+}
+
+export default (props) => {
     const {images: imagesGiven, inlineCarousel = false, clickable = true, mosaic = false} = props;
     const history = useHistory();
     const ref = React.useRef({});
@@ -103,6 +109,7 @@ export default withStyles()((props) => {
     const {selected = null, gallery} = state;
 
     const images = (imagesGiven || []).map(image => {
+        image = image.replace(/([()])/g, replaceCommas);
         let value = {href: image, thumbnail: image};
         try {
             if (image.match(/youtu/)) {
@@ -230,4 +237,4 @@ export default withStyles()((props) => {
         />}
         {!mosaic && !clickable && <div className={classesCurrent._postMediaGalleryDisabled}/>}*/}
     </>
-});
+};

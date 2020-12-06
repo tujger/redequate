@@ -4,23 +4,27 @@ import ClearIcon from "@material-ui/icons/Clear";
 import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
 import {useFirebase} from "../../controllers/General";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
+import MenuItem from "@material-ui/core/MenuItem";
 
-export default ({postData, classes, onChange, onDelete, type}) => {
+export default ({postData, classes, onMenuItemClick, onDelete, type}) => {
     const [state, setState] = React.useState({});
     const {
         deletePost,
     } = state;
-    const firebase = useFirebase();
     const dispatch = useDispatch();
-    const currentUserData = useCurrentUserData();
+    const firebase = useFirebase();
 
     const handleClickDelete = evt => {
         evt && evt.stopPropagation();
         setState(state => ({...state, deletePost: true}));
+    }
+
+    const handleMenuItemClick = evt => {
+        setState(state => ({...state, deletePost: true}));
+        onMenuItemClick(evt);
     }
 
     const handleConfirmDeletion = () => {
@@ -42,20 +46,28 @@ export default ({postData, classes, onChange, onDelete, type}) => {
         setState(state => ({...state, deletePost: false}));
     }
 
-    const isDeleteAllowed = currentUserData && !currentUserData.disabled && (postData.uid === currentUserData.id || matchRole([Role.ADMIN], currentUserData))
-
-    return <>
-        <Grid item>
+    let element;
+    if (onMenuItemClick) {
+        element = <MenuItem
+            children={"Delete"}
+            id={"delete"}
+            onClick={handleMenuItemClick}
+        />
+    } else {
+        element = <Grid item>
             <IconButton
                 aria-label={"Delete"}
                 children={<ClearIcon/>}
-                className={isDeleteAllowed ? null : classes.hidden}
                 component={"div"}
-                onClick={isDeleteAllowed ? handleClickDelete : null}
+                onClick={handleClickDelete}
                 size={"small"}
                 title={"Delete"}
             />
         </Grid>
+    }
+
+    return <>
+        {element}
         {deletePost && <ConfirmComponent
             children={"Your post and all replies will be deleted."}
             confirmLabel={"Delete"}

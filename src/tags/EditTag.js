@@ -28,26 +28,18 @@ import Pagination from "../controllers/FirebasePagination";
 import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
 import {tokenizeText} from "../components";
 import MentionedTextComponent from "../components/MentionedTextComponent";
-import {MutualMode, mutualRequest} from "../components/MutualComponent";
+import {mutualRequest} from "../components/MutualComponent";
 
 const stylesCurrent = theme => ({
-    image: {
-        color: "darkgray",
-        marginBottom: theme.spacing(1),
-        objectFit: "cover",
-        [theme.breakpoints.up("sm")]: {
-            height: theme.spacing(18),
-            width: theme.spacing(18),
-        },
-        [theme.breakpoints.down("sm")]: {
-            height: theme.spacing(24),
-            width: theme.spacing(24),
-        },
-    },
-    _image: {
+    profileImage: {
         [theme.breakpoints.down("sm")]: {
             borderRadius: theme.spacing(2),
             width: "100%"
+        },
+    },
+    profileField: {
+        [theme.breakpoints.down("sm")]: {
+            textAlign: "initial",
         },
     },
     label: {
@@ -55,17 +47,7 @@ const stylesCurrent = theme => ({
         cursor: "default",
         textDecoration: "none",
     },
-    photo: {
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "start",
-        position: "relative",
-        [theme.breakpoints.down("sm")]: {
-            width: "100%",
-        },
-    },
-    clearPhoto: {
+    clearImage: {
         backgroundColor: "transparent",
         position: "absolute",
         right: 0,
@@ -107,6 +89,13 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     }
 
     const saveTag = async () => {
+        const preparePublishing = async () => {
+            dispatch(ProgressView.SHOW);
+            setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
+        }
+        const updateTagKey = async () => {
+            tag._key = id || newId;
+        }
         const checkIfLabelNotEmpty = async () => {
             tag.label = (tag.label || "").trim();
             if (!tag.label) {
@@ -115,32 +104,32 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         }
         const checkIfIdValid = async () => {
             const updatedId = tag.id || normalizeSortName(tag.label);
-            // if (!isNew && updatedId !== tag.id) {
-            //     throw Error("Label has been changed too significantly");
-            // }
-
             const existing = await new Pagination({
                 ref: firebase.database().ref("tag"),
                 child: "id",
                 equals: updatedId,
             }).next();
-            const ids = existing.filter(item => item.key !== id);
-            if (ids.length) {
-                console.error(`[EditTag] already exists '${updatedId}' from '${tag.label}' for '${id}, found: ${JSON.stringify(existing)}`);
-                throw Error(`${tag.label} already exists, please modify.`);
+            const other = existing.filter(item => item.key !== tag._key);
+            if (other.length) {
+                console.error(`[EditTag] already exists '${updatedId}' from '${tag.label}' for '${tag._key}', found: ${JSON.stringify(other)}`);
+                const existingTag = other[0];
+                if (existingTag.value.uid) {
+                    throw Error(`${tag.label} already exists, please modify.`);
+                }
+                tag._key = existingTag.key;
             }
             return updatedId;
         }
-        const checkIfLabelValid = async (updatedId) => {
+        const checkIfLabelValid = async updatedId => {
             const existing = await new Pagination({
                 ref: firebase.database().ref("tag"),
                 child: "label",
                 equals: tag.label,
             }).next();
             console.log(existing);
-            const labels = existing.filter(item => item.key !== id);
+            const labels = existing.filter(item => item.key !== tag._key);
             if (labels.length) {
-                console.error(`[EditTag] not available '${tag.label}' for '${updatedId}/${id}, found: ${JSON.stringify(existing)}`);
+                console.error(`[EditTag] not available '${tag.label}' for '${updatedId}/${tag._key}, found: ${JSON.stringify(labels)}`);
                 throw Error(`${tag.label} is not available, please modify.`);
             }
             tag.id = updatedId;
@@ -184,18 +173,25 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 tag._sort_name = null;
             }
         }
-        const publishTag = async () => {
-            return firebase.database().ref("tag").child(id || newId).set(tag);
+        const extractTagKey = async () => {
+            const key = tag._key;
+            delete tag._key;
+            return key;
         }
-        const removeCachedTag = async () => {
-            cacheDatas.remove(id || newId);
+        const publishTag = async key => {
+            await firebase.database().ref("tag").child(key).set(tag);
+            return key;
         }
-        const subscribeToTag = async () => {
+        const removeCachedTag = async key => {
+            cacheDatas.remove(key);
+            return key;
+        }
+        const subscribeToTag = async key => {
             if (isNew) {
                 return mutualRequest({
                     firebase,
                     currentUserData,
-                    mutualId: id || newId,
+                    mutualId: key,
                     mutualType: "tag",
                     typeId: "watching"
                 });
@@ -208,25 +204,27 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 history.replace(pages.tag.route + tag.id)
             }
         }
+        const finalizePublishing = async () => {
+            dispatch(ProgressView.HIDE);
+            setState(state => ({...state, disabled: false}));
+        }
 
-        dispatch(ProgressView.SHOW);
-        setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
-        checkIfLabelNotEmpty()
+        preparePublishing()
+            .then(updateTagKey)
+            .then(checkIfLabelNotEmpty)
             .then(checkIfIdValid)
             .then(checkIfLabelValid)
             .then(publishImageIfChanged)
             .then(updateTimestamp)
             .then(updateUid)
             .then(updateSortName)
+            .then(extractTagKey)
             .then(publishTag)
             .then(removeCachedTag)
             .then(subscribeToTag)
             .then(onPublishSuccess)
             .catch(notifySnackbar)
-            .finally(() => {
-                dispatch(ProgressView.HIDE);
-                setState(state => ({...state, disabled: false}));
-            })
+            .finally(finalizePublishing)
         console.log("[EditTag] save", tag)
     }
 
@@ -307,9 +305,37 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     }
 
     const deleteTag = () => {
-        dispatch(ProgressView.SHOW);
-        setState(state => ({...state, disabled: true, deleteTagOpen: false}));
-        let updates = {};
+
+        const prepareDeleting = async () => {
+            dispatch(ProgressView.SHOW);
+            setState(state => ({...state, disabled: true, deleteTagOpen: false}));
+        }
+        const createUpdates = async () => {
+            const updates = {};
+            updates[`tag/${id}`] = null;
+            return updates;
+        }
+        const publishUpdates = async updates => {
+            console.log(updates);
+            return firebase.database().ref().update(updates);
+        }
+        const onComplete = async () => {
+            // history.goBack();
+            history.replace(pages.home.route);
+        }
+        const finalizeDeleting = async () => {
+            setState(state => ({...state, disabled: false}));
+            dispatch(ProgressView.HIDE);
+        }
+
+        prepareDeleting()
+            .then(createUpdates)
+            .then(publishUpdates)
+            .then(onComplete)
+            .catch(notifySnackbar)
+            .finally(finalizeDeleting)
+
+        // let updates = {};
         // let updatesLength = 0;
         // const addUpdate = async (path, value) => {
         //     updates[path] = value || null;
@@ -325,8 +351,8 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         //     return firebase.database().ref().update(upds);
         // }
 
-        updates[`tag/${id}`] = null;
-        updates[`_tag/${id}`] = null;
+        // updates[`tag/${id}`] = null;
+        // updates[`_tag/${id}`] = null;
         // updates[`extra/${game.id}`] = null;
         // updates[`_counters/${game.id}`] = null;
         // updates[`_game_scores/${game.id}`] = null;
@@ -430,15 +456,15 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
 
     if (!tag) return <LoadingComponent/>;
     return <Grid container className={classes.center}>
-        <Grid container spacing={1}>
-            <Grid item className={classes.photo}>
-                {image ? <img src={image} alt={""} className={[classes.profileImage, classes._image].join(" ")}/>
+        <Grid container className={classes.profile} spacing={1}>
+            <Grid item className={classes.profileFieldImage}>
+                {image ? <img src={image} alt={""} className={classes.profileImage}/>
                     : <TagIcon className={classes.profileImage}/>}
                 {image && <Hidden smDown>
                     <IconButton
                         aria-label={"Clear"}
                         children={<ClearIcon/>}
-                        className={classes.clearPhoto}
+                        className={classes.clearImage}
                         onClick={() => {
                             setState({...state, image: "", uppy: null});
                         }}
@@ -450,7 +476,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                         <UploadComponent
                             button={<Button
                                 aria-label={"Change"}
-                                children={"Change"}
+                                children={windowData.isNarrow() ? "Set image" : "Change"}
                                 color={"secondary"}
                                 fullWidth={!windowData.isNarrow()}
                                 title={"Change"}
@@ -479,8 +505,8 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     </Hidden>}
                 </Grid>
             </Grid>
-            <Grid item xs>
-                <Grid container alignItems={"flex-end"}>
+            <Grid item className={classes.profileFields} xs>
+                <Grid container className={classes.profileField}>
                     <TextField
                         color={"secondary"}
                         disabled={disabled}
@@ -495,7 +521,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     />
                 </Grid>
                 <Box m={1}/>
-                <Grid container alignItems={"flex-end"}>
+                <Grid container className={classes.profileField}>
                     <MentionsInputComponent
                         className={classes._description}
                         color={"secondary"}
@@ -517,7 +543,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 </Grid>
                 <Box m={1}/>
                 {!uppy && isCurrentUserAdmin && <>
-                    <Grid container alignItems={"flex-end"}>
+                    <Grid container className={classes.profileField}>
                         <TextField
                             color={"secondary"}
                             disabled={disabled}
@@ -530,7 +556,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                             value={image || ""}
                         />
                     </Grid>
-                    <Grid container alignItems={"flex-end"}>
+                    <Grid container className={classes.profileField}>
                         {!disabled && <Typography variant={"subtitle2"}>
                             <a
                                 href={`https://www.google.com/search?q=${tag.label} &source=lnms&tbm=isch&sa=X`}
@@ -541,7 +567,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     <Box m={1}/>
                 </>}
                 {!isNew && <>
-                    <Grid container alignItems={"flex-end"}>
+                    <Grid container className={classes.profileField}>
                         <MentionsInputComponent
                             color={"secondary"}
                             disabled={disabled}
@@ -570,7 +596,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     <Box m={1}/>
                 </>}
                 {!isNew && <>
-                    <Grid container alignItems={"flex-end"}>
+                    <Grid container className={classes.profileField}>
                         <FormControlLabel
                             control={<Switch
                                 checked={tag.hidden || false}
@@ -652,10 +678,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     </Grid>
 };
 
-export default withStyles(theme => ({
-    ...styles(theme),
-    ...stylesCurrent(theme)
-}))(EditTag);
+export default withStyles(stylesCurrent)(withStyles(styles)(EditTag));
 
 export const mentionPlatforms = firebase => ({
     appendSpaceOnAdd: false,

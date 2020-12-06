@@ -20,7 +20,7 @@ export default ({classes, collapsible:givenCollapsible, disableClick, mentions, 
     const collapseLength = windowData.isNarrow() ? 260 : 2000;
     const shortened = postData.length > collapseLength;
 
-    return <>
+    return <div className={classes.cardBody}>
         <Collapse
             addEndListener={() => {
             }}
@@ -56,9 +56,9 @@ export default ({classes, collapsible:givenCollapsible, disableClick, mentions, 
                 tokens={postData.tokens}
             />
             {/*{postData.image && <Grid container alignItems={"flex-start"}>*/}
-            {/*    <img src={postData.image} alt={"Attachment"} className={classes.cardImage}/>*/}
+            {/*  <img src={postData.image} alt={"Attachment"} className={classes.cardImage}/>*/}
             {/*</Grid>}*/}
         </Collapse>
-    </>
+    </div>
 }
 

@@ -15,7 +15,6 @@ import HeaderComponent from "../../components/HeaderComponent";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
-import ConfirmComponent from "../../components/ConfirmComponent";
 import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
 
 const stylesCurrent = theme => ({
@@ -35,8 +34,14 @@ const stylesCurrent = theme => ({
         justifyContent: "flex-end",
     },
     topmenu: {
+        ...theme.typography.button,
         backgroundColor: "#ffffff88",
+        alignItems: "center",
+        display: "flex",
+        zIndex: 2,
+        ...theme.fetchOverride(theme => theme.customized.topBottomLayout.topmenu),
     },
+
     headertitle: {},
     headerlabel: {
         margin: theme.spacing(1),
@@ -45,9 +50,6 @@ const stylesCurrent = theme => ({
         flexBasis: theme.mixins.toolbar.minHeight,
         flexGrow: 0,
         flexShrink: 0,
-
-        // position: "sticky",
-        // bottom: 0,
     },
     version: {
         backgroundColor: theme.palette.background.default,
@@ -129,18 +131,22 @@ function TopBottomMenuLayout(props) {
         }}/>
         <Grid container className={classes.footer} justify={"center"}>
             <BottomMenu items={menu}/>
-            <Grid container justify={"center"} className={classes.version} onClick={event => {
-                if (!matchRole(Role.ADMIN, currentUserData)) return;
-                counter++;
-                if (counter === 3) {
-                    const count = enableDisabledPages();
-                    if (count) {
-                        event.preventDefault();
-                        refreshAll(store);
-                        notifySnackbar(`Temporarily enabled ${count} hidden page(s)`)
+            <Grid
+                container
+                justify={"center"}
+                className={classes.version}
+                onClick={event => {
+                    if (!matchRole(Role.ADMIN, currentUserData)) return;
+                    counter++;
+                    if (counter === 3) {
+                        const count = enableDisabledPages();
+                        if (count) {
+                            event.preventDefault();
+                            refreshAll(store);
+                            notifySnackbar(`Temporarily enabled ${count} hidden page(s)`)
+                        }
                     }
-                }
-            }}>
+                }}>
                 <Typography variant={"caption"}>{copyright}</Typography>
             </Grid>
         </Grid>

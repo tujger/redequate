@@ -56,8 +56,8 @@ const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
     }, []);
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent label={label} classes={null} flat/>
-    if (skeleton || !type) return <ItemPlaceholderComponent classes={null} flat/>;
+    if (label) return <ItemPlaceholderComponent label={label} classes={null} pattern={"flat"}/>
+    if (skeleton || !type) return <ItemPlaceholderComponent classes={null} pattern={"flat"}/>;
 
     return <>
         <Card className={[classes.card, classes.cardFlat].join(" ")}>

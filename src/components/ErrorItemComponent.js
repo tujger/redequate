@@ -67,8 +67,8 @@ function ErrorItemComponent(props) {
     }, [])
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label} flat/>
-    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} flat/>
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>
+    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>
 
     return <Card className={[classes.card, classes.cardFlat].join(" ")}>
         <CardActionArea

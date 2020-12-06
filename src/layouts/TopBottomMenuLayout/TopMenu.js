@@ -14,13 +14,6 @@ const styles = theme => ({
         cursor: "default",
         textDecoration: "none",
     },
-    topmenu: {
-        ...theme.typography.button,
-        alignItems: "center",
-        backgroundColor: "transparent",
-        display: "flex",
-        zIndex: 2,
-    },
     profileitem: {
         margin: theme.spacing(0.5),
     }

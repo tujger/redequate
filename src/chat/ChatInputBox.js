@@ -5,8 +5,6 @@ import IconButton from "@material-ui/core/IconButton";
 import SendIcon from "@material-ui/icons/Send";
 import withStyles from "@material-ui/styles/withStyles";
 
-const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
-
 const styles = theme => ({
     inputfield: {
         alignItems: "center",

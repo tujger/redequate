@@ -74,7 +74,7 @@ const NewPostComponent = (
         onBeforePublish = async data => data,
         onError = error => notifySnackbar(error),
         onClose = () => console.log("[NewPost] onClose()"),
-        onComplete = data => console.log("[NewPost] onComplete(data)", data),
+        onComplete = ({key}) => console.log("[NewPost] onComplete({key})", {key}),
         replyTo,
         text: initialText,
         title = replyTo ? "New reply" : "New post",
@@ -105,84 +105,92 @@ const NewPostComponent = (
         setState(state => ({...state, open: true}))
     }
 
-    const publishImage = async () => {
-        let urls = null;
-        if (uppy) {
-            const publish = await uploadComponentPublish(firebase)({
-                auth: currentUserData.id,
-                uppy,
-                onprogress: progress => {
-                    dispatch({...ProgressView.SHOW, value: progress});
-                },
-            });
-            urls = publish.map(item => item.url);
-        }
-        return urls;
-    }
-
-    const parseTokens = async (text) => {
-        const newtokens = [];
-        const tokens = tokenizeText(text);
-        tokens.forEach(token => {
-            if (token.type !== "text") {
-                newtokens.push(token);
-            } else {
-                const tokens = token.value.split(/(#[\w]+)/);
-                tokens.map(newtoken => {
-                    if (newtoken.indexOf("#") === 0) {
-                        newtoken = newtoken.replace(/^#/, "");
-                        const normalizedToken = normalizeSortName(newtoken);
-                        newtokens.push({type: "tag", value: newtoken, id: normalizedToken});
-                    } else {
-                        newtokens.push({type: "text", value: newtoken});
-                    }
-                })
-            }
-        })
-        const newtext = newtokens.map(token => {
-            if (token.type === "cr") {
-                return "\n";
-            } else if (token.type === "text") {
-                return token.value;
-            } else if (token.type) {
-                return `$[${token.type}:${token.id}:${token.value}]`;
-            } else {
-                return token;
-            }
-        }).join("");
-        return newtext;
-    }
-
     const handleSend = () => {
-        if (text && text.length) {
+        const preparePublishing = async () => {
             setState(state => ({...state, disabled: true}));
             dispatch(ProgressView.SHOW);
-            const uid = currentUserData.id;
-            parseTokens(text)
-                .then(text => publishImage()
-                    .then(images => ({
-                        created: firebase.database.ServerValue.TIMESTAMP,
-                        images,
-                        to: replyTo || 0,
-                        text,
-                        uid,
-                    }))
-                )
-                .then(onBeforePublish)
-                .then(data => firebase.database().ref().child(type).push(data))
-                .then(snapshot => {
-                    dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: undefined});
-                    setState(state => ({...state, disabled: false, open: false}));
-                    onComplete(snapshot.key);
-                })
-                .catch(error => {
-                    setState(state => ({...state, disabled: false}));
-                    onError(error);
-                })
-                .finally(() => {
-                    dispatch(ProgressView.HIDE)
-                });
         }
+        const checkIfTextChanged = async () => {
+            if (!text) throw "Text is empty";
+            if (text === initialText) throw "Text is not changed";
+            return text;
+        }
+        const parseTokens = async (text) => {
+            const newtokens = [];
+            const tokens = tokenizeText(text);
+            tokens.forEach(token => {
+                if (token.type !== "text") {
+                    newtokens.push(token);
+                } else {
+                    const tokens = token.value.split(/(#[\w]+)/);
+                    tokens.map(newtoken => {
+                        if (newtoken.indexOf("#") === 0) {
+                            newtoken = newtoken.replace(/^#/, "");
+                            const normalizedToken = normalizeSortName(newtoken);
+                            newtokens.push({type: "tag", value: newtoken, id: normalizedToken});
+                        } else {
+                            newtokens.push({type: "text", value: newtoken});
+                        }
+                    })
+                }
+            })
+            const newtext = newtokens.map(token => {
+                if (token.type === "cr") {
+                    return "\n";
+                } else if (token.type === "text") {
+                    return token.value;
+                } else if (token.type) {
+                    return `$[${token.type}:${token.id}:${token.value}]`;
+                } else {
+                    return token;
+                }
+            }).join("");
+            return newtext;
+        }
+        const publishImage = async (text) => {
+            let images = null;
+            if (uppy) {
+                const publish = await uploadComponentPublish(firebase)({
+                    auth: currentUserData.id,
+                    uppy,
+                    onprogress: progress => {
+                        dispatch({...ProgressView.SHOW, value: progress});
+                    },
+                });
+                images = publish.map(item => item.url);
+            }
+            return {text, images};
+        }
+        const buildData = async ({text, images}) => ({
+            created: firebase.database.ServerValue.TIMESTAMP,
+            images,
+            to: replyTo || 0,
+            text,
+            uid: currentUserData.id,
+        });
+        const publishData = async data => {
+            return firebase.database().ref().child(type).push(data);
+        }
+        const publishComplete = async snapshot => {
+            dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: undefined});
+            setState(state => ({...state, disabled: false, open: false}));
+            onComplete({key: snapshot.key})
+        }
+        const finalizePublishing = async () => {
+            setState(state => ({...state, disabled: false}));
+            dispatch(ProgressView.HIDE);
+        }
+
+        preparePublishing()
+            .then(checkIfTextChanged)
+            .then(parseTokens)
+            .then(publishImage)
+            .then(buildData)
+            .then(onBeforePublish)
+            .then(publishData)
+            .then(publishComplete)
+            .catch(onError || notifySnackbar)
+            .finally(finalizePublishing)
     }
 
     const handleKeyUp = event => {

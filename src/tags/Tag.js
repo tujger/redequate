@@ -3,12 +3,10 @@ import {useHistory, useParams} from "react-router-dom";
 import withStyles from "@material-ui/styles/withStyles";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
-import Typography from "@material-ui/core/Typography";
 import IconButton from "@material-ui/core/IconButton";
+import Typography from "@material-ui/core/Typography";
 import FixIcon from "@material-ui/icons/BugReport";
 import {useDispatch} from "react-redux";
-import Button from "@material-ui/core/Button";
-import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import EditIcon from "@material-ui/icons/Edit";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
@@ -31,55 +29,27 @@ import {styles} from "../controllers/Theme";
 import InfoComponent from "../components/InfoComponent";
 import ShareComponent from "../components/ShareComponent";
 import ActionComponent from "../components/MutualComponent/ActionComponent";
+import FlexFabComponent from "../components/FlexFabComponent";
+import ShareIcon from "@material-ui/icons/Share";
 
 const stylesCurrent = theme => ({
-    tagImage: {
-        borderRadius: theme.spacing(2),
-        width: "100%"
-    },
     follow: {
         borderColor: theme.palette.secondary.main,
         fontSize: theme.typography.caption.fontSize,
         fontWeight: "initial",
         textTransform: "initial",
     },
-    _label: {
-        [theme.breakpoints.up("md")]: {
-            fontSize: "125%",
-            fontWeight: "bold",
-            lineHeight: "normal",
-            marginBottom: theme.spacing(1),
-            marginTop: theme.spacing(1),
-        },
-        [theme.breakpoints.down("sm")]: {
-            fontSize: "125%",
-            fontWeight: "bold",
-            lineHeight: "normal",
-            marginBottom: theme.spacing(1),
-            marginTop: theme.spacing(1),
-        },
-    },
-    _description: {
-        [theme.breakpoints.up("md")]: {
-            flexFlow: "column",
-        },
-    },
-    _button: {
-        borderColor: theme.palette.secondary.main,
-        fontSize: theme.typography.caption.fontSize,
-        fontWeight: "initial",
-        textTransform: "initial",
-        [theme.breakpoints.up("md")]: {
-        },
-        [theme.breakpoints.down("sm")]: {
-            width: theme.spacing(10),
-            marginLeft: theme.spacing(0.5),
-            marginRight: theme.spacing(0.5),
-        }
-    },
-    _profileFields: {
+    profileFields: {
         marginBottom: 0,
-    }
+    },
+    profileFieldImage: {
+        [theme.breakpoints.up("sm")]: {
+            width: theme.spacing(40),
+        },
+    },
+    profileImage: {
+        borderRadius: theme.spacing(2),
+    },
 });
 
 const Tag = ({classes, allowOwner = true}) => {
@@ -121,20 +91,27 @@ const Tag = ({classes, allowOwner = true}) => {
                 }).next().then(items => items[0])
             })
             .then(tag => {
-                if (!tag.value.hidden) history.replace(pages.tag.route + tag.value.id);
-                isMounted && setState(state => ({...state, tag}))
+                const isOwner = allowOwner && tag.value.uid === currentUserData.id;
+                if (tag.value.hidden && !isCurrentUserAdmin && !isOwner) {
+                    history.goBack();
+                } else {
+                    history.replace(pages.tag.route + tag.value.id);
+                    isMounted && setState(state => ({...state, tag}))
+                }
             })
             .catch(error => {
                 console.error(itemId, error);
-                notifySnackbar(Error(`Cannot open "${itemId}" properties`));
+                // notifySnackbar(Error(`Cannot open "${itemId}" properties`));
                 history.goBack();
             })
+            .finally(() => dispatch(ProgressView.HIDE))
         return () => {
             isMounted = false;
         }
         // eslint-disable-next-line
     }, [itemId]);
 
+    console.log(isOwner, allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id)
     if (!tag) return <LoadingComponent/>
 
     return <>
@@ -142,64 +119,69 @@ const Tag = ({classes, allowOwner = true}) => {
             alignItems={"flex-end"}
             justify={"center"}
             className={classes.top}
-            mediumButton={isCurrentUserAdmin && <IconButton
-                aria-label={"Fix possible errors"}
-                children={<FixIcon/>}
-                onClick={fixErrors}
-                title={"Fix possible errors"}
-            />}
-            rightButton={(isCurrentUserAdmin || isOwner) && <IconButton
-                aria-label={"Edit"}
-                children={<EditIcon/>}
-                onClick={() => history.push(pages.edittag.route + tag.key)}
-                title={"Edit"}
+            mediumButton={<>
+                {isCurrentUserAdmin && <IconButton
+                    aria-label={"Fix possible errors"}
+                    children={<FixIcon/>}
+                    onClick={fixErrors}
+                    title={"Fix possible errors"}
+                />}
+                {(isCurrentUserAdmin || isOwner) && <IconButton
+                    aria-label={"Edit"}
+                    children={<EditIcon/>}
+                    onClick={() => history.push(pages.edittag.route + tag.key)}
+                    title={"Edit"}
+                />}
+            </>}
+            rightButton={<ShareComponent
+                component={<IconButton
+                    aria-label={"Invite"}
+                    children={<ShareIcon/>}
+                />}
+                text={"Share"}
+                title={"Share"}
+                url={window.location.origin + pages.tag.route + tag.value.id}
             />}
         />
         <Grid container className={classes.center}>
-            <Grid container>
-                {tag.value.image && <Grid item className={classes.profileImageContainer}>
+            <Grid container className={classes.profile}>
+                {tag.value.image && <Grid item className={classes.profileFieldImage}>
                     <img
                         alt={""}
-                        className={[classes.profileImage, classes.tagImage].join(" ")}
+                        className={classes.profileImage}
                         src={tag.value.image}
                     />
                 </Grid>}
-                <Grid item className={[classes.profileFields, classes._profileFields].join(" ")}>
+                <Grid item className={classes.profileFields}>
                     <Grid container className={classes.profileField}>
-                        <Grid item className={classes._label}>
-                            {tag.value.label}
-                        </Grid>
+                        <Typography variant={"h6"} style={{whiteSpace: "pre-wrap"}}>
+                            {tag.value.label} {tag.value.hidden && <>(hidden)</>}
+                        </Typography>
                     </Grid>
-                    <Grid container className={[classes.profileField, classes._description].join(" ")}>
-                        <MentionedTextComponent
-                            mentions={[mentionTags, mentionUsers]}
-                            text={tag.value.description}
-                        />
+                    <Grid container className={classes.profileField}>
+                        <Typography variant={"body2"} style={{whiteSpace: "pre-wrap"}}>
+                            <MentionedTextComponent
+                                mentions={[mentionTags, mentionUsers]}
+                                text={tag.value.description}
+                            />
+                        </Typography>
                     </Grid>
-                    <Box m={1}/>
                     <Grid container spacing={1} className={classes.profileField}>
-                        <ShareComponent
-                            component={<ActionComponent
-                                className={classes._button}
-                                label={"Invite"}
-                            />}
+                        {/*<ShareComponent
+                            component={<ActionComponent label={"Invite"}/>}
                             text={"Share"}
                             title={"Share"}
                             url={window.location.origin + pages.tag.route + tag.value.id}
-                        />
+                        />*/}
                         <MutualComponent
                             counterComponent={<InfoComponent suffix={"follower(s)"}/>}
                             mutualId={tag.key}
                             mutualType={"tag"}
                             typeId={"watching"}
-                            subscribeComponent={<ActionComponent
-                                className={classes._button}
-                                label={"Follow"}
-                            />}
-                            unsubscribeComponent={<ActionComponent
-                                className={classes._button}
-                                label={"Unfollow"}
-                            />}
+                            subscribeComponent={<ActionComponent label={"Follow"}/>}
+                            unsubscribeComponent={<ActionComponent label={"Unfollow"} variant={"outlined"}/>}
+                            counter={false}
+                            // unsubscribeComponent={<ActionComponent label={"Unfollow"}/>}
                         />
                     </Grid>
                 </Grid>
@@ -217,7 +199,7 @@ const Tag = ({classes, allowOwner = true}) => {
                     fetchItemId: item => item.key,
                     onItemError: (error, options) => {
                         console.log(error, options);
-                        fetchCallable(firebase)("fixMutual", {
+                        fetchCallable(firebase)("fixMutualStamp", {
                             ...options,
                             id: options.id,
                             tag: tag.key,
@@ -226,6 +208,7 @@ const Tag = ({classes, allowOwner = true}) => {
                             .catch(console.error);
                     }
                 })}
+                live
                 noItemsComponent={<PostComponent label={"No posts found"}/>}
                 pagination={() => new Pagination({
                     ref: db.ref("_tag").child(tag.key),
@@ -234,23 +217,18 @@ const Tag = ({classes, allowOwner = true}) => {
                 placeholder={<PostComponent skeleton={true}/>}
             />
         </Grid>
-        <NewPostComponent
-            buttonComponent={<Fab
-                aria-label={"New post"}
-                color={"primary"}
-                className={classes.fab}
-                variant={windowData.isNarrow() ? "round" : "extended"}
-            >
-                <AddIcon/>
-                {!windowData.isNarrow() && "New post"}
-            </Fab>}
+        {!tag.value.hidden && <NewPostComponent
+            buttonComponent={<FlexFabComponent
+                icon={<AddIcon/>}
+                label={"New post"}
+            />}
             context={tag.value.id}
             mentions={[mentionTags, mentionUsers]}
             onBeforePublish={async data => {
                 data.text += `${String.fromCharCode(1)}$[tag:${tag.value.id}:${tag.key}]${String.fromCharCode(2)}`
                 return data;
             }}
-            onComplete={key => {
+            onComplete={({key}) => {
                 dispatch({type: lazyListComponentReducer.RESET});
                 history.push(pages.post.route + key);
             }}
@@ -258,11 +236,8 @@ const Tag = ({classes, allowOwner = true}) => {
                 console.error(error)
             }}
             UploadProps={windowData.isNarrow() ? {camera: false} : undefined}
-        />
+        />}
     </>
 };
 
-export default withStyles((theme) => ({
-    ...styles(theme),
-    ...stylesCurrent(theme),
-}))(Tag);
+export default withStyles(stylesCurrent)(withStyles(styles)(Tag));

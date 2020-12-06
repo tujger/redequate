@@ -35,11 +35,7 @@ export function share({title = "Share", text = "Share", url = ""}) {
 }
 
 export async function copyToClipboard(text) {
-    if (navigator.clipboard) {
-        return navigator.clipboard.writeText(text)
-            .then(() => notifySnackbar("Copied to the clipboard"))
-            .catch(notifySnackbar)
-    } else {
+    const classicWay = () => {
         const inputNode = document.createElement("input");
         inputNode.setAttribute("style", "display:none;opacity:0;position:fixed;top:1;left:1;z-index:1000000;");
         inputNode.setAttribute("value", text);
@@ -54,5 +50,14 @@ export async function copyToClipboard(text) {
         }, 100)
         if (copied) notifySnackbar("Copied to the clipboard");
         else notifySnackbar(new Error("Failed copy to clipboard"));
+    }
+
+    if (navigator.clipboard) {
+        return navigator.clipboard.writeText(text)
+            .then(() => notifySnackbar("Copied to the clipboard"))
+            .catch(classicWay)
+            .catch(notifySnackbar)
+    } else {
+        return classicWay();
     }
 }

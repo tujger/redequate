@@ -96,8 +96,8 @@ function ChatsItem(props) {
     }, []);
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent label={label} flat/>;
-    if (skeleton || !chatMeta || !userData) return <ItemPlaceholderComponent skeleton flat/>;
+    if (label) return <ItemPlaceholderComponent label={label} pattern={"flat"}/>;
+    if (skeleton || !chatMeta || !userData) return <ItemPlaceholderComponent skeleton pattern={"flat"}/>;
 
     const isNew = fetchIsNew() && !shown;
 

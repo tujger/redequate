@@ -1,13 +1,13 @@
 import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
 import CardHeader from "@material-ui/core/CardHeader";
+import Typography from "@material-ui/core/Typography";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import Button from "@material-ui/core/Button";
 import CardActionArea from "@material-ui/core/CardActionArea";
-import Hidden from "@material-ui/core/Hidden";
+import MenuItem from "@material-ui/core/MenuItem";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import ProgressView from "../ProgressView";
@@ -16,16 +16,23 @@ import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {toDateString} from "../../controllers/DateFormat";
 import {stylesList} from "../../controllers/Theme";
+import CounterComponent from "../CounterComponent";
+import Menu from "@material-ui/core/Menu";
+import IconButton from "@material-ui/core/IconButton";
+import Fade from "@material-ui/core/Fade";
+import MenuIcon from "@material-ui/icons/MoreVert";
 
 const MutualSubscribeItem = (
     {
         classes,
+        counter = false,
         data,
         skeleton,
         label,
         typeId,
         onDelete = () => {
         },
+        pattern,
         type = "users_public",
         unsubscribeLabel = "Unsubscribe"
     }) => {
@@ -36,7 +43,7 @@ const MutualSubscribeItem = (
     const history = useHistory();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
-    const {disabled} = state;
+    const {disabled, anchor} = state;
     const {key, userData = {}, value} = data;
 
     const handleUnsubscribe = evt => {
@@ -59,6 +66,16 @@ const MutualSubscribeItem = (
             .finally(() => dispatch(ProgressView.HIDE));
     }
 
+    const handleMenuClick = event => {
+        event.stopPropagation();
+        setState(state => ({...state, anchor: event.currentTarget}));
+    };
+
+    const handleMenuClose = (event) => {
+        event.stopPropagation();
+        setState(state => ({...state, anchor: null}));
+    };
+
     const isSameUser = value && value.uid === currentUserData.id;
     const isAdminUser = matchRole([Role.ADMIN], currentUserData);
     const buttonLabel = unsubscribeLabel + ((isAdminUser && !isSameUser) ? " - force as Administrator" : "");
@@ -77,11 +94,17 @@ const MutualSubscribeItem = (
         variant: "contained",
     }
 
-    if (label) return <ItemPlaceholderComponent label={label} classes={classes} flat/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes} flat/>;
+    if (label) return <ItemPlaceholderComponent label={label} classes={classes} pattern={"flat"}/>
+    if (skeleton) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
 
     return <>
-        <Card className={[classes.card, classes.cardFlat].join(" ")}>
+        <Card
+            className={[
+                classes.card,
+                pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : classes.cardFlat
+            ].join(" ")}
+            style={value.hidden ? {opacity: 0.5} : undefined}
+        >
             <CardActionArea
                 className={classes.root}
                 disabled={disabled}
@@ -108,28 +131,58 @@ const MutualSubscribeItem = (
                         <Grid item className={classes.userName}>
                             <b>{userData.name}</b>
                         </Grid>
+                        {counter && windowData.isNarrow() && <Grid item>
+                            <CounterComponent
+                                live
+                                path={`${key}/mutual/${typeId}_s`}
+                                prefix={"- "}
+                                suffix={" follower(s)"}/>
+                        </Grid>}
                         {windowData.isNarrow() && <Grid item xs/>}
                         {value.timestamp && <Grid item className={classes.date} title={new Date(value.timestamp).toLocaleString()}>
                             {toDateString(value.timestamp)}
                         </Grid>}
+                        {counter && !windowData.isNarrow() && <Grid item>
+                            <CounterComponent
+                                live
+                                path={`${key}/mutual/${typeId}_s`}
+                                prefix={"- "}
+                                suffix={" follower(s)"}/>
+                        </Grid>}
+                        {unsubscribeLabel && (isSameUser || isAdminUser) && <>
+                            <IconButton className={classes.cardMenuButton} onClick={handleMenuClick}>
+                                <MenuIcon/>
+                            </IconButton>
+                            <Menu
+                                anchorEl={anchor}
+                                keepMounted
+                                onClose={handleMenuClose}
+                                open={Boolean(anchor)}
+                                TransitionComponent={Fade}
+                            >
+                                <MenuItem
+                                    children={unsubscribeLabel + (isSameUser ? "" : " - force as Admin")}
+                                    onClick={handleUnsubscribe}
+                                    id={"unsubscribe"}
+                                />
+                            </Menu>
+                        </>}
                     </Grid>}
                     subheader={<>
-                        <Grid container alignItems={"flex-end"}>
-                            <Grid item xs>
-                                {value.message}
-                            </Grid>
-                        </Grid>
-                        {(isSameUser || isAdminUser) && unsubscribeLabel && <Hidden smUp>
+                        <Typography variant={"body2"}>
+                            {value.message}
+                        </Typography>
+                        {/*{(isSameUser || isAdminUser) && unsubscribeLabel && <Hidden smUp>
                             <Grid container justify={"flex-end"}>
                                 <Button {...buttonProps}/>
                             </Grid>
-                        </Hidden>}
+                        </Hidden>}*/}
                     </>}
-                    action={(isSameUser || isAdminUser) && unsubscribeLabel && <Grid>
+                    /*action={(isSameUser || isAdminUser) && unsubscribeLabel && <Grid>
                         <Hidden smDown>
                             <Button {...buttonProps}/>
                         </Hidden>
-                    </Grid>}
+                    </Grid>}*/
                 />
             </CardActionArea>
         </Card>

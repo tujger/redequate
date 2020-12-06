@@ -9,6 +9,7 @@ const MentionedTextComponent = (
         classes = {text: "", link: ""},
         className = "",
         disableClick,
+        maxLength,
         mentions = [mentionTags, mentionUsers],
         text,
         tokens,
@@ -19,51 +20,68 @@ const MentionedTextComponent = (
     }
 
     if (!tokens) return null;
-    return <>
+
+    let length = 0;
+
+    return <span className={[classes.text, className].join(" ")}>
         {tokens.map((token, index) => {
+            if (maxLength && length > maxLength) return null;
             const mention = mentions.filter(item => item.type === token.type)[0];
             if (mention) {
                 const component = mention.component;
                 if (!token.value) return null;
+                const text = mention.displayTransform(token.id, token.value);
+                length += text.length;
                 return <component.type
                     {...component.props}
-                    className={[classes.text, classes.link, mention.className, className].join(" ")}
+                    className={[classes.link, mention.className].join(" ")}
                     disableClick={disableClick}
-                    display={mention.displayTransform(token.id, token.value)}
+                    display={text}
                     id={token.id}
                     key={index}
                     style={mention.style}
                 />
             } else if (token.type === "cr") {
-                return <p className={[classes.text, className].join(" ")} key={index}/>
+                if (maxLength && length > maxLength) return null;
+                return <br key={index}/>
             } else {
+                if (maxLength && length > maxLength) return null;
+                let text = token.value;
+                length += text.length;
+                let disable = false;
+                if (maxLength && length > maxLength) {
+                    text = text.substr(0, text.length - (length - maxLength)) + "...";
+                    disable = true;
+                }
                 return <span
                     key={index}
-                    className={[classes.text, className].join(" ")}
                 >
                     <Linkify
                         componentDecorator={(decoratedHref, decoratedText, key) => {
-                            return <a
-                                href={disableClick ? "#" : decoratedHref}
-                                className={[classes.text, classes.link].join(" ")}
-                                key={key}
-                                rel={"noopener noreferrer"}
-                                target={"_blank"}
-                            >
-                                {decoratedText}
-                            </a>
-                        }}
-                        textDecorator={text => {
-                            if (text.length > 50) {
-                                return text.substr(0, 50) + "...";
+                            if (disable || disableClick) {
+                                return <span
+                                    className={classes.link}
+                                    key={key}
+                                >
+                                    {decoratedText}
+                                </span>
+                            } else {
+                                return <a
+                                    href={(disable || disableClick) ? "#" : decoratedHref}
+                                    className={classes.link}
+                                    key={key}
+                                    rel={"noopener noreferrer"}
+                                    target={"_blank"}
+                                >
+                                    {decoratedText}
+                                </a>
                             }
-                            return text;
                         }}
-                    >{token.value}</Linkify>
+                    >{text}</Linkify>
                 </span>
             }
         })}
-    </>
+    </span>
 }
 
 export default withStyles(styles)(MentionedTextComponent);

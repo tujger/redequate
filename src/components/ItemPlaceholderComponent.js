@@ -7,11 +7,11 @@ import AvatarView from "./AvatarView";
 import withStyles from "@material-ui/styles/withStyles";
 import {stylesList} from "../controllers/Theme";
 
-const ItemPlaceholderComponent = ({avatar, classes, label, flat, cloud, onClick, transparent}) => (
+const ItemPlaceholderComponent = ({avatar, classes, label, onClick, pattern}) => (
     <Card
         className={[
             classes.card,
-            flat ? classes.cardFlat : cloud ? classes.cardCloud : transparent ? classes.cardTransparent : ""
+            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
         ].join(" ")}
         onClick={onClick}
     >

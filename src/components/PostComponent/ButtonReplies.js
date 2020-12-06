@@ -3,15 +3,18 @@ import {useHistory} from "react-router-dom";
 import IconButton from "@material-ui/core/IconButton";
 import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
 import ChatFilledIcon from "@material-ui/icons/Chat";
+import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import {usePages} from "../../controllers/General";
+import CounterComponent from "../CounterComponent";
 
-export default ({postData, classes}) => {
+export default ({postData, classes, disableClick}) => {
     const history = useHistory();
     const pages = usePages();
 
     return <Grid item>
         <IconButton
+            className={classes.counter}
             component={"div"}
             onClick={event => {
                 event.stopPropagation();
@@ -21,8 +24,13 @@ export default ({postData, classes}) => {
             }}
             size={"small"}
         >
-            {postData.counter("replied") ? <ChatFilledIcon/> : <ChatEmptyIcon/>}
-            <span className={classes.counter}>{postData.counter("replied")}</span>
+            <CounterComponent
+                counter={postData.counter("replied")}
+                path={disableClick ? `${postData.id}/replied` : undefined}
+                prefix={<><ChatFilledIcon/><Box m={0.5}/></>}
+                showZero
+                zeroPrefix={<><ChatEmptyIcon/><Box m={0.5}/></>}
+            />
         </IconButton>
     </Grid>
 }

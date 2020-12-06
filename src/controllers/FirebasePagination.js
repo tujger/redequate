@@ -1,4 +1,4 @@
-function Pagination({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 30000}) {
+function Pagination({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 30000, transform}) {
     const baseRef = ref;
     let lastKey = null;
     let lastValue = null;
@@ -82,7 +82,7 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
             clearTimeout(timeoutTask);
             if (timeoutFired) return;
             const keys = [];
-            const data = []; // store data in array so it's ordered
+            let data = []; // store data in array so it's ordered
             const children = [];
 
             snap.forEach(child => {
@@ -120,6 +120,9 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
                 else if (value && data[last]) lastValue = data[last].value;
             }
             if (count < size) finished = true;
+            if (transform) {
+                data = Promise.all(data.map(async item => transform(item)));
+            }
             resolve(data);
         }, error => {
             reject(error);

@@ -17,6 +17,7 @@ export {default as Tag} from "../tags/Tag";
 export {default as Tags} from "../tags/Tags";
 export {default as EditTag} from "../tags/EditTag";
 export {default as Users} from "./admin/users/Users";
+export {default as UserItem} from "./admin/users/UserItem";
 export SearchToolbar from "./search/SearchToolbar";
 export SearchModal from "./search/SearchModal";
 export SearchContent from "./search/SearchContent";

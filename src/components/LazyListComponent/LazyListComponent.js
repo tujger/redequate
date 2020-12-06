@@ -28,6 +28,7 @@ function LazyListComponent(
         random,
         reverse = false,
         scrollerClassName,
+        ItemProps = {},
         ["LazyListComponent_" + cache]: cacheData = {},
     }) {
     const dispatch = useDispatch();
@@ -80,7 +81,7 @@ function LazyListComponent(
                     }
                     if (transformed) {
                         try {
-                            return itemComponent(transformed, index);
+                            return itemComponent(transformed, index, ItemProps);
                         } catch (error) {
                             console.error(error);
                         }
@@ -171,7 +172,7 @@ function LazyListComponent(
             const item = {key: snapshot.key, value: snapshot.val()};
             let transformed = await itemTransform(item, snapshot.key);
             if (transformed) {
-                transformed = itemComponent(transformed, snapshot.key);
+                transformed = itemComponent(transformed, snapshot.key, ItemProps);
             }
             if (cache) {
                 dispatch({

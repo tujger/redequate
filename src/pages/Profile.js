@@ -1,6 +1,4 @@
 import React from "react";
-import Tooltip from "@material-ui/core/Tooltip";
-import Fab from "@material-ui/core/Fab";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
@@ -34,6 +32,7 @@ import Box from "@material-ui/core/Box";
 import {styles} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
 import {notifySnackbar} from "../controllers/notifySnackbar";
+import FlexFabComponent from "../components/FlexFabComponent";
 
 const stylesProfile = theme => ({
     root: {
@@ -229,21 +228,12 @@ const Profile = (
                 />}
             </ButtonGroup>
         </Grid>
-        {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <Tooltip title={"Start private chat"}>
-            <Fab
-                aria-label={"Private chat"}
-                color={"primary"}
-                className={classes.fab}
-                onClick={handleChatClick}
-                variant={windowData.isNarrow() ? "round" : "extended"}
-            >
-                <ChatIcon/>
-                {!windowData.isNarrow() && <>
-                    <Box m={0.5}/>
-                    Private chat
-                </>}
-            </Fab>
-        </Tooltip>}
+        {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <FlexFabComponent
+            tooltip={"Start private chat"}
+            icon={<ChatIcon/>}
+            label={"Private chat"}
+            onClick={handleChatClick}
+        />}
     </>;
 };
 

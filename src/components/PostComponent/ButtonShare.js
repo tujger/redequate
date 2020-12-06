@@ -3,23 +3,44 @@ import IconButton from "@material-ui/core/IconButton";
 import ShareIcon from "@material-ui/icons/Share";
 import Grid from "@material-ui/core/Grid";
 import {usePages} from "../../controllers/General";
-import ShareComponent from "../ShareComponent";
+import {copyToClipboard} from "../ShareComponent";
+import MenuItem from "@material-ui/core/MenuItem";
+import {notifySnackbar} from "../../controllers";
+import ProgressView from "../ProgressView";
+import {useDispatch} from "react-redux";
 
-export default ({postData}) => {
+export default React.forwardRef(({postData, onMenuItemClick, ...props}, ref) => {
     const pages = usePages();
+    const dispatch = useDispatch();
+
+    const handleMenuItemClick = evt => {
+        copyPathToClipboard();
+        onMenuItemClick(evt);
+    }
+
+    const handleButtonClick = evt => {
+        evt.stopPropagation();
+        copyPathToClipboard();
+    }
+
+    const copyPathToClipboard = () => {
+        dispatch(ProgressView.SHOW);
+        postData.fetchPath()
+            .then(path => copyToClipboard(window.location.origin + pages.post.route + path))
+            .catch(notifySnackbar)
+            .finally(() => dispatch(ProgressView.HIDE))
+    }
+
+    if (onMenuItemClick) return <MenuItem ref={ref} onClick={handleMenuItemClick} id={"share"}>Share</MenuItem>
 
     return <Grid item>
-        <ShareComponent
-            component={<IconButton
-                aria-label={"Share"}
-                children={<ShareIcon/>}
-                component={"div"}
-                size={"small"}
-                title={"Share"}
-            />}
-            text={"Share"}
+        <IconButton
+            aria-label={"Share"}
+            children={<ShareIcon/>}
+            component={"div"}
+            onClick={handleButtonClick}
+            size={"small"}
             title={"Share"}
-            url={window.location.origin + pages.post.route + postData.id}
         />
     </Grid>
-}
+})

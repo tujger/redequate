@@ -33,17 +33,22 @@ import UploadComponent from "../components/UploadComponent/UploadComponent";
 // import AvatarEdit from "react-avatar-edit";
 
 const stylesCurrent = theme => ({
-    image: {
-        color: "darkgray",
-        marginBottom: theme.spacing(1),
-        objectFit: "cover",
-        [theme.breakpoints.up("sm")]: {
-            height: theme.spacing(18),
-            width: theme.spacing(18),
-        },
+    // image: {
+    //     color: "darkgray",
+    //     marginBottom: theme.spacing(1),
+    //     objectFit: "cover",
+    //     [theme.breakpoints.up("sm")]: {
+    //         height: theme.spacing(18),
+    //         width: theme.spacing(18),
+    //     },
+    //     [theme.breakpoints.down("sm")]: {
+    //         height: theme.spacing(24),
+    //         width: theme.spacing(24),
+    //     },
+    // },
+    profileImage: {
         [theme.breakpoints.down("sm")]: {
-            height: theme.spacing(24),
-            width: theme.spacing(24),
+            width: theme.spacing(25),
         },
     },
     label: {
@@ -61,7 +66,7 @@ const stylesCurrent = theme => ({
             width: "100%",
         },
     },
-    clearPhoto: {
+    clearImage: {
         backgroundColor: "transparent",
         position: "absolute",
         right: 0,
@@ -97,84 +102,67 @@ function EditProfile(props) {
 
     const {image, disabled, requiredError = [], uniqueError = [], userData, deleteOpen, role, uppy} = state;
 
-    const onerror = error => {
-        setState(state => ({...state, disabled: false}));
-        notifySnackbar(error);
-        refreshAll(store);
-    };
-
-    const requiredFilled = () => {
-        const requiredError = [];
-        publicFields.forEach(field => {
-            if (field && field.required && (!state[field.id] || !state[field.id].toString().trim().length)) {
-                requiredError.push(field.id);
-            }
-        })
-        if (requiredError.length > 0) {
-            setState(state => ({...state, requiredError}));
-            return false;
+    const saveUser = async () => {
+        const prepareSaving = async () => {
+            dispatch(ProgressView.SHOW);
+            setState(state => ({...state, requiredError: [], uniqueError: [], disabled: true}));
         }
-        return true;
-    }
-
-    const checkUnique = async () => {
-        const uniqueError = [];
-        for (const field of publicFields) {
-            if (field.unique) {
-                const values = await new Pagination({
-                    ref: firebase.database().ref("users_public"),
-                    child: "name",
-                    equals: (state[field.id] !== undefined && (state[field.id] || "").constructor.name === "String")
-                        ? (state[field.id] || "").trim() : state[field.id]
-                }).next();
-                for (const value of (values || [])) {
-                    if (value.key && value.key !== userData.id) {
-                        uniqueError.push(field.id);
+        const checkForRequiredFields = async () => {
+            const requiredError = [];
+            publicFields.forEach(field => {
+                if (field && field.required && (!state[field.id] || !state[field.id].toString().trim().length)) {
+                    requiredError.push(field.id);
+                }
+            })
+            if (requiredError.length > 0) {
+                setState(state => ({...state, requiredError}));
+                throw "";
+            }
+        }
+        const checkIfNameIsUnique = async () => {
+            const uniqueError = [];
+            for (const field of publicFields) {
+                if (field.unique) {
+                    const values = await new Pagination({
+                        ref: firebase.database().ref("users_public"),
+                        child: "name",
+                        equals: (state[field.id] !== undefined && (state[field.id] || "").constructor.name === "String")
+                            ? (state[field.id] || "").trim() : state[field.id]
+                    }).next();
+                    for (const value of (values || [])) {
+                        if (value.key && value.key !== userData.id) {
+                            uniqueError.push(field.id);
+                        }
                     }
                 }
             }
-        }
-        if (uniqueError.length > 0) {
-            setState(state => ({...state, uniqueError}));
-            return false;
-        }
-        return true;
-    }
-
-    const saveUser = async () => {
-        if (!requiredFilled()) return;
-
-        dispatch(ProgressView.SHOW);
-        setState(state => ({...state, requiredError: [], uniqueError: [], disabled: true}));
-        const unique = await checkUnique();
-        if (!unique) {
-            setState(state => ({...state, disabled: false}));
-            dispatch(ProgressView.HIDE);
-            return;
-        }
-
-        const exists = await firebase.database().ref("users_public").child(userData.id).child("email").once("value").then(snapshot => snapshot.exists());
-        if (!exists) {
-            notifySnackbar(Error("Profile is not found, force log out"));
-            await logoutUser(firebase, store)();
-            refreshAll(store);
-            history.replace(pages.home.route);
-            return;
-        }
-
-        let publishing = {};
-
-        if (userData.image && image !== userData.image) {
-            console.log("[EditProfile] delete", userData.image)
-            try {
-                await firebase.storage().refFromURL(userData.image).delete();
-            } catch (e) {
-                console.error(e);
+            if (uniqueError.length > 0) {
+                setState(state => ({...state, uniqueError}));
+                throw ""
             }
         }
-        if (uppy) {
-            try {
-                publishing = await uploadComponentPublish(firebase)({
+        const checkIfProfileExists = async () => {
+            const exists = await firebase.database().ref("users_public").child(userData.id).child("email").once("value").then(snapshot => snapshot.exists());
+            if (!exists) {
+                await logoutUser(firebase, store)();
+                refreshAll(store);
+                history.replace(pages.home.route);
+                throw Error("Profile is not found, forcing log out");
+            }
+        }
+        const deleteImageIfObsolete = async () => {
+            if (userData.image && image !== userData.image) {
+                console.log("[EditProfile] delete", userData.image)
+                try {
+                    await firebase.storage().refFromURL(userData.image).delete();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+        const publishImage = async () => {
+            if (uppy) {
+                const publishing = await uploadComponentPublish(firebase)({
                     auth: userData.id,
                     uppy,
                     name: "profile",
@@ -183,60 +171,79 @@ function EditProfile(props) {
                     },
                     deleteFile: userData.public.image
                 });
-            } catch (error) {
-                onerror(error);
-                return;
+                const {url} = (publishing[0] || {});
+                userData.set({
+                    image: url || image || null,
+                });
+            } else {
+                userData.set({
+                    image: image || null,
+                });
             }
-        } else if (image) {
         }
-        const {url: imageSaved} = (publishing[0] || {});
-        if (isAdminAllowed) await saveUserByAdmin();
-        console.log(imageSaved, publishing);
-
-        const additionalPublic = {};
-        publicFields.forEach(field => {
-            if (state[field.id] !== undefined) {
-                additionalPublic[field.id] = state[field.id];
+        const processPublicFields = async () => {
+            const additionalPublic = {};
+            publicFields.forEach(field => {
+                if (state[field.id] !== undefined) {
+                    additionalPublic[field.id] = state[field.id];
+                }
+            })
+            userData.set({
+                ...additionalPublic,
+            });
+        }
+        const saveByAdmin = async () => {
+            if (isAdmin) {
+                const updates = {};
+                updates[`roles/${userData.id}`] = (role === Role.USER || role === Role.USER_NOT_VERIFIED) ? null : role;
+                if (role === Role.USER_NOT_VERIFIED) {
+                    updates[`users_public/${userData.id}/emailVerified`] = false;
+                } else if (role === Role.USER || role === Role.ADMIN) {
+                    updates[`users_public/${userData.id}/emailVerified`] = true;
+                }
+                updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
+                return firebase.database().ref().update(updates);
             }
-        })
+        }
+        const refreshUserData = async () => {
+            await userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE]);
+        }
+        const updateCurrentUserData = async () => {
+            if (currentUserData.id === userData.id) {
+                dispatch({type: "currentUserData", userData});
+            }
+        }
+        const onSaveComplete = async () => {
+            setState(state => ({...state, disabled: false, uppy: null}))
+            refreshAll(store);
+            if (isAdmin) {
+                history.goBack();
+            } else if (tosuccessroute) {
+                history.push(tosuccessroute);
+            } else {
+                history.goBack();
+            }
+        }
+        const finalizeSaving = async () => {
+            dispatch(ProgressView.HIDE);
+            setState(state => ({...state, disabled: false}));
+        }
 
-        userData.set({
-            ...additionalPublic,
-            image: imageSaved || image || "",
-        }).then(() => userData.savePublic())
-            .then(() => userData.fetch([UserData.UPDATED, UserData.FORCE]))
-            .then(() => {
-                if (currentUserData.id === userData.id) {
-                    dispatch({type: "currentUserData", userData});
-                }
-            })
-            .then(() => {
-                setState(state => ({...state, disabled: false, uppy: null}))
-                refreshAll(store);
-                if (isAdminAllowed) {
-                    history.goBack();
-                } else if (tosuccessroute) {
-                    history.push(tosuccessroute);
-                } else {
-                    history.goBack();
-                }
-            })
-            .catch(onerror)
-            .finally(() => dispatch(ProgressView.HIDE));
+        prepareSaving()
+            .then(checkForRequiredFields)
+            .then(checkIfNameIsUnique)
+            .then(checkIfProfileExists)
+            .then(deleteImageIfObsolete)
+            .then(publishImage)
+            .then(processPublicFields)
+            .then(userData.savePublic)
+            .then(saveByAdmin)
+            .then(refreshUserData)
+            .then(updateCurrentUserData)
+            .then(onSaveComplete)
+            .catch(notifySnackbar)
+            .finally(finalizeSaving);
     };
-
-    const saveUserByAdmin = () => {
-        const updates = {};
-        updates[`roles/${userData.id}`] = (role === Role.USER || role === Role.USER_NOT_VERIFIED) ? null : role;
-        if (role === Role.USER_NOT_VERIFIED) {
-            updates[`users_public/${userData.id}/emailVerified`] = false;
-        } else if (role === Role.USER || role === Role.ADMIN) {
-            updates[`users_public/${userData.id}/emailVerified`] = true;
-        }
-        updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
-        return firebase.database().ref().update(updates)
-            .then(() => userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE]))
-    }
 
     const handleUploadPhotoSuccess = ({uppy, snapshot}) => {
         setState(state => ({...state, uppy, image: snapshot.uploadURL}));
@@ -257,14 +264,19 @@ function EditProfile(props) {
         setState(state => ({...state, disabled: true, deleteOpen: false}));
         console.log("delete user by admin", userData.id)
 
-        userData.delete()
-            .then(() => {
-                notifySnackbar("User deleted");
-                setState(state => ({...state, disabled: false}));
-                history.goBack();
-            })
-            .catch(notifySnackbar)
-            .finally(() => dispatch(ProgressView.HIDE))
+        if (isAdmin) {
+            userData.delete()
+                .then(() => {
+                    notifySnackbar("User deleted");
+                    setState(state => ({...state, disabled: false}));
+                    history.goBack();
+                })
+                .catch(notifySnackbar)
+                .finally(() => dispatch(ProgressView.HIDE))
+        } else {
+            setState(state => ({...state, disabled: false}));
+            dispatch(ProgressView.HIDE);
+        }
     }
 
     const handleNotifications = (evt, enable) => {
@@ -334,22 +346,22 @@ function EditProfile(props) {
         return <Redirect to={pages.editprofile.route}/>
     }
 
-    const isAdminAllowed = matchRole([Role.ADMIN], currentUserData);
+    const isAdmin = matchRole([Role.ADMIN], currentUserData);
     // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
-    const fields = [...publicFields, ...(isAdminAllowed ? adminFieldsGiven : [])];
+    const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
     const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
 
     return <Grid className={classes.center} container>
         <Box m={0.5}/>
-        <Grid container spacing={1}>
-            <Grid item className={classes.photo}>
-                {image ? <img src={image} alt={"User photo"} className={classes.image}/>
-                    : <EmptyAvatar className={classes.image}/>}
+        <Grid container className={classes.profile} spacing={1}>
+            <Grid item className={classes.profileFieldImage}>
+                {image ? <img src={image} alt={"User photo"} className={classes.profileImage}/>
+                    : <EmptyAvatar className={classes.profileImage}/>}
                 {image && <Hidden smDown>
                     <IconButton
                         aria-label={"Clear"}
                         children={<ClearIcon/>}
-                        className={classes.clearPhoto}
+                        className={classes.clearImage}
                         onClick={() => {
                             setState(state => ({...state, image: "", uppy: null}));
                         }}
@@ -361,7 +373,7 @@ function EditProfile(props) {
                         <UploadComponent
                             button={<Button
                                 aria-label={"Change"}
-                                children={"Change"}
+                                children={windowData.isNarrow() ? "Set image" : "Change"}
                                 color={"secondary"}
                                 fullWidth={!windowData.isNarrow()}
                                 title={"Change"}
@@ -390,7 +402,7 @@ function EditProfile(props) {
                     </Hidden>}
                 </Grid>
             </Grid>
-            <Grid item xs>
+            <Grid item className={classes.profileFields} xs>
                 <Grid container spacing={1} alignItems={"flex-end"}>
                     <Grid item>
                         <MailIcon/>
@@ -490,13 +502,12 @@ function EditProfile(props) {
                         Cancel
                     </Button>
                 </ButtonGroup>}
-                {isAdminAllowed && <>
-                    <Box m={8}/>
-                    <Grid container justify={"center"}>
-                        <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
-                            Delete user account
-                        </Button>
-                    </Grid></>}
+                <Box m={8}/>
+                <Grid container justify={"center"}>
+                    <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
+                        Delete account
+                    </Button>
+                </Grid>
             </Grid>
         </Grid>
         {deleteOpen && <ConfirmComponent
@@ -506,15 +517,11 @@ function EditProfile(props) {
             onConfirm={deleteUser}
             title={"Delete user data?"}
         >
-            User's <b>{userData.name}</b> account and all his data will be deleted and can not be
-            restored.
+            Account and all data will be deleted and can not be restored.
             <br/>
             WARNING! This action will be proceeded immediately!
         </ConfirmComponent>}
     </Grid>
 }
 
-export default withStyles(theme => ({
-    ...styles(theme),
-    ...stylesCurrent(theme)
-}))(EditProfile);
+export default withStyles(stylesCurrent)(withStyles(styles)(EditProfile));
