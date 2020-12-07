@@ -44,7 +44,10 @@ const MainContent = props => {
                                 {...props}
                                 {...pages.login.component.props}
                                 onLogin={(isFirstLogin) => {
-                                    if (!isFirstLogin) history.push(window.location.pathname)
+                                    if (!isFirstLogin) {
+                                        history.push(window.location.pathname)
+                                        return true;
+                                    }
                                 }}
                             />
                         }

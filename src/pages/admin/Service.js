@@ -8,6 +8,7 @@ import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Switch from "@material-ui/core/Switch";
 import InfoIcon from "@material-ui/icons/Info";
 import SupportIcon from "@material-ui/icons/Person";
+import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
 import MaintenanceIcon from "@material-ui/icons/Settings";
 import {useCurrentUserData, UserData} from "../../controllers/UserData";
 import ProgressView from "../../components/ProgressView";
@@ -36,7 +37,7 @@ const Service = ({classes}) => {
         disabled: false,
         message: "Sorry, site is under technical maintenance now. Please come back later.",
     });
-    const {disabled, maintenanceOpen, message, maintenance, support} = state;
+    const {disabled, maintenanceOpen, message, maintenance, support, blockedNames} = state;
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
     const finallyCallback = () => {
@@ -80,6 +81,7 @@ const Service = ({classes}) => {
     }
 
     const handleSave = evt => {
+        const updates = {};
         const prepareSaving = async () => {
             dispatch(ProgressView.SHOW);
             setState(state => ({...state, disabled: true}));
@@ -91,11 +93,18 @@ const Service = ({classes}) => {
             }
             throw Error("Support is incorrect")
         }
-        const publishSupport = async token => {
+        const addSupport = async token => {
             if (token.type === "user") {
-                return firebase.database().ref().child("meta/support").set(token.id);
+                updates.support = token.id;
+                return;
             }
             throw Error(`Incorrect token: ${JSON.stringify(token)}`);
+        }
+        const addBlockedNames = async () => {
+            updates.blockedNames = blockedNames;
+        }
+        const publish = async () => {
+            return firebase.database().ref().child("meta").update(updates);
         }
         const notifyAboutSaved = async () => {
             notifySnackbar("Saved");
@@ -107,7 +116,9 @@ const Service = ({classes}) => {
 
         prepareSaving()
             .then(parseSupport)
-            .then(publishSupport)
+            .then(addSupport)
+            .then(addBlockedNames)
+            .then(publish)
             .then(notifyAboutSaved)
             .catch(notifySnackbar)
             .finally(finalizeSaving);
@@ -141,6 +152,14 @@ const Service = ({classes}) => {
             } else {
                 setState(state => ({...state, support: ""}));
             }
+        })
+    }, [])
+
+    React.useEffect(() => {
+        const ref = firebase.database().ref("meta/blockedNames");
+        ref.once("value", snapshot => {
+            const blockedNames = snapshot.val();
+            setState(state => ({...state, blockedNames}));
         })
     }, [])
 
@@ -208,7 +227,27 @@ const Service = ({classes}) => {
                         setState(state => ({...state, support: text}));
                     }}
                     label={"Support person"}
-                    value={support}
+                    value={support || ""}
+                />
+            </Grid>
+        </Grid>
+        <Grid container alignItems={"flex-end"} spacing={1}>
+            <Grid item>
+                <BlockedNamesIcon/>
+            </Grid>
+            <Grid item xs>
+                <TextField
+                    color={"secondary"}
+                    disabled={blockedNames === undefined}
+                    fullWidth
+                    label={"Blocked names"}
+                    multiline
+                    onChange={(ev, a, b, tokens) => {
+                        // console.log(ev.target.value, a, b, c)
+                        setState(state => ({...state, blockedNames: ev.target.value}));
+                    }}
+                    rows={3}
+                    value={blockedNames || ""}
                 />
             </Grid>
         </Grid>

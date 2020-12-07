@@ -133,12 +133,9 @@ function Login(props) {
             })
             .then(() => {
                 refreshAll(store);
-                if (onLogin) {
-                    onLogin(isFirstLogin);
-                } else {
-                    if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin: true});
-                    else history.replace(pages.home.route);
-                }
+                if (onLogin && onLogin(isFirstLogin)) return;
+                if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin: true});
+                else history.replace(pages.home.route);
             });
     };
 

@@ -584,6 +584,11 @@ export const stylesList = theme => ({
         "&$reply": {
             alignItems: "flex-start",
         },
+        "& .MuiCardHeader-title": {
+            [theme.breakpoints.down("sm")]: {
+                marginRight: theme.spacing(3),
+            },
+        },
         [theme.breakpoints.down("sm")]: {
             // paddingBottom: theme.spacing(1),
         },

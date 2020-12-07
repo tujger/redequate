@@ -18,20 +18,56 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
 export default ShareComponent;
 
-export function share({title = "Share", text = "Share", url = ""}) {
-    if (hasWrapperControlInterface()) {
-        wrapperControlCall({method: "shareText", title, text, url})
-            .catch(notifySnackbar);
-    } else if (navigator.share) {
-        try {
-            navigator.share({text, title, url})
-                .catch(notifySnackbar)
-        } catch (error) {
-            notifySnackbar(error);
-        }
-    } else {
-        copyToClipboard(url);
+export function share({title = "Share", text = "Share", url = "", shortify = false}) {
+    const shortifyUrl = async () => {
+        if (true) return;
+        return await window.fetch("https://api-ssl.bitly.com/v4/shorten", {
+            method: "POST",
+            headers: {
+                Authorization: "Bearer o_1nbj07r68c",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                group_guid: "Ba1bc23dE4F",
+                domain: "bit.ly",
+                long_url: url
+            })
+        })
+            .then(response => response.json)
+            .then(console.log);
     }
+    const withWrapperControl = async () => {
+        if (hasWrapperControlInterface()) {
+            return wrapperControlCall({method: "shareText", title, text, url})
+                .catch(notifySnackbar);
+        } else throw "no-wrapper-control-interface"
+    }
+    const withNavigatorShare = async () => {
+        return navigator.share({text, title, url})
+    }
+    const withClipboard = async () => {
+        return copyToClipboard(url);
+    }
+
+    shortifyUrl()
+        .then(withWrapperControl)
+        .catch(withNavigatorShare)
+        .catch(withClipboard)
+        .catch(notifySnackbar)
+
+    // if (hasWrapperControlInterface()) {
+    //     wrapperControlCall({method: "shareText", title, text, url})
+    //         .catch(notifySnackbar);
+    // } else if (navigator.share) {
+    //     try {
+    //         navigator.share({text, title, url})
+    //             .catch(notifySnackbar)
+    //     } catch (error) {
+    //         notifySnackbar(error);
+    //     }
+    // } else {
+    //     copyToClipboard(url);
+    // }
 }
 
 export async function copyToClipboard(text) {

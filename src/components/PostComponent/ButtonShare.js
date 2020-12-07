@@ -3,7 +3,7 @@ import IconButton from "@material-ui/core/IconButton";
 import ShareIcon from "@material-ui/icons/Share";
 import Grid from "@material-ui/core/Grid";
 import {usePages} from "../../controllers/General";
-import {copyToClipboard} from "../ShareComponent";
+import {share} from "../ShareComponent";
 import MenuItem from "@material-ui/core/MenuItem";
 import {notifySnackbar} from "../../controllers";
 import ProgressView from "../ProgressView";
@@ -14,19 +14,19 @@ export default React.forwardRef(({postData, onMenuItemClick, ...props}, ref) => 
     const dispatch = useDispatch();
 
     const handleMenuItemClick = evt => {
-        copyPathToClipboard();
+        sharePath();
         onMenuItemClick(evt);
     }
 
     const handleButtonClick = evt => {
         evt.stopPropagation();
-        copyPathToClipboard();
+        sharePath();
     }
 
-    const copyPathToClipboard = () => {
+    const sharePath = () => {
         dispatch(ProgressView.SHOW);
         postData.fetchPath()
-            .then(path => copyToClipboard(window.location.origin + pages.post.route + path))
+            .then(path => share({url: window.location.origin + pages.post.route + path}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }

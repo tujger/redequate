@@ -13,7 +13,7 @@ import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, useHistory, useParams} from "react-router-dom";
-import {logoutUser, matchRole, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {logoutUser, matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
@@ -119,7 +119,15 @@ function EditProfile(props) {
                 throw "";
             }
         }
-        const checkIfNameIsUnique = async () => {
+        const checkIfNameIsBlocked = async () => {
+            const snapshot = await firebase.database().ref("meta/blockedNames").once("value");
+            const blockedNames = (snapshot.val() || "").split(/[\s\r\n]+/)
+                .map(item => normalizeSortName(item));
+            if (blockedNames.indexOf(normalizeSortName(state.name)) >= 0) {
+                throw Error("This user user name is reserved for distilleries. If you are a distillery, please contact us using Contacts page.")
+            }
+        }
+        const checkForUniqueFields = async () => {
             const uniqueError = [];
             for (const field of publicFields) {
                 if (field.unique) {
@@ -231,7 +239,8 @@ function EditProfile(props) {
 
         prepareSaving()
             .then(checkForRequiredFields)
-            .then(checkIfNameIsUnique)
+            .then(checkIfNameIsBlocked)
+            .then(checkForUniqueFields)
             .then(checkIfProfileExists)
             .then(deleteImageIfObsolete)
             .then(publishImage)
@@ -502,12 +511,14 @@ function EditProfile(props) {
                         Cancel
                     </Button>
                 </ButtonGroup>}
-                <Box m={8}/>
-                <Grid container justify={"center"}>
-                    <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
-                        Delete account
-                    </Button>
-                </Grid>
+                {isAdmin && <>
+                    <Box m={8}/>
+                    <Grid container justify={"center"}>
+                        <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
+                            Delete account
+                        </Button>
+                    </Grid>
+                </>}
             </Grid>
         </Grid>
         {deleteOpen && <ConfirmComponent
