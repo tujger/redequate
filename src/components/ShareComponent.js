@@ -2,6 +2,7 @@ import React from "react";
 import Button from "@material-ui/core/Button";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import {notifySnackbar} from "../controllers/notifySnackbar";
+import {firebaseMessaging} from "../controllers/Firebase";
 
 const ShareComponent = ({title, text, url, component = <Button/>}) => {
     const handleShare = (evt) => {
@@ -18,23 +19,41 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
 export default ShareComponent;
 
-export function share({title = "Share", text = "Share", url = "", shortify = false}) {
+export function share({title = "Share", text = "Share", url: givenUrl = "", shortify = false}) {
+    let url = givenUrl;
     const shortifyUrl = async () => {
-        if (true) return;
-        return await window.fetch("https://api-ssl.bitly.com/v4/shorten", {
-            method: "POST",
-            headers: {
-                Authorization: "Bearer o_1nbj07r68c",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                group_guid: "Ba1bc23dE4F",
-                domain: "bit.ly",
-                long_url: url
+        if (!shortify) return;
+        firebaseMessaging.database().ref("meta/dynamicLinksUrlPrefix").once("value")
+            .then(snapshot => snapshot.val())
+            .then(domainUriPrefix => {
+                if (!domainUriPrefix) {
+                    throw Error("'domainUriPrefix' is not defined. Define 'Dynamic links URI prefix' in 'Admin/Service'");
+                }
+                return window.fetch("https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + (firebaseMessaging.config.apiKey), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        dynamicLinkInfo: {
+                            domainUriPrefix,
+                            link: url
+                        },
+                        suffix: {
+                            option: "SHORT"
+                        }
+                    })
+                })
             })
-        })
-            .then(response => response.json)
-            .then(console.log);
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) throw result.error;
+                console.log(result)
+                if (result && result.shortLink) {
+                    url = result.shortLink;
+                }
+            })
+            .catch(console.error);
     }
     const withWrapperControl = async () => {
         if (hasWrapperControlInterface()) {
@@ -54,20 +73,6 @@ export function share({title = "Share", text = "Share", url = "", shortify = fal
         .catch(withNavigatorShare)
         .catch(withClipboard)
         .catch(notifySnackbar)
-
-    // if (hasWrapperControlInterface()) {
-    //     wrapperControlCall({method: "shareText", title, text, url})
-    //         .catch(notifySnackbar);
-    // } else if (navigator.share) {
-    //     try {
-    //         navigator.share({text, title, url})
-    //             .catch(notifySnackbar)
-    //     } catch (error) {
-    //         notifySnackbar(error);
-    //     }
-    // } else {
-    //     copyToClipboard(url);
-    // }
 }
 
 export async function copyToClipboard(text) {

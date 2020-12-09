@@ -40,6 +40,10 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 const origin = console.error;
 console.error = function (...args) {
+    if (args[0].toString().indexOf("Material-UI: The key") >= 0
+        && args[0].toString().indexOf("provided to the classes") >= 0) {
+        return;
+    }
     origin.call(this, ...args);
     // return;
     try {

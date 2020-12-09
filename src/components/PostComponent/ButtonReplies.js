@@ -7,8 +7,11 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import {usePages} from "../../controllers/General";
 import CounterComponent from "../CounterComponent";
+import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import {useDispatch} from "react-redux";
 
 export default ({postData, classes, disableClick}) => {
+    const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
 
@@ -18,8 +21,9 @@ export default ({postData, classes, disableClick}) => {
             component={"div"}
             onClick={event => {
                 event.stopPropagation();
+                dispatch({type: lazyListComponentReducer.REFRESH});
                 history.push(pages.post.route + postData.id, {
-                    onlyReplies: !!postData.counter("replied")
+                    onlyReplies: !!postData.counter("replied"),
                 })
             }}
             size={"small"}

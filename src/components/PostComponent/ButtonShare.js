@@ -9,7 +9,7 @@ import {notifySnackbar} from "../../controllers";
 import ProgressView from "../ProgressView";
 import {useDispatch} from "react-redux";
 
-export default React.forwardRef(({postData, onMenuItemClick, ...props}, ref) => {
+export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     const pages = usePages();
     const dispatch = useDispatch();
 
@@ -26,7 +26,10 @@ export default React.forwardRef(({postData, onMenuItemClick, ...props}, ref) => 
     const sharePath = () => {
         dispatch(ProgressView.SHOW);
         postData.fetchPath()
-            .then(path => share({url: window.location.origin + pages.post.route + path}))
+            .then(path => share({
+                shortify: isReply,
+                url: window.location.origin + pages.post.route + path
+            }))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }

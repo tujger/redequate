@@ -9,7 +9,7 @@ import {useHistory} from "react-router-dom";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {useDispatch} from "react-redux";
 
-const PostComponent = ({forceExpand, ...props}) => {
+const PostComponent = (props) => {
     const {
         skeleton, label, level, postData,
         onChange = data => console.log("onChange", data),
@@ -17,7 +17,8 @@ const PostComponent = ({forceExpand, ...props}) => {
         allowedExtras = ["like"],
         collapsible = true,
         disableClick = false,
-        expand: givenExpand = [],
+        expand: givenExpand,
+        expanded: givenExpanded,
         highlight: givenHighlight,
         isReply = false,
         pattern,
@@ -34,7 +35,7 @@ const PostComponent = ({forceExpand, ...props}) => {
         const {key} = props;
         cacheDatas.remove(postData.id);
         if (key) {
-            setState(state => ({...state, highlight: key, expand: [...state.expand, postData.id]}))
+            setState(state => ({...state, highlight: key, expand: postData.id}))
         } else {
             onChange(props);
         }
@@ -54,6 +55,7 @@ const PostComponent = ({forceExpand, ...props}) => {
     }
 
     const onlyReplies = level === 0 && history && history.location && history.location.state && history.location.state.onlyReplies;
+    const expanded = givenExpanded || onlyReplies;
 
     React.useEffect(() => {
         if (!givenHighlight) return;
@@ -70,6 +72,7 @@ const PostComponent = ({forceExpand, ...props}) => {
         collapsible,
         disableClick,
         expand,
+        expanded,
         handleClickPost,
         highlight,
         isReply,
@@ -82,7 +85,6 @@ const PostComponent = ({forceExpand, ...props}) => {
         {!onlyReplies && <PostCard {...inheritProps}/>}
         {level !== undefined && <RepliesTree
             {...inheritProps}
-            forceExpand={forceExpand}
             key={highlight}
             postId={postData.id}
         />}

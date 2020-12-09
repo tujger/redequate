@@ -111,7 +111,6 @@ const Tag = ({classes, allowOwner = true}) => {
         // eslint-disable-next-line
     }, [itemId]);
 
-    console.log(isOwner, allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id)
     if (!tag) return <LoadingComponent/>
 
     return <>

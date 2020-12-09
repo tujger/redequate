@@ -7,6 +7,7 @@ import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Switch from "@material-ui/core/Switch";
 import InfoIcon from "@material-ui/icons/Info";
+import DynamicLinksIcon from "@material-ui/icons/Link";
 import SupportIcon from "@material-ui/icons/Person";
 import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
 import MaintenanceIcon from "@material-ui/icons/Settings";
@@ -24,6 +25,7 @@ import {mentionUsers} from "../../controllers/mentionTypes";
 import Pagination from "../../controllers/FirebasePagination";
 import {tokenizeText} from "../../components";
 import {useHistory, useParams} from "react-router-dom";
+import {updateActivity} from "./Activity";
 
 const Service = ({classes}) => {
     const dispatch = useDispatch();
@@ -37,7 +39,7 @@ const Service = ({classes}) => {
         disabled: false,
         message: "Sorry, site is under technical maintenance now. Please come back later.",
     });
-    const {disabled, maintenanceOpen, message, maintenance, support, blockedNames} = state;
+    const {disabled, maintenanceOpen, message, maintenance, support, blockedNames, dynamicLinksUrlPrefix} = state;
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
     const finallyCallback = () => {
@@ -103,8 +105,14 @@ const Service = ({classes}) => {
         const addBlockedNames = async () => {
             updates.blockedNames = blockedNames;
         }
+        const addDynamicLinksUrlPrefix = async () => {
+            updates.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix;
+        }
         const publish = async () => {
             return firebase.database().ref().child("meta").update(updates);
+        }
+        const updateServiceActivity = async () => {
+            return updateActivity({firebase, uid: currentUserData.id, type})
         }
         const notifyAboutSaved = async () => {
             notifySnackbar("Saved");
@@ -118,6 +126,7 @@ const Service = ({classes}) => {
             .then(parseSupport)
             .then(addSupport)
             .then(addBlockedNames)
+            .then(addDynamicLinksUrlPrefix)
             .then(publish)
             .then(notifyAboutSaved)
             .catch(notifySnackbar)
@@ -156,10 +165,11 @@ const Service = ({classes}) => {
     }, [])
 
     React.useEffect(() => {
-        const ref = firebase.database().ref("meta/blockedNames");
+        const ref = firebase.database().ref("meta");
         ref.once("value", snapshot => {
-            const blockedNames = snapshot.val();
-            setState(state => ({...state, blockedNames}));
+            const val = snapshot.val();
+            const {blockedNames = "", dynamicLinksUrlPrefix = ""} = val;
+            setState(state => ({...state, blockedNames, dynamicLinksUrlPrefix}));
         })
     }, [])
 
@@ -176,7 +186,7 @@ const Service = ({classes}) => {
             </Grid>
             <Box m={1}/>
         </>}
-        <Grid container spacing={1}>
+        <Grid container spacing={1} alignItems={"center"}>
             <Grid item>
                 <MaintenanceIcon/>
             </Grid>
@@ -192,6 +202,7 @@ const Service = ({classes}) => {
                 />
             </Grid>
         </Grid>
+        <Box m={1}/>
         <Grid container alignItems={"flex-end"} spacing={1}>
             <Grid item>
                 <SupportIcon/>
@@ -231,6 +242,7 @@ const Service = ({classes}) => {
                 />
             </Grid>
         </Grid>
+        <Box m={1}/>
         <Grid container alignItems={"flex-end"} spacing={1}>
             <Grid item>
                 <BlockedNamesIcon/>
@@ -242,12 +254,25 @@ const Service = ({classes}) => {
                     fullWidth
                     label={"Blocked names"}
                     multiline
-                    onChange={(ev, a, b, tokens) => {
-                        // console.log(ev.target.value, a, b, c)
-                        setState(state => ({...state, blockedNames: ev.target.value}));
-                    }}
-                    rows={3}
+                    onChange={ev => setState(state => ({...state, blockedNames: ev.target.value}))}
+                    rows={5}
                     value={blockedNames || ""}
+                />
+            </Grid>
+        </Grid>
+        <Box m={1}/>
+        <Grid container alignItems={"flex-end"} spacing={1}>
+            <Grid item>
+                <DynamicLinksIcon/>
+            </Grid>
+            <Grid item xs>
+                <TextField
+                    color={"secondary"}
+                    disabled={dynamicLinksUrlPrefix === undefined}
+                    fullWidth
+                    label={"Dynamic links URL prefix"}
+                    onChange={ev => setState(state => ({...state, dynamicLinksUrlPrefix: ev.target.value}))}
+                    value={dynamicLinksUrlPrefix || ""}
                 />
             </Grid>
         </Grid>

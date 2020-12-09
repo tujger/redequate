@@ -287,6 +287,12 @@ export const styles = theme => ({
     searchToolbarIcon: {
         color: "inherit",
     },
+    searchClearIcon: {
+        color: "inherit",
+        position: "absolute",
+        right: 0,
+        top: theme.spacing(-1),
+    },
     searchToolbarInput: {
         color: "inherit",
         "& .MuiInput-root, & .MuiInput-input": {
@@ -513,13 +519,19 @@ export const stylesList = theme => ({
     cardHighlighted: {}, // DO NOT DELETE this class is important because of dependencies above
     cardInvite: {
         backgroundColor: "transparent",
-        bottom: 0,
         boxShadow: "none",
         display: "flex",
         fontSize: "110%",
         padding: theme.spacing(3),
-        position: "fixed",
-        top: 0,
+        [theme.breakpoints.up("md")]: {
+            justifyContent: "center",
+            position: "relative",
+        },
+        [theme.breakpoints.down("sm")]: {
+            bottom: 0,
+            position: "fixed",
+            top: 0,
+        },
     },
     cardActions: {
         display: "flex",

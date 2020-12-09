@@ -75,12 +75,12 @@ export default (
                     color={"secondary"}
                     endAdornment={<IconButton
                         children={<ClearIcon/>}
+                        className={classes.searchClearIcon}
                         onClick={() => {
                             setState({...state, searchValue: ""});
                             inputRef.current && inputRef.current.focus();
                             Input.props.onChange && Input.props.onChange("");
                         }}
-                        style={{color: "inherit"}}
                         title={"Clear search"}
                         variant={"text"}
                     />}

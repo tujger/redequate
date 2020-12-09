@@ -10,6 +10,9 @@ import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {useHistory} from "react-router-dom";
 import withStyles from "@material-ui/styles/withStyles";
+import {notifySnackbar} from "../../controllers";
+import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import {useDispatch} from "react-redux";
 
 const stylesCurrent = theme => ({
     indent: {},
@@ -28,8 +31,7 @@ const stylesCurrent = theme => ({
             [theme.breakpoints.up("md")]: {
                 width: theme.spacing(4)
             },
-            [theme.breakpoints.down("sm")]: {
-            },
+            [theme.breakpoints.down("sm")]: {},
         }
     },
     textSmall: {
@@ -42,61 +44,99 @@ const stylesCurrent = theme => ({
     }
 });
 
-export default withStyles(stylesCurrent)(({forceExpand, ...props}) => {
-    const {allowedExtras, level, postId, classes = {}, type, expand: givenExpand, onChange} = props;
+export default withStyles(stylesCurrent)((props) => {
+    const {allowedExtras, level, postId, classes = {}, type, expand, onChange, expanded: givenExpanded} = props;
     const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const windowData = useWindowData();
-    const [state, setState] = React.useState({expand: []});
-    const {expanded, repliesMin, userReplied, expand, paginationOptions} = state;
+    const [state, setState] = React.useState({});
+    const {expanded, repliesMin, userReplied, paginationOptions} = state;
 
     const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
     React.useEffect(async () => {
         let isMounted = true;
-        const paginationOptions = (forceExpand && forceExpand !== postId) ? {
-            equals: forceExpand,
-        } : {
-            child: "to",
-            equals: postId,
-        }
-
-        const pagination = new Pagination({
+        const paginationOptions = {
             ref: firebase.database().ref(type),
+            equals: postId,
+            child: "to",
             order: "desc",
-            ...paginationOptions,
-        });
-        const items = await pagination.next();
-        if (items[0]) {
-            UserData(firebase).fetch(items[0].value.uid, [UserData.NAME, UserData.IMAGE])
-                .then(userData => {
-                    isMounted && setState(state => ({
-                        ...state,
-                        paginationOptions,
-                        repliesMin: items.length,
-                        userReplied: userData
-                    }));
-                })
+        };
+
+        const prepareChecking = async () => {
+            // throw {expanded: true, a:0};
         }
+        const throwExpandIfGivenExpanded = async () => {
+            // dispatch({type: lazyListComponentReducer.REFRESH});
+            if (givenExpanded) throw {expanded: true, a: 1};
+        }
+        const throwExpandIfForceExpanded = async () => {
+            if (expand && level === 0) {
+                throw {
+                    expanded: true,
+                    paginationOptions: {
+                        ref: firebase.database().ref(type),
+                        equals: expand,
+                    },
+                    a: 2
+                };
+            }
+            if (level > 0 && expand) throw {expanded: true, a: 3};
+        }
+        const throwExpandIfReply = async () => {
+            if (level > 1) throw {expanded: true, a: 4};
+        }
+        const throwExpandIfShowingPost = async () => {
+            // dispatch({type: lazyListComponentReducer.REFRESH});
+            if (level === 0) throw {expanded: true, a: 5};
+        }
+        const fetchExistingRepliesIfComment = async () => {
+            const pagination = new Pagination(paginationOptions);
+            return pagination.next();
+        }
+        const fetchFirstAuthorOfReplies = async replies => {
+            if (replies[0]) {
+                return UserData(firebase)
+                    .fetch(replies[0].value.uid, [UserData.NAME, UserData.IMAGE])
+                    .then(userReplied => ({replies, userReplied}))
+            }
+            throw {expanded: false, a: 6};
+        }
+        const throwInfoToExpand = async ({replies, userReplied}) => {
+            throw {repliesMin: replies.length, userReplied};
+        }
+        const updateState = async props => {
+            // console.error(postId, {paginationOptions, ...props})
+            if (props instanceof Error) throw props;
+            isMounted && setState(state => ({...state, paginationOptions, ...props}))
+        }
+        const finalizeChecking = async () => {
+        }
+
+        prepareChecking()
+            .then(throwExpandIfGivenExpanded)
+            .then(throwExpandIfForceExpanded)
+            .then(throwExpandIfReply)
+            .then(throwExpandIfShowingPost)
+            .then(fetchExistingRepliesIfComment)
+            .then(fetchFirstAuthorOfReplies)
+            .then(throwInfoToExpand)
+            .catch(updateState)
+            .catch(notifySnackbar)
+            .finally(finalizeChecking)
+
         return () => {
             isMounted = false;
         }
-    }, []);
+    }, [givenExpanded]);
 
-    React.useEffect(() => {
-        if (!expand) return;
-        let isMounted = true;
-        const exp = [...(expand || []), ...(givenExpand || [])];
-        const expanded = level !== 1 || exp.indexOf(postId) >= 0;
-        isMounted && setState(state => ({...state, expanded}))
-        return () => {
-            isMounted = false;
-        }
-    }, [expand, givenExpand])
+    // console.log(expanded, givenExpanded, level)
 
-    if (!repliesMin) return null;
+    if (!paginationOptions) return null;
+    if (!expanded && !userReplied) return null;
     if (!expanded) {
         return <Grid container>
             <Grid className={classes.indent}/>
@@ -116,7 +156,7 @@ export default withStyles(stylesCurrent)(({forceExpand, ...props}) => {
                     </span>}
                     pattern={"transparent"}
                     onClick={() => {
-                        setState(state => ({...state, expand: [...state.expand, postId]}));
+                        setState(state => ({...state, expanded: true}));
                     }}
                 />
             </Grid>
@@ -124,7 +164,7 @@ export default withStyles(stylesCurrent)(({forceExpand, ...props}) => {
     }
 
     return <>
-        {forceExpand && <Grid container>
+        {expand && level === 0 && <Grid container>
             <Grid item xs>
                 <ItemPlaceholderComponent
                     avatar={null}
@@ -141,12 +181,13 @@ export default withStyles(stylesCurrent)(({forceExpand, ...props}) => {
             <Grid item xs>
                 <LazyListComponent
                     disableProgress={true}
-                    pagination={() => new Pagination({
-                        ref: firebase.database().ref(type),
-                        order: "desc",
-                        ...paginationOptions
+                    pagination={() => new Pagination(paginationOptions)}
+                    itemTransform={postItemTransform({
+                        allowedExtras,
+                        currentUserData,
+                        firebase,
+                        type,
                     })}
-                    itemTransform={postItemTransform({firebase, currentUserData, type, allowedExtras})}
                     itemComponent={item => <PostComponent
                         {...props}
                         classes={{

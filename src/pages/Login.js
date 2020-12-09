@@ -58,6 +58,7 @@ function Login(props) {
             .then(() => {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.setCustomParameters({prompt: "select_account"});
+                provider.addScope("https://www.googleapis.com/auth/userinfo.email");
                 dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState(state => ({...state, requesting: true}));
@@ -71,6 +72,28 @@ function Login(props) {
             })
             .catch(errorCallback)
     };
+
+    const requestLoginFacebook = () => {
+        dispatch(ProgressView.SHOW);
+        window.localStorage.removeItem(pages.login.route);
+        logoutUser(firebase, store)()
+            .then(() => {
+                const provider = new firebase.auth.FacebookAuthProvider();
+                provider.addScope("email");
+                provider.setCustomParameters({prompt: "select_account"});
+                dispatch({type: "currentUserData", userData: null});
+                if (popup) {
+                    setState(state => ({...state, requesting: true}));
+                    return firebase.auth().signInWithPopup(provider)
+                        .then(loginSuccess)
+                        .then(finallyCallback);
+                } else {
+                    window.localStorage.setItem(pages.login.route, provider.providerId);
+                    return firebase.auth().signInWithRedirect(provider);
+                }
+            })
+            .catch(errorCallback)
+    }
 
     const requestLoginPassword = () => {
         dispatch(ProgressView.SHOW);
@@ -160,27 +183,6 @@ function Login(props) {
         notifySnackbar("Agreement rejected");
         history.goBack();
         // history.push(pages.home.route);
-    }
-
-    const requestLoginFacebook = () => {
-        dispatch(ProgressView.SHOW);
-        window.localStorage.removeItem(pages.login.route);
-        logoutUser(firebase, store)()
-            .then(() => {
-                const provider = new firebase.auth.FacebookAuthProvider();
-                provider.setCustomParameters({prompt: "select_account"});
-                dispatch({type: "currentUserData", userData: null});
-                if (popup) {
-                    setState(state => ({...state, requesting: true}));
-                    return firebase.auth().signInWithPopup(provider)
-                        .then(loginSuccess)
-                        .then(finallyCallback);
-                } else {
-                    window.localStorage.setItem(pages.login.route, provider.providerId);
-                    return firebase.auth().signInWithRedirect(provider);
-                }
-            })
-            .catch(errorCallback)
     }
 
     // if (!popup && window.localStorage.getItem(pages.login.route)) {
