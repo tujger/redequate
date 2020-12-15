@@ -26,7 +26,9 @@ import {installWrapperControl} from "./controllers/WrapperControl";
 import MetaInfoView from "./components/MetaInfoView";
 import {initReactI18next, useTranslation} from "react-i18next";
 import {restoreLanguage} from "./reducers/languageReducer";
-import {notifySnackbar} from "./controllers";
+import notifySnackbar from "./controllers/notifySnackbar";
+import {getScrollPosition} from "./controllers/useScrollPosition";
+import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import localeRu from "./locales/ru-RU.json";
 import localeEn from "./locales/en-EN.json";
 import i18n from "i18next";
@@ -216,10 +218,10 @@ function Dispatcher(props) {
         }
         const installNotificationsWatcher = async props => {
             (async () => {
-                if (hasNotifications()) {
+                if (!iOS && hasNotifications()) {
                     setupReceivingNotifications(props.firebase).catch(console.error);
                 }
-            })().catch(notifySnackbar);
+            })().catch(console.error);
             return props;
         }
         const installUserChangeWatcher = async props => {
@@ -229,7 +231,7 @@ function Dispatcher(props) {
                     watchUserChanged(firebase, store).then(() => refreshAll(store));
                 }, 30000)
                 watchUserChanged(firebase, store).then(() => refreshAll(store));
-            })().catch(notifySnackbar);
+            })().catch(console.error);
             return props;
         }
         const installMaintenanceWatcher = async props => {
@@ -247,7 +249,7 @@ function Dispatcher(props) {
                         return state;
                     })
                 });
-            })().catch(notifySnackbar);
+            })().catch(console.error);
             return props;
         }
         const installLastVisitSaver = async props => {
@@ -255,7 +257,7 @@ function Dispatcher(props) {
                 window.addEventListener("beforeunload", event => {
                     window.localStorage.setItem(title + "_last", new Date().getTime());
                 });
-            })().catch(notifySnackbar);
+            })().catch(console.error);
             return props;
         }
         const installWindowWidthWatcher = async props => {
@@ -279,8 +281,30 @@ function Dispatcher(props) {
                     }, 50)
                 }
                 window.addEventListener("resize", onWidthChange);
-            })().catch(notifySnackbar);
+            })().catch(console.error);
             return props;
+        }
+        const installForegroundChecker = async props => {
+            const {store} = props;
+            const refreshNeeded = () => {
+                const position = getScrollPosition({});
+                if (position.y === 0) {
+                    store.dispatch({type: Layout.REFRESH_CONTENT});
+                    checkForUpdate(false).then(console.log).catch(console.error);
+                }
+            }
+            (async () => {
+                window.addEventListener("pageshow", () => {
+                    refreshNeeded();
+                })
+            })().catch(console.error);
+            (async () => {
+                document.addEventListener("visibilitychange", event => {
+                    if (document.visibilityState === "visible") {
+                        refreshNeeded();
+                    }
+                })
+            })().catch(console.error);
         }
         const onError = async error => {
             if (error.fatal) {
@@ -305,7 +329,7 @@ function Dispatcher(props) {
             .then(fetchCurrentUserLastVisit)
             .then(changeCurrentLanguage)
             .then(initPagesBuilder)
-            .then(printProps)
+            // .then(printProps)
             .then(updateState)
             .then(installWrapperControl_)
             .then(installNotificationsWatcher)
@@ -313,6 +337,7 @@ function Dispatcher(props) {
             .then(installMaintenanceWatcher)
             .then(installLastVisitSaver)
             .then(installWindowWidthWatcher)
+            .then(installForegroundChecker)
             .catch(onError);
 
         return () => {

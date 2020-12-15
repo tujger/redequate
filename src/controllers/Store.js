@@ -17,6 +17,7 @@ import {newPostComponentReducer} from "../components/NewPostComponent/newPostCom
 import {tagsReducer} from "../tags/tagsReducer";
 import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
 import {languageReducer} from "../reducers/languageReducer";
+import {refreshOnVisibilityReducer} from "../reducers/refreshOnVisibilityReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -31,6 +32,7 @@ const Store = (name, reducers) => {
         language: languageReducer,
         lazyListComponentReducer,
         mainAppbarReducer,
+        refreshOnVisibilityReducer,
         newPostComponentReducer,
         progressView: progressViewReducer,
         snackbar: snackbarReducer,

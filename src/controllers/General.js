@@ -138,5 +138,6 @@ export const MenuBadge = {
 }
 export const Layout = {
     REFRESH: "layout_Refresh",
+    REFRESH_CONTENT: "layout_RefreshContent",
     TITLE: "layout_Title",
 }

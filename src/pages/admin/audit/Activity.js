@@ -40,12 +40,12 @@ const Activity = (props) => {
     const handleFilterChange = action => event => {
         dispatch({type: lazyListComponentReducer.RESET});
         if (action === "clear") {
-            dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilter: undefined, activitySort});
+            dispatch({type: auditReducer.ACTIVITY, activityFilter: undefined, activityMode, activitySort});
         } else {
             dispatch({
                 type: auditReducer.ACTIVITY,
-                activityMode,
                 activityFilter: event.target.value || undefined,
+                activityMode,
                 activitySort
             });
         }
@@ -53,10 +53,7 @@ const Activity = (props) => {
 
     const handleMode = evt => {
         dispatch({type: lazyListComponentReducer.RESET});
-        dispatch({
-            type: auditReducer.ACTIVITY,
-            activityMode: evt.target.value,
-        });
+        dispatch({type: auditReducer.ACTIVITY, activityMode: evt.target.value, activitySort});
     }
 
     const handleSortClick = evt => {

@@ -50,7 +50,6 @@ export function share({title = "Share", text = "Share", url = ""}) {
                     return url;
                 })
         } else {
-            console.error("'domainUriPrefix' is not defined. Define 'Dynamic links URI prefix' in 'Admin/Settings'");
             return url;
         }
     }

@@ -23,7 +23,9 @@ import ConfirmComponent from "../components/ConfirmComponent";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
-import { useTranslation, Trans } from "react-i18next";
+import {useTranslation} from "react-i18next";
+
+const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 function Login(props) {
     const {
@@ -146,6 +148,7 @@ function Login(props) {
                 dispatch({type: "currentUserData", userData: ud});
             })
             .then(() => {
+                if (iOS) return;
                 if (isFirstOnDevice || ud.private[fetchDeviceId()].notification) {
                     return setupReceivingNotifications(firebase)
                         .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})

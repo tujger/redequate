@@ -287,8 +287,8 @@ LazyListComponent.propTypes = {
     reverse: PropTypes.bool,
 }
 
-const mapStateToProps = ({lazyListComponentReducer}) => {
-    return {...lazyListComponentReducer};
+const mapStateToProps = ({lazyListComponentReducer, refreshOnVisibilityReducer}) => {
+    return {...lazyListComponentReducer, ...refreshOnVisibilityReducer};
 }
 
-export default connect(mapStateToProps)(LazyListComponent)
+export default connect(mapStateToProps)(LazyListComponent);

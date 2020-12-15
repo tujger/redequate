@@ -80,6 +80,8 @@ const stylesCurrent = theme => ({
     }
 });
 
+const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 function EditProfile(props) {
     // eslint-disable-next-line react/prop-types
     let {classes, uploadable = true, notifications = true, publicFields = publicFieldsDefault, adminFields: adminFieldsGiven = adminFields} = props;
@@ -358,7 +360,7 @@ function EditProfile(props) {
     const isAdmin = matchRole([Role.ADMIN], currentUserData);
     // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
-    const isNotificationsAvailable = firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
+    const isNotificationsAvailable = !iOS && firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
 
     return <Grid className={classes.center} container>
         <Box m={0.5}/>
