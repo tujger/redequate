@@ -54,10 +54,6 @@ function ErrorItemComponent(props) {
         let isMounted = true;
         const userData = cacheDatas.put(data.value.uid, UserData(firebase));
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
-            .then(userData => {
-                console.log(userData.asString);
-                return userData;
-            })
             .then(() => isMounted && setState(state => ({...state, userData})))
             .catch(error => {
                 if (!isMounted) return;

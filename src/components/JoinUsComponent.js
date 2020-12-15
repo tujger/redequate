@@ -2,31 +2,47 @@ import React from "react";
 // import {ConfirmComponent, getScrollPosition, useCurrentUserData, useMetaInfo, usePages} from "redequate";
 import {useHistory} from "react-router-dom";
 import {useCurrentUserData} from "../controllers/UserData";
-import {useMetaInfo, usePages} from "../controllers/General";
+import {useFirebase, useMetaInfo, usePages} from "../controllers/General";
 import {getScrollPosition} from "../controllers/useScrollPosition";
 import ConfirmComponent from "./ConfirmComponent";
+import {updateActivity} from "../pages/admin/audit/auditReducer";
 
 const JoinUsComponent = ({label}) => {
     const [state, setState] = React.useState({});
     const {allowed, show} = state;
     const currentUserData = useCurrentUserData();
+    const firebase = useFirebase();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
     const {settings} = metaInfo || {};
-    const {joinUsScroll, joinUsText, joinUsTimeout} = settings || {};
+    const {joinUsScroll, joinUsText, joinUsTimeout, joinUsTitle} = settings || {};
 
     const handleCancel = () => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
         setState(state => ({...state, allowed: false, show: false}));
+        updateActivity({
+            firebase,
+            type: "Join us",
+            details: {
+                action: "rejected",
+                referrer: document.referrer || null
+            }
+        });
     }
 
     const handleConfirm = () => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
         setState(state => ({...state, allowed: false, show: false}));
-        setTimeout(() => {
-            history.push(pages.login.route);
-        }, 10)
+        updateActivity({
+            firebase,
+            type: "Join us",
+            details: {
+                action: "accepted",
+                referrer: document.referrer || null
+            }
+        });
+        window.location = pages.login.route;
     }
 
     React.useLayoutEffect(() => {
@@ -43,7 +59,6 @@ const JoinUsComponent = ({label}) => {
             if (now - timestamp < 1000 * 60 * 60 * 24) throw "skip";
         }
         const allowRequest = async () => {
-            console.log("OUR CLIENT!")
             setState(state => ({...state, allowed: true}));
         }
         const installAlertOnTimeout = async () => {
@@ -88,13 +103,16 @@ const JoinUsComponent = ({label}) => {
 
     return <ConfirmComponent
         cancelLabel={"Later"}
-        children={joinUsText}
+        cancelProps={{style: {color: "lightgray", textTransform: "none"}}}
         confirmLabel={"Join us"}
-        confirmProps={{variant: "contained"}}
+        confirmProps={{variant: "contained", className: "MuiFab-extended"}}
+        modal
         onCancel={handleCancel}
         onConfirm={handleConfirm}
-        title={"Join us!"}
-    />
+        title={joinUsTitle || "Join us!"}
+    >
+        {joinUsText}
+    </ConfirmComponent>
 }
 
 export default JoinUsComponent;

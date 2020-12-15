@@ -35,7 +35,7 @@ export default (props) => {
         <IconButton className={classes.cardMenuButton} onClick={handleMenuClick}>
             <MenuIcon/>
         </IconButton>
-        <Menu
+        {anchor && <Menu
             anchorEl={anchor}
             keepMounted
             onClose={handleMenuClose}
@@ -43,6 +43,6 @@ export default (props) => {
             TransitionComponent={Fade}
         >
             {items}
-        </Menu>
+        </Menu>}
     </>
 }

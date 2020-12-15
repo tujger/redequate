@@ -10,6 +10,9 @@ import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
 import {useWindowData} from "../controllers";
 
 const styles = theme => ({
+    _dialog: {
+        whiteSpace: "pre-wrap",
+    },
     modal: {
         [theme.breakpoints.up("md")]: {
             width: "60%",
@@ -30,6 +33,7 @@ const styles = theme => ({
 const ConfirmComponent = (
     {
         children,
+        classes,
         confirmLabel = "OK",
         confirmProps = {},
         cancelLabel = confirmLabel ? "Cancel" : "Close",
@@ -55,6 +59,7 @@ const ConfirmComponent = (
     }, []);
 
     return <Dialog
+        className={classes._dialog}
         disableBackdropClick={modal}
         onClose={onCancel}
         onEscapeKeyDown={onCancel}

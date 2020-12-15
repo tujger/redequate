@@ -14,11 +14,11 @@ auditReducer.ACTIVITY = "audit_activity";
 auditReducer.SAVE = "audit_save";
 auditReducer.ERRORS = "audit_errors";
 
-export const updateActivity = async ({firebase, uid, type = null, details = null}) => {
-    if (!uid) {
-        console.error(Error("uid is not defined for activity registration"));
-        return;
-    }
+export const updateActivity = async ({firebase, uid = null, type = null, details = null}) => {
+    // if (!uid) {
+    //     console.error(Error("uid is not defined for activity registration"));
+    //     return;
+    // }
     console.log({
         details,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -30,7 +30,7 @@ export const updateActivity = async ({firebase, uid, type = null, details = null
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         type,
         uid,
-    })
+    }).catch(console.error)
 }
 updateActivity.SERVICE = "service";
 updateActivity.MAINTENANCE_START = "maintenance_start";

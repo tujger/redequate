@@ -24,18 +24,22 @@ function ErrorItemComponent(props) {
     const handleUserClick = (event) => onItemClick("uid")(event, userData.id);
 
     React.useEffect(() => {
-        if (!data || !data.value || !data.value.uid) return;
+        if (!data || !data.value) return;
         let isMounted = true;
-        const userData = cacheDatas.put(data.value.uid, UserData(firebase));
-        userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
-            .then(userData => isMounted && setState(state => ({...state, userData})))
-            .catch(error => {
-                console.log(error);
-                if (!isMounted) return;
-                userData.public.name = userData.public.name || (data.value.uid === "anonymous" ? "Anonymous" : "User deleted");
-                if (data.value.uid !== "anonymous") console.log("[Activity] user deleted", data.value.uid);
-                setState(state => ({...state, userData}))
-            });
+        if(data.value.uid) {
+            const userData = cacheDatas.put(data.value.uid, UserData(firebase));
+            userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
+                .then(userData => isMounted && setState(state => ({...state, userData})))
+                .catch(error => {
+                    console.log(error);
+                    if (!isMounted) return;
+                    userData.public.name = userData.public.name || (data.value.uid === "anonymous" ? "Anonymous" : "User deleted");
+                    if (data.value.uid !== "anonymous") console.log("[Activity] user deleted", data.value.uid);
+                    setState(state => ({...state, userData}))
+                });
+        } else {
+            isMounted && setState(state => ({...state, userData: {name: "Anonymous"}}))
+        }
         return () => {
             isMounted = false;
         }

@@ -323,9 +323,20 @@ const LoginLayout = (
                 size={"small"}
             />
         </ButtonGroup>
-        <Box m={3}/>
+        <Box m={1}/>
         <Grid container alignItems={"center"} justify={"center"} spacing={1}>
         {/*<ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"small"} fullWidth>*/}
+            <Button disabled={disabled} variant={"text"} color={"secondary"} onClick={onRequestGoogle} size={"large"}>
+                <img src={GoogleLogo} width={20} height={20} alt={""}/>
+                <Box m={0.5}/>
+                {t("Login.Login with")} Google
+            </Button>
+            <Button disabled={disabled} variant={"text"} color={"secondary"} onClick={onRequestFacebook} size={"large"}>
+                <img src={FacebookLogo} width={20} height={20} alt={""}/>
+                <Box m={0.5}/>
+                {t("Login.Login with")} Facebook
+            </Button>
+{/*
             <Button disabled variant={"text"} color={"default"} size={"small"}>
                 {t("Login.Login with")}
             </Button>
@@ -339,6 +350,7 @@ const LoginLayout = (
                 <Box m={0.5}/>
                 Facebook
             </Button>
+*/}
         {/*</ButtonGroup>*/}
         </Grid>
         <Box m={1}/>

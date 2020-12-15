@@ -48,6 +48,7 @@ const Settings = ({classes}) => {
         joinUsScroll,
         joinUsText,
         joinUsTimeout,
+        joinUsTitle,
         loaded,
         maintenanceOpen,
         message,
@@ -147,6 +148,7 @@ const Settings = ({classes}) => {
             settings.joinUsScroll = +joinUsScroll || null;
             settings.joinUsText = joinUsText || null;
             settings.joinUsTimeout = +joinUsTimeout || null;
+            settings.joinUsTitle = joinUsTitle || null;
         }
         const publish = async () => {
             updates.settings = settings;
@@ -355,7 +357,23 @@ const Settings = ({classes}) => {
                     color={"secondary"}
                     disabled={disabled}
                     fullWidth
+                    label={"Join us title"}
+                    onChange={handleChange("joinUsTitle")}
+                    value={joinUsTitle || ""}
+                />
+            </Grid>
+        </Grid>
+        <Grid container alignItems={"flex-end"} spacing={1}>
+            <Grid item>
+                <DynamicLinksIcon/>
+            </Grid>
+            <Grid item xs>
+                <TextField
+                    color={"secondary"}
+                    disabled={disabled}
+                    fullWidth
                     label={"Join us text"}
+                    multiline
                     onChange={handleChange("joinUsText")}
                     value={joinUsText || ""}
                 />
