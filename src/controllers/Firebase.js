@@ -1,10 +1,5 @@
 import firebase from "firebase/app";
-import "firebase/auth";
-import "firebase/database";
-import "firebase/functions";
-import "firebase/storage";
-import "firebase/analytics";
-import "firebase/messaging";
+import "./FirebaseImports";
 
 export const firebaseMessaging = firebase;
 const Firebase = firebaseConfig => {
@@ -18,11 +13,11 @@ const Firebase = firebaseConfig => {
     } catch (e) {
         console.error(e);
     }
-    firebase.auth().getRedirectResult().then(res => {
-        console.log("[Firebase] redirect", res);
-    }).catch(error => {
-        console.error(error);
-    })
+    // firebase.auth().getRedirectResult().then(res => {
+    //     console.log("[Firebase] redirect", res);
+    // }).catch(error => {
+    //     console.error(error);
+    // })
     if (process.env.NODE_ENV === "development") {
         // firebase.functions().useFunctionsEmulator("http://localhost:5001");
     }

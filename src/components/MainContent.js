@@ -3,8 +3,8 @@ import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch, useHistory} from "react-router-dom";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
 import LoadingComponent from "../components/LoadingComponent";
-import {usePages, useTechnicalInfo} from "../controllers/General";
-import TechnicalInfoView from "./TechnicalInfoView";
+import {usePages, useMetaInfo} from "../controllers/General";
+import MetaInfoView from "./MetaInfoView";
 import {InView} from "react-intersection-observer";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import {notifySnackbar} from "../controllers/notifySnackbar";
@@ -25,13 +25,13 @@ const MainContent = props => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
-    const technical = useTechnicalInfo();
+    const metaInfo = useMetaInfo();
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
-    const isDisabled = technical && technical.maintenance && !matchRole([UserData.ADMIN], currentUserData);
+    const isDisabled = metaInfo && metaInfo.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
     return <>
-        <TechnicalInfoView/>
+        <MetaInfoView/>
         {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
                 return <Route

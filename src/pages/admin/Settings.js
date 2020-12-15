@@ -6,6 +6,7 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Switch from "@material-ui/core/Switch";
+import Divider from "@material-ui/core/Divider";
 import InfoIcon from "@material-ui/icons/Info";
 import DynamicLinksIcon from "@material-ui/icons/Link";
 import SupportIcon from "@material-ui/icons/Person";
@@ -16,7 +17,7 @@ import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {useFirebase, useTechnicalInfo} from "../../controllers/General";
+import {useFirebase, useMetaInfo} from "../../controllers/General";
 import LoadingComponent from "../../components/LoadingComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import {styles} from "../../controllers/Theme";
@@ -24,22 +25,36 @@ import MentionsInputComponent from "../../components/MentionsInputComponent/Ment
 import {mentionUsers} from "../../controllers/mentionTypes";
 import Pagination from "../../controllers/FirebasePagination";
 import {tokenizeText} from "../../components";
-import {useHistory, useParams} from "react-router-dom";
-import {updateActivity} from "./Activity";
+import {useHistory} from "react-router-dom";
+import {updateActivity} from "./audit/auditReducer";
 
-const Service = ({classes}) => {
+const Settings = ({classes}) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
 
     const currentUserData = useCurrentUserData();
-    const {maintenance: maintenanceGiven} = useTechnicalInfo();
+    const {maintenance: maintenanceGiven} = useMetaInfo();
     const [state, setState] = React.useState({
         error: null,
-        disabled: false,
+        details: {},
+        disabled: true,
         message: "Sorry, site is under technical maintenance now. Please come back later.",
     });
-    const {disabled, maintenanceOpen, message, maintenance, support, blockedNames, dynamicLinksUrlPrefix} = state;
+    const {
+        disabled,
+        blockedNames,
+        dynamicLinksUrlPrefix,
+        joinUsScroll,
+        joinUsText,
+        joinUsTimeout,
+        loaded,
+        maintenanceOpen,
+        message,
+        maintenance,
+        support,
+        details
+    } = state;
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
     const finallyCallback = () => {
@@ -59,7 +74,6 @@ const Service = ({classes}) => {
         const updates = {};
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, maintenanceOpen: false}));
-
         if (value) {
             updates["meta/maintenance"] = {
                 message: message || "",
@@ -69,11 +83,20 @@ const Service = ({classes}) => {
         } else {
             updates["meta/maintenance"] = null;
         }
-
         firebase.database().ref().update(updates)
             .then(() => firebase.database().ref("meta").once("value", snapshot => snapshot.val()))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
+            .then(() => updateActivity({
+                firebase,
+                uid: currentUserData.id,
+                type: "Maintenance",
+                details: {
+                    message: message || null,
+                    state: value ? "on" : "off",
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                }
+            }))
             .catch(notifySnackbar)
             .finally(finallyCallback)
     }
@@ -82,8 +105,20 @@ const Service = ({classes}) => {
         setState({...state, message: evt.target.value});
     }
 
+    const handleChange = type => ev => {
+        setState(state => ({
+            ...state,
+            [type]: ev.target.value,
+            details: {
+                ...state.details,
+                [type]: ev.target.value
+            }
+        }))
+    }
+
     const handleSave = evt => {
         const updates = {};
+        const settings = {}
         const prepareSaving = async () => {
             dispatch(ProgressView.SHOW);
             setState(state => ({...state, disabled: true}));
@@ -97,83 +132,117 @@ const Service = ({classes}) => {
         }
         const addSupport = async token => {
             if (token.type === "user") {
-                updates.support = token.id;
+                updates.support = token.id || null;
                 return;
             }
             throw Error(`Incorrect token: ${JSON.stringify(token)}`);
         }
         const addBlockedNames = async () => {
-            updates.blockedNames = blockedNames;
+            updates.blockedNames = blockedNames || null;
         }
-        const addDynamicLinksUrlPrefix = async () => {
-            updates.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix;
+        const addPreferenceDynamicLinksUrlPrefix = async () => {
+            settings.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix || null;
+        }
+        const addPreferenceJoinUs = async () => {
+            settings.joinUsScroll = +joinUsScroll || null;
+            settings.joinUsText = joinUsText || null;
+            settings.joinUsTimeout = +joinUsTimeout || null;
         }
         const publish = async () => {
+            updates.settings = settings;
+            console.log(updates)
             return firebase.database().ref().child("meta").update(updates);
         }
         const updateServiceActivity = async () => {
-            return updateActivity({firebase, uid: currentUserData.id, type})
+            if (Object.keys(details).length > 0) {
+                updateActivity({
+                    firebase,
+                    uid: currentUserData.id,
+                    type: "Settings updated",
+                    details
+                });
+            }
         }
         const notifyAboutSaved = async () => {
             notifySnackbar("Saved");
         }
         const finalizeSaving = async () => {
             dispatch(ProgressView.HIDE);
-            setState(state => ({...state, disabled: false}));
+            setState(state => ({...state, disabled: false, details: {}}));
         }
 
         prepareSaving()
+            .then(addBlockedNames)
             .then(parseSupport)
             .then(addSupport)
-            .then(addBlockedNames)
-            .then(addDynamicLinksUrlPrefix)
+            .then(addPreferenceDynamicLinksUrlPrefix)
+            .then(addPreferenceJoinUs)
             .then(publish)
             .then(notifyAboutSaved)
+            .then(updateServiceActivity)
             .catch(notifySnackbar)
             .finally(finalizeSaving);
     }
 
     React.useEffect(() => {
-        const maintenanceRef = firebase.database().ref("meta/maintenance");
-        maintenanceRef.once("value", snapshot => {
+        const prepareFetching = async () => {
+            dispatch(ProgressView.SHOW);
+            setState(state => ({...state, disabled: true}));
+            return {};
+        }
+        const fetchBlockedNames = async props => {
+            const ref = firebase.database().ref("meta/blockedNames");
+            const snapshot = await ref.once("value");
+            const blockedNames = snapshot.val() || "";
+            return {...props, blockedNames};
+        }
+        const fetchMaintenance = async props => {
+            const ref = firebase.database().ref("meta/maintenance");
+            const snapshot = await ref.once("value");
             const meta = snapshot.val();
-            setState(state => ({
-                ...state,
-                maintenance: Boolean(meta),
-                ...meta
-            }));
-        })
-    }, [])
-
-    React.useEffect(() => {
-        const supportRef = firebase.database().ref("meta/support");
-        supportRef.once("value", snapshot => {
+            return {...props, maintenance: Boolean(meta), ...(meta || {})};
+        }
+        const fetchSettings = async props => {
+            const ref = firebase.database().ref("meta/settings");
+            const snapshot = await ref.once("value");
+            const settings = snapshot.val() || {};
+            return {...props, ...settings};
+        }
+        const fetchSupport = async props => {
+            const ref = firebase.database().ref("meta/support");
+            const snapshot = await ref.once("value");
             const supportId = snapshot.val();
             if (supportId) {
-                UserData(firebase).fetch(supportId)
-                    .then(userData => {
-                        setState(state => ({...state, support: `$[user:${supportId}:${userData.name}]`}));
-                    })
+                return UserData(firebase).fetch(supportId)
+                    .then(userData => ({...props, support: `$[user:${supportId}:${userData.name}]`}))
                     .catch(error => {
                         notifySnackbar(error);
-                        setState(state => ({...state, support: ""}))
+                        return {...props, support: ""}
                     });
             } else {
-                setState(state => ({...state, support: ""}));
+                return {...props, support: ""}
             }
-        })
+        }
+        const updateState = async props => {
+            console.log(props)
+            setState(state => ({...state, ...props}));
+        }
+        const finalizeFetching = async () => {
+            dispatch(ProgressView.HIDE);
+            setState(state => ({...state, disabled: false, loaded: true}));
+        }
+
+        prepareFetching()
+            .then(fetchBlockedNames)
+            .then(fetchMaintenance)
+            .then(fetchSettings)
+            .then(fetchSupport)
+            .then(updateState)
+            .catch(notifySnackbar)
+            .finally(finalizeFetching);
     }, [])
 
-    React.useEffect(() => {
-        const ref = firebase.database().ref("meta");
-        ref.once("value", snapshot => {
-            const val = snapshot.val();
-            const {blockedNames = "", dynamicLinksUrlPrefix = ""} = val;
-            setState(state => ({...state, blockedNames, dynamicLinksUrlPrefix}));
-        })
-    }, [])
-
-    if (maintenance === undefined) return <LoadingComponent/>;
+    if (loaded === undefined) return <LoadingComponent/>;
     return <Grid container className={classes.center}>
         {givenTimestamp && <>
             <Grid container spacing={1} alignItems={"center"}>
@@ -210,7 +279,7 @@ const Service = ({classes}) => {
             <Grid item xs>
                 <MentionsInputComponent
                     color={"secondary"}
-                    disabled={support === undefined}
+                    disabled={disabled}
                     mentionsParams={[{
                         ...mentionUsers,
                         trigger: "",
@@ -235,7 +304,7 @@ const Service = ({classes}) => {
                             const token = tokens[tokens.length - 1];
                             text = token ? `$[user:${token.id}:${token.display}]` : "";
                         }
-                        setState(state => ({...state, support: text}));
+                        handleChange("support")({target: {value: text}});
                     }}
                     label={"Support person"}
                     value={support || ""}
@@ -250,11 +319,11 @@ const Service = ({classes}) => {
             <Grid item xs>
                 <TextField
                     color={"secondary"}
-                    disabled={blockedNames === undefined}
+                    disabled={disabled}
                     fullWidth
                     label={"Blocked names"}
                     multiline
-                    onChange={ev => setState(state => ({...state, blockedNames: ev.target.value}))}
+                    onChange={handleChange("blockedNames")}
                     rows={5}
                     value={blockedNames || ""}
                 />
@@ -268,11 +337,52 @@ const Service = ({classes}) => {
             <Grid item xs>
                 <TextField
                     color={"secondary"}
-                    disabled={dynamicLinksUrlPrefix === undefined}
+                    disabled={disabled}
                     fullWidth
                     label={"Dynamic links URL prefix"}
-                    onChange={ev => setState(state => ({...state, dynamicLinksUrlPrefix: ev.target.value}))}
+                    onChange={handleChange("dynamicLinksUrlPrefix")}
                     value={dynamicLinksUrlPrefix || ""}
+                />
+            </Grid>
+        </Grid>
+        <Box m={1}/>
+        <Grid container alignItems={"flex-end"} spacing={1}>
+            <Grid item>
+                <DynamicLinksIcon/>
+            </Grid>
+            <Grid item xs>
+                <TextField
+                    color={"secondary"}
+                    disabled={disabled}
+                    fullWidth
+                    label={"Join us text"}
+                    onChange={handleChange("joinUsText")}
+                    value={joinUsText || ""}
+                />
+            </Grid>
+        </Grid>
+        <Grid container alignItems={"flex-end"} spacing={1}>
+            <Grid item>
+                <DynamicLinksIcon/>
+            </Grid>
+            <Grid item>
+                <TextField
+                    color={"secondary"}
+                    disabled={disabled}
+                    label={"Join us on timeout, s"}
+                    onChange={handleChange("joinUsTimeout")}
+                    type="number"
+                    value={joinUsTimeout | ""}
+                />
+            </Grid>
+            <Grid item>
+                <TextField
+                    color={"secondary"}
+                    disabled={disabled}
+                    label={"Join us on scroll, px"}
+                    onChange={handleChange("joinUsScroll")}
+                    type="number"
+                    value={joinUsScroll || ""}
                 />
             </Grid>
         </Grid>
@@ -311,4 +421,4 @@ const Service = ({classes}) => {
     </Grid>
 };
 
-export default withStyles(styles)(Service);
+export default withStyles(styles)(Settings);

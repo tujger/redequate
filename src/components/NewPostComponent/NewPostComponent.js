@@ -29,6 +29,7 @@ import UploadComponent from "../UploadComponent/UploadComponent";
 import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
 import {useHistory} from "react-router-dom";
 import {tokenizeText} from "../MentionedTextComponent";
+import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     content: {
@@ -89,6 +90,7 @@ const NewPostComponent = (
     const [state, setState] = React.useState({});
     const {disabled, uppy, open} = state;
     const {camera = true, multi = true} = UploadProps;
+    const {t} = useTranslation();
 
     const text = context === _savedContext ? _savedText : initialText;
     const handleOpen = evt => {
@@ -263,6 +265,7 @@ const NewPostComponent = (
 
     return <>
         <buttonComponent.type
+            label={title}
             {...buttonComponent.props}
             onClick={handleOpen}
         />
@@ -357,8 +360,12 @@ const NewPostComponent = (
                             })}
                         </Grid>
                     </Grid>
-                    <Button onClick={handleCancel} color={"secondary"} disabled={disabled}>Cancel</Button>
-                    <Button onClick={handleSend} color={"secondary"} disabled={disabled}>Send</Button>
+                    <Button onClick={handleCancel} color={"secondary"} disabled={disabled}>
+                        {t("Common.Cancel")}
+                    </Button>
+                    <Button onClick={handleSend} color={"secondary"} disabled={disabled}>
+                        {t("Common.Send")}
+                    </Button>
                 </DialogActions>
             </Hidden>
         </ModalComponent>}

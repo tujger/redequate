@@ -23,7 +23,7 @@ Pages.propTypes = {
 
     // generic admin cases
     adduser: PropTypes.objectOf(Page).isRequired,
-    adminservice: PropTypes.objectOf(Page).isRequired,
+    settings: PropTypes.objectOf(Page).isRequired,
     edituser: PropTypes.objectOf(Page).isRequired,
     users: PropTypes.objectOf(Page).isRequired,
 

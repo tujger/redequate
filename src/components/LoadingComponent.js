@@ -1,6 +1,12 @@
 import React from "react";
+import {getI18n} from "react-i18next";
 
-function LoadingComponent({text = "Loading..."}) {
+function LoadingComponent(props) {
+    // const {t} = useTranslation();
+
+    const t = (getI18n() && getI18n().getFixedT(null)) || (resource => resource);
+
+    const {text = t("Loading...")} = props;
     return <div className={"progress-loading"}>
         {text}
         <svg className={"progress-circular"}>

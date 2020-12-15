@@ -2,7 +2,9 @@ import React from "react";
 import Fab from "@material-ui/core/Fab";
 import Zoom from "@material-ui/core/Zoom";
 import Tooltip from "@material-ui/core/Tooltip";
-import {styles, useWindowData} from "../controllers";
+import {styles} from "../controllers/Theme";
+import {useWindowData} from "../controllers/General";
+import useScrollPosition from "../controllers/useScrollPosition";
 import withStyles from "@material-ui/styles/withStyles";
 import useTheme from "@material-ui/core/styles/useTheme";
 
@@ -100,43 +102,6 @@ export default withStyles(theme => ({
     ...styles(theme),
     ...stylesCurrent(theme)
 }))(FlexFabComponent);
-
-const isBrowser = typeof window !== "undefined";
-
-function getScrollPosition({element, useWindow}) {
-    if (!isBrowser) return {x: 0, y: 0}
-
-    const target = element ? element.current : document.body
-    const position = target.getBoundingClientRect()
-
-    return useWindow
-        ? {x: window.scrollX, y: window.scrollY}
-        : {x: position.left, y: position.top}
-}
-
-function useScrollPosition(effect, deps, element, useWindow, wait) {
-    const position = React.useRef(getScrollPosition({useWindow}))
-    React.useLayoutEffect(() => {
-        let throttleTimeout = null
-        const callBack = () => {
-            const currPos = getScrollPosition({element, useWindow})
-            effect({prevPos: position.current, currPos})
-            position.current = currPos
-            throttleTimeout = null
-        }
-        const handleScroll = () => {
-            if (wait) {
-                if (throttleTimeout === null) {
-                    throttleTimeout = setTimeout(callBack, wait)
-                }
-            } else {
-                callBack()
-            }
-        }
-        window.addEventListener("scroll", handleScroll)
-        return () => window.removeEventListener("scroll", handleScroll)
-    }, deps)
-}
 
 const Wrapper = ({tooltip, children}) => {
     if (tooltip) {

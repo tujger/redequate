@@ -139,7 +139,8 @@ const MutualSubscribeItem = (
                                 suffix={" follower(s)"}/>
                         </Grid>}
                         {windowData.isNarrow() && <Grid item xs/>}
-                        {value.timestamp && <Grid item className={classes.date} title={new Date(value.timestamp).toLocaleString()}>
+                        {value.timestamp &&
+                        <Grid item className={classes.date} title={new Date(value.timestamp).toLocaleString()}>
                             {toDateString(value.timestamp)}
                         </Grid>}
                         {counter && !windowData.isNarrow() && <Grid item>
@@ -150,9 +151,12 @@ const MutualSubscribeItem = (
                                 suffix={" follower(s)"}/>
                         </Grid>}
                         {unsubscribeLabel && (isSameUser || isAdminUser) && <>
-                            <IconButton className={classes.cardMenuButton} onClick={handleMenuClick}>
-                                <MenuIcon/>
-                            </IconButton>
+                            <IconButton
+                                children={<MenuIcon/>}
+                                className={classes.cardMenuButton}
+                                component={"div"}
+                                onClick={handleMenuClick}
+                            />
                             <Menu
                                 anchorEl={anchor}
                                 keepMounted

@@ -1,3 +1,5 @@
+import React from "react";
+
 const DeviceUUID = require("device-uuid");
 
 export const fetchDeviceId = () => {
@@ -7,21 +9,6 @@ export const fetchDeviceId = () => {
     }
     return window.localStorage.getItem("device_id");
 };
-
-export const checkIfCompatible = () => {
-    try {
-        const deviceUUID = new DeviceUUID.DeviceUUID();
-        const deviceMeta = deviceUUID.parse();
-        const browser = deviceMeta.browser.toLowerCase();
-        const version = parseInt(deviceMeta.version);
-        if (browser === "edge" && version < 18) return false;
-        // if (browser === "chrome") return false;
-    } catch (e) {
-        console.error(e);
-        return false;
-    }
-    return true;
-}
 
 export const delay = millis => new Promise((resolve) => {
     setTimeout(() => {
@@ -33,18 +20,20 @@ let firebaseInstance;
 let pagesInstance;
 let storeInstance = {};
 let windowDataInstance = {};
-let technicalInfoInstance;
+let metaInfoInstance;
 
 export const useFirebase = firebase => {
     if (firebase) firebaseInstance = firebase;
     return firebaseInstance;
 }
 
-export const usePages = pages => {
-    if (pages) pagesInstance = pages;
-    // if(pages && pagesInstance) console.warn("Attempted to redefine pages")
-    return pagesInstance;
-}
+export const usePages = (() => {
+    let pagesInstance;
+    return pages => {
+        if (pages) pagesInstance = pages;
+        return pagesInstance;
+    }
+})();
 
 export const useStore = initial => {
     if (initial) storeInstance = initial || {};
@@ -56,11 +45,11 @@ export const useWindowData = initial => {
     return windowDataInstance;
 }
 
-export const useTechnicalInfo = (initial) => {
+export const useMetaInfo = (initial) => {
     if (initial instanceof Function) {
-        technicalInfoInstance = initial(technicalInfoInstance);
-    } else if (initial) technicalInfoInstance = initial || {};
-    return technicalInfoInstance;
+        metaInfoInstance = initial(metaInfoInstance);
+    } else if (initial) metaInfoInstance = initial || {};
+    return metaInfoInstance;
 }
 
 export const enableDisabledPages = () => {

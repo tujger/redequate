@@ -234,7 +234,7 @@ function LazyListComponent(
             history.action = "PUSH";
             return;
         }
-        console.log(`[Lazy] refresh list ${cache}`);
+        console.log(`[Lazy] refresh ${cache}`);
         if (!reverse) scrollHeight(0);
         dispatch({type: lazyListComponentReducer.REFRESH, ...(cache ? {cache} : {})});
     }, [cache, autoRefresh, reverse]);

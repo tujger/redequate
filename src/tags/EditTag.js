@@ -29,6 +29,7 @@ import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "
 import {tokenizeText} from "../components";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import {mutualRequest} from "../components/MutualComponent";
+import {updateActivity} from "../pages/admin/audit/auditReducer";
 
 const stylesCurrent = theme => ({
     profileImage: {
@@ -89,6 +90,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     }
 
     const saveTag = async () => {
+        let ownerChanged = null;
         const preparePublishing = async () => {
             dispatch(ProgressView.SHOW);
             setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
@@ -158,6 +160,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             tag.uid = tag.uid !== undefined ? tag.uid : currentUserData.id;
             if (changeOwnerOpen) {
                 const ownerToken = tokenizeText(owner)[0];
+                ownerChanged = tag.uid;
                 if (ownerToken && ownerToken.type === "user") {
                     tag.uid = ownerToken.id;
                 } else {
@@ -180,6 +183,23 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         }
         const publishTag = async key => {
             await firebase.database().ref("tag").child(key).set(tag);
+            return key;
+        }
+        const auditActivity = async key => {
+            if (ownerChanged !== null) {
+                updateActivity({
+                    firebase,
+                    uid: currentUserData.id,
+                    type: "Tag owner changed",
+                    details: {
+                        id: tag.id,
+                        uid: {
+                            new: tag.uid,
+                            old: ownerChanged,
+                        }
+                    }
+                });
+            }
             return key;
         }
         const removeCachedTag = async key => {
@@ -220,6 +240,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             .then(updateSortName)
             .then(extractTagKey)
             .then(publishTag)
+            .then(auditActivity)
             .then(removeCachedTag)
             .then(subscribeToTag)
             .then(onPublishSuccess)
@@ -335,73 +356,6 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             .catch(notifySnackbar)
             .finally(finalizeDeleting)
 
-        // let updates = {};
-        // let updatesLength = 0;
-        // const addUpdate = async (path, value) => {
-        //     updates[path] = value || null;
-        //     updatesLength++;
-        //     if (updatesLength > 1000) await updateUpdates();
-        // }
-
-        // const updateUpdates = () => {
-        //     console.log("[EditTag]", updatesLength, updates);
-        //     const upds = updates;
-        //     updates = {};
-        //     updatesLength = 0;
-        //     return firebase.database().ref().update(upds);
-        // }
-
-        // updates[`tag/${id}`] = null;
-        // updates[`_tag/${id}`] = null;
-        // updates[`extra/${game.id}`] = null;
-        // updates[`_counters/${game.id}`] = null;
-        // updates[`_game_scores/${game.id}`] = null;
-        // updates[`_stat/${game.id}`] = null;
-        // new Pagination({
-        //     ref: firebase.database().ref("_posts"),
-        //     child: "gid",
-        //     equals: tag.id,
-        //     size: 10000,
-        //     timeout: 180000,
-        //     update: async (key, post) => {
-        //         await addUpdate(`_posts/${key}`);
-        //         await addUpdate(`posts/${post.id}`);
-        //     }
-        // }).next()
-        //     .then(() => new Pagination({
-        //         ref: firebase.database().ref("watch"),
-        //         child: "wid",
-        //         equals: game.id,
-        //         size: 10000,
-        //         timeout: 180000,
-        //         update: async (key, watch) => {
-        //             // console.log("watch", key, watch);
-        //             await addUpdate(`watch/${key}`);
-        //             await new Pagination({
-        //                 ref: firebase.database().ref("watchstamps").child(watch.uid),
-        //                 value: true,
-        //                 equals: game.id,
-        //                 size: 10000,
-        //                 timeout: 180000,
-        //                 update: async (key, watchstamp) => {
-        //                     await addUpdate(`watchstamps/${watch.uid}/${key}`);
-        //                 }
-        //             }).next()
-        //         }
-        //     }).next())
-        //     .then(() => {
-        //         console.log(updates)
-        //         return updateUpdates();
-        //     })
-        //     .then(() => {
-        //         notifySnackbar(`Game ${game.data.name} has been deleted.`);
-        //         history.push(pages.games.route);
-        //     })
-        //     .catch(notifySnackbar)
-        //     .finally(() => {
-        //         dispatch(ProgressView.HIDE);
-        //         setState(state => ({...state, game, disabled: false}));
-        //     })
     }
 
     const handleUploadPhotoSuccess = ({uppy, snapshot}) => {

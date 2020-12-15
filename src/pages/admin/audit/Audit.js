@@ -3,18 +3,26 @@ import {withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import withStyles from "@material-ui/styles/withStyles";
 import {connect, useDispatch} from "react-redux";
+import Activity from "./Activity";
 import Errors from "./Errors";
-import {styles} from "../../controllers/Theme";
-import {usePages, useWindowData} from "../../controllers/General";
-import {auditReducer} from "../../reducers/auditReducer";
-import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
-import NavigationToolbar from "../../components/NavigationToolbar";
+import {styles} from "../../../controllers/Theme";
+import {usePages, useWindowData} from "../../../controllers/General";
+import {auditReducer} from "./auditReducer";
+import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import NavigationToolbar from "../../../components/NavigationToolbar";
 
 const Audit = (props) => {
     const dispatch = useDispatch();
     const pages = usePages();
     const windowData = useWindowData();
-    const {classes, tabSelected, children = [(pages.errors && pages.errors.component) || <Errors/>]} = props;
+    const {
+        children = [
+            <Errors/>,
+            <Activity/>
+        ],
+        classes,
+        tabSelected,
+    } = props;
 
     const handleChange = tabSelected => () => {
         dispatch({type: auditReducer.SAVE, tabSelected});

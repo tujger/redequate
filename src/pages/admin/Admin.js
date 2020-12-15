@@ -7,9 +7,8 @@ import {CardHeader} from "@material-ui/core";
 import {usePages} from "../../controllers/General";
 import {styles, stylesList} from "../../controllers/Theme";
 
-const Admin = ({menu: menuFunc, classes = {}}) => {
+const Admin = ({fetchMenu, classes = {}}) => {
     const history = useHistory();
-    const menu = menuFunc();
     const pages = usePages();
     const itemsFlat = Object.keys(pages)
         .map(item => pages[item])
@@ -18,6 +17,8 @@ const Admin = ({menu: menuFunc, classes = {}}) => {
             if (o1.label < o2.label) return -1;
             return 0
         });
+
+    const menu = fetchMenu(pages);
 
     return <div className={classes.center}>
         {itemsFlat.map((item, index) => {

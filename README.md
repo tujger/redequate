@@ -85,7 +85,7 @@ There is important to define two variables: `pages` and `menu`;
 
         adduser: {route: "/admin/add", label: "Add user", icon: <AddUserIcon/>, component: <AddUser/>, roles: [Role.ADMIN]},
 
-        adminservice: {route: "/admin/service", label: "Service", icon: <ServiceIcon/>, component: <Service/>, roles: [Role.ADMIN]},
+        settings: {route: "/admin/settings", label: "Service", icon: <ServiceIcon/>, component: <Settings/>, roles: [Role.ADMIN]},
 
         audit: {route: "/admin/audit", label: "Audit", icon: <ErrorsIcon/>, component: <Audit/>, roles: [Role.ADMIN]},
 
@@ -151,7 +151,7 @@ Menu can contain all or some of the items from `pages`. First item in each secti
         pages.logout,
     ], [
         pages.admin,
-        pages.adminservice,
+        pages.settings,
         pages.users,
         pages.audit,
         pages.widgets,

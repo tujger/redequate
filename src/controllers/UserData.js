@@ -1,5 +1,6 @@
 import {cacheDatas} from "./General";
 import {notifySnackbar} from "./notifySnackbar";
+import {restoreLanguage} from "../reducers/languageReducer";
 
 export function watchUserChanged(firebase, store) {
     return new Promise((resolve, reject) => {
@@ -53,6 +54,7 @@ export function logoutUser(firebase, store) {
         await firebase.auth().signOut();
         console.log("[UserData] logout", currentUserDataInstance);
         currentUserDataInstance = new UserData();
+        restoreLanguage(store);
         if (store) {
             store.dispatch({type: "currentUserData", userData: null});
         }
@@ -147,12 +149,7 @@ export function UserData(firebase) {
     }
 
     const _fetch = async ref => {
-        // try {
         return ref.once("value");
-        // } catch (error) {
-        //     console.error(error);
-        //     _error = error;
-        // }
     }
 
     const prepareUpdates = (includePublic, includePrivate) => {

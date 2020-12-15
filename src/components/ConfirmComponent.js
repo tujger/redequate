@@ -7,6 +7,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import Button from "@material-ui/core/Button";
 import {useHistory} from "react-router-dom";
 import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
+import {useWindowData} from "../controllers";
 
 const styles = theme => ({
     modal: {
@@ -30,7 +31,9 @@ const ConfirmComponent = (
     {
         children,
         confirmLabel = "OK",
+        confirmProps = {},
         cancelLabel = confirmLabel ? "Cancel" : "Close",
+        cancelProps = {},
         critical,
         message,
         modal = false,
@@ -39,6 +42,7 @@ const ConfirmComponent = (
         title,
     }) => {
     const history = useHistory();
+    const windowData = useWindowData();
 
     React.useEffect(() => {
         const unblock = history.block(() => {
@@ -64,18 +68,20 @@ const ConfirmComponent = (
         <DialogActions>
             {cancelLabel && <Button
                 aria-label={cancelLabel}
-                autoFocus={!confirmLabel}
+                autoFocus={!confirmLabel && !windowData.isNarrow()}
                 children={cancelLabel}
                 color={"secondary"}
                 onClick={onCancel}
+                {...cancelProps}
             />}
             {confirmLabel && <Button
                 aria-label={confirmLabel}
-                autoFocus
+                autoFocus={!windowData.isNarrow()}
                 children={confirmLabel}
                 color={"secondary"}
                 onClick={onConfirm}
                 style={critical ? {color: "#ff0000"} : {}}
+                {...confirmProps}
             />}
         </DialogActions>
     </Dialog>

@@ -7,22 +7,22 @@ import Select from "@material-ui/core/Select";
 import Chip from "@material-ui/core/Chip";
 import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
-import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
-import Pagination from "../../controllers/FirebasePagination";
-import {cacheDatas, useFirebase} from "../../controllers/General";
-import ProgressView from "../../components/ProgressView";
-import ErrorItemComponent from "../../components/ErrorItemComponent";
-import ConfirmComponent from "../../components/ConfirmComponent";
-import AvatarView from "../../components/AvatarView";
-import {notifySnackbar} from "../../controllers/notifySnackbar";
-import {errorsReducer} from "../../reducers/errorsReducer";
-import NavigationToolbar from "../../components/NavigationToolbar";
-import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
+import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
+import Pagination from "../../../controllers/FirebasePagination";
+import {cacheDatas, useFirebase} from "../../../controllers/General";
+import ProgressView from "../../../components/ProgressView";
+import ErrorItemComponent from "./ErrorItemComponent";
+import ConfirmComponent from "../../../components/ConfirmComponent";
+import AvatarView from "../../../components/AvatarView";
+import {notifySnackbar} from "../../../controllers/notifySnackbar";
+import NavigationToolbar from "../../../components/NavigationToolbar";
+import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import withStyles from "@material-ui/styles/withStyles";
-import {styles} from "../../controllers/Theme";
+import {styles} from "../../../controllers/Theme";
+import {auditReducer} from "./auditReducer";
 
 const Errors = (props) => {
-    const {classes, mode = "all", filter} = props;
+    const {classes, errorsMode = "all", errorsFilter} = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
@@ -30,7 +30,7 @@ const Errors = (props) => {
 
     const handleMode = evt => {
         dispatch({type: lazyListComponentReducer.RESET});
-        dispatch({type: errorsReducer.MODE, mode: evt.target.value, filter});
+        dispatch({type: auditReducer.ERRORS, errorsMode: evt.target.value, errorsFilter});
     }
 
     const handleConfirmDeletion = evt => {
@@ -47,16 +47,16 @@ const Errors = (props) => {
             dispatch(ProgressView.HIDE);
         }
         // eslint-disable-next-line
-    }, [mode]);
+    }, [errorsMode]);
 
     let pagination;
     let itemTransform;
-    switch (mode) {
+    switch (errorsMode) {
         case "all":
             pagination = new Pagination({
-                child: filter ? "uid" : undefined,
+                child: errorsFilter ? "uid" : undefined,
                 // eslint-disable-next-line no-unneeded-ternary
-                equals: filter ? filter : undefined,
+                equals: errorsFilter ? errorsFilter : undefined,
                 order: "desc",
                 ref: firebase.database().ref("errors"),
             })
@@ -65,7 +65,7 @@ const Errors = (props) => {
         default:
     }
 
-    const filteredUserData = filter ? cacheDatas.get(filter) : null;
+    const filteredUserData = errorsFilter ? cacheDatas.get(errorsFilter) : null;
 
     return <>
         <NavigationToolbar
@@ -83,11 +83,11 @@ const Errors = (props) => {
             <Select
                 color={"secondary"}
                 onChange={handleMode}
-                value={mode}
+                value={errorsMode}
             >
-                <MenuItem value={"all"}>All errors</MenuItem>
+                <MenuItem value={"all"}>All</MenuItem>
             </Select>
-            {mode === "all" && filteredUserData && <Chip
+            {errorsMode === "all" && filteredUserData && <Chip
                 avatar={<AvatarView
                     alt={"Avatar"}
                     image={filteredUserData.image}
@@ -96,7 +96,7 @@ const Errors = (props) => {
                 />}
                 label={filteredUserData.name}
                 onDelete={() => {
-                    dispatch({type: errorsReducer.MODE, mode, filter: ""});
+                    dispatch({type: auditReducer.ERRORS, errorsMode, errorsFilter: ""});
                     dispatch({type: lazyListComponentReducer.RESET});
                 }}
             />}
@@ -107,9 +107,9 @@ const Errors = (props) => {
                 itemComponent={item => <ErrorItemComponent
                     data={item}
                     key={item.key}
-                    onUserClick={(event, filter) => {
+                    onUserClick={(event, errorsFilter) => {
                         event && event.stopPropagation();
-                        dispatch({type: errorsReducer.MODE, mode: "all", filter});
+                        dispatch({type: auditReducer.ERRORS, errorsMode: "all", errorsFilter});
                     }}
                 />}
                 itemTransform={itemTransform}
@@ -129,26 +129,9 @@ const Errors = (props) => {
     </>
 };
 
-const mapStateToProps = ({errors}) => ({
-    filter: errors.filter,
-    mode: errors.mode,
+const mapStateToProps = ({audit}) => ({
+    errorsFilter: audit.errorsFilter,
+    errorsMode: audit.errorsMode,
 });
 
 export default connect(mapStateToProps)(withStyles(styles)(Errors));
-
-export const updateActivity = async ({firebase, uid, type = null, details = null}) => {
-    if (!uid) {
-        console.error(Error("uid is not defined for activity registration"));
-        return;
-    }
-    return firebase.database().ref("activity").push({
-        details,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        type,
-        uid,
-    })
-}
-updateActivity.SERVICE = "service";
-updateActivity.MAINTENANCE_START = "maintenance_start";
-updateActivity.MAINTENANCE_STOP = "maintenance_stop";
-

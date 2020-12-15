@@ -1,6 +1,6 @@
 export {default as AddUser} from "./admin/AddUser";
 export {default as Admin} from "./admin/Admin";
-export {default as Audit} from "./admin/Audit";
+export {default as Audit} from "./admin/audit/Audit";
 export {default as Login} from "./Login";
 export {default as Logout} from "./Logout";
 export {default as EditProfile} from "./EditProfile";
@@ -9,8 +9,8 @@ export {default as NotFound} from "./NotFound";
 export {default as Profile, publicFields} from "./Profile";
 export {default as RestorePassword} from "./RestorePassword";
 export {default as Search} from "./search/Search";
-export {default as Service} from "./admin/Service";
-export {default as Errors} from "./admin/Errors";
+export {default as Settings} from "./admin/Settings";
+export {default as Errors} from "./admin/audit/Errors";
 export {default as Signup} from "./Signup";
 export {default as SimplePage} from "./SimplePage";
 export {default as Tag} from "../tags/Tag";

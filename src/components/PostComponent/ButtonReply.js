@@ -20,21 +20,22 @@ export default ({icon = true, postData, userData, mentions, onChange, UploadProp
     const classesCurrent = stylesCurrent();
     return <Grid item>
         <NewPostComponent
-            buttonComponent={icon ? <IconButton
-                aria-label={"Reply"}
-                children={<ReplyIcon/>}
-                component={"div"}
-                size={"small"}
-                title={"Reply"}
-            /> : <Button
-                aria-label={"Reply"}
-                children={"Reply"}
-                className={classesCurrent.replyButton}
-                component={"div"}
-                size={"small"}
-                title={"Reply"}
-                variant={"text"}
-            />}
+            buttonComponent={icon ?
+                <IconButton
+                    aria-label={"Reply"}
+                    children={<ReplyIcon/>}
+                    component={"div"}
+                    size={"small"}
+                    title={"Reply"}
+                /> : <Button
+                    aria-label={"Reply"}
+                    children={"Reply"}
+                    className={classesCurrent.replyButton}
+                    component={"div"}
+                    size={"small"}
+                    title={"Reply"}
+                    variant={"text"}
+                />}
             context={postData.id}
             // infoComponent={<InfoComponent style={{maxHeight: 100, overflow: "auto"}}
             // >

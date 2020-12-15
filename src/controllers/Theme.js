@@ -351,6 +351,13 @@ export const styles = theme => ({
 })
 
 export const stylesList = theme => ({
+    "@global": {
+        ".MuiButton-sort-asc": {
+            transform: "rotateX(180deg)"
+        },
+        ".MuiButton-sort-desc": {
+        }
+    },
     avatar: {
         boxSizing: "border-box",
         color: "lightgray",

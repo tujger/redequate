@@ -24,6 +24,7 @@ import {notifySnackbar} from "../../controllers/notifySnackbar";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
 import StickyHeader from "../TopBottomMenuLayout/StickyHeader";
+import {useTranslation} from "react-i18next";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -115,9 +116,10 @@ const styles = theme => ({
 });
 
 function ResponsiveDrawerLayout(props) {
-    const {container, menu, classes, title, headerComponent = <HeaderComponent/>, copyright} = props;
+    const {container, footerComponent, menu, classes, title, headerComponent = <HeaderComponent/>, copyright} = props;
     const [state, setState] = React.useState({mobileOpen: false, key: Math.random()});
     const {mobileOpen} = state;
+    const {t} = useTranslation();
     const currentUserData = useCurrentUserData();
     const store = useStore();
     const windowData = useWindowData();
@@ -151,7 +153,7 @@ function ResponsiveDrawerLayout(props) {
             if (count) {
                 event.preventDefault();
                 refreshAll(store);
-                notifySnackbar(`Temporarily enabled ${count} hidden page(s)`)
+                notifySnackbar(t(`Admin.Temporarily enabled ${count} hidden page(s)`))
             }
         }
     }}>
@@ -219,6 +221,7 @@ function ResponsiveDrawerLayout(props) {
             topSticky: classes.topSticky,
             top: classes.top
         }}/>
+        {footerComponent}
         <Snackbar/>
         <NotificationsSnackbar/>
         <DispatchedConfirmComponent open={false}/>

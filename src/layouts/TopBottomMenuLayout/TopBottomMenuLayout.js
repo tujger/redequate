@@ -16,6 +16,7 @@ import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
 import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
+import {useTranslation, getI18n} from "react-i18next";
 
 const stylesCurrent = theme => ({
     indent: {
@@ -99,7 +100,8 @@ const stylesCurrent = theme => ({
 });
 
 function TopBottomMenuLayout(props) {
-    const {menu, classes, title, headerComponent = <HeaderComponent/>, random, copyright} = props;
+    const {menu, classes, title, footerComponent, headerComponent = <HeaderComponent/>, random, copyright} = props;
+    const {t} = useTranslation();
     const currentUserData = useCurrentUserData();
     const pages = usePages();
     const store = useStore();
@@ -143,7 +145,7 @@ function TopBottomMenuLayout(props) {
                         if (count) {
                             event.preventDefault();
                             refreshAll(store);
-                            notifySnackbar(`Temporarily enabled ${count} hidden page(s)`)
+                            notifySnackbar(t(`Admin.Temporarily enabled ${count} hidden page(s)`))
                         }
                     }
                 }}>
@@ -151,6 +153,7 @@ function TopBottomMenuLayout(props) {
             </Grid>
         </Grid>
         <div className={[classes.stickyBottom].join(" ")}>{null}</div>
+        {footerComponent}
         <Snackbar/>
         <NotificationsSnackbar/>
         <DispatchedConfirmComponent open={false}/>

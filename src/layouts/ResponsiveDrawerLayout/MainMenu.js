@@ -8,6 +8,7 @@ import ListItemText from "@material-ui/core/ListItemText";
 import withStyles from "@material-ui/styles/withStyles";
 import {Link} from "react-router-dom";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import LanguageComponent from "../../components/LanguageComponent";
 
 const styles = theme => ({
     header: {
@@ -32,7 +33,20 @@ const styles = theme => ({
     },
     active: {
         backgroundColor: "rgba(0,0,0,.1)",
-    }
+    },
+    languageChange: {
+        color: "inherit",
+        fontSize: "inherit",
+        marginLeft: theme.spacing(1),
+        marginRight: theme.spacing(1),
+        // paddingLeft: theme.spacing(1),
+        "& .MuiSelect-root": {
+            padding: theme.spacing(0.5),
+        },
+        "&:before": {
+            borderColor: "rgba(0, 0, 0, 0.12)",
+        }
+    },
 });
 
 function MainMenu(props) {
@@ -85,6 +99,9 @@ function MainMenu(props) {
             </div>;
             return hasItems ? section : null;
         })}
+        <ListItem disableGutters>
+            <LanguageComponent fullWidth className={classes.languageChange}/>
+        </ListItem>
     </div>
 }
 

@@ -3,6 +3,7 @@ import Button from "@material-ui/core/Button";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 import {firebaseMessaging} from "../controllers/Firebase";
+import {useMetaInfo} from "../controllers";
 
 const ShareComponent = ({title, text, url, component = <Button/>}) => {
     const handleShare = (evt) => {
@@ -19,52 +20,62 @@ const ShareComponent = ({title, text, url, component = <Button/>}) => {
 
 export default ShareComponent;
 
-export function share({title = "Share", text = "Share", url: givenUrl = "", shortify = false}) {
-    let url = givenUrl;
+export function share({title = "Share", text = "Share", url = ""}) {
+    const metaInfo = useMetaInfo();
     const shortifyUrl = async () => {
-        if (!shortify) return;
-        firebaseMessaging.database().ref("meta/dynamicLinksUrlPrefix").once("value")
-            .then(snapshot => snapshot.val())
-            .then(domainUriPrefix => {
-                if (!domainUriPrefix) {
-                    throw Error("'domainUriPrefix' is not defined. Define 'Dynamic links URI prefix' in 'Admin/Service'");
-                }
-                return window.fetch("https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + (firebaseMessaging.config.apiKey), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
+        const domainUriPrefix = metaInfo && metaInfo.settings && metaInfo.settings.dynamicLinksUrlPrefix;
+        if (domainUriPrefix) {
+            return window.fetch("https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + (firebaseMessaging.config.apiKey), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    dynamicLinkInfo: {
+                        domainUriPrefix,
+                        link: url
                     },
-                    body: JSON.stringify({
-                        dynamicLinkInfo: {
-                            domainUriPrefix,
-                            link: url
-                        },
-                        suffix: {
-                            option: "SHORT"
-                        }
-                    })
+                    suffix: {
+                        option: "SHORT"
+                    }
                 })
             })
-            .then(response => response.json())
-            .then(result => {
-                if (result.error) throw result.error;
-                console.log(result)
-                if (result && result.shortLink) {
-                    url = result.shortLink;
-                }
-            })
-            .catch(console.error);
+                .then(response => response.json())
+                .then(result => {
+                    if (result.error) throw result.error;
+                    return result.shortLink;
+                })
+                .catch(error => {
+                    console.error(error);
+                    return url;
+                })
+        } else {
+            console.error("'domainUriPrefix' is not defined. Define 'Dynamic links URI prefix' in 'Admin/Settings'");
+            return url;
+        }
     }
-    const withWrapperControl = async () => {
+    const withWrapperControl = async url => {
         if (hasWrapperControlInterface()) {
             return wrapperControlCall({method: "shareText", title, text, url})
-                .catch(notifySnackbar);
-        } else throw "no-wrapper-control-interface"
+                .catch(() => {
+                    throw url;
+                });
+        }
+        throw url;
     }
-    const withNavigatorShare = async () => {
-        return navigator.share({text, title, url})
+    const withNavigatorShare = async url => {
+        if (navigator.share) {
+            return navigator.share({text, title, url})
+                .catch(error => {
+                    if (error.constructor.name === "DOMException") return error;
+                    console.error(error)
+                    if (error instanceof Error) throw url;
+                    return error;
+                });
+        }
+        throw url;
     }
-    const withClipboard = async () => {
+    const withClipboard = async url => {
         return copyToClipboard(url);
     }
 
@@ -72,7 +83,9 @@ export function share({title = "Share", text = "Share", url: givenUrl = "", shor
         .then(withWrapperControl)
         .catch(withNavigatorShare)
         .catch(withClipboard)
-        .catch(notifySnackbar)
+        .catch(error => {
+            console.error(error);
+        })
 }
 
 export async function copyToClipboard(text) {
@@ -88,16 +101,17 @@ export async function copyToClipboard(text) {
         inputNode.style.display = "none";
         setTimeout(() => {
             document.body.removeChild(inputNode);
-        }, 100)
+        }, 500)
         if (copied) notifySnackbar("Copied to the clipboard");
-        else notifySnackbar(new Error("Failed copy to clipboard"));
+        else {
+            notifySnackbar(new Error("Failed copy to clipboard"));
+        }
     }
 
     if (navigator.clipboard) {
         return navigator.clipboard.writeText(text)
             .then(() => notifySnackbar("Copied to the clipboard"))
             .catch(classicWay)
-            .catch(notifySnackbar)
     } else {
         return classicWay();
     }

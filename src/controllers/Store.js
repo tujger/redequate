@@ -5,8 +5,7 @@ import PropTypes from "prop-types";
 import {currentUserData} from "./UserData";
 import {cacheDatas, Layout, MenuBadge} from "./General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import {auditReducer} from "../reducers/auditReducer";
-import {errorsReducer} from "../reducers/errorsReducer";
+import {auditReducer} from "../pages/admin/audit/auditReducer";
 import {usersReducer} from "../pages/admin/users/usersReducer";
 import {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
 import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/mainAppbarReducer";
@@ -17,6 +16,7 @@ import {alertsCounterReducer} from "../alerts/alertsCounterReducer";
 import {newPostComponentReducer} from "../components/NewPostComponent/newPostComponentReducer";
 import {tagsReducer} from "../tags/tagsReducer";
 import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
+import {languageReducer} from "../reducers/languageReducer";
 
 const Store = (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -28,7 +28,7 @@ const Store = (name, reducers) => {
         confirmComponentReducer,
         currentUserData,
         dispatcherRoutedBodyReducer,
-        errors: errorsReducer,
+        language: languageReducer,
         lazyListComponentReducer,
         mainAppbarReducer,
         newPostComponentReducer,

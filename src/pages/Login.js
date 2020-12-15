@@ -23,6 +23,7 @@ import ConfirmComponent from "../components/ConfirmComponent";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
+import { useTranslation, Trans } from "react-i18next";
 
 function Login(props) {
     const {
@@ -35,6 +36,7 @@ function Login(props) {
     const location = useLocation();
     const pages = usePages();
     const store = useStore();
+    const {i18n, t} = useTranslation();
     const [state, setState] = React.useState({});
     const {showAgreement = false, email = "", password = "", requesting = true, response = null} = state;
 
@@ -107,17 +109,17 @@ function Login(props) {
     const loginSuccess = response => {
         if (!response) return;
         if (!response.user) {
-            throw new Error("Login failed. Please try again");
+            throw new Error(t("Login.Login failed. Please try again"));
         }
         let isFirstLogin = false;
         let isFirstOnDevice = false;
         const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
         if (!ud.verified) {
             notifySnackbar({
-                buttonLabel: "Resend verification",
+                buttonLabel: t("Login.Resend verification"),
                 onButtonClick: () => sendVerificationEmail(firebase),
                 priority: "high",
-                title: "Your account is not yet verified.",
+                title: t("Login.Your account is not yet verified."),
                 variant: "warning",
             })
             setState(state => ({...state, requesting: true}));
@@ -125,6 +127,7 @@ function Login(props) {
         }
         return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
             .then(() => ud.fetchPrivate(fetchDeviceId(), true))
+            .then(() => i18n.changeLanguage(ud.private[fetchDeviceId()].locale))
             .then(() => {
                 if (!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true
             })
@@ -147,7 +150,7 @@ function Login(props) {
                     return setupReceivingNotifications(firebase)
                         .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
                             .then(() => ud.savePrivate()))
-                        .then(() => notifySnackbar({title: "Subscribed to notifications"}))
+                        .then(() => notifySnackbar({title: t("Login.Subscribed to notifications")}))
                         .then(() => setTimeout(() => {
                             setState(state => ({...state, disabled: false}))
                         }, 10))
@@ -163,7 +166,8 @@ function Login(props) {
     };
 
     const checkFirstLogin = async response => {
-        if (!response || !response.user) throw Error("Login cancelled");
+        console.log(response)
+        if (!response || !response.user) throw Error(t("Login.Login cancelled"));
         if (!agreementComponent) return response;
         const deviceId = fetchDeviceId();
         const userData = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
@@ -180,7 +184,7 @@ function Login(props) {
 
     const handleDecline = () => {
         setState(state => ({...state, showAgreement: false}));
-        notifySnackbar("Agreement rejected");
+        notifySnackbar(t("Login.Agreement rejected"));
         history.goBack();
         // history.push(pages.home.route);
     }
@@ -253,6 +257,7 @@ const LoginLayout = (
     }) => {
     const pages = usePages();
     const history = useHistory();
+    const {t} = useTranslation();
 
     return <Grid container className={classes.center}>
         {logo}
@@ -266,7 +271,7 @@ const LoginLayout = (
                     color={"secondary"}
                     disabled={disabled}
                     fullWidth
-                    label={"E-mail"}
+                    label={t("Login.E-mail")}
                     onChange={onChangeEmail}
                     value={email}
                     // InputProps={{
@@ -284,7 +289,7 @@ const LoginLayout = (
                 <PasswordField
                     color={"secondary"}
                     disabled={disabled}
-                    label={"Password"}
+                    label={t("Login.Password")}
                     onChange={onChangePassword}
                     value={password}
                 />
@@ -293,12 +298,12 @@ const LoginLayout = (
         <Box m={2}/>
         <ButtonGroup disabled={disabled} variant={"contained"} color={"secondary"} size={"large"} fullWidth>
             <Button
-                children={"Continue"}
+                children={t("Common.Continue")}
                 fullWidth
                 onClick={onRequestLogin}
             />
             <Button
-                children={"Cancel"}
+                children={t("Common.Cancel")}
                 fullWidth
                 onClick={() => history.goBack()}
             />
@@ -306,13 +311,13 @@ const LoginLayout = (
         <Box m={1}/>
         <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"large"} fullWidth>
             {signup && <Button
-                children={"Create account"}
+                children={t("Login.Create account")}
                 fullWidth
                 onClick={() => history.push(pages.signup.route)}
                 size={"small"}
             />}
             <Button
-                children={"Forgot password?"}
+                children={t("Login.Forgot password?")}
                 fullWidth
                 onClick={() => history.push(pages.restore.route)}
                 size={"small"}
@@ -322,7 +327,7 @@ const LoginLayout = (
         <Grid container alignItems={"center"} justify={"center"} spacing={1}>
         {/*<ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"small"} fullWidth>*/}
             <Button disabled variant={"text"} color={"default"} size={"small"}>
-                Login with
+                {t("Login.Login with")}
             </Button>
             <Button disabled={disabled} variant={"text"} color={"default"} onClick={onRequestGoogle} size={"small"}>
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
@@ -338,11 +343,11 @@ const LoginLayout = (
         </Grid>
         <Box m={1}/>
         {agreementComponent && <ConfirmComponent
-            confirmLabel={"Agree"}
+            confirmLabel={t("Login.Agree")}
             modal
             onCancel={onDecline}
             onConfirm={onAgree}
-            title={"User Agreement"}
+            title={t("Login.User agreement")}
         >
             <agreementComponent.type
                 {...agreementComponent.props}

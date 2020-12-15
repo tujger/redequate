@@ -6,6 +6,7 @@ import resolve from 'rollup-plugin-node-resolve'
 import url from 'rollup-plugin-url'
 import svgr from '@svgr/rollup'
 import del from 'rollup-plugin-delete'
+import json from '@rollup/plugin-json'
 
 import pkg from './package.json'
 
@@ -35,7 +36,8 @@ export default [
             svgr(),
             babel(),
             resolve(),
-            commonjs()
+            commonjs(),
+            json(),
         ]
     },
     {
@@ -77,7 +79,7 @@ export default [
             ProgressView: 'src/components/ProgressView.js',
             ProfileComponent: 'src/components/ProfileComponent.js',
             ShareComponent: 'src/components/ShareComponent.js',
-            TechnicalInfoView: 'src/components/TechnicalInfoView.js',
+            MetaInfoView: 'src/components/MetaInfoView.js',
             UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
 
             // layouts
@@ -88,14 +90,15 @@ export default [
             // pages
             Alerts: 'src/alerts/Alerts.js',
             // AlertsCounter: 'src/alerts/AlertsCounter.js',
+            Activity: 'src/pages/admin/audit/Activity.js',
             Admin: 'src/pages/admin/Admin.js',
-            Audit: 'src/pages/admin/Audit.js',
+            Audit: 'src/pages/admin/audit/Audit.js',
             Chat: 'src/chat/Chat.js',
             Chats: 'src/chat/Chats.js',
             // ChatsCounter: 'src/chat/ChatsCounter.js',
             EditProfile: 'src/pages/EditProfile.js',
             EditTag: 'src/tags/EditTag.js',
-            Errors: 'src/pages/admin/Errors.js',
+            Errors: 'src/pages/admin/audit/Errors.js',
             Login: 'src/pages/Login.js',
             Profile: 'src/pages/Profile.js',
             Signup: 'src/pages/Signup.js',
@@ -106,11 +109,10 @@ export default [
             // internal
             __alertsVisitReducer: 'src/alerts/alertsVisitReducer.js',
             __alertsCounterReducer: 'src/alerts/alertsCounterReducer.js',
-            __auditReducer: 'src/reducers/auditReducer.js',
+            __auditReducer: 'src/pages/admin/audit/auditReducer.js',
             __chatsCounterReducer: 'src/chat/chatsCounterReducer.js',
             __chatMeta: 'src/chat/ChatMeta.js',
             __dateTimePicker: 'src/components/DateTimePicker/DateTimePicker.js',
-            __errorsReducer: 'src/reducers/errorsReducer.js',
             __firebase: 'src/controllers/Firebase.js',
             __lazyMentionsInputComponent: 'src/components/MentionsInputComponent/LazyMentionsComponent.js',
             __mainContent: 'src/components/MainContent.js',
@@ -137,7 +139,8 @@ export default [
             url(),
             babel(),
             resolve(),
-            commonjs()
+            commonjs(),
+            json(),
         ]
     }
 ]

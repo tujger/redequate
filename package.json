@@ -25,7 +25,9 @@
     "dependencies": {
         "axios": "latest",
         "firebase": "latest",
+        "firebase-key": "latest",
         "geo-coder-t": "latest",
+        "i18next-browser-languagedetector": "latest",
         "react-add-to-calendar-hoc": "latest",
         "react-device-detect": "latest",
         "react-image-file-resizer": "latest",
@@ -75,6 +77,7 @@
         "@babel/plugin-external-helpers": "latest",
         "@babel/plugin-proposal-export-default-from": "latest",
         "@babel/preset-react": "latest",
+        "@rollup/plugin-json": "latest",
         "babel-eslint": "latest",
         "cross-env": "latest",
         "eslint-config-prettier": "latest",

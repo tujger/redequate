@@ -4,19 +4,19 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import IconButton from "@material-ui/core/IconButton";
-import {UserData} from "../controllers/UserData";
-import {cacheDatas, useFirebase} from "../controllers/General";
-import AvatarView from "./AvatarView";
-import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
+import {UserData} from "../../../controllers/UserData";
+import {cacheDatas, useFirebase} from "../../../controllers/General";
+import AvatarView from "../../../components/AvatarView";
+import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import ConfirmComponent from "./ConfirmComponent";
-import {toDateString} from "../controllers/DateFormat";
-import {fetchCallable} from "../controllers/Firebase";
-import ProgressView from "./ProgressView";
+import ConfirmComponent from "../../../components/ConfirmComponent";
+import {toDateString} from "../../../controllers/DateFormat";
+import {fetchCallable} from "../../../controllers/Firebase";
+import ProgressView from "../../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
-import {stylesList} from "../controllers/Theme";
-import {notifySnackbar} from "../controllers/notifySnackbar";
+import {stylesList} from "../../../controllers/Theme";
+import {notifySnackbar} from "../../../controllers/notifySnackbar";
 
 function ErrorItemComponent(props) {
     const {data, classes, skeleton, label, onUserClick} = props;
@@ -54,13 +54,18 @@ function ErrorItemComponent(props) {
         let isMounted = true;
         const userData = cacheDatas.put(data.value.uid, UserData(firebase));
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
+            .then(userData => {
+                console.log(userData.asString);
+                return userData;
+            })
             .then(() => isMounted && setState(state => ({...state, userData})))
-            .catch(() => {
+            .catch(error => {
                 if (!isMounted) return;
-                userData.public.name = data.value.uid === "anonymous" ? "Anonymous" : "User deleted";
+                console.log(error, userData)
+                userData.public.name = userData.public.name || (data.value.uid === "anonymous" ? "Anonymous" : "User deleted");
                 if (data.value.uid !== "anonymous") console.log("[Error] user deleted", data.value.uid);
                 setState(state => ({...state, userData}))
-            })
+            });
         return () => {
             isMounted = false;
         }

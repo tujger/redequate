@@ -82,7 +82,7 @@ const styles = theme => ({
 });
 
 function BottomToolbarLayout(props) {
-    const {menu, classes} = props;
+    const {classes, footerComponent, menu} = props;
 
     return <div className={classes.container}>
         <CssBaseline/>
@@ -100,6 +100,7 @@ function BottomToolbarLayout(props) {
             topSticky: classes.topSticky,
             top: classes.top
         }}/>
+        {footerComponent}
         <BottomToolbar items={menu}/>
         <Snackbar/>
         <NotificationsSnackbar/>

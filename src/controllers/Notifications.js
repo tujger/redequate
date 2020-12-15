@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import {useSnackbar} from "notistack";
 import RichSnackbarContent from "../components/RichSnackbarContent";
-import {useTechnicalInfo} from "./General";
+import {useMetaInfo} from "./General";
 import {useHistory} from "react-router-dom";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 import {notifySnackbar} from "./notifySnackbar";
@@ -119,7 +119,7 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
 
 export const NotificationsSnackbar = () => {
     const {enqueueSnackbar, closeSnackbar} = useSnackbar();
-    const technicalInfo = useTechnicalInfo();
+    const metaInfo = useMetaInfo();
     const history = useHistory();
 
     return <div
@@ -133,7 +133,7 @@ export const NotificationsSnackbar = () => {
                         const node = document.createElement("div");
                         ReactDOM.render(<>{payload.title}</>, node, () => {
                             try {
-                                const title = technicalInfo.title;
+                                const title = metaInfo.title;
                                 const onclick = () => {
                                     history.push(payload.id || "/")
                                     // window.open(payload.id || "/");

@@ -1,25 +1,20 @@
 import React from "react";
 import ThemeProvider from "@material-ui/styles/ThemeProvider";
-// import BottomToolbarLayout from "./layouts/BottomToolbarLayout/BottomToolbarLayout";
-// import ResponsiveDrawerLayout from "./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout";
-// import TopBottomMenuLayout from "./layouts/TopBottomMenuLayout/TopBottomMenuLayout";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import withWidth from "@material-ui/core/withWidth";
-import Typography from "@material-ui/core/Typography";
 import PropTypes from "prop-types";
 import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
-    checkIfCompatible,
     fetchDeviceId,
     Layout,
     useFirebase,
+    useMetaInfo,
     usePages,
     useStore,
-    useTechnicalInfo,
     useWindowData
 } from "./controllers/General";
 import LoadingComponent from "./components/LoadingComponent";
@@ -28,9 +23,16 @@ import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
-import TechnicalInfoView from "./components/TechnicalInfoView";
-import {Pages} from "./proptypes/Pages";
-import {Page} from "./proptypes";
+import MetaInfoView from "./components/MetaInfoView";
+import {initReactI18next, useTranslation} from "react-i18next";
+import {restoreLanguage} from "./reducers/languageReducer";
+import {notifySnackbar} from "./controllers";
+import localeRu from "./locales/ru-RU.json";
+import localeEn from "./locales/en-EN.json";
+import i18n from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+
+const DeviceUUID = require("device-uuid");
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -76,123 +78,286 @@ console.error = function (...args) {
     }
 }
 
-const isIncompatible = !checkIfCompatible();
-
 let oldWidth;
 
 function Dispatcher(props) {
-    const {firebaseConfig, title, theme = createTheme({colors: colors()}), reducers, pages, width} = props;
+    const {
+        firebaseConfig,
+        locales,
+        pages: givenPages,
+        title,
+        reducers,
+        theme = createTheme({colors: colors()}),
+        width
+    } = props;
     const [state, setState] = React.useState({store: null});
-    const {store, firebase} = state;
-    useFirebase(firebase);
-    usePages(pages);
-    useStore(store);
-    useTechnicalInfo(state => ({
-        ...state,
-        maintenance: null,
-        refreshed: new Date().getTime(),
-        title: title,
-    }));
-    useWindowData({
-        breakpoint: width,
-        isNarrow: () => width === "xs" || width === "sm"
-    });
+    const {firebase} = state;
 
     React.useEffect(() => {
-        if (isIncompatible) return;
-        window.addEventListener("beforeunload", event => {
-            window.localStorage.setItem(title + "_last", new Date().getTime());
-        })
-        let maintenanceRef;
-        (async () => {
+        let maintenanceRef, unlisten;
+        const initInternationalization = async () => {
+            const resources = {
+                en: localeEn,
+                ru: localeRu,
+            };
+            let fallbackLng;
+            for (const r in locales) {
+                fallbackLng = fallbackLng || r;
+                resources[r] = {translation: {...(resources[r] || {}), ...locales[r]}};
+            }
+            return i18n.use(LanguageDetector).use(initReactI18next)
+                .init({
+                    debug: false,
+                    detection: {
+                        lookupLocalStorage: title + "_i18n"
+                    },
+                    fallbackLng,
+                    keySeparator: false,
+                    parseMissingKeyHandler: (value) => {
+                        return value.replace(/^\w+\./, "");
+                    },
+                    resources: locales ? resources : undefined,
+                    saveMissing: false,
+                }).then(() => ({i18n, t: i18n.getFixedT()}));
+        }
+        const initFirebase = async props => {
+            const firebase = Firebase(firebaseConfig);
+            return {...props, firebase};
+        }
+        const initStore = async props => {
+            return {...props, store: Store(title, reducers)};
+        }
+        const initWindowData = async props => {
+            const windowData = {
+                breakpoint: width,
+                isNarrow: () => width === "xs" || width === "sm"
+            }
+            return {...props, windowData};
+        }
+        const fetchDeviceId_ = async props => {
+            return {...props, deviceId: fetchDeviceId()};
+        }
+        const checkIfCompatible = async props => {
+            const {t} = props;
             try {
-                for (let x in pages) {
+                const deviceUUID = new DeviceUUID.DeviceUUID();
+                const deviceMeta = deviceUUID.parse();
+                const browser = deviceMeta.browser.toLowerCase();
+                const version = parseInt(deviceMeta.version);
+
+                if (browser === "edge" && version < 18) {
+                    throw Error(t("Oops, we have detected that your browser is outdated and cannot be supported by {{title}}\nWe'll be happy to see you back using {{title}} with up-to-date browser!", {title: t(title)}));
+                }
+                // if (browser === "chrome") throw Error("incompatible");
+            } catch (error) {
+                console.error(error);
+                throw {...props, fatal: error};
+            }
+            return props;
+        }
+        const fetchMetaInfo = async props => {
+            const {firebase} = props;
+            const snapshot = await firebase.database().ref("meta/settings").once("value");
+            const settings = snapshot.val() || {};
+            return {...props, metaInfo: {settings}};
+        }
+        const fetchCurrentUserData = async props => {
+            const {store, firebase} = props;
+            const savedUserData = store.getState().currentUserData;
+            if (savedUserData && savedUserData.userData) {
+                const userData = new UserData(firebase).fromJSON(savedUserData.userData);
+                return userData.fetch([UserData.ROLE])
+                    .then(() => userData.fetchPrivate(fetchDeviceId(), true))
+                    .then(() => ({...props, userData}))
+            }
+            return props;
+        }
+        const fetchCurrentUserLastVisit = async props => {
+            const {userData} = props;
+            if (userData) {
+                userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
+                cacheDatas.put(userData.id, userData);
+                useCurrentUserData(userData);
+            }
+            return props;
+        }
+        const changeCurrentLanguage = async props => {
+            const {deviceId, i18n, store, userData} = props;
+            if (!i18n) return props;
+            if (userData && userData.private[deviceId]) {
+                const pvt = userData.private[deviceId];
+                i18n.changeLanguage(pvt.locale);
+            } else {
+                restoreLanguage(store, i18n);
+            }
+            return props;
+        }
+        const initPagesBuilder = async props => {
+            const buildPages = () => {
+                const {t} = props;
+                const pages = givenPages(t);
+                for (const x in pages) {
                     pages[x]._route = pages[x].route;
                     pages[x].route = pages[x].route.split(/[*:]/)[0];
                 }
-                const firebase = Firebase(firebaseConfig);
-                installWrapperControl(firebase);
-                fetchDeviceId();
+                return pages;
+            }
+            return {...props, buildPages};
+        }
+        const updateState = async props => {
+            setState(state => ({...state, ...props}));
+            return props;
+        }
+        const installWrapperControl_ = async props => {
+            (async () => {
+                installWrapperControl(props.firebase);
+            })().catch(notifySnackbar);
+            return props;
+        }
+        const installNotificationsWatcher = async props => {
+            (async () => {
                 if (hasNotifications()) {
-                    setupReceivingNotifications(firebase).catch(console.error);
+                    setupReceivingNotifications(props.firebase).catch(console.error);
                 }
-                const store = Store(title, reducers);
-                try {
-                    const savedUserData = store.getState().currentUserData;
-                    if (savedUserData && savedUserData.userData) {
-                        const userData = new UserData(firebase).fromJSON(savedUserData.userData);
-                        await userData.fetch([UserData.ROLE]);
-                        await userData.fetchPrivate(fetchDeviceId(), true);
-                        userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
-                        useCurrentUserData(userData);
-                        cacheDatas.put(userData.id, userData);
-                    }
-                } catch (error) {
-                    console.error(error);
-                }
+            })().catch(notifySnackbar);
+            return props;
+        }
+        const installUserChangeWatcher = async props => {
+            (async () => {
+                const {firebase, store} = props;
                 setInterval(() => {
                     watchUserChanged(firebase, store).then(() => refreshAll(store));
                 }, 30000)
                 watchUserChanged(firebase, store).then(() => refreshAll(store));
+            })().catch(notifySnackbar);
+            return props;
+        }
+        const installMaintenanceWatcher = async props => {
+            (async () => {
+                const {firebase} = props;
                 maintenanceRef = firebase.database().ref("meta/maintenance");
                 maintenanceRef.on("value", snapshot => {
                     const maintenance = snapshot.val();
-                    console.log(`[Dispatcher] maintenance: ${JSON.stringify(maintenance)}`)
-                    useTechnicalInfo(currentMeta => {
-                        if (currentMeta.maintenance !== maintenance) {
-                            console.log("[Dispatcher] maintenance changed to", maintenance);
-                            useTechnicalInfo({...currentMeta, maintenance: maintenance});
-                            refreshAll(store)
+                    setState(state => {
+                        const metaInfo = state.metaInfo || {};
+                        if (JSON.stringify(maintenance || null) !== JSON.stringify(metaInfo.maintenance || null)) {
+                            console.warn("[Dispatcher] maintenance changed to", maintenance || "none");
+                            return {...state, metaInfo: {...metaInfo, maintenance}};
                         }
-                        return useTechnicalInfo();
-                    });
+                        return state;
+                    })
                 });
-                setState(state => ({...state, firebase, store}));
-            } catch (e) {
-                console.error(e);
+            })().catch(notifySnackbar);
+            return props;
+        }
+        const installLastVisitSaver = async props => {
+            (async () => {
+                window.addEventListener("beforeunload", event => {
+                    window.localStorage.setItem(title + "_last", new Date().getTime());
+                });
+            })().catch(notifySnackbar);
+            return props;
+        }
+        const installWindowWidthWatcher = async props => {
+            (async () => {
+                const {store} = props;
+                let widthPoint;
+                const onWidthChange = (event) => {
+                    clearTimeout(widthPoint);
+                    widthPoint = setTimeout(() => {
+                        const widths = {1920: "xl", 1280: "lg", 960: "md", 600: "sm", 0: "xs"};
+                        let newWidth = "xl";
+                        for (const x in widths) {
+                            if (window.innerWidth > x) {
+                                newWidth = widths[x];
+                            }
+                        }
+                        if (oldWidth && oldWidth !== newWidth) {
+                            refreshAll(store);
+                        }
+                        oldWidth = newWidth;
+                    }, 50)
+                }
+                window.addEventListener("resize", onWidthChange);
+            })().catch(notifySnackbar);
+            return props;
+        }
+        const onError = async error => {
+            if (error.fatal) {
+                setState(state => ({...state, ...error}));
+            } else {
+                setState(state => ({...state, fatal: error.fatal}));
             }
-        })();
+        }
+        const printProps = async props => {
+            console.log(props);
+            return props
+        }
+
+        initInternationalization()
+            .then(initFirebase)
+            .then(initStore)
+            .then(initWindowData)
+            .then(fetchDeviceId_)
+            .then(checkIfCompatible)
+            .then(fetchMetaInfo)
+            .then(fetchCurrentUserData)
+            .then(fetchCurrentUserLastVisit)
+            .then(changeCurrentLanguage)
+            .then(initPagesBuilder)
+            .then(printProps)
+            .then(updateState)
+            .then(installWrapperControl_)
+            .then(installNotificationsWatcher)
+            .then(installUserChangeWatcher)
+            .then(installMaintenanceWatcher)
+            .then(installLastVisitSaver)
+            .then(installWindowWidthWatcher)
+            .catch(onError);
+
         return () => {
             maintenanceRef && maintenanceRef.off();
+            unlisten && unlisten();
         }
         // eslint-disable-next-line
     }, []);
 
-    if (isIncompatible) {
-        return <ThemeProvider theme={theme}><TechnicalInfoView
-            message={<>
-                <Typography>Oops, we have detected that your browser is outdated and cannot be supported
-                    by {title} :(</Typography>
-                <Typography>We'll be happy to see you back using {title} with up-to-date browser!</Typography>
-            </>}
+    if (!firebase) return <LoadingComponent/>;
+
+    return <DispatcherInitialized
+        {...props}
+        {...state}
+        theme={theme}
+    />
+}
+
+const DispatcherInitialized = (props) => {
+    const {fatal, buildPages, copyright, firebase, store, menu: givenMenu, theme, title, windowData, metaInfo} = props;
+    const {t} = useTranslation();
+
+    useFirebase(firebase);
+    useStore(store);
+    useMetaInfo(metaInfo);
+    useWindowData(windowData);
+    const pages = usePages(buildPages ? buildPages() : {});
+    const menu = givenMenu(pages);
+
+    if (fatal) {
+        return <ThemeProvider theme={theme}><MetaInfoView
+            message={fatal.message}
         /></ThemeProvider>
     }
-
-    if (!store || !firebase) return <LoadingComponent/>;
-
-    const onWidthChange = (event) => {
-        clearTimeout(widthPoint);
-        widthPoint = setTimeout(() => {
-            const widths = {1920: "xl", 1280: "lg", 960: "md", 600: "sm", 0: "xs"};
-            let newWidth = "xl";
-            for (let x in widths) {
-                if (window.innerWidth > x) {
-                    newWidth = widths[x];
-                }
-            }
-            if (oldWidth && oldWidth !== newWidth) {
-                refreshAll(store);
-            }
-            oldWidth = newWidth;
-        }, 50)
-    }
-    window.addEventListener("resize", onWidthChange);
 
     return <Provider store={store}>
         <ThemeProvider theme={theme}>
             <BrowserRouter>
                 <SnackbarProvider maxSnack={4} preventDuplicate>
-                    <DispatcherRoutedBody {...props} theme={theme}/>
+                    <DispatcherRoutedBody
+                        {...props}
+                        copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                        menu={menu}
+                        title={t(title)}
+                    />
                 </SnackbarProvider>
             </BrowserRouter>
             <PWAPrompt promptOnVisit={3} timesToShow={3}/>
@@ -200,14 +365,27 @@ function Dispatcher(props) {
     </Provider>;
 }
 
-let widthPoint;
+const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
 
-function _DispatcherRoutedBody(props) {
+const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
     // eslint-disable-next-line react/prop-types
-    const {pages, menu, width, copyright, headerComponent, layout, title, logo, random, iosLayout = true} = props;
+    const {
+        menu,
+        width,
+        copyright,
+        footerComponent,
+        headerComponent,
+        layout,
+        title,
+        logo,
+        random,
+        iosLayout = true
+    } = props;
+    const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const history = useHistory();
-    const currentUserData = useCurrentUserData();
+    const pages = usePages();
+    const {t} = useTranslation();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
@@ -219,20 +397,25 @@ function _DispatcherRoutedBody(props) {
             } catch (error) {
                 console.error(error);
             }
-            const currentPage = (itemsFlat.filter(item => matchPath(location.pathname, {
-                exact: true,
-                path: item._route,
-            })) || [])[0];
+            let titleLabel = title;
+            if (history.action === "POP") {
 
-            if (currentPage) {
-                const allowed = needAuth(currentPage.roles, currentUserData)
-                    ? pages.login
-                    : (matchRole(currentPage.roles, currentUserData) && !currentPage.disabled && currentPage.component)
-                        ? currentPage : pages.notfound;
-                const label = allowed.title || allowed.label;
-                document.title = label + (title ? " - " + title : "");
-                dispatch({type: Layout.TITLE, label});
+            } else {
+                const currentPage = (itemsFlat.filter(item => matchPath(location.pathname, {
+                    exact: true,
+                    path: item._route,
+                })) || [])[0];
+
+                if (currentPage) {
+                    const allowed = needAuth(currentPage.roles, currentUserData)
+                        ? pages.login
+                        : (matchRole(currentPage.roles, currentUserData) && !currentPage.disabled && currentPage.component)
+                            ? currentPage : pages.notfound;
+                    titleLabel = t(allowed.title || allowed.label);
+                }
             }
+            document.title = titleLabel + (title && title !== titleLabel ? " - " + title : "");
+            dispatch({type: Layout.TITLE, label: titleLabel});
         }
 
         updateTitle({pathname: window.location.pathname});
@@ -264,6 +447,7 @@ function _DispatcherRoutedBody(props) {
                         ? <layout.type
                             {...layout.props}
                             copyright={copyright}
+                            footerComponent={footerComponent}
                             headerComponent={headerComponent}
                             logo={logo}
                             menu={menu}
@@ -273,12 +457,14 @@ function _DispatcherRoutedBody(props) {
                             ? ((iOS && iosLayout)
                                 ? <BottomToolbarLayout
                                     copyright={copyright}
+                                    footerComponent={footerComponent}
                                     headerComponent={headerComponent}
                                     menu={menu}
                                     title={title}
                                 />
                                 : <ResponsiveDrawerLayout
                                     copyright={copyright}
+                                    footerComponent={footerComponent}
                                     headerComponent={headerComponent}
                                     logo={logo}
                                     menu={menu}
@@ -286,6 +472,7 @@ function _DispatcherRoutedBody(props) {
                                 />)
                             : <TopBottomMenuLayout
                                 copyright={copyright}
+                                footerComponent={footerComponent}
                                 headerComponent={headerComponent}
                                 menu={menu}
                                 title={title}
@@ -295,7 +482,7 @@ function _DispatcherRoutedBody(props) {
             />
         </Switch>
         {itemsFlat.map((item, index) => {
-            if (!item.daemon || !item.component || item.disabled || isIncompatible) return null;
+            if (!item.daemon || !item.component || item.disabled) return null;
             if (!matchRole(item.roles, currentUserData)) return null;
             return <item.component.type
                 key={item.route}
@@ -307,25 +494,17 @@ function _DispatcherRoutedBody(props) {
         })}
         {background && <Route path={history.location.pathname} children={<div/>}/>}
     </React.Fragment>
-}
+});
 
-_DispatcherRoutedBody.propTypes = {
-    layout: PropTypes.any,
-    pages: PropTypes.objectOf(Pages).isRequired,
-};
-
-const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
-
-const DispatcherRoutedBody = connect(mapStateToProps)(_DispatcherRoutedBody);
 
 Dispatcher.propTypes = {
     copyright: PropTypes.any,
     firebaseConfig: PropTypes.any.isRequired,
     layout: PropTypes.any,
-    menu: PropTypes.arrayOf(PropTypes.arrayOf(Page)).isRequired,
+    menu: PropTypes.any,//PropTypes.arrayOf(PropTypes.arrayOf(Page)).isRequired,
     logo: PropTypes.any,
     title: PropTypes.string.isRequired,
-    pages: PropTypes.objectOf(Pages).isRequired,
+    pages: PropTypes.func,//PropTypes.objectOf(Pages).isRequired,
     reducers: PropTypes.object,
     theme: PropTypes.any,
     width: PropTypes.string,
