@@ -106,7 +106,7 @@ export const checkForUpdate = (reloadIfFailed = true) => new Promise((resolve, r
                     window.location.reload();
                 }
             } else if (!registration.installing && !registration.waiting) {
-                notifySnackbar({title: "You already use the latest version"});
+                if (reloadIfFailed) notifySnackbar({title: "You already use the latest version"});
                 resolve("latest");
                 // window.location.reload();
             } else if (registration.waiting) {
