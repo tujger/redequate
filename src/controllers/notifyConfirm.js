@@ -1,5 +1,5 @@
-import ConfirmComponent from "../components/ConfirmComponent";
 import {useStore} from "./General";
+import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
 
 export const notifyConfirm = (
     {
@@ -17,7 +17,7 @@ export const notifyConfirm = (
     }) => {
     const store = useStore();
     store.dispatch({
-        type: ConfirmComponent.SHOW,
+        type: confirmComponentReducer.SHOW,
         props: {
             children,
             confirmLabel,

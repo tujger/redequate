@@ -10,7 +10,7 @@ import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
 import PostCardWrapper from "./PostCardWrapper";
 import MentionedTextComponent from "../MentionedTextComponent";
-import {mentionTags} from "../..";
+import {mentionTags} from "../../controllers/mentionTypes";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
 

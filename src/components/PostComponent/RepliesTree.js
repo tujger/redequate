@@ -11,7 +11,6 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {useHistory} from "react-router-dom";
 import withStyles from "@material-ui/styles/withStyles";
 import {notifySnackbar} from "../../controllers";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {useDispatch} from "react-redux";
 
 const stylesCurrent = theme => ({

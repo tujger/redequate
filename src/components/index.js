@@ -12,6 +12,7 @@ export {default as LazyListComponent} from "./LazyListComponent/LazyListComponen
 export {lazyListComponentReducer} from "./LazyListComponent/lazyListComponentReducer";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";
+export {default as MentionedSelectComponent} from "./MentionedSelectComponent";
 export {default as MentionedTextComponent, tokenizeText} from "./MentionedTextComponent";
 export {default as ModalComponent} from "./ModalComponent";
 export {default as NavigationToolbar} from "./NavigationToolbar";

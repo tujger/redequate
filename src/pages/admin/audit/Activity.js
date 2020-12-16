@@ -16,7 +16,6 @@ import LazyListComponent from "../../../components/LazyListComponent/LazyListCom
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
-import NavigationToolbar from "../../../components/NavigationToolbar";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../../../controllers/Theme";
@@ -24,6 +23,7 @@ import {auditReducer} from "./auditReducer";
 import ActivityItemComponent from "./ActivityItemComponent";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import {toDateString} from "../../../controllers/DateFormat";
+import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
 
 const Activity = (props) => {
     const {classes, activityMode = "all", activityFilterItem, activityFilter, activitySort = "asc"} = props;
@@ -60,6 +60,12 @@ const Activity = (props) => {
         const sort = activitySort === "asc" ? "desc" : "asc";
         dispatch({type: lazyListComponentReducer.RESET});
         dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activityFilter, activitySort: sort});
+    }
+
+    const handleTypeSelect = evt => {
+        const activityFilterItem = evt.target.value;
+        dispatch({type: lazyListComponentReducer.RESET});
+        dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activitySort});
     }
 
     const handleStartDate = (startDate) => {
@@ -142,7 +148,7 @@ const Activity = (props) => {
                     </Select>
                 </Grid>
                 <Grid item xs>
-                    {!filteredItem && (activityMode !== "uid") && <Input
+                    {!filteredItem && activityMode === "all" && <Input
                         autoFocus
                         color={"secondary"}
                         endAdornment={activityFilter
@@ -156,6 +162,18 @@ const Activity = (props) => {
                         onChange={handleFilterChange("filter")}
                         placeholder={"Search"}
                         value={activityFilter || ""}
+                    />}
+                    {activityMode === "type" && <MentionedSelectComponent
+                        mention={{
+                            pagination: (start, firebase) => new Pagination({
+                                ref: firebase.database().ref("_activity/types"),
+                                order: "asc",
+                                size: 100,
+                            }),
+                            transform: item => ({id: item.key, display: item.key}),
+                        }}
+                        onChange={handleTypeSelect}
+                        value={activityFilter || null}
                     />}
                 </Grid>
                 <Grid item><IconButton
