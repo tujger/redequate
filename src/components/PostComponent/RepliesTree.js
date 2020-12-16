@@ -11,7 +11,7 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {useHistory} from "react-router-dom";
 import withStyles from "@material-ui/styles/withStyles";
 import {notifySnackbar} from "../../controllers";
-import {useDispatch} from "react-redux";
+import RotatingReplies from "./RotatingReplies";
 
 const stylesCurrent = theme => ({
     indent: {},
@@ -46,13 +46,12 @@ const stylesCurrent = theme => ({
 export default withStyles(stylesCurrent)((props) => {
     const {allowedExtras, level, postId, classes = {}, type, expand, onChange, expanded: givenExpanded} = props;
     const currentUserData = useCurrentUserData();
-    const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
-    const {expanded, repliesMin, userReplied, paginationOptions} = state;
+    const {expanded, replies, userReplied, paginationOptions, rotating} = state;
 
     const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
@@ -68,8 +67,15 @@ export default withStyles(stylesCurrent)((props) => {
         const prepareChecking = async () => {
             // throw {expanded: true, a:0};
         }
+        const throwIfPostOnIndex = async () => {
+            if (level === undefined) {
+                return fetchExistingRepliesIfComment()
+                    .then(replies => {
+                        throw {expanded: false, rotating: true, replies};
+                    })
+            }
+        }
         const throwExpandIfGivenExpanded = async () => {
-            // dispatch({type: lazyListComponentReducer.REFRESH});
             if (givenExpanded) throw {expanded: true, a: 1};
         }
         const throwExpandIfForceExpanded = async () => {
@@ -89,7 +95,6 @@ export default withStyles(stylesCurrent)((props) => {
             if (level > 1) throw {expanded: true, a: 4};
         }
         const throwExpandIfShowingPost = async () => {
-            // dispatch({type: lazyListComponentReducer.REFRESH});
             if (level === 0) throw {expanded: true, a: 5};
         }
         const fetchExistingRepliesIfComment = async () => {
@@ -100,12 +105,14 @@ export default withStyles(stylesCurrent)((props) => {
             if (replies[0]) {
                 return UserData(firebase)
                     .fetch(replies[0].value.uid, [UserData.NAME, UserData.IMAGE])
-                    .then(userReplied => ({replies, userReplied}))
+                    .then(userReplied => {
+                        throw {replies, userReplied};
+                    })
             }
             throw {expanded: false, a: 6};
         }
         const throwInfoToExpand = async ({replies, userReplied}) => {
-            throw {repliesMin: replies.length, userReplied};
+            throw {replies, userReplied};
         }
         const updateState = async props => {
             // console.error(postId, {paginationOptions, ...props})
@@ -117,12 +124,13 @@ export default withStyles(stylesCurrent)((props) => {
 
         prepareChecking()
             .then(throwExpandIfGivenExpanded)
+            .then(throwIfPostOnIndex)
             .then(throwExpandIfForceExpanded)
             .then(throwExpandIfReply)
             .then(throwExpandIfShowingPost)
             .then(fetchExistingRepliesIfComment)
             .then(fetchFirstAuthorOfReplies)
-            .then(throwInfoToExpand)
+            // .then(throwInfoToExpand)
             .catch(updateState)
             .catch(notifySnackbar)
             .finally(finalizeChecking)
@@ -132,9 +140,16 @@ export default withStyles(stylesCurrent)((props) => {
         }
     }, [givenExpanded]);
 
-    // console.log(expanded, givenExpanded, level)
-
     if (!paginationOptions) return null;
+    if (rotating && replies && replies.length) {
+        return <Grid container>
+            <Grid className={classes.indent}/>
+            <Grid item xs>
+                <RotatingReplies {...props} items={replies}/>
+            </Grid>
+        </Grid>
+    }
+
     if (!expanded && !userReplied) return null;
     if (!expanded) {
         return <Grid container>
@@ -151,7 +166,7 @@ export default withStyles(stylesCurrent)((props) => {
                         <span className={classes.suggestionName}>
                             {userReplied.name}
                         </span>
-                        {repliesMin > 1 ? " and others replied" : " replied"}
+                        {replies && replies.length > 1 ? " and others replied" : " replied"}
                     </span>}
                     pattern={"transparent"}
                     onClick={() => {

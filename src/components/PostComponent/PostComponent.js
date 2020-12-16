@@ -83,11 +83,11 @@ const PostComponent = (props) => {
 
     return <>
         {!onlyReplies && <PostCard {...inheritProps}/>}
-        {level !== undefined && <RepliesTree
+        <RepliesTree
             {...inheritProps}
             key={highlight}
             postId={postData.id}
-        />}
+        />
     </>
 }
 
