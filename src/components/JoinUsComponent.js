@@ -16,7 +16,7 @@ const JoinUsComponent = ({label}) => {
     const metaInfo = useMetaInfo();
     const pages = usePages();
     const {settings} = metaInfo || {};
-    const {joinUsScroll, joinUsText, joinUsTimeout, joinUsTitle} = settings || {};
+    const {joinUsCancel, joinUsConfirm, joinUsScroll, joinUsText, joinUsTimeout, joinUsTitle} = settings || {};
 
     const handleCancel = () => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
@@ -102,9 +102,9 @@ const JoinUsComponent = ({label}) => {
     if (!show) return null;
 
     return <ConfirmComponent
-        cancelLabel={"Later"}
+        cancelLabel={joinUsCancel || null}
         cancelProps={{style: {color: "lightgray", textTransform: "none"}}}
-        confirmLabel={"Join us"}
+        confirmLabel={joinUsConfirm || "Join us"}
         confirmProps={{variant: "contained", className: "MuiFab-extended"}}
         modal
         onCancel={handleCancel}

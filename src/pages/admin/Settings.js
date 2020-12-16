@@ -4,20 +4,21 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Switch from "@material-ui/core/Switch";
-import Divider from "@material-ui/core/Divider";
-import InfoIcon from "@material-ui/icons/Info";
 import DynamicLinksIcon from "@material-ui/icons/Link";
 import SupportIcon from "@material-ui/icons/Person";
 import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
 import MaintenanceIcon from "@material-ui/icons/Settings";
+import JoinUsIcon from "@material-ui/icons/PanTool";
+import AllIcon from "@material-ui/icons/ExpandMore";
 import {useCurrentUserData, UserData} from "../../controllers/UserData";
 import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {useFirebase, useMetaInfo} from "../../controllers/General";
+import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
 import LoadingComponent from "../../components/LoadingComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import {styles} from "../../controllers/Theme";
@@ -27,24 +28,40 @@ import Pagination from "../../controllers/FirebasePagination";
 import {tokenizeText} from "../../components";
 import {useHistory} from "react-router-dom";
 import {updateActivity} from "./audit/auditReducer";
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+
+const stylesCurrent = theme => ({
+    _content: {
+        flexDirection: "column",
+        padding: theme.spacing(1),
+    },
+    _root: {
+        // display: "flex",
+    },
+    _tabs: {}
+});
 
 const Settings = ({classes}) => {
+    const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
-
-    const currentUserData = useCurrentUserData();
+    const windowData = useWindowData();
     const {maintenance: maintenanceGiven} = useMetaInfo();
     const [state, setState] = React.useState({
         error: null,
         details: {},
         disabled: true,
         message: "Sorry, site is under technical maintenance now. Please come back later.",
+        tab: 0,
     });
     const {
         disabled,
         blockedNames,
         dynamicLinksUrlPrefix,
+        joinUsCancel,
+        joinUsConfirm,
         joinUsScroll,
         joinUsText,
         joinUsTimeout,
@@ -54,7 +71,8 @@ const Settings = ({classes}) => {
         message,
         maintenance,
         support,
-        details
+        details,
+        tab
     } = state;
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
@@ -117,6 +135,10 @@ const Settings = ({classes}) => {
         }))
     }
 
+    const handleChangeTab = (event, tab) => {
+        setState(state => ({...state, tab}));
+    };
+
     const handleSave = evt => {
         const updates = {};
         const settings = {}
@@ -145,6 +167,8 @@ const Settings = ({classes}) => {
             settings.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix || null;
         }
         const addPreferenceJoinUs = async () => {
+            settings.joinUsCancel = joinUsCancel || null;
+            settings.joinUsConfirm = joinUsConfirm || null;
             settings.joinUsScroll = +joinUsScroll || null;
             settings.joinUsText = joinUsText || null;
             settings.joinUsTimeout = +joinUsTimeout || null;
@@ -184,6 +208,14 @@ const Settings = ({classes}) => {
             .then(updateServiceActivity)
             .catch(notifySnackbar)
             .finally(finalizeSaving);
+    }
+
+    const tabProps = (icon, label, value) => {
+        return {
+            icon: windowData.isNarrow() ? icon : undefined,
+            label: windowData.isNarrow() ? undefined : label,
+            value: value,
+        }
     }
 
     React.useEffect(() => {
@@ -245,165 +277,196 @@ const Settings = ({classes}) => {
     }, [])
 
     if (loaded === undefined) return <LoadingComponent/>;
-    return <Grid container className={classes.center}>
-        {givenTimestamp && <>
-            <Grid container spacing={1} alignItems={"center"}>
-                <Grid item>
-                    <InfoIcon/>
-                </Grid>
-                <Grid item xs>
-                    Maintenance set up by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
-                </Grid>
+    return <Grid container className={[classes.center].join(" ")}>
+        <div className={classes._root}>
+            <Tabs
+                aria-label={"Settings"}
+                className={classes._tabs}
+                onChange={handleChangeTab}
+                scrollButtons={"auto"}
+                value={tab}
+                variant={"scrollable"}
+            >
+                <Tab {...tabProps(<MaintenanceIcon/>, "Maintenance", 0)}/>
+                <Tab {...tabProps(<SupportIcon/>, "Personality", 1)}/>
+                <Tab {...tabProps(<BlockedNamesIcon/>, "User profiles", 2)}/>
+                <Tab {...tabProps(<DynamicLinksIcon/>, "Convenience", 3)}/>
+                <Tab {...tabProps(<JoinUsIcon/>, "Welcome popup", 4)}/>
+                <Tab {...tabProps(<AllIcon/>, "All options", -1)}/>
+            </Tabs>
+            <Grid container className={classes._content}>
+                {(tab === 0 || tab === -1) && <>
+                    <Grid container>
+                        <Typography variant={"button"}>Maintenance</Typography>
+                    </Grid>
+                    <Box m={1}/>
+                    {givenTimestamp && <>
+                        <Grid container>
+                            Maintenance set up by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
+                        </Grid>
+                        <Box m={1}/>
+                    </>}
+                    <Grid container>
+                        <FormControlLabel
+                            color={"secondary"}
+                            control={<Switch
+                                onChange={handleSwitchMaintenance}
+                                checked={maintenance}
+                            />}
+                            disabled={disabled}
+                            label={"Maintenance in process"}
+                        />
+                    </Grid>
+                    <Box m={1}/>
+                </>}
+                {(tab === 1 || tab === -1) && <>
+                    <Grid container>
+                        <Typography variant={"button"}>Personality</Typography>
+                    </Grid>
+                    <Box m={1}/>
+                    <Grid container>
+                        <MentionsInputComponent
+                            color={"secondary"}
+                            disabled={disabled}
+                            mentionsParams={[{
+                                ...mentionUsers,
+                                trigger: "",
+                                displayTransform: (id, display) => display,
+                                pagination: () => new Pagination({
+                                    ref: firebase.database().ref("roles"),
+                                    value: true,
+                                    equals: "admin",
+                                    size: 1000,
+                                    transform: item => UserData(firebase)
+                                        .fetch(item.key, [UserData.PUBLIC, UserData.ROLE])
+                                        .then(value => ({key: item.key, value}))
+                                        .catch(notifySnackbar)
+                                }),
+                            }]}
+                            onApply={(value) => console.log(value)}
+                            onChange={(ev, a, b, tokens) => {
+                                // console.log(ev.target.value, a, b, c)
+                                tokens = tokens || [];
+                                let text = ev.target.value;
+                                if (tokens.length) {
+                                    const token = tokens[tokens.length - 1];
+                                    text = token ? `$[user:${token.id}:${token.display}]` : "";
+                                }
+                                handleChange("support")({target: {value: text}});
+                            }}
+                            label={"Support person"}
+                            value={support || ""}
+                        />
+                    </Grid>
+                    <Box m={1}/>
+                </>}
+                {(tab === 2 || tab === -1) && <>
+                    <Grid container>
+                        <Typography variant={"button"}>User profiles</Typography>
+                    </Grid>
+                    <Box m={1}/>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Blocked names"}
+                            multiline
+                            onChange={handleChange("blockedNames")}
+                            rows={5}
+                            value={blockedNames || ""}
+                        />
+                    </Grid>
+                    <Box m={1}/>
+                </>}
+                {(tab === 3 || tab === -1) && <>
+                    <Grid container>
+                        <Typography variant={"button"}>Convenience</Typography>
+                    </Grid>
+                    <Box m={1}/>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Dynamic links URL prefix"}
+                            onChange={handleChange("dynamicLinksUrlPrefix")}
+                            value={dynamicLinksUrlPrefix || ""}
+                        />
+                    </Grid>
+                    <Box m={1}/>
+                </>}
+                {(tab === 4 || tab === -1) && <>
+                    <Grid container>
+                        <Typography variant={"button"}>Welcome popup</Typography>
+                    </Grid>
+                    <Box m={1}/>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Title"}
+                            onChange={handleChange("joinUsTitle")}
+                            value={joinUsTitle || ""}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Message"}
+                            multiline
+                            onChange={handleChange("joinUsText")}
+                            value={joinUsText || ""}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Cancel button label"}
+                            multiline
+                            onChange={handleChange("joinUsCancel")}
+                            value={joinUsCancel || ""}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Confirm button label"}
+                            multiline
+                            onChange={handleChange("joinUsConfirm")}
+                            placeholder={"Join us"}
+                            value={joinUsConfirm || ""}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            label={"Popup on timeout, s"}
+                            onChange={handleChange("joinUsTimeout")}
+                            type="number"
+                            value={joinUsTimeout | ""}
+                        />
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            label={"Popup on scroll, px"}
+                            onChange={handleChange("joinUsScroll")}
+                            type="number"
+                            value={joinUsScroll || ""}
+                        />
+                    </Grid>
+                    <Box m={1}/>
+                </>}
             </Grid>
-            <Box m={1}/>
-        </>}
-        <Grid container spacing={1} alignItems={"center"}>
-            <Grid item>
-                <MaintenanceIcon/>
-            </Grid>
-            <Grid item>
-                <FormControlLabel
-                    color={"secondary"}
-                    control={<Switch
-                        onChange={handleSwitchMaintenance}
-                        checked={maintenance}
-                    />}
-                    disabled={disabled}
-                    label={"Maintenance"}
-                />
-            </Grid>
-        </Grid>
-        <Box m={1}/>
-        <Grid container alignItems={"flex-end"} spacing={1}>
-            <Grid item>
-                <SupportIcon/>
-            </Grid>
-            <Grid item xs>
-                <MentionsInputComponent
-                    color={"secondary"}
-                    disabled={disabled}
-                    mentionsParams={[{
-                        ...mentionUsers,
-                        trigger: "",
-                        displayTransform: (id, display) => display,
-                        pagination: () => new Pagination({
-                            ref: firebase.database().ref("roles"),
-                            value: true,
-                            equals: "admin",
-                            size: 1000,
-                            transform: item => UserData(firebase)
-                                .fetch(item.key, [UserData.PUBLIC, UserData.ROLE])
-                                .then(value => ({key: item.key, value}))
-                                .catch(notifySnackbar)
-                        }),
-                    }]}
-                    onApply={(value) => console.log(value)}
-                    onChange={(ev, a, b, tokens) => {
-                        // console.log(ev.target.value, a, b, c)
-                        tokens = tokens || [];
-                        let text = ev.target.value;
-                        if (tokens.length) {
-                            const token = tokens[tokens.length - 1];
-                            text = token ? `$[user:${token.id}:${token.display}]` : "";
-                        }
-                        handleChange("support")({target: {value: text}});
-                    }}
-                    label={"Support person"}
-                    value={support || ""}
-                />
-            </Grid>
-        </Grid>
-        <Box m={1}/>
-        <Grid container alignItems={"flex-end"} spacing={1}>
-            <Grid item>
-                <BlockedNamesIcon/>
-            </Grid>
-            <Grid item xs>
-                <TextField
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    label={"Blocked names"}
-                    multiline
-                    onChange={handleChange("blockedNames")}
-                    rows={5}
-                    value={blockedNames || ""}
-                />
-            </Grid>
-        </Grid>
-        <Box m={1}/>
-        <Grid container alignItems={"flex-end"} spacing={1}>
-            <Grid item>
-                <DynamicLinksIcon/>
-            </Grid>
-            <Grid item xs>
-                <TextField
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    label={"Dynamic links URL prefix"}
-                    onChange={handleChange("dynamicLinksUrlPrefix")}
-                    value={dynamicLinksUrlPrefix || ""}
-                />
-            </Grid>
-        </Grid>
-        <Box m={1}/>
-        <Grid container alignItems={"flex-end"} spacing={1}>
-            <Grid item>
-                <DynamicLinksIcon/>
-            </Grid>
-            <Grid item xs>
-                <TextField
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    label={"Join us title"}
-                    onChange={handleChange("joinUsTitle")}
-                    value={joinUsTitle || ""}
-                />
-            </Grid>
-        </Grid>
-        <Grid container alignItems={"flex-end"} spacing={1}>
-            <Grid item>
-                <DynamicLinksIcon/>
-            </Grid>
-            <Grid item xs>
-                <TextField
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    label={"Join us text"}
-                    multiline
-                    onChange={handleChange("joinUsText")}
-                    value={joinUsText || ""}
-                />
-            </Grid>
-        </Grid>
-        <Grid container alignItems={"flex-end"} spacing={1}>
-            <Grid item>
-                <DynamicLinksIcon/>
-            </Grid>
-            <Grid item>
-                <TextField
-                    color={"secondary"}
-                    disabled={disabled}
-                    label={"Join us on timeout, s"}
-                    onChange={handleChange("joinUsTimeout")}
-                    type="number"
-                    value={joinUsTimeout | ""}
-                />
-            </Grid>
-            <Grid item>
-                <TextField
-                    color={"secondary"}
-                    disabled={disabled}
-                    label={"Join us on scroll, px"}
-                    onChange={handleChange("joinUsScroll")}
-                    type="number"
-                    value={joinUsScroll || ""}
-                />
-            </Grid>
-        </Grid>
+        </div>
         <Box m={1}/>
         <ButtonGroup
             color={"secondary"}
@@ -439,4 +502,4 @@ const Settings = ({classes}) => {
     </Grid>
 };
 
-export default withStyles(styles)(Settings);
+export default withStyles(stylesCurrent)(withStyles(styles)(Settings));

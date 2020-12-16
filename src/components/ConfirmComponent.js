@@ -73,7 +73,6 @@ const ConfirmComponent = (
         <DialogActions>
             {cancelLabel && <Button
                 aria-label={cancelLabel}
-                autoFocus={!confirmLabel && !windowData.isNarrow()}
                 children={cancelLabel}
                 color={"secondary"}
                 onClick={onCancel}
@@ -81,7 +80,6 @@ const ConfirmComponent = (
             />}
             {confirmLabel && <Button
                 aria-label={confirmLabel}
-                autoFocus={!windowData.isNarrow()}
                 children={confirmLabel}
                 color={"secondary"}
                 onClick={onConfirm}

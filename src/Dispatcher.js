@@ -284,7 +284,7 @@ function Dispatcher(props) {
             })().catch(console.error);
             return props;
         }
-        const installForegroundChecker = async props => {
+        const installApplicationVisibilityChecker = async props => {
             const {store} = props;
             const refreshNeeded = () => {
                 const position = getScrollPosition({});
@@ -337,7 +337,7 @@ function Dispatcher(props) {
             .then(installMaintenanceWatcher)
             .then(installLastVisitSaver)
             .then(installWindowWidthWatcher)
-            .then(installForegroundChecker)
+            .then(installApplicationVisibilityChecker)
             .catch(onError);
 
         return () => {

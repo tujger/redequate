@@ -128,92 +128,101 @@ const Activity = (props) => {
     })();
 
     return <>
-        <NavigationToolbar
-            backButton={null}
-            className={classes.topSticky}
-            mediumButton={<>
-                <IconButton
+        <Grid container className={classes.topSticky}>
+            <Grid container alignItems={"flex-start"}>
+                <Grid item>
+                    <Select
+                        color={"secondary"}
+                        onChange={handleMode}
+                        value={activityMode}
+                    >
+                        <MenuItem value={"all"}>All</MenuItem>
+                        <MenuItem value={"type"}>By type</MenuItem>
+                        <MenuItem value={"uid"}>By person</MenuItem>
+                    </Select>
+                </Grid>
+                <Grid item xs>
+                    {!filteredItem && (activityMode !== "uid") && <Input
+                        autoFocus
+                        color={"secondary"}
+                        endAdornment={activityFilter
+                            ? <IconButton
+                                children={<ClearIcon/>}
+                                onClick={handleFilterChange("clear")}
+                                size={"small"}
+                                title={"Clear"}
+                                variant={"text"}
+                            /> : null}
+                        onChange={handleFilterChange("filter")}
+                        placeholder={"Search"}
+                        value={activityFilter || ""}
+                    />}
+                </Grid>
+                <Grid item><IconButton
                     children={<SortIcon/>}
                     className={"MuiButton-sort-" + activitySort}
                     onClick={handleSortClick}
-                />
-            </>}
-            rightButton={<IconButton
-                children={<RefreshIcon/>}
-                onClick={() => setState({...state, random: Math.random()})}
-            />}
-        >
-            <Select
-                color={"secondary"}
-                onChange={handleMode}
-                value={activityMode}
-            >
-                <MenuItem value={"all"}>All</MenuItem>
-                <MenuItem value={"type"}>By type</MenuItem>
-                <MenuItem value={"uid"}>By person</MenuItem>
-            </Select>
-            {!filteredItem && (activityMode !== "uid") && <Input
-                autoFocus
-                color={"secondary"}
-                endAdornment={activityFilter
-                    ? <IconButton
-                        children={<ClearIcon/>}
-                        onClick={handleFilterChange("clear")}
-                        size={"small"}
-                        title={"Clear"}
-                        variant={"text"}
-                    /> : null}
-                onChange={handleFilterChange("filter")}
-                placeholder={"Search"}
-                value={activityFilter || ""}
-            />}
-            {filteredItem && <Chip
-                avatar={<AvatarView
-                    alt={"Avatar"}
-                    image={filteredItem.image}
-                    initials={filteredItem.name}
-                    verified={true}
-                />}
-                label={filteredItem.name}
-                onDelete={() => {
-                    dispatch({
-                        type: auditReducer.ACTIVITY,
-                        activityMode,
-                        activitySort
-                    });
-                    dispatch({type: lazyListComponentReducer.RESET});
-                }}
-            />}
-            {startDate && <Chip
-                avatar={<StartDateIcon/>}
-                label={toDateString(startDate.toDate().getTime())}
-                onDelete={() => {
-                    dispatch({type: lazyListComponentReducer.RESET});
-                    setState(state => ({...state, startDate: null}));
-                }}
-            />}
-            {endDate && <Chip
-                avatar={<EndDateIcon/>}
-                label={toDateString(endDate.toDate().getTime())}
-                onDelete={() => {
-                    dispatch({type: lazyListComponentReducer.RESET});
-                    setState(state => ({...state, endDate: null}));
-                }}
-            />}
-            <IconButton
-                aria-label={"start date"}
-                children={<StartDateIcon/>}
-                edge={"end"}
-                onClick={(event) => setState(state => ({...state, startDateAnchor: event.target}))}
-            />
-            &mdash;
-            <IconButton
-                aria-label={"end date"}
-                children={<EndDateIcon/>}
-                edge={"start"}
-                onClick={(event) => setState(state => ({...state, endDateAnchor: event.target}))}
-            />
-        </NavigationToolbar>
+                /></Grid>
+                <Grid item>
+                    <IconButton
+                        children={<RefreshIcon/>}
+                        onClick={() => setState({...state, random: Math.random()})}
+                    />
+                </Grid>
+            </Grid>
+            <Grid container alignItems={"flex-start"}>
+                <Grid item xs>
+                    {filteredItem && <Chip
+                        avatar={<AvatarView
+                            alt={"Avatar"}
+                            image={filteredItem.image}
+                            initials={filteredItem.name}
+                            verified={true}
+                        />}
+                        label={filteredItem.name}
+                        onDelete={() => {
+                            dispatch({
+                                type: auditReducer.ACTIVITY,
+                                activityMode,
+                                activitySort
+                            });
+                            dispatch({type: lazyListComponentReducer.RESET});
+                        }}
+                    />}
+                    {startDate && <Chip
+                        avatar={<StartDateIcon/>}
+                        label={toDateString(startDate.toDate().getTime())}
+                        onDelete={() => {
+                            dispatch({type: lazyListComponentReducer.RESET});
+                            setState(state => ({...state, startDate: null}));
+                        }}
+                    />}
+                    {endDate && <Chip
+                        avatar={<EndDateIcon/>}
+                        label={toDateString(endDate.toDate().getTime())}
+                        onDelete={() => {
+                            dispatch({type: lazyListComponentReducer.RESET});
+                            setState(state => ({...state, endDate: null}));
+                        }}
+                    />}
+                </Grid>
+                <Grid item>
+                    <IconButton
+                        aria-label={"start date"}
+                        children={<StartDateIcon/>}
+                        edge={"end"}
+                        onClick={(event) => setState(state => ({...state, startDateAnchor: event.target}))}
+                    />
+                    &mdash;
+                    <IconButton
+                        aria-label={"end date"}
+                        children={<EndDateIcon/>}
+                        edge={"start"}
+                        onClick={(event) => setState(state => ({...state, endDateAnchor: event.target}))}
+                    />
+                </Grid>
+            </Grid>
+        </Grid>
         <Grid container className={classes.center}>
             <LazyListComponent
                 key={random}
