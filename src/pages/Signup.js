@@ -17,6 +17,9 @@ import {refreshAll} from "../controllers/Store";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
+import GoogleLogo from "../images/google-logo.svg";
+import FacebookLogo from "../images/facebook-logo.svg";
+import {useTranslation} from "react-i18next";
 
 const Signup = ({classes, signup = true, additional}) => {
     const [state, setState] = React.useState({
@@ -33,6 +36,7 @@ const Signup = ({classes, signup = true, additional}) => {
     const history = useHistory();
     const currentUserData = useCurrentUserData();
     const params = useParams();
+    const {i18n, t} = useTranslation();
 
     const requestSignupPassword = () => {
         if (!email && !requestPasswordFor) {
@@ -94,6 +98,14 @@ const Signup = ({classes, signup = true, additional}) => {
         history.push(pages.login.route);
         setState({...state, requesting: false});
     };
+
+    const onRequestGoogle = () => {
+        history.push(pages.login.route, {loginWith: "google"})
+    }
+
+    const onRequestFacebook = () => {
+        history.push(pages.login.route, {loginWith: "facebook"})
+    }
 
     if (!signup) return <Redirect to={pages.home.route}/>;
 
@@ -190,6 +202,19 @@ const Signup = ({classes, signup = true, additional}) => {
                 Cancel
             </Button>
         </ButtonGroup>
+        <Box m={2}/>
+        <Grid container alignItems={"center"} justify={"center"} spacing={1}>
+            <Button variant={"text"} color={"secondary"} onClick={onRequestGoogle} size={"large"}>
+                <img src={GoogleLogo} width={20} height={20} alt={""}/>
+                <Box m={0.5}/>
+                {t("Signup.Sign up with")} Google
+            </Button>
+            <Button variant={"text"} color={"secondary"} onClick={onRequestFacebook} size={"large"}>
+                <img src={FacebookLogo} width={20} height={20} alt={""}/>
+                <Box m={0.5}/>
+                {t("Signup.Sign up with")} Facebook
+            </Button>
+        </Grid>
     </Grid>
 };
 

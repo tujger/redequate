@@ -76,7 +76,7 @@ export const serviceWorkerRegister = () => {
     });
 };
 
-export const checkForUpdate = (reloadIfFailed = true) => new Promise((resolve, reject) => {
+export const checkForUpdate = (explicitCheck = true) => new Promise((resolve, reject) => {
     if (hasWrapperControlInterface()) {
         wrapperControlCall({method: "clearCache"}).then(result => {
             console.log("[SWC] reload by WrapperControlInterface");
@@ -87,7 +87,7 @@ export const checkForUpdate = (reloadIfFailed = true) => new Promise((resolve, r
     }
     if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
         console.log("[SWC] sw is not defined");
-        if (reloadIfFailed) {
+        if (explicitCheck) {
             resolve("reload");
             window.location.reload();
         }
@@ -101,12 +101,12 @@ export const checkForUpdate = (reloadIfFailed = true) => new Promise((resolve, r
         .then(registration => {
             if (!registration) {
                 console.log("[SWC] sw.registration is not defined");
-                if (reloadIfFailed) {
+                if (explicitCheck) {
                     resolve("reload");
                     window.location.reload();
                 }
             } else if (!registration.installing && !registration.waiting) {
-                if (reloadIfFailed) notifySnackbar({title: "You already use the latest version"});
+                if (explicitCheck) notifySnackbar({title: "You already use the latest version"});
                 resolve("latest");
                 // window.location.reload();
             } else if (registration.waiting) {

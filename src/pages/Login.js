@@ -211,6 +211,14 @@ function Login(props) {
     }
 
     React.useEffect(() => {
+        if (location.state && location.state.loginWith) {
+            if (location.state.loginWith === "google") {
+                requestLoginGoogle();
+            } else if (location.state.loginWith === "facebook") {
+                requestLoginFacebook();
+            }
+            return;
+        }
         if (!popup && window.localStorage.getItem(pages.login.route)) {
             window.localStorage.removeItem(pages.login.route);
             firebase.auth().getRedirectResult()
@@ -328,7 +336,6 @@ const LoginLayout = (
         </ButtonGroup>
         <Box m={1}/>
         <Grid container alignItems={"center"} justify={"center"} spacing={1}>
-        {/*<ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"small"} fullWidth>*/}
             <Button disabled={disabled} variant={"text"} color={"secondary"} onClick={onRequestGoogle} size={"large"}>
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
                 <Box m={0.5}/>
@@ -339,7 +346,8 @@ const LoginLayout = (
                 <Box m={0.5}/>
                 {t("Login.Login with")} Facebook
             </Button>
-{/*
+        </Grid>
+        {/*<ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"small"} fullWidth>
             <Button disabled variant={"text"} color={"default"} size={"small"}>
                 {t("Login.Login with")}
             </Button>
@@ -353,9 +361,8 @@ const LoginLayout = (
                 <Box m={0.5}/>
                 Facebook
             </Button>
+            </ButtonGroup>
 */}
-        {/*</ButtonGroup>*/}
-        </Grid>
         <Box m={1}/>
         {agreementComponent && <ConfirmComponent
             confirmLabel={t("Login.Agree")}

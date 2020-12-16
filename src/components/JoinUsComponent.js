@@ -42,7 +42,7 @@ const JoinUsComponent = ({label}) => {
                 referrer: document.referrer || null
             }
         });
-        window.location = pages.login.route;
+        window.location = pages.signup.route;
     }
 
     React.useLayoutEffect(() => {
