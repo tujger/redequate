@@ -10,6 +10,7 @@ import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
+import {WebWorker} from "../../workers/WebWorker";
 
 const stylesCurrent = theme => ({
     entering: {},
@@ -23,12 +24,15 @@ const stylesCurrent = theme => ({
     },
     moveable: {
         height: theme.spacing(4),
-        transition: "1s linear all",
+        maxHeight: theme.spacing(4),
+        overflow: "hidden",
         paddingLeft: theme.spacing(2),
+        transition: "1s ease margin-top",
         "&$leaving": {
-            height: 0,
-            overflow: "hidden",
-            transform: `translateY(-${theme.spacing(4)}px)`,
+            marginTop: theme.spacing(-4),
+            // height: 0,
+            // overflow: "hidden",
+            // transform: `translateY(-${theme.spacing(4)}px)`,
         }
     },
     singleline: {
@@ -150,6 +154,30 @@ export default withStyles(stylesCurrent)((props) => {
             isMounted = false;
         }
     }, [items]);
+
+    React.useEffect(() => {
+        const fibonacci = () => {
+            // performance test
+            const fib = (x) => {
+                if (x <= 0) return 0;
+                if (x === 1) return 1;
+                return fib(x - 1) + fib(x - 2);
+            };
+
+            self.addEventListener("message", e => {
+                const criteria = e.data.criteria || 25;
+                const num = fib(criteria);
+                return void self.postMessage({
+                    criteria: criteria,
+                    result: num,
+                });
+            })
+        }
+
+        new WebWorker(fibonacci)({criteria: 30})
+            .then(console.log)
+            .catch(notifySnackbar);
+    }, []);
 
     if (!postData) return null;
     return <Grid item xs className={classes.root} onClick={handleClick}>
