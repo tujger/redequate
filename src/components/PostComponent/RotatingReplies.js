@@ -10,7 +10,6 @@ import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {WebWorker} from "../../workers/WebWorker";
 
 const stylesCurrent = theme => ({
     entering: {},
@@ -30,22 +29,18 @@ const stylesCurrent = theme => ({
         transition: "1s ease margin-top",
         "&$leaving": {
             marginTop: theme.spacing(-4),
-            // height: 0,
-            // overflow: "hidden",
-            // transform: `translateY(-${theme.spacing(4)}px)`,
         }
     },
     singleline: {
+        "& br": {
+            display: "none",
+        },
         "& .MuiCardHeader-content": {
             overflow: "hidden",
             textOverflow: "ellipsis",
         },
-        "& .MuiCardHeader-root": {
-            alignItems: "flex-start",
-        },
         "& $textSmall": {
             display: "inline",
-            height: theme.spacing(2.5),
             whiteSpace: "nowrap",
         }
     },
@@ -59,9 +54,10 @@ export default withStyles(stylesCurrent)((props) => {
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
-    const {postData, userData, postDataPrev, userDataPrev} = state;
+    const {item, itemPrev} = state;
     const taskRef = React.useRef(null);
     const leavingRef = React.useRef(null);
+    const rootRef = React.useRef(null);
 
     const handleClick = () => {
         dispatch({type: lazyListComponentReducer.REFRESH});
@@ -86,7 +82,20 @@ export default withStyles(stylesCurrent)((props) => {
             } else if (typeof document.webkitHidden !== "undefined") {
                 hidden = "webkitHidden";
             }
-            if (document[hidden]) throw "not-focused";
+            if (document[hidden]) throw "page-not-focused";
+            return props;
+        }
+        const checkIfComponentInViewport = async props => {
+            if (rootRef.current) {
+                const rect = rootRef.current.getBoundingClientRect();
+                if (!(rect.top >= 0 &&
+                    rect.left >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                )) {
+                    throw "item-not-visible";
+                }
+            }
             return props;
         }
         const fetchSelectedIndex = async props => {
@@ -112,10 +121,29 @@ export default withStyles(stylesCurrent)((props) => {
             selectedIndex = selected;
             return props;
         }
+        const buildItemComponent = async props => {
+            const {postData, userData} = props;
+            const item = <ItemPlaceholderComponent
+                avatar={<AvatarView
+                    className={classes.avatarSmallest}
+                    image={userData.image}
+                    initials={userData.initials}
+                    verified
+                />}
+                className={classes.singleline}
+                label={<span className={classes.textSmall}>
+                    <span className={classes.suggestionName}>
+                        {userData.name}
+                    </span> <MentionedTextComponent disableClick mentions={mentions} text={postData.text.substr(0,200)}/>
+                </span>}
+                pattern={"transparent"}
+            />;
+            return {...props, item};
+        }
         const updateState = async props => {
             isMounted && setState(state => {
-                const {postData: postDataPrev, userData: userDataPrev} = state;
-                return ({...state, postDataPrev, userDataPrev, ...props})
+                const {item: itemPrev} = state;
+                return ({...state, itemPrev, item, ...props})
             });
         }
         const installAnimation = async () => {
@@ -125,7 +153,7 @@ export default withStyles(stylesCurrent)((props) => {
         }
         const thrownEvent = async event => {
             if (event instanceof Error) throw event;
-            console.log(event)
+            // console.log(event)
         }
         const finalizeRotating = async props => {
         }
@@ -133,10 +161,12 @@ export default withStyles(stylesCurrent)((props) => {
         const process = () => {
             prepareRotating()
                 .then(checkIfAppInForeground)
+                .then(checkIfComponentInViewport)
                 .then(fetchSelectedIndex)
                 .then(selectItem)
                 .then(fetchUserData)
                 .then(updateSelectedIndex)
+                .then(buildItemComponent)
                 .then(updateState)
                 .then(installAnimation)
                 .catch(thrownEvent)
@@ -146,7 +176,7 @@ export default withStyles(stylesCurrent)((props) => {
 
         process();
         if (items.length > 1) {
-            taskRef.current = setInterval(() => process(), 3000 + Math.random() * 1000);
+            taskRef.current = setInterval(() => process(), 4000 + Math.random() * 1000);
         }
 
         return () => {
@@ -155,61 +185,9 @@ export default withStyles(stylesCurrent)((props) => {
         }
     }, [items]);
 
-    React.useEffect(() => {
-        const fibonacci = () => {
-            // performance test
-            const fib = (x) => {
-                if (x <= 0) return 0;
-                if (x === 1) return 1;
-                return fib(x - 1) + fib(x - 2);
-            };
-
-            self.addEventListener("message", e => {
-                const criteria = e.data.criteria || 25;
-                const num = fib(criteria);
-                return void self.postMessage({
-                    criteria: criteria,
-                    result: num,
-                });
-            })
-        }
-
-        new WebWorker(fibonacci)({criteria: 30})
-            .then(console.log)
-            .catch(notifySnackbar);
-    }, []);
-
-    if (!postData) return null;
-    return <Grid item xs className={classes.root} onClick={handleClick}>
-        {postDataPrev && <Grid container key={Math.random()} ref={leavingRef} className={classes.moveable}><ItemPlaceholderComponent
-            avatar={<AvatarView
-                className={classes.avatarSmallest}
-                image={userDataPrev.image}
-                initials={userDataPrev.initials}
-                verified
-            />}
-            className={classes.singleline}
-            label={<span className={classes.textSmall}>
-                    <span className={classes.suggestionName}>
-                        {userDataPrev.name}
-                    </span> <MentionedTextComponent disableClick mentions={mentions} text={postDataPrev.text}/>
-                </span>}
-            pattern={"transparent"}
-        /></Grid>}
-        <Grid container className={classes.moveable}><ItemPlaceholderComponent
-            avatar={<AvatarView
-                className={classes.avatarSmallest}
-                image={userData.image}
-                initials={userData.initials}
-                verified
-            />}
-            className={classes.singleline}
-            label={<span className={classes.textSmall}>
-                    <span className={classes.suggestionName}>
-                        {userData.name}
-                    </span> <MentionedTextComponent disableClick mentions={mentions} text={postData.text}/>
-                </span>}
-            pattern={"transparent"}
-        /></Grid>
+    if (!item) return null;
+    return <Grid item xs ref={rootRef} className={classes.root} onClick={handleClick}>
+        {itemPrev && <Grid container key={Math.random()} ref={leavingRef} className={classes.moveable}>{itemPrev}</Grid>}
+        <Grid container className={classes.moveable}>{item}</Grid>
     </Grid>
 })
