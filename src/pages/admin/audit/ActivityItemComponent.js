@@ -162,6 +162,7 @@ function ActivityItemComponent(props) {
             }</pre>
             </Linkify>
             <Typography variant={"h6"}>Context</Typography>
+            <Grid container spacing={1}>Activity: {type}</Grid>
             {userDatas && userDatas.map((item, index) => <Grid container key={index} spacing={1}>
                 <Grid item>{item.key}</Grid>
                 <Grid item className={classes.userName} onClickCapture={handleUserClick(item.userData.id)}>
