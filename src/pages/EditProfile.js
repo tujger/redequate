@@ -29,6 +29,7 @@ import Pagination from "../controllers/FirebasePagination";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
+import {updateActivity} from "./admin/audit/auditReducer";
 // const UploadComponent = React.lazy(() => import(/* webpackChunkName: 'upload' */"../components/UploadComponent/UploadComponent"));
 // import AvatarEdit from "react-avatar-edit";
 
@@ -212,6 +213,18 @@ function EditProfile(props) {
                     updates[`users_public/${userData.id}/emailVerified`] = true;
                 }
                 updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
+                if (role !== userData.role) {
+                    updateActivity({
+                        firebase,
+                        uid: currentUserData.id,
+                        type: "User save",
+                        details: {
+                            role: role || null,
+                            previousRole: userData.role || null,
+                            uid: userData.id,
+                        },
+                    }).catch(console.error);
+                }
                 return firebase.database().ref().update(updates);
             }
         }
@@ -281,6 +294,14 @@ function EditProfile(props) {
                     notifySnackbar("User deleted");
                     setState(state => ({...state, disabled: false}));
                     history.goBack();
+                })
+                .then(() => {
+                    updateActivity({
+                        firebase,
+                        uid: currentUserData.id,
+                        type: "User delete",
+                        details: userData.toJSON(),
+                    }).catch(console.error);
                 })
                 .catch(notifySnackbar)
                 .finally(() => dispatch(ProgressView.HIDE))

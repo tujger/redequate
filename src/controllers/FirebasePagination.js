@@ -121,7 +121,7 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
             }
             if (count < size) finished = true;
             if (transform) {
-                data = Promise.all(data.map(async item => transform(item)));
+                data = await Promise.all(data.map(async item => transform(item)));
             }
             resolve(data);
         }, error => {

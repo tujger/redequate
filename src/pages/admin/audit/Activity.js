@@ -14,7 +14,7 @@ import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import Pagination from "../../../controllers/FirebasePagination";
-import {cacheDatas, useFirebase} from "../../../controllers/General";
+import {cacheDatas, useFirebase, useWindowData} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import withStyles from "@material-ui/styles/withStyles";
@@ -29,6 +29,7 @@ const Activity = (props) => {
     const {classes, activityMode = "all", activityFilterItem, activityFilter, activitySort = "asc"} = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
+    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {random, startDate, endDate, startDateAnchor, endDateAnchor} = state;
 
@@ -176,6 +177,21 @@ const Activity = (props) => {
                         value={activityFilter || null}
                     />}
                 </Grid>
+                {!windowData.isNarrow() && <Grid item>
+                    <IconButton
+                        aria-label={"start date"}
+                        children={<StartDateIcon/>}
+                        edge={"end"}
+                        onClick={(event) => setState(state => ({...state, startDateAnchor: event.target}))}
+                    />
+                    &mdash;
+                    <IconButton
+                        aria-label={"end date"}
+                        children={<EndDateIcon/>}
+                        edge={"start"}
+                        onClick={(event) => setState(state => ({...state, endDateAnchor: event.target}))}
+                    />
+                </Grid>}
                 <Grid item><IconButton
                     children={<SortIcon/>}
                     className={"MuiButton-sort-" + activitySort}
@@ -224,7 +240,7 @@ const Activity = (props) => {
                         }}
                     />}
                 </Grid>
-                <Grid item>
+                {windowData.isNarrow() && <Grid item>
                     <IconButton
                         aria-label={"start date"}
                         children={<StartDateIcon/>}
@@ -238,7 +254,7 @@ const Activity = (props) => {
                         edge={"start"}
                         onClick={(event) => setState(state => ({...state, endDateAnchor: event.target}))}
                     />
-                </Grid>
+                </Grid>}
             </Grid>
         </Grid>
         <Grid container className={classes.center}>
