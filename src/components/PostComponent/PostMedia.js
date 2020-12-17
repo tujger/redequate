@@ -6,6 +6,8 @@ import {useHistory} from "react-router-dom";
 import SmartGallery from "react-smart-gallery";
 import Lightbox from "react-image-lightbox";
 import "react-image-lightbox/style.css";
+import {useWindowData} from "../../controllers";
+import ScrollSnapComponent from "../ScrollSnapComponent";
 
 const stylesCurrent = makeStyles(theme => ({
     _postMediaLightboxPortal: {
@@ -105,6 +107,7 @@ export default (props) => {
     const history = useHistory();
     const ref = React.useRef({});
     const classesCurrent = stylesCurrent();
+    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {selected = null, gallery} = state;
 
@@ -129,25 +132,38 @@ export default (props) => {
         return value;
     })
 
+    const handleClickImage = selected => evt => {
+        evt && evt.stopPropagation();
+        console.log(evt, selected)
+        if (gallery && gallery.list && gallery.list[selected]) {
+            gallery.list[selected].click();
+        } else {
+            setState(state => ({...state, selected}))
+        }
+    }
+
     if (!images.length) return null;
 
     return <>
-        <SmartGallery
+        {!windowData.isNarrow() && <ScrollSnapComponent
+            items={
+                images.map((image, selected) => {
+                    return <img
+                        key={selected}
+                        onClick={handleClickImage(selected)}
+                        src={image.thumbnail}
+                    />
+                })
+            }
+        />}
+        {windowData.isNarrow() && <SmartGallery
             rootStyle={{backgroundColor: "transparent"}}
             images={images.map(image => {
                 return image.href;
             })}
-            onImageSelect={(evt, src, selected) => {
-                evt && evt.stopPropagation();
-                console.log(evt, src, selected)
-                if (gallery && gallery.list && gallery.list[selected]) {
-                    gallery.list[selected].click();
-                } else {
-                    setState(state => ({...state, selected}))
-                }
-            }}
+            onImageSelect={(evt, src, selected) => handleClickImage(selected)(evt)}
             width={"100%"}
-        />
+        />}
         {selected !== null && <Lightbox
             imagePadding={0}
             mainSrc={images[selected].href}

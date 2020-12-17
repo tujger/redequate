@@ -26,6 +26,7 @@ export {default as ProfileComponent} from "./ProfileComponent";
 export {default as ProgressView} from "./ProgressView";
 export {default as RichSnackbarContent} from "./RichSnackbarContent";
 export {default as ServiceComponent} from "./ServiceComponent";
+export {default as ScrollSnapComponent} from "./ScrollSnapComponent";
 export {default as ShareComponent, share, copyToClipboard} from "./ShareComponent";
 export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
