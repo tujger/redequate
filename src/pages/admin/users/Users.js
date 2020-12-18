@@ -56,6 +56,7 @@ function Users(props) {
             pagination = new Pagination({
                 ref: firebase.database().ref("users_public"),
                 child: "visit",
+                start: 0,
                 order: "desc",
             })
             itemTransform = async item => {
@@ -92,6 +93,7 @@ function Users(props) {
             pagination = new Pagination({
                 ref: firebase.database().ref("users_public"),
                 child: "created",
+                start: 0,
                 order: "desc",
             })
             itemTransform = item => fetchUserData(item);

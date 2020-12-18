@@ -98,31 +98,31 @@ const Activity = (props) => {
     switch (activityMode) {
         case "all":
             pagination = new Pagination({
-                endDate: endDate ? endDate.toDate() : null,
+                endDate: endDate ? endDate.toDate() : undefined,
                 order: activitySort,
                 ref: firebase.database().ref("activity"),
-                startDate: startDate ? startDate.toDate() : null,
+                startDate: startDate ? startDate.toDate() : undefined,
             })
             break;
         case "type":
             pagination = new Pagination({
                 child: "type",
-                endDate: endDate ? endDate.toDate() : null,
+                endDate: endDate ? endDate.toDate() : undefined,
                 equals: activityFilterItem,
                 order: activitySort,
                 ref: firebase.database().ref("activity"),
                 start: activityFilter,
-                startDate: startDate ? startDate.toDate() : null,
+                startDate: startDate ? startDate.toDate() : undefined,
             })
             break;
         case "uid":
             pagination = new Pagination({
                 child: "uid",
-                endDate: endDate ? endDate.toDate() : null,
-                equals: activityFilterItem,
+                endDate: endDate ? endDate.toDate() : undefined,
+                equals: activityFilterItem || undefined,
                 order: activitySort,
                 ref: firebase.database().ref("activity"),
-                startDate: startDate ? startDate.toDate() : null,
+                startDate: startDate ? startDate.toDate() : undefined,
             })
             break;
         default:
@@ -149,7 +149,7 @@ const Activity = (props) => {
                     </Select>
                 </Grid>
                 <Grid item xs>
-                    {!filteredItem && activityMode === "all" && <Input
+                    {false && !filteredItem && activityMode === "uid" && <Input
                         autoFocus
                         color={"secondary"}
                         endAdornment={activityFilter
@@ -217,11 +217,20 @@ const Activity = (props) => {
                         onDelete={() => {
                             dispatch({
                                 type: auditReducer.ACTIVITY,
-                                activityMode,
                                 activitySort
                             });
                             dispatch({type: lazyListComponentReducer.RESET});
                         }}
+                    />}
+                    {activityMode === "type" && !filteredItem && <Chip
+                        avatar={null}
+                        color={"secondary"}
+                        label={"Needs select type"}
+                    />}
+                    {activityMode === "uid" && !filteredItem && <Chip
+                        avatar={null}
+                        color={"secondary"}
+                        label={"Needs select person"}
                     />}
                     {startDate && <Chip
                         avatar={<StartDateIcon/>}

@@ -1,7 +1,27 @@
-function Pagination({ref, child, value, size = 10, order = "asc", start, end, equals, update, timeout = 30000, transform}) {
+import {key} from "firebase-key";
+
+function Pagination(
+    {
+        ref,
+        child,
+        value,
+        size = 10,
+        order = "asc",
+        start,
+        startDate,
+        end,
+        equals,
+        endDate,
+        update,
+        timeout = 30000,
+        transform,
+        transformData
+    }) {
     const baseRef = ref;
-    let lastKey = null;
-    let lastValue = null;
+    const startKey = startDate !== undefined ? key(startDate || 0, "min") : undefined;
+    const endKey = endDate !== undefined ? key(endDate, "min") : undefined;
+    let cursorKey = order === "asc" ? startKey : endKey;
+    let cursorValue;
     let countTotal = 0;
     let count = 0;
     let finished = false;
@@ -9,87 +29,206 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
     let timeoutTask;
 
     const next = () => new Promise((resolve, reject) => {
-        if (finished) {
-            resolve([]);
-            return;
+        let timedout = false;
+        const checkIfFinished = async () => {
+            if (finished) throw [];
         }
-
-        let ref = baseRef;
-        if (child) ref = ref.orderByChild(child);
-        else if (value) ref = ref.orderByValue();
-        else ref = ref.orderByKey();
-        count = 0;
-        started = true;
-
-        if (lastKey !== null) {
-            // a previous page has been loaded so get the next one using the previous value/key
-            // we have to start from the current cursor so add one to page size
-            if (order === "asc") {
-                if (equals !== undefined) {
-                    ref = ref.startAt(lastValue, lastKey).endAt(equals + "\uf8ff").limitToFirst(size + 1);
-                    // ref = ref.equalTo(lastValue, lastKey).limitToFirst(size + 1);
-                } else if (child || value) {
-                    ref = ref.startAt(lastValue, lastKey).limitToFirst(size + 1);
-                } else {
-                    ref = ref.startAt(lastKey).limitToFirst(size + 1);
-                }
-            } else {
-                if (equals !== undefined) {
-                    ref = ref.startAt(equals).endAt(lastValue, lastKey).limitToLast(size + 1);
-                    // ref = ref.equalTo(lastValue, lastKey).limitToLast(size + 1);
-                } else if (child || value) {
-                    ref = ref.endAt(lastValue, lastKey).limitToLast(size + 1);
-                } else {
-                    ref = ref.endAt(lastKey).limitToLast(size + 1);
-                }
+        const importArguments = async props => {
+            return {
+                ...props,
+                baseRef,
+                child,
+                end,
+                endDate,
+                equals,
+                order,
+                size,
+                start,
+                startDate,
+                term: {child, value, equals, start, ref: baseRef.key, size},
+                timeout,
+                transform,
+                transformData,
+                update,
+                value,
+            };
+        }
+        const validateArguments = async props => {
+            const {child, endDate, equals, start, startDate, value} = props;
+            if (start && equals) throw Error(`[FP] Ambiguous terms: start=${start}, equals=${equals}`);
+            if (child && value) throw Error(`[FP] Ambiguous terms: child=${child}, value=${value}`);
+            if (startDate && endDate && startDate > endDate) throw Error(`[FP] Incorrect terms: startDate=${startDate} > endDate=${endDate}`);
+            return props;
+        }
+        const importGlobalFlags = async props => {
+            return {...props, cursorKey, cursorValue, startKey, endKey};
+        }
+        const buildRef = async props => {
+            const {baseRef, child, value} = props;
+            let ref = baseRef;
+            if (child) ref = ref.orderByChild(child);
+            else if (value) ref = ref.orderByValue();
+            else ref = ref.orderByKey();
+            return {...props, ref};
+        }
+        const updateSize = async props => {
+            const {cursorKey, size} = props;
+            const size_ = cursorKey === undefined ? size : size + 1;
+            return {...props, size: size_};
+        }
+        const detectTypeOfValue = async props => {
+            const {end, equals, start} = props;
+            const isString = value => {
+                return value !== undefined && value !== null && value.constructor.name === "String";
             }
-        } else {
-            // this is the first page
+            const isNumber = value => {
+                return value !== undefined && value !== null && value.constructor.name === "Number";
+            }
+            const value = start !== undefined ? start : end !== undefined ? end : equals;
+            return {...props, isString: isString(value), isNumber: isNumber(value)};
+        }
+        const buildMinMax = async props => {
+            const {end, endKey, equals, start, startKey, isNumber, isString} = props;
+
+            const minKey = startKey !== undefined ? startKey : "\u0020";
+            const maxKey = endKey !== undefined ? endKey : "\uf8ff";
+
+            let minValue, maxValue;
+            if (isString) {
+                minValue = (start || equals || "") + "\u0020";
+                maxValue = (end || start || equals || "") + "\uf8ff";
+            } else if (isNumber) {
+                minValue = start !== undefined ? start : equals !== undefined ? equals : Number.MIN_SAFE_INTEGER;
+                maxValue = end !== undefined ? end : equals !== undefined ? equals : Number.MAX_SAFE_INTEGER;
+            } else {
+                minValue = "\u0020";
+                maxValue = "\uf8ff"
+            }
+            return {...props, minKey, minValue, maxKey, maxValue};
+        }
+        const buildCursorForEquals = async props => {
+            const {cursorKey, cursorValue, equals, maxKey, minKey, order} = props;
             if (equals !== undefined) {
-                if (order === "asc") {
-                    ref = ref.equalTo(equals).limitToFirst(size);
-                } else {
-                    // ref = ref.startAt(start).endAt(start + "\uf8ff").limitToLast(size);
-                    ref = ref.equalTo(equals).limitToLast(size);
-                }
-            } else if (start !== undefined) {
-                if (order === "asc") {
-                    const endAt = start !== null && start.constructor.name === "String" ? ((end || start) + "\uf8ff") : (end || Number.MAX_SAFE_INTEGER);
-                    ref = ref.startAt(start).endAt(endAt).limitToFirst(size);
-                } else {
-                    const endAt = start !== null && start.constructor.name === "String" ? (start + "\uf8ff") : Number.MAX_SAFE_INTEGER;
-                    ref = ref.startAt(start).endAt(endAt).limitToLast(size);
-                }
-            } else {
-                if (order === "asc") {
-                    ref = ref.startAt("\u0000").limitToFirst(size);
-                } else {
-                    ref = ref.endAt("\uf8ff").limitToLast(size);
+                const cursorKey_ = cursorKey || (order === "asc" ? minKey : maxKey);
+                const cursorValue_ = cursorValue !== undefined ? cursorValue : equals;
+                return {
+                    ...props,
+                    cursorKey: cursorKey_,
+                    cursorValue: cursorValue_,
+                    minValue: cursorValue_,
+                    maxValue: cursorValue_
+                };
+            }
+            return props;
+        }
+        const buildCursorForStart = async props => {
+            const {cursorValue, maxValue, minValue, start} = props;
+            if (start !== undefined) {
+                const cursorValue_ = cursorValue || (order === "asc" ? minValue : maxValue);
+                return {...props, cursorValue: cursorValue_};
+            }
+            return props;
+        }
+        const buildCursorForByKey = async props => {
+            const {child, cursorKey, cursorValue, equals, start, value} = props;
+            if (child === undefined && value === undefined) {
+                if (start !== undefined) {
+                    const cursorKey_ = cursorKey || start;
+                    return {...props, cursorKey: cursorKey_};
+                } else if (equals !== undefined) {
+                    const cursorKey_ = cursorValue || equals;
+                    return {...props, cursorKey: cursorKey_, minKey: cursorKey_, maxKey: cursorKey_};
                 }
             }
+            return props;
         }
-        // baseRef.database.goOnline();
-
-        let timeoutFired = false;
-        clearTimeout(timeoutTask);
-        timeoutTask = setTimeout(() => {
-            timeoutFired = true;
-            console.error(`[FP] timed out for ${toString()}`);
-            reject(new Error("Timed out on data request."));
-        }, timeout);
-
-        return ref.once("value").then(async snap => {
+        const buildFirst = async props => {
+            const {cursorKey, cursorValue, minKey, minValue, order} = props;
+            let firstKey, firstValue;
+            if (order === "asc") {
+                firstKey = cursorKey || minKey;
+                firstValue = cursorValue !== undefined ? cursorValue : minValue;
+            } else {
+                firstKey = minKey;
+                firstValue = minValue;
+            }
+            return {...props, firstKey, firstValue};
+        }
+        const buildLast = async props => {
+            const {cursorValue, cursorKey, maxKey, maxValue, order} = props;
+            let lastKey, lastValue;
+            if (order === "asc") {
+                lastKey = maxKey;
+                lastValue = maxValue;
+            } else {
+                lastKey = cursorKey || maxKey;
+                lastValue = cursorValue !== undefined ? cursorValue : maxValue;
+            }
+            return {...props, lastKey, lastValue};
+        }
+        const applyTermsForKey = async props => {
+            const {child, firstKey, lastKey, ref, value} = props;
+            if (child || value) return props;
+            let ref_ = ref.startAt(firstKey).endAt(lastKey);
+            return {...props, ref: ref_};
+        }
+        const applyTermsForChild = async props => {
+            const {child, firstKey, firstValue, lastKey, lastValue, ref} = props;
+            if (!child) return props;
+            let ref_ = ref.startAt(firstValue, firstKey).endAt(lastValue, lastKey);
+            return {...props, ref: ref_};
+        }
+        const applyTermsForValue = async props => {
+            const {firstKey, firstValue, lastKey, lastValue, ref, value} = props;
+            if (!value) return props;
+            let ref_ = ref.startAt(firstValue, firstKey).endAt(lastValue, lastKey);
+            return {...props, ref: ref_};
+        }
+        const applyLimits = async props => {
+            const {order, ref, size} = props;
+            let ref_;
+            if (order === "asc") {
+                ref_ = ref.limitToFirst(size);
+            } else {
+                ref_ = ref.limitToLast(size);
+            }
+            return {...props, ref: ref_};
+        }
+        const installTimeout = async props => {
+            const {timeout} = props;
+            const timeoutTask = setTimeout(() => {
+                console.error(`[FP] time out on ${toString()}`);
+                reject(new Error("Time out on data request."));
+                timedout = true;
+            }, timeout);
+            return {...props, timeoutTask};
+        }
+        const fetchData = async props => {
+            const {ref} = props;
+            const snapshot = await ref.once("value");
+            return {...props, snapshot}
+        }
+        const removeTimeoutOrThrow = async props => {
+            const {timeoutTask} = props;
             clearTimeout(timeoutTask);
-            if (timeoutFired) return;
-            const keys = [];
-            let data = []; // store data in array so it's ordered
+            if (timedout) throw "time-out";
+            return props;
+        }
+        const extractChildren = async props => {
+            const {snapshot, minKey, maxKey, order, ...rest} = props;
             const children = [];
-
-            snap.forEach(child => {
+            snapshot.forEach(child => {
+                if (order === "asc" && child.key > maxKey) return;
+                if (order === "desc" && child.key < minKey) return;
                 children.push(child)
             });
+            return {...props, children};
+        }
+        const processChildren = async props => {
+            const {child, children, update} = props;
+            const keys = [];
+            const data = [];
             for (const ss of children) {
-                if (lastKey && ss.key === lastKey) continue;
                 const value = ss.val();
                 if (child && value[child] === undefined) continue;
                 if (update) {
@@ -108,31 +247,98 @@ function Pagination({ref, child, value, size = 10, order = "asc", start, end, eq
                     data.push({value: ss.val(), key: ss.key});
                 }
                 keys.push(ss.key);
-                count++;
-                countTotal++;
             }
-            // store the cursor
+            return {...props, data, keys};
+        }
+        const extractCursor = async props => {
+            const {child, data, keys, order, value} = props;
             if (keys.length) {
                 const last = order === "asc" ? keys.length - 1 : 0;
-                lastKey = keys[last];
-                // console.log(child, lastKey, data[last])
-                if (child && data[last]) lastValue = data[last].value[child];
-                else if (value && data[last]) lastValue = data[last].value;
+                const cursorKey = keys[last];
+                let cursorValue;
+                if (child && data[last]) cursorValue = data[last].value[child];
+                else if (value && data[last]) cursorValue = data[last].value;
+
+                return {...props, cursorKey, cursorValue}
             }
-            if (count < size) finished = true;
+            return props;
+        }
+        const transformItems = async props => {
+            const {data, transform} = props;
             if (transform) {
-                data = await Promise.all(data.map(async item => transform(item)));
+                const data_ = Promise.all(data.map(async item => transform(item)));
+                return {...props, data: data_};
             }
+            return props;
+        }
+        const transformDataset = async props => {
+            const {data, transformData} = props;
+            if (transformData) {
+                const data_ = await transformData(data);
+                return {...props, data: data_};
+            }
+            return props;
+        }
+        const exportGlobalFlags = async props => {
+            const {data, size, cursorKey: cursorKey_, cursorValue: cursorValue_} = props;
+            if (data.length < size) finished = true;
+            countTotal += data.length;
+            count = data.length;
+            cursorKey = cursorKey_;
+            cursorValue = cursorValue_;
+            return props;
+        }
+        const returnData = async props => {
+            const {data} = props;
             resolve(data);
-        }, error => {
-            reject(error);
-        });
-    })
+        }
+        const print = order => async props => {
+            console.log(order, props);
+            return props;
+        }
+        const catchEvent = async event => {
+            if (event instanceof Error) !timedout && reject(event);
+            console.warn("[FP] catch event", event);
+            if (timedout) return;
+            resolve(event);
+            // reject(event);
+        }
+
+        return checkIfFinished()
+            .then(importArguments)
+            .then(validateArguments)
+            .then(importGlobalFlags)
+            .then(buildRef)
+            .then(updateSize)
+            .then(detectTypeOfValue)
+            .then(buildMinMax)
+            .then(buildCursorForEquals)
+            .then(buildCursorForStart)
+            .then(buildCursorForByKey)
+            .then(buildFirst)
+            .then(buildLast)
+            .then(applyTermsForKey)
+            .then(applyTermsForChild)
+            .then(applyTermsForValue)
+            .then(applyLimits)
+            .then(installTimeout)
+            .then(fetchData)
+            .then(removeTimeoutOrThrow)
+            .then(extractChildren)
+            .then(processChildren)
+            .then(extractCursor)
+            .then(transformItems)
+            .then(transformDataset)
+            .then(exportGlobalFlags)
+            .then(returnData)
+            .catch(catchEvent);
+    });
+
     const reset = () => {
         // baseRef.database.goOnline();
         clearTimeout(timeoutTask);
-        lastKey = null;
-        lastValue = null;
+        cursorKey = order === "asc" ? startKey : endKey;
+        cursorValue = undefined;
         countTotal = 0;
         count = 0;
         finished = false;

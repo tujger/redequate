@@ -13,7 +13,7 @@ export default function({firebase, start}) {
         child: "_sort_name",
         ref: firebase.database().ref("users_public"),
         size: maxItems,
-        start: normalizeSortName(start)
+        start: normalizeSortName(start),
     });
 
     const emailsPagination = new Pagination({

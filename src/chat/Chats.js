@@ -67,6 +67,7 @@ function Chats(
                 pagination={() => new Pagination({
                     child: "timestamp",
                     order: "desc",
+                    start: 0,
                     ref: firebase.database().ref("_chats").child(currentUserData.id),
                 })}
                 placeholder={<ChatsItem skeleton/>}
@@ -96,6 +97,7 @@ function Chats(
                     noItemsComponent={<ChatsItem label={"No chats found"}/>}
                     pagination={() => new Pagination({
                         child: "timestamp",
+                        start: 0,
                         order: "desc",
                         ref: firebase.database().ref("_chats").child(currentUserData.id),
                     })}

@@ -83,7 +83,7 @@ function ActivityItemComponent(props) {
         }
         const catchEvent = async event => {
             if (event instanceof Error) throw event;
-            console.warn(event);
+            if (event) console.warn(event);
         }
         const catchUserFailed = uid => async error => {
             console.warn(error);
