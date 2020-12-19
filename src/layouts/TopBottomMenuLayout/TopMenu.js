@@ -8,6 +8,7 @@ import {usePages} from "../../controllers/General";
 import {connect} from "react-redux";
 import MenuSection from "./MenuSection";
 import LanguageComponent from "../../components/LanguageComponent";
+import {styles} from "../../controllers/Theme";
 
 const stylesCurrent = theme => ({
     label: {
@@ -53,6 +54,7 @@ const TopMenu = props => {
             className={[classes.label, classes.profileitem].join(" ")}
         >
             <AvatarView
+                className={classes.avatarSmall}
                 admin={currentRole(currentUserData) === Role.ADMIN}
                 image={currentUserData.image}
                 initials={currentUserData.initials}
@@ -75,4 +77,4 @@ const mapStateToProps = ({topMenuReducer}) => ({
     badge: topMenuReducer.badge,
 });
 
-export default connect(mapStateToProps)(withStyles(stylesCurrent)(TopMenu));
+export default connect(mapStateToProps)(withStyles(stylesCurrent)(withStyles(styles)(TopMenu)));

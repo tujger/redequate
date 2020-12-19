@@ -11,7 +11,7 @@ const styles = theme => ({
         color: "#ffffff",
         flexDirection: "column",
         justifyContent: "center",
-        padding: theme.spacing(1),
+        padding: theme.spacing(0),
         textAlign: "center",
         whiteSpace: "pre-wrap",
     }

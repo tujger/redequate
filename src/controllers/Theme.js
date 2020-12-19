@@ -146,6 +146,12 @@ export const styles = theme => ({
         backgroundColor: theme.palette.primary.main,
         color: theme.palette.getContrastText(theme.palette.primary.main),
     },
+    avatarSmall: {
+        height: theme.spacing(5),
+        fontSize: "1rem",
+        textDecoration: "none",
+        width: theme.spacing(5),
+    },
 
     badge: {
         color: "#ff0000",

@@ -36,7 +36,7 @@ const Signup = ({classes, signup = true, additional}) => {
     const history = useHistory();
     const currentUserData = useCurrentUserData();
     const params = useParams();
-    const {i18n, t} = useTranslation();
+    const {t} = useTranslation();
 
     const requestSignupPassword = () => {
         if (!email && !requestPasswordFor) {
@@ -54,11 +54,11 @@ const Signup = ({classes, signup = true, additional}) => {
             setState({...state, requesting: false});
             return;
         }
-        if (password !== confirm) {
-            notifySnackbar(new Error("Passwords not equal"));
-            setState({...state, requesting: false});
-            return;
-        }
+        // if (password !== confirm) {
+        //     notifySnackbar(new Error("Passwords not equal"));
+        //     setState({...state, requesting: false});
+        //     return;
+        // }
 
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
@@ -171,7 +171,7 @@ const Signup = ({classes, signup = true, additional}) => {
                 />
             </Grid>
         </Grid>
-        <Box m={1}/>
+        {/*<Box m={1}/>
         <Grid container spacing={1} alignItems={"flex-end"}>
             <Grid item>
                 <Lock/>
@@ -187,7 +187,7 @@ const Signup = ({classes, signup = true, additional}) => {
                     value={confirm}
                 />
             </Grid>
-        </Grid>
+        </Grid>*/}
         {additional}
         <Box m={2}/>
         <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth disabled={requesting}>

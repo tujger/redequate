@@ -29,7 +29,11 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 function Login(props) {
     const {
-        popup = true, agreementComponent = null, onLogin, transformUserDataOnFirstLogin, layout = <LoginLayout/>
+        agreementComponent = null,
+        layout = <LoginLayout/>,
+        onLogin,
+        popup = true,
+        transformUserDataOnFirstLogin,
     } = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
@@ -124,7 +128,7 @@ function Login(props) {
                 title: t("Login.Your account is not yet verified."),
                 variant: "warning",
             })
-            setState(state => ({...state, requesting: true}));
+            setState(state => ({...state, requesting: false}));
             return;
         }
         return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
@@ -157,6 +161,10 @@ function Login(props) {
                         .then(() => setTimeout(() => {
                             setState(state => ({...state, disabled: false}))
                         }, 10))
+                        .catch(error => {
+                            if(error && error.code === "messaging/failed-service-worker-registration") return;
+                            throw error;
+                        })
                         .catch(notifySnackbar)
                 }
             })

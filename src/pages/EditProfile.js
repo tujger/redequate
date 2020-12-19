@@ -85,7 +85,14 @@ const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 function EditProfile(props) {
     // eslint-disable-next-line react/prop-types
-    let {classes, uploadable = true, notifications = true, publicFields = publicFieldsDefault, adminFields: adminFieldsGiven = adminFields} = props;
+    let {
+        adminFields: adminFieldsGiven = adminFields,
+        allowDelete = true,
+        classes,
+        notifications = true,
+        publicFields = publicFieldsDefault,
+        uploadable = true,
+    } = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -284,31 +291,44 @@ function EditProfile(props) {
     }
 
     const deleteUser = () => {
-        dispatch(ProgressView.SHOW);
-        setState(state => ({...state, disabled: true, deleteOpen: false}));
-        console.log("delete user by admin", userData.id)
-
-        if (isAdmin) {
-            userData.delete()
-                .then(() => {
-                    notifySnackbar("User deleted");
-                    setState(state => ({...state, disabled: false}));
-                    history.goBack();
-                })
-                .then(() => {
-                    updateActivity({
-                        firebase,
-                        uid: currentUserData.id,
-                        type: "User delete",
-                        details: userData.toJSON(),
-                    }).catch(console.error);
-                })
-                .catch(notifySnackbar)
-                .finally(() => dispatch(ProgressView.HIDE))
-        } else {
-            setState(state => ({...state, disabled: false}));
-            dispatch(ProgressView.HIDE);
+        let isMount = true;
+        const prepareDeleting = async () => {
+            dispatch(ProgressView.SHOW);
+            setState(state => ({...state, disabled: true, deleteOpen: false}));
         }
+        const deleteUserData = async () => {
+            console.log("[EditProfile] delete user by", currentUserData.role, userData.id);
+            return userData.delete();
+        }
+        const onDeleteComplete = async () => {
+            notifySnackbar("User deleted");
+            if(isSameUser(userData, currentUserData)) {
+                logoutUser(firebase, store)();
+                history.replace(pages.home.route);
+            } else {
+                history.goBack();
+            }
+            isMount = false;
+        }
+        const publishActivity = async () => {
+            updateActivity({
+                firebase,
+                uid: currentUserData.id,
+                type: "User delete",
+                details: userData.toJSON(),
+            }).catch(console.error);
+        }
+        const finalizeDeleting = async () => {
+            dispatch(ProgressView.HIDE);
+            isMount && setState(state => ({...state, disabled: false, deleteOpen: false}));
+        }
+
+        prepareDeleting()
+            .then(deleteUserData)
+            .then(onDeleteComplete)
+            .then(publishActivity)
+            .catch(notifySnackbar)
+            .finally(finalizeDeleting);
     }
 
     const handleNotifications = (evt, enable) => {
@@ -348,7 +368,13 @@ function EditProfile(props) {
         }
     };
 
+    const isAdmin = matchRole([Role.ADMIN], currentUserData);
+    // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
+    const isDeleteAllowed = isAdmin || (allowDelete && isSameUser(userData, currentUserData));
+    const isNotificationsAvailable = !iOS && firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
+    const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
+
 
     React.useEffect(() => {
         let isMounted = true;
@@ -377,11 +403,6 @@ function EditProfile(props) {
     if (userData.id !== currentUserData.id && !matchRole([Role.ADMIN], currentUserData)) {
         return <Redirect to={pages.editprofile.route}/>
     }
-
-    const isAdmin = matchRole([Role.ADMIN], currentUserData);
-    // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
-    const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
-    const isNotificationsAvailable = !iOS && firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
 
     return <Grid className={classes.center} container>
         <Box m={0.5}/>
@@ -534,7 +555,7 @@ function EditProfile(props) {
                         Cancel
                     </Button>
                 </ButtonGroup>}
-                {isAdmin && <>
+                {isDeleteAllowed && <>
                     <Box m={8}/>
                     <Grid container justify={"center"}>
                         <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
@@ -544,7 +565,7 @@ function EditProfile(props) {
                 </>}
             </Grid>
         </Grid>
-        {deleteOpen && <ConfirmComponent
+        {isDeleteAllowed && deleteOpen && <ConfirmComponent
             confirmLabel={"Delete"}
             critical
             onCancel={() => setState(state => ({...state, deleteOpen: false}))}

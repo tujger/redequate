@@ -49,12 +49,13 @@ const ConfirmComponent = (
     const windowData = useWindowData();
 
     React.useEffect(() => {
-        const unblock = history.block(() => {
+        history.unblock = history.block(() => {
             onCancel();
             return false;
         })
         return () => {
-            unblock();
+            history.unblock && history.unblock();
+            history.unblock = null;
         }
     }, []);
 

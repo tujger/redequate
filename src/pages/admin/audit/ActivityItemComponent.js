@@ -5,7 +5,7 @@ import Card from "@material-ui/core/Card";
 import Typography from "@material-ui/core/Typography";
 import CardHeader from "@material-ui/core/CardHeader";
 import {UserData} from "../../../controllers/UserData";
-import {cacheDatas, useFirebase} from "../../../controllers/General";
+import {cacheDatas, useFirebase, usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import withStyles from "@material-ui/styles/withStyles";
@@ -15,10 +15,13 @@ import {stylesList} from "../../../controllers/Theme";
 import TypeIcon from "@material-ui/icons/ArrowRight";
 import {notifySnackbar} from "../../../controllers";
 import Linkify from "react-linkify";
+import {useHistory} from "react-router-dom";
 
 function ActivityItemComponent(props) {
     const {data, classes, skeleton, label, onItemClick} = props;
     const firebase = useFirebase();
+    const history = useHistory();
+    const pages = usePages();
     const [state, setState] = React.useState({});
     const {alert, detailTimestamp, userData, removed, details, timestamp, type, userDatas = []} = state;
 
@@ -165,7 +168,14 @@ function ActivityItemComponent(props) {
             <Grid container spacing={1}>Activity: {type}</Grid>
             {userDatas && userDatas.map((item, index) => <Grid container key={index} spacing={1}>
                 <Grid item>{item.key}</Grid>
-                <Grid item className={classes.userName} onClickCapture={handleUserClick(item.userData.id)}>
+                <Grid item className={classes.userName} onClickCapture={evt => {
+                    evt && evt.stopPropagation();
+                    if(history.unblock) {
+                        history.unblock();
+                        history.unblock = null;
+                    }
+                    history.push(pages.user.route + item.userData.id)
+                }}>
                     {item.userData.name}
                 </Grid>
             </Grid>)}

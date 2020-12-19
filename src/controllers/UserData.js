@@ -265,13 +265,14 @@ export function UserData(firebase) {
             }
         },
         delete: async () => {
-            const updates = {};
-            updates[`users_public/${_id}`] = null;
-            updates[`roles/${_id}`] = null;
-            updates[`users_private/${_id}`] = null;
+            // const updates = {};
+            // updates[`users_public/${_id}`] = null;
+            // updates[`roles/${_id}`] = null;
+            // updates[`users_private/${_id}`] = null;
 
-            console.log("[UserData] delete", updates);
-            await firebase.database().ref().update(updates);
+            console.log("[UserData] delete", _id);
+            await firebase.database().ref("users_public").child(_id).set(null);
+            // await firebase.database().ref().update(updates);
             cacheDatas.remove(_id);
             return _body;
         },
