@@ -7,7 +7,7 @@ export function uploadComponentClean(uppy, key) {
             const file = uppy._uris[itemKey];
             if (file) {
                 uppy.removeFile(file.id);
-                console.log("[UploadComponent] file removed", file);
+                console.log("[UploadComponent] file removed from uppy", file);
             }
             delete uppy._uris[itemKey];
         });
@@ -34,7 +34,7 @@ export function uploadComponentPublish(firebase) {
             const uuid = Uuid();
             const fileRef = firebase.storage().ref().child(auth + "/images/" + (name ? name + "-" : "") + uuid + "-" + file.name);
 
-            console.log("[Upload] uploaded", file, fileRef);
+            console.log("[Upload] uploaded to firebase", file, fileRef);
             return fetchImage().then(blob => {
                 // eslint-disable-next-line promise/param-names
                 return new Promise((resolve1, reject1) => {
@@ -60,7 +60,7 @@ export function uploadComponentPublish(firebase) {
                 uploadComponentClean(uppy);
                 if (deleteFile) {
                     try {
-                        console.log("[Upload] delete old file", deleteFile);
+                        console.log("[Upload] delete old file from firebase", deleteFile);
                         firebase.storage().refFromURL(deleteFile).delete();
                     } catch (e) {
                         console.error("[Upload]", e);

@@ -2,19 +2,20 @@ import React from "react";
 import Menu from "@material-ui/core/Menu";
 import IconButton from "@material-ui/core/IconButton";
 import Fade from "@material-ui/core/Fade";
-import ButtonShare from "./ButtonShare";
+import ActionShare from "./ActionShare";
 import {matchRole, Role, useCurrentUserData} from "../../controllers";
-import ButtonDelete from "./ButtonDelete";
+import ActionDelete from "./ActionDelete";
 import MenuIcon from "@material-ui/icons/MoreVert";
+import ActionEdit from "./ActionEdit";
 
 export default (props) => {
-    const {classes, postData} = props;
+    const {classes, onChange, onDelete, postData} = props;
     const currentUserData = useCurrentUserData();
     const [state, setState] = React.useState({});
     const {anchor} = state;
 
     const isDeleteAllowed = currentUserData && !currentUserData.disabled
-        && (postData.uid === currentUserData.id || matchRole([Role.ADMIN], currentUserData))
+        && (postData.uid === currentUserData.id || matchRole([Role.ADMIN], currentUserData));
 
     const handleMenuClick = event => {
         event.stopPropagation();
@@ -27,15 +28,18 @@ export default (props) => {
     };
 
     const items = [];
-    items.push(<ButtonShare {...props} id={"share"} key={"share"} onMenuItemClick={handleMenuClose}/>);
-    if (isDeleteAllowed) items.push(<ButtonDelete {...props} id={"delete"} key={"delete"} onMenuItemClick={handleMenuClose}/>);
+    items.push(<ActionShare {...props} id={"share"} key={"share"} onMenuItemClick={handleMenuClose}/>);
+    if (isDeleteAllowed) {
+        items.push(<ActionEdit {...props} id={"edit"} key={"edit"} onMenuItemClick={handleMenuClose} onComplete={onChange}/>);
+        items.push(<ActionDelete {...props} id={"delete"} key={"delete"} onMenuItemClick={handleMenuClose} onComplete={onDelete}/>);
+    }
 
     if (!items.length) return null;
     return <>
         <IconButton className={classes.cardMenuButton} onClick={handleMenuClick}>
             <MenuIcon/>
         </IconButton>
-        {anchor && <Menu
+        <Menu
             anchorEl={anchor}
             keepMounted
             onClose={handleMenuClose}
@@ -43,6 +47,6 @@ export default (props) => {
             TransitionComponent={Fade}
         >
             {items}
-        </Menu>}
+        </Menu>
     </>
 }

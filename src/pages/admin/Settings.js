@@ -113,7 +113,6 @@ const Settings = ({classes}) => {
                 details: {
                     message: message || null,
                     state: value ? "on" : "off",
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
                 }
             }))
             .catch(notifySnackbar)

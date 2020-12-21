@@ -29,7 +29,6 @@ export default React.forwardRef((props, ref) => {
     } = props;
     const pages = usePages();
 
-    // return React.useMemo(() => {
     return <Card
         className={[
             classes.card,
@@ -94,14 +93,17 @@ export default React.forwardRef((props, ref) => {
                     >
                         <PostMedia
                             images={postData.images}
-                            inlineCarousel={false}
                             clickable={disableClick}
                         />
                     </Grid>}
-                    {!disableButtons && <PostButtons {...props}/>}
+                    <Grid container alignItems={"flex-end"} justify={"flex-end"}>
+                        {postData.edit && <Grid item xs className={classes.date}>
+                            Edited {toDateString(postData.editOf("last").timestamp)}
+                        </Grid>}
+                        {!disableButtons && <PostButtons {...props}/>}
+                    </Grid>
                 </>}
             />
         </PostCardWrapper>
     </Card>
-    // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 });

@@ -16,7 +16,7 @@ const stylesCurrent = makeStyles(theme => ({
     }
 }));
 
-export default ({icon = true, postData, userData, mentions, onChange, UploadProps}) => {
+export default ({icon = true, postData, userData, mentions, onComplete, UploadProps}) => {
     const classesCurrent = stylesCurrent();
     return <Grid item>
         <NewPostComponent
@@ -48,7 +48,7 @@ export default ({icon = true, postData, userData, mentions, onChange, UploadProp
             mentions={mentions}
             onComplete={({key}) => {
                 cacheDatas.remove(postData.id);
-                onChange({key});
+                onComplete({key});
             }}
             onError={notifySnackbar}
             replyTo={postData.id}

@@ -1,10 +1,9 @@
 import React from "react";
 import {useCurrentUserData} from "../controllers/UserData";
-import {fetchDeviceId, useStore} from "../controllers/General";
+import {fetchDeviceId} from "../controllers/General";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 import {useTranslation} from "react-i18next";
-import {refreshAll} from "../controllers/Store";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {connect} from "react-redux"
 import {languageReducer} from "../reducers/languageReducer";
@@ -15,7 +14,6 @@ const mapStateToProps = ({language}) => ({
 
 export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
     const currentUserData = useCurrentUserData();
-    const store = useStore();
     const {i18n, t} = useTranslation();
 
     const handleLanguageChange = event => {
@@ -28,10 +26,9 @@ export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
         } else {
             dispatch({type: languageReducer.CHANGE, locale: event.target.value});
         }
-        // refreshAll(store);
     }
 
-    if (!i18n || !i18n.options || !i18n.options.resources) return null;
+    if (!i18n || !i18n.options || !i18n.options.resources || Object.keys(i18n.options.resources).length < 2) return null;
     return <Select
         className={className}
         onChange={handleLanguageChange}

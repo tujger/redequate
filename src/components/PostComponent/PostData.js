@@ -2,7 +2,7 @@ import {tokenizeText} from "../MentionedTextComponent";
 import {cacheDatas} from "../../controllers/General";
 
 export const PostData = function ({firebase, type = "posts", allowedExtras = ["like"]}) {
-    let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root, _targetTag;
+    let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root, _targetTag, _edit;
     const refRoot = firebase.database().ref();
 
     const _body = {
@@ -12,11 +12,14 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
         get created() {
             return _created
         },
+        get edit() {
+            return _edit;
+        },
         get extras() {
             return _extras
         },
         get id() {
-            return _id
+            return _id;
         },
         set id(id) {
             if (_id && _id !== id) throw new Error("Post id is already defined");
@@ -81,10 +84,11 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
             if (value !== undefined) _counters[type] = value;
             return _counters[type] || 0;
         },
-        create: async ({uid, text, id, created, image, images, replyTo, root}) => {
+        create: async ({uid, text, id, created, edit, image, images, replyTo, root}) => {
             _uid = uid;
             _id = id || _id;
             _created = created;
+            _edit = edit;
             _text = text;
             _images = images;
             _replyTo = replyTo;
@@ -131,6 +135,15 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
             if (_images) data.images = _images;
             return data;
         },
+        editOf: type => {
+            if(!_edit) return null;
+            const keys = Object.keys(_edit);
+            if (type === "last") {
+                const key = keys[keys.length - 1];
+                return _edit[key];
+            }
+            return null;
+        },
         extra: type => {
             if (!_extras || !_extras[type]) {
                 return null;
@@ -138,10 +151,15 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
             return !!_extras[type].value;
         },
         fetch: (id) => new Promise((resolve, reject) => {
+            let force = false;
+            if (id === true || id === false) {
+                force = id;
+                id = _id;
+            }
             if (_id && id && _id !== id) throw new Error(`Post id is already defined: ${id}!=${_id}`);
             _id = id || _id;
             if (!_id) throw new Error("Post id is not defined");
-            if (_tokens) {
+            if (_tokens && !force) {
                 resolve(_body);
                 return;
             }

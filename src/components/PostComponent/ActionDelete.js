@@ -9,7 +9,7 @@ import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
 import MenuItem from "@material-ui/core/MenuItem";
 
-export default ({postData, classes, onMenuItemClick, onDelete, type}) => {
+export default ({postData, classes, onMenuItemClick, onComplete, type}) => {
     const [state, setState] = React.useState({});
     const {
         deletePost,
@@ -35,7 +35,7 @@ export default ({postData, classes, onMenuItemClick, onDelete, type}) => {
             .then(() => {
                 notifySnackbar({title: "Post successfully deleted."});
                 setTimeout(() => {
-                    onDelete && onDelete(postData);
+                    onComplete && onComplete(postData);
                 }, 2000)
             })
             .catch(notifySnackbar)

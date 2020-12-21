@@ -46,7 +46,10 @@ export default ({postData, classes}) => {
             }
         }
         const publishLike = async () => {
-            return postData[postData.extra("like") ? "removeExtra" : "putExtra"]({type: "like", uid: currentUserData.id});
+            return postData[postData.extra("like") ? "removeExtra" : "putExtra"]({
+                type: "like",
+                uid: currentUserData.id
+            });
         }
         const waitTimeout = async postData => {
             await delay(1000);
@@ -170,14 +173,14 @@ export default ({postData, classes}) => {
         <IconButton
             aria-label={"Like"}
             className={classes.counter}
+            // disabled={disabled}
             component={"div"}
-            onClick={handleClickExtra("like")}
+            onClick={disabled ? undefined : handleClickExtra("like")}
             size={"small"}
             style={postData.extra("like") ? {color: theme.palette.secondary.main} : undefined}
             title={"Like"}
         >
             <CounterComponent
-                // path={`${postData.id}/like`}
                 counter={postData.counter("like")}
                 prefix={<>
                     {postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}

@@ -23,7 +23,7 @@ function ActivityItemComponent(props) {
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
-    const {alert, detailTimestamp, userData, removed, details, timestamp, type, userDatas = []} = state;
+    const {alert, detailTimestamp, userData, removed, details, path, timestamp, type, userDatas = []} = state;
 
     const handleUserClick = uid => (event) => onItemClick("uid")(event, uid);
 
@@ -81,6 +81,14 @@ function ActivityItemComponent(props) {
             }
             return props;
         }
+        const fetchDetailPost = async props => {
+            const {details} = props;
+            const {postId, path} = details || {};
+            if(postId && path) {
+                return {...props, path};
+            }
+            return props;
+        }
         const updateState = async props => {
             isMounted && setState(state => ({...state, ...props}));
         }
@@ -100,6 +108,7 @@ function ActivityItemComponent(props) {
             .then(fetchDetailsUids)
             .then(fetchDetailsUserDatas)
             .then(fetchDetailTimestamp)
+            .then(fetchDetailPost)
             .then(updateState)
             .catch(catchEvent)
             .catch(notifySnackbar)
@@ -125,7 +134,6 @@ function ActivityItemComponent(props) {
                     <AvatarView
                         image={userData.image}
                         initials={userData.name}
-                        // onclick={(event) => onItemClick("uid")(event, userData.id)}
                         verified={true}
                     />
                 </div>}
@@ -165,12 +173,12 @@ function ActivityItemComponent(props) {
             }</pre>
             </Linkify>
             <Typography variant={"h6"}>Context</Typography>
-            <Grid container spacing={1}>Activity: {type}</Grid>
+            <Grid container spacing={1}><Grid item>Activity: {type}</Grid></Grid>
             {userDatas && userDatas.map((item, index) => <Grid container key={index} spacing={1}>
-                <Grid item>{item.key}</Grid>
+                <Grid item>{item.key}:</Grid>
                 <Grid item className={classes.userName} onClickCapture={evt => {
                     evt && evt.stopPropagation();
-                    if(history.unblock) {
+                    if (history.unblock) {
                         history.unblock();
                         history.unblock = null;
                     }
@@ -179,7 +187,20 @@ function ActivityItemComponent(props) {
                     {item.userData.name}
                 </Grid>
             </Grid>)}
-            {detailTimestamp && <Grid container spacing={1}>Timestamp: {detailTimestamp}</Grid>}
+            {path && <Grid container spacing={1}>
+                <Grid item>Post:</Grid>
+                <Grid item className={classes.userName} onClickCapture={evt => {
+                    evt && evt.stopPropagation();
+                    if (history.unblock) {
+                        history.unblock();
+                        history.unblock = null;
+                    }
+                    history.push(pages.post.route + path)
+                }}>
+                    open if exists
+                </Grid>
+            </Grid>}
+            {detailTimestamp && <Grid container spacing={1}><Grid item>Timestamp: {detailTimestamp}</Grid></Grid>}
         </ConfirmComponent>}
     </Card>
 }

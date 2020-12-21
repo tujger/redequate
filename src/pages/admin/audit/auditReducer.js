@@ -15,16 +15,12 @@ auditReducer.SAVE = "audit_save";
 auditReducer.ERRORS = "audit_errors";
 
 export const updateActivity = async ({firebase, uid = null, type = null, details = null}) => {
-    // if (!uid) {
-    //     console.error(Error("uid is not defined for activity registration"));
-    //     return;
-    // }
-    console.log({
+    /*console.log({
         details,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         type,
         uid,
-    });
+    });*/
     firebase.database().ref("activity").push({
         details,
         timestamp: firebase.database.ServerValue.TIMESTAMP,

@@ -98,14 +98,16 @@ function Dispatcher(props) {
     React.useEffect(() => {
         let maintenanceRef, unlisten;
         const initInternationalization = async () => {
-            const resources = {
+            const defaultResources = {
                 en: localeEn,
                 ru: localeRu,
             };
             let fallbackLng;
-            for (const r in locales) {
+            const resources = {};
+            const overrideWithResources = locales || defaultResources;
+            for (const r in overrideWithResources) {
                 fallbackLng = fallbackLng || r;
-                resources[r] = {translation: {...(resources[r] || {}), ...locales[r]}};
+                resources[r] = {translation: {...(defaultResources[r] || {}), ...overrideWithResources[r]}};
             }
             return i18n.use(LanguageDetector).use(initReactI18next)
                 .init({
@@ -118,7 +120,7 @@ function Dispatcher(props) {
                     parseMissingKeyHandler: (value) => {
                         return value.replace(/^\w+\./, "");
                     },
-                    resources: locales ? resources : undefined,
+                    resources,
                     saveMissing: false,
                 }).then(() => ({i18n, t: i18n.getFixedT()}));
         }
@@ -132,7 +134,8 @@ function Dispatcher(props) {
         const initWindowData = async props => {
             const windowData = {
                 breakpoint: width,
-                isNarrow: () => width === "xs" || width === "sm"
+                isNarrow: () => width === "xs" || width === "sm",
+                isWide: () => width === "md" || width === "lg" || width === "xl",
             }
             return {...props, windowData};
         }

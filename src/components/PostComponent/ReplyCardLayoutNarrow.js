@@ -27,7 +27,6 @@ export default React.forwardRef((props, ref) => {
     const pages = usePages();
     const windowData = useWindowData();
 
-    // return React.useMemo(() => {
     return <Card
         className={[
             classes.card,
@@ -55,7 +54,6 @@ export default React.forwardRef((props, ref) => {
                 <Grid
                     className={classes.userName}
                     item
-                    // onClick={evt => evt.stopPropagation()}
                 >
                     <Link
                         to={pages.user.route + userData.id}
@@ -88,5 +86,4 @@ export default React.forwardRef((props, ref) => {
             </>}
         />
     </Card>
-    // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 });

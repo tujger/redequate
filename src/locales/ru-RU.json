@@ -2,9 +2,7 @@
   "Common.Cancel": "Отмена",
   "Common.Continue": "Продолжить",
   "Common.Follow": "Подписаться",
-  "Common.New post": "Создать статью",
   "Common.Send": "Отправить",
-  "Common.Type message, use @ to mention other users and # for groups.": "Введите текст, используйте @ для ссылки на кого-нибудь или # для ссылки на группу.",
   "Contacts.Thank you for submitting your request": "Спасибо за Ваше сообщение! Наша команда скоро свяжется с Вами, если это нужно.",
   "Definitions.About": "О проекте",
   "Definitions.Alerts": "Уведомления",
@@ -33,5 +31,7 @@
   "Login.E-mail": "Пароль",
   "Login.Forgot password?": "Забыли пароль?",
   "Login.Login with": "Войти через",
-  "Login.Password": "Пароль"
+  "Login.Password": "Пароль",
+  "Post.New post": "Создать статью",
+  "Post.Type message, use @ to mention other users and # for tags.": "Введите текст, используйте @ для ссылки на кого-нибудь или # для ссылки на тег."
 }

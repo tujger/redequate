@@ -40,6 +40,7 @@ export default (props) => {
         ref,
     }
 
+    // return React.useMemo(() => {
     return <>
         <Hidden mdUp>
             {level > 0
@@ -50,4 +51,5 @@ export default (props) => {
             <PostCardLayoutWide {...inheritProps}/>
         </Hidden>
     </>
+    // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

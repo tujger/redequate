@@ -44,6 +44,22 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
             });
             resolve(token);
         }).catch(error => {
+            if (error.code === "messaging/unsupported-browser") {
+                if (hasWrapperControlInterface()) {
+                    wrapperControlCall({method: "subscribeNotifications", timeout: 30000}).then((response) => {
+                        console.log("[Notifications] token " + JSON.stringify(response));
+                        resolve(response);
+                    }).catch(error => {
+                        console.error(error);
+                        reject(error);
+                    })
+                    return;
+                }
+            } else if(error.code === "messaging/failed-service-worker-registration") {
+                console.error(error);
+                reject(error);
+                return;
+            }
             if (onMessage) onMessage({title: error.message});
             else setTimeout(() => notifySnackbar(error), 10);
             reject(error);
@@ -110,6 +126,10 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                 })
                 return;
             }
+        } else if(error.code === "messaging/failed-service-worker-registration") {
+            console.error(error);
+            reject(error);
+            return;
         }
         console.error(error);
         (onMessage || notifySnackbar)({title: error.message});

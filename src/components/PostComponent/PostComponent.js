@@ -8,6 +8,7 @@ import {cacheDatas, usePages} from "../../controllers/General";
 import {useHistory} from "react-router-dom";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {useDispatch} from "react-redux";
+import {notifySnackbar} from "../../controllers";
 
 const PostComponent = (props) => {
     const {
@@ -29,12 +30,16 @@ const PostComponent = (props) => {
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({expand: givenExpand});
-    const {highlight, expand} = state;
+    const {highlight, expand, random} = state;
 
     const handleChange = (props) => {
         const {key} = props;
         cacheDatas.remove(postData.id);
-        if (key) {
+        if (key === postData.id) {
+            postData.fetch(true)
+                .then(() => setState(state => ({...state, random: Math.random()})))
+                .catch(notifySnackbar)
+        } else if (key) {
             setState(state => ({...state, highlight: key, expand: postData.id}))
         } else {
             onChange(props);
@@ -82,7 +87,7 @@ const PostComponent = (props) => {
     }
 
     return <>
-        {!onlyReplies && <PostCard {...inheritProps}/>}
+        {!onlyReplies && <PostCard key={random} {...inheritProps}/>}
         <RepliesTree
             {...inheritProps}
             key={highlight}

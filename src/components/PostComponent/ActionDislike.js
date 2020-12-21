@@ -46,7 +46,7 @@ export default ({postData, classes}) => {
             aria-label={"Dislike"}
             className={classes.counter}
             component={"div"}
-            onClick={handleClickExtra("dislike")}
+            onClick={disabled ? undefined : handleClickExtra("dislike")}
             size={"small"}
             title={"Dislike"}
         >

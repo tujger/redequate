@@ -18,9 +18,12 @@ import SendIcon from "@material-ui/icons/Send";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
-import {useFirebase, usePages, useWindowData} from "../../controllers/General";
+import {cacheDatas, useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {styles} from "../../controllers/Theme";
-import {uploadComponentClean, uploadComponentPublish} from "../UploadComponent/uploadComponentControls";
+import {
+    uploadComponentClean,
+    uploadComponentPublish
+} from "../UploadComponent/uploadComponentControls";
 import ProgressView from "../ProgressView";
 import ModalComponent from "../ModalComponent";
 import NavigationToolbar from "../NavigationToolbar";
@@ -30,6 +33,7 @@ import MentionsInputComponent from "../MentionsInputComponent/MentionsInputCompo
 import {useHistory} from "react-router-dom";
 import {tokenizeText} from "../MentionedTextComponent";
 import {useTranslation} from "react-i18next";
+import {updateActivity} from "../../pages/admin/audit/auditReducer";
 
 const stylesCurrent = theme => ({
     content: {
@@ -61,15 +65,17 @@ const stylesCurrent = theme => ({
     },
 });
 
-const NewPostComponent = (
-    {
+const NewPostComponent = props => {
+    const {t} = useTranslation();
+    const {
         _savedText,
         _savedContext,
         buttonComponent,
         classes,
         context,
         dispatch,
-        hint = "Type message, use @ to mention other users and # for tags.",
+        editPostData,
+        hint = t("Post.Type message, use @ to mention other users and # for tag."),
         infoComponent,
         mentions = [mentionTags, mentionUsers],
         onBeforePublish = async data => data,
@@ -78,19 +84,18 @@ const NewPostComponent = (
         onComplete = ({key}) => console.log("[NewPost] onComplete({key})", {key}),
         replyTo,
         text: initialText,
-        title = replyTo ? "New reply" : "New post",
+        title = replyTo ? t("Post.New reply") : t("Post.New post"),
         type = "posts",
         UploadProps = {}
-    }) => {
+    } = props;
     const currentUserData = useCurrentUserData();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
-    const {disabled, uppy, open} = state;
+    const {disabled, hiddenTag, images, open, uppy} = state;
     const {camera = true, multi = true} = UploadProps;
-    const {t} = useTranslation();
 
     const text = context === _savedContext ? _savedText : initialText;
     const handleOpen = evt => {
@@ -104,7 +109,10 @@ const NewPostComponent = (
             history.push(pages.profile.route);
             return;
         }
-        setState(state => ({...state, open: true}))
+        setState(state => ({...state, open: true}));
+        if (buttonComponent && buttonComponent.props && buttonComponent.props.onClick) {
+            buttonComponent.props.onClick(evt);
+        }
     }
 
     const handleSend = () => {
@@ -113,8 +121,9 @@ const NewPostComponent = (
             dispatch(ProgressView.SHOW);
         }
         const checkIfTextChanged = async () => {
-            if (!text) throw "Text is empty";
-            if (text === initialText) throw "Text is not changed";
+            if (!text) throw t("Post.Text is empty.");
+            if (text === initialText) throw t("Post.Text is not changed.");
+            if (editPostData && text === editPostData.text && !images && !uppy) throw t("Post.Text is not changed.");
             return text;
         }
         const parseTokens = async (text) => {
@@ -136,7 +145,7 @@ const NewPostComponent = (
                     })
                 }
             })
-            const newtext = newtokens.map(token => {
+            let newtext = newtokens.map(token => {
                 if (token.type === "cr") {
                     return "\n";
                 } else if (token.type === "text") {
@@ -147,10 +156,28 @@ const NewPostComponent = (
                     return token;
                 }
             }).join("");
+            if (hiddenTag) newtext += hiddenTag;
             return newtext;
         }
-        const publishImage = async (text) => {
-            let images = null;
+        const removeOldImages = async text => {
+            if (editPostData) {
+                let removeImages = [];
+                if (editPostData.images) {
+                    for (const image of editPostData.images) {
+                        if (images.indexOf(image) >= 0) continue;
+                        removeImages.push(image);
+                    }
+                }
+                removeImages = removeImages.map(async url => firebase.storage()
+                    .refFromURL(url)
+                    .delete()
+                );
+                Promise.all(removeImages).catch(console.error);
+            }
+            return {text, images};
+        }
+        const publishImage = async ({text, images}) => {
+            let newImages = [];
             if (uppy) {
                 const publish = await uploadComponentPublish(firebase)({
                     auth: currentUserData.id,
@@ -159,22 +186,54 @@ const NewPostComponent = (
                         dispatch({...ProgressView.SHOW, value: progress});
                     },
                 });
-                images = publish.map(item => item.url);
+                newImages = publish.map(item => item.url) || [];
+                images = [...(images || []), ...(newImages || [])];
             }
+            setState(state => ({...state, images}));
             return {text, images};
         }
         const buildData = async ({text, images}) => ({
             created: firebase.database.ServerValue.TIMESTAMP,
-            images,
+            images: images || null,
             to: replyTo || 0,
-            text,
+            text: text || null,
             uid: currentUserData.id,
         });
         const publishData = async data => {
-            return firebase.database().ref().child(type).push(data);
+            if (editPostData) {
+                const {images, text} = data;
+                const {edit = {}} = editPostData;
+                const newEdit = firebase.database().ref().child(type).push();
+                edit[newEdit.key] = {
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    uid: currentUserData.id,
+                };
+                const updates = {images, text, edit};
+                return firebase.database().ref().child(type).child(editPostData.id).update(updates)
+                .then(() => {
+                    updateActivity({
+                        firebase,
+                        uid: currentUserData.id,
+                        type: "Post edit",
+                        details: {
+                            postId: editPostData.id,
+                            path: `${editPostData.root ? editPostData.root + "/" : ""}${editPostData.replyTo ? editPostData.replyTo + "/" : ""}${editPostData.id}` || null,
+                            uid: editPostData.uid,
+                        }
+                    })
+                    return {key: editPostData.id};
+                });
+            } else {
+                return firebase.database().ref().child(type).push(data);
+            }
+            throw data;
         }
         const publishComplete = async snapshot => {
-            dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: undefined});
+            dispatch({
+                type: newPostComponentReducer.SAVE,
+                _savedText: undefined,
+                _savedContext: undefined
+            });
             setState(state => ({...state, disabled: false, open: false}));
             onComplete({key: snapshot.key})
         }
@@ -184,15 +243,16 @@ const NewPostComponent = (
         }
 
         preparePublishing()
-            .then(checkIfTextChanged)
-            .then(parseTokens)
-            .then(publishImage)
-            .then(buildData)
-            .then(onBeforePublish)
-            .then(publishData)
-            .then(publishComplete)
-            .catch(onError || notifySnackbar)
-            .finally(finalizePublishing)
+        .then(checkIfTextChanged)
+        .then(parseTokens)
+        .then(removeOldImages)
+        .then(publishImage)
+        .then(buildData)
+        .then(onBeforePublish)
+        .then(publishData)
+        .then(publishComplete)
+        .catch(onError || notifySnackbar)
+        .finally(finalizePublishing)
     }
 
     const handleKeyUp = event => {
@@ -204,12 +264,20 @@ const NewPostComponent = (
     }
 
     const handleChange = (evt) => {
-        dispatch({type: newPostComponentReducer.SAVE, _savedText: evt.target.value, _savedContext: context});
+        dispatch({
+            type: newPostComponentReducer.SAVE,
+            _savedText: evt.target.value,
+            _savedContext: context
+        });
     }
 
     const handleCancel = evt => {
         handleImageRemove()();
-        dispatch({type: newPostComponentReducer.SAVE, _savedText: undefined, _savedContext: undefined});
+        dispatch({
+            type: newPostComponentReducer.SAVE,
+            _savedText: undefined,
+            _savedContext: undefined
+        });
         handleClose(evt);
         onClose();
     }
@@ -235,13 +303,41 @@ const NewPostComponent = (
         setState(state => ({...state, uppy}));
     }
 
+    const handleSavedImageRemove = index => () => {
+        const newImages = images.filter((image, i) => i !== index);
+        setState(state => ({...state, images: newImages}));
+    }
+
+    React.useEffect(() => {
+        if (!open) return;
+        if (editPostData) {
+            let _savedText = editPostData.text;
+            let hiddenTag = undefined;
+            if(_savedText) {
+                const specialCharacterPos = _savedText.indexOf(String.fromCharCode(1));
+                if(specialCharacterPos >= 0) {
+                    hiddenTag = _savedText.substring(specialCharacterPos);
+                    _savedText = _savedText.substring(0, specialCharacterPos);
+                }
+            }
+            dispatch({
+                type: newPostComponentReducer.SAVE,
+                _savedText,
+                _savedContext: context
+            });
+            setState(state => ({...state, editPostData, images: editPostData.images, hiddenTag}));
+        }
+        return () => {
+        }
+    }, [open])
+
     React.useEffect(() => {
         return () => {
             uploadComponentClean(uppy);
         }
     }, [uppy])
 
-    const uploadComponent = <UploadComponent
+    const uploadComponent = open && <UploadComponent
         button={windowData.isNarrow()
             ? <IconButton
                 children={multi ? <ImageAddIcon/> : <ImageIcon/>}
@@ -263,13 +359,53 @@ const NewPostComponent = (
         {...UploadProps}
     />
 
+    const imagesComponent = open && <>
+        {images && images.map((image, index) => {
+            return <Grid item key={index}>
+                <img
+                    alt={"Image"}
+                    className={classes._preview}
+                    src={image}
+                    title={"Image"}
+                />
+                <IconButton
+                    children={<ClearIcon/>}
+                    color={"secondary"}
+                    disabled={disabled}
+                    onClick={handleSavedImageRemove(index)}
+                    size={"small"}
+                    title={t("Post.Remove image")}
+                />
+            </Grid>
+        })}
+        {uppy && Object.keys(uppy._uris).map((key) => {
+            const file = uppy._uris[key];
+            return <Grid item key={key}>
+                <img
+                    alt={file.name}
+                    className={classes._preview}
+                    src={file.uploadURL}
+                    title={file.name}
+                />
+                <IconButton
+                    children={<ClearIcon/>}
+                    color={"secondary"}
+                    disabled={disabled}
+                    onClick={handleImageRemove(key)}
+                    size={"small"}
+                    title={t("Post.Remove image")}
+                />
+            </Grid>
+        })}
+    </>
+
     return <>
-        <buttonComponent.type
+        {buttonComponent && <buttonComponent.type
             label={title}
             {...buttonComponent.props}
             onClick={handleOpen}
-        />
-        {open && <ModalComponent open={open} onClose={handleClose}>
+        />}
+        {open && <ModalComponent open={true} onClose={handleClose}>
             <Hidden mdUp>
                 <NavigationToolbar
                     backButton={<IconButton
@@ -281,11 +417,11 @@ const NewPostComponent = (
                     className={classes.toolbar}
                     mediumButton={uploadComponent}
                     rightButton={<IconButton
-                        aria-label={"Send"}
+                        aria-label={t("Common.Send")}
                         children={<SendIcon/>}
                         onClick={handleSend}
                         style={{color: "inherit"}}
-                        title={"Send"}
+                        title={t("Common.Send")}
                     />}
                 />
             </Hidden>
@@ -312,25 +448,7 @@ const NewPostComponent = (
                 <Hidden mdUp>
                     <Box m={1}/>
                     <Grid container justify={"center"}>
-                        {uppy && Object.keys(uppy._uris).map((key) => {
-                            const file = uppy._uris[key];
-                            return <Grid item key={key}>
-                                <img
-                                    alt={file.name}
-                                    className={classes._preview}
-                                    src={file.uploadURL}
-                                    title={file.name}
-                                />
-                                <IconButton
-                                    children={<ClearIcon/>}
-                                    color={"secondary"}
-                                    disabled={disabled}
-                                    onClick={handleImageRemove(key)}
-                                    size={"small"}
-                                    title={"Remove image"}
-                                />
-                            </Grid>
-                        })}
+                        {imagesComponent}
                     </Grid>
                 </Hidden>
             </DialogContent>
@@ -339,25 +457,7 @@ const NewPostComponent = (
                     <Grid item xs>
                         <Grid container>
                             <Grid item>{uploadComponent}</Grid>
-                            {uppy && Object.keys(uppy._uris).map((key) => {
-                                const file = uppy._uris[key];
-                                return <Grid item key={key}>
-                                    <img
-                                        alt={file.name}
-                                        className={classes._preview}
-                                        src={file.uploadURL}
-                                        title={file.name}
-                                    />
-                                    <IconButton
-                                        children={<ClearIcon/>}
-                                        color={"secondary"}
-                                        disabled={disabled}
-                                        onClick={handleImageRemove(key)}
-                                        size={"small"}
-                                        title={"Remove image"}
-                                    />
-                                </Grid>
-                            })}
+                            {imagesComponent}
                         </Grid>
                     </Grid>
                     <Button onClick={handleCancel} color={"secondary"} disabled={disabled}>
