@@ -54,10 +54,14 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                         reject(error);
                     })
                     return;
+                } else {
+                    console.error(error);
+                    reject(error);
+                    return;
                 }
-            } else if(error.code === "messaging/failed-service-worker-registration") {
+            } else if (error.code === "messaging/failed-service-worker-registration") {
                 console.error(error);
-                reject(error);
+                resolve();
                 return;
             }
             if (onMessage) onMessage({title: error.message});
@@ -125,8 +129,12 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                     reject(error);
                 })
                 return;
+            } else {
+                console.error(error);
+                resolve();
+                return;
             }
-        } else if(error.code === "messaging/failed-service-worker-registration") {
+        } else if (error.code === "messaging/failed-service-worker-registration") {
             console.error(error);
             reject(error);
             return;

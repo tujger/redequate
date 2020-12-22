@@ -36,7 +36,7 @@ function ActivityItemComponent(props) {
         const fetchInitiatorData = async props => {
             const {uid} = props;
             if (!uid) return {...props, userData: {id: "", name: "Anonymous"}};
-            if (uid === "0") return {...props, userData: {id: "", name: "No user"}};
+            if (uid === "0") return {...props, userData: {id: "0", name: "No user"}};
             return cacheDatas.fetch(uid, id => UserData(firebase).fetch(id, [UserData.NAME, UserData.IMAGE]))
                 .then(userData => ({...props, userData}))
                 .catch(error => catchUserFailed(uid)(error).then(userData => ({...props, userData})));
@@ -84,7 +84,7 @@ function ActivityItemComponent(props) {
         const fetchDetailPost = async props => {
             const {details} = props;
             const {postId, path} = details || {};
-            if(postId && path) {
+            if (postId && path) {
                 return {...props, path};
             }
             return props;
@@ -132,6 +132,7 @@ function ActivityItemComponent(props) {
             <CardHeader
                 avatar={<div onClick={handleUserClick(userData.id)}>
                     <AvatarView
+                        className={classes.avatarSmall}
                         image={userData.image}
                         initials={userData.name}
                         verified={true}

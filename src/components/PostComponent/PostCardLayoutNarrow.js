@@ -14,6 +14,7 @@ import {mentionTags} from "../../controllers/mentionTypes";
 import PostButtons from "./PostButtons";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import PostMenu from "./PostMenu";
+import RotatingReplies from "./RotatingReplies";
 
 const stylesCurrent = makeStyles(theme => ({
     inline: {
@@ -32,6 +33,7 @@ export default React.forwardRef((props, ref) => {
         disableClick,
         disableButtons,
         handleClickPost,
+        level,
         pattern,
         postData,
         userData,
@@ -115,5 +117,6 @@ export default React.forwardRef((props, ref) => {
             {!disableButtons && <PostButtons {...props}/>}
         </Grid>*/}
         {!disableButtons && <PostButtons {...props}/>}
+        {level === undefined && <RotatingReplies {...props} postId={postData.id}/>}
     </Card>
 })

@@ -14,7 +14,7 @@ auditReducer.ACTIVITY = "audit_activity";
 auditReducer.SAVE = "audit_save";
 auditReducer.ERRORS = "audit_errors";
 
-export const updateActivity = async ({firebase, uid = null, type = null, details = null}) => {
+export const updateActivity = async ({firebase, uid = 0, type = null, details = null}) => {
     /*console.log({
         details,
         timestamp: firebase.database.ServerValue.TIMESTAMP,

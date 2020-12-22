@@ -18,7 +18,13 @@ import {
     useWindowData
 } from "./controllers/General";
 import LoadingComponent from "./components/LoadingComponent";
-import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
+import {
+    matchRole,
+    needAuth,
+    useCurrentUserData,
+    UserData,
+    watchUserChanged
+} from "./controllers/UserData";
 import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {SnackbarProvider} from "notistack";
@@ -33,6 +39,7 @@ import localeRu from "./locales/ru-RU.json";
 import localeEn from "./locales/en-EN.json";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 
 const DeviceUUID = require("device-uuid");
 
@@ -138,6 +145,10 @@ function Dispatcher(props) {
                 isWide: () => width === "md" || width === "lg" || width === "xl",
             }
             return {...props, windowData};
+        }
+        const initTextTranslation = async props => {
+            const textTranslationInstance = textTranslation({firebase});
+            return {...props, textTranslation: textTranslationInstance};
         }
         const fetchDeviceId_ = async props => {
             return {...props, deviceId: fetchDeviceId()};
@@ -310,10 +321,11 @@ function Dispatcher(props) {
             })().catch(console.error);
         }
         const onError = async error => {
+            console.error(error);
             if (error.fatal) {
-                setState(state => ({...state, ...error}));
-            } else {
                 setState(state => ({...state, fatal: error.fatal}));
+            } else {
+                setState(state => ({...state, ...error}));
             }
         }
         const printProps = async props => {
@@ -325,6 +337,7 @@ function Dispatcher(props) {
             .then(initFirebase)
             .then(initStore)
             .then(initWindowData)
+            .then(initTextTranslation)
             .then(fetchDeviceId_)
             .then(checkIfCompatible)
             .then(fetchMetaInfo)
@@ -360,12 +373,13 @@ function Dispatcher(props) {
 }
 
 const DispatcherInitialized = (props) => {
-    const {fatal, buildPages, copyright, firebase, store, menu: givenMenu, theme, title, windowData, metaInfo} = props;
+    const {fatal, buildPages, copyright, firebase, store, menu: givenMenu, theme, title, textTranslation, windowData, metaInfo} = props;
     const {t} = useTranslation();
 
     useFirebase(firebase);
-    useStore(store);
     useMetaInfo(metaInfo);
+    useStore(store);
+    useTextTranslation(textTranslation);
     useWindowData(windowData);
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);

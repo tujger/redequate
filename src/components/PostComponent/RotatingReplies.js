@@ -5,7 +5,7 @@ import {UserData} from "../../controllers/UserData";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar} from "../../controllers";
+import {notifySnackbar, Pagination} from "../../controllers";
 import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {useHistory} from "react-router-dom";
@@ -48,13 +48,13 @@ const stylesCurrent = theme => ({
 });
 
 export default withStyles(stylesCurrent)((props) => {
-    const {classes = {}, items, mentions, postId} = props;
+    const {classes = {}, items: givenItems, mentions, postId, type} = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const [state, setState] = React.useState({});
-    const {item, itemPrev} = state;
+    const [state, setState] = React.useState({items: givenItems});
+    const {item, itemPrev, items} = state;
     const taskRef = React.useRef(null);
     const leavingRef = React.useRef(null);
     const rootRef = React.useRef(null);
@@ -67,6 +67,7 @@ export default withStyles(stylesCurrent)((props) => {
     }
 
     React.useEffect(() => {
+        if (!items || !items.length) return;
         let isMounted = true;
         let selectedIndex = -1;
 
@@ -134,7 +135,9 @@ export default withStyles(stylesCurrent)((props) => {
                 label={<span className={classes.textSmall}>
                     <span className={classes.suggestionName}>
                         {userData.name}
-                    </span> <MentionedTextComponent disableClick mentions={mentions} text={postData.text.substr(0,200)}/>
+                    </span> <MentionedTextComponent
+                    disableClick mentions={mentions}
+                    text={postData.text.substr(0, 200)}/>
                 </span>}
                 pattern={"transparent"}
             />;
@@ -185,9 +188,34 @@ export default withStyles(stylesCurrent)((props) => {
         }
     }, [items]);
 
+    React.useEffect(() => {
+        if (items) return;
+        let isMount = true;
+        const fetchReplies = async () => {
+            return Pagination({
+                ref: firebase.database().ref(type),
+                equals: postId,
+                child: "to",
+                order: "desc",
+            }).next()
+        }
+        const updateState = async items => {
+            isMount && setState(state => ({...state, items}));
+        }
+
+        fetchReplies()
+            .then(updateState)
+            .catch(notifySnackbar)
+
+        return () => {
+            isMount = false;
+        }
+    }, []);
+
     if (!item) return null;
     return <Grid item xs ref={rootRef} className={classes.root} onClick={handleClick}>
-        {itemPrev && <Grid container key={Math.random()} ref={leavingRef} className={classes.moveable}>{itemPrev}</Grid>}
+        {itemPrev && <Grid container key={Math.random()} ref={leavingRef}
+                           className={classes.moveable}>{itemPrev}</Grid>}
         <Grid container className={classes.moveable}>{item}</Grid>
     </Grid>
 })

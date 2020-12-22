@@ -119,7 +119,7 @@ const Activity = (props) => {
             pagination = new Pagination({
                 child: "uid",
                 endDate: endDate ? endDate.toDate() : undefined,
-                equals: activityFilterItem || undefined,
+                equals: activityFilterItem,
                 order: activitySort,
                 ref: firebase.database().ref("activity"),
                 startDate: startDate ? startDate.toDate() : undefined,
@@ -130,6 +130,7 @@ const Activity = (props) => {
 
     const filteredItem = (() => {
         if (!activityFilterItem) return undefined;
+        if (activityMode === "uid" && activityFilterItem === "0") return {name: "No user"};
         if (activityMode === "uid") return cacheDatas.get(activityFilterItem);
         if (activityMode === "type") return {image: null, initials: activityFilterItem, name: activityFilterItem};
     })();
@@ -209,6 +210,7 @@ const Activity = (props) => {
                     {filteredItem && <Chip
                         avatar={<AvatarView
                             alt={"Avatar"}
+                            className={classes.avatarSmallest}
                             image={filteredItem.image}
                             initials={filteredItem.name}
                             verified={true}
@@ -271,7 +273,7 @@ const Activity = (props) => {
                 key={random}
                 itemComponent={itemComponent}
                 itemTransform={itemTransform}
-                noItemsComponent={<ActivityItemComponent label={"No errors found"}/>}
+                noItemsComponent={<ActivityItemComponent label={"No activities found"}/>}
                 pagination={pagination}
                 placeholder={<ActivityItemComponent skeleton={true}/>}
             />

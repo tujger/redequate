@@ -6,6 +6,7 @@ import ActionReplies from "./ActionReplies";
 import ActionReply from "./ActionReply";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import {useWindowData} from "../../controllers/General";
+import ActionTranslate from "./ActionTranslate";
 
 const stylesCurrent = makeStyles(theme => ({
     cardActions: {
@@ -34,6 +35,7 @@ export default (props) => {
         {allowedExtras.indexOf("dislike") >= 0 && <ActionDislike {...props}/>}
         {(showRepliesCounter && !isReply) && <ActionReplies {...props}/>}
         {isReply && <ActionReply {...props} icon={!isReply || !isNarrow} onComplete={onChange}/>}
+        <ActionTranslate {...props}/>
         {/*{isNarrow && <Grid item xs/>}*/}
         {/*{!isReply && <ButtonShare {...props}/>}*/}
         {/*<ButtonDelete {...props}/>*/}

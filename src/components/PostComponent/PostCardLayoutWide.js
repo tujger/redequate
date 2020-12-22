@@ -13,6 +13,7 @@ import MentionedTextComponent from "../MentionedTextComponent";
 import {mentionTags} from "../../controllers/mentionTypes";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
+import RotatingReplies from "./RotatingReplies";
 
 export default React.forwardRef((props, ref) => {
     const {
@@ -105,5 +106,6 @@ export default React.forwardRef((props, ref) => {
                 </>}
             />
         </PostCardWrapper>
+        {level === undefined && <RotatingReplies {...props} postId={postData.id}/>}
     </Card>
 });

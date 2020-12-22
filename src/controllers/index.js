@@ -25,3 +25,4 @@ export * from "./notifySnackbar";
 export * from "./notifyConfirm";
 export {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
 export {default as useScrollPosition, getScrollPosition} from "./useScrollPosition";
+export {useTextTranslation} from "./textTranslation";

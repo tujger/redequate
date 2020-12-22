@@ -224,7 +224,7 @@ function EditProfile(props) {
                     updateActivity({
                         firebase,
                         uid: currentUserData.id,
-                        type: "User save",
+                        type: "User role change",
                         details: {
                             role: role || null,
                             previousRole: userData.role || null,
