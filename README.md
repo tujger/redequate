@@ -47,51 +47,67 @@ There is important to define two variables: `pages` and `menu`;
 
         // generic cases
 
-        about: {route: "/about", label: "About", icon: <AboutIcon/>, component: <About/>},
+        about: {route: "/about", label: t("Definitions.About"), icon: <AboutIcon/>, component: <About/>},
 
-        alerts: {route: "/alerts", label: "Alerts", icon: <AlertsIcon/>, component: <Alerts fetchAlertContent={fetchAlertContent}/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <AlertsCounter/>},
+        alerts: {route: "/alerts", label: t("Definitions.Alerts"), icon: <AlertsIcon/>, component: <Alerts fetchAlertContent={fetchAlertContent}/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <AlertsCounter/>},
 
-        chat: {route: "/chat/:id", label: "Chat", icon: <ChatsIcon/>, component: <Chat/>, pullToRefresh: false, roles: [Role.ADMIN, Role.USER]},
+        chat: {route: "/chat/:id", label: t("Definitions.Chat"), icon: <ChatsIcon/>, component: <Chat/>, pullToRefresh: false, roles: [Role.ADMIN, Role.USER]},
 
-        chats: {route: "/chats", label: "Chats", icon: <ChatsIcon/>, component: <Chats/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <ChatsCounter/>},
+        chats: {route: "/chats", label: t("Definitions.Chats"), icon: <ChatsIcon/>, component: <Chats/>, roles: [Role.ADMIN, Role.USER], daemon: true, adornment: (user) => <ChatsCounter/>},
 
-        contacts: {route: "/contacts", label: "Contacts", icon: <ContactsIcon/>, component: <Contacts/>},
+        contacts: {route: "/contacts", label: t("Definitions.Contacts"), icon: <ContactsIcon/>, component: <Contacts/>, roles: [Role.ADMIN, Role.USER]},
 
-        editprofile: {route: "/edit/profile/*", label: "Edit profile", icon: <EditProfileIcon/>, component: <EditProfile uploadable={true} publicFields={publicFields}/>, roles: [Role.ADMIN, Role.USER]},
+        editprofile: {route: "/edit/profile/*", label: t("Definitions.Edit profile"), icon: <EditProfileIcon/>, component: <EditProfile uploadable={true}/>, roles: [Role.ADMIN, Role.USER]},
 
-        home: {route: "/", label: "Home", icon: <HomeIcon/>, component: <Home/>},
+        home: {route: "/", label: t("Definitions.Home","Home"), icon: <HomeIcon/>, component: <Home/>},
 
-        login: {route: "/login", label: "Login", icon: <LoginIcon/>, component: <Login signup={true} popup={true}/>, roles: [Role.LOGIN]},
+        login: {route: "/login", label: t("Definitions.Login"), title: t("Definitions.Login"), icon: <LoginIcon/>, component: <Login signup={true} popup={false}/>, roles: [Role.LOGIN]},
 
-        logout: {route: "/logout", label: "Logout", icon: <LogoutIcon/>, component: <Logout immediate={true}/>, roles: [Role.ADMIN, Role.USER, Role.USER_NOT_VERIFIED, Role.DISABLED]},
+        logout: {route: "/logout", label: t("Definitions.Logout"), icon: <LogoutIcon/>, component: <Logout immediate={true}/>, roles: [Role.ADMIN, Role.USER, Role.USER_NOT_VERIFIED, Role.DISABLED]},
 
-        main: {route: "/", label: "Home", icon: <HomeIcon/>, component: <Home/>},
+        main: {route: "/", label: t("Definitions.Home","Home"), icon: <HomeIcon/>, component: <Home/>},
 
-        profile: {route: "/profile/*", label: "Profile", icon: <ProfileIcon/>, component: <Profile/>, roles: [Role.ADMIN, Role.USER, Role.DISABLED]},
+        newpost: {route: "/new/post", label: t("Definitions.New post"), icon: <PostIcon/>, component: <NewPost/>, roles: [Role.ADMIN, Role.USER]},
 
-        restore: {route: "/user/restore", label: "Restore password", icon: <RestorePasswordIcon/>, component: <RestorePassword/>},
+        newtag: {route: "/new/tag", label: t("Definitions.Add tag"), icon: <GameIcon/>, component: <EditTag/>, roles: [Role.ADMIN, Role.USER]},
 
-        search: {route: "/search", label: "Search", icon: <SearchIcon/>, component: <Search/>},
+        post: {route: "/post/:id", label: t("Definitions.Post"), icon: <PostIcon/>, component: <Post/>},
 
-        signup: {route: "/signup", label: "Sign up", icon: <LoginIcon/>, component: <Signup signup={true} additional={<Agreement/>}/>},
+        profile: {route: "/profile/*", label: t("Definitions.Profile"), icon: <ProfileIcon/>, component: <Profile/>, roles: [Role.ADMIN, Role.USER, Role.DISABLED]},
 
-        signupFinish: {route: "/signup/:email", label: "Sign up", icon: <LoginIcon/>, component: <Signup signup={true}/>},
+        reply: {route: "/post/:id/:comment/:reply", label: t("Definitions.Post"), icon: <PostIcon/>, component: <Post/>},
 
-        user: {route: "/user/:id", label: "User", icon: <ProfileIcon/>, component: <Profile/>, roles: [Role.ADMIN, Role.USER]},
+        restore: {route: "/user/restore", label: t("Definitions.Restore password"), icon: <RestorePasswordIcon/>, component: <RestorePassword/>},
+
+        search: {route: "/search", label: t("Definitions.Search"), icon: <SearchIcon/>, component: <Search/>},
+
+        signup: {route: "/signup", label: t("Definitions.Sign up"), icon: <LoginIcon/>, component: <Signup signup={true} additional={<Agreement/>}/>},
+
+        signupFinish: {route: "/signup/:email", label: t("Definitions.Sign up"), icon: <LoginIcon/>, component: <Signup signup={true}/>},
+
+        tag: {route: "/tag/:id", label: t("Definitions.Group","Group"), icon: <GameIcon/>, component: <Tag/>},
+
+        user: {route: "/user/:id", label: t("Definitions.Profile"), icon: <ProfileIcon/>, component: <Profile/>, roles: [Role.ADMIN, Role.USER]},
 
         // generic admin cases
 
-        admin: {route: "/admin", label: "Admin", icon: <OnlyAdminIcon/>, component: <Admin menu={() => menu}/>, roles: [Role.ADMIN]},
+        activity: {route: "/admin/activity", label: "Activity", icon: <ErrorsIcon/>, component: <Activity/>, roles: [Role.ADMIN]},
+
+        admin: {route: "/admin", label: "Admin", icon: <OnlyAdminIcon/>, component: <Admin fetchMenu={pages => menu(pages)}/>, roles: [Role.ADMIN]},
 
         adduser: {route: "/admin/add", label: "Add user", icon: <AddUserIcon/>, component: <AddUser/>, roles: [Role.ADMIN]},
 
-        settings: {route: "/admin/settings", label: "Service", icon: <ServiceIcon/>, component: <Settings/>, roles: [Role.ADMIN]},
+        settings: {route: "/admin/settings", label: "Settings", icon: <ServiceIcon/>, component: <Settings/>, roles: [Role.ADMIN]},
 
         audit: {route: "/admin/audit", label: "Audit", icon: <ErrorsIcon/>, component: <Audit/>, roles: [Role.ADMIN]},
+
+        edittag: {route: "/edit/tag/:id", label: "Edit group", icon: <GameIcon/>, component: <EditTag/>, roles: [Role.ADMIN, Role.USER]},
 
         edituser: {route: "/edit/user/:id", label: "Edit profile", icon: <EditProfileIcon/>, component: <EditProfile uploadable={true}/>, roles: [Role.ADMIN]},
 
         errors: {route: "/admin/errors", label: "Errors", icon: <ErrorsIcon/>, component: <Errors/>, roles: [Role.ADMIN]},
+
+        tags: {route: "/admin/tags", label: "Tags", icon: <TagIcon/>, component: <Tags/>, roles: [Role.ADMIN]},
 
         users: {route: "/admin/users", label: "Users", icon: <UsersIcon/>, component: <Users invitation={false}/>, roles: [Role.ADMIN]},
 
@@ -99,36 +115,37 @@ There is important to define two variables: `pages` and `menu`;
 
         // example use cases
 
-        onlyadmin: {route: "/admin", label: "Admin", icon: <OnlyAdminIcon/>, component: <SimplePage title={resources.onlyadmin.title} body={resources.onlyadmin.body}/>, roles: [Role.ADMIN]},
-
         allroles: {route: "/allroles", label: "All roles", icon: <AllRolesIcon/>, component: <SimplePage title={resources.allroles.title} body={resources.allroles.body}/>},
 
         needauth: {route: "/needauth", label: "Need auth", icon: <NeedAuthIcon/>, component: <SimplePage title={resources.needauth.title} body={resources.needauth.body}/>, roles: [Role.AUTH]},
+
+        onlyadmin: {route: "/admin", label: "Admin", icon: <OnlyAdminIcon/>, component: <SimplePage title={resources.onlyadmin.title} body={resources.onlyadmin.body}/>, roles: [Role.ADMIN]},
 
         onlyuser: {route: "/onlyuser", label: "Only user", icon: <OnlyUserIcon/>, component: <SimplePage title={resources.onlyuser.title} body={resources.onlyuser.body}/>, roles: [Role.USER, Role.USER_NOT_VERIFIED, Role.DISABLED]},
 
         // here are project related pages
 
         // notfound must be always at the last position
-        notfound: {route: "/:path", label: "Not found", icon: <NotFoundIcon/>, component: <NotFound/>},
+        notfound: {route: "/:path", label: t("Definitions.Not found"), icon: <NotFoundIcon/>, component: <NotFound/>},
     };
 
 Page common options are:
 
-    route: String, // based on 'react-router-dom'
-    label: String,
-    icon: React.Component,
-    component?: React.Component,
-    onClick?: Function,
-    pullToRefresh?: Boolean, // if 'false' then disables pull-to-refresh in mobile wrapper
-    roles?: Array,
     adornment?: (UserData) => React.Component, // will be added to menu item
+    component?: React.Component,
     daemon?: Boolean, // if 'true' then component will be mandatory called with 'daemon' argument
     disabled?: Boolean, // set 'true' to temporarily disable item
+    icon: React.Component,
+    label: String,
+    onClick?: Function,
+    pullToRefresh?: Boolean, // if 'false' then disables pull-to-refresh in mobile wrapper when this page is shown
+    roles?: Array,
+    route: String, // based on 'react-router-dom'
+    title?: String, // uses 'label' if not defined
 
 Roles are:
 
-    AUTH - page can be shown to all users but user must be logged in to access the page,
+    AUTH - page can be shown in menus to all users but user must be logged in to access the page,
     ADMIN - administrator has higher priority access,
     DISABLED - user is suspended, has access to profile but no ability to edit or do any actions,
     LOGIN - user not logged in; show page only to that users,
@@ -245,12 +262,24 @@ Props:
 
 ## Database structure
 
+    _activity
+        types
+            type_name: timestamp
     _chats
         uid/chat_id
             private? - opposite uid
             timestamp - last update
     _counters
         id/counter: number
+    _tag
+        tag_id
+            post_id: uid
+    activity
+        activity_id
+            details - object with details
+            timestamp
+            type - indexed into _activity/types
+            uid
     alerts
         uid/alert_id
     chats
@@ -268,13 +297,37 @@ Props:
             error - text
             timestamp
             uid
+    extra
+        extra_id
+            id
+            id_uid
+            timestamp
+            type - one of ["like", "dislike"]
+            uid
+            uid_id
+    meta
+        blockedNames: String
+        maintenance
+            message
+            person: uid
+            timestamp
+        settings
+            dynamicLinksUrlPrefix
+            joinUsCancel
+            joinUsConfirm
+            joinUsScroll
+            joinUsText
+            joinUsTimeout
+            joinUsTitle
+        support: uid
     mutual
         type/item_id
             id - mutual object id
             id_uid - mixed key
+            timestamp
+            type
             uid - subject id
             uid_id - mixed key
-            timestamp
     mutualstamps
         _/uid - all items for uid
         _my/uid - all posts of uid
@@ -286,17 +339,49 @@ Props:
     posts
         post_id
             created
+            edit?
+                edit_id
+                    timestamp
+                    uid
             images
             root?
             text
-            to?
+            to: 0 or parent_id
             uid
     roles
         uid/role
+    tag
+        tag_id
+            _sort_name? - also 'hidden=true' if not present
+            description?
+            hidden?: Boolean
+            id
+            image?
+            label
+            timestamp
+            uid? - owner
     users_private
-        uid/device_id/options
+        uid/device_id
+            agreeement?: Boolean
+            browserName
+            deviceType
+            locale?
+            notification?
+            osName
+            osVersion
     users_public
-        uid/options
+        uid
+            _sort_name
+            created: Timestamp
+            email
+            emailVerified: Boolean
+            image?
+            lastLogin: Timestamp
+            name
+            provider
+            updated: Timestamp
+            visit: Timestamp
+            ...other options
 
 
 ## License

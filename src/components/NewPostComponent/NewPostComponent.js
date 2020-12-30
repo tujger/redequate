@@ -399,7 +399,6 @@ const NewPostComponent = props => {
             return props;
         }
         const updateState = async props => {
-            console.log(JSON.stringify(props));
             const {text, context, _savedContext} = props;
             if (context && context !== _savedContext) {
                 dispatch({
