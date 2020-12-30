@@ -182,13 +182,14 @@ function EditProfile(props) {
             if (uppy) {
                 const publishing = await uploadComponentPublish(firebase)({
                     auth: userData.id,
-                    uppy,
+                    files: uppy._uris,
                     name: "profile",
                     onprogress: progress => {
                         dispatch({...ProgressView.SHOW, value: progress});
                     },
                     deleteFile: userData.public.image
                 });
+                uploadComponentClean(uppy);
                 const {url} = (publishing[0] || {});
                 userData.set({
                     image: url || image || null,

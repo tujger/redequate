@@ -2,31 +2,24 @@ import React from "react";
 import {connect} from "react-redux";
 import Grid from "@material-ui/core/Grid";
 import withStyles from "@material-ui/styles/withStyles";
-import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
-import BackIcon from "@material-ui/icons/ArrowBack";
 import ImageIcon from "@material-ui/icons/InsertPhoto";
 import ImageAddIcon from "@material-ui/icons/AddPhotoAlternate";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Hidden from "@material-ui/core/Hidden";
 import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-import ClearIcon from "@material-ui/icons/Clear";
 import Box from "@material-ui/core/Box";
 import {newPostComponentReducer} from "./newPostComponentReducer";
-import SendIcon from "@material-ui/icons/Send";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
-import {cacheDatas, useFirebase, usePages, useWindowData} from "../../controllers/General";
+import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {styles} from "../../controllers/Theme";
 import {
     uploadComponentClean,
     uploadComponentPublish
 } from "../UploadComponent/uploadComponentControls";
 import ProgressView from "../ProgressView";
-import ModalComponent from "../ModalComponent";
-import NavigationToolbar from "../NavigationToolbar";
 import LoadingComponent from "../LoadingComponent";
 import UploadComponent from "../UploadComponent/UploadComponent";
 import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
@@ -34,9 +27,14 @@ import {useHistory} from "react-router-dom";
 import {tokenizeText} from "../MentionedTextComponent";
 import {useTranslation} from "react-i18next";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
+import Wrapper from "./Wrapper";
+import Images from "./Images";
+import {Pagination} from "../../controllers";
+import Toolbar from "./Toolbar";
 
 const stylesCurrent = theme => ({
     content: {
+        flex: "0 0 auto",
         padding: theme.spacing(1),
     },
     messagebox: {
@@ -76,14 +74,17 @@ const NewPostComponent = props => {
         dispatch,
         editPostData,
         hint = t("Post.Type message, use @ to mention other users and # for tag."),
+        imageDescriptors: givenImageDescriptors,
         infoComponent,
+        inline,
         mentions = [mentionTags, mentionUsers],
         onBeforePublish = async data => data,
         onError = error => notifySnackbar(error),
         onClose = () => console.log("[NewPost] onClose()"),
         onComplete = ({key}) => console.log("[NewPost] onComplete({key})", {key}),
         replyTo,
-        text: initialText,
+        tag: givenTag,
+        text: givenText,
         title = replyTo ? t("Post.New reply") : t("Post.New post"),
         type = "posts",
         UploadProps = {}
@@ -94,10 +95,9 @@ const NewPostComponent = props => {
     const pages = usePages();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
-    const {disabled, hiddenTag, images, open, uppy} = state;
+    const {disabled, hiddenTag, images, open, ready, text, uppy, imageDescriptors} = state;
     const {camera = true, multi = true} = UploadProps;
 
-    const text = context === _savedContext ? _savedText : initialText;
     const handleOpen = evt => {
         evt && evt.stopPropagation();
         if (!currentUserData || !currentUserData.id) {
@@ -122,7 +122,7 @@ const NewPostComponent = props => {
         }
         const checkIfTextChanged = async () => {
             if (!text) throw t("Post.Text is empty.");
-            if (text === initialText) throw t("Post.Text is not changed.");
+            // if (text === givenText) throw t("Post.Text is not changed.");
             if (editPostData && text === editPostData.text && !images && !uppy) throw t("Post.Text is not changed.");
             return text;
         }
@@ -142,6 +142,7 @@ const NewPostComponent = props => {
                         } else {
                             newtokens.push({type: "text", value: newtoken});
                         }
+                        return null;
                     })
                 }
             })
@@ -181,11 +182,12 @@ const NewPostComponent = props => {
             if (uppy) {
                 const publish = await uploadComponentPublish(firebase)({
                     auth: currentUserData.id,
-                    uppy,
+                    files: uppy._uris,
                     onprogress: progress => {
                         dispatch({...ProgressView.SHOW, value: progress});
                     },
                 });
+                uploadComponentClean(uppy);
                 newImages = publish.map(item => item.url) || [];
                 images = [...(images || []), ...(newImages || [])];
             }
@@ -210,23 +212,22 @@ const NewPostComponent = props => {
                 };
                 const updates = {images, text, edit};
                 return firebase.database().ref().child(type).child(editPostData.id).update(updates)
-                .then(() => {
-                    updateActivity({
-                        firebase,
-                        uid: currentUserData.id,
-                        type: "Post edit",
-                        details: {
-                            postId: editPostData.id,
-                            path: `${editPostData.root ? editPostData.root + "/" : ""}${editPostData.replyTo ? editPostData.replyTo + "/" : ""}${editPostData.id}` || null,
-                            uid: editPostData.uid,
-                        }
-                    })
-                    return {key: editPostData.id};
-                });
+                    .then(() => {
+                        updateActivity({
+                            firebase,
+                            uid: currentUserData.id,
+                            type: "Post edit",
+                            details: {
+                                postId: editPostData.id,
+                                path: `${editPostData.root ? editPostData.root + "/" : ""}${editPostData.replyTo ? editPostData.replyTo + "/" : ""}${editPostData.id}` || null,
+                                uid: editPostData.uid,
+                            }
+                        })
+                        return {key: editPostData.id};
+                    });
             } else {
                 return firebase.database().ref().child(type).push(data);
             }
-            throw data;
         }
         const publishComplete = async snapshot => {
             dispatch({
@@ -234,7 +235,15 @@ const NewPostComponent = props => {
                 _savedText: undefined,
                 _savedContext: undefined
             });
-            setState(state => ({...state, disabled: false, open: false}));
+            setState(state => ({
+                ...state,
+                disabled: false,
+                open: false,
+                ready: false,
+                uppy: null,
+                images: null,
+                hiddenTag: null
+            }));
             onComplete({key: snapshot.key})
         }
         const finalizePublishing = async () => {
@@ -243,16 +252,16 @@ const NewPostComponent = props => {
         }
 
         preparePublishing()
-        .then(checkIfTextChanged)
-        .then(parseTokens)
-        .then(removeOldImages)
-        .then(publishImage)
-        .then(buildData)
-        .then(onBeforePublish)
-        .then(publishData)
-        .then(publishComplete)
-        .catch(onError || notifySnackbar)
-        .finally(finalizePublishing)
+            .then(checkIfTextChanged)
+            .then(parseTokens)
+            .then(removeOldImages)
+            .then(publishImage)
+            .then(buildData)
+            .then(onBeforePublish)
+            .then(publishData)
+            .then(publishComplete)
+            .catch(onError)
+            .finally(finalizePublishing)
     }
 
     const handleKeyUp = event => {
@@ -269,6 +278,7 @@ const NewPostComponent = props => {
             _savedText: evt.target.value,
             _savedContext: context
         });
+        setState(state => ({...state, text: evt.target.value}));
     }
 
     const handleCancel = evt => {
@@ -278,13 +288,14 @@ const NewPostComponent = props => {
             _savedText: undefined,
             _savedContext: undefined
         });
+        setState(state => ({...state, text: "", hiddenTag: null, images: null, uppy: null}));
         handleClose(evt);
         onClose();
     }
 
     const handleClose = evt => {
         if (!evt) return;
-        setState(state => ({...state, open: false}))
+        setState(state => ({...state, open: false, ready: false}))
         if (evt) onClose(evt);
     }
 
@@ -303,33 +314,131 @@ const NewPostComponent = props => {
         setState(state => ({...state, uppy}));
     }
 
-    const handleSavedImageRemove = index => () => {
-        const newImages = images.filter((image, i) => i !== index);
-        setState(state => ({...state, images: newImages}));
+    const handleImagesChange = ({images, uppy}) => {
+        setState(state => ({...state, images, uppy}));
     }
 
     React.useEffect(() => {
-        if (!open) return;
-        if (editPostData) {
-            let _savedText = editPostData.text;
-            let hiddenTag = undefined;
-            if(_savedText) {
-                const specialCharacterPos = _savedText.indexOf(String.fromCharCode(1));
-                if(specialCharacterPos >= 0) {
-                    hiddenTag = _savedText.substring(specialCharacterPos);
-                    _savedText = _savedText.substring(0, specialCharacterPos);
+        let isMount = true;
+        const throwIfNotShown = async () => {
+            if (!open && !inline) throw "not-shown";
+        }
+        const prepareShowing = async () => {
+            setState(state => ({...state, disabled: true}));
+            dispatch(ProgressView.SHOW);
+        }
+        const importValues = async () => {
+            return {
+                _savedText,
+                _savedContext,
+                context,
+                editPostData,
+                inline,
+                givenImageDescriptors,
+                replyTo,
+                givenTag,
+                givenText,
+                open: true
+            };
+        }
+        const checkIfTextGiven = async props => {
+            const {context, _savedContext, _savedText, givenText, givenTag} = props;
+            let hiddenTag;
+            if (givenTag) {
+                const item = await Pagination({
+                    ref: firebase.database().ref("tag"),
+                    child: "id",
+                    equals: givenTag
+                }).next().then(items => items[0]);
+                if (item) {
+                    hiddenTag = String.fromCharCode(1) + `$[tag:${givenTag}:${item.key}]` + String.fromCharCode(2);
+                } else {
+                    notifySnackbar(Error(`${givenTag} is not found.`))
                 }
             }
-            dispatch({
-                type: newPostComponentReducer.SAVE,
-                _savedText,
-                _savedContext: context
-            });
-            setState(state => ({...state, editPostData, images: editPostData.images, hiddenTag}));
+            if (context && context === _savedContext) {
+                return {...props, text: _savedText, hiddenTag};
+            }
+            return {...props, text: givenText, hiddenTag};
         }
+        const checkIfImageDescriptorsGiven = async props => {
+            const {givenImageDescriptors} = props;
+            if (givenImageDescriptors) {
+                // const images = [imageDescriptors.uploadURL];
+                return {...props, imageDescriptors: givenImageDescriptors}
+            }
+            return props;
+        }
+        const checkIfEditPost = async props => {
+            const {context, editPostData} = props;
+            if (editPostData) {
+                let text = editPostData.text;
+                let hiddenTag;
+                if (text) {
+                    const specialCharacterPos = text.indexOf(String.fromCharCode(1));
+                    if (specialCharacterPos >= 0) {
+                        hiddenTag = text.substring(specialCharacterPos);
+                        text = text.substring(0, specialCharacterPos);
+                    }
+                }
+                return {
+                    ...props,
+                    context: context || editPostData.id,
+                    text,
+                    hiddenTag,
+                    images: editPostData.images
+                };
+            }
+            return props;
+        }
+        const checkIfReplyTo = async props => {
+            const {context, replyTo} = props;
+            if (replyTo) {
+                return {...props, context: context || replyTo};
+            }
+            return props;
+        }
+        const updateState = async props => {
+            console.log(JSON.stringify(props));
+            const {text, context, _savedContext} = props;
+            if (context && context !== _savedContext) {
+                dispatch({
+                    type: newPostComponentReducer.SAVE,
+                    _savedText: text,
+                    _savedContext: context
+                });
+            }
+            isMount && setState(state => ({...state, ...props, ready: true, disabled: false}));
+        }
+        const catchEvent = async event => {
+            if (event instanceof Error) throw event;
+            if (event === "not-shown") return;
+            console.error(JSON.stringify(event));
+        }
+        const catchError = async error => {
+            isMount && setState(state => ({...state, disabled: false}));
+            onError && onError(error);
+        }
+        const finalizeShowing = async () => {
+            dispatch(ProgressView.HIDE);
+        }
+
+        throwIfNotShown()
+            .then(prepareShowing)
+            .then(importValues)
+            .then(checkIfTextGiven)
+            .then(checkIfImageDescriptorsGiven)
+            .then(checkIfReplyTo)
+            .then(checkIfEditPost)
+            .then(updateState)
+            .catch(catchEvent)
+            .catch(catchError)
+            .finally(finalizeShowing)
+
         return () => {
+            isMount = false;
         }
-    }, [open])
+    }, [open]);
 
     React.useEffect(() => {
         return () => {
@@ -337,7 +446,7 @@ const NewPostComponent = props => {
         }
     }, [uppy])
 
-    const uploadComponent = open && <UploadComponent
+    const uploadComponent = ready && <UploadComponent
         button={windowData.isNarrow()
             ? <IconButton
                 children={multi ? <ImageAddIcon/> : <ImageIcon/>}
@@ -352,6 +461,7 @@ const NewPostComponent = props => {
             />}
         camera={camera}
         firebase={firebase}
+        imageDescriptors={imageDescriptors}
         limits={{width: 1000, height: 1000, size: 100000}}
         multi={true}
         onsuccess={handleUploadPhotoSuccess}
@@ -359,45 +469,17 @@ const NewPostComponent = props => {
         {...UploadProps}
     />
 
-    const imagesComponent = open && <>
-        {images && images.map((image, index) => {
-            return <Grid item key={index}>
-                <img
-                    alt={"Image"}
-                    className={classes._preview}
-                    src={image}
-                    title={"Image"}
-                />
-                <IconButton
-                    children={<ClearIcon/>}
-                    color={"secondary"}
-                    disabled={disabled}
-                    onClick={handleSavedImageRemove(index)}
-                    size={"small"}
-                    title={t("Post.Remove image")}
-                />
-            </Grid>
-        })}
-        {uppy && Object.keys(uppy._uris).map((key) => {
-            const file = uppy._uris[key];
-            return <Grid item key={key}>
-                <img
-                    alt={file.name}
-                    className={classes._preview}
-                    src={file.uploadURL}
-                    title={file.name}
-                />
-                <IconButton
-                    children={<ClearIcon/>}
-                    color={"secondary"}
-                    disabled={disabled}
-                    onClick={handleImageRemove(key)}
-                    size={"small"}
-                    title={t("Post.Remove image")}
-                />
-            </Grid>
-        })}
-    </>
+    const toolbar = ready && <Toolbar
+        bottom={!windowData.isNarrow() || inline}
+        classes={classes}
+        disabled={disabled}
+        onCancel={handleCancel}
+        onImagesChange={handleImagesChange}
+        onSend={handleSend}
+        title={title}
+        top={windowData.isNarrow() && !inline}
+        uploadComponent={uploadComponent}
+    />;
 
     return <>
         {buttonComponent && <buttonComponent.type
@@ -405,26 +487,8 @@ const NewPostComponent = props => {
             {...buttonComponent.props}
             onClick={handleOpen}
         />}
-        {open && <ModalComponent open={true} onClose={handleClose}>
-            <Hidden mdUp>
-                <NavigationToolbar
-                    backButton={<IconButton
-                        children={<BackIcon/>}
-                        disabled={disabled}
-                        onClick={handleCancel}
-                    />}
-                    children={title}
-                    className={classes.toolbar}
-                    mediumButton={uploadComponent}
-                    rightButton={<IconButton
-                        aria-label={t("Common.Send")}
-                        children={<SendIcon/>}
-                        onClick={handleSend}
-                        style={{color: "inherit"}}
-                        title={t("Common.Send")}
-                    />}
-                />
-            </Hidden>
+        {ready && <Wrapper inline={inline} onClose={handleClose}>
+            {(windowData.isNarrow() && !inline) && toolbar}
             <Hidden smDown>
                 <DialogTitle>{title}</DialogTitle>
             </Hidden>
@@ -445,30 +509,16 @@ const NewPostComponent = props => {
                         value={text}
                     />
                 </React.Suspense>
-                <Hidden mdUp>
-                    <Box m={1}/>
-                    <Grid container justify={"center"}>
-                        {imagesComponent}
-                    </Grid>
-                </Hidden>
             </DialogContent>
-            <Hidden smDown>
-                <DialogActions>
-                    <Grid item xs>
-                        <Grid container>
-                            <Grid item>{uploadComponent}</Grid>
-                            {imagesComponent}
-                        </Grid>
-                    </Grid>
-                    <Button onClick={handleCancel} color={"secondary"} disabled={disabled}>
-                        {t("Common.Cancel")}
-                    </Button>
-                    <Button onClick={handleSend} color={"secondary"} disabled={disabled}>
-                        {t("Common.Send")}
-                    </Button>
-                </DialogActions>
-            </Hidden>
-        </ModalComponent>}
+            {(!windowData.isNarrow() || inline) && toolbar}
+            <Images
+                classes={classes}
+                disabled={disabled}
+                images={images}
+                onChange={handleImagesChange}
+                uppy={uppy}
+            />
+        </Wrapper>}
     </>
 };
 

@@ -3,6 +3,7 @@ import {firebaseMessaging} from "./Firebase";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 import {notifySnackbar} from "./notifySnackbar";
 import notifyConfirm from "./notifyConfirm";
+import {cacheDatas} from "./General";
 
 const activateUpdate = registration => {
     try {
@@ -74,6 +75,16 @@ export const serviceWorkerRegister = () => {
             }
         },
     });
+
+    if (navigator.serviceWorker) {
+        try {
+            navigator.serviceWorker.addEventListener("message", (event) => {
+                cacheDatas.put("ServiceWorkerControl", event.data)
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
 };
 
 export const checkForUpdate = (explicitCheck = true) => new Promise((resolve, reject) => {

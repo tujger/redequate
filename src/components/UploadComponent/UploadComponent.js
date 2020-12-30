@@ -8,14 +8,13 @@ import Dashboard from "@uppy/dashboard";
 import {connect} from "react-redux";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
-import Resizer from "react-image-file-resizer";
 import ReactDOM from "react-dom";
 import "@uppy/core/dist/style.css";
 import "@uppy/progress-bar/dist/style.css";
 import "@uppy/dashboard/dist/style.css";
 import "@uppy/webcam/dist/style.css";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
-import {uploadComponentClean} from "./uploadComponentControls";
+import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
 
 const MAX_FILE_SIZE = 20 * 1024;
 
@@ -135,7 +134,17 @@ const styles = theme => ({
     },
 })
 
-const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, facingMode: givenFacingMode, multi = true}) => {
+const UploadComponent = (
+    {
+        button,
+        camera = true,
+        imageDescriptors,
+        onsuccess,
+        onerror,
+        limits,
+        facingMode: givenFacingMode,
+        multi = true
+    }) => {
     const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
     const {uppy, facingMode} = state;
 
@@ -173,36 +182,24 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
 
             console.log(`[UploadComponent] resize ${result.name} to ${maxWidth}x${maxHeight} with quality ${quality}`);
 
-            Resizer.imageFileResizer(
-                result.data,
-                maxWidth,
-                maxHeight,
-                type,
-                quality,
-                0,
-                uri => {
+            uploadComponentResize({
+                descriptor: result,
+                limits: {
+                    maxWidth,
+                    maxHeight,
+                    quality,
+                }
+            })
+                .then(result => {
                     uppy._uris[result.id] = result;
-                    result.uploadURL = uri;
-                    setState(state => ({...state, uppy}));
                     uppy.emit("upload-success", result, {
                         status: "complete",
                         body: null,
-                        uploadURL: uri
-                    })
-                    // Resizer.imageFileResizer(
-                    //     result.data,
-                    //     maxWidth,
-                    //     maxHeight,
-                    //     type,
-                    //     quality,
-                    //     0,
-                    //     uri => {
-                    //     },
-                    //     "base64"
-                    // )
-                },
-                "base64"
-            )
+                        uploadURL: result.uploadURL
+                    });
+                    setState(state => ({...state, uppy}));
+                })
+                .catch(console.error);
         });
         uppy.on("complete", (result) => {
         });
@@ -327,7 +324,18 @@ const UploadComponent = ({button, camera = true, onsuccess, onerror, limits, fac
                 target: Dashboard,
             });
         }
-        setState({...state, uppy: uppy});
+        if (imageDescriptors && imageDescriptors.length) {
+            uppy._uris = uppy._uris || {};
+            for (const descriptor of imageDescriptors) {
+                uppy._uris[descriptor.id] = descriptor;
+                uppy.emit("upload-success", descriptor, {
+                    status: "complete",
+                    body: null,
+                    uploadURL: descriptor.uploadURL
+                });
+            }
+        }
+        setState(state => ({...state, uppy: uppy}));
     }, [])
 
     let maxWidth, maxHeight;

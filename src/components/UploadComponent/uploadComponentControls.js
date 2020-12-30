@@ -1,6 +1,7 @@
 import Uuid from "react-uuid";
+import Resizer from "react-image-file-resizer";
 
-export function uploadComponentClean(uppy, key) {
+export async function uploadComponentClean(uppy, key) {
     if (uppy) {
         Object.keys(uppy._uris).map(itemKey => {
             if (key && key !== itemKey) return;
@@ -14,15 +15,26 @@ export function uploadComponentClean(uppy, key) {
     }
 }
 
+export async function uploadComponentDelete(firebase, deleteFile) {
+    if (deleteFile) {
+        try {
+            console.log("[Upload] delete old file from firebase", deleteFile);
+            return firebase.storage().refFromURL(deleteFile).delete();
+        } catch (e) {
+            console.error("[Upload]", e);
+        }
+    }
+}
+
 export function uploadComponentPublish(firebase) {
-    return ({uppy, name, metadata, onprogress, auth, deleteFile}) => new Promise((resolve, reject) => {
-        if (!uppy) {
+    return ({files, name, metadata, onprogress, auth, deleteFile}) => new Promise((resolve, reject) => {
+        if (!files) {
             resolve();
             return;
         }
 
-        const promises = Object.keys(uppy._uris).map(key => {
-            const file = uppy._uris[key];
+        const promises = Object.keys(files).map(key => {
+            const file = files[key];
             const fetchImage = async () => {
                 // if (uppy._uris && uppy._uris[file.id]) {
                 //     return uppy._uris[file.id].uploadURL;
@@ -57,14 +69,8 @@ export function uploadComponentPublish(firebase) {
                     });
                 });
             }).then(ref => {
-                uploadComponentClean(uppy);
                 if (deleteFile) {
-                    try {
-                        console.log("[Upload] delete old file from firebase", deleteFile);
-                        firebase.storage().refFromURL(deleteFile).delete();
-                    } catch (e) {
-                        console.error("[Upload]", e);
-                    }
+                    uploadComponentDelete(firebase, deleteFile).catch(console.error);
                 }
                 return ref;
             }).then(ref => {
@@ -81,3 +87,24 @@ export function uploadComponentPublish(firebase) {
             .catch(reject);
     });
 }
+
+export const uploadComponentResize = ({descriptor = {}, limits = {}}) => new Promise((resolve, reject) => {
+    const {data, type} = descriptor;
+    const imageType = type === "image/png" ? "PNG" : "JPEG";
+
+    const {maxWidth, maxHeight, quality} = limits;
+    Resizer.imageFileResizer(
+        data,
+        maxWidth,
+        maxHeight,
+        imageType,
+        quality,
+        0,
+        uri => {
+            console.error(JSON.stringify(descriptor));
+            descriptor.uploadURL = uri;
+            resolve(descriptor);
+        },
+        "base64"
+    )
+})

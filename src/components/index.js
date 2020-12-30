@@ -30,6 +30,8 @@ export {default as ScrollSnapComponent} from "./ScrollSnapComponent";
 export {default as ShareComponent, share, copyToClipboard} from "./ShareComponent";
 export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
-export {uploadComponentClean, uploadComponentPublish} from "./UploadComponent/uploadComponentControls";
+export {
+    uploadComponentClean, uploadComponentPublish, uploadComponentDelete, uploadComponentResize
+} from "./UploadComponent/uploadComponentControls";
 export {default as MentionsInputComponent} from "./MentionsInputComponent/MentionsInputComponent";
 export {mentionUsers, mentionTags} from "../controllers/mentionTypes";

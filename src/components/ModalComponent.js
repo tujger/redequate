@@ -11,6 +11,7 @@ const styles = theme => ({
         [theme.breakpoints.down("xs")]: {
             borderRadius: 0,
             bottom: 0,
+            justifyContent: "flex-start",
             left: 0,
             margin: 0,
             maxHeight: "initial",

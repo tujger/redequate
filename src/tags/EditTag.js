@@ -142,13 +142,14 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 console.log("[EditTag] publish image", uppy)
                 publishing = await uploadComponentPublish(firebase)({
                     auth: ".main",//currentUserData.id,
-                    uppy,
+                    files: uppy._uris,
                     name: tag.label,
                     onprogress: progress => {
                         dispatch({...ProgressView.SHOW, value: progress});
                     },
                     deleteFile: tag.image
                 });
+                uploadComponentClean(uppy);
             }
             const {url: imageSaved} = (publishing[0] || {});
             tag.image = imageSaved || image || null;
