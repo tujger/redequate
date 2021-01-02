@@ -6,12 +6,14 @@ import Popover from "@material-ui/core/Popover";
 import TextField from "@material-ui/core/TextField";
 import Cancel from "@material-ui/icons/Cancel";
 import normalizeDateInput from "./normalizedDateInput";
+import {useTranslation} from "react-i18next";
 
 export default props => {
     // eslint-disable-next-line react/prop-types
     const {classes, disabled, label, format = "L LT", onChange, range, date: givenDate, start: givenStart, end: givenEnd, InputProps, PopoverProps, color = "primary"} = props;
     const [state, setState] = React.useState({anchor: null});
     const {anchor} = state;
+    const {t} = useTranslation();
 
     const date = normalizeDateInput(givenDate);
     const start = normalizeDateInput(givenStart);
@@ -70,7 +72,7 @@ export default props => {
                                 event.stopPropagation();
                                 onChange(null, null);
                             }}
-                            title={"Clear"}
+                            title={t("Common.Clear")}
                         />
                     </InputAdornment> : null,
                 value: valueRange(),

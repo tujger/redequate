@@ -11,10 +11,12 @@ import ProgressView from "../ProgressView";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import Pagination from "../../controllers/FirebasePagination";
 import ConfirmComponent from "../ConfirmComponent";
+import {useTranslation} from "react-i18next";
 
-const MutualComponent = (
-    {
-        acceptLabel = "Accept",
+const MutualComponent = props => {
+    const {t} = useTranslation();
+    const {
+        acceptLabel = t("Mutual.Accept"),
         acceptComponent = <ActionComponent label={acceptLabel}/>,
         counter = true,
         counterComponent = <InfoComponent/>,
@@ -26,16 +28,16 @@ const MutualComponent = (
         mutualId,
         mutualMode = MutualMode.SIMPLEX_QUIET,
         mutualType = "users_public",
-        pendingLabel = "Waiting for response",
+        pendingLabel = t("Mutual.Waiting for response"),
         pendingComponent = <ActionComponent label={pendingLabel}/>,
-        rejectLabel = "Reject",
+        rejectLabel = t("Mutual.Reject"),
         rejectComponent = <ActionComponent label={rejectLabel}/>,
-        subscribeLabel = "Subscribe",
+        subscribeLabel = t("Mutual.Subscribe"),
         subscribeComponent = <ActionComponent label={subscribeLabel}/>,
         typeId,
-        unsubscribeLabel = "Unsubscribe",
+        unsubscribeLabel = t("Mutual.Unsubscribe"),
         unsubscribeComponent = <ActionComponent label={unsubscribeLabel}/>,
-    }) => {
+    } = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
@@ -76,7 +78,7 @@ const MutualComponent = (
 
     const handleSubscribe = () => {
         if (!isAllowed) {
-            onError(new Error("Subscribe not allowed"));
+            onError(new Error(t("Mutual.Subscribe not allowed")));
             return;
         }
         if (mutualMode === MutualMode.SIMPLEX_QUIET) {
@@ -88,7 +90,7 @@ const MutualComponent = (
 
     const handleUnsubscribe = () => {
         if (!isAllowed) {
-            onError(new Error("Unsubscribe not allowed"));
+            onError(new Error(t("Mutual.Unsubscribe not allowed")));
             return;
         }
         dispatch(ProgressView.SHOW);
@@ -290,16 +292,16 @@ const MutualComponent = (
             children={requestsCounter}
         />}
         {messageOpen && <ConfirmComponent
-            confirmLabel={"Invite"}
+            confirmLabel={t("Mutual.Invite")}
             onCancel={() => setState(state => ({...state, messageOpen: false}))}
             onConfirm={() => pushRequest()}
-            title={"Send the specialized message with your invitation."}
+            title={t("Mutual.Send the specialized message with your invitation.")}
         >
             <TextField
                 color={"secondary"}
                 fullWidth
-                label={"Message"}
-                placeholder={"Type message here"}
+                label={t("Mutual.Message")}
+                placeholder={t("Mutual.Type message here")}
                 multiline
                 rows={3}
                 onChange={handleChangeMessage}

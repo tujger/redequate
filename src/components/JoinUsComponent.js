@@ -6,6 +6,7 @@ import {useFirebase, useMetaInfo, usePages} from "../controllers/General";
 import {getScrollPosition} from "../controllers/useScrollPosition";
 import ConfirmComponent from "./ConfirmComponent";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
+import {useTranslation} from "react-i18next";
 
 const JoinUsComponent = ({label}) => {
     const [state, setState] = React.useState({});
@@ -17,13 +18,14 @@ const JoinUsComponent = ({label}) => {
     const pages = usePages();
     const {settings} = metaInfo || {};
     const {joinUsCancel, joinUsConfirm, joinUsScroll, joinUsText, joinUsTimeout, joinUsTitle} = settings || {};
+    const {t} = useTranslation();
 
     const handleCancel = () => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
         setState(state => ({...state, allowed: false, show: false}));
         updateActivity({
             firebase,
-            type: "Join us",
+            type: t("JoinUs.Join us"),
             details: {
                 action: "rejected",
                 referrer: document.referrer || null
@@ -36,7 +38,7 @@ const JoinUsComponent = ({label}) => {
         setState(state => ({...state, allowed: false, show: false}));
         updateActivity({
             firebase,
-            type: "Join us",
+            type: t("JoinUs.Join us"),
             details: {
                 action: "accepted",
                 referrer: document.referrer || null
@@ -104,12 +106,12 @@ const JoinUsComponent = ({label}) => {
     return <ConfirmComponent
         cancelLabel={joinUsCancel || null}
         cancelProps={{style: {color: "lightgray", textTransform: "none"}}}
-        confirmLabel={joinUsConfirm || "Join us"}
+        confirmLabel={joinUsConfirm || t("JoinUs.Join us")}
         confirmProps={{variant: "contained", className: "MuiFab-extended"}}
         modal
         onCancel={handleCancel}
         onConfirm={handleConfirm}
-        title={joinUsTitle || "Join us!"}
+        title={joinUsTitle || t("JoinUs.Join us")}
     >
         {joinUsText}
     </ConfirmComponent>

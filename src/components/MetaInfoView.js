@@ -4,6 +4,7 @@ import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import {useMetaInfo} from "../controllers/General";
+import {useTranslation, Trans} from "react-i18next";
 
 const styles = theme => ({
     root: {
@@ -20,10 +21,11 @@ const styles = theme => ({
 const MetaInfoView = ({classes, message}) => {
     const metaInfo = useMetaInfo();
     const {maintenance} = metaInfo || {};
+    const {t} = useTranslation();
 
     if (!maintenance && !message) return null;
     const {
-        message: maintenanceMessage = "Sorry, the service is temporarily unavailable.",
+        message: maintenanceMessage = t("MetaInfo.Sorry, the service is temporarily unavailable."),
         person = {},
         timestamp
     } = maintenance || {};
@@ -33,9 +35,12 @@ const MetaInfoView = ({classes, message}) => {
             <h4>{message || maintenanceMessage}</h4>
             {timestamp && <>
                 <Typography variant={"caption"}>
-                    Maintenance has been established by <a
-                    href={"mailto:" + email}
-                    style={{color: "inherit"}}>{name}</a> at {new Date(timestamp).toLocaleString()}
+                    <div dangerouslySetInnerHTML={{__html: t("MetaInfo.Maintenance has been established by {{person}} at {{date}}", {
+                        person: `<a href='mailto:${email}' style='color:inherit'>${name}</a>`,
+                        date: new Date(timestamp).toLocaleString(),
+                        nsSeparator: "~",
+                        interpolation: { escapeValue: false }
+                    })}}/>
                 </Typography>
                 <Box m={1}/>
             </>}

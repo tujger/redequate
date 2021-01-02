@@ -9,6 +9,7 @@ import UserIcon from "@material-ui/icons/Mail";
 import AvatarView from "./AvatarView";
 import {styles} from "../controllers/Theme";
 import FacebookLogo from "../images/facebook-logo.svg";
+import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     label: {
@@ -38,6 +39,7 @@ const stylesCurrent = theme => ({
 
 const ProfileComponent = (props) => {
     const {classes, userData, publicFields, provider = true} = props;
+    const {t} = useTranslation();
 
     return <Grid container className={classes.profile} style={{position: "relative"}}>
         {userData.image && <Grid item className={classes.profileImageContainer}>
@@ -66,25 +68,25 @@ const ProfileComponent = (props) => {
                 <Grid container justify={"flex-end"}>
                     <img src={GoogleLogo} width={40} height={40} alt={""}/>
                 </Grid>
-                <Typography variant={"body2"}>Signed with Google</Typography>
+                <Typography variant={"body2"}>{t("User.Signed with {{provider}}", {provider: "Google"})}</Typography>
             </>}
             {userData.public.provider && userData.public.provider === "facebook.com" && <>
                 <Grid container justify={"flex-end"}>
                     <img src={FacebookLogo} width={40} height={40} alt={""}/>
                 </Grid>
-                <Typography variant={"body2"}>Signed with Facebook</Typography>
+                <Typography variant={"body2"}>{t("User.Signed with {{provider}}", {provider: "Facebook"})}</Typography>
             </>}
             {userData.public.provider && userData.public.provider === "password" && <>
                 <Grid container justify={"flex-end"}>
                     <UserIcon/>
                 </Grid>
-                <Typography variant={"body2"}>Signed with e-mail</Typography>
+                <Typography variant={"body2"}>{t("User.Signed with {{provider}}", {provider: "e-mail"})}</Typography>
                 {!userData.verified && <Typography variant={"body2"}>Not verified</Typography>}
             </>}
             {userData.public.provider && userData.public.provider !== "password" && userData.public.provider !== "google.com" && userData.public.provider !== "facebook.com" &&
             <>
-                <Typography variant={"body2"}>Signed with {userData.public.provider}</Typography>
-                {!userData.verified && <Typography variant={"body2"}>Not verified</Typography>}
+                <Typography variant={"body2"}>{t("User.Signed with {{provider}}", {provider: userData.public.provider})}</Typography>
+                {!userData.verified && <Typography variant={"body2"}>{t("User.Not verified")}</Typography>}
             </>}
         </Grid>}
     </Grid>

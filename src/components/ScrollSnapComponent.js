@@ -56,18 +56,23 @@ const stylesCurrent = ({align, fullHeight, variant}) => makeStyles(theme => ({
         },
 }));
 
-export default ({
-                    align = "center",
-                    classes = {},
-                    className,
-                    items,
-                    style = {},
-                    variant = "horizontal",
-                    fullHeight = true
-                }) => {
+export default (
+    {
+        align = "center",
+        classes = {},
+        className,
+        items,
+        style = {},
+        variant = "horizontal",
+        fullHeight = true
+    }) => {
     const classesCurrent = stylesCurrent({align, fullHeight, variant})();
 
-    return <Grid container className={[classesCurrent.list, classes.list, className].join(" ")} style={style}>
+    return <Grid
+        container
+        className={[classesCurrent.list, classes.list, className].join(" ")}
+        style={style}
+    >
         {items.map((item, index) => <item.type
             key={index}
             {...item.props}

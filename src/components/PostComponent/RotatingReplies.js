@@ -214,8 +214,13 @@ export default withStyles(stylesCurrent)((props) => {
 
     if (!item) return null;
     return <Grid item xs ref={rootRef} className={classes.root} onClick={handleClick}>
-        {itemPrev && <Grid container key={Math.random()} ref={leavingRef}
-                           className={classes.moveable}>{itemPrev}</Grid>}
+        {itemPrev && <Grid
+            children={itemPrev}
+            container
+            key={Math.random()}
+            ref={leavingRef}
+            className={classes.moveable}
+        />}
         <Grid container className={classes.moveable}>{item}</Grid>
     </Grid>
 })

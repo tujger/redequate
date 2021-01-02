@@ -5,9 +5,11 @@ import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import MenuIcon from "@material-ui/icons/MoreVert";
+import {useTranslation} from "react-i18next";
 
 // eslint-disable-next-line react/prop-types
 export default ({show, range, onSelect}) => {
+    const {t} = useTranslation();
     const [state, setState] = React.useState({anchor: null});
     const {anchor} = state;
     if (!show) return null;
@@ -18,8 +20,8 @@ export default ({show, range, onSelect}) => {
     };
 
     const items = {
-        "today": {
-            label: "Today",
+        today: {
+            label: t("DateTimePicker.Today"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss"),
@@ -27,8 +29,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "tomorrow": {
-            label: "Tomorrow",
+        tomorrow: {
+            label: t("DateTimePicker.Tomorrow"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").add(1, "day"),
@@ -36,8 +38,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "yesterday": {
-            label: "Yesterday",
+        yesterday: {
+            label: t("DateTimePicker.Yesterday"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").subtract(1, "day"),
@@ -45,8 +47,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "week": {
-            label: "This week",
+        week: {
+            label: t("DateTimePicker.This week"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").weekday(0),
@@ -54,8 +56,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "nextweek": {
-            label: "Next week",
+        nextweek: {
+            label: t("DateTimePicker.Next week"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").weekday(0).add(1, "week"),
@@ -63,8 +65,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "lastweek": {
-            label: "Last week",
+        lastweek: {
+            label: t("DateTimePicker.Last week"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").weekday(0).subtract(1, "week"),
@@ -72,8 +74,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "month": {
-            label: "This month",
+        month: {
+            label: t("DateTimePicker.This month"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").date(1),
@@ -81,8 +83,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "nextmonth": {
-            label: "Next month",
+        nextmonth: {
+            label: t("DateTimePicker.Next month"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").date(1).add(1, "month"),
@@ -90,8 +92,8 @@ export default ({show, range, onSelect}) => {
                 )
             }
         },
-        "lastmonth": {
-            label: "Last month",
+        lastmonth: {
+            label: t("DateTimePicker.Last month"),
             onSelect: () => {
                 onSelect(
                     moment(range ? "00:00" : "12:00", "HH:ss").date(1).subtract(1, "month"),

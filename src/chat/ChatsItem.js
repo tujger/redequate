@@ -7,13 +7,13 @@ import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import {cacheDatas, useFirebase, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
-import {toDateString} from "../controllers/DateFormat";
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {useTranslation} from "react-i18next";
 
 const stylesChat = theme => ({
     offline: {
@@ -48,6 +48,7 @@ function ChatsItem(props) {
     const pages = usePages();
     const [state, setState] = React.useState({});
     const {shown, userData, chatMeta, online, removed} = state;
+    const {t} = useTranslation();
 
     const fetchIsNew = () => {
         const latestVisit = chatMeta.lastVisit(currentUserData.id);
@@ -129,7 +130,7 @@ function ChatsItem(props) {
                     <Grid item>
                         <div
                             className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
-                            title={online ? "Online" : "Offline"}/>
+                            title={online ? t("Chat.Online") : t("Chat.Offline")}/>
                     </Grid>
                     {/*<Grid
                         className={classes.date}

@@ -18,6 +18,7 @@ import ConfirmComponent from "../components/ConfirmComponent";
 import {styles} from "../controllers/Theme";
 import withStyles from "@material-ui/styles/withStyles";
 import NavigationToolbar from "../components/NavigationToolbar";
+import {useTranslation} from "react-i18next";
 
 const Alerts = ({daemon, fetchAlertContent, classes}) => {
     const currentUserData = useCurrentUserData();
@@ -26,6 +27,7 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
     const pages = usePages();
     const [state, setState] = React.useState({});
     const {allRead, allClear} = state;
+    const {t} = useTranslation();
 
     const handleAllRead = () => {
         setState({...state, allRead: true});
@@ -89,34 +91,34 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
             className={classes.topSticky}
             backButton={null}
             mediumButton={<IconButton
-                aria-label={"Clear"}
+                aria-label={t("Common.Clear")}
                 children={<Clear/>}
                 onClick={handleClear}
-                title={"Clear"}
+                title={t("Common.Clear")}
             />}
             rightButton={<IconButton
-                aria-label={"All read"}
+                aria-label={t("Alerts.All read")}
                 children={<AllReadIcon/>}
                 onClick={handleAllRead}
-                title={"All read"}
+                title={t("Alerts.All read")}
             />}
         />
         <Grid container className={classes.center}>
             <AlertsList fetchAlertContent={fetchAlertContent}/>
         </Grid>
         {allRead && <ConfirmComponent
-            children={"All alerts will be marked as read."}
+            children={t("Alerts.All alerts will be marked as read.")}
             onCancel={() => setState({...state, allRead: false})}
             onConfirm={handleAllReadConfirm}
-            title={"All read?"}
+            title={t("Alerts.All read?")}
         />}
         {allClear && <ConfirmComponent
-            children={"All alerts will be removed."}
-            confirmLabel={"Clear"}
+            children={t("Alerts.All alerts will be removed.")}
+            confirmLabel={t("Common.Clear")}
             critical
             onCancel={() => setState({...state, allClear: false})}
             onConfirm={handleClearConfirm}
-            title={"Clear all?"}
+            title={t("Alerts.Clear all?")}
         />}
     </>
 };

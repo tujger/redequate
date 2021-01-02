@@ -17,6 +17,7 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import {stylesList} from "../../controllers/Theme";
+import {useTranslation} from "react-i18next";
 
 const MutualRequestItem = (
     {
@@ -36,6 +37,7 @@ const MutualRequestItem = (
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const {key, userData, value} = data;
+    const {t} = useTranslation();
 
     const handleAccept = evt => {
         evt.stopPropagation();
@@ -108,7 +110,8 @@ const MutualRequestItem = (
                             <b>{userData.name}</b>
                         </Grid>
                         {windowData.isNarrow() && <Grid item xs/>}
-                        <Grid item className={classes.date} title={new Date(value.timestamp).toLocaleString()}>
+                        <Grid item className={classes.date}
+                              title={new Date(value.timestamp).toLocaleString()}>
                             {toDateString(value.timestamp)}
                         </Grid>
                     </Grid>}
@@ -120,17 +123,17 @@ const MutualRequestItem = (
                             <Grid container justify={"flex-end"}>
                                 <Button
                                     {...buttonProps}
-                                    aria-label={"Accept"}
-                                    children={"Accept"}
+                                    aria-label={t("Mutual.Accept")}
+                                    children={t("Mutual.Accept")}
                                     onClick={handleAccept}
-                                    title={"Accept"}
+                                    title={t("Mutual.Accept")}
                                 />
                                 <Button
                                     {...buttonProps}
-                                    aria-label={"Reject"}
-                                    children={"Reject"}
+                                    aria-label={t("Mutual.Reject")}
+                                    children={t("Mutual.Reject")}
                                     onClick={handleReject}
-                                    title={"Reject"}
+                                    title={t("Mutual.Reject")}
                                 />
                             </Grid>
                         </Hidden>
@@ -139,17 +142,17 @@ const MutualRequestItem = (
                         <Hidden smDown>
                             <Button
                                 {...buttonProps}
-                                aria-label={"Accept"}
-                                children={"Accept"}
+                                aria-label={t("Mutual.Accept")}
+                                children={t("Mutual.Accept")}
                                 onClick={handleAccept}
-                                title={"Accept"}
+                                title={t("Mutual.Accept")}
                             />
                             <Button
                                 {...buttonProps}
-                                aria-label={"Reject"}
-                                children={"Reject"}
+                                aria-label={t("Mutual.Reject")}
+                                children={t("Mutual.Reject")}
                                 onClick={handleReject}
-                                title={"Reject"}
+                                title={t("Mutual.Reject")}
                             />
                         </Hidden>
                     </Grid>}
@@ -160,4 +163,3 @@ const MutualRequestItem = (
 }
 
 export default withStyles(stylesList)(MutualRequestItem);
-

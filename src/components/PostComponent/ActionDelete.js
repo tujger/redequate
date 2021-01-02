@@ -8,6 +8,7 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
 import MenuItem from "@material-ui/core/MenuItem";
+import {useTranslation} from "react-i18next";
 
 export default ({postData, classes, onMenuItemClick, onComplete, type}) => {
     const [state, setState] = React.useState({});
@@ -16,6 +17,7 @@ export default ({postData, classes, onMenuItemClick, onComplete, type}) => {
     } = state;
     const dispatch = useDispatch();
     const firebase = useFirebase();
+    const {t} = useTranslation();
 
     const handleClickDelete = evt => {
         evt && evt.stopPropagation();
@@ -33,7 +35,7 @@ export default ({postData, classes, onMenuItemClick, onComplete, type}) => {
         dispatch(ProgressView.SHOW);
         firebase.database().ref(type).child(postData.id).set(null)
             .then(() => {
-                notifySnackbar({title: "Post successfully deleted."});
+                notifySnackbar({title: t("Post.Post successfully deleted.")});
                 setTimeout(() => {
                     onComplete && onComplete(postData);
                 }, 2000)
@@ -49,19 +51,19 @@ export default ({postData, classes, onMenuItemClick, onComplete, type}) => {
     let element;
     if (onMenuItemClick) {
         element = <MenuItem
-            children={"Delete"}
+            children={t("Common.Delete")}
             id={"delete"}
             onClick={handleMenuItemClick}
         />
     } else {
         element = <Grid item>
             <IconButton
-                aria-label={"Delete"}
+                aria-label={t("Common.Delete")}
                 children={<ClearIcon/>}
                 component={"div"}
                 onClick={handleClickDelete}
                 size={"small"}
-                title={"Delete"}
+                title={t("Common.Delete")}
             />
         </Grid>
     }
@@ -69,13 +71,13 @@ export default ({postData, classes, onMenuItemClick, onComplete, type}) => {
     return <>
         {element}
         {deletePost && <ConfirmComponent
-            children={"Your post and all replies will be deleted."}
-            confirmLabel={"Delete"}
+            children={t("Post.Your post and all replies will be deleted.")}
+            confirmLabel={t("Common.Delete")}
             critical
             open={true}
             onCancel={handleCancelDeletion}
             onConfirm={handleConfirmDeletion}
-            title={"Delete post?"}
+            title={t("Post.Delete post?")}
         />}
     </>
 }

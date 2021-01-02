@@ -10,16 +10,18 @@ import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentRe
 import Pagination from "../../controllers/FirebasePagination";
 import {UserData} from "../../controllers/UserData";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import {useTranslation} from "react-i18next";
 
-const MutualListComponent = (
-    {
+const MutualListComponent = props => {
+    const {t} = useTranslation();
+    const {
         cached = true,
         itemComponent,
         itemTransform,
         live,
         mode = MutualListMode.SUBSCRIBES,
         mutualId,
-        noItemsComponent = <ItemPlaceholderComponent label={"Items not found."} pattern={"flat"}/>,
+        noItemsComponent = <ItemPlaceholderComponent label={t("Mutual.Items not found.")} pattern={"flat"}/>,
         onChanged = () => {
         },
         order = "desc",
@@ -29,7 +31,7 @@ const MutualListComponent = (
         typeId,
         unsubscribeLabel,
         ItemProps,
-    }) => {
+    } = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const mixedId = typeId + "_" + mode + "_" + mutualId;

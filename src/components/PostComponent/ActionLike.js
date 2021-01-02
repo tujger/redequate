@@ -16,6 +16,7 @@ import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
 import {useDispatch} from "react-redux";
 import {Pagination} from "../../controllers";
+import {useTranslation} from "react-i18next";
 
 export default ({postData, classes}) => {
     const [state, setState] = React.useState({});
@@ -26,6 +27,7 @@ export default ({postData, classes}) => {
     const pages = usePages();
     const theme = useTheme();
     const currentUserData = useCurrentUserData();
+    const {t} = useTranslation();
 
     const handleClickExtra = extraType => evt => {
         const prepareProcess = async () => {
@@ -171,14 +173,14 @@ export default ({postData, classes}) => {
 
     return <Grid item>
         <IconButton
-            aria-label={"Like"}
+            aria-label={t("Common.Like")}
             className={classes.counter}
             // disabled={disabled}
             component={"div"}
             onClick={disabled ? undefined : handleClickExtra("like")}
             size={"small"}
             style={postData.extra("like") ? {color: theme.palette.secondary.main} : undefined}
-            title={"Like"}
+            title={t("Common.Like")}
         >
             <CounterComponent
                 counter={postData.counter("like")}

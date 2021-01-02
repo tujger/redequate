@@ -25,10 +25,10 @@ export default ({classes, disabled, images, onChange, uppy}) => {
             {images && images.map((image, index) => {
                 return <Grid item key={index}>
                     <img
-                        alt={"Image"}
+                        alt={t("Post.Image")}
                         className={classes._preview}
                         src={image}
-                        title={"Image"}
+                        title={t("Post.Image")}
                     />
                     <IconButton
                         children={<ClearIcon/>}

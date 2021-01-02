@@ -21,9 +21,11 @@ import Menu from "@material-ui/core/Menu";
 import IconButton from "@material-ui/core/IconButton";
 import Fade from "@material-ui/core/Fade";
 import MenuIcon from "@material-ui/icons/MoreVert";
+import {useTranslation} from "react-i18next";
 
-const MutualSubscribeItem = (
-    {
+const MutualSubscribeItem = props => {
+    const {t} = useTranslation();
+    const {
         classes,
         counter = false,
         data,
@@ -34,8 +36,8 @@ const MutualSubscribeItem = (
         },
         pattern,
         type = "users_public",
-        unsubscribeLabel = "Unsubscribe"
-    }) => {
+        unsubscribeLabel = t("Mutual.Unsubscribe")
+    } = props;
     const pages = usePages();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
@@ -57,7 +59,7 @@ const MutualSubscribeItem = (
             .then(() => onDelete({key, value}))
             .catch(error => {
                 if (error && error.code === "PERMISSION_DENIED") {
-                    notifySnackbar(new Error("Can't unsubscribe"));
+                    notifySnackbar(new Error(t("Mutual.Can't unsubscribe")));
                 } else {
                     notifySnackbar(error);
                 }

@@ -1,6 +1,7 @@
 import React from "react";
 import Avatar from "@material-ui/core/Avatar";
 import makeStyles from "@material-ui/styles/makeStyles";
+import {useTranslation} from "react-i18next";
 
 const useStyles = bgcolor => makeStyles(theme => ({
     bgcolor: bgcolor ? {
@@ -41,13 +42,14 @@ const calculateBgColor = (image, initials) => {
 const AvatarView = ({admin, className, image, icon, initials, onclick, verified}) => {
     const bgcolor = calculateBgColor(image, initials);
     const classes = useStyles(bgcolor)();
+    const {t} = useTranslation();
 
     return <Avatar
         className={[verified ? (admin ? classes.admin : null) : classes.notVerified, classes.bgcolor, classes.avatar, className || ""].join(" ")}
         onClick={onclick}
-        title={verified ? (admin ? "Administrator" : null) : "Not verified"}
+        title={verified ? (admin ? t("User.Administrator") : null) : t("User.Not verified")}
     >
-        {image && <img src={image} alt={"Avatar"} className={classes.avatarImage}/>}
+        {image && <img src={image} alt={t("User.Avatar")} className={classes.avatarImage}/>}
         {!image && icon}
         {!image && !icon && initials && initials.substr(0, 2).toUpperCase()}
     </Avatar>

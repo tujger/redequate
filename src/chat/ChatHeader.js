@@ -12,6 +12,7 @@ import ClearIcon from "@material-ui/icons/Clear";
 import ConfirmComponent from "../components/ConfirmComponent";
 import ProgressView from "../components/ProgressView";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     presence: {
@@ -38,6 +39,7 @@ const ChatHeader = ({chatMeta, classes, className, id, userComponent, userData})
     const pages = usePages();
     const [state, setState] = React.useState({});
     const {online, timestamp, deleteOpen} = state;
+    const {t} = useTranslation();
 
     const handleConfirmDeletion = evt => {
         dispatch(ProgressView.SHOW);
@@ -103,7 +105,7 @@ const ChatHeader = ({chatMeta, classes, className, id, userComponent, userData})
                 <Grid item>
                     <div
                         className={[classes.presence, online ? classes.online : classes.offline].join(" ")}
-                        title={online ? "Online" : "Offline"}
+                        title={online ? t("Chat.Online") : t("Chat.Offline")}
                     />
                 </Grid>
                 {timestamp > 0 && <Grid item className={classes.date}>
@@ -118,12 +120,12 @@ const ChatHeader = ({chatMeta, classes, className, id, userComponent, userData})
             </Grid>
         </NavigationToolbar>
         {deleteOpen && <ConfirmComponent
-            children={"Chat will be deleted for you."}
-            confirmLabel={"Delete chat"}
+            children={t("Chat.Chat will be deleted for you.")}
+            confirmLabel={t("Chat.Delete chat")}
             critical
             onCancel={() => setState({...state, deleteOpen: false})}
             onConfirm={handleConfirmDeletion}
-            title={"Delete chat"}
+            title={t("Chat.Delete chat")}
         />}
     </>
 };

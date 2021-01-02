@@ -7,6 +7,7 @@ import {cacheDatas} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 import makeStyles from "@material-ui/core/styles/makeStyles";
+import {useTranslation} from "react-i18next";
 
 const stylesCurrent = makeStyles(theme => ({
     replyButton: {
@@ -17,23 +18,24 @@ const stylesCurrent = makeStyles(theme => ({
 }));
 
 export default ({icon = true, postData, userData, mentions, onComplete, UploadProps}) => {
+    const {t} = useTranslation();
     const classesCurrent = stylesCurrent();
     return <Grid item>
         <NewPostComponent
             buttonComponent={icon ?
                 <IconButton
-                    aria-label={"Reply"}
+                    aria-label={t("Common.Reply")}
                     children={<ReplyIcon/>}
                     component={"div"}
                     size={"small"}
-                    title={"Reply"}
+                    title={t("Common.Reply")}
                 /> : <Button
-                    aria-label={"Reply"}
-                    children={"Reply"}
+                    aria-label={t("Common.Reply")}
+                    children={t("Common.Reply")}
                     className={classesCurrent.replyButton}
                     component={"div"}
                     size={"small"}
-                    title={"Reply"}
+                    title={t("Common.Reply")}
                     variant={"text"}
                 />}
             context={postData.id}

@@ -8,10 +8,12 @@ import MenuItem from "@material-ui/core/MenuItem";
 import {notifySnackbar} from "../../controllers";
 import ProgressView from "../ProgressView";
 import {useDispatch} from "react-redux";
+import {useTranslation} from "react-i18next";
 
 export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     const pages = usePages();
     const dispatch = useDispatch();
+    const {t} = useTranslation();
 
     const handleMenuItemClick = evt => {
         sharePath();
@@ -34,16 +36,21 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
             .finally(() => dispatch(ProgressView.HIDE))
     }
 
-    if (onMenuItemClick) return <MenuItem ref={ref} onClick={handleMenuItemClick} id={"share"}>Share</MenuItem>
+    if (onMenuItemClick) return <MenuItem
+        children={t("Common.Share")}
+        ref={ref}
+        onClick={handleMenuItemClick}
+        id={"share"}
+    />
 
     return <Grid item>
         <IconButton
-            aria-label={"Share"}
+            aria-label={t("Common.Share")}
             children={<ShareIcon/>}
             component={"div"}
             onClick={handleButtonClick}
             size={"small"}
-            title={"Share"}
+            title={t("Common.Share")}
         />
     </Grid>
 })

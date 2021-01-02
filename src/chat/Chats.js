@@ -11,6 +11,7 @@ import {lazyListComponentReducer} from "../components/LazyListComponent/lazyList
 import Grid from "@material-ui/core/Grid";
 import {styles} from "../controllers/Theme";
 import Chat from "./Chat";
+import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     observer: {
@@ -33,6 +34,7 @@ function Chats(
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {chatId} = state;
+    const {t} = useTranslation();
 
     React.useEffect(() => {
         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
@@ -63,7 +65,7 @@ function Chats(
                     if (item.key === "!meta") return null;
                     return item
                 }}
-                noItemsComponent={<ChatsItem label={"No chats found"}/>}
+                noItemsComponent={<ChatsItem label={t("Chat.No chats found")}/>}
                 pagination={() => new Pagination({
                     child: "timestamp",
                     order: "desc",
@@ -94,7 +96,7 @@ function Chats(
                         if (item.key === "!meta") return null;
                         return item
                     }}
-                    noItemsComponent={<ChatsItem label={"No chats found"}/>}
+                    noItemsComponent={<ChatsItem label={t("Chat.No chats found")}/>}
                     pagination={() => new Pagination({
                         child: "timestamp",
                         start: 0,

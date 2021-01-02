@@ -7,7 +7,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import Button from "@material-ui/core/Button";
 import {useHistory} from "react-router-dom";
 import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
-import {useWindowData} from "../controllers/General";
+import {useTranslation} from "react-i18next";
 
 const styles = theme => ({
     _dialog: {
@@ -30,13 +30,15 @@ const styles = theme => ({
     },
 });
 
-const ConfirmComponent = (
-    {
+const ConfirmComponent = props => {
+    const history = useHistory();
+    const {t} = useTranslation();
+    const {
         children,
         classes,
-        confirmLabel = "OK",
+        confirmLabel = t("Common.OK"),
         confirmProps = {},
-        cancelLabel = confirmLabel ? "Cancel" : "Close",
+        cancelLabel = confirmLabel ? t("Common.Cancel") : t("Common.Close"),
         cancelProps = {},
         critical,
         message,
@@ -44,9 +46,7 @@ const ConfirmComponent = (
         onCancel,
         onConfirm,
         title,
-    }) => {
-    const history = useHistory();
-    const windowData = useWindowData();
+    } = props;
 
     React.useEffect(() => {
         history.unblock = history.block(() => {

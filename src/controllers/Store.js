@@ -71,15 +71,3 @@ export const refreshAll = store => {
     store.dispatch({type: MenuBadge.RESET});
     store.dispatch(ProgressView.HIDE);
 };
-
-// export const preferencesReducer = (state = {timestamp: 0}, action) => {
-//     console.log(action)
-//     switch (action.type) {
-//         case preferencesReducer.LAST_VISIT.type:
-//             console.log("UPDATE LAST VISIT");
-//             return {...state, timestamp: new Date().getTime()};
-//         default:
-//             return state;
-//     }
-// };
-// preferencesReducer.LAST_VISIT = {type: "_lastVisitTimestamp"};
