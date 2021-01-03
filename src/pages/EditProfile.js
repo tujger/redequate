@@ -211,6 +211,14 @@ function EditProfile(props) {
                 ...additionalPublic,
             });
         }
+        const updateFieldsInFirebase = async () => {
+            if (isSameUser(userData, currentUserData)) {
+                firebase.auth().currentUser.updateProfile({
+                    displayName: userData.name,
+                    photoURL: userData.image
+                }).catch(console.error)
+            }
+        }
         const saveByAdmin = async () => {
             if (isAdmin) {
                 const updates = {};
@@ -269,6 +277,7 @@ function EditProfile(props) {
             .then(publishImage)
             .then(processPublicFields)
             .then(userData.savePublic)
+            .then(updateFieldsInFirebase)
             .then(saveByAdmin)
             .then(refreshUserData)
             .then(updateCurrentUserData)

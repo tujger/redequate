@@ -70,6 +70,7 @@ const Settings = ({classes}) => {
         maintenanceOpen,
         message,
         maintenance,
+        oneTapCliendId,
         support,
         details,
         tab
@@ -172,6 +173,7 @@ const Settings = ({classes}) => {
             settings.joinUsText = joinUsText || null;
             settings.joinUsTimeout = +joinUsTimeout || null;
             settings.joinUsTitle = joinUsTitle || null;
+            settings.oneTapCliendId = oneTapCliendId || null;
         }
         const publish = async () => {
             updates.settings = settings;
@@ -461,6 +463,21 @@ const Settings = ({classes}) => {
                             type="number"
                             value={joinUsScroll || ""}
                         />
+                    </Grid>
+                    <Box m={1}/>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"One Tap client id"}
+                            onChange={handleChange("oneTapCliendId")}
+                            placeholder={"One Tap client id"}
+                            value={oneTapCliendId || ""}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <a href={"https://developers.google.com/identity/one-tap"} target={"_blank"}>Learn more</a>
                     </Grid>
                     <Box m={1}/>
                 </>}

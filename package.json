@@ -30,6 +30,7 @@
         "i18next-browser-languagedetector": "latest",
         "react-add-to-calendar-hoc": "latest",
         "react-device-detect": "latest",
+        "react-googleyolo": "latest",
         "react-image-file-resizer": "latest",
         "react-intersection-observer": "latest",
         "react-ios-pwa-prompt": "latest",

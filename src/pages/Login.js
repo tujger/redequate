@@ -48,6 +48,7 @@ function Login(props) {
 
     const errorCallback = error => {
         notifySnackbar(error);
+        dispatch(ProgressView.HIDE);
         dispatch({type: "currentUserData", userData: null});
         setState(state => ({...state, requesting: false}));
         // refreshAll(store);
@@ -99,6 +100,19 @@ function Login(props) {
                     window.localStorage.setItem(pages.login.route, provider.providerId);
                     return firebase.auth().signInWithRedirect(provider);
                 }
+            })
+            .catch(errorCallback)
+    }
+
+    const requestLoginToken = (token) => {
+        dispatch(ProgressView.SHOW);
+        logoutUser(firebase, store)()
+            .then(() => {
+                setState(state => ({...state, requesting: true}));
+                const credential = firebase.auth.GoogleAuthProvider.credential(token);
+                return firebase.auth().signInWithCredential(credential)
+                    .then(loginSuccess)
+                    .then(finallyCallback);
             })
             .catch(errorCallback)
     }
@@ -224,6 +238,8 @@ function Login(props) {
                 requestLoginGoogle();
             } else if (location.state.loginWith === "facebook") {
                 requestLoginFacebook();
+            } else if (location.state.loginWith === "token") {
+                requestLoginToken(location.state.credential);
             }
             return;
         }

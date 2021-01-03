@@ -17,7 +17,15 @@ const JoinUsComponent = ({label}) => {
     const metaInfo = useMetaInfo();
     const pages = usePages();
     const {settings} = metaInfo || {};
-    const {joinUsCancel, joinUsConfirm, joinUsScroll, joinUsText, joinUsTimeout, joinUsTitle} = settings || {};
+    const {
+        joinUsCancel,
+        joinUsConfirm,
+        joinUsScroll,
+        joinUsText,
+        joinUsTimeout,
+        joinUsTitle,
+        oneTapCliendId
+    } = settings || {};
     const {t} = useTranslation();
 
     const handleCancel = () => {
@@ -51,6 +59,52 @@ const JoinUsComponent = ({label}) => {
         const checkIfUserRegistered = async () => {
             if (currentUserData.id) throw "skip";
         }
+        const tryWithOneTap = async () => new Promise((resolve, reject) => {
+            if (!oneTapCliendId) return;
+            try {
+                const promptCallback = (notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        resolve();
+                    } else {
+                        reject("skip");
+                    }
+                }
+                if (window.google && window.google.accounts && window.google.accounts.id) {
+                    window.google.accounts.id.prompt(promptCallback);
+                } else {
+                    const scriptNode = document.createElement("script");
+                    scriptNode.onload = () => {
+                        try {
+                            window.google.accounts.id.initialize({
+                                client_id: oneTapCliendId,
+                                skip_prompt_cookie: "abcdef" + Math.random(),
+                                provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+                                callback: props => {
+                                    try {
+                                        history.push(pages.login.route, {
+                                            loginWith: "token",
+                                            credential: props.credential
+                                        });
+                                    } catch (error) {
+                                        console.error(error);
+                                        resolve();
+                                    }
+                                }
+                            });
+                            window.google.accounts.id.prompt(promptCallback);
+                        } catch (error) {
+                            console.error(error);
+                            resolve();
+                        }
+                    }
+                    scriptNode.src = "https://accounts.google.com/gsi/client";
+                    document.head.appendChild(scriptNode);
+                }
+            } catch (error) {
+                console.error(error);
+                resolve();
+            }
+        })
         const checkIfSettingsAre = async () => {
             if (!joinUsTimeout && !joinUsScroll) throw "skip";
             if (!joinUsText) throw "skip";
@@ -88,6 +142,7 @@ const JoinUsComponent = ({label}) => {
         }
 
         checkIfUserRegistered()
+            .then(tryWithOneTap)
             .then(checkIfSettingsAre)
             .then(checkIfAlreadyRequested)
             .then(allowRequest)

@@ -319,6 +319,7 @@ Props:
             joinUsText
             joinUsTimeout
             joinUsTitle
+            oneTapCliendId
         support: uid
     mutual
         type/item_id
