@@ -131,6 +131,10 @@ function Dispatcher(props) {
                     saveMissing: false,
                 }).then(() => ({i18n, t: i18n.getFixedT()}));
         }
+        const clearOneTapCookie = async props => {
+            document.cookie = "g_state=''";
+            return props;
+        }
         const initFirebase = async props => {
             const firebase = Firebase(firebaseConfig);
             return {...props, firebase};
@@ -334,6 +338,7 @@ function Dispatcher(props) {
         }
 
         initInternationalization()
+            .then(clearOneTapCookie)
             .then(initFirebase)
             .then(initStore)
             .then(initWindowData)

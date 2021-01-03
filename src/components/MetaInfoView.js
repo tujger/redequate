@@ -4,7 +4,7 @@ import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
 import {useMetaInfo} from "../controllers/General";
-import {useTranslation, Trans} from "react-i18next";
+import {useTranslation} from "react-i18next";
 
 const styles = theme => ({
     root: {

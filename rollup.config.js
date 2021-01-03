@@ -66,6 +66,7 @@ export default [
             DateTimePicker: 'src/components/DateTimePicker/index.js',
             HeaderComponent: 'src/components/HeaderComponent.js',
             ItemPlaceholderComponent: 'src/components/ItemPlaceholderComponent.js',
+            JoinUsComponent: 'src/components/JoinUsComponent.js',
             LazyListComponent: 'src/components/LazyListComponent/LazyListComponent.js',
             LoadingComponent: 'src/components/LoadingComponent.js',
             MentionedTextComponent: 'src/components/MentionedTextComponent.js',
