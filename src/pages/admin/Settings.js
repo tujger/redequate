@@ -4,8 +4,10 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
-import Typography from "@material-ui/core/Typography";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
+import InputLabel from "@material-ui/core/InputLabel";
+import Typography from "@material-ui/core/Typography";
+import FormControl from "@material-ui/core/FormControl";
 import Switch from "@material-ui/core/Switch";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -74,6 +76,7 @@ const Settings = ({classes}) => {
         message,
         maintenance,
         oneTapCliendId,
+        postsAllowEdit,
         postsRotateReplies,
         support,
         details,
@@ -128,13 +131,24 @@ const Settings = ({classes}) => {
         setState({...state, message: evt.target.value});
     }
 
-    const handleChange = type => ev => {
+    const handleChange = type => (ev, value) => {
         setState(state => ({
             ...state,
             [type]: ev.target.value,
             details: {
                 ...state.details,
                 [type]: ev.target.value
+            }
+        }))
+    }
+
+    const handleSwitch = type => (ev, value) => {
+        setState(state => ({
+            ...state,
+            [type]: value,
+            details: {
+                ...state.details,
+                [type]: value
             }
         }))
     }
@@ -181,6 +195,7 @@ const Settings = ({classes}) => {
         }
         const addPreferencePosts = async () => {
             settings.postsRotateReplies = postsRotateReplies || null;
+            settings.postsAllowEdit = postsAllowEdit || null;
         }
         const publish = async () => {
             updates.settings = settings;
@@ -496,16 +511,30 @@ const Settings = ({classes}) => {
                     </Grid>
                     <Box m={1}/>
                     <Grid container>
-                        <Select
+                        <FormControlLabel
                             color={"secondary"}
-                            onChange={handleChange("postsRotateReplies")}
-                            value={postsRotateReplies || ""}
-                            displayEmpty={true}
-                        >
-                            <MenuItem value={""}>None</MenuItem>
-                            <MenuItem value={"inside"}>Inside post</MenuItem>
-                            <MenuItem value={"outside"}>Outside of post</MenuItem>
-                        </Select>
+                            control={<Switch
+                                onChange={handleSwitch("postsAllowEdit")}
+                                checked={postsAllowEdit || false}
+                            />}
+                            disabled={disabled}
+                            label={"Allow edit"}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <FormControl>
+                            <InputLabel>Rotate replies</InputLabel>
+                            <Select
+                                color={"secondary"}
+                                onChange={handleChange("postsRotateReplies")}
+                                value={postsRotateReplies || ""}
+                                displayEmpty={true}
+                            >
+                                <MenuItem value={""}>None</MenuItem>
+                                <MenuItem value={"inside"}>Inside post</MenuItem>
+                                <MenuItem value={"outside"}>Outside of post</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Grid>
                     <Box m={1}/>
                 </>}

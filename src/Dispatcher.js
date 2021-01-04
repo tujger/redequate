@@ -103,7 +103,7 @@ function Dispatcher(props) {
     const {firebase} = state;
 
     React.useEffect(() => {
-        let maintenanceRef, unlisten;
+        let maintenanceRef, metaRef, unlisten;
         const initInternationalization = async () => {
             const defaultResources = {
                 en: localeEn,
@@ -257,12 +257,21 @@ function Dispatcher(props) {
             })().catch(console.error);
             return props;
         }
-        const installMaintenanceWatcher = async props => {
+        const installMetaWatcher = async props => {
             (async () => {
-                const {firebase} = props;
-                maintenanceRef = firebase.database().ref("meta/maintenance");
-                maintenanceRef.on("value", snapshot => {
-                    const maintenance = snapshot.val();
+                const {firebase, store} = props;
+                let initial = true;
+                metaRef = firebase.database().ref("meta");
+                metaRef.on("value", snapshot => {
+                    const meta = snapshot.val() || {};
+                    const {maintenance, settings} = meta;
+                    if (initial) {
+                        initial = false;
+                    } else {
+                        console.warn("[Dispatcher] meta changed", meta);
+                        setState(state => ({...state, metaInfo: {settings}}));
+                        refreshAll(store);
+                    }
                     setState(state => {
                         const metaInfo = state.metaInfo || {};
                         if (JSON.stringify(maintenance || null) !== JSON.stringify(metaInfo.maintenance || null)) {
@@ -360,7 +369,7 @@ function Dispatcher(props) {
             .then(installWrapperControl_)
             .then(installNotificationsWatcher)
             .then(installUserChangeWatcher)
-            .then(installMaintenanceWatcher)
+            .then(installMetaWatcher)
             .then(installLastVisitSaver)
             .then(installWindowWidthWatcher)
             .then(installApplicationVisibilityChecker)
@@ -368,6 +377,7 @@ function Dispatcher(props) {
 
         return () => {
             maintenanceRef && maintenanceRef.off();
+            metaRef && metaRef.off();
             unlisten && unlisten();
         }
         // eslint-disable-next-line
