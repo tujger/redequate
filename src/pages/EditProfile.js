@@ -13,12 +13,26 @@ import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, useHistory, useParams} from "react-router-dom";
-import {logoutUser, matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {
+    logoutUser,
+    matchRole,
+    normalizeSortName,
+    Role,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
 import withStyles from "@material-ui/styles/withStyles";
-import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
+import {
+    cacheDatas,
+    fetchDeviceId,
+    useFirebase,
+    usePages,
+    useStore,
+    useWindowData
+} from "../controllers/General";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {setupReceivingNotifications} from "../controllers/Notifications";
@@ -27,9 +41,13 @@ import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import {
+    uploadComponentClean,
+    uploadComponentPublish
+} from "../components/UploadComponent/uploadComponentControls";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {updateActivity} from "./admin/audit/auditReducer";
+import {useTranslation} from "react-i18next";
 // const UploadComponent = React.lazy(() => import(/* webpackChunkName: 'upload' */"../components/UploadComponent/UploadComponent"));
 // import AvatarEdit from "react-avatar-edit";
 
@@ -107,10 +125,20 @@ function EditProfile(props) {
     });
     const {state: givenState = {}} = history.location;
     const {tosuccessroute, isFirstLogin} = givenState;
+    const {t} = useTranslation();
 
     // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
-    const {image, disabled, requiredError = [], uniqueError = [], userData, deleteOpen, role, uppy} = state;
+    const {
+        image,
+        disabled,
+        requiredError = [],
+        uniqueError = [],
+        userData,
+        deleteOpen,
+        role,
+        uppy
+    } = state;
 
     const saveUser = async () => {
         const prepareSaving = async () => {
@@ -165,7 +193,7 @@ function EditProfile(props) {
                 await logoutUser(firebase, store)();
                 refreshAll(store);
                 history.replace(pages.home.route);
-                throw Error("Profile is not found, forcing log out");
+                throw Error(t("User.Profile is not found, forcing log out"));
             }
         }
         const deleteImageIfObsolete = async () => {
@@ -311,8 +339,8 @@ function EditProfile(props) {
             return userData.delete();
         }
         const onDeleteComplete = async () => {
-            notifySnackbar("User deleted");
-            if(isSameUser(userData, currentUserData)) {
+            notifySnackbar(t("User.User deleted"));
+            if (isSameUser(userData, currentUserData)) {
                 logoutUser(firebase, store)();
                 history.replace(pages.home.route);
             } else {
@@ -350,7 +378,7 @@ function EditProfile(props) {
                     userData.private[fetchDeviceId()].notification = token;
                     return userData.savePrivate();
                 })
-                .then(() => notifySnackbar("Subscribed"))
+                .then(() => notifySnackbar(t("User.Subscribed")))
                 .catch(notifySnackbar)
                 .finally(() => {
                     dispatch(ProgressView.HIDE);
@@ -362,13 +390,16 @@ function EditProfile(props) {
                 .then(() => firebase.messaging().deleteToken())
                 .catch(error => {
                     if (error.code === "messaging/unsupported-browser" && hasWrapperControlInterface()) {
-                        return wrapperControlCall({method: "unsubscribeNotifications", timeout: 30000})
+                        return wrapperControlCall({
+                            method: "unsubscribeNotifications",
+                            timeout: 30000
+                        })
                             .then(result => {
                                 console.log("UNSUBSCRIBE RESULT " + JSON.stringify(result));
                             })
                     } else return error;
                 })
-                .then(() => notifySnackbar("Unsubscribed"))
+                .then(() => notifySnackbar(t("User.Unsubscribed")))
                 .catch(notifySnackbar)
                 .finally(() => {
                     dispatch(ProgressView.HIDE);
@@ -385,7 +416,6 @@ function EditProfile(props) {
     const isNotificationsAvailable = !iOS && firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
     const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
 
-
     React.useEffect(() => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
@@ -397,7 +427,12 @@ function EditProfile(props) {
         }
         userData.fetch([UserData.PUBLIC, UserData.ROLE])
             .then(() => isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))
-            .then(() => isMounted && setState(state => ({...state, userData, ...userData.public, role: userData.role})))
+            .then(() => isMounted && setState(state => ({
+                ...state,
+                userData,
+                ...userData.public,
+                role: userData.role
+            })))
             .catch(error => {
                 notifySnackbar(error);
                 history.goBack();
@@ -418,28 +453,29 @@ function EditProfile(props) {
         <Box m={0.5}/>
         <Grid container className={classes.profile} spacing={1}>
             <Grid item className={classes.profileFieldImage}>
-                {image ? <img src={image} alt={"User photo"} className={classes.profileImage}/>
+                {image
+                    ? <img src={image} alt={t("User.User photo")} className={classes.profileImage}/>
                     : <EmptyAvatar className={classes.profileImage}/>}
                 {image && <Hidden smDown>
                     <IconButton
-                        aria-label={"Clear"}
+                        aria-label={t("Common.Clear")}
                         children={<ClearIcon/>}
                         className={classes.clearImage}
                         onClick={() => {
                             setState(state => ({...state, image: "", uppy: null}));
                         }}
-                        title={"Clear"}
+                        title={t("Common.Clear")}
                     />
                 </Hidden>}
                 <Grid container justify={"center"}>
                     {uploadable && <React.Suspense fallback={<LoadingComponent/>}>
                         <UploadComponent
                             button={<Button
-                                aria-label={"Change"}
-                                children={windowData.isNarrow() ? "Set image" : "Change"}
+                                aria-label={t("User.Set image")}
+                                children={windowData.isNarrow() ? t("User.Set image") : t("Common.Change")}
                                 color={"secondary"}
                                 fullWidth={!windowData.isNarrow()}
-                                title={"Change"}
+                                title={t("User.Set image")}
                                 variant={"contained"}
                             />}
                             camera={false}
@@ -453,13 +489,13 @@ function EditProfile(props) {
                     </React.Suspense>}
                     {image && <Hidden mdUp>
                         <Button
-                            aria-label={"Clear"}
-                            children={"Clear"}
+                            aria-label={t("Common.Clear")}
+                            children={t("Common.Clear")}
                             color={"secondary"}
                             onClick={() => {
                                 setState(state => ({...state, image: "", uppy: null}));
                             }}
-                            title={"Clear"}
+                            title={t("Common.Clear")}
                             variant={"contained"}
                         />
                     </Hidden>}
@@ -475,7 +511,7 @@ function EditProfile(props) {
                             color={"secondary"}
                             disabled
                             fullWidth
-                            label={"E-mail"}
+                            label={t("User.E-mail")}
                             value={userData.email || ""}
                         />
                     </Grid>
@@ -499,9 +535,12 @@ function EditProfile(props) {
                                         disabled,
                                         error: missedRequired || uniqueRequired,
                                         fullWidth: true,
-                                        label: field.label,
+                                        label: t(field.label),
                                         onChange: ev => {
-                                            setState(state => ({...state, [field.id]: ev.target.value || ""}));
+                                            setState(state => ({
+                                                ...state,
+                                                [field.id]: ev.target.value || ""
+                                            }));
                                         },
                                         required: field.required,
                                         value: state[field.id] || ""
@@ -512,16 +551,23 @@ function EditProfile(props) {
                                         disabled={disabled}
                                         error={missedRequired || uniqueRequired}
                                         fullWidth
-                                        label={field.label}
+                                        label={t(field.label)}
                                         onChange={ev => {
-                                            setState(state => ({...state, [field.id]: ev.target.value || ""}));
+                                            setState(state => ({
+                                                ...state,
+                                                [field.id]: ev.target.value || ""
+                                            }));
                                         }}
                                         required={field.required}
                                         value={state[field.id] || ""}
                                     />}
                                 {missedRequired || uniqueRequired
-                                    ? <FormHelperText error>{missedRequired ? "Please enter value"
-                                        : (uniqueRequired ? "This name is already taken" : null)}</FormHelperText> : null}
+                                    ? <FormHelperText error>{missedRequired
+                                        ? t("Common.Please enter value")
+                                        : (uniqueRequired
+                                            ? t("User.This name is already taken")
+                                            : null)}</FormHelperText>
+                                    : null}
                             </Grid>
                         </Grid>
                     </React.Fragment>
@@ -536,7 +582,7 @@ function EditProfile(props) {
                                 onChange={handleNotifications}
                             />
                         }
-                        label={"Get notifications"}
+                        label={t("User.Get notifications")}
                     /></Grid>
                 </>}
                 <Box m={2}/>
@@ -547,9 +593,10 @@ function EditProfile(props) {
                     size={"large"}
                     variant={"contained"}
                 >
-                    <Button onClick={saveUser}>
-                        Register
-                    </Button>
+                    <Button
+                        children={t("User.Register")}
+                        onClick={saveUser}
+                    />
                 </ButtonGroup>}
                 {!isFirstLogin && <ButtonGroup
                     color={"secondary"}
@@ -558,33 +605,38 @@ function EditProfile(props) {
                     size={"large"}
                     variant={"contained"}
                 >
-                    <Button onClick={saveUser}>
-                        Save
-                    </Button>
-                    <Button onClick={() => history.goBack()}>
-                        Cancel
-                    </Button>
+                    <Button
+                        children={t("Common.Save")}
+                        onClick={saveUser}
+                    />
+                    <Button
+                        children={t("Common.Cancel")}
+                        onClick={() => history.goBack()}
+                    />
                 </ButtonGroup>}
                 {isDeleteAllowed && <>
                     <Box m={8}/>
                     <Grid container justify={"center"}>
-                        <Button onClick={handleClickDelete} variant={"text"} style={{color: "#ff0000"}}>
-                            Delete account
-                        </Button>
+                        <Button
+                            children={t("User.Delete account")}
+                            onClick={handleClickDelete}
+                            style={{color: "#ff0000"}}
+                            variant={"text"}
+                        />
                     </Grid>
                 </>}
             </Grid>
         </Grid>
         {isDeleteAllowed && deleteOpen && <ConfirmComponent
-            confirmLabel={"Delete"}
+            confirmLabel={t("Common.Delete")}
             critical
             onCancel={() => setState(state => ({...state, deleteOpen: false}))}
             onConfirm={deleteUser}
-            title={"Delete user data?"}
+            title={t("User.Delete user data?")}
         >
-            Account and all data will be deleted and can not be restored.
+            {t("User.Account and all data will be deleted and can not be restored.")}
             <br/>
-            WARNING! This action will be proceeded immediately!
+            {t("Common.WARNING! This action will be proceeded immediately!")}
         </ConfirmComponent>}
     </Grid>
 }

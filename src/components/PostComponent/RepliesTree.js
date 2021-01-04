@@ -2,7 +2,7 @@ import React from "react";
 import Grid from "@material-ui/core/Grid";
 import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
-import {useFirebase, usePages, useWindowData} from "../../controllers/General";
+import {useFirebase, useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import {useCurrentUserData, UserData} from "../../controllers/UserData";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
@@ -52,6 +52,9 @@ export default withStyles(stylesCurrent)((props) => {
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {expanded, replies, userReplied, paginationOptions, rotating} = state;
+    const metaInfo = useMetaInfo();
+    const {settings = {}} = metaInfo || {};
+    const {postsRotateReplies} = settings;
 
     const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
@@ -141,7 +144,7 @@ export default withStyles(stylesCurrent)((props) => {
     }, [givenExpanded]);
 
     if (!paginationOptions) return null;
-    if (rotating && replies && replies.length) {
+    if (postsRotateReplies === "outside" && rotating && replies && replies.length) {
         return <Grid container>
             <Grid className={classes.indent}/>
             <Grid item xs>

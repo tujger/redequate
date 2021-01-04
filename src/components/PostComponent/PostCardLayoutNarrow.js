@@ -4,7 +4,7 @@ import CardHeader from "@material-ui/core/CardHeader";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
 import PostBody from "./PostBody";
-import {usePages} from "../../controllers/General";
+import {useMetaInfo, usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
@@ -41,6 +41,9 @@ export default React.forwardRef((props, ref) => {
     } = props;
     const classesCurrent = stylesCurrent();
     const pages = usePages();
+    const metaInfo = useMetaInfo();
+    const {settings = {}} = metaInfo || {};
+    const {postsRotateReplies} = settings;
 
     return <Card
         className={[
@@ -117,6 +120,6 @@ export default React.forwardRef((props, ref) => {
             {!disableButtons && <PostButtons {...props}/>}
         </Grid>*/}
         {!disableButtons && <PostButtons {...props}/>}
-        {level === undefined && <RotatingReplies {...props} postId={postData.id}/>}
+        {level === undefined && postsRotateReplies === "inside" && <RotatingReplies {...props} postId={postData.id}/>}
     </Card>
 })

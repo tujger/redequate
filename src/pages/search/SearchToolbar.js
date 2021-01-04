@@ -6,6 +6,7 @@ import Toolbar from "@material-ui/core/Toolbar";
 import ClearIcon from "@material-ui/icons/Clear";
 import InputOrigin from "@material-ui/core/Input";
 import {usePages} from "../../controllers/General";
+import {useTranslation} from "react-i18next";
 
 export default (
     {
@@ -21,6 +22,7 @@ export default (
     const [state, setState] = React.useState({});
     const {search = open, searchValue = "", unblock} = state;
     const inputRef = React.useRef();
+    const {t} = useTranslation();
 
     const closeSearch = () => {
         setState(state => ({...state, search: false, unblock: null}));
@@ -56,7 +58,7 @@ export default (
                 setState({...state, search: true, unblock})
                 onOpen && onOpen();
             }}
-            title={"Search"}
+            title={t("Search.Search")}
             variant={"text"}
         />
         {search && <>
@@ -67,7 +69,7 @@ export default (
                     color={"inherit"}
                     edge={"start"}
                     onClick={closeSearch}
-                    title={"Cancel search"}
+                    title={t("Common.Cancel")}
                 />
                 <Input.type
                     autoFocus={true}
@@ -81,7 +83,7 @@ export default (
                             inputRef.current && inputRef.current.focus();
                             Input.props.onChange && Input.props.onChange("");
                         }}
-                        title={"Clear search"}
+                        title={t("Common.Clear")}
                         variant={"text"}
                     />}
                     fullWidth
@@ -92,7 +94,7 @@ export default (
                         //     Input.props.onKeyUp && Input.props.onKeyUp(evt);
                         // }
                     }}
-                    placeholder={"Search"}
+                    placeholder={t("Search.Search")}
                     inputRef={inputRef}
                     value={searchValue}
                     {...Input.props}
@@ -107,7 +109,7 @@ export default (
                     children={pages.search.icon}
                     className={classes.searchToolbarIcon}
                     onClick={handleSearch}
-                    title={"Search"}
+                    title={t("Search.Search")}
                     variant={"text"}
                 />
             </Toolbar>

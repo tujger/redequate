@@ -17,7 +17,10 @@ import TagIcon from "@material-ui/icons/Label";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import ProgressView from "../components/ProgressView";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import {
+    uploadComponentClean,
+    uploadComponentPublish
+} from "../components/UploadComponent/uploadComponentControls";
 import LoadingComponent from "../components/LoadingComponent";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import MentionsInputComponent from "../components/MentionsInputComponent/MentionsInputComponent";
@@ -25,11 +28,18 @@ import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {styles} from "../controllers/Theme";
 import Pagination from "../controllers/FirebasePagination";
-import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {
+    matchRole,
+    normalizeSortName,
+    Role,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
 import {tokenizeText} from "../components";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import {mutualRequest} from "../components/MutualComponent";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
+import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     profileImage: {
@@ -71,8 +81,20 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     const pages = usePages();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
-    const {tag, disabled, hideTagOpen, image, uppy, showTagOpen, deleteTagOpen, changeOwnerOpen, newId, owner = ""} = state;
+    const {
+        tag,
+        disabled,
+        hideTagOpen,
+        image,
+        uppy,
+        showTagOpen,
+        deleteTagOpen,
+        changeOwnerOpen,
+        newId,
+        owner = ""
+    } = state;
     const {id} = useParams();
+    const {t} = useTranslation();
 
     const isNew = id === undefined;
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
@@ -101,7 +123,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         const checkIfLabelNotEmpty = async () => {
             tag.label = (tag.label || "").trim();
             if (!tag.label) {
-                throw Error("Can not save item, label isn't defined");
+                throw Error(t("Tag.Can not save tag, label isn't defined."));
             }
         }
         const checkIfIdValid = async () => {
@@ -116,7 +138,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 console.error(`[EditTag] already exists '${updatedId}' from '${tag.label}' for '${tag._key}', found: ${JSON.stringify(other)}`);
                 const existingTag = other[0];
                 if (existingTag.value.uid) {
-                    throw Error(`${tag.label} already exists, please modify.`);
+                    throw Error(t("Tag.{{label}} already exists, please modify.", {label: tag.label}));
                 }
                 tag._key = existingTag.key;
             }
@@ -132,7 +154,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             const labels = existing.filter(item => item.key !== tag._key);
             if (labels.length) {
                 console.error(`[EditTag] not available '${tag.label}' for '${updatedId}/${tag._key}, found: ${JSON.stringify(labels)}`);
-                throw Error(`${tag.label} is not available, please modify.`);
+                throw Error(t("Tag.{{label}} is not available, please modify.", {label: tag.label}));
             }
             tag.id = updatedId;
         }
@@ -280,7 +302,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             .then(() => {
                 tag.hidden = true;
                 notifySnackbar({
-                    title: `${tag.label} has been hidden.`,
+                    title: t("Tag.{{label}} has been hidden.", {label: tag.label}),
                     variant: "warning"
                 });
             })
@@ -308,7 +330,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         firebase.database().ref().update(updates)
             .then(() => {
                 notifySnackbar({
-                    title: `${tag.label} is visible now.`,
+                    title: t("Tag.{{label}} is visible now.", {label: tag.label}),
                     variant: "warning"
                 });
             })
@@ -378,7 +400,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             firebase.database().ref("tag").child(id).once("value")
                 .then(snapshot => {
                     if (snapshot.exists()) return snapshot.val();
-                    throw Error(`${id} is not found`);
+                    throw Error(t("Tag.{{id}} is not found.", {id: id}));
                 })
                 .then(tag => {
                     if (isCurrentUserAdmin) {
@@ -386,7 +408,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     } else if (allowOwner && tag.uid === currentUserData.id) {
                         return tag;
                     }
-                    throw Error(`You can not manage ${tag.label}`);
+                    throw Error(t("Tag.You can not manage {{label}}", {label: tag.label}));
                 })
                 .then(tag => setState(state => ({...state, tag, image: tag && tag.image})))
                 .catch(error => {
@@ -417,24 +439,24 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     : <TagIcon className={classes.profileImage}/>}
                 {image && <Hidden smDown>
                     <IconButton
-                        aria-label={"Clear"}
+                        aria-label={t("Common.Clear")}
                         children={<ClearIcon/>}
                         className={classes.clearImage}
                         onClick={() => {
                             setState({...state, image: "", uppy: null});
                         }}
-                        title={"Clear"}
+                        title={t("Common.Clear")}
                     />
                 </Hidden>}
                 <Grid container justify={"center"}>
                     <React.Suspense fallback={<LoadingComponent/>}>
                         <UploadComponent
                             button={<Button
-                                aria-label={"Change"}
-                                children={windowData.isNarrow() ? "Set image" : "Change"}
+                                aria-label={t("Tag.Set image")}
+                                children={windowData.isNarrow() ? t("Tag.Set image") : t("Common.Change")}
                                 color={"secondary"}
                                 fullWidth={!windowData.isNarrow()}
-                                title={"Change"}
+                                title={t("Tag.Set image")}
                                 variant={"contained"}
                             />}
                             camera={false}
@@ -448,13 +470,13 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     </React.Suspense>
                     {image && <Hidden mdUp>
                         <Button
-                            aria-label={"Clear"}
-                            children={"Clear"}
+                            aria-label={t("Common.Clear")}
+                            children={t("Common.Clear")}
                             color={"secondary"}
                             onClick={() => {
                                 setState({...state, image: "", uppy: null});
                             }}
-                            title={"Clear"}
+                            title={t("Common.Clear")}
                             variant={"contained"}
                         />
                     </Hidden>}
@@ -467,7 +489,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                         disabled={disabled}
                         required
                         fullWidth
-                        label={"Name"}
+                        label={t("Tag.Name")}
                         onChange={ev => {
                             tag.label = ev.target.value;
                             setState({...state, tag, random: Math.random()});
@@ -492,7 +514,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                             tag.description = ev.target.value;
                             setState({...state, tag});
                         }}
-                        label={"Description"}
+                        label={t("Tag.Description")}
                         value={tag.description}
                         focused={true}/>
                 </Grid>
@@ -503,7 +525,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                             color={"secondary"}
                             disabled={disabled}
                             fullWidth
-                            label={"Image URL"}
+                            label={t("Tag.Image URL")}
                             onChange={ev => {
                                 const image = ev.target.value;
                                 setState({...state, image, random: Math.random()});
@@ -516,7 +538,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                             <a
                                 href={`https://www.google.com/search?q=${tag.label} &source=lnms&tbm=isch&sa=X`}
                                 rel={"noopener noreferrer"}
-                                target={"_blank"}>Search for the image on Google</a>
+                                target={"_blank"}>{t("Tag.Search for the image on Google")}</a>
                         </Typography>}
                     </Grid>
                     <Box m={1}/>
@@ -545,7 +567,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                                 }
                                 setState(state => ({...state, owner: text}));
                             }}
-                            label={"Change owner"}
+                            label={t("Tag.Change owner")}
                             value={owner}/>
                     </Grid>
                     <Box m={1}/>
@@ -558,7 +580,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                                 disabled={disabled}
                                 onChange={toggleTag}
                             />}
-                            label={"Deactivate"}
+                            label={t("Tag.Deactivate")}
                             style={{color: "#ff0000"}}
                         />
                     </Grid>
@@ -571,62 +593,72 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                     size={"large"}
                     variant={"contained"}
                 >
-                    <Button onClick={handleBeforeSaveTag}>Save</Button>
-                    <Button onClick={() => history.goBack()}>Cancel</Button>
+                    <Button
+                        children={t("Common.Save")}
+                        onClick={handleBeforeSaveTag}
+                    />
+                    <Button
+                        children={t("Common.Cancel")}
+                        onClick={() => history.goBack()}
+                    />
                 </ButtonGroup>
                 {!isNew && <>
                     <Box m={4}/>
                     <Grid container justify={"center"}>
-                        <Button onClick={handleClickDelete} style={{color: "#ff0000"}}>
-                            Permanently remove
-                        </Button>
+                        <Button
+                            children={t("Tag.Permanently remove")}
+                            onClick={handleClickDelete} style={{color: "#ff0000"}}
+                        />
                     </Grid>
                 </>}
             </Grid>
             {hideTagOpen && <ConfirmComponent
-                confirmLabel={"Hide"}
+                confirmLabel={t("Tag.Hide")}
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={hideTag}
-                title={`Hide ${tag.label}?`}
+                title={t("Tag.Hide {{label}}?", {label: tag.label})}
             >
-                <b>{tag.label}</b> will be hidden, unavailable for view, not presented in suggestions. All
-                related posts will be available.
+                {t("Tag.{{label}} will be hidden, unavailable for view, not presented in suggestions. All related posts will be available.", {label: tag.label})}
                 <br/>
-                WARNING! This action will be proceeded immediately!
+                {t("Common.WARNING! This action will be proceeded immediately!")}
             </ConfirmComponent>}
             {showTagOpen && <ConfirmComponent
-                confirmLabel={"Show"}
+                confirmLabel={t("Tag.Show")}
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={showTag}
-                title={`Show ${tag.label}?`}
+                title={t("Tag.Show {{label}}?", {label: tag.label})}
             >
-                The hidden <b>{tag.label}</b> will be restored to show.
+                {t("Tag.The hidden {{label}} will be restored to show.", {label: tag.label})}
                 <br/>
-                WARNING! This action will be proceeded immediately!
+                {t("Common.WARNING! This action will be proceeded immediately!")}
             </ConfirmComponent>}
             {deleteTagOpen && <ConfirmComponent
-                confirmLabel={"Delete"}
+                confirmLabel={t("Common.Delete")}
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={deleteTag}
-                title={`Delete ${tag.label}?`}
+                title={t("Tag.Delete {{label}}?", {label: tag.label})}
             >
-                <b>{tag.label}</b> will be deleted and can not be restored.
+                {t("Tag.{{label}} will be deleted and can not be restored.", {label: tag.label})}
                 <br/>
-                WARNING! This action will be proceeded immediately!
+                {t("Common.WARNING! This action will be proceeded immediately!")}
             </ConfirmComponent>}
             {changeOwnerOpen && <ConfirmComponent
-                confirmLabel={"Continue"}
+                confirmLabel={t("Common.Continue")}
                 critical
                 onCancel={handleCancelAction}
                 onConfirm={saveTag}
-                title={"Change owner?"}
+                title={t("Tag.Change owner?")}
             >
                 <MentionedTextComponent
                     mentions={[{...mentionUsers, displayTransform: (id, display) => display}]}
-                    text={`You are going to ${owner ? `change owner to ${owner}` : "remove owner"}.${isCurrentUserAdmin ? "" : `\nWARNING! You will not be able to manage ${tag.label} anymore!`}`}
+                    text={(owner
+                        ? t("Tag.You are going to change owner to {{person}}.", {owner: owner})
+                        : t("Tag.You are going to remove owner."))
+                    + (isCurrentUserAdmin ? "" : "\n" + t("Tag.WARNING! You will not be able to manage {{label}} anymore!", {label: tag.label}))
+                    }
                 />
             </ConfirmComponent>}
         </Grid>

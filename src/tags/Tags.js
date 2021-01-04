@@ -192,73 +192,8 @@ const Tags = (props) => {
                 ItemProps={{
                     counter: true
                 }}
-                // reverse
             />
         </Grid>
-        {/*<Hidden smDown>
-            <NavigationToolbar
-                backButton={null}
-                className={classes.topSticky}
-            >
-                <Select
-                    color={"secondary"}
-                    onChange={handleMode}
-                    value={mode}
-                >
-                    <MenuItem value={"all"}>All games</MenuItem>
-                    <MenuItem value={"score"}>Games with score</MenuItem>
-                    <MenuItem value={"hidden"}>Hidden games</MenuItem>
-                </Select>
-                {mode === "all" ? <Input
-                    color={"secondary"}
-                    endAdornment={filter ? <IconButton
-                        children={<Clear/>}
-                        onClick={() => {
-                            dispatch({type: gamesReducer.MODE, mode, filter: ""});
-                            // setState({...state, filter: ""});
-                        }}
-                        title={"Clear"}
-                        variant={"text"}
-                        size={"small"}
-                    /> : null}
-                    onChange={handleFilter}
-                    placeholder={"Search"}
-                    value={filter}
-                /> : null}
-            </NavigationToolbar>
-        </Hidden>
-        <Hidden mdUp>
-            <NavigationToolbar
-                backButton={null}
-                className={classes.topSticky}
-                rightButton={<Select
-                    color={"secondary"}
-                    onChange={handleMode}
-                    value={mode}
-                >
-                    <MenuItem value={"all"}>All games</MenuItem>
-                    <MenuItem value={"score"}>Games with score</MenuItem>
-                    <MenuItem value={"hidden"}>Hidden games</MenuItem>
-                </Select>}
-            >
-                {mode === "all" ? <Input
-                    color={"secondary"}
-                    endAdornment={filter ? <IconButton
-                        children={<Clear/>}
-                        onClick={() => {
-                            dispatch({type: gamesReducer.MODE, mode, filter: ""});
-                            // setState({...state, filter: ""});
-                        }}
-                        title={"Clear"}
-                        variant={"text"}
-                        size={"small"}
-                    /> : null}
-                    onChange={handleFilter}
-                    placeholder={"Search"}
-                    value={filter}
-                /> : null}
-            </NavigationToolbar>
-        </Hidden>*/}
         <Link
             to={pages.newtag.route}
             key={pages.newtag.route}>

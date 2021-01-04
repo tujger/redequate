@@ -306,7 +306,7 @@ const LoginLayout = (
                     color={"secondary"}
                     disabled={disabled}
                     fullWidth
-                    label={t("Login.E-mail")}
+                    label={t("User.E-mail")}
                     onChange={onChangeEmail}
                     value={email}
                     // InputProps={{
@@ -324,7 +324,7 @@ const LoginLayout = (
                 <PasswordField
                     color={"secondary"}
                     disabled={disabled}
-                    label={t("Login.Password")}
+                    label={t("User.Password")}
                     onChange={onChangePassword}
                     value={password}
                 />

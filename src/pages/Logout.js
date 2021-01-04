@@ -11,6 +11,7 @@ import {useFirebase, usePages, useStore} from "../controllers/General";
 import LoadingComponent from "../components/LoadingComponent";
 import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
+import {useTranslation} from "react-i18next";
 
 const Logout = (props) => {
     const {classes, immediate = true} = props;
@@ -18,6 +19,7 @@ const Logout = (props) => {
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
+    const {t} = useTranslation();
 
     const doLogout = () => {
         window.localStorage.removeItem(pages.login.route);
@@ -37,27 +39,26 @@ const Logout = (props) => {
     if (immediate) {
         return <Grid container>
             <Box m={1}/>
-            <LoadingComponent text={"Logging out..."}/>
+            <LoadingComponent text={t("Login.Logging out...")}/>
             <Box m={1}/>
         </Grid>;
     }
     return <Grid container className={classes.center}>
         <Box m={0.5}/>
         <Grid container spacing={1} alignItems={"flex-end"}>
-            Do you want to log out?
+            {t("Login.Do you want to log out?")}
         </Grid>
         <Box m={1}/>
         <Grid container spacing={1} alignItems={"flex-end"}>
             <Button
                 size={"large"}
+                children={t("Login.Logout")}
                 color={"secondary"}
                 onClick={() => {
                     doLogout();
                 }}
                 variant={"contained"}
-            >
-                Logout
-            </Button>
+            />
         </Grid>
     </Grid>
 };

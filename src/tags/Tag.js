@@ -31,6 +31,7 @@ import ShareComponent from "../components/ShareComponent";
 import ActionComponent from "../components/MutualComponent/ActionComponent";
 import FlexFabComponent from "../components/FlexFabComponent";
 import ShareIcon from "@material-ui/icons/Share";
+import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     follow: {
@@ -63,6 +64,7 @@ const Tag = ({classes, allowOwner = true}) => {
     const currentUserData = useCurrentUserData();
     const windowData = useWindowData();
     const {id: itemId} = useParams();
+    const {t} = useTranslation();
 
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
     const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
@@ -120,25 +122,25 @@ const Tag = ({classes, allowOwner = true}) => {
             className={classes.top}
             mediumButton={<>
                 {isCurrentUserAdmin && <IconButton
-                    aria-label={"Fix possible errors"}
+                    aria-label={t("Common.Fix possible errors")}
                     children={<FixIcon/>}
                     onClick={fixErrors}
-                    title={"Fix possible errors"}
+                    title={t("Common.Fix possible errors")}
                 />}
                 {(isCurrentUserAdmin || isOwner) && <IconButton
-                    aria-label={"Edit"}
+                    aria-label={t("Common.Edit")}
                     children={<EditIcon/>}
                     onClick={() => history.push(pages.edittag.route + tag.key)}
-                    title={"Edit"}
+                    title={t("Common.Edit")}
                 />}
             </>}
             rightButton={<ShareComponent
                 component={<IconButton
-                    aria-label={"Invite"}
+                    aria-label={t("Common.Share")}
                     children={<ShareIcon/>}
                 />}
-                text={"Share"}
-                title={"Share"}
+                text={t("Common.Share")}
+                title={t("Common.Share")}
                 url={window.location.origin + pages.tag.route + tag.value.id}
             />}
         />
@@ -177,8 +179,8 @@ const Tag = ({classes, allowOwner = true}) => {
                             mutualId={tag.key}
                             mutualType={"tag"}
                             typeId={"watching"}
-                            subscribeComponent={<ActionComponent label={"Follow"}/>}
-                            unsubscribeComponent={<ActionComponent label={"Unfollow"} variant={"outlined"}/>}
+                            subscribeComponent={<ActionComponent label={t("Tag.Follow")}/>}
+                            unsubscribeComponent={<ActionComponent label={t("Tag.Unfollow")} variant={"outlined"}/>}
                             counter={false}
                             // unsubscribeComponent={<ActionComponent label={"Unfollow"}/>}
                         />
@@ -208,7 +210,7 @@ const Tag = ({classes, allowOwner = true}) => {
                     }
                 })}
                 live
-                noItemsComponent={<PostComponent label={"No posts found"}/>}
+                noItemsComponent={<PostComponent label={t("Tag.No posts found")}/>}
                 pagination={() => new Pagination({
                     ref: db.ref("_tag").child(tag.key),
                     order: "desc",
@@ -219,7 +221,7 @@ const Tag = ({classes, allowOwner = true}) => {
         {!tag.value.hidden && <NewPostComponent
             buttonComponent={<FlexFabComponent
                 icon={<AddIcon/>}
-                label={"New post"}
+                label={t("Post.New post")}
             />}
             context={tag.value.id}
             mentions={[mentionTags, mentionUsers]}

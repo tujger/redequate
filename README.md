@@ -320,6 +320,7 @@ Props:
             joinUsTimeout
             joinUsTitle
             oneTapCliendId
+            postsRepliesInside: Boolean
         support: uid
     mutual
         type/item_id

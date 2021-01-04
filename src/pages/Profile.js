@@ -6,10 +6,16 @@ import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
 import ProfileComponentOrigin from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
+import {
+    matchRole,
+    Role,
+    sendVerificationEmail,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {useFirebase, usePages, useWindowData} from "../controllers/General";
+import {useFirebase, usePages} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
@@ -34,6 +40,7 @@ import NavigationToolbar from "../components/NavigationToolbar";
 import {notifySnackbar} from "../controllers/notifySnackbar";
 import FlexFabComponent from "../components/FlexFabComponent";
 import MetaInfoView from "../components/MetaInfoView";
+import {useTranslation} from "react-i18next";
 
 const stylesProfile = theme => ({
     root: {
@@ -50,14 +57,14 @@ export const publicFields = [
     {
         icon: <NameIcon/>,
         id: "name",
-        label: "Name",
+        label: "User.Name",
         required: true,
         unique: true,
         viewComponent: userData => <Typography variant={"h6"}>{userData.name}</Typography>
     },
     {
         id: "created",
-        label: "Date since",
+        label: "User.Date since",
         editComponent: null,
         viewComponent: userData => <>
             <Typography variant={"caption"}>Since {userData.created}</Typography>
@@ -66,7 +73,7 @@ export const publicFields = [
     },
     {
         id: "address",
-        label: "Address",
+        label: "User.Address",
         icon: <AddressIcon/>,
         editComponent: <PlacesTextField
             type={"formatted"}
@@ -74,7 +81,7 @@ export const publicFields = [
     },
     {
         id: "phone",
-        label: "Phone",
+        label: "User.Phone",
         icon: <PhoneIcon/>,
         editComponent: <TextField
             InputProps={{
@@ -129,8 +136,8 @@ const Profile = (
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const windowData = useWindowData();
     const {id} = useParams();
+    const {t} = useTranslation();
 
     const handleChatClick = () => {
         history.push(pages.chat.route + userData.id);
@@ -177,27 +184,28 @@ const Profile = (
         <NavigationToolbar
             className={classes.top}
             mediumButton={isCurrentUserAdmin && <IconButton
-                aria-label={"Fix possible errors"}
+                aria-label={t("Common.Fix possible errors")}
                 children={<FixIcon/>}
                 onClick={fixErrors}
-                title={"Fix possible errors"}
+                title={t("Common.Fix possible errors")}
             />}
             rightButton={isEditAllowed && <IconButton
-                aria-label={"Edit"}
+                aria-label={t("Common.Edit")}
                 children={<EditIcon/>}
                 onClick={() => {
                     history.push(isSameUser ? pages.editprofile.route : pages.edituser.route + userData.id)
                 }}
-                title={"Edit"}
+                title={t("Common.Edit")}
             />}
         />
         <Grid container className={classes.center}>
             {userData.disabled && <MetaInfoView
-                message={<h4>Account is suspended. Please contact with administrator.</h4>}
+                message={
+                    <h4>{t("User.Account is suspended. Please contact with administrator.")}</h4>}
             />}
             {!userData.verified && <MetaInfoView
-                message={<h4>You still have email not verified. Some features will not
-                    be available. If you were already verified please log out and log in again.</h4>}
+                message={
+                    <h4>{t("User.You still have email not verified. Some features will not be available. If you were already verified please log out and log in again.")}</h4>}
             />}
             <ProfileComponent.type
                 {...ProfileComponent.props}
@@ -212,8 +220,9 @@ const Profile = (
                 size={"large"}
                 variant={"contained"}
             >
-                {!currentUserData.verified && currentUserData.email && !currentUserData.disabled && <Button
-                    children={"Resend verification"}
+                {!currentUserData.verified && currentUserData.email && !currentUserData.disabled &&
+                <Button
+                    children={t("User.Resend verification")}
                     className={classes.resendVerification}
                     onClick={() => {
                         dispatch(ProgressView.SHOW);
@@ -225,12 +234,14 @@ const Profile = (
                 />}
             </ButtonGroup>
         </Grid>
-        {(isSameUser || !pages.chat || pages.chat.disabled) ? null : <FlexFabComponent
-            tooltip={"Start private chat"}
-            icon={<ChatIcon/>}
-            label={"Private chat"}
-            onClick={handleChatClick}
-        />}
+        {(isSameUser || !pages.chat || pages.chat.disabled)
+            ? null
+            : <FlexFabComponent
+                tooltip={t("Chat.Start private chat")}
+                icon={<ChatIcon/>}
+                label={t("Chat.Private chat")}
+                onClick={handleChatClick}
+            />}
     </>;
 };
 

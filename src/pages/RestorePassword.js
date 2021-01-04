@@ -13,6 +13,7 @@ import {notifySnackbar} from "../controllers/notifySnackbar";
 import {useFirebase, usePages} from "../controllers/General";
 import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
+import {useTranslation} from "react-i18next";
 
 const RestorePassword = ({classes}) => {
     const [state, setState] = React.useState({
@@ -25,12 +26,13 @@ const RestorePassword = ({classes}) => {
     const firebase = useFirebase();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
+    const {t} = useTranslation();
 
     const requestRestorePassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         firebase.auth().sendPasswordResetEmail(email).then(() => {
-            notifySnackbar("Instructions have been sent to e-mail.");
+            notifySnackbar(t("User.Instructions have been sent to e-mail."));
             history.push(pages.login.route);
         }).catch(error => {
             notifySnackbar(error);
@@ -54,7 +56,7 @@ const RestorePassword = ({classes}) => {
                 <TextField
                     color={"secondary"}
                     disabled={requesting}
-                    label={"E-mail"}
+                    label={t("User.E-mail")}
                     fullWidth
                     onChange={ev => setState({...state, email: ev.target.value})}
                     value={email}
@@ -63,12 +65,16 @@ const RestorePassword = ({classes}) => {
         </Grid>
         <Box m={2}/>
         <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth>
-            <Button aria-label={"Restore bassword"} onClick={requestRestorePassword}>
-                Restore
-            </Button>
-            <Button aria-label={"Cancel"} onClick={() => history.push(pages.login.route)}>
-                Cancel
-            </Button>
+            <Button
+                aria-label={t("User.Restore password")}
+                children={t("User.Restore")}
+                onClick={requestRestorePassword}
+            />
+            <Button
+                aria-label={t("Common.Cancel")}
+                children={t("Common.Cancel")}
+                onClick={() => history.push(pages.login.route)}
+            />
         </ButtonGroup>
     </Grid>
 };

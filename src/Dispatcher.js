@@ -189,15 +189,20 @@ function Dispatcher(props) {
                 return userData.fetch([UserData.ROLE])
                     .then(() => userData.fetchPrivate(fetchDeviceId(), true))
                     .then(() => ({...props, userData}))
+                    .catch(error => {
+                        console.error(error);
+                        store.dispatch({type: "currentUserData", userData: null});
+                        return props;
+                    })
             }
             return props;
         }
         const fetchCurrentUserLastVisit = async props => {
-            const {userData} = props;
+            const {store, userData} = props;
             if (userData) {
                 userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
                 cacheDatas.put(userData.id, userData);
-                useCurrentUserData(userData);
+                store.dispatch({type: "currentUserData", userData});
             }
             return props;
         }

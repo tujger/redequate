@@ -7,11 +7,14 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Switch from "@material-ui/core/Switch";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
 import DynamicLinksIcon from "@material-ui/icons/Link";
 import SupportIcon from "@material-ui/icons/Person";
 import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
 import MaintenanceIcon from "@material-ui/icons/Settings";
 import JoinUsIcon from "@material-ui/icons/PanTool";
+import PostIcon from "@material-ui/icons/ChatBubbleOutline";
 import AllIcon from "@material-ui/icons/ExpandMore";
 import {useCurrentUserData, UserData} from "../../controllers/UserData";
 import ProgressView from "../../components/ProgressView";
@@ -71,6 +74,7 @@ const Settings = ({classes}) => {
         message,
         maintenance,
         oneTapCliendId,
+        postsRotateReplies,
         support,
         details,
         tab
@@ -175,6 +179,9 @@ const Settings = ({classes}) => {
             settings.joinUsTitle = joinUsTitle || null;
             settings.oneTapCliendId = oneTapCliendId || null;
         }
+        const addPreferencePosts = async () => {
+            settings.postsRotateReplies = postsRotateReplies || null;
+        }
         const publish = async () => {
             updates.settings = settings;
             console.log(updates)
@@ -204,6 +211,7 @@ const Settings = ({classes}) => {
             .then(addSupport)
             .then(addPreferenceDynamicLinksUrlPrefix)
             .then(addPreferenceJoinUs)
+            .then(addPreferencePosts)
             .then(publish)
             .then(notifyAboutSaved)
             .then(updateServiceActivity)
@@ -293,6 +301,7 @@ const Settings = ({classes}) => {
                 <Tab {...tabProps(<BlockedNamesIcon/>, "User profiles", 2)}/>
                 <Tab {...tabProps(<DynamicLinksIcon/>, "Convenience", 3)}/>
                 <Tab {...tabProps(<JoinUsIcon/>, "Welcome popup", 4)}/>
+                <Tab {...tabProps(<PostIcon/>, "Posts", 5)}/>
                 <Tab {...tabProps(<AllIcon/>, "All options", -1)}/>
             </Tabs>
             <Grid container className={classes._content}>
@@ -478,6 +487,25 @@ const Settings = ({classes}) => {
                     </Grid>
                     <Grid container>
                         <a href={"https://developers.google.com/identity/one-tap"} target={"_blank"}>Learn more</a>
+                    </Grid>
+                    <Box m={1}/>
+                </>}
+                {(tab === 5 || tab === -1) && <>
+                    <Grid container>
+                        <Typography variant={"button"}>Posts</Typography>
+                    </Grid>
+                    <Box m={1}/>
+                    <Grid container>
+                        <Select
+                            color={"secondary"}
+                            onChange={handleChange("postsRotateReplies")}
+                            value={postsRotateReplies || ""}
+                            displayEmpty={true}
+                        >
+                            <MenuItem value={""}>None</MenuItem>
+                            <MenuItem value={"inside"}>Inside post</MenuItem>
+                            <MenuItem value={"outside"}>Outside of post</MenuItem>
+                        </Select>
                     </Grid>
                     <Box m={1}/>
                 </>}

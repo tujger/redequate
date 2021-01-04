@@ -40,17 +40,17 @@ const Signup = ({classes, signup = true, additional}) => {
 
     const requestSignupPassword = () => {
         if (!email && !requestPasswordFor) {
-            notifySnackbar(new Error("Empty e-mail"));
+            notifySnackbar(new Error(t("User.Empty e-mail")));
             setState({...state, requesting: false});
             return;
         }
         if (!password) {
-            notifySnackbar(new Error("Empty password"));
+            notifySnackbar(new Error(t("User.Empty password")));
             setState({...state, requesting: false});
             return;
         }
         if (password.length < 8) {
-            notifySnackbar(new Error("Password must be at least 8 symbols"));
+            notifySnackbar(new Error(t("User.Password must be at least 8 symbols")));
             setState({...state, requesting: false});
             return;
         }
@@ -67,7 +67,7 @@ const Signup = ({classes, signup = true, additional}) => {
             user.updatePassword(password)
                 .then(() => {
                     notifySnackbar({
-                        title: "Now you may login with your e-mail and password."
+                        title: t("User.Now you may login with your e-mail and password.")
                     });
                     history.replace(pages.login.route);
                 })
@@ -115,7 +115,7 @@ const Signup = ({classes, signup = true, additional}) => {
 
         console.log("[Signup] with link for", email)
         if (!email) {
-            email = window.prompt("Please provide your email for confirmation");
+            email = window.prompt(t("User.Please provide your e-mail for confirmation"));
             if (!email) return <Redirect to={pages.home.route}/>
         }
         firebase.auth().signInWithEmailLink(email, window.location.href)
@@ -138,7 +138,7 @@ const Signup = ({classes, signup = true, additional}) => {
                 <TextField
                     color={"secondary"}
                     disabled={requesting}
-                    label={"E-mail"}
+                    label={t("User.E-mail")}
                     fullWidth
                     onChange={ev => {
                         setState({...state, email: ev.target.value});
@@ -152,7 +152,7 @@ const Signup = ({classes, signup = true, additional}) => {
         </Grid>}
         {!requestPasswordFor && <Box m={1}/>}
         {requestPasswordFor && <Grid container spacing={1} alignItems={"flex-end"}>
-            <h4>Please create password for your account.</h4>
+            <h4>{t("User.Please create password for your account.")}</h4>
         </Grid>}
         {!requestPasswordFor && <Box m={1}/>}
         <Grid container spacing={1} alignItems={"flex-end"}>
@@ -163,7 +163,7 @@ const Signup = ({classes, signup = true, additional}) => {
                 <PasswordField
                     color={"secondary"}
                     disabled={requesting}
-                    label={"Password"}
+                    label={t("User.Password")}
                     onChange={ev => {
                         setState({...state, password: ev.target.value});
                     }}
@@ -192,27 +192,25 @@ const Signup = ({classes, signup = true, additional}) => {
         <Box m={2}/>
         <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth disabled={requesting}>
             <Button
+                children={t("Definitions.Sign up")}
                 onClick={requestSignupPassword}
-            >
-                Sign up
-            </Button>
+            />
             <Button
+                children={t("Common.Cancel")}
                 onClick={() => history.goBack()}
-            >
-                Cancel
-            </Button>
+            />
         </ButtonGroup>
         <Box m={2}/>
         <Grid container alignItems={"center"} justify={"center"} spacing={1}>
             <Button variant={"text"} color={"secondary"} onClick={onRequestGoogle} size={"large"}>
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
                 <Box m={0.5}/>
-                {t("Signup.Sign up with")} Google
+                {t("Login.Sign up with")} Google
             </Button>
             <Button variant={"text"} color={"secondary"} onClick={onRequestFacebook} size={"large"}>
                 <img src={FacebookLogo} width={20} height={20} alt={""}/>
                 <Box m={0.5}/>
-                {t("Signup.Sign up with")} Facebook
+                {t("Login.Sign up with")} Facebook
             </Button>
         </Grid>
     </Grid>

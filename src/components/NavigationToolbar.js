@@ -5,6 +5,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import {useHistory} from "react-router-dom";
+import {useTranslation} from "react-i18next";
 
 const styles = theme => ({
     toolbar: {
@@ -12,14 +13,15 @@ const styles = theme => ({
     }
 })
 
-const NavigationToolbar = (
-    {
+const NavigationToolbar = props => {
+    const {t} = useTranslation();
+    const {
         alignItems = "center",
         backButton = <IconButton
-            aria-label={"Back"}
+            aria-label={t("Common.Back")}
             children={<BackIcon/>}
             /* eslint-disable-next-line no-undef */
-            title={"Back"}
+            title={t("Common.Back")}
         />,
         children,
         classes,
@@ -28,7 +30,7 @@ const NavigationToolbar = (
         mediumButton,
         rightButton,
         style,
-    }) => {
+    } = props;
     const history = useHistory();
 
     const button = backButton && <backButton.type
