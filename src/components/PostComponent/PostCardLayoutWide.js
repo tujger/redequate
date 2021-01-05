@@ -31,7 +31,7 @@ export default React.forwardRef((props, ref) => {
     const pages = usePages();
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
-    const {postsRotateReplies} = settings;
+    const {postsRotateReplies, postsAllowEdit} = settings;
 
     return <Card
         className={[
@@ -42,7 +42,8 @@ export default React.forwardRef((props, ref) => {
         ].join(" ")}
         ref={ref}
     >
-        <PostCardWrapper classes={classes} disableClick={disableClick} handleClickPost={handleClickPost}>
+        <PostCardWrapper classes={classes} disableClick={disableClick}
+                         handleClickPost={handleClickPost}>
             <CardHeader
                 classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
                 className={[
@@ -72,7 +73,8 @@ export default React.forwardRef((props, ref) => {
                             to={pages.user.route + userData.id}
                         >{userData.name}</Link>
                     </Grid>
-                    <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
+                    <Grid item className={classes.date}
+                          title={new Date(postData.created).toLocaleString()}>
                         {toDateString(postData.created)}
                     </Grid>
                     {postData.targetTag && <Grid item>
@@ -101,7 +103,7 @@ export default React.forwardRef((props, ref) => {
                         />
                     </Grid>}
                     <Grid container alignItems={"flex-end"} justify={"flex-end"}>
-                        {postData.edit && <Grid item xs className={classes.date}>
+                        {postsAllowEdit && postData.edit && <Grid item xs className={classes.date}>
                             Edited {toDateString(postData.editOf("last").timestamp)}
                         </Grid>}
                         {!disableButtons && <PostButtons {...props}/>}
@@ -109,6 +111,7 @@ export default React.forwardRef((props, ref) => {
                 </>}
             />
         </PostCardWrapper>
-        {level === undefined && postsRotateReplies === "inside" && <RotatingReplies {...props} postId={postData.id}/>}
+        {level === undefined && postsRotateReplies === "inside" &&
+        <RotatingReplies {...props} postId={postData.id}/>}
     </Card>
 });

@@ -43,7 +43,7 @@ export default React.forwardRef((props, ref) => {
     const pages = usePages();
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
-    const {postsRotateReplies} = settings;
+    const {postsRotateReplies, postsAllowEdit} = settings;
 
     return <Card
         className={[
@@ -114,7 +114,7 @@ export default React.forwardRef((props, ref) => {
             />
         </Grid>}
         {/*<Grid container alignItems={"flex-end"} justify={"flex-end"}>
-            {postData.edit && <Grid item xs className={classes.date}>
+            {postsAllowEdit && postData.edit && <Grid item xs className={classes.date}>
                 Edited {toDateString(postData.editOf("last").timestamp)}
             </Grid>}
             {!disableButtons && <PostButtons {...props}/>}

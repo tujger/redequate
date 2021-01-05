@@ -24,6 +24,7 @@ import {notifySnackbar} from "../controllers/notifySnackbar";
 import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
 import {useTranslation} from "react-i18next";
+import LoadingComponent from "../components/LoadingComponent";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -44,7 +45,13 @@ function Login(props) {
     const store = useStore();
     const {i18n, t} = useTranslation();
     const [state, setState] = React.useState({});
-    const {showAgreement = false, email = "", password = "", requesting = true, response = null} = state;
+    const {
+        showAgreement = false,
+        email = "",
+        password = "",
+        requesting = true,
+        response = null
+    } = state;
 
     const errorCallback = error => {
         notifySnackbar(error);
@@ -151,7 +158,13 @@ function Login(props) {
             .then(() => {
                 if (!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true
             })
-            .then(() => ud.setPrivate(fetchDeviceId(), {osName, osVersion, deviceType, browserName, agreement: true}))
+            .then(() => ud.setPrivate(fetchDeviceId(), {
+                osName,
+                osVersion,
+                deviceType,
+                browserName,
+                agreement: true
+            }))
             .then(() => ud.savePrivate())
             .then(() => {
                 if (!ud.persisted) {
@@ -176,7 +189,7 @@ function Login(props) {
                             setState(state => ({...state, disabled: false}))
                         }, 10))
                         .catch(error => {
-                            if(error && error.code === "messaging/failed-service-worker-registration") return;
+                            if (error && error.code === "messaging/failed-service-worker-registration") return;
                             throw error;
                         })
                         .catch(notifySnackbar)
@@ -211,18 +224,7 @@ function Login(props) {
         setState(state => ({...state, showAgreement: false}));
         notifySnackbar(t("Login.Agreement rejected"));
         history.goBack();
-        // history.push(pages.home.route);
     }
-
-    // if (!popup && window.localStorage.getItem(pages.login.route)) {
-    //     window.localStorage.removeItem(pages.login.route);
-    //     firebase.auth().getRedirectResult()
-    //         .then(checkFirstLogin)
-    //         .then(loginSuccess)
-    //         .catch(errorCallback)
-    //         .finally(() => dispatch(ProgressView.HIDE));
-    //     return <LoadingComponent/>;
-    // }
 
     if (currentUserData && currentUserData.id) {
         if (location.pathname === pages.login.route) {
@@ -250,11 +252,12 @@ function Login(props) {
                 .then(loginSuccess)
                 .catch(errorCallback)
                 .finally(() => dispatch(ProgressView.HIDE));
-            // return <LoadingComponent/>;
         } else {
             setState(state => ({...state, requesting: false}));
         }
     }, [])
+
+    if (requesting) return <LoadingComponent/>
 
     return <layout.type
         {...props}
@@ -331,7 +334,13 @@ const LoginLayout = (
             </Grid>
         </Grid>
         <Box m={2}/>
-        <ButtonGroup disabled={disabled} variant={"contained"} color={"secondary"} size={"large"} fullWidth>
+        <ButtonGroup
+            color={"secondary"}
+            disabled={disabled}
+            fullWidth
+            size={"large"}
+            variant={"contained"}
+        >
             <Button
                 children={t("Common.Continue")}
                 fullWidth
@@ -344,7 +353,13 @@ const LoginLayout = (
             />
         </ButtonGroup>
         <Box m={1}/>
-        <ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"large"} fullWidth>
+        <ButtonGroup
+            color={"default"}
+            disabled={disabled}
+            fullWidth
+            size={"large"}
+            variant={"text"}
+        >
             {signup && <Button
                 children={t("Login.Create account")}
                 fullWidth
@@ -360,33 +375,29 @@ const LoginLayout = (
         </ButtonGroup>
         <Box m={1}/>
         <Grid container alignItems={"center"} justify={"center"} spacing={1}>
-            <Button disabled={disabled} variant={"text"} color={"secondary"} onClick={onRequestGoogle} size={"large"}>
+            <Button
+                color={"secondary"}
+                disabled={disabled}
+                onClick={onRequestGoogle}
+                size={"large"}
+                variant={"text"}
+            >
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
                 <Box m={0.5}/>
                 {t("Login.Login with")} Google
             </Button>
-            <Button disabled={disabled} variant={"text"} color={"secondary"} onClick={onRequestFacebook} size={"large"}>
+            <Button
+                color={"secondary"}
+                disabled={disabled}
+                onClick={onRequestFacebook}
+                size={"large"}
+                variant={"text"}
+            >
                 <img src={FacebookLogo} width={20} height={20} alt={""}/>
                 <Box m={0.5}/>
                 {t("Login.Login with")} Facebook
             </Button>
         </Grid>
-        {/*<ButtonGroup disabled={disabled} variant={"text"} color={"default"} size={"small"} fullWidth>
-            <Button disabled variant={"text"} color={"default"} size={"small"}>
-                {t("Login.Login with")}
-            </Button>
-            <Button disabled={disabled} variant={"text"} color={"default"} onClick={onRequestGoogle} size={"small"}>
-                <img src={GoogleLogo} width={20} height={20} alt={""}/>
-                <Box m={0.5}/>
-                Google
-            </Button>
-            <Button disabled={disabled} variant={"text"} color={"default"} onClick={onRequestFacebook} size={"small"}>
-                <img src={FacebookLogo} width={20} height={20} alt={""}/>
-                <Box m={0.5}/>
-                Facebook
-            </Button>
-            </ButtonGroup>
-*/}
         <Box m={1}/>
         {agreementComponent && <ConfirmComponent
             confirmLabel={t("Login.Agree")}
