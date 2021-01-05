@@ -77,7 +77,6 @@ const JoinUsComponent = ({label}) => {
                         try {
                             window.google.accounts.id.initialize({
                                 client_id: oneTapCliendId,
-                                skip_prompt_cookie: "abcdef" + Math.random(),
                                 provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
                                 callback: props => {
                                     try {

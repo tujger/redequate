@@ -4,7 +4,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
 import makeStyles from "@material-ui/core/styles/makeStyles";
-import {cacheDatas, usePages, useWindowData} from "../controllers/General";
+import {cacheDatas, useMetaInfo, usePages, useWindowData} from "../controllers/General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import notifySnackbar from "../controllers/notifySnackbar";
 import ProgressView from "../components/ProgressView";
@@ -43,6 +43,9 @@ const NewPost = (props) => {
     const {imageDescriptors, text, tag, ready} = state;
     const classesPost = useStyles();
     const windowData = useWindowData();
+    const metaInfo = useMetaInfo();
+    const {settings = {}} = metaInfo || {};
+    const {uploadsAllow, uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality} = settings;
 
     const handleReplyChange = ({key}) => {
         cacheDatas.remove(id);
@@ -92,7 +95,7 @@ const NewPost = (props) => {
         }
         const buildImageDescriptors = async props => {
             const {media} = props;
-            if (media && media.length) {
+            if (media && media.length && uploadsAllow) {
                 const promises = media.map(async item => {
                     const {name, size, type} = item;
                     const nameTokens = (name || "").split(".") || [];
@@ -112,7 +115,10 @@ const NewPost = (props) => {
                     return uploadComponentResize({
                         descriptor,
                         limits: {
-                            maxWidth: 1000, maxHeight: 1000, size: 100000, quality: 75
+                            maxWidth: uploadsMaxWidth,
+                            maxHeight: uploadsMaxHeight,
+                            size: uploadsMaxSize * 1024,
+                            quality: uploadsQuality
                         }
                     })
                 });

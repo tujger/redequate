@@ -16,6 +16,7 @@ import "@uppy/webcam/dist/style.css";
 import {notifySnackbar} from "../../controllers/notifySnackbar";
 import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
 import {useTranslation} from "react-i18next";
+import {useMetaInfo} from "../../controllers";
 
 const MAX_FILE_SIZE = 20 * 1024;
 
@@ -142,20 +143,29 @@ const UploadComponent = (
         imageDescriptors,
         onsuccess,
         onerror,
-        limits,
+        limits = {},
         facingMode: givenFacingMode,
         multi = true
     }) => {
     const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
     const {uppy, facingMode} = state;
     const {t} = useTranslation();
+    const metaInfo = useMetaInfo();
+    const {settings = {}} = metaInfo || {};
+    const {uploadsAllow, uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality} = settings;
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
 
-    const {width = 1000, height = 1000, size = 100000, quality = 75} = limits || {};
+    const {
+        width = uploadsMaxWidth,
+        height = uploadsMaxHeight,
+        size = uploadsMaxSize * 1024,
+        quality = uploadsQuality
+    } = limits;
 
     React.useEffect(() => {
+        if(!uploadsAllow) return;
         const uppy = Uppy({
             allowMultipleUploads: multi,
             autoProceed: true,
@@ -182,13 +192,13 @@ const UploadComponent = (
                 })
             }
 
-            console.log(`[UploadComponent] resize ${result.name} to ${maxWidth}x${maxHeight} with quality ${quality}`);
+            console.log(`[UploadComponent] resize ${result.name} to ${width}x${height} with quality ${quality}`);
 
             uploadComponentResize({
                 descriptor: result,
                 limits: {
-                    maxWidth,
-                    maxHeight,
+                    maxWidth: width,
+                    maxHeight: height,
                     quality,
                 }
             })
@@ -291,7 +301,11 @@ const UploadComponent = (
                     done: t("Common.Cancel"),
                 }
             },
-            note: t("Upload.Images up to {{maxFileSize}} kb (will be resized to {{maxWidth}}x{{maxHeight}} max)", {maxFileSize: MAX_FILE_SIZE, maxWidth, maxHeight}),
+            note: t("Upload.Images up to {{maxFileSize}} kb (will be resized to {{maxWidth}}x{{maxHeight}} max)", {
+                maxFileSize: MAX_FILE_SIZE,
+                maxWidth: width,
+                maxHeight: height
+            }),
             // note: `Images up to ${MAX_FILE_SIZE} kb${maxWidth ? ` (will be resized to ${maxWidth}x${maxHeight} max)` : ""}`,
             theme: "auto",
         });
@@ -341,13 +355,14 @@ const UploadComponent = (
         setState(state => ({...state, uppy: uppy}));
     }, [])
 
-    let maxWidth, maxHeight;
-    if (limits) {
-        maxHeight = height;
-        maxWidth = width || maxHeight;
-        maxHeight = maxHeight || maxWidth;
-    }
+    // let maxWidth, maxHeight;
+    // if (limits) {
+    //     maxHeight = height;
+    //     maxWidth = width || maxHeight;
+    //     maxHeight = maxHeight || maxWidth;
+    // }
 
+    if (!uploadsAllow) return null;
     return <>
         {button
             ? <button.type

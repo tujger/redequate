@@ -12,6 +12,7 @@ import Switch from "@material-ui/core/Switch";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import DynamicLinksIcon from "@material-ui/icons/Link";
+import UploadsIcon from "@material-ui/icons/CloudUpload";
 import SupportIcon from "@material-ui/icons/Person";
 import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
 import MaintenanceIcon from "@material-ui/icons/Settings";
@@ -47,7 +48,7 @@ const stylesCurrent = theme => ({
     _tabs: {}
 });
 
-const Settings = ({classes}) => {
+const Settings = ({classes, uploadable}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -80,7 +81,12 @@ const Settings = ({classes}) => {
         postsRotateReplies,
         support,
         details,
-        tab
+        tab,
+        uploadsAllow,
+        uploadsMaxHeight,
+        uploadsMaxSize,
+        uploadsMaxWidth,
+        uploadsQuality
     } = state;
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
@@ -197,6 +203,13 @@ const Settings = ({classes}) => {
             settings.postsRotateReplies = postsRotateReplies || null;
             settings.postsAllowEdit = postsAllowEdit || null;
         }
+        const addPreferenceUploads = async () => {
+            settings.uploadsAllow = uploadsAllow || null;
+            settings.uploadsMaxHeight = uploadsAllow ? uploadsMaxHeight || 1000 : null;
+            settings.uploadsMaxSize = uploadsAllow ? uploadsMaxSize || 100 : null;
+            settings.uploadsMaxWidth = uploadsAllow ? uploadsMaxWidth || 1000 : null;
+            settings.uploadsQuality = uploadsAllow ? uploadsQuality || 75 : null;
+        }
         const publish = async () => {
             updates.settings = settings;
             console.log(updates)
@@ -227,6 +240,7 @@ const Settings = ({classes}) => {
             .then(addPreferenceDynamicLinksUrlPrefix)
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
+            .then(addPreferenceUploads)
             .then(publish)
             .then(notifyAboutSaved)
             .then(updateServiceActivity)
@@ -317,6 +331,7 @@ const Settings = ({classes}) => {
                 <Tab {...tabProps(<DynamicLinksIcon/>, "Convenience", 3)}/>
                 <Tab {...tabProps(<JoinUsIcon/>, "Welcome popup", 4)}/>
                 <Tab {...tabProps(<PostIcon/>, "Posts", 5)}/>
+                {uploadable && <Tab {...tabProps(<UploadsIcon/>, "Uploads", 6)}/>}
                 <Tab {...tabProps(<AllIcon/>, "All options", -1)}/>
             </Tabs>
             <Grid container className={classes._content}>
@@ -535,6 +550,64 @@ const Settings = ({classes}) => {
                                 <MenuItem value={"outside"}>Outside of post</MenuItem>
                             </Select>
                         </FormControl>
+                    </Grid>
+                    <Box m={1}/>
+                </>}
+                {uploadable && (tab === 6 || tab === -1) && <>
+                    <Grid container>
+                        <Typography variant={"button"}>Uploads</Typography>
+                    </Grid>
+                    <Box m={1}/>
+                    <Grid container>
+                        <FormControlLabel
+                            color={"secondary"}
+                            control={<Switch
+                                onChange={handleSwitch("uploadsAllow")}
+                                checked={uploadsAllow || false}
+                            />}
+                            disabled={disabled}
+                            label={"Allow uploads"}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            label={"Max width, px"}
+                            onChange={handleChange("uploadsMaxWidth")}
+                            type="number"
+                            value={uploadsMaxWidth | 1000}
+                        />
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            label={"Max height, px"}
+                            onChange={handleChange("uploadsMaxHeight")}
+                            type="number"
+                            value={uploadsMaxHeight || 1000}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Quality for JPEG and PNG, %"}
+                            onChange={handleChange("uploadsQuality")}
+                            type="number"
+                            value={uploadsQuality || 75}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Limit size, kb"}
+                            onChange={handleChange("uploadsMaxSize")}
+                            type="number"
+                            value={uploadsMaxSize || 100}
+                        />
                     </Grid>
                     <Box m={1}/>
                 </>}

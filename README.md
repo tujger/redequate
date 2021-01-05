@@ -97,7 +97,7 @@ There is important to define two variables: `pages` and `menu`;
 
         adduser: {route: "/admin/add", label: "Add user", icon: <AddUserIcon/>, component: <AddUser/>, roles: [Role.ADMIN]},
 
-        settings: {route: "/admin/settings", label: "Settings", icon: <ServiceIcon/>, component: <Settings/>, roles: [Role.ADMIN]},
+        settings: {route: "/admin/settings", label: "Settings", icon: <ServiceIcon/>, component: <Settings uploadable={true}/>, roles: [Role.ADMIN]},
 
         audit: {route: "/admin/audit", label: "Audit", icon: <ErrorsIcon/>, component: <Audit/>, roles: [Role.ADMIN]},
 

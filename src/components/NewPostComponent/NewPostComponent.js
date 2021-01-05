@@ -461,7 +461,6 @@ const NewPostComponent = props => {
         camera={camera}
         firebase={firebase}
         imageDescriptors={imageDescriptors}
-        limits={{width: 1000, height: 1000, size: 100000}}
         multi={true}
         onsuccess={handleUploadPhotoSuccess}
         onerror={handleUploadPhotoError}

@@ -259,7 +259,7 @@ function Dispatcher(props) {
         }
         const installMetaWatcher = async props => {
             (async () => {
-                const {firebase, store} = props;
+                const {firebase, store, t} = props;
                 let initial = true;
                 metaRef = firebase.database().ref("meta");
                 metaRef.on("value", snapshot => {
@@ -271,6 +271,7 @@ function Dispatcher(props) {
                         console.warn("[Dispatcher] meta changed", meta);
                         setState(state => ({...state, metaInfo: {settings}}));
                         refreshAll(store);
+                        notifySnackbar(t("Reloaded due to settings changed"));
                     }
                     setState(state => {
                         const metaInfo = state.metaInfo || {};
