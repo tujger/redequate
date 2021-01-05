@@ -91,17 +91,6 @@ const ChatItem = (props) => {
                 verified={true}
             />}
             title={<Grid container>
-                {/* <Grid item className={classes.userName}>
-                        <UserNameComponent
-                            className={[classes.label].join(" ")}
-                            id={data.uid}
-                            prefix={"@"}
-                            // needVerify={user.uid()}
-                        />
-                    </Grid> */}
-                {/* <Grid item className={classes.date} title={new Date(data.created).toLocaleString()}>
-                        {toDateString(data.created)}
-                    </Grid> */}
             </Grid>}
             subheader={<Grid container className={classes._text}>
                 <Grid item xs>{textComponent(data.text)}</Grid>

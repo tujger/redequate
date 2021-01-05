@@ -9,11 +9,13 @@ import {usePages} from "../../controllers/General";
 import CounterComponent from "../CounterComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {useDispatch} from "react-redux";
+import {useTranslation} from "react-i18next";
 
 export default ({postData, classes, disableClick}) => {
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
+    const {t} = useTranslation();
 
     return <Grid item>
         <IconButton
@@ -27,6 +29,7 @@ export default ({postData, classes, disableClick}) => {
                 })
             }}
             size={"small"}
+            title={t("Post.Replies")}
         >
             <CounterComponent
                 counter={postData.counter("replied")}
