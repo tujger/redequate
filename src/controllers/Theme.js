@@ -187,6 +187,9 @@ export const styles = theme => ({
             color: theme.palette.getContrastText(theme.palette.secondary.main),
         },
     },
+    formIcon: {
+        marginTop: theme.spacing(2.5),
+    },
     label: {
         color: "#101010",
         textDecoration: "none",

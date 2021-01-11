@@ -1,5 +1,5 @@
 import React from "react";
-import {logoutUser, sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
+import {logoutUser, Role, sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
@@ -134,73 +134,219 @@ function Login(props) {
     };
 
     const loginSuccess = response => {
-        if (!response) return;
-        if (!response.user) {
-            throw new Error(t("Login.Login failed. Please try again"));
+        // if (!response) return;
+        // if (!response.user) {
+        //     throw new Error(t("Login.Login failed. Please try again"));
+        // }
+        // let isFirstLogin = false;
+        // let isFirstOnDevice = false;
+        // const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+        // if (!ud.verified) {
+        //     notifySnackbar({
+        //         buttonLabel: t("Login.Resend verification"),
+        //         onButtonClick: () => sendVerificationEmail(firebase),
+        //         priority: "high",
+        //         title: t("Login.Your account is not yet verified."),
+        //         variant: "warning",
+        //     })
+        //     setState(state => ({...state, requesting: false}));
+        //     return;
+        // }
+        // return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
+        //     .then(() => ud.fetchPrivate(fetchDeviceId(), true))
+        //     .then(() => i18n.changeLanguage(ud.private[fetchDeviceId()].locale))
+        //     .then(() => {
+        //         if (!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true
+        //     })
+        //     .then(() => ud.setPrivate(fetchDeviceId(), {
+        //         osName,
+        //         osVersion,
+        //         deviceType,
+        //         browserName,
+        //         agreement: true
+        //     }))
+        //     .then(() => ud.savePrivate())
+        //     .then(() => {
+        //         if (!ud.persisted) {
+        //             isFirstLogin = true;
+        //             if (transformUserDataOnFirstLogin) return transformUserDataOnFirstLogin(ud);
+        //         }
+        //         return ud;
+        //     })
+        //     .then(ud => isFirstLogin ? ud.savePublic() : ud.updateVisitTimestamp())
+        //     .then(ud => {
+        //         useCurrentUserData(ud);
+        //         dispatch({type: "currentUserData", userData: ud});
+        //     })
+        //     .then(() => {
+        //         if (iOS) return;
+        //         if (isFirstOnDevice || ud.private[fetchDeviceId()].notification) {
+        //             return setupReceivingNotifications(firebase)
+        //                 .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
+        //                     .then(() => ud.savePrivate()))
+        //                 .then(() => notifySnackbar({title: t("Login.Subscribed to notifications")}))
+        //                 .then(() => setTimeout(() => {
+        //                     setState(state => ({...state, disabled: false}))
+        //                 }, 10))
+        //                 .catch(error => {
+        //                     if (error && error.code === "messaging/failed-service-worker-registration") return;
+        //                     throw error;
+        //                 })
+        //                 .catch(notifySnackbar)
+        //         }
+        //     })
+        //     .then(() => {
+        //         refreshAll(store);
+        //         if (onLogin && onLogin(isFirstLogin)) return;
+        //         if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin: true});
+        //         else history.replace(pages.home.route);
+        //     });
+
+        const importValues = async () => {
+            return {deviceId: fetchDeviceId(), response}
         }
-        let isFirstLogin = false;
-        let isFirstOnDevice = false;
-        const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
-        if (!ud.verified) {
-            notifySnackbar({
-                buttonLabel: t("Login.Resend verification"),
-                onButtonClick: () => sendVerificationEmail(firebase),
-                priority: "high",
-                title: t("Login.Your account is not yet verified."),
-                variant: "warning",
-            })
-            setState(state => ({...state, requesting: false}));
-            return;
+        const checkIfResponseValid = async props => {
+            const {response} = props;
+            if (!response) throw "empty-response";
+            if (!response.user) {
+                throw new Error(t("Login.Login failed. Please try again"));
+            }
+            return props;
         }
-        return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
-            .then(() => ud.fetchPrivate(fetchDeviceId(), true))
-            .then(() => i18n.changeLanguage(ud.private[fetchDeviceId()].locale))
-            .then(() => {
-                if (!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true
-            })
-            .then(() => ud.setPrivate(fetchDeviceId(), {
+        const createUserDataFromResponse = async props => {
+            const {response} = props;
+            const userData = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+            return {...props, userData}
+        }
+        const checkIfUserVerified = async props => {
+            const {userData} = props;
+            if (!userData.verified) {
+                notifySnackbar({
+                    buttonLabel: t("Login.Resend verification"),
+                    onButtonClick: () => sendVerificationEmail(firebase),
+                    priority: "high",
+                    title: t("Login.Your account is not yet verified."),
+                    variant: "warning",
+                })
+                throw "user-not-verified";
+            }
+            return props;
+        }
+        const fetchPublicAndPrivateData = async props => {
+            const {userData, deviceId} = props;
+            await userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
+                .then(() => userData.fetchPrivate(deviceId, true));
+            return {...props, userData};
+        }
+        const changeLocaleByUser = async props => {
+            const {userData, deviceId} = props;
+            try {
+                i18n.changeLanguage(userData.private[deviceId].locale);
+            } catch (error) {
+                console.error(error);
+            }
+            return props;
+        }
+        const checkIfFirstLoginAndOnDevice = async props => {
+            const {userData, deviceId} = props;
+            const isFirstOnDevice = !!userData.private[deviceId].osName;
+            const isFirstLogin = !userData.persisted;
+            return {...props, isFirstOnDevice, isFirstLogin};
+        }
+        const updatePrivateData = async props => {
+            const {userData, deviceId} = props;
+            await userData.setPrivate(deviceId, {
                 osName,
                 osVersion,
                 deviceType,
                 browserName,
                 agreement: true
-            }))
-            .then(() => ud.savePrivate())
-            .then(() => {
-                if (!ud.persisted) {
-                    isFirstLogin = true;
-                    if (transformUserDataOnFirstLogin) return transformUserDataOnFirstLogin(ud);
-                }
-                return ud;
-            })
-            .then(ud => isFirstLogin ? ud.savePublic() : ud.updateVisitTimestamp())
-            .then(ud => {
-                useCurrentUserData(ud);
-                dispatch({type: "currentUserData", userData: ud});
-            })
-            .then(() => {
-                if (iOS) return;
-                if (isFirstOnDevice || ud.private[fetchDeviceId()].notification) {
-                    return setupReceivingNotifications(firebase)
-                        .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
-                            .then(() => ud.savePrivate()))
-                        .then(() => notifySnackbar({title: t("Login.Subscribed to notifications")}))
-                        .then(() => setTimeout(() => {
-                            setState(state => ({...state, disabled: false}))
-                        }, 10))
-                        .catch(error => {
-                            if (error && error.code === "messaging/failed-service-worker-registration") return;
-                            throw error;
-                        })
-                        .catch(notifySnackbar)
-                }
-            })
-            .then(() => {
-                refreshAll(store);
-                if (onLogin && onLogin(isFirstLogin)) return;
-                if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin: true});
-                else history.replace(pages.home.route);
             });
+            return props;
+        }
+        const transformUserDataIfNeeded = async props => {
+            let {userData, isFirstLogin} = props;
+            if (isFirstLogin && transformUserDataOnFirstLogin) {
+                userData = await transformUserDataOnFirstLogin(userData);
+            }
+            return {...props, userData};
+        }
+        const publishUserData = async props => {
+            const {userData, isFirstLogin} = props;
+            await userData.savePrivate();
+            if (isFirstLogin) {
+                await userData.savePublic();
+            } else {
+                userData.updateVisitTimestamp();
+            }
+            return props;
+        }
+        const updateCurrentUserData = async props => {
+            const {userData} = props;
+            useCurrentUserData(userData);
+            dispatch({type: "currentUserData", userData});
+            refreshAll(store);
+            return props;
+        }
+        const checkIfUserDisabled = async props => {
+            const {userData} = props;
+            if (userData.role === Role.DISABLED) {
+                history.push(pages.profile.route);
+                throw "user-disabled";
+            }
+            return props;
+        }
+        const setupNotifications = async props => {
+            const {userData, isFirstOnDevice, deviceId} = props;
+            if (iOS) return props;
+            if (isFirstOnDevice || userData.private[deviceId].notification) {
+                await setupReceivingNotifications(firebase)
+                    .then(notification => userData.setPrivate(deviceId, {notification}))
+                    .then(() => userData.savePrivate())
+                    .then(() => notifySnackbar({title: t("Login.Subscribed to notifications")}))
+                    // .then(() => setTimeout(() => {
+                    //     setState(state => ({...state, disabled: false}))
+                    // }, 10))
+                    .catch(error => {
+                        if (error && error.code === "messaging/failed-service-worker-registration") return;
+                        throw error;
+                    })
+                    .catch(notifySnackbar)
+            }
+            return props;
+        }
+        const doIfFirstLogin = async props => {
+            console.log(props)
+            const {isFirstLogin} = props;
+            if (onLogin && onLogin(isFirstLogin)) return;
+            if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin});
+            else history.replace(pages.home.route);
+        }
+        const catchEvent = async event => {
+            if (event instanceof Error) throw event;
+            console.warn(event);
+        }
+        const finalize = async () => {
+            setState(state => ({...state, requesting: false}));
+        }
+
+        importValues()
+            .then(checkIfResponseValid)
+            .then(createUserDataFromResponse)
+            .then(checkIfUserVerified)
+            .then(fetchPublicAndPrivateData)
+            .then(changeLocaleByUser)
+            .then(checkIfFirstLoginAndOnDevice)
+            .then(updatePrivateData)
+            .then(transformUserDataIfNeeded)
+            .then(publishUserData)
+            .then(updateCurrentUserData)
+            .then(checkIfUserDisabled)
+            .then(setupNotifications)
+            .then(doIfFirstLogin)
+            .catch(catchEvent)
+            .catch(notifySnackbar)
+            .finally(finalize)
     };
 
     const checkFirstLogin = async response => {

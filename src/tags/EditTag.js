@@ -10,6 +10,8 @@ import Box from "@material-ui/core/Box";
 import {useDispatch} from "react-redux";
 import Switch from "@material-ui/core/Switch";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
+import InputLabel from "@material-ui/core/InputLabel";
+import FormControl from "@material-ui/core/FormControl";
 import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
 import withStyles from "@material-ui/styles/withStyles";
@@ -35,11 +37,12 @@ import {
     useCurrentUserData,
     UserData
 } from "../controllers/UserData";
-import {tokenizeText} from "../components";
+import {tokenizeText} from "../components/MentionedTextComponent";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import {mutualRequest} from "../components/MutualComponent";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
 import {useTranslation} from "react-i18next";
+import MentionedSelectComponent from "../components/MentionedSelectComponent";
 
 const stylesCurrent = theme => ({
     profileImage: {
@@ -545,30 +548,21 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 </>}
                 {!isNew && <>
                     <Grid container className={classes.profileField}>
-                        <MentionsInputComponent
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            mentionsParams={[
-                                {
+                        <FormControl fullWidth>
+                            <MentionedSelectComponent
+                                color={"secondary"}
+                                combobox
+                                disabled={disabled}
+                                label={t("Tag.Change owner")}
+                                mention={{
                                     ...mentionUsers,
                                     trigger: "",
                                     displayTransform: (id, display) => display
-                                }
-                            ]}
-                            onApply={(value) => console.log(value)}
-                            onChange={(ev, a, b, tokens) => {
-                                // console.log(ev.target.value, a, b, c)
-                                tokens = tokens || [];
-                                let text = ev.target.value;
-                                if (tokens.length) {
-                                    const token = tokens[tokens.length - 1];
-                                    text = token ? `$[user:${token.id}:${token.display}]` : "";
-                                }
-                                setState(state => ({...state, owner: text}));
-                            }}
-                            label={t("Tag.Change owner")}
-                            value={owner}/>
+                                }}
+                                onChange={(ev, owner) => setState(state => ({...state, owner}))}
+                                value={owner}
+                            />
+                        </FormControl>
                     </Grid>
                     <Box m={1}/>
                 </>}

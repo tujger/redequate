@@ -30,11 +30,17 @@ const stylesCurrent = ({align, fullHeight, variant}) => makeStyles(theme => ({
         },
     list: variant === "horizontal" ?
         {
+            // "&::-webkit-scrollbar": {
+            //     width: "1em",
+            // },
+            // "&::-webkit-scrollbar-thumb": {
+            //     backgroundColor: "blue",
+            // },
             "&.MuiGrid-container": {
                 boxSizing: "content-box",
                 display: "flex",
                 flexFlow: "nowrap",
-                gap: theme.spacing(0.5),
+                gap: theme.spacing(0.25),
                 overflowX: "auto",
                 paddingBottom: theme.spacing(1),
                 // scrollPadding: theme.spacing(6) + "px",
@@ -45,7 +51,7 @@ const stylesCurrent = ({align, fullHeight, variant}) => makeStyles(theme => ({
             "&.MuiGrid-container": {
                 display: "flex",
                 flexFlow: "nowrap",
-                gap: theme.spacing(0.5),
+                gap: theme.spacing(0.25),
                 height: fullHeight ? "100vh" : undefined,
                 overflowY: "auto",
                 paddingBottom: theme.spacing(1),

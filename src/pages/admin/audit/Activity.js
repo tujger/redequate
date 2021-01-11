@@ -1,13 +1,11 @@
 import React from "react";
 import {connect, useDispatch} from "react-redux";
-import ClearIcon from "@material-ui/icons/Clear";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import StartDateIcon from "@material-ui/icons/Today";
 import EndDateIcon from "@material-ui/icons/Event";
 import SortIcon from "@material-ui/icons/Sort";
 import IconButton from "@material-ui/core/IconButton";
 import Popover from "@material-ui/core/Popover";
-import Input from "@material-ui/core/Input";
 import Select from "@material-ui/core/Select";
 import Chip from "@material-ui/core/Chip";
 import Grid from "@material-ui/core/Grid";
@@ -24,9 +22,18 @@ import ActivityItemComponent from "./ActivityItemComponent";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import {toDateString} from "../../../controllers/DateFormat";
 import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
+import {mentionUsers} from "../../../controllers/mentionTypes";
+import notifySnackbar from "../../../controllers/notifySnackbar";
+import {UserData} from "../../../controllers/UserData";
 
 const Activity = (props) => {
-    const {classes, activityMode = "all", activityFilterItem, activityFilter, activitySort = "asc"} = props;
+    const {
+        classes,
+        activityMode = "all",
+        activityFilterItem,
+        activityFilter,
+        activitySort = "asc"
+    } = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const windowData = useWindowData();
@@ -38,20 +45,6 @@ const Activity = (props) => {
         dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activitySort});
     }
 
-    const handleFilterChange = action => event => {
-        dispatch({type: lazyListComponentReducer.RESET});
-        if (action === "clear") {
-            dispatch({type: auditReducer.ACTIVITY, activityFilter: undefined, activityMode, activitySort});
-        } else {
-            dispatch({
-                type: auditReducer.ACTIVITY,
-                activityFilter: event.target.value || undefined,
-                activityMode,
-                activitySort
-            });
-        }
-    }
-
     const handleMode = evt => {
         dispatch({type: lazyListComponentReducer.RESET});
         dispatch({type: auditReducer.ACTIVITY, activityMode: evt.target.value, activitySort});
@@ -60,7 +53,13 @@ const Activity = (props) => {
     const handleSortClick = evt => {
         const sort = activitySort === "asc" ? "desc" : "asc";
         dispatch({type: lazyListComponentReducer.RESET});
-        dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activityFilter, activitySort: sort});
+        dispatch({
+            type: auditReducer.ACTIVITY,
+            activityMode,
+            activityFilterItem,
+            activityFilter,
+            activitySort: sort
+        });
     }
 
     const handleTypeSelect = evt => {
@@ -132,12 +131,16 @@ const Activity = (props) => {
         if (!activityFilterItem) return undefined;
         if (activityMode === "uid" && activityFilterItem === "0") return {name: "No user"};
         if (activityMode === "uid") return cacheDatas.get(activityFilterItem);
-        if (activityMode === "type") return {image: null, initials: activityFilterItem, name: activityFilterItem};
+        if (activityMode === "type") return {
+            image: null,
+            initials: activityFilterItem,
+            name: activityFilterItem
+        };
     })();
 
     return <>
         <Grid container className={classes.topSticky}>
-            <Grid container alignItems={"flex-start"}>
+            <Grid container alignItems={"center"}>
                 <Grid item>
                     <Select
                         color={"secondary"}
@@ -150,22 +153,22 @@ const Activity = (props) => {
                     </Select>
                 </Grid>
                 <Grid item xs>
-                    {false && !filteredItem && activityMode === "uid" && <Input
-                        autoFocus
-                        color={"secondary"}
-                        endAdornment={activityFilter
-                            ? <IconButton
-                                children={<ClearIcon/>}
-                                onClick={handleFilterChange("clear")}
-                                size={"small"}
-                                title={"Clear"}
-                                variant={"text"}
-                            /> : null}
-                        onChange={handleFilterChange("filter")}
-                        placeholder={"Search"}
-                        value={activityFilter || ""}
+                    {activityMode === "uid" && !filteredItem && <MentionedSelectComponent
+                        combobox
+                        mention={{
+                            ...mentionUsers,
+                            displayTransform: (id, display) => display,
+                            trigger: ""
+                        }}
+                        onChange={(evt, value, token) => {
+                            token && cacheDatas.fetch(token.id, id => {
+                                return UserData(firebase).fetch(id);
+                            }).then(() => handleItemClick("uid")(null, token.id))
+                                .catch(notifySnackbar);
+                        }}
+                        placeholder={"Filter"}
                     />}
-                    {activityMode === "type" && <MentionedSelectComponent
+                    {activityMode === "type" && !filteredItem && <MentionedSelectComponent
                         mention={{
                             pagination: (start, firebase) => new Pagination({
                                 ref: firebase.database().ref("_activity/types"),
@@ -175,7 +178,6 @@ const Activity = (props) => {
                             transform: item => ({id: item.key, display: item.key}),
                         }}
                         onChange={handleTypeSelect}
-                        value={activityFilter || null}
                     />}
                 </Grid>
                 {!windowData.isNarrow() && <Grid item>
@@ -183,14 +185,20 @@ const Activity = (props) => {
                         aria-label={"start date"}
                         children={<StartDateIcon/>}
                         edge={"end"}
-                        onClick={(event) => setState(state => ({...state, startDateAnchor: event.target}))}
+                        onClick={(event) => setState(state => ({
+                            ...state,
+                            startDateAnchor: event.target
+                        }))}
                     />
                     &mdash;
                     <IconButton
                         aria-label={"end date"}
                         children={<EndDateIcon/>}
                         edge={"start"}
-                        onClick={(event) => setState(state => ({...state, endDateAnchor: event.target}))}
+                        onClick={(event) => setState(state => ({
+                            ...state,
+                            endDateAnchor: event.target
+                        }))}
                     />
                 </Grid>}
                 <Grid item><IconButton
@@ -219,6 +227,7 @@ const Activity = (props) => {
                         onDelete={() => {
                             dispatch({
                                 type: auditReducer.ACTIVITY,
+                                activityMode,
                                 activitySort
                             });
                             dispatch({type: lazyListComponentReducer.RESET});
@@ -256,14 +265,20 @@ const Activity = (props) => {
                         aria-label={"start date"}
                         children={<StartDateIcon/>}
                         edge={"end"}
-                        onClick={(event) => setState(state => ({...state, startDateAnchor: event.target}))}
+                        onClick={(event) => setState(state => ({
+                            ...state,
+                            startDateAnchor: event.target
+                        }))}
                     />
                     &mdash;
                     <IconButton
                         aria-label={"end date"}
                         children={<EndDateIcon/>}
                         edge={"start"}
-                        onClick={(event) => setState(state => ({...state, endDateAnchor: event.target}))}
+                        onClick={(event) => setState(state => ({
+                            ...state,
+                            endDateAnchor: event.target
+                        }))}
                     />
                 </Grid>}
             </Grid>

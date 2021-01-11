@@ -166,7 +166,7 @@ const Profile = (
             setState({...state, userData: currentUserData});
             return;
         }
-        new UserData(firebase).fetch(id)
+        new UserData(firebase).fetch(id, [UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
             .then(userData => isMounted && setState({...state, userData}))
             .catch(error => {
                 // notifySnackbar

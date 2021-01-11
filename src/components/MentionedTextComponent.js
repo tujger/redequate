@@ -89,7 +89,7 @@ export default withStyles(styles)(MentionedTextComponent);
 const pattern = new RegExp(/((?:\$\[.*?])|(?:[\r\n]+))/g);
 
 export const tokenizeText = (text = "") => {
-    let tokens = text.split(pattern);
+    let tokens = (text || "").split(pattern);
     tokens = tokens
         .map(token => token.match(/\$\[(\w+):(.*?):(.*)]/) || [token || ""])
         .filter(matches => matches.length > 1 || matches[0].length > 0)

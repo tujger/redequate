@@ -28,14 +28,14 @@ import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General
 import LoadingComponent from "../../components/LoadingComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import {styles} from "../../controllers/Theme";
-import MentionsInputComponent from "../../components/MentionsInputComponent/MentionsInputComponent";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import Pagination from "../../controllers/FirebasePagination";
-import {tokenizeText} from "../../components";
+import MentionedSelectComponent from "../../components/MentionedSelectComponent";
 import {useHistory} from "react-router-dom";
 import {updateActivity} from "./audit/auditReducer";
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
+import {tokenizeText} from "../../components/MentionedTextComponent";
 
 const stylesCurrent = theme => ({
     _content: {
@@ -175,7 +175,7 @@ const Settings = ({classes, uploadable}) => {
             if (token && token.type === "user") {
                 return token;
             }
-            throw Error("Support is incorrect")
+            throw Error("Support person is incorrect")
         }
         const addSupport = async token => {
             if (token.type === "user") {
@@ -286,7 +286,10 @@ const Settings = ({classes, uploadable}) => {
             const supportId = snapshot.val();
             if (supportId) {
                 return UserData(firebase).fetch(supportId)
-                    .then(userData => ({...props, support: `$[user:${supportId}:${userData.name}]`}))
+                    .then(userData => ({
+                        ...props,
+                        support: `$[user:${supportId}:${userData.name}]`
+                    }))
                     .catch(error => {
                         notifySnackbar(error);
                         return {...props, support: ""}
@@ -336,13 +339,14 @@ const Settings = ({classes, uploadable}) => {
             </Tabs>
             <Grid container className={classes._content}>
                 {(tab === 0 || tab === -1) && <>
-                    <Grid container>
+                    {windowData.isNarrow() && <Grid container>
                         <Typography variant={"button"}>Maintenance</Typography>
-                    </Grid>
+                    </Grid>}
                     <Box m={1}/>
                     {givenTimestamp && <>
                         <Grid container>
-                            Maintenance set up by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
+                            Maintenance set up
+                            by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
                         </Grid>
                         <Box m={1}/>
                     </>}
@@ -354,21 +358,21 @@ const Settings = ({classes, uploadable}) => {
                                 checked={maintenance}
                             />}
                             disabled={disabled}
-                            label={"Maintenance in process"}
+                            label={maintenance ? "Maintenance in on" : "Maintenance is off"}
                         />
                     </Grid>
                     <Box m={1}/>
                 </>}
                 {(tab === 1 || tab === -1) && <>
-                    <Grid container>
+                    {windowData.isNarrow() && <Grid container>
                         <Typography variant={"button"}>Personality</Typography>
-                    </Grid>
+                    </Grid>}
                     <Box m={1}/>
                     <Grid container>
-                        <MentionsInputComponent
-                            color={"secondary"}
-                            disabled={disabled}
-                            mentionsParams={[{
+                        <MentionedSelectComponent
+                            id={"select"}
+                            label={"Support person"}
+                            mention={{
                                 ...mentionUsers,
                                 trigger: "",
                                 displayTransform: (id, display) => display,
@@ -378,32 +382,23 @@ const Settings = ({classes, uploadable}) => {
                                     equals: "admin",
                                     size: 1000,
                                     transform: item => UserData(firebase)
-                                        .fetch(item.key, [UserData.PUBLIC, UserData.ROLE])
+                                        .fetch(item.key)
                                         .then(value => ({key: item.key, value}))
                                         .catch(notifySnackbar)
-                                }),
-                            }]}
-                            onApply={(value) => console.log(value)}
-                            onChange={(ev, a, b, tokens) => {
-                                // console.log(ev.target.value, a, b, c)
-                                tokens = tokens || [];
-                                let text = ev.target.value;
-                                if (tokens.length) {
-                                    const token = tokens[tokens.length - 1];
-                                    text = token ? `$[user:${token.id}:${token.display}]` : "";
-                                }
-                                handleChange("support")({target: {value: text}});
+                                })
                             }}
-                            label={"Support person"}
+                            onChange={(evt, value) => {
+                                handleChange("support")({target: {value}})
+                            }}
                             value={support || ""}
                         />
                     </Grid>
                     <Box m={1}/>
                 </>}
                 {(tab === 2 || tab === -1) && <>
-                    <Grid container>
+                    {windowData.isNarrow() && <Grid container>
                         <Typography variant={"button"}>User profiles</Typography>
-                    </Grid>
+                    </Grid>}
                     <Box m={1}/>
                     <Grid container>
                         <TextField
@@ -420,9 +415,9 @@ const Settings = ({classes, uploadable}) => {
                     <Box m={1}/>
                 </>}
                 {(tab === 3 || tab === -1) && <>
-                    <Grid container>
+                    {windowData.isNarrow() && <Grid container>
                         <Typography variant={"button"}>Convenience</Typography>
-                    </Grid>
+                    </Grid>}
                     <Box m={1}/>
                     <Grid container>
                         <TextField
@@ -437,9 +432,9 @@ const Settings = ({classes, uploadable}) => {
                     <Box m={1}/>
                 </>}
                 {(tab === 4 || tab === -1) && <>
-                    <Grid container>
+                    {windowData.isNarrow() && <Grid container>
                         <Typography variant={"button"}>Welcome popup</Typography>
-                    </Grid>
+                    </Grid>}
                     <Box m={1}/>
                     <Grid container>
                         <TextField
@@ -491,7 +486,7 @@ const Settings = ({classes, uploadable}) => {
                             disabled={disabled}
                             label={"Popup on timeout, s"}
                             onChange={handleChange("joinUsTimeout")}
-                            type="number"
+                            type={"number"}
                             value={joinUsTimeout | ""}
                         />
                         <TextField
@@ -499,7 +494,7 @@ const Settings = ({classes, uploadable}) => {
                             disabled={disabled}
                             label={"Popup on scroll, px"}
                             onChange={handleChange("joinUsScroll")}
-                            type="number"
+                            type={"number"}
                             value={joinUsScroll || ""}
                         />
                     </Grid>
@@ -516,14 +511,15 @@ const Settings = ({classes, uploadable}) => {
                         />
                     </Grid>
                     <Grid container>
-                        <a href={"https://developers.google.com/identity/one-tap"} target={"_blank"}>Learn more</a>
+                        <a href={"https://developers.google.com/identity/one-tap"}
+                           target={"_blank"}>Learn more</a>
                     </Grid>
                     <Box m={1}/>
                 </>}
                 {(tab === 5 || tab === -1) && <>
-                    <Grid container>
+                    {windowData.isNarrow() && <Grid container>
                         <Typography variant={"button"}>Posts</Typography>
-                    </Grid>
+                    </Grid>}
                     <Box m={1}/>
                     <Grid container>
                         <FormControlLabel
@@ -537,7 +533,7 @@ const Settings = ({classes, uploadable}) => {
                         />
                     </Grid>
                     <Grid container>
-                        <FormControl>
+                        <FormControl fullWidth>
                             <InputLabel>Rotate replies</InputLabel>
                             <Select
                                 color={"secondary"}
@@ -554,9 +550,9 @@ const Settings = ({classes, uploadable}) => {
                     <Box m={1}/>
                 </>}
                 {uploadable && (tab === 6 || tab === -1) && <>
-                    <Grid container>
+                    {windowData.isNarrow() && <Grid container>
                         <Typography variant={"button"}>Uploads</Typography>
-                    </Grid>
+                    </Grid>}
                     <Box m={1}/>
                     <Grid container>
                         <FormControlLabel
@@ -575,7 +571,7 @@ const Settings = ({classes, uploadable}) => {
                             disabled={disabled}
                             label={"Max width, px"}
                             onChange={handleChange("uploadsMaxWidth")}
-                            type="number"
+                            type={"number"}
                             value={uploadsMaxWidth | 1000}
                         />
                         <TextField
@@ -583,7 +579,7 @@ const Settings = ({classes, uploadable}) => {
                             disabled={disabled}
                             label={"Max height, px"}
                             onChange={handleChange("uploadsMaxHeight")}
-                            type="number"
+                            type={"number"}
                             value={uploadsMaxHeight || 1000}
                         />
                     </Grid>
@@ -594,7 +590,7 @@ const Settings = ({classes, uploadable}) => {
                             fullWidth
                             label={"Quality for JPEG and PNG, %"}
                             onChange={handleChange("uploadsQuality")}
-                            type="number"
+                            type={"number"}
                             value={uploadsQuality || 75}
                         />
                     </Grid>
@@ -605,7 +601,7 @@ const Settings = ({classes, uploadable}) => {
                             fullWidth
                             label={"Limit size, kb"}
                             onChange={handleChange("uploadsMaxSize")}
-                            type="number"
+                            type={"number"}
                             value={uploadsMaxSize || 100}
                         />
                     </Grid>
