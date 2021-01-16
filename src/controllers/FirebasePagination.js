@@ -1,4 +1,4 @@
-import {key} from "firebase-key";
+import {key} from "firebase-key"; // https://cartant.github.io/firebase-key/
 
 function Pagination(
     {
@@ -106,7 +106,7 @@ function Pagination(
             }
             return {...props, minKey, minValue, maxKey, maxValue};
         }
-        const buildCursorForEquals = async props => {
+        const buildCursorIfEquals = async props => {
             const {cursorKey, cursorValue, equals, maxKey, minKey, order} = props;
             if (equals !== undefined) {
                 const cursorKey_ = cursorKey || (order === "asc" ? minKey : maxKey);
@@ -121,7 +121,7 @@ function Pagination(
             }
             return props;
         }
-        const buildCursorForStart = async props => {
+        const buildCursorIfStart = async props => {
             const {cursorValue, maxValue, minValue, start} = props;
             if (start !== undefined) {
                 const cursorValue_ = cursorValue || (order === "asc" ? minValue : maxValue);
@@ -129,7 +129,7 @@ function Pagination(
             }
             return props;
         }
-        const buildCursorForByKey = async props => {
+        const buildCursorIfByKey = async props => {
             const {child, cursorKey, cursorValue, equals, start, value} = props;
             if (child === undefined && value === undefined) {
                 if (start !== undefined) {
@@ -166,22 +166,22 @@ function Pagination(
             }
             return {...props, lastKey, lastValue};
         }
-        const applyTermsForKey = async props => {
+        const applyTermsIfKey = async props => {
             const {child, firstKey, lastKey, ref, value} = props;
             if (child || value) return props;
-            let ref_ = ref.startAt(firstKey).endAt(lastKey);
+            const ref_ = ref.startAt(firstKey).endAt(lastKey);
             return {...props, ref: ref_};
         }
-        const applyTermsForChild = async props => {
+        const applyTermsIfChild = async props => {
             const {child, firstKey, firstValue, lastKey, lastValue, ref} = props;
             if (!child) return props;
-            let ref_ = ref.startAt(firstValue, firstKey).endAt(lastValue, lastKey);
+            const ref_ = ref.startAt(firstValue, firstKey).endAt(lastValue, lastKey);
             return {...props, ref: ref_};
         }
-        const applyTermsForValue = async props => {
+        const applyTermsIfValue = async props => {
             const {firstKey, firstValue, lastKey, lastValue, ref, value} = props;
             if (!value) return props;
-            let ref_ = ref.startAt(firstValue, firstKey).endAt(lastValue, lastKey);
+            const ref_ = ref.startAt(firstValue, firstKey).endAt(lastValue, lastKey);
             return {...props, ref: ref_};
         }
         const applyLimits = async props => {
@@ -215,7 +215,7 @@ function Pagination(
             return props;
         }
         const extractChildren = async props => {
-            const {snapshot, minKey, maxKey, order, ...rest} = props;
+            const {snapshot, minKey, maxKey, order} = props;
             const children = [];
             snapshot.forEach(child => {
                 if (order === "asc" && child.key > maxKey) return;
@@ -297,11 +297,16 @@ function Pagination(
             return props;
         }
         const catchEvent = async event => {
-            if (event instanceof Error) !timedout && reject(event);
-            console.warn("[FP] catch event", event);
-            if (timedout) return;
-            resolve(event);
-            // reject(event);
+            if (timedout) {
+                console.warn(event);
+                return;
+            }
+            if (event instanceof Error) {
+                reject(event);
+            } else {
+                console.warn("[FP] catch event", event);
+                resolve(event);
+            }
         }
 
         return checkIfFinished()
@@ -312,14 +317,14 @@ function Pagination(
             .then(updateSize)
             .then(detectTypeOfValue)
             .then(buildMinMax)
-            .then(buildCursorForEquals)
-            .then(buildCursorForStart)
-            .then(buildCursorForByKey)
+            .then(buildCursorIfEquals)
+            .then(buildCursorIfStart)
+            .then(buildCursorIfByKey)
             .then(buildFirst)
             .then(buildLast)
-            .then(applyTermsForKey)
-            .then(applyTermsForChild)
-            .then(applyTermsForValue)
+            .then(applyTermsIfKey)
+            .then(applyTermsIfChild)
+            .then(applyTermsIfValue)
             .then(applyLimits)
             .then(installTimeout)
             .then(fetchData)
@@ -335,7 +340,6 @@ function Pagination(
     });
 
     const reset = () => {
-        // baseRef.database.goOnline();
         clearTimeout(timeoutTask);
         cursorKey = order === "asc" ? startKey : endKey;
         cursorValue = undefined;
@@ -385,7 +389,7 @@ function Pagination(
             return toString();
         },
         get term() {
-            return `${ref.path}|${child || ""}|${start || ""}|${end || ""}|${equals || ""}|${value || ""}`;
+            return `${ref.path}|${child || ""}|${start || ""}|${end || ""}|${equals || ""}|${value || ""}|${order || ""}|${startDate || ""}|${endDate || ""}`;
         },
         next: next,
         reset: reset,
