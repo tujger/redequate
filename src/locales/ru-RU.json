@@ -108,6 +108,7 @@
     "Post.Replies": "Ответы",
     "Post.Text is empty.": "Пустое сообщение",
     "Post.Text is not changed.": "Текст не изменен",
+    "Post.Translated {{source}}->{{target}}": "Переведено {{source}}->{{target}}",
     "Post.Type message, use @ to mention other users and # for tags.": "Введите текст, используйте @ для ссылки на кого-нибудь или # для ссылки на тег.",
     "Post.Post successfully deleted.": "Статья удалена",
     "Post.Your post and all replies will be deleted.": "Статья и все комментарии и ответы будут удалены",

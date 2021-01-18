@@ -23,12 +23,12 @@ export default (
     }) => {
     const textTranslation = useTextTranslation();
     const [state, setState] = React.useState({});
-    const {show, translated} = state;
+    const {show, translated, title} = state;
     const metaInfo = useMetaInfo();
     const {settings} = metaInfo || {};
     const {translateLimit} = settings;
     const currentUserData = useCurrentUserData();
-    const {i18n} = useTranslation();
+    const {i18n, t} = useTranslation();
 
     const handleClick = evt => {
         evt.stopPropagation();
@@ -63,18 +63,8 @@ export default (
         const simplifyText = async props => {
             let text = postData.text;
             text = text.split(String.fromCharCode(1))[0] || "";
-            text = text.replaceAll(/\$\[.*?:.*?:(.*?)]/g, "$1");
+            text = text.replace(/\$\[.*?:.*?:(.*?)]/g, "$1");
             return {...props, text};
-        }
-        const detectSourceLocale = async props => {
-            const {text} = props;
-            const source = await textTranslation.detectLanguage(text);
-            return {...props, source};
-        }
-        const checkIfTargetSameAsSource = async props => {
-            const {target, source} = props;
-            if (source === target) throw "The same language";
-            return props;
         }
         const translateText = async props => {
             const {target, source, text} = props;
@@ -84,25 +74,21 @@ export default (
                 text
             });
             if (updatedSource === target) throw "The same language";
-            if(!textTranslated) throw "Not translated";
-            const newtext = `Translated "${updatedSource}"->"${target}"\n${textTranslated}`;
-            return {...props, translated: newtext, source: updatedSource};
+            if (!textTranslated) throw "Not translated";
+            const title = t("Post.Translated {{source}}->{{target}}", {source: updatedSource, target});
+            return {...props, translated: textTranslated, source: updatedSource, title};
         }
         const sendTranslatedToAncillaryRef = async props => {
-            const {translated} = props;
+            const {translated, title} = props;
             if (translated && ancillaryRef.current) {
-                // ancillaryRef.current.innerHTML = translated;
-                setState(state => ({...state, translated}));
-                // const component = <MentionedTextComponent classes={classes} text={translated}/>;
-                // const portal = ReactDOM.createPortal(component, ancillaryRef.current);
-                // console.log(component, portal);
+                setState(state => ({...state, translated, title}));
             }
             return props;
         }
         const callOnCompleteIfNeeded = async props => {
-            const {translated} = props;
+            const {source, target, translated} = props;
             if (translated && onComplete) {
-                onComplete({body: translated});
+                onComplete({source, target, text: translated});
             }
         }
         const catchEvent = async event => {
@@ -116,14 +102,11 @@ export default (
             .then(fetchBrowserLocale)
             .then(checkAvailability)
             .then(simplifyText)
-            // .then(detectSourceLocale)
-            // .then(checkIfTargetSameAsSource)
             .then(translateText)
             .then(sendTranslatedToAncillaryRef)
             .then(callOnCompleteIfNeeded)
             .catch(catchEvent)
             .catch(notifySnackbar);
-
     }
 
     React.useEffect(() => {
@@ -132,12 +115,12 @@ export default (
         if (!translateLimit) return;
         if (!textTranslation.isAvailable()) return;
         setState(state => ({...state, show: true}));
-
     }, [])
 
     if (!show) return null;
     return <>
         {translated && <Portal targetNode={ancillaryRef.current}>
+            <h5>{title}</h5>
             <MentionedTextComponent classes={classes} text={translated}/>
         </Portal>}
         <Grid item>

@@ -59,7 +59,7 @@ export default React.forwardRef(({classes, collapsible:givenCollapsible, disable
             {/*{postData.image && <Grid container alignItems={"flex-start"}>*/}
             {/*  <img src={postData.image} alt={"Attachment"} className={classes.cardImage}/>*/}
             {/*</Grid>}*/}
-            <AncillaryBody ref={ref}/>
         </Collapse>
+        <AncillaryBody ref={ref}/>
     </div>
 })

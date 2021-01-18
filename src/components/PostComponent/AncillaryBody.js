@@ -12,6 +12,16 @@ const classesCurrent = theme => ({
         paddingLeft: theme.spacing(3),
         whiteSpace: "pre-wrap",
         wordWrap: "break-word",
+        "& h5": {
+            marginBottom: 0,
+            marginTop: 0,
+        },
+        "& span": {
+            color: "gray",
+        },
+        "&:empty": {
+            display: "none",
+        }
     }
 })
 
@@ -19,7 +29,5 @@ export default withStyles(theme => ({
     ...stylesList(theme),
     ...classesCurrent(theme)
 }))(forwardRef(({classes}, ref) => {
-    return <Grid className={classes.text} ref={ref} container>
-
-    </Grid>
+    return <Grid className={classes.text} ref={ref} container/>
 }))
