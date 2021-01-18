@@ -3,8 +3,9 @@ import Collapse from "@material-ui/core/Collapse";
 import Grid from "@material-ui/core/Grid";
 import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
+import AncillaryBody from "./AncillaryBody";
 
-export default ({classes, collapsible:givenCollapsible, disableClick, mentions, postData}) => {
+export default React.forwardRef(({classes, collapsible:givenCollapsible, disableClick, mentions, postData}, ref) => {
     const [state, setState] = React.useState({});
     const {
         collapsible = givenCollapsible,
@@ -58,7 +59,7 @@ export default ({classes, collapsible:givenCollapsible, disableClick, mentions, 
             {/*{postData.image && <Grid container alignItems={"flex-start"}>*/}
             {/*  <img src={postData.image} alt={"Attachment"} className={classes.cardImage}/>*/}
             {/*</Grid>}*/}
+            <AncillaryBody ref={ref}/>
         </Collapse>
     </div>
-}
-
+})

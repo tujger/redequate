@@ -136,7 +136,7 @@ export const PostData = function ({firebase, type = "posts", allowedExtras = ["l
             return data;
         },
         editOf: type => {
-            if(!_edit) return null;
+            if (!_edit) return null;
             const keys = Object.keys(_edit);
             if (type === "last") {
                 const key = keys[keys.length - 1];

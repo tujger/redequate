@@ -44,6 +44,7 @@ export default React.forwardRef((props, ref) => {
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
     const {postsRotateReplies, postsAllowEdit} = settings;
+    const ancillaryRef = React.useRef();
 
     return <Card
         className={[
@@ -101,6 +102,7 @@ export default React.forwardRef((props, ref) => {
             />
             <PostBody
                 {...props}
+                ref={ancillaryRef}
                 disableClick={!disableClick}
             />
         </PostCardWrapper>
@@ -119,7 +121,7 @@ export default React.forwardRef((props, ref) => {
             </Grid>}
             {!disableButtons && <PostButtons {...props}/>}
         </Grid>*/}
-        {!disableButtons && <PostButtons {...props}/>}
+        {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
         {level === undefined && postsRotateReplies === "inside" && <RotatingReplies {...props} postId={postData.id}/>}
     </Card>
 })

@@ -32,6 +32,7 @@ export default React.forwardRef((props, ref) => {
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
     const {postsRotateReplies, postsAllowEdit} = settings;
+    const ancillaryRef = React.useRef();
 
     return <Card
         className={[
@@ -42,8 +43,11 @@ export default React.forwardRef((props, ref) => {
         ].join(" ")}
         ref={ref}
     >
-        <PostCardWrapper classes={classes} disableClick={disableClick}
-                         handleClickPost={handleClickPost}>
+        <PostCardWrapper
+            classes={classes}
+            disableClick={disableClick}
+            handleClickPost={handleClickPost}
+        >
             <CardHeader
                 classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
                 className={[
@@ -92,6 +96,7 @@ export default React.forwardRef((props, ref) => {
                     <PostBody
                         {...props}
                         disableClick={!disableClick}
+                        ref={ancillaryRef}
                     />
                     {postData.images && <Grid
                         className={classes.cardImage}
@@ -106,7 +111,7 @@ export default React.forwardRef((props, ref) => {
                         {postsAllowEdit && postData.edit && <Grid item xs className={classes.date}>
                             Edited {toDateString(postData.editOf("last").timestamp)}
                         </Grid>}
-                        {!disableButtons && <PostButtons {...props}/>}
+                        {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
                     </Grid>
                 </>}
             />

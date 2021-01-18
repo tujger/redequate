@@ -182,12 +182,12 @@ function Dispatcher(props) {
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
-            const {store, firebase} = props;
+            const {deviceId, store, firebase} = props;
             const savedUserData = store.getState().currentUserData;
             if (savedUserData && savedUserData.userData) {
                 const userData = new UserData(firebase).fromJSON(savedUserData.userData);
                 return userData.fetch([UserData.ROLE])
-                    .then(() => userData.fetchPrivate(fetchDeviceId(), true))
+                    .then(() => userData.fetchPrivate(deviceId, true))
                     .then(() => ({...props, userData}))
                     .catch(error => {
                         console.error(error);

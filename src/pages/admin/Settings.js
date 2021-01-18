@@ -82,6 +82,7 @@ const Settings = ({classes, uploadable}) => {
         support,
         details,
         tab,
+        translateLimit,
         uploadsAllow,
         uploadsMaxHeight,
         uploadsMaxSize,
@@ -190,6 +191,9 @@ const Settings = ({classes, uploadable}) => {
         const addPreferenceDynamicLinksUrlPrefix = async () => {
             settings.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix || null;
         }
+        const addPreferenceTranslateLimit = async () => {
+            settings.translateLimit = +translateLimit || null;
+        }
         const addPreferenceJoinUs = async () => {
             settings.joinUsCancel = joinUsCancel || null;
             settings.joinUsConfirm = joinUsConfirm || null;
@@ -205,10 +209,10 @@ const Settings = ({classes, uploadable}) => {
         }
         const addPreferenceUploads = async () => {
             settings.uploadsAllow = uploadsAllow || null;
-            settings.uploadsMaxHeight = uploadsAllow ? uploadsMaxHeight || 1000 : null;
-            settings.uploadsMaxSize = uploadsAllow ? uploadsMaxSize || 100 : null;
-            settings.uploadsMaxWidth = uploadsAllow ? uploadsMaxWidth || 1000 : null;
-            settings.uploadsQuality = uploadsAllow ? uploadsQuality || 75 : null;
+            settings.uploadsMaxHeight = uploadsAllow ? +uploadsMaxHeight || 1000 : null;
+            settings.uploadsMaxSize = uploadsAllow ? +uploadsMaxSize || 100 : null;
+            settings.uploadsMaxWidth = uploadsAllow ? +uploadsMaxWidth || 1000 : null;
+            settings.uploadsQuality = uploadsAllow ? +uploadsQuality || 75 : null;
         }
         const publish = async () => {
             updates.settings = settings;
@@ -238,6 +242,7 @@ const Settings = ({classes, uploadable}) => {
             .then(parseSupport)
             .then(addSupport)
             .then(addPreferenceDynamicLinksUrlPrefix)
+            .then(addPreferenceTranslateLimit)
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
             .then(addPreferenceUploads)
@@ -427,6 +432,17 @@ const Settings = ({classes, uploadable}) => {
                             label={"Dynamic links URL prefix"}
                             onChange={handleChange("dynamicLinksUrlPrefix")}
                             value={dynamicLinksUrlPrefix || ""}
+                        />
+                    </Grid>
+                    <Grid container>
+                        <TextField
+                            color={"secondary"}
+                            disabled={disabled}
+                            fullWidth
+                            label={"Allow translate up to, chars/month"}
+                            onChange={handleChange("translateLimit")}
+                            type={"number"}
+                            value={translateLimit || ""}
                         />
                     </Grid>
                     <Box m={1}/>

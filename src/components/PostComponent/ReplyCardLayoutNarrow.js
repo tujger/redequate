@@ -26,6 +26,7 @@ export default React.forwardRef((props, ref) => {
 
     const pages = usePages();
     const windowData = useWindowData();
+    const ancillaryRef = React.useRef();
 
     return <Card
         className={[
@@ -70,6 +71,7 @@ export default React.forwardRef((props, ref) => {
             subheader={<>
                 <PostBody
                     {...props}
+                    ref={ancillaryRef}
                     disableClick={!disableClick}
                 />
                 {postData.images && <Grid
@@ -82,7 +84,7 @@ export default React.forwardRef((props, ref) => {
                         mosaic
                     />
                 </Grid>}
-                {!disableButtons && <PostButtons {...props}/>}
+                {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
             </>}
         />
     </Card>

@@ -20,7 +20,7 @@ const stylesCurrent = makeStyles(theme => ({
 }));
 
 export default (props) => {
-    const {allowedExtras, classes = {}, onChange, showRepliesCounter = true, isReply = false} = props;
+    const {allowedExtras, ancillaryRef, classes = {}, onChange, showRepliesCounter = true, isReply = false} = props;
     const classesCurrent = stylesCurrent();
     const windowData = useWindowData();
 
@@ -31,11 +31,12 @@ export default (props) => {
         isReply ? classesCurrent.cardActions : "",
         // isReply ? classesCurrent.cardActionsSmall : ""
     ].join(" ")}>
+        {!isNarrow && <ActionTranslate {...props} ancillaryRef={ancillaryRef}/>}
         {allowedExtras.indexOf("like") >= 0 && <ActionLike {...props}/>}
         {allowedExtras.indexOf("dislike") >= 0 && <ActionDislike {...props}/>}
         {(showRepliesCounter && !isReply) && <ActionReplies {...props}/>}
         {isReply && <ActionReply {...props} icon={!isReply || !isNarrow} onComplete={onChange}/>}
-        <ActionTranslate {...props}/>
+        {isNarrow && <ActionTranslate {...props} ancillaryRef={ancillaryRef}/>}
         {/*{isNarrow && <Grid item xs/>}*/}
         {/*{!isReply && <ButtonShare {...props}/>}*/}
         {/*<ButtonDelete {...props}/>*/}
