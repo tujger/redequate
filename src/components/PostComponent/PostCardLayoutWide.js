@@ -77,8 +77,10 @@ export default React.forwardRef((props, ref) => {
                             to={pages.user.route + userData.id}
                         >{userData.name}</Link>
                     </Grid>
-                    <Grid item className={classes.date}
-                          title={new Date(postData.created).toLocaleString()}>
+                    <Grid
+                        item
+                        className={classes.date}
+                        title={new Date(postData.created).toLocaleString()}>
                         {toDateString(postData.created)}
                     </Grid>
                     {postData.targetTag && <Grid item>

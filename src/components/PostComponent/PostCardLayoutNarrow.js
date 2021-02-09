@@ -55,7 +55,10 @@ export default React.forwardRef((props, ref) => {
         ].join(" ")}
         ref={ref}
     >
-        <PostCardWrapper classes={classes} disableClick={disableClick} handleClickPost={handleClickPost}>
+        <PostCardWrapper
+            classes={classes}
+            disableClick={disableClick}
+            handleClickPost={handleClickPost}>
             <CardHeader
                 classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
                 className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post].join(" ")}
@@ -71,7 +74,10 @@ export default React.forwardRef((props, ref) => {
                         verified={true}
                     />
                 </Link>}
-                title={<Grid container alignItems={"baseline"} className={[classesCurrent.inline, classes.cardTitle].join(" ")}>
+                title={<Grid
+                    container
+                    alignItems={"baseline"}
+                    className={[classesCurrent.inline, classes.cardTitle].join(" ")}>
                     <Grid
                         className={classes.userName}
                         item
@@ -95,7 +101,10 @@ export default React.forwardRef((props, ref) => {
                     /></Grid>}
                 </Grid>}
                 subheader={<>
-                    <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
+                    <Grid
+                        item
+                        className={classes.date}
+                        title={new Date(postData.created).toLocaleString()}>
                         {toDateString(postData.created)}
                     </Grid>
                 </>}
@@ -122,6 +131,7 @@ export default React.forwardRef((props, ref) => {
             {!disableButtons && <PostButtons {...props}/>}
         </Grid>*/}
         {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
-        {level === undefined && postsRotateReplies === "inside" && <RotatingReplies {...props} postId={postData.id}/>}
+        {level === undefined && postsRotateReplies === "inside" &&
+        <RotatingReplies {...props} postId={postData.id}/>}
     </Card>
 })
