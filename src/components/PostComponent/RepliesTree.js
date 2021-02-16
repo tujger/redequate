@@ -58,7 +58,7 @@ export default withStyles(stylesCurrent)((props) => {
 
     const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
-    React.useEffect(async () => {
+    React.useEffect(() => {
         let isMounted = true;
         const paginationOptions = {
             ref: firebase.database().ref(type),
