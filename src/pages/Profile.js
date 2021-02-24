@@ -112,10 +112,11 @@ export const adminFields = [
                 onChange={props.onChange}
                 value={props.value}
             >
-                <MenuItem value={Role.USER}>User</MenuItem>
-                <MenuItem value={Role.USER_NOT_VERIFIED}>User not verified</MenuItem>
-                <MenuItem value={Role.DISABLED}>User disabled</MenuItem>
-                <MenuItem value={Role.ADMIN}>Admin</MenuItem>
+                {
+                    Object.keys(Role).map(key => {
+                        return <MenuItem key={key} value={Role[key]}>{key}</MenuItem>
+                    })
+                }
             </Select>
         </FormControl>
     },

@@ -6,8 +6,8 @@ import {useDispatch} from "react-redux";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import AddIcon from "@material-ui/icons/Add";
 import {useTranslation} from "react-i18next";
-import {useCurrentUserData} from "../controllers/UserData";
-import {cacheDatas, useFirebase, useWindowData} from "../controllers/General";
+import {matchRole, useCurrentUserData} from "../controllers/UserData";
+import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import ProgressView from "../components/ProgressView";
 import postItemTransform from "../components/PostComponent/postItemTransform";
@@ -53,6 +53,7 @@ const Post = (props) => {
     const classesPost = useStyles();
     const type = "posts";
     const allowedExtras = ["like"];
+    const pages = usePages();
     const windowData = useWindowData();
 
     const handleReplyChange = ({key, ...rest}) => {
@@ -117,7 +118,7 @@ const Post = (props) => {
                 userData={userData}
             />
         </Grid>
-        <NewPostComponent
+        {matchRole(pages.reply.roles, currentUserData) && <NewPostComponent
             buttonComponent={<FlexFabComponent
                 className={classesPost.replyButton}
                 icon={<AddIcon/>}
@@ -138,7 +139,7 @@ const Post = (props) => {
             // </InfoComponent>}
             // text={`$[user:${postData.uid}:${userData.name}] `}
             UploadProps={{camera: !windowData.isNarrow(), multi: true}}
-        />
+        />}
         <JoinUsComponent/>
     </>
 };

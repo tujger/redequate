@@ -537,6 +537,7 @@ function EditProfile(props) {
                                         fullWidth: true,
                                         label: t(field.label),
                                         onChange: ev => {
+                                            ev.persist();
                                             setState(state => ({
                                                 ...state,
                                                 [field.id]: ev.target.value || ""
@@ -553,6 +554,7 @@ function EditProfile(props) {
                                         fullWidth
                                         label={t(field.label)}
                                         onChange={ev => {
+                                            ev.persist();
                                             setState(state => ({
                                                 ...state,
                                                 [field.id]: ev.target.value || ""

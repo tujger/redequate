@@ -2,6 +2,16 @@ import {cacheDatas} from "./General";
 import {notifySnackbar} from "./notifySnackbar";
 import {restoreLanguage} from "../reducers/languageReducer";
 
+export const Role = {
+    AUTH: "auth",
+    ADMIN: "admin",
+    AUTHOR: "author",
+    DISABLED: "disabled",
+    LOGIN: "login",
+    USER: "user",
+    USER_NOT_VERIFIED: "userNotVerified",
+};
+
 export function watchUserChanged(firebase, store) {
     return new Promise((resolve, reject) => {
         try {
@@ -79,15 +89,6 @@ export function needAuth(roles, user) {
     if (roles.indexOf(currentRole(user)) >= 0) return false;
     return currentRole(user) === Role.LOGIN;
 }
-
-export const Role = {
-    AUTH: "auth",
-    ADMIN: "admin",
-    DISABLED: "disabled",
-    LOGIN: "login",
-    USER: "user",
-    USER_NOT_VERIFIED: "userNotVerified",
-};
 
 export function sendInvitationEmail(firebase) {
     return options => new Promise((resolve, reject) => {
