@@ -39,6 +39,9 @@ If `No Xcode or CLT version detected!` happens:
         sudo xcode-select --install
 
 
+
+    npm config set legacy-peer-deps true
+
 ## Definitions
 
 There is important to define two variables: `pages` and `menu`;

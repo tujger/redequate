@@ -14,6 +14,7 @@ export default [
     {
         inlineDynamicImports: true,
         input: 'src/index.js',
+        external: ['react', 'react-dom', 'react-datepicker-t', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker-t/dist/react-datepicker.css'],
         output: [
             {
                 file: pkg.main,
@@ -129,6 +130,7 @@ export default [
             __snackbar: 'src/components/Snackbar.js',
             __store: 'src/controllers/Store.js'
         },
+        external: ['react', 'react-dom', 'react-datepicker-t', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker-t/dist/react-datepicker.css'],
         output: [
             {
                 dir: 'core',
