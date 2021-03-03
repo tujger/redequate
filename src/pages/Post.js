@@ -124,11 +124,7 @@ const Post = (props) => {
                 icon={<AddIcon/>}
                 label={t("Post.Add comment")}
             />}
-            mentions={[mentionTags, mentionUsers]}
-            onComplete={handleReplyChange}
-            onError={notifySnackbar}
             context={postData.id}
-            replyTo={postData.id}
             // infoComponent={<InfoComponent style={{maxHeight: 100, overflow: "auto"}}
             // >
             //     <MentionedTextComponent
@@ -138,6 +134,11 @@ const Post = (props) => {
             //     />
             // </InfoComponent>}
             // text={`$[user:${postData.uid}:${userData.name}] `}
+            mentions={[mentionTags, mentionUsers]}
+            onComplete={handleReplyChange}
+            onError={notifySnackbar}
+            replyTo={postData.id}
+            roles={pages.reply.roles}
             UploadProps={{camera: !windowData.isNarrow(), multi: true}}
         />}
         <JoinUsComponent/>

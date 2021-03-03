@@ -83,6 +83,7 @@ const NewPostComponent = props => {
         onClose = () => console.log("[NewPost] onClose()"),
         onComplete = ({key}) => console.log("[NewPost] onComplete({key})", {key}),
         replyTo,
+        roles = [Role.ADMIN, Role.USER],
         tag: givenTag,
         text: givenText,
         title = replyTo ? t("Post.New reply") : t("Post.New post"),
@@ -104,7 +105,7 @@ const NewPostComponent = props => {
             history.push(pages.login.route);
             return;
         }
-        const isPostingAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
+        const isPostingAllowed = matchRole(roles, currentUserData);
         if (!isPostingAllowed) {
             history.push(pages.profile.route);
             return;

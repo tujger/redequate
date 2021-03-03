@@ -5,7 +5,7 @@ import {restoreLanguage} from "../reducers/languageReducer";
 export const Role = {
     AUTH: "auth",
     ADMIN: "admin",
-    AUTHOR: "author",
+    AUTHOR: "author", // child of USER
     DISABLED: "disabled",
     LOGIN: "login",
     USER: "user",
@@ -81,6 +81,7 @@ export function matchRole(roles, user) {
     if (!roles) return true;
     if (roles.indexOf(Role.AUTH) >= 0) return true;
     if (!currentRole(user)) return false;
+    if (roles.indexOf(Role.USER) >= 0 && roles.indexOf(Role.AUTHOR) < 0) roles.push(Role.AUTHOR);
     return roles.indexOf(currentRole(user)) >= 0;
 }
 
