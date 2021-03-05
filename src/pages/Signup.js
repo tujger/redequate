@@ -1,9 +1,5 @@
 import React from "react";
 import {Redirect, useHistory, useParams} from "react-router-dom";
-import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
-import LoadingComponent from "../components/LoadingComponent";
-import PasswordField from "../components/PasswordField";
-import ProgressView from "../components/ProgressView";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
@@ -12,14 +8,18 @@ import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
+import withStyles from "@material-ui/styles/withStyles";
+import {useTranslation} from "react-i18next";
+import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
+import LoadingComponent from "../components/LoadingComponent";
+import PasswordField from "../components/PasswordField";
+import ProgressView from "../components/ProgressView";
 import {useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
-import {notifySnackbar} from "../controllers/notifySnackbar";
-import withStyles from "@material-ui/styles/withStyles";
+import notifySnackbar from "../controllers/notifySnackbar";
 import {styles} from "../controllers/Theme";
 import GoogleLogo from "../images/google-logo.svg";
 import FacebookLogo from "../images/facebook-logo.svg";
-import {useTranslation} from "react-i18next";
 
 const Signup = ({classes, signup = true, additional}) => {
     const [state, setState] = React.useState({

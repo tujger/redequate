@@ -1,6 +1,7 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import Grid from "@material-ui/core/Grid";
+import {useTranslation} from "react-i18next";
 import MutualRequestItem from "./MutualRequestItem";
 import MutualSubscribeItem from "./MutualSubscribeItem";
 import {MutualListMode} from "./MutualConstants";
@@ -10,9 +11,8 @@ import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentRe
 import Pagination from "../../controllers/FirebasePagination";
 import {UserData} from "../../controllers/UserData";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
-import {useTranslation} from "react-i18next";
 
-const MutualListComponent = props => {
+export default props => {
     const {t} = useTranslation();
     const {
         cached = true,
@@ -163,5 +163,3 @@ const MutualListComponent = props => {
         ItemProps={ItemProps}
     />
 }
-
-export default MutualListComponent;

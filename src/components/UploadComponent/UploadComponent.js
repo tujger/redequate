@@ -13,10 +13,10 @@ import "@uppy/core/dist/style.css";
 import "@uppy/progress-bar/dist/style.css";
 import "@uppy/dashboard/dist/style.css";
 import "@uppy/webcam/dist/style.css";
-import {notifySnackbar} from "../../controllers/notifySnackbar";
-import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
 import {useTranslation} from "react-i18next";
-import {useMetaInfo} from "../../controllers";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
+import {useMetaInfo} from "../../controllers/General";
 
 const MAX_FILE_SIZE = 20 * 1024;
 

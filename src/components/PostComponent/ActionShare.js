@@ -2,13 +2,13 @@ import React from "react";
 import IconButton from "@material-ui/core/IconButton";
 import ShareIcon from "@material-ui/icons/Share";
 import Grid from "@material-ui/core/Grid";
-import {usePages} from "../../controllers/General";
-import {share} from "../ShareComponent";
 import MenuItem from "@material-ui/core/MenuItem";
-import {notifySnackbar} from "../../controllers";
-import ProgressView from "../ProgressView";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
+import {usePages} from "../../controllers/General";
+import {share} from "../ShareComponent";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import ProgressView from "../ProgressView";
 
 export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     const pages = usePages();

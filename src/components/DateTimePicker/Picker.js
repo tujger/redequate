@@ -1,9 +1,9 @@
 import React from "react";
-import TimeP from "./TimeP";
-import DateP from "./DateP";
 import moment from "moment";
 import normalizeDateInput from "./normalizedDateInput";
 import {currentStyles} from "./currentStyles";
+import TimeP from "./TimeP";
+import DateP from "./DateP";
 
 export default props => {
     const {classes, onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;

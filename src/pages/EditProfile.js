@@ -13,6 +13,9 @@ import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, useHistory, useParams} from "react-router-dom";
+import {useDispatch} from "react-redux";
+import {useTranslation} from "react-i18next";
+import withStyles from "@material-ui/styles/withStyles";
 import {
     logoutUser,
     matchRole,
@@ -22,9 +25,7 @@ import {
     UserData
 } from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
-import {useDispatch} from "react-redux";
 import {refreshAll} from "../controllers/Store";
-import withStyles from "@material-ui/styles/withStyles";
 import {
     cacheDatas,
     fetchDeviceId,
@@ -47,9 +48,6 @@ import {
 } from "../components/UploadComponent/uploadComponentControls";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {updateActivity} from "./admin/audit/auditReducer";
-import {useTranslation} from "react-i18next";
-// const UploadComponent = React.lazy(() => import(/* webpackChunkName: 'upload' */"../components/UploadComponent/UploadComponent"));
-// import AvatarEdit from "react-avatar-edit";
 
 const stylesCurrent = theme => ({
     // image: {

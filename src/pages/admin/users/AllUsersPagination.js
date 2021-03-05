@@ -1,5 +1,5 @@
 import Pagination from "../../../controllers/FirebasePagination";
-import {normalizeSortName} from "../../../controllers";
+import {normalizeSortName} from "../../../controllers/UserData";
 
 export default function({firebase, start}) {
     // eslint-disable-next-line one-var

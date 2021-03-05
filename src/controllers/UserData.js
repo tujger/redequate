@@ -1,5 +1,5 @@
 import {cacheDatas} from "./General";
-import {notifySnackbar} from "./notifySnackbar";
+import notifySnackbar from "./notifySnackbar";
 import {restoreLanguage} from "../reducers/languageReducer";
 
 export const Role = {

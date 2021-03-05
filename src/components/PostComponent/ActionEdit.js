@@ -2,12 +2,12 @@ import React from "react";
 import IconButton from "@material-ui/core/IconButton";
 import EditIcon from "@material-ui/icons/Edit";
 import Grid from "@material-ui/core/Grid";
-import {useMetaInfo, useWindowData} from "../../controllers/General";
 import MenuItem from "@material-ui/core/MenuItem";
-import NewPostComponent from "../NewPostComponent/NewPostComponent";
 import {useTranslation} from "react-i18next";
+import {useMetaInfo, useWindowData} from "../../controllers/General";
+import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
-export default ({postData, classes, mentions, onMenuItemClick, onComplete, type}) => {
+export default ({postData, mentions, onMenuItemClick, onComplete}) => {
     const windowData = useWindowData();
     const {t} = useTranslation();
     const metaInfo = useMetaInfo();

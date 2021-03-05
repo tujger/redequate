@@ -9,9 +9,14 @@ import BackIcon from "@material-ui/icons/ChevronLeft";
 import {Link, useHistory, useLocation, withRouter} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
-import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
+import {
+    currentRole,
+    matchRole,
+    needAuth,
+    Role,
+    useCurrentUserData
+} from "../../controllers/UserData";
 import {usePages} from "../../controllers/General";
-// import {styles} from "../../controllers/Theme";
 
 const stylesCurrent = theme => ({
     appbar: {

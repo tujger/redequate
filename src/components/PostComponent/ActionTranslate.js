@@ -3,12 +3,12 @@ import ReactDOM from "react-dom";
 import IconButton from "@material-ui/core/IconButton";
 import TranslateIcon from "@material-ui/icons/Translate";
 import Grid from "@material-ui/core/Grid";
+import {useTranslation} from "react-i18next";
 import {useTextTranslation} from "../../controllers/textTranslation";
-import {fetchDeviceId, useMetaInfo,} from "../../controllers/General";
+import {fetchDeviceId, useMetaInfo} from "../../controllers/General";
 import {useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import MentionedTextComponent from "../MentionedTextComponent";
-import {useTranslation} from "react-i18next";
 
 export default (
     {

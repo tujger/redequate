@@ -1,14 +1,14 @@
 import React from "react";
 import {withStyles} from "@material-ui/core/styles";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import {useHistory} from "react-router-dom";
+import {useDispatch} from "react-redux";
 import {stylesList} from "../../controllers/Theme";
 import PostCard from "./PostCard";
 import RepliesTree from "./RepliesTree";
 import {cacheDatas, usePages} from "../../controllers/General";
-import {useHistory} from "react-router-dom";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
-import {useDispatch} from "react-redux";
-import {notifySnackbar} from "../../controllers";
+import notifySnackbar from "../../controllers/notifySnackbar";
 
 const PostComponent = (props) => {
     const {

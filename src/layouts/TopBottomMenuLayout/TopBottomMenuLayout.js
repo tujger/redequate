@@ -3,20 +3,20 @@ import PropTypes from "prop-types";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
+import {Route, Switch} from "react-router-dom";
+import {useTranslation} from "react-i18next";
 import BottomMenu from "./BottomMenu";
 import MainContent from "../../components/MainContent";
 import Snackbar from "../../components/Snackbar";
 import StickyHeader from "./StickyHeader";
 import TopMenu from "./TopMenu";
-import {Route, Switch} from "react-router-dom";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 import {enableDisabledPages, usePages, useStore} from "../../controllers/General";
 import HeaderComponent from "../../components/HeaderComponent";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
-import {notifySnackbar} from "../../controllers/notifySnackbar";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
-import {useTranslation, getI18n} from "react-i18next";
 
 const stylesCurrent = theme => ({
     indent: {

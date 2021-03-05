@@ -1,7 +1,7 @@
 import * as serviceWorker from "../serviceWorker";
 import {firebaseMessaging} from "./Firebase";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
-import {notifySnackbar} from "./notifySnackbar";
+import notifySnackbar from "./notifySnackbar";
 import notifyConfirm from "./notifyConfirm";
 import {cacheDatas} from "./General";
 

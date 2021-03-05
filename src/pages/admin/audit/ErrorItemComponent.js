@@ -4,19 +4,19 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import IconButton from "@material-ui/core/IconButton";
+import withStyles from "@material-ui/styles/withStyles";
+import {useDispatch} from "react-redux";
+import ClearIcon from "@material-ui/icons/Clear";
 import {UserData} from "../../../controllers/UserData";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
-import withStyles from "@material-ui/styles/withStyles";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import {toDateString} from "../../../controllers/DateFormat";
 import {fetchCallable} from "../../../controllers/Firebase";
 import ProgressView from "../../../components/ProgressView";
-import {useDispatch} from "react-redux";
-import ClearIcon from "@material-ui/icons/Clear";
 import {stylesList} from "../../../controllers/Theme";
-import {notifySnackbar} from "../../../controllers/notifySnackbar";
+import notifySnackbar from "../../../controllers/notifySnackbar";
 
 function ErrorItemComponent(props) {
     const {data, classes, skeleton, label, onUserClick} = props;

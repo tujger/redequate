@@ -1,8 +1,8 @@
 import React from "react";
+import {Link} from "react-router-dom";
 import Pagination from "./FirebasePagination";
 import {normalizeSortName} from "./UserData";
 import {usePages} from "./General";
-import {Link} from "react-router-dom";
 
 const ComponentUser = ({children, disableClick, display, label, id, className, style, ...rest}) => {
     const pages = usePages();

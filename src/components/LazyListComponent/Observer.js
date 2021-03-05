@@ -2,7 +2,7 @@ import React from "react";
 import {InView} from "react-intersection-observer";
 
 // eslint-disable-next-line react/prop-types
-export const Observer = ({active = true, finished, loadNextPage, placeholder, placeholders}) => {
+export default ({active = true, finished, loadNextPage, placeholder, placeholders}) => {
     if (finished) return null;
     const [state = active, setState] = React.useState();
 

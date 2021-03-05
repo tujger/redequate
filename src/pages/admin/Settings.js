@@ -19,10 +19,13 @@ import MaintenanceIcon from "@material-ui/icons/Settings";
 import JoinUsIcon from "@material-ui/icons/PanTool";
 import PostIcon from "@material-ui/icons/ChatBubbleOutline";
 import AllIcon from "@material-ui/icons/ExpandMore";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
-import ProgressView from "../../components/ProgressView";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
+import {useHistory} from "react-router-dom";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
+import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import ProgressView from "../../components/ProgressView";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
 import LoadingComponent from "../../components/LoadingComponent";
@@ -31,10 +34,7 @@ import {styles} from "../../controllers/Theme";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import Pagination from "../../controllers/FirebasePagination";
 import MentionedSelectComponent from "../../components/MentionedSelectComponent";
-import {useHistory} from "react-router-dom";
 import {updateActivity} from "./audit/auditReducer";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
 import {tokenizeText} from "../../components/MentionedTextComponent";
 
 const stylesCurrent = theme => ({

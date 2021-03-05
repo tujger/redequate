@@ -2,7 +2,7 @@ import React from "react";
 import {InView} from "react-intersection-observer";
 
 // eslint-disable-next-line react/prop-types
-export const Scroller = ({live, className}) => {
+export default ({live, className}) => {
     const [scrolled, setScrolled] = React.useState(false);
 
     const scrollerShown = React.useRef();

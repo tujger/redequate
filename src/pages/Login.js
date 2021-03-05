@@ -1,7 +1,11 @@
 import React from "react";
-import {logoutUser, Role, sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
-import PasswordField from "../components/PasswordField";
-import ProgressView from "../components/ProgressView";
+import {
+    logoutUser,
+    Role,
+    sendVerificationEmail,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -10,20 +14,20 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
-import GoogleLogo from "../images/google-logo.svg";
-import FacebookLogo from "../images/facebook-logo.svg";
 import PropTypes from "prop-types";
 import {useDispatch} from "react-redux";
+import withStyles from "@material-ui/styles/withStyles";
+import {useTranslation} from "react-i18next";
+import PasswordField from "../components/PasswordField";
+import ProgressView from "../components/ProgressView";
+import GoogleLogo from "../images/google-logo.svg";
+import FacebookLogo from "../images/facebook-logo.svg";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
-import {browserName, deviceType, osName, osVersion} from "react-device-detect";
-import {UserData} from "../controllers";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {notifySnackbar} from "../controllers/notifySnackbar";
-import withStyles from "@material-ui/styles/withStyles";
+import notifySnackbar from "../controllers/notifySnackbar";
 import {styles} from "../controllers/Theme";
-import {useTranslation} from "react-i18next";
 import LoadingComponent from "../components/LoadingComponent";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -255,13 +259,10 @@ function Login(props) {
         }
         const updatePrivateData = async props => {
             const {userData, deviceId} = props;
-            await userData.setPrivate(deviceId, {
-                osName,
-                osVersion,
-                deviceType,
-                browserName,
-                agreement: true
-            });
+            const deviceData = await import("react-device-detect")
+                .then(({browserName, deviceType, osName, osVersion}) => ({browserName, deviceType, osName, osVersion, agreement: true}))
+                .catch(() => {});
+            await userData.setPrivate(deviceId, deviceData);
             return props;
         }
         const transformUserDataIfNeeded = async props => {

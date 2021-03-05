@@ -5,12 +5,12 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import withStyles from "@material-ui/styles/withStyles";
+import makeStyles from "@material-ui/core/styles/makeStyles";
 import {usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import {stylesList} from "../../../controllers/Theme";
 import {toDateString} from "../../../controllers/DateFormat";
-import makeStyles from "@material-ui/core/styles/makeStyles";
 
 const stylesCurrent = makeStyles(theme => ({
     admin: {

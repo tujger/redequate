@@ -6,8 +6,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Button from "@material-ui/core/Button";
 import {useHistory} from "react-router-dom";
-import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
 import {useTranslation} from "react-i18next";
+import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
 
 const styles = theme => ({
     _dialog: {

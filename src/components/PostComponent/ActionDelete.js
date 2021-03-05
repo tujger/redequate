@@ -3,14 +3,14 @@ import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
 import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
+import MenuItem from "@material-ui/core/MenuItem";
+import {useTranslation} from "react-i18next";
 import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
-import MenuItem from "@material-ui/core/MenuItem";
-import {useTranslation} from "react-i18next";
 
-export default ({postData, classes, onMenuItemClick, onComplete, type}) => {
+export default ({postData, onMenuItemClick, onComplete, type}) => {
     const [state, setState] = React.useState({});
     const {
         deletePost,

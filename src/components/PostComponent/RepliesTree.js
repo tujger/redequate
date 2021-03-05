@@ -1,5 +1,7 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
+import {useHistory} from "react-router-dom";
+import withStyles from "@material-ui/styles/withStyles";
 import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
 import {useFirebase, useMetaInfo, usePages, useWindowData} from "../../controllers/General";
@@ -8,9 +10,7 @@ import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {useHistory} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar} from "../../controllers";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import RotatingReplies from "./RotatingReplies";
 
 const stylesCurrent = theme => ({

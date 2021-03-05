@@ -1,9 +1,9 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
-import {notifySnackbar} from "../controllers/notifySnackbar";
+import notifySnackbar from "../controllers/notifySnackbar";
 import {firebaseMessaging} from "../controllers/Firebase";
-import {useMetaInfo} from "../controllers";
+import {useMetaInfo} from "../controllers/General";
 
 const ShareComponent = ({title, text, url, component = <Button/>}) => {
     const handleShare = (evt) => {

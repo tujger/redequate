@@ -5,8 +5,8 @@ import {useHistory} from "react-router-dom";
 import Toolbar from "@material-ui/core/Toolbar";
 import ClearIcon from "@material-ui/icons/Clear";
 import InputOrigin from "@material-ui/core/Input";
-import {usePages} from "../../controllers/General";
 import {useTranslation} from "react-i18next";
+import {usePages} from "../../controllers/General";
 
 export default (
     {

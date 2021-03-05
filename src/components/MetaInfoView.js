@@ -3,8 +3,8 @@ import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
-import {useMetaInfo} from "../controllers/General";
 import {useTranslation} from "react-i18next";
+import {useMetaInfo} from "../controllers/General";
 
 const styles = theme => ({
     root: {

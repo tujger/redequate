@@ -5,11 +5,11 @@ import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
 import ChatFilledIcon from "@material-ui/icons/Chat";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
+import {useDispatch} from "react-redux";
+import {useTranslation} from "react-i18next";
 import {usePages} from "../../controllers/General";
 import CounterComponent from "../CounterComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
-import {useDispatch} from "react-redux";
-import {useTranslation} from "react-i18next";
 
 export default ({postData, classes, disableClick}) => {
     const dispatch = useDispatch();

@@ -1,13 +1,12 @@
 import React from "react";
-import ProgressView from "../ProgressView";
 import {connect, useDispatch} from "react-redux";
 import PropTypes from "prop-types";
-import {Observer} from "./Observer";
-import {Scroller} from "./Scroller";
-import {forceFirebaseReinit} from "../../controllers/Firebase";
-import {notifySnackbar} from "../../controllers/notifySnackbar";
-import {lazyListComponentReducer} from "./lazyListComponentReducer";
 import {useHistory} from "react-router-dom";
+import ProgressView from "../ProgressView";
+import Observer from "./Observer";
+import Scroller from "./Scroller";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {lazyListComponentReducer} from "./lazyListComponentReducer";
 
 function LazyListComponent(
     {
@@ -118,8 +117,12 @@ function LazyListComponent(
                     buttonLabel: "Refresh",
                     error: error,
                     onButtonClick: () => {
-                        forceFirebaseReinit();
-                        window.location.reload()
+                        import("../../controllers/Firebase")
+                            .then(({forceFirebaseReinit}) => {
+                                forceFirebaseReinit();
+                                window.location.reload()
+                            })
+                            .catch(notifySnackbar);
                     },
                 });
                 return {

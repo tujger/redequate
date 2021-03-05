@@ -4,18 +4,18 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import Typography from "@material-ui/core/Typography";
 import CardHeader from "@material-ui/core/CardHeader";
+import withStyles from "@material-ui/styles/withStyles";
+import TypeIcon from "@material-ui/icons/ArrowRight";
+import Linkify from "react-linkify";
+import {useHistory} from "react-router-dom";
 import {UserData} from "../../../controllers/UserData";
 import {cacheDatas, useFirebase, usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
-import withStyles from "@material-ui/styles/withStyles";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import {toDateString} from "../../../controllers/DateFormat";
 import {stylesList} from "../../../controllers/Theme";
-import TypeIcon from "@material-ui/icons/ArrowRight";
-import {notifySnackbar} from "../../../controllers";
-import Linkify from "react-linkify";
-import {useHistory} from "react-router-dom";
+import notifySnackbar from "../../../controllers/notifySnackbar";
 
 function ActivityItemComponent(props) {
     const {data, classes, skeleton, label, onItemClick} = props;

@@ -1,11 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import withStyles from "@material-ui/styles/withStyles";
-import {currentRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {connect} from "react-redux";
 import {Link} from "react-router-dom";
+import {currentRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import AvatarView from "../../components/AvatarView";
 import {usePages} from "../../controllers/General";
-import {connect} from "react-redux";
 import MenuSection from "./MenuSection";
 import LanguageComponent from "../../components/LanguageComponent";
 import {styles} from "../../controllers/Theme";

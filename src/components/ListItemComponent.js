@@ -2,8 +2,7 @@ import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
 import PropTypes from "prop-types";
 import {useDrag} from "react-use-gesture";
-import {isMobile} from "react-device-detect";
-import {notifySnackbar} from "../controllers/notifySnackbar";
+import notifySnackbar from "../controllers/notifySnackbar";
 
 const styles = theme => ({
     root: {
@@ -54,12 +53,12 @@ const styles = theme => ({
 
 const calculateOpacityIndent = () => {
     let indent;
-    if (isMobile) {
-        indent = window.innerWidth / 3;
-    } else {
+    // if (isMobile) {
+    //     indent = window.innerWidth / 3;
+    // } else {
         indent = window.innerWidth / 5;
         if (indent > 100) indent = 100;
-    }
+    // }
     return indent;
 };
 const calculateActionIndent = calculateOpacityIndent;
@@ -99,8 +98,8 @@ function ListItemComponent(props) {
             setState({...state, dragging: down, x: x, removing})
         }
     });
-    const bind_ = (process.env.NODE_ENV === "development") ? bind : (isMobile ? bind : () => {
-    });
+    const bind_ = (process.env.NODE_ENV === "development") ? bind : () => {
+    };
 
     React.useEffect(() => {
         const ref = React.createRef();

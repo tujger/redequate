@@ -1,5 +1,5 @@
 import React from "react";
-import {useFirebase} from "../controllers";
+import {useFirebase} from "../controllers/General";
 
 export default ({counter, path, prefix, suffix, live = false, onChange, showZero = false, zeroPrefix, zeroSuffix}) => {
     const firebase = useFirebase();

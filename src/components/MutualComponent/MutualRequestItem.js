@@ -9,6 +9,7 @@ import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import Hidden from "@material-ui/core/Hidden";
+import {useTranslation} from "react-i18next";
 import {mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import ProgressView from "../ProgressView";
@@ -17,7 +18,6 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
 import {stylesList} from "../../controllers/Theme";
-import {useTranslation} from "react-i18next";
 
 const MutualRequestItem = (
     {

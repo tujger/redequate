@@ -1,12 +1,12 @@
 import React from "react";
-import {useCurrentUserData} from "../controllers/UserData";
-import {fetchDeviceId} from "../controllers/General";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 import {useTranslation} from "react-i18next";
-import notifySnackbar from "../controllers/notifySnackbar";
 import {connect} from "react-redux"
+import notifySnackbar from "../controllers/notifySnackbar";
 import {languageReducer} from "../reducers/languageReducer";
+import {useCurrentUserData} from "../controllers/UserData";
+import {fetchDeviceId} from "../controllers/General";
 
 const mapStateToProps = ({language}) => ({
     locale: language.locale,

@@ -1,7 +1,5 @@
 import React from "react";
-import {useCurrentUserData} from "../controllers/UserData";
 import {Redirect, useHistory} from "react-router-dom";
-import ProgressView from "../components/ProgressView";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
@@ -9,11 +7,13 @@ import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
-import {notifySnackbar} from "../controllers/notifySnackbar";
-import {useFirebase, usePages} from "../controllers/General";
 import withStyles from "@material-ui/styles/withStyles";
-import {styles} from "../controllers/Theme";
 import {useTranslation} from "react-i18next";
+import {useCurrentUserData} from "../controllers/UserData";
+import ProgressView from "../components/ProgressView";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {useFirebase, usePages} from "../controllers/General";
+import {styles} from "../controllers/Theme";
 
 const RestorePassword = ({classes}) => {
     const [state, setState] = React.useState({

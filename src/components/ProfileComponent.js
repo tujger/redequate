@@ -2,14 +2,12 @@ import React from "react";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import withStyles from "@material-ui/styles/withStyles";
-import {withRouter} from "react-router-dom";
-import EmptyAvatar from "@material-ui/icons/Person";
-import GoogleLogo from "../images/google-logo.svg"
+import {useTranslation} from "react-i18next";
 import UserIcon from "@material-ui/icons/Mail";
+import GoogleLogo from "../images/google-logo.svg"
 import AvatarView from "./AvatarView";
 import {styles} from "../controllers/Theme";
 import FacebookLogo from "../images/facebook-logo.svg";
-import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     label: {

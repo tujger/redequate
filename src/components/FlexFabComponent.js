@@ -2,11 +2,11 @@ import React from "react";
 import Fab from "@material-ui/core/Fab";
 import Zoom from "@material-ui/core/Zoom";
 import Tooltip from "@material-ui/core/Tooltip";
+import withStyles from "@material-ui/styles/withStyles";
+import useTheme from "@material-ui/core/styles/useTheme";
 import {styles} from "../controllers/Theme";
 import {useWindowData} from "../controllers/General";
 import useScrollPosition from "../controllers/useScrollPosition";
-import withStyles from "@material-ui/styles/withStyles";
-import useTheme from "@material-ui/core/styles/useTheme";
 
 const stylesCurrent = theme => ({
     _common: {

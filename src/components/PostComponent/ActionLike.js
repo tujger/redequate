@@ -8,15 +8,15 @@ import MinusIcon from "@material-ui/icons/Remove";
 import RestoreIcon from "@material-ui/icons/Replay";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
+import useTheme from "@material-ui/styles/useTheme";
+import {useDispatch} from "react-redux";
+import {useTranslation} from "react-i18next";
 import {delay, useFirebase, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import useTheme from "@material-ui/styles/useTheme";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
-import {useDispatch} from "react-redux";
-import {Pagination} from "../../controllers";
-import {useTranslation} from "react-i18next";
+import Pagination from "../../controllers/FirebasePagination";
 
 export default ({postData, classes}) => {
     const [state, setState] = React.useState({});

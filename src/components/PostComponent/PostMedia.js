@@ -4,7 +4,7 @@ import {useHistory} from "react-router-dom";
 import SmartGallery from "react-smart-gallery";
 import Lightbox from "react-image-lightbox";
 import "react-image-lightbox/style.css";
-import {useWindowData} from "../../controllers";
+import {useWindowData} from "../../controllers/General";
 import ScrollSnapComponent from "../ScrollSnapComponent";
 
 const stylesCurrent = makeStyles(theme => ({

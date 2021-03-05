@@ -17,7 +17,7 @@ import SortIcon from "@material-ui/icons/Sort";
 import PropTypes from "prop-types";
 import ListItemComponent from "./ListItemComponent";
 import ListAction from "./ListAction";
-import {notifySnackbar} from "../controllers/notifySnackbar";
+import notifySnackbar from "../controllers/notifySnackbar";
 
 const styles = theme => ({
     counter: {

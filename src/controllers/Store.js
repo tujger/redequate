@@ -1,7 +1,7 @@
-import ProgressView, {progressViewReducer} from "../components/ProgressView";
-import {snackbarReducer} from "../components/Snackbar";
 import {combineReducers, createStore} from "redux";
 import PropTypes from "prop-types";
+import ProgressView, {progressViewReducer} from "../components/ProgressView";
+import {snackbarReducer} from "../components/Snackbar";
 import {currentUserData} from "./UserData";
 import {cacheDatas, Layout, MenuBadge} from "./General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";

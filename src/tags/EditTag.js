@@ -10,12 +10,12 @@ import Box from "@material-ui/core/Box";
 import {useDispatch} from "react-redux";
 import Switch from "@material-ui/core/Switch";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
-import InputLabel from "@material-ui/core/InputLabel";
 import FormControl from "@material-ui/core/FormControl";
 import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
 import withStyles from "@material-ui/styles/withStyles";
 import TagIcon from "@material-ui/icons/Label";
+import {useTranslation} from "react-i18next";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import ProgressView from "../components/ProgressView";
 import notifySnackbar from "../controllers/notifySnackbar";
@@ -37,11 +37,9 @@ import {
     useCurrentUserData,
     UserData
 } from "../controllers/UserData";
-import {tokenizeText} from "../components/MentionedTextComponent";
-import MentionedTextComponent from "../components/MentionedTextComponent";
+import MentionedTextComponent, {tokenizeText} from "../components/MentionedTextComponent";
 import {mutualRequest} from "../components/MutualComponent";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
-import {useTranslation} from "react-i18next";
 import MentionedSelectComponent from "../components/MentionedSelectComponent";
 
 const stylesCurrent = theme => ({

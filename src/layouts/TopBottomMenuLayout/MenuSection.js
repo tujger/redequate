@@ -2,12 +2,12 @@ import React from "react";
 import MenuItem from "@material-ui/core/MenuItem";
 import ArrowRightIcon from "@material-ui/icons/ArrowRight";
 import withStyles from "@material-ui/styles/withStyles";
-import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 import {Link, useHistory} from "react-router-dom";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
 import Popper from "@material-ui/core/Popper";
 import MenuList from "@material-ui/core/MenuList";
+import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 
 const styles = theme => ({
     badge: {

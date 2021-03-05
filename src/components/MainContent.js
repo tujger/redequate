@@ -1,13 +1,13 @@
 import React from "react";
 import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch, useHistory} from "react-router-dom";
+import {InView} from "react-intersection-observer";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
 import LoadingComponent from "../components/LoadingComponent";
 import {useMetaInfo, usePages} from "../controllers/General";
 import MetaInfoView from "./MetaInfoView";
-import {InView} from "react-intersection-observer";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
-import {notifySnackbar} from "../controllers/notifySnackbar";
+import notifySnackbar from "../controllers/notifySnackbar";
 
 const styles = theme => ({
     bottom: {},

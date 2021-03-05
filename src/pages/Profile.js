@@ -4,27 +4,13 @@ import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
 import InputLabel from "@material-ui/core/InputLabel";
 import TextField from "@material-ui/core/TextField";
-import ProfileComponentOrigin from "../components/ProfileComponent";
-import ProgressView from "../components/ProgressView";
-import {
-    matchRole,
-    Role,
-    sendVerificationEmail,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {useFirebase, usePages} from "../controllers/General";
 import NameIcon from "@material-ui/icons/Person";
 import AddressIcon from "@material-ui/icons/LocationCity";
 import PhoneIcon from "@material-ui/icons/Phone";
-import {fetchCallable} from "../controllers/Firebase";
-import {TextMaskPhone} from "../controllers/TextMasks";
-import LoadingComponent from "../components/LoadingComponent";
 import IconButton from "@material-ui/core/IconButton";
 import EditIcon from "@material-ui/icons/Edit";
-import PlacesTextField from "../components/PlacesTextField";
 import InfoIcon from "@material-ui/icons/Info";
 import FixIcon from "@material-ui/icons/BugReport";
 import RoleIcon from "@material-ui/icons/Security";
@@ -35,12 +21,26 @@ import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
 import withStyles from "@material-ui/styles/withStyles";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
+import {useTranslation} from "react-i18next";
+import ProfileComponentOrigin from "../components/ProfileComponent";
+import ProgressView from "../components/ProgressView";
+import {
+    matchRole,
+    Role,
+    sendVerificationEmail,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
+import {useFirebase, usePages} from "../controllers/General";
+import {fetchCallable} from "../controllers/Firebase";
+import {TextMaskPhone} from "../controllers/TextMasks";
+import LoadingComponent from "../components/LoadingComponent";
+import PlacesTextField from "../components/PlacesTextField";
 import {styles} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
-import {notifySnackbar} from "../controllers/notifySnackbar";
+import notifySnackbar from "../controllers/notifySnackbar";
 import FlexFabComponent from "../components/FlexFabComponent";
 import MetaInfoView from "../components/MetaInfoView";
-import {useTranslation} from "react-i18next";
 
 const stylesProfile = theme => ({
     root: {

@@ -2,9 +2,9 @@ import React from "react";
 import Grid from "@material-ui/core/Grid";
 import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
-import {uploadComponentClean} from "../UploadComponent/uploadComponentControls";
-import {useTranslation} from "react-i18next";
 import Box from "@material-ui/core/Box";
+import {useTranslation} from "react-i18next";
+import {uploadComponentClean} from "../UploadComponent/uploadComponentControls";
 
 export default ({classes, disabled, images, onChange, uppy}) => {
     const {t} = useTranslation();

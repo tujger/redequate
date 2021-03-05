@@ -1,15 +1,16 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
+import {useHistory} from "react-router-dom";
+import {useDispatch} from "react-redux";
+import withStyles from "@material-ui/styles/withStyles";
 import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import withStyles from "@material-ui/styles/withStyles";
-import {notifySnackbar, Pagination} from "../../controllers";
+import Pagination from "../../controllers/FirebasePagination";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
-import {useHistory} from "react-router-dom";
-import {useDispatch} from "react-redux";
 
 const stylesCurrent = theme => ({
     entering: {},

@@ -1,17 +1,17 @@
 import React from "react";
-import {logoutUser} from "../controllers/UserData";
 import {useHistory, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import PropTypes from "prop-types";
 import {connect} from "react-redux";
+import withStyles from "@material-ui/styles/withStyles";
+import {useTranslation} from "react-i18next";
+import {logoutUser} from "../controllers/UserData";
 import {refreshAll} from "../controllers/Store";
 import {useFirebase, usePages, useStore} from "../controllers/General";
 import LoadingComponent from "../components/LoadingComponent";
-import withStyles from "@material-ui/styles/withStyles";
 import {styles} from "../controllers/Theme";
-import {useTranslation} from "react-i18next";
 
 const Logout = (props) => {
     const {classes, immediate = true} = props;

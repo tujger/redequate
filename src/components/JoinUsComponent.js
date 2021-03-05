@@ -1,12 +1,12 @@
 import React from "react";
 // import {ConfirmComponent, getScrollPosition, useCurrentUserData, useMetaInfo, usePages} from "redequate";
 import {useHistory} from "react-router-dom";
+import {useTranslation} from "react-i18next";
 import {useCurrentUserData} from "../controllers/UserData";
 import {useFirebase, useMetaInfo, usePages} from "../controllers/General";
 import {getScrollPosition} from "../controllers/useScrollPosition";
 import ConfirmComponent from "./ConfirmComponent";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
-import {useTranslation} from "react-i18next";
 
 const JoinUsComponent = ({label}) => {
     const [state, setState] = React.useState({});

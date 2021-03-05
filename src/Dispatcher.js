@@ -5,6 +5,10 @@ import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import withWidth from "@material-ui/core/withWidth";
 import PropTypes from "prop-types";
+import {SnackbarProvider} from "notistack";
+import {initReactI18next, useTranslation} from "react-i18next";
+import i18n from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
 import Store, {refreshAll} from "./controllers/Store";
 import Firebase from "./controllers/Firebase";
 import {
@@ -27,18 +31,14 @@ import {
 } from "./controllers/UserData";
 import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
-import {SnackbarProvider} from "notistack";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import MetaInfoView from "./components/MetaInfoView";
-import {initReactI18next, useTranslation} from "react-i18next";
 import {restoreLanguage} from "./reducers/languageReducer";
 import notifySnackbar from "./controllers/notifySnackbar";
 import {getScrollPosition} from "./controllers/useScrollPosition";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import localeRu from "./locales/ru-RU.json";
 import localeEn from "./locales/en-EN.json";
-import i18n from "i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 
 const DeviceUUID = require("device-uuid");

@@ -6,15 +6,15 @@ import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import MailIcon from "@material-ui/icons/Mail";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
+import withStyles from "@material-ui/styles/withStyles";
 import {sendInvitationEmail} from "../../controllers/UserData";
 import {TextMaskEmail} from "../../controllers/TextMasks";
 import ProgressView from "../../components/ProgressView";
-import {useDispatch} from "react-redux";
-import {useHistory} from "react-router-dom";
 import {useFirebase, usePages} from "../../controllers/General";
-import {notifySnackbar} from "../../controllers/notifySnackbar";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import {styles} from "../../controllers/Theme";
-import withStyles from "@material-ui/styles/withStyles";
 
 const AddUser = ({classes}) => {
     const [state, setState] = React.useState({requesting: false, error: ""});

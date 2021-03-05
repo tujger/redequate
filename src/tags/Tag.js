@@ -2,13 +2,14 @@ import React from "react";
 import {useHistory, useParams} from "react-router-dom";
 import withStyles from "@material-ui/styles/withStyles";
 import Grid from "@material-ui/core/Grid";
-import Box from "@material-ui/core/Box";
 import IconButton from "@material-ui/core/IconButton";
 import Typography from "@material-ui/core/Typography";
 import FixIcon from "@material-ui/icons/BugReport";
 import {useDispatch} from "react-redux";
 import AddIcon from "@material-ui/icons/Add";
 import EditIcon from "@material-ui/icons/Edit";
+import ShareIcon from "@material-ui/icons/Share";
+import {useTranslation} from "react-i18next";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {fetchCallable} from "../controllers/Firebase";
 import notifySnackbar from "../controllers/notifySnackbar";
@@ -30,8 +31,6 @@ import InfoComponent from "../components/InfoComponent";
 import ShareComponent from "../components/ShareComponent";
 import ActionComponent from "../components/MutualComponent/ActionComponent";
 import FlexFabComponent from "../components/FlexFabComponent";
-import ShareIcon from "@material-ui/icons/Share";
-import {useTranslation} from "react-i18next";
 
 const stylesCurrent = theme => ({
     follow: {

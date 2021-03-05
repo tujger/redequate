@@ -1,6 +1,5 @@
 import React from "react";
 import {connect} from "react-redux";
-import Grid from "@material-ui/core/Grid";
 import withStyles from "@material-ui/styles/withStyles";
 import IconButton from "@material-ui/core/IconButton";
 import ImageIcon from "@material-ui/icons/InsertPhoto";
@@ -8,7 +7,8 @@ import ImageAddIcon from "@material-ui/icons/AddPhotoAlternate";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Hidden from "@material-ui/core/Hidden";
 import DialogContent from "@material-ui/core/DialogContent";
-import Box from "@material-ui/core/Box";
+import {useHistory} from "react-router-dom";
+import {useTranslation} from "react-i18next";
 import {newPostComponentReducer} from "./newPostComponentReducer";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -23,13 +23,11 @@ import ProgressView from "../ProgressView";
 import LoadingComponent from "../LoadingComponent";
 import UploadComponent from "../UploadComponent/UploadComponent";
 import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
-import {useHistory} from "react-router-dom";
 import {tokenizeText} from "../MentionedTextComponent";
-import {useTranslation} from "react-i18next";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import Wrapper from "./Wrapper";
 import Images from "./Images";
-import {Pagination} from "../../controllers";
+import Pagination from "../../controllers/FirebasePagination";
 import Toolbar from "./Toolbar";
 
 const stylesCurrent = theme => ({

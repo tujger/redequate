@@ -3,7 +3,7 @@ import {useHistory} from "react-router-dom";
 import CardActionArea from "@material-ui/core/CardActionArea";
 import Card from "@material-ui/core/Card";
 import withStyles from "@material-ui/styles/withStyles";
-import {CardHeader} from "@material-ui/core";
+import CardHeader from "@material-ui/core/CardHeader";
 import {usePages} from "../../controllers/General";
 import {styles, stylesList} from "../../controllers/Theme";
 

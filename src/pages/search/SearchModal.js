@@ -1,5 +1,4 @@
 import React from "react";
-import ModalComponent from "../../components/ModalComponent";
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
@@ -8,6 +7,7 @@ import Hidden from "@material-ui/core/Hidden";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
+import ModalComponent from "../../components/ModalComponent";
 import SearchContent from "./SearchContent";
 
 export default ({open, onClose, classes, handleSearch, ...props}) => {

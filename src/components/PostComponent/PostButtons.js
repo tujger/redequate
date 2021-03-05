@@ -1,10 +1,10 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
+import makeStyles from "@material-ui/core/styles/makeStyles";
 import ActionLike from "./ActionLike";
 import ActionDislike from "./ActionDislike";
 import ActionReplies from "./ActionReplies";
 import ActionReply from "./ActionReply";
-import makeStyles from "@material-ui/core/styles/makeStyles";
 import {useWindowData} from "../../controllers/General";
 import ActionTranslate from "./ActionTranslate";
 

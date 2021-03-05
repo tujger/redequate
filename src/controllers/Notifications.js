@@ -1,11 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import {useSnackbar} from "notistack";
+import {useHistory} from "react-router-dom";
 import RichSnackbarContent from "../components/RichSnackbarContent";
 import {useMetaInfo} from "./General";
-import {useHistory} from "react-router-dom";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
-import {notifySnackbar} from "./notifySnackbar";
+import notifySnackbar from "./notifySnackbar";
 
 export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {
     try {

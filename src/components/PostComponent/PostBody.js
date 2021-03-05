@@ -1,11 +1,11 @@
-import React from 'react';
+import React from "react";
 import Collapse from "@material-ui/core/Collapse";
 import Grid from "@material-ui/core/Grid";
 import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
 import AncillaryBody from "./AncillaryBody";
 
-export default React.forwardRef(({classes, collapsible:givenCollapsible, disableClick, mentions, postData}, ref) => {
+export default React.forwardRef(({classes, collapsible: givenCollapsible, disableClick, mentions, postData}, ref) => {
     const [state, setState] = React.useState({});
     const {
         collapsible = givenCollapsible,

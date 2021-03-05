@@ -6,7 +6,7 @@ import {ChatMeta} from "./ChatMeta";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {fetchCallable} from "../controllers/Firebase";
-import {notifySnackbar} from "../controllers/notifySnackbar";
+import notifySnackbar from "../controllers/notifySnackbar";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {chatsCounterReducer} from "./chatsCounterReducer";
 

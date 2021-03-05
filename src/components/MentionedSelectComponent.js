@@ -1,5 +1,4 @@
 import React from "react";
-import {useFirebase} from "../controllers/General";
 import Select from "@material-ui/core/Select";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
@@ -7,6 +6,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {tokenizeText} from "./MentionedTextComponent";
 import MentionsInputComponent from "./MentionsInputComponent/MentionsInputComponent";
+import {useFirebase} from "../controllers/General";
 
 const MentionedSelectComponent = (
     {
