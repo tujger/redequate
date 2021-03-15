@@ -345,7 +345,7 @@ const NewPostComponent = props => {
             let hiddenTag;
             if (givenTag) {
                 const item = await Pagination({
-                    ref: firebase.database().ref("tag"),
+                    ref: "tag",
                     child: "id",
                     equals: givenTag
                 }).next().then(items => items[0]);

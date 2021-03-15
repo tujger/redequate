@@ -69,7 +69,7 @@ const Tag = ({classes, allowOwner = true}) => {
     const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
 
     const fixErrors = () => {
-        fetchCallable(firebase)("fixTag", {
+        fetchCallable("fixTag", {
             key: tag.id
         })
             .then(({result = "Complete"}) => notifySnackbar(result))
@@ -85,7 +85,7 @@ const Tag = ({classes, allowOwner = true}) => {
             .then(snapshot => {
                 if (snapshot.exists()) return {key: snapshot.key, value: snapshot.val()};
                 return Pagination({
-                    ref: firebase.database().ref("tag"),
+                    ref: "tag",
                     child: "id",
                     equals: itemId,
                     size: 1
@@ -199,7 +199,7 @@ const Tag = ({classes, allowOwner = true}) => {
                     fetchItemId: item => item.key,
                     onItemError: (error, options) => {
                         console.log(error, options);
-                        fetchCallable(firebase)("fixMutualStamp", {
+                        fetchCallable("fixMutualStamp", {
                             ...options,
                             id: options.id,
                             tag: tag.key,

@@ -1,6 +1,7 @@
 import {cacheDatas} from "./General";
 import notifySnackbar from "./notifySnackbar";
 import {restoreLanguage} from "../reducers/languageReducer";
+import {firebaseMessaging} from "./Firebase";
 
 export const Role = {
     AUTH: "auth",
@@ -91,13 +92,13 @@ export function needAuth(roles, user) {
     return currentRole(user) === Role.LOGIN;
 }
 
-export function sendInvitationEmail(firebase) {
+export function sendInvitationEmail() {
     return options => new Promise((resolve, reject) => {
         const actionCodeSettings = {
             url: window.location.origin + "/signup/" + options.email,
             handleCodeInApp: true,
         };
-        return firebase.auth().sendSignInLinkToEmail(options.email, actionCodeSettings)
+        return firebaseMessaging.auth().sendSignInLinkToEmail(options.email, actionCodeSettings)
             .then(() => notifySnackbar("Invitation email has been sent"))
             .then(resolve).catch(error => {
                 notifySnackbar(error);
@@ -136,6 +137,8 @@ export function UserData(firebase) {
     // eslint-disable-next-line one-var
     let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp, _loaded = {}, _persisted,
         _lastVisitUpdate = 0;
+
+    firebase = firebase || firebaseMessaging;
 
     const _dateFormatted = date => {
         if (!date) return "";

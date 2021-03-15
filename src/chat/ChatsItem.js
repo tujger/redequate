@@ -5,7 +5,7 @@ import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import Grid from "@material-ui/core/Grid";
 import CardActionArea from "@material-ui/core/CardActionArea";
-import {cacheDatas, useFirebase, usePages} from "../controllers/General";
+import {cacheDatas, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import {ChatMeta} from "./ChatMeta";
 import AvatarView from "../components/AvatarView";
@@ -43,7 +43,6 @@ function ChatsItem(props) {
     const {id, classes, skeleton, label, onClick, userComponent, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
@@ -60,12 +59,12 @@ function ChatsItem(props) {
     React.useEffect(() => {
         if (skeleton || label) return;
         let isMounted = true;
-        const chatMeta = ChatMeta(firebase);
+        const chatMeta = ChatMeta();
         chatMeta.getOrCreateFor(currentUserData.id, id)
             .then(() => chatMeta.fetch())
             .then(() => {
                 const uid = chatMeta.uidOtherThan(currentUserData.id);
-                return cacheDatas.put(uid, UserData(firebase)).fetch(uid, [UserData.IMAGE, UserData.NAME]);
+                return cacheDatas.put(uid, UserData()).fetch(uid, [UserData.IMAGE, UserData.NAME]);
             })
             .then(userData => {
                 chatMeta.watch(({removed}) => {

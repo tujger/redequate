@@ -12,7 +12,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import {sendInvitationEmail} from "../../controllers/UserData";
 import {TextMaskEmail} from "../../controllers/TextMasks";
 import ProgressView from "../../components/ProgressView";
-import {useFirebase, usePages} from "../../controllers/General";
+import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {styles} from "../../controllers/Theme";
 
@@ -21,7 +21,6 @@ const AddUser = ({classes}) => {
     const {email = "", requesting, error = ""} = state;
     const pages = usePages();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
 
     const addUser = () => {
@@ -32,7 +31,7 @@ const AddUser = ({classes}) => {
         setState({...state, requesting: true});
         dispatch(ProgressView.SHOW);
 
-        sendInvitationEmail(firebase)({email: email})
+        sendInvitationEmail()({email: email})
             .then(() => {
                 history.push(pages.users.route);
             })

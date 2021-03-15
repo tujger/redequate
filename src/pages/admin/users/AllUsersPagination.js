@@ -1,7 +1,7 @@
 import Pagination from "../../../controllers/FirebasePagination";
 import {normalizeSortName} from "../../../controllers/UserData";
 
-export default function({firebase, start}) {
+export default function({start}) {
     // eslint-disable-next-line one-var
     let count = 0, countTotal = 0, finished = false, started = true, names = [], emails = [];
     const order = "asc";
@@ -11,14 +11,14 @@ export default function({firebase, start}) {
 
     const namesPagination = new Pagination({
         child: "_sort_name",
-        ref: firebase.database().ref("users_public"),
+        ref: "users_public",
         size: maxItems,
         start: normalizeSortName(start),
     });
 
     const emailsPagination = new Pagination({
         child: "email",
-        ref: firebase.database().ref("users_public"),
+        ref: "users_public",
         size: maxItems,
         start: start,
     });

@@ -10,7 +10,7 @@ import AddIcon from "@material-ui/icons/Add";
 import Hidden from "@material-ui/core/Hidden";
 import Grid from "@material-ui/core/Grid";
 import {Link} from "react-router-dom";
-import {useFirebase, usePages} from "../controllers/General";
+import {usePages} from "../controllers/General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {normalizeSortName} from "../controllers/UserData";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -35,7 +35,6 @@ const Tags = (props) => {
         noItemsCoponent = <ItemPlaceholderComponent skeleton={true} pattern={"flat"} label={"No tags found"}/>,
         ItemProps = {counter: true}
     } = props;
-    const firebase = useFirebase();
     const dispatch = useDispatch();
     const pages = usePages();
     const mode = forceMode || inheritMode;
@@ -91,7 +90,7 @@ const Tags = (props) => {
     switch (mode) {
         case "all":
             paginationOptions = {
-                ref: firebase.database().ref("tag"),
+                ref: "tag",
                 child: "_sort_name",
                 equals: equals,
             };
@@ -102,14 +101,14 @@ const Tags = (props) => {
             break;
         case "hidden":
             paginationOptions = {
-                ref: firebase.database().ref("tag"),
+                ref: "tag",
                 child: "hidden",
                 equals: true,
             }
             break;
         case "uid":
             paginationOptions = {
-                ref: firebase.database().ref("tag"),
+                ref: "tag",
                 child: "uid",
                 equals: equals,
             }

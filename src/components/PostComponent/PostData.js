@@ -1,7 +1,8 @@
 import {tokenizeText} from "../MentionedTextComponent";
 import {cacheDatas} from "../../controllers/General";
+import {firebaseMessaging as firebase} from "../../controllers/Firebase";
 
-export const PostData = function ({firebase, type = "posts", allowedExtras = ["like"]}) {
+export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
     let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root, _targetTag, _edit;
     const refRoot = firebase.database().ref();
 

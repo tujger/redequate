@@ -67,7 +67,7 @@ const Chat = (props) => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
-        const chatMeta = ChatMeta(firebase);
+        const chatMeta = ChatMeta();
         chatMeta.getOrCreateFor(currentUserData.id, id, history.location.state && history.location.state.meta)
             // .then(console.log)
             .catch(error => {
@@ -82,7 +82,7 @@ const Chat = (props) => {
                 }
             })
             .then(() => chatMeta.fetch())
-            .then(() => cacheDatas.put(chatMeta.uidOtherThan(currentUserData.id), UserData(firebase)))
+            .then(() => cacheDatas.put(chatMeta.uidOtherThan(currentUserData.id), UserData()))
             .then(userData => userData.fetch(chatMeta.uidOtherThan(currentUserData.id), [UserData.IMAGE, UserData.NAME]))
             .then(userData => isMounted && setState(state => ({...state, chatMeta, userData})))
             .then(() => chatMeta.updateVisit(currentUserData.id))

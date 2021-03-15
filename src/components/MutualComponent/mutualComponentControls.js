@@ -3,14 +3,14 @@ import {MutualMode} from "./MutualConstants";
 import Pagination from "../../controllers/FirebasePagination";
 
 export const mutualRequestAccept = ({requestId, firebase}) => {
-    return fetchCallable(firebase)("mutualAction", {
+    return fetchCallable("mutualAction", {
         key: requestId,
         action: "accept",
     });
 }
 
 export const mutualRequestReject = ({requestId, firebase}) => {
-    return fetchCallable(firebase)("mutualAction", {
+    return fetchCallable("mutualAction", {
         key: requestId,
         action: "reject",
     });
@@ -37,7 +37,7 @@ export const mutualRequest = async ({firebase, currentUserData, mutualId, mutual
     }
 
     const existing = new Pagination({
-        ref: firebase.database().ref("mutual").child(typeId),
+        ref: "mutual/" + typeId,
         child: "uid_id",
         equals: uidId,
         size: 10,

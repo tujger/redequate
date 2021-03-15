@@ -30,8 +30,8 @@ export const mentionUsers = {
     className: "Mention-user-label",
     displayTransform: (id, display) => "@" + display,
     markup: "$[user:__id__:__display__]",
-    pagination: (start, firebase) => new Pagination({
-        ref: firebase.database().ref("users_public"),
+    pagination: (start) => new Pagination({
+        ref: "users_public",
         child: "_sort_name",
         size: 10,
         start: normalizeSortName(start),
@@ -48,8 +48,8 @@ export const mentionTags = {
     className: "Mention-tag-label",
     displayTransform: (id, display) => "#" + display,
     markup: "$[tag:__id__:__display__]",
-    pagination: (start, firebase) => new Pagination({
-        ref: firebase.database().ref("tag"),
+    pagination: (start) => new Pagination({
+        ref: "tag",
         child: "_sort_name",
         size: 10,
         start: normalizeSortName(start),

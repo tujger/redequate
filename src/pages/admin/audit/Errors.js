@@ -58,7 +58,7 @@ const Errors = (props) => {
                 // eslint-disable-next-line no-unneeded-ternary
                 equals: errorsFilter ? errorsFilter : undefined,
                 order: "desc",
-                ref: firebase.database().ref("errors"),
+                ref: "errors",
             })
             itemTransform = item => item;
             break;

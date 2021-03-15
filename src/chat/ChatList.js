@@ -1,12 +1,10 @@
 import React from "react";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import ChatItem from "./ChatItem";
-import {useFirebase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 
 // eslint-disable-next-line react/prop-types
 const ChatList = ({chatKey, chatMeta, containerRef, textComponent, scrollerClassName}) => {
-    const firebase = useFirebase();
     return <LazyListComponent
         containerRef={containerRef}
         disableProgress={true}
@@ -24,7 +22,7 @@ const ChatList = ({chatKey, chatMeta, containerRef, textComponent, scrollerClass
         noItemsComponent={<div/>}
         pagination={() => new Pagination({
             order: "desc",
-            ref: firebase.database().ref("chats").child(chatKey),
+            ref: "chats/" + chatKey,
             size: 100,
         })}
         placeholder={<ChatItem skeleton/>}

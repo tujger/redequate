@@ -219,7 +219,7 @@ function Login(props) {
         }
         const createUserDataFromResponse = async props => {
             const {response} = props;
-            const userData = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+            const userData = new UserData().fromFirebaseAuth(response.user.toJSON());
             return {...props, userData}
         }
         const checkIfUserVerified = async props => {
@@ -355,7 +355,7 @@ function Login(props) {
         if (!response || !response.user) throw Error(t("Login.Login cancelled"));
         if (!agreementComponent) return response;
         const deviceId = fetchDeviceId();
-        const userData = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
+        const userData = new UserData().fromFirebaseAuth(response.user.toJSON());
         await userData.fetchPrivate(deviceId, true);
         const agreement = (userData.private[deviceId] || {}).agreement;
         if (agreement) return response;

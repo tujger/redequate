@@ -22,7 +22,7 @@ const AlertsDaemon = ({fetchAlertContent}) => {
             lastVisit = value.timestamp;
         }
         const alertsPagination = new Pagination({
-            ref: firebase.database().ref("alerts").child(currentUserData.id),
+            ref: "alerts/" + currentUserData.id,
             child: "timestamp",
             start: lastVisit,
             size: 10000,

@@ -9,7 +9,7 @@ import TypeIcon from "@material-ui/icons/ArrowRight";
 import Linkify from "react-linkify";
 import {useHistory} from "react-router-dom";
 import {UserData} from "../../../controllers/UserData";
-import {cacheDatas, useFirebase, usePages} from "../../../controllers/General";
+import {cacheDatas, usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import ConfirmComponent from "../../../components/ConfirmComponent";
@@ -19,7 +19,6 @@ import notifySnackbar from "../../../controllers/notifySnackbar";
 
 function ActivityItemComponent(props) {
     const {data, classes, skeleton, label, onItemClick} = props;
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
@@ -37,7 +36,7 @@ function ActivityItemComponent(props) {
             const {uid} = props;
             if (!uid) return {...props, userData: {id: "", name: "Anonymous"}};
             if (uid === "0") return {...props, userData: {id: "0", name: "No user"}};
-            return cacheDatas.fetch(uid, id => UserData(firebase).fetch(id, [UserData.NAME, UserData.IMAGE]))
+            return cacheDatas.fetch(uid, id => UserData().fetch(id, [UserData.NAME, UserData.IMAGE]))
                 .then(userData => ({...props, userData}))
                 .catch(error => catchUserFailed(uid)(error).then(userData => ({...props, userData})));
         }
@@ -63,7 +62,7 @@ function ActivityItemComponent(props) {
             const userDatas = await Promise.all(uids
                 .map(async item => {
                     if (item.id === "0") return {key: item.key, userData: {id: item.id, name: "No user"}};
-                    return UserData(firebase)
+                    return UserData()
                         .fetch(item.id, [UserData.NAME, UserData.IMAGE])
                         .then(userData => ({key: item.key, userData}))
                         .catch(error => catchUserFailed(item.id)(error)

@@ -8,7 +8,7 @@ import LazyListComponent from "../../../components/LazyListComponent/LazyListCom
 import UserItem from "./UserItem";
 import Pagination from "../../../controllers/FirebasePagination";
 import {UserData} from "../../../controllers/UserData";
-import {useFirebase, usePages} from "../../../controllers/General";
+import {usePages} from "../../../controllers/General";
 import ProgressView from "../../../components/ProgressView";
 import {styles} from "../../../controllers/Theme";
 import {usersReducer} from "./usersReducer";
@@ -22,7 +22,6 @@ function Users(props) {
     const {classes, mode = "all", filter = "", invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
 
     const handleHeaderChange = type => evt => {
         if (type === "clear") {
@@ -45,7 +44,7 @@ function Users(props) {
 
     const fetchUserData = async item => {
         // const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
-        const data = await UserData(firebase).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
+        const data = await UserData().fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
         return {key: item.key, value: data};
     }
 
@@ -54,7 +53,7 @@ function Users(props) {
     switch (mode) {
         case "active":
             pagination = new Pagination({
-                ref: firebase.database().ref("users_public"),
+                ref: "users_public",
                 child: "visit",
                 start: 0,
                 order: "desc",
@@ -67,7 +66,7 @@ function Users(props) {
             break;
         case "admins":
             pagination = new Pagination({
-                ref: firebase.database().ref("roles"),
+                ref: "roles",
                 value: true,
                 equals: "admin",
             })
@@ -75,7 +74,7 @@ function Users(props) {
             break;
         case "disabled":
             pagination = new Pagination({
-                ref: firebase.database().ref("roles"),
+                ref: "roles",
                 value: true,
                 equals: "disabled",
             })
@@ -83,7 +82,7 @@ function Users(props) {
             break;
         case "notVerified":
             pagination = new Pagination({
-                ref: firebase.database().ref("users_public"),
+                ref: "users_public",
                 child: "emailVerified",
                 equals: false,
             })
@@ -91,7 +90,7 @@ function Users(props) {
             break;
         case "recent":
             pagination = new Pagination({
-                ref: firebase.database().ref("users_public"),
+                ref: "users_public",
                 child: "created",
                 start: 0,
                 order: "desc",
@@ -101,7 +100,6 @@ function Users(props) {
         case "all":
         default:
             pagination = new AllUsersPagination({
-                firebase: firebase,
                 start: filter
             })
             itemTransform = item => fetchUserData(item);

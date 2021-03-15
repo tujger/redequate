@@ -96,7 +96,7 @@ export default props => {
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: false});
         new Pagination({
-            ref: firebase.database().ref("mutual").child(typeId),
+            ref: "mutual/" + typeId,
             child: "uid_id",
             equals: uidId,
             update: () => null
@@ -128,13 +128,13 @@ export default props => {
     React.useEffect(() => {
         let isMounted = true;
         const pendingPagination = new Pagination({
-            ref: firebase.database().ref("mutualrequests").child(typeId),
+            ref: "mutualrequests/" + typeId,
             child: "uid_id",
             equals: uidId,
             size: 1,
         });
         const subscribePagination = new Pagination({
-            ref: firebase.database().ref("mutual").child(typeId),
+            ref: "mutual/" + typeId,
             child: "uid_id",
             equals: uidId,
             size: 1,
@@ -227,7 +227,7 @@ export default props => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         let isMutualRequestsCheckMount = true;
         new Pagination({
-            ref: firebase.database().ref("mutualrequests").child(typeId),
+            ref: "mutualrequests/" + typeId,
             child: "uid_id",
             equals: idUid,
         }).next()

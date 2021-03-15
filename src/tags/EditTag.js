@@ -130,7 +130,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         const checkIfIdValid = async () => {
             const updatedId = tag.id || normalizeSortName(tag.label);
             const existing = await new Pagination({
-                ref: firebase.database().ref("tag"),
+                ref: "tag",
                 child: "id",
                 equals: updatedId,
             }).next();
@@ -147,7 +147,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         }
         const checkIfLabelValid = async updatedId => {
             const existing = await new Pagination({
-                ref: firebase.database().ref("tag"),
+                ref: "tag",
                 child: "label",
                 equals: tag.label,
             }).next();
@@ -164,7 +164,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             if (uppy) {
                 console.log("[EditTag] publish image", uppy)
                 publishing = await uploadComponentPublish(firebase)({
-                    auth: ".main",//currentUserData.id,
+                    auth: ".main",
                     files: uppy._uris,
                     name: tag.label,
                     onprogress: progress => {
@@ -350,7 +350,6 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     }
 
     const deleteTag = () => {
-
         const prepareDeleting = async () => {
             dispatch(ProgressView.SHOW);
             setState(state => ({...state, disabled: true, deleteTagOpen: false}));
@@ -378,8 +377,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             .then(publishUpdates)
             .then(onComplete)
             .catch(notifySnackbar)
-            .finally(finalizeDeleting)
-
+            .finally(finalizeDeleting);
     }
 
     const handleUploadPhotoSuccess = ({uppy, snapshot}) => {
@@ -425,7 +423,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
 
     React.useEffect(() => {
         if (!tag || !tag.uid || tag.uid === "0") return;
-        UserData(firebase).fetch(tag.uid)
+        UserData().fetch(tag.uid)
             .then(userData => {
                 setState(state => ({...state, owner: `$[user:${tag.uid}:${userData.name}]`}));
             })
@@ -436,7 +434,8 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     return <Grid container className={classes.center}>
         <Grid container className={classes.profile} spacing={1}>
             <Grid item className={classes.profileFieldImage}>
-                {image ? <img src={image} alt={""} className={classes.profileImage}/>
+                {image
+                    ? <img src={image} alt={""} className={classes.profileImage}/>
                     : <TagIcon className={classes.profileImage}/>}
                 {image && <Hidden smDown>
                     <IconButton
@@ -658,17 +657,3 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
 };
 
 export default withStyles(stylesCurrent)(withStyles(styles)(EditTag));
-
-export const mentionPlatforms = firebase => ({
-    appendSpaceOnAdd: false,
-    displayTransform: (a, b) => b,
-    markup: "$[item:__id__:__display__]",
-    pagination: (start) => new Pagination({
-        ref: firebase.database().ref("_platforms"),
-        child: "_sort_name",
-        start: normalizeSortName(start),
-        order: "asc"
-    }),
-    transform: item => ({id: item.key, display: item.value.name}),
-    trigger: /(?:[,;]\s+)?(([^,;]*))$/,
-});

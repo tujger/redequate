@@ -1,5 +1,6 @@
 import Pagination from "../controllers/FirebasePagination";
 import {UserData} from "../controllers/UserData";
+import {firebaseMessaging as firebase} from "../controllers/Firebase";
 
 const ONLINE_TIMEOUT = 60000;
 
@@ -12,7 +13,7 @@ Meta:
     _chats/__UID__/__KEY__/private: <__OPPOSITE_UID__> if chat is private
 */
 
-export function ChatMeta(firebase) {
+export function ChatMeta() {
     // eslint-disable-next-line one-var
     let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef,
         _redirect, _activeUids = [];

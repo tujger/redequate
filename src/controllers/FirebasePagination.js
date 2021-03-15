@@ -1,4 +1,5 @@
 import {key} from "firebase-key"; // https://cartant.github.io/firebase-key/
+import {firebaseMessaging as firebase} from "./Firebase";
 
 function Pagination(
     {
@@ -17,7 +18,7 @@ function Pagination(
         transform,
         transformData
     }) {
-    const baseRef = ref;
+    let baseRef = ref;
     const startKey = startDate !== undefined ? key(startDate || 0, "min") : undefined;
     const endKey = endDate !== undefined ? key(endDate, "min") : undefined;
     let cursorKey = order === "asc" ? startKey : endKey;
@@ -27,6 +28,10 @@ function Pagination(
     let finished = false;
     let started = false;
     let timeoutTask;
+
+    if (baseRef.constructor.name === "String") {
+        baseRef = firebase.database().ref(baseRef);
+    }
 
     const next = () => new Promise((resolve, reject) => {
         let timedout = false;
@@ -389,7 +394,7 @@ function Pagination(
             return toString();
         },
         get term() {
-            return `${ref.path}|${child || ""}|${start || ""}|${end || ""}|${equals || ""}|${value || ""}|${order || ""}|${startDate || ""}|${endDate || ""}`;
+            return `${baseRef.path}|${child || ""}|${start || ""}|${end || ""}|${equals || ""}|${value || ""}|${order || ""}|${startDate || ""}|${endDate || ""}`;
         },
         next: next,
         reset: reset,

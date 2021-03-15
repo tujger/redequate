@@ -31,7 +31,7 @@ function ErrorItemComponent(props) {
         dispatch(ProgressView.SHOW);
         setState({...state, alert: false});
         console.log("[Error] try to fix", data);
-        fetchCallable(firebase)("fixError", {
+        fetchCallable("fixError", {
             key: data.key
         })
             .then(({result}) => notifySnackbar(result))
@@ -52,7 +52,7 @@ function ErrorItemComponent(props) {
     React.useEffect(() => {
         if (!data || !data.value || !data.value.uid) return;
         let isMounted = true;
-        const userData = cacheDatas.put(data.value.uid, UserData(firebase));
+        const userData = cacheDatas.put(data.value.uid, UserData());
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
             .then(() => isMounted && setState(state => ({...state, userData})))
             .catch(error => {

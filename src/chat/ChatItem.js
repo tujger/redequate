@@ -3,7 +3,7 @@ import withStyles from "@material-ui/styles/withStyles";
 import Card from "@material-ui/core/Card";
 import CardHeader from "@material-ui/core/CardHeader";
 import Grid from "@material-ui/core/Grid";
-import {cacheDatas, toDateString, useCurrentUserData, useFirebase, UserData} from "../controllers";
+import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import {stylesList} from "../controllers/Theme";
@@ -42,7 +42,6 @@ const ChatItem = (props) => {
     // eslint-disable-next-line react/prop-types
     const {data, classes, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
-    const firebase = useFirebase();
     const [state, setState] = React.useState({});
     const {authorData} = state;
 
@@ -55,7 +54,7 @@ const ChatItem = (props) => {
     React.useEffect(() => {
         if (skeleton) return;
         let isMounted = true;
-        const authorData = cacheDatas.put(data.uid, UserData(firebase));
+        const authorData = cacheDatas.put(data.uid, UserData());
         authorData.fetch(data.uid, [UserData.IMAGE, UserData.NAME])
             .then(() => isMounted && setState({...state, authorData}))
 

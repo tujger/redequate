@@ -12,7 +12,7 @@ import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import Pagination from "../../../controllers/FirebasePagination";
-import {cacheDatas, useFirebase, useWindowData} from "../../../controllers/General";
+import {cacheDatas, useWindowData} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import withStyles from "@material-ui/styles/withStyles";
@@ -35,7 +35,6 @@ const Activity = (props) => {
         activitySort = "asc"
     } = props;
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {random, startDate, endDate, startDateAnchor, endDateAnchor} = state;
@@ -99,7 +98,7 @@ const Activity = (props) => {
             pagination = new Pagination({
                 endDate: endDate ? endDate.toDate() : undefined,
                 order: activitySort,
-                ref: firebase.database().ref("activity"),
+                ref: "activity",
                 startDate: startDate ? startDate.toDate() : undefined,
             })
             break;
@@ -109,7 +108,7 @@ const Activity = (props) => {
                 endDate: endDate ? endDate.toDate() : undefined,
                 equals: activityFilterItem,
                 order: activitySort,
-                ref: firebase.database().ref("activity"),
+                ref: "activity",
                 start: activityFilter,
                 startDate: startDate ? startDate.toDate() : undefined,
             })
@@ -120,7 +119,7 @@ const Activity = (props) => {
                 endDate: endDate ? endDate.toDate() : undefined,
                 equals: activityFilterItem,
                 order: activitySort,
-                ref: firebase.database().ref("activity"),
+                ref: "activity",
                 startDate: startDate ? startDate.toDate() : undefined,
             })
             break;
@@ -162,7 +161,7 @@ const Activity = (props) => {
                         }}
                         onChange={(evt, value, token) => {
                             token && cacheDatas.fetch(token.id, id => {
-                                return UserData(firebase).fetch(id);
+                                return UserData().fetch(id);
                             }).then(() => handleItemClick("uid")(null, token.id))
                                 .catch(notifySnackbar);
                         }}
@@ -170,8 +169,8 @@ const Activity = (props) => {
                     />}
                     {activityMode === "type" && !filteredItem && <MentionedSelectComponent
                         mention={{
-                            pagination: (start, firebase) => new Pagination({
-                                ref: firebase.database().ref("_activity/types"),
+                            pagination: (start) => new Pagination({
+                                ref: "_activity/types",
                                 order: "asc",
                                 size: 100,
                             }),

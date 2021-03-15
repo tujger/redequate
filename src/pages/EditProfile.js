@@ -168,7 +168,7 @@ function EditProfile(props) {
             for (const field of publicFields) {
                 if (field.unique) {
                     const values = await new Pagination({
-                        ref: firebase.database().ref("users_public"),
+                        ref: "users_public",
                         child: "name",
                         equals: (state[field.id] !== undefined && (state[field.id] || "").constructor.name === "String")
                             ? (state[field.id] || "").trim() : state[field.id]
@@ -281,6 +281,7 @@ function EditProfile(props) {
         const onSaveComplete = async () => {
             setState(state => ({...state, disabled: false, uppy: null}))
             refreshAll(store);
+            isMount = false;
             if (isAdmin) {
                 history.goBack();
             } else if (tosuccessroute) {
@@ -291,9 +292,10 @@ function EditProfile(props) {
         }
         const finalizeSaving = async () => {
             dispatch(ProgressView.HIDE);
-            setState(state => ({...state, disabled: false}));
+            isMount && setState(state => ({...state, disabled: false}));
         }
 
+        let isMount = true;
         prepareSaving()
             .then(checkForRequiredFields)
             .then(checkIfNameIsBlocked)
@@ -421,7 +423,7 @@ function EditProfile(props) {
         if (!id || id === ":id") {
             userData = currentUserData;
         } else {
-            userData = cacheDatas.put(id, UserData(firebase).create(id));
+            userData = cacheDatas.put(id, UserData().create(id));
         }
         userData.fetch([UserData.PUBLIC, UserData.ROLE])
             .then(() => isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))

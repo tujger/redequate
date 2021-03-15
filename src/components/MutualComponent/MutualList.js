@@ -6,7 +6,7 @@ import MutualRequestItem from "./MutualRequestItem";
 import MutualSubscribeItem from "./MutualSubscribeItem";
 import {MutualListMode} from "./MutualConstants";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {cacheDatas, useFirebase} from "../../controllers/General";
+import {cacheDatas} from "../../controllers/General";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import Pagination from "../../controllers/FirebasePagination";
 import {UserData} from "../../controllers/UserData";
@@ -33,7 +33,6 @@ export default props => {
         ItemProps,
     } = props;
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const mixedId = typeId + "_" + mode + "_" + mutualId;
 
     const refreshList = () => {
@@ -44,33 +43,33 @@ export default props => {
     const fetchPagination = () => {
         if (mode === MutualListMode.SUBSCRIBERS) {
             return () => new Pagination({
-                ref: firebase.database().ref("mutual").child(typeId),
+                ref: "mutual/" + typeId,
                 child: "id",
                 equals: mutualId,
                 order,
             })
         } else if (mode === MutualListMode.SELF) {
             return () => new Pagination({
-                ref: firebase.database().ref("mutualstamps").child("_my").child(mutualId),
+                ref: "mutualstamps/_my/" + mutualId,
                 // child: "uid",
                 // equals: mutualId,
                 order,
             })
         } else if (mode === MutualListMode.SUBSCRIBES) {
             return () => new Pagination({
-                ref: firebase.database().ref("mutual").child(typeId),
+                ref: "mutual/" + typeId,
                 child: "uid",
                 equals: mutualId,
                 order,
             })
         } else if (mode === MutualListMode.STAMPS) {
             return () => new Pagination({
-                ref: firebase.database().ref("mutualstamps").child(typeId).child(mutualId),
+                ref: "mutualstamps/" + typeId + "/" + mutualId,
                 order,
             });
         } else if (mode === MutualListMode.REQUESTS) {
             return () => new Pagination({
-                ref: firebase.database().ref("mutualrequests").child(typeId),
+                ref: "mutualrequests/" + typeId,
                 child: "id",
                 equals: mutualId,
                 order,
@@ -120,19 +119,19 @@ export default props => {
         if (itemTransform) return itemTransform;
         if (mode === MutualListMode.REQUESTS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData(firebase))
+                return cacheDatas.put(item.value.uid, UserData())
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBERS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData(firebase))
+                return cacheDatas.put(item.value.uid, UserData())
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBES) {
             return item => {
-                return cacheDatas.put(item.value.id, UserData(firebase))
+                return cacheDatas.put(item.value.id, UserData())
                     .fetch(item.value.id, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }

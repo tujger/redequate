@@ -31,7 +31,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
             if (data.uid === currentUserData.id) return;
             console.log(`[ChatsDaemon] new message: ${JSON.stringify(data)}`)
             // if (!document.hasFocus()) return;
-            const userData = cacheDatas.put(data.uid, UserData(firebase));
+            const userData = cacheDatas.put(data.uid, UserData());
             userData.fetch(data.uid, [UserData.NAME])
                 .then(() => notifySnackbar({
                     id: pages.chat.route + chatId,
@@ -42,7 +42,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                     </React.Fragment>
                 }))
         }
-        const installListenerIfNeeded = (id, live) => ChatMeta(firebase).fetch(id)
+        const installListenerIfNeeded = (id, live) => ChatMeta().fetch(id)
             .then(meta => {
                 if (meta.lastMessage.uid === currentUserData.id) return;
                 if (meta.lastVisit(currentUserData.id) > meta.timestamp) return;
@@ -81,7 +81,7 @@ export const ChatsDaemon = ({clearText = text => text}) => {
             }).catch(error => {
                 console.error(`[ChatsDaemon] failed for ${currentUserData.id}`)
                 console.error(error);
-                fetchCallable(firebase)("fixChat", {id, uid: currentUserData.id})
+                fetchCallable("fixChat", {id, uid: currentUserData.id})
                     .then(console.log)
                     .catch(console.error);
             });

@@ -2,7 +2,6 @@ import React from "react";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
 import {useCurrentUserData} from "../controllers/UserData";
-import {useFirebase, useWindowData} from "../controllers/General";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import Pagination from "../controllers/FirebasePagination";
 import ChatsItem from "./ChatsItem";
@@ -30,8 +29,6 @@ function Chats(
     }) {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
-    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {chatId} = state;
     const {t} = useTranslation();
@@ -70,7 +67,7 @@ function Chats(
                     child: "timestamp",
                     order: "desc",
                     start: 0,
-                    ref: firebase.database().ref("_chats").child(currentUserData.id),
+                    ref: "_chats/" + currentUserData.id,
                 })}
                 placeholder={<ChatsItem skeleton/>}
             />
@@ -101,7 +98,7 @@ function Chats(
                         child: "timestamp",
                         start: 0,
                         order: "desc",
-                        ref: firebase.database().ref("_chats").child(currentUserData.id),
+                        ref: "_chats/" + currentUserData.id,
                     })}
                     placeholder={<ChatsItem skeleton/>}
                 />

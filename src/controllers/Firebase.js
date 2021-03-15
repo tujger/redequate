@@ -38,9 +38,9 @@ export const forceFirebaseReinit = () => {
     });
 }
 
-export const fetchFunction = firebase => (name, options) => new Promise((resolve, reject) => {
+export const fetchFunction = (name, options) => new Promise((resolve, reject) => {
     try {
-        firebase.auth().onAuthStateChanged(data => {
+        firebaseMessaging.auth().onAuthStateChanged(data => {
             data.getIdToken().then(token => {
                 const config = {
                     headers: {
@@ -58,7 +58,7 @@ export const fetchFunction = firebase => (name, options) => new Promise((resolve
     }
 });
 
-export const fetchCallable = firebase => (name, options) => new Promise((resolve, reject) => {
+export const fetchCallable = (name, options) => new Promise((resolve, reject) => {
     try {
         const namedFunction = firebaseMessaging.functions().httpsCallable(name);//, config);
         namedFunction(options).then(result => {
@@ -69,8 +69,8 @@ export const fetchCallable = firebase => (name, options) => new Promise((resolve
     }
 });
 
-export const checkIfConnected = database => new Promise((resolve, reject) => {
-    return database.ref(".info").once("value").then(snapshot => {
+export const checkIfConnected = () => new Promise((resolve, reject) => {
+    return firebaseMessaging.database().ref(".info").once("value").then(snapshot => {
         console.log(snapshot, snapshot.val());
         resolve();
     })

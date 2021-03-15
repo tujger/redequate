@@ -37,7 +37,7 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
         dispatch(ProgressView.SHOW);
         setState({...state, allRead: false});
         new Pagination({
-            ref: firebase.database().ref("alerts").child(currentUserData.id),
+            ref: "alerts/" + currentUserData.id,
             order: "desc",
             size: 10000,
             timeout: 180000,

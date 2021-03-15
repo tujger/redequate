@@ -20,12 +20,12 @@ export default (
     firebase = firebase || useFirebase();
     try {
         const postData = await cacheDatas.fetch(fetchItemId(item), id => {
-            return PostData({firebase, type, allowedExtras}).fetch(id);
+            return PostData({type, allowedExtras}).fetch(id);
         });
         await postData.fetchCounters();
         await postData.fetchExtras(currentUserData.id);
         const userData = await cacheDatas.fetch(postData.uid, id => {
-            return UserData(firebase).fetch(id, currentUserData.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
+            return UserData().fetch(id, currentUserData.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
         })
         postData._userData = userData;
         // console.log(postData)
@@ -38,7 +38,7 @@ export default (
             return onItemError(error, {code, id: item.key, uid: currentUserData.id});
         } else {
             if (code === MutualError.NOT_FOUND) {
-                fetchCallable(firebase)("fixPost", currentUserData && currentUserData.id
+                fetchCallable("fixPost", currentUserData && currentUserData.id
                     ? {
                         code,
                         id: item.key,
@@ -51,7 +51,7 @@ export default (
                     .then(console.log)
                     .catch(console.error);
 
-                fetchCallable(firebase)("fixMutualStamp", {
+                fetchCallable("fixMutualStamp", {
                     code,
                     id: item.key,
                     uid: item.value,
