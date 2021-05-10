@@ -163,7 +163,7 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
             let publishing = {};
             if (uppy) {
                 console.log("[EditTag] publish image", uppy)
-                publishing = await uploadComponentPublish(firebase)({
+                publishing = await uploadComponentPublish({
                     auth: ".main",
                     files: uppy._uris,
                     name: tag.label,
@@ -212,7 +212,6 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
         const auditActivity = async key => {
             if (ownerChanged !== null) {
                 updateActivity({
-                    firebase,
                     uid: currentUserData.id,
                     type: "Tag owner changed",
                     details: {

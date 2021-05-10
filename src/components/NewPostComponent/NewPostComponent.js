@@ -179,7 +179,7 @@ const NewPostComponent = props => {
         const publishImage = async ({text, images}) => {
             let newImages = [];
             if (uppy) {
-                const publish = await uploadComponentPublish(firebase)({
+                const publish = await uploadComponentPublish({
                     auth: currentUserData.id,
                     files: uppy._uris,
                     onprogress: progress => {
@@ -213,7 +213,6 @@ const NewPostComponent = props => {
                 return firebase.database().ref().child(type).child(editPostData.id).update(updates)
                     .then(() => {
                         updateActivity({
-                            firebase,
                             uid: currentUserData.id,
                             type: "Post edit",
                             details: {

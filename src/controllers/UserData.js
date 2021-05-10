@@ -59,18 +59,16 @@ export function watchUserChanged(firebase, store) {
     })
 }
 
-export function logoutUser(firebase, store) {
-    return async () => {
-        // window.localStorage.removeItem("notification-token");
-        await firebase.auth().signOut();
-        console.log("[UserData] logout", currentUserDataInstance);
-        currentUserDataInstance = new UserData();
-        restoreLanguage(store);
-        if (store) {
-            store.dispatch({type: "currentUserData", userData: null});
-        }
-        return null;
+export const logoutUser = async (store) => {
+    // window.localStorage.removeItem("notification-token");
+    await firebaseMessaging.auth().signOut();
+    console.log("[UserData] logout", currentUserDataInstance);
+    currentUserDataInstance = new UserData();
+    restoreLanguage(store);
+    if (store) {
+        store.dispatch({type: "currentUserData", userData: null});
     }
+    return null;
 }
 
 export function currentRole(user) {
@@ -92,30 +90,31 @@ export function needAuth(roles, user) {
     return currentRole(user) === Role.LOGIN;
 }
 
-export function sendInvitationEmail() {
-    return options => new Promise((resolve, reject) => {
+export function sendInvitationEmail(email) {
+    return new Promise((resolve, reject) => {
         const actionCodeSettings = {
-            url: window.location.origin + "/signup/" + options.email,
+            url: window.location.origin + "/signup/" + email,
             handleCodeInApp: true,
         };
-        return firebaseMessaging.auth().sendSignInLinkToEmail(options.email, actionCodeSettings)
-            .then(() => notifySnackbar("Invitation email has been sent"))
-            .then(resolve).catch(error => {
-                notifySnackbar(error);
-                reject(error);
-            });
+        return firebaseMessaging.auth().sendSignInLinkToEmail(email, actionCodeSettings)
+            .then(resolve)
+            .catch(reject);
     })
 }
 
-export function sendVerificationEmail(firebase) {
+export function sendVerificationEmail() {
     return new Promise((resolve, reject) => {
-        firebase.auth().currentUser.sendEmailVerification().then(() => {
-            notifySnackbar("Verification email has been sent");
-            resolve();
-        }).catch(error => {
-            notifySnackbar(error);
-            reject(error);
-        });
+        firebaseMessaging.auth().currentUser.sendEmailVerification()
+            .then(resolve)
+            .catch(reject);
+    })
+}
+
+export function sendPasswordResetEmail(email) {
+    return new Promise((resolve, reject) => {
+        firebaseMessaging.auth().sendPasswordResetEmail(email)
+            .then(resolve)
+            .catch(reject);
     })
 }
 
@@ -133,12 +132,12 @@ export function currentUserData(state = {
 }
 
 // new stuff
-export function UserData(firebase) {
+export function UserData() {
     // eslint-disable-next-line one-var
     let _id, _public = {}, _private = {}, _role = null, _requestedTimestamp, _loaded = {}, _persisted,
         _lastVisitUpdate = 0;
 
-    firebase = firebase || firebaseMessaging;
+    const firebase = firebaseMessaging;
 
     const _dateFormatted = date => {
         if (!date) return "";

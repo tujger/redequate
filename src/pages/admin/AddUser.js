@@ -31,8 +31,9 @@ const AddUser = ({classes}) => {
         setState({...state, requesting: true});
         dispatch(ProgressView.SHOW);
 
-        sendInvitationEmail()({email: email})
+        sendInvitationEmail(email)
             .then(() => {
+                notifySnackbar("Invitation email has been sent");
                 history.push(pages.users.route);
             })
             .catch(notifySnackbar)

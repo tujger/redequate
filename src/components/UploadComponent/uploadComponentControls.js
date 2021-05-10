@@ -1,5 +1,6 @@
 import Uuid from "react-uuid";
 import Resizer from "react-image-file-resizer";
+import {firebaseMessaging as firebase} from "../../controllers/Firebase";
 
 export async function uploadComponentClean(uppy, key) {
     if (uppy) {
@@ -15,7 +16,7 @@ export async function uploadComponentClean(uppy, key) {
     }
 }
 
-export async function uploadComponentDelete(firebase, deleteFile) {
+export async function uploadComponentDelete(deleteFile) {
     if (deleteFile) {
         try {
             console.log("[Upload] delete old file from firebase", deleteFile);
@@ -26,60 +27,113 @@ export async function uploadComponentDelete(firebase, deleteFile) {
     }
 }
 
-export function uploadComponentPublish(firebase) {
-    return ({files, name, metadata, onprogress, auth, deleteFile}) => new Promise((resolve, reject) => {
+export function uploadComponentPublish({files, name, metadata, onprogress, auth, deleteFile}) {
+    return new Promise((resolve, reject) => {
         if (!files) {
             resolve();
             return;
         }
 
         const promises = Object.keys(files).map(key => {
-            const file = files[key];
-            const fetchImage = async () => {
+            const importVariables = async () => {
+                return {deleteFile, files, key, metadata, name, onprogress, uid: auth};
+            }
+            const extractItem = async props => {
+                const {files, key} = props;
+                return {...props, item: files[key]};
+            }
+            const detectType = async props => {
+                const {item} = props;
+                const type = item.type.split("/")[0];
+                return {...props, type};
+            }
+            const createUuid = async props => {
+                const uuid = Uuid();
+                return {...props, uuid};
+            }
+            const createRef = async props => {
+                const {item, name, type, uid, uuid} = props;
+                const ref = firebase.storage().ref().child(uid + "/" + type + "/" + (name ? name + "-" : "") + uuid + "-" + item.name);
+                return {...props, ref};
+            }
+            const extractBlobImage = async props => {
+                const {item, type} = props;
                 // if (uppy._uris && uppy._uris[file.id]) {
                 //     return uppy._uris[file.id].uploadURL;
                 // }
-                return window.fetch(file.uploadURL).then(response => {
-                    return response.blob();
-                })
-            }
-            const uuid = Uuid();
-            const fileRef = firebase.storage().ref().child(auth + "/images/" + (name ? name + "-" : "") + uuid + "-" + file.name);
-
-            console.log("[Upload] uploaded to firebase", file, fileRef);
-            return fetchImage().then(blob => {
-                // eslint-disable-next-line promise/param-names
-                return new Promise((resolve1, reject1) => {
-                    const uploadTask = fileRef.put(blob, {
-                        contentType: file.type,
-                        customMetadata: {
-                            ...metadata,
-                            uid: auth,
-                            // message: Uuid(),
-                            filename: file.name
-                        }
-                    });
-                    uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-                        const progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
-                        onprogress && onprogress(progressValue);
-                    }, error => {
-                        reject(error);
-                    }, () => {
-                        resolve1(uploadTask.snapshot.ref);
-                    });
-                });
-            }).then(ref => {
-                if (deleteFile) {
-                    uploadComponentDelete(firebase, deleteFile).catch(console.error);
+                if (type === "image") {
+                    const blob = await window.fetch(item.uploadURL).then(response => {
+                        return response.blob();
+                    })
+                    return {...props, blob};
                 }
-                return ref;
-            }).then(ref => {
-                return ref.getDownloadURL().then(url => {
-                    return ref.getMetadata().then(metadata => {
-                        return {url: url, metadata: metadata};
+                return props;
+            }
+            const extractBlobAttahed = attachedType => async props => {
+                const {item, type} = props;
+                if (type === attachedType) {
+                    const blob = new window.Blob([await item.data.arrayBuffer()], {type: item.type});
+                    return {...props, blob};
+                }
+                return props;
+            }
+            const createPublishTask = async props => {
+                const {blob, item, metadata, ref, uid} = props;
+                const publishTask = ref.put(blob, {
+                    contentType: item.type,
+                    customMetadata: {
+                        ...metadata,
+                        uid,
+                        // message: Uuid(),
+                        filename: item.name
+                    }
+                });
+                return {...props, publishTask};
+            }
+            const publishBlob = props => new Promise((resolve, reject) => {
+                const {onprogress, publishTask} = props;
+                publishTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
+                    const progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
+                    onprogress && onprogress(progressValue);
+                }, error => {
+                    reject(error);
+                }, () => {
+                    resolve({...props, result: publishTask.snapshot.ref});
+                });
+            })
+            const deleteObsoleteFile = async props => {
+                if (props.deleteFile) {
+                    uploadComponentDelete(props.deleteFile).catch(console.error);
+                }
+                return props;
+            }
+            const extractDownloadUrl = async props => {
+                const {result} = props;
+                return result.getDownloadURL().then(url => {
+                    return result.getMetadata().then(metadata => {
+                        return {...props, url, metadata};
                     })
                 })
-            });
+            }
+            const exportResult = async props => {
+                console.log("props", props);
+                const {url, metadata} = props;
+                return {url, metadata};
+            }
+
+            return importVariables()
+                .then(extractItem)
+                .then(detectType)
+                .then(createUuid)
+                .then(createRef)
+                .then(extractBlobImage)
+                .then(extractBlobAttahed("video"))
+                .then(extractBlobAttahed("audio"))
+                .then(createPublishTask)
+                .then(publishBlob)
+                .then(deleteObsoleteFile)
+                .then(extractDownloadUrl)
+                .then(exportResult)
         })
 
         Promise.all(promises)
@@ -93,18 +147,22 @@ export const uploadComponentResize = ({descriptor = {}, limits = {}}) => new Pro
     const imageType = type === "image/png" ? "PNG" : "JPEG";
 
     const {maxWidth, maxHeight, quality} = limits;
-    Resizer.imageFileResizer(
-        data,
-        maxWidth,
-        maxHeight,
-        imageType,
-        quality,
-        0,
-        uri => {
-            console.error(JSON.stringify(descriptor));
-            descriptor.uploadURL = uri;
-            resolve(descriptor);
-        },
-        "base64"
-    )
+    try {
+        Resizer.imageFileResizer(
+            data,
+            maxWidth,
+            maxHeight,
+            imageType,
+            quality,
+            0,
+            uri => {
+                console.log(JSON.stringify(descriptor));
+                descriptor.uploadURL = uri;
+                resolve(descriptor);
+            },
+            "base64"
+        )
+    } catch (e) {
+        reject(e);
+    }
 })

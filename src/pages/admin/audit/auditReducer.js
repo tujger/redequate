@@ -1,3 +1,5 @@
+import {firebaseMessaging} from "../../../controllers/Firebase";
+
 export const auditReducer = (state = {tabSelected: 0, errorsFilter: undefined, errorsMode: "all", activityFilter: undefined, activityFilterItem: undefined, activityMode: "all", activitySort: "asc"}, action) => {
     switch (action.type) {
         case auditReducer.SAVE:
@@ -14,16 +16,10 @@ auditReducer.ACTIVITY = "audit_activity";
 auditReducer.SAVE = "audit_save";
 auditReducer.ERRORS = "audit_errors";
 
-export const updateActivity = async ({firebase, uid = 0, type = null, details = null}) => {
-    /*console.log({
+export const updateActivity = async ({uid = 0, type = null, details = null}) => {
+    firebaseMessaging.database().ref("activity").push({
         details,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        type,
-        uid,
-    });*/
-    firebase.database().ref("activity").push({
-        details,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        timestamp: firebaseMessaging.database.ServerValue.TIMESTAMP,
         type,
         uid,
     }).catch(console.error)

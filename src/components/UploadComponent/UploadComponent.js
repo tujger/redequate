@@ -1,5 +1,7 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
+import VideoIcon from "@material-ui/icons/Movie";
+import AudioIcon from "@material-ui/icons/Audiotrack";
 import FlipIcon from "@material-ui/icons/FlipCameraAndroid";
 import Uppy from "@uppy/core";
 import ProgressBar from "@uppy/progress-bar";
@@ -16,7 +18,7 @@ import "@uppy/webcam/dist/style.css";
 import {useTranslation} from "react-i18next";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
-import {useMetaInfo} from "../../controllers/General";
+import {useMetaInfo, usePages, useStore} from "../../controllers/General";
 
 const MAX_FILE_SIZE = 20 * 1024;
 
@@ -152,7 +154,8 @@ const UploadComponent = (
     const {t} = useTranslation();
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
-    const {uploadsAllow, uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality} = settings;
+    const {uploadsAllow, uploadsTypes,
+        uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality} = settings;
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
@@ -164,8 +167,10 @@ const UploadComponent = (
         quality = uploadsQuality
     } = limits;
 
+    const allowedFileTypes = uploadsTypes || [];
+
     React.useEffect(() => {
-        if(!uploadsAllow) return;
+        if (!uploadsAllow) return;
         const uppy = Uppy({
             allowMultipleUploads: multi,
             autoProceed: true,
@@ -177,13 +182,13 @@ const UploadComponent = (
             restrictions: {
                 maxNumberOfFiles: multi ? 10 : 1,
                 maxFileSize: MAX_FILE_SIZE * 1024,
-                allowedFileTypes: ["image/*"]
+                allowedFileTypes
             },
         })
         uppy.on("file-added", (result) => {
             // if (!maxWidth) return;
             // if (maxSize && maxSize > result.size) return;
-            const type = result.type === "image/png" ? "PNG" : "JPEG";
+            const type = result.type.split("/")[0];
 
             uppy._uris = uppy._uris || {};
             if (!multi) {
@@ -192,26 +197,64 @@ const UploadComponent = (
                 })
             }
 
-            console.log(`[UploadComponent] resize ${result.name} to ${width}x${height} with quality ${quality}`);
+            if (type === "image") {
+                console.log(`[UploadComponent] resize ${result.name} to ${width}x${height} with quality ${quality}`);
 
-            uploadComponentResize({
-                descriptor: result,
-                limits: {
-                    maxWidth: width,
-                    maxHeight: height,
-                    quality,
-                }
-            })
-                .then(result => {
-                    uppy._uris[result.id] = result;
-                    uppy.emit("upload-success", result, {
-                        status: "complete",
-                        body: null,
-                        uploadURL: result.uploadURL
-                    });
-                    setState(state => ({...state, uppy}));
+                uploadComponentResize({
+                    descriptor: result,
+                    limits: {
+                        maxWidth: width,
+                        maxHeight: height,
+                        quality,
+                    }
                 })
-                .catch(console.error);
+                    .then(result => {
+                        uppy._uris[result.id] = result;
+                        uppy.emit("upload-success", result, {
+                            status: "complete",
+                            body: null,
+                            uploadURL: result.uploadURL
+                        });
+                        setState(state => ({...state, uppy}));
+                    })
+                    .catch(console.error);
+            } else if (type === "video") {
+                console.log(type, result);
+                uppy._uris[result.id] = result;
+                let uploadURL = <VideoIcon/>;
+                getVideoCover(result.data)
+                    .then(blob => new Promise((resolve) => {
+                        var a = new window.FileReader();
+                        a.onload = function(e) {
+                            uploadURL = e.target.result;
+                            resolve();
+                        }
+                        a.readAsDataURL(blob);
+                    }))
+                    .finally(() => {
+                        result.uploadURL = uploadURL;
+                        uppy.emit("upload-success", result, {
+                            status: "complete",
+                            body: null,
+                            uploadURL
+                        });
+                        setState(state => ({...state, uppy}));
+                    })
+            } else if (type === "audio") {
+                console.log(type, result);
+                uppy._uris[result.id] = result;
+                const uploadURL = <AudioIcon/>;
+                result.uploadURL = uploadURL;
+                uppy.emit("upload-success", result, {
+                    status: "complete",
+                    body: null,
+                    uploadURL
+                });
+                setState(state => ({...state, uppy}));
+            } else {
+                console.log(type, result);
+                setState(state => ({...state, uppy}));
+            }
         });
         uppy.on("complete", (result) => {
         });
@@ -301,7 +344,7 @@ const UploadComponent = (
                     done: t("Common.Cancel"),
                 }
             },
-            note: t("Upload.Images up to {{maxFileSize}} kb (will be resized to {{maxWidth}}x{{maxHeight}} max)", {
+            note: t("Upload.Files up to {{maxFileSize}} kb (images will be resized to {{maxWidth}}x{{maxHeight}} max)", {
                 maxFileSize: MAX_FILE_SIZE,
                 maxWidth: width,
                 maxHeight: height
@@ -389,7 +432,32 @@ const UploadComponent = (
 
 UploadComponent.propTypes = {
     button: PropTypes.any,
-    firebase: PropTypes.any,
 };
 
 export default connect()(withStyles(styles)(UploadComponent));
+
+function getVideoCover(file, seekTo = 0.0) {
+    return new Promise((resolve, reject) => {
+        const videoPlayer = document.createElement("video");
+        videoPlayer.setAttribute("src", URL.createObjectURL(file));
+        videoPlayer.load();
+        videoPlayer.addEventListener("error", reject);
+        videoPlayer.addEventListener("loadedmetadata", () => {
+            if (videoPlayer.duration < seekTo) {
+                reject(Error("Video is too short."));
+                return;
+            }
+            setTimeout(() => {
+                videoPlayer.currentTime = seekTo;
+            }, 200);
+            videoPlayer.addEventListener("seeked", () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = videoPlayer.videoWidth;
+                canvas.height = videoPlayer.videoHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+                ctx.canvas.toBlob(blob => resolve(blob), "image/jpeg", 0.75);
+            });
+        });
+    });
+}

@@ -7,7 +7,7 @@ import makeStyles from "@material-ui/core/styles/makeStyles";
 import AddIcon from "@material-ui/icons/Add";
 import {useTranslation} from "react-i18next";
 import {matchRole, useCurrentUserData} from "../controllers/UserData";
-import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
+import {cacheDatas, usePages, useWindowData} from "../controllers/General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import ProgressView from "../components/ProgressView";
 import postItemTransform from "../components/PostComponent/postItemTransform";
@@ -43,7 +43,6 @@ const useStyles = makeStyles(theme => ({
 const Post = (props) => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
-    const firebase = useFirebase();
     const dispatch = useDispatch();
     const {classes} = props;
     const {id, comment, reply} = useParams();
@@ -74,7 +73,6 @@ const Post = (props) => {
         postItemTransform({
             allowedExtras,
             currentUserData,
-            firebase,
             onItemError: error => {
                 throw error;
             },

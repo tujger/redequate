@@ -59,7 +59,7 @@ test("watchUserChanged", () => {
     expect(watchUserChanged(firebase, store)).rejects.toThrow(Error);
 });
 test("logoutUser", async () => {
-    return logoutUser(firebase, store)()
+    return logoutUser(store)
         .then(e => expect(e).toEqual(null))
         .catch(e => expect(e).toMatch('error'));
 });
@@ -72,9 +72,8 @@ test("useCurrentUserData", async () => {
 });
 test("sendInvitationEmail", async () => {
     useCurrentUserData(userDataServiceUser);
-    return sendInvitationEmail(firebase)({email: userDataServiceUser.email})
-        .then(e => expect(e).toEqual(undefined))
-
+    return sendInvitationEmail(userDataServiceUser.email)
+        .then(e => expect(e).toEqual(undefined));
 });
 test("sendVerificationEmail", async () => {
     useCurrentUserData(userDataServiceUser);

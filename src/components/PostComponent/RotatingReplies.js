@@ -3,7 +3,7 @@ import Grid from "@material-ui/core/Grid";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
-import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
+import {cacheDatas, usePages} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
@@ -51,7 +51,6 @@ const stylesCurrent = theme => ({
 export default withStyles(stylesCurrent)((props) => {
     const {classes = {}, items: givenItems, mentions, postId, type} = props;
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({items: givenItems});
@@ -114,7 +113,7 @@ export default withStyles(stylesCurrent)((props) => {
         const fetchUserData = async props => {
             const {postData} = props;
             const userData = await cacheDatas.fetch(postData.uid, id => {
-                return UserData(firebase).fetch(id, [UserData.NAME, UserData.IMAGE]);
+                return UserData().fetch(id, [UserData.NAME, UserData.IMAGE]);
             });
             return {...props, userData};
         }
@@ -194,7 +193,7 @@ export default withStyles(stylesCurrent)((props) => {
         let isMount = true;
         const fetchReplies = async () => {
             return Pagination({
-                ref: firebase.database().ref(type),
+                ref: type,
                 equals: postId,
                 child: "to",
                 order: "desc",

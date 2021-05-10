@@ -11,18 +11,18 @@ import Grid from "@material-ui/core/Grid";
 import useTheme from "@material-ui/styles/useTheme";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
-import {delay, useFirebase, usePages} from "../../controllers/General";
+import {delay, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
 import Pagination from "../../controllers/FirebasePagination";
+import counter from "../../controllers/counterControl";
 
 export default ({postData, classes}) => {
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const theme = useTheme();
@@ -96,20 +96,7 @@ export default ({postData, classes}) => {
             // setState(state => ({...state, disabled: true}));
         }
         const publishCounter = async () => {
-            return firebase.database().ref("_counters").child(postData.id).child("like")
-                .transaction(value => {
-                    if (!value) {
-                        if (increment > 0) return increment;
-                        else return null;
-                    } else if (value <= 0) {
-                        if (increment > 0) return increment;
-                        else return null;
-                    } else {
-                        let result = value + increment;
-                        if (result <= 0) result = null;
-                        return result;
-                    }
-                })
+            return counter({path: [postData.id, "like"], increment});
         }
         const updateCounter = async result => {
             const json = result.toJSON();
@@ -136,7 +123,7 @@ export default ({postData, classes}) => {
         }
         const fetchExtras = async () => {
             return Pagination({
-                ref: firebase.database().ref("extra"),
+                ref: "extra",
                 child: "id",
                 equals: postData.id,
                 size: 10000
@@ -148,7 +135,7 @@ export default ({postData, classes}) => {
             return likes.length;
         }
         const publishCounter = async counter => {
-            await firebase.database().ref("_counters").child(postData.id).child("like").set(counter);
+            await counter({path: [postData.id, "like"], value: counter});
             return counter;
         }
         const updateCounter = async counter => {

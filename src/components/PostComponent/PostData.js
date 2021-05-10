@@ -136,6 +136,10 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
             if (_images) data.images = _images;
             return data;
         },
+        delete: () => {
+            cacheDatas.remove(_id);
+            return _body._refPosts.child(_id).set(null);
+        },
         editOf: type => {
             if (!_edit) return null;
             const keys = Object.keys(_edit);
@@ -238,9 +242,10 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
             return _body;
         },
         putExtra: async ({type, uid}) => {
-            if (!_extras) throw new Error("'postData.fetchExtras(uid)' before put.");
+            // if (!_extras) throw new Error("'postData.fetchExtras(uid)' before put.");
             if (allowedExtras.indexOf(type) < 0) throw new Error(`Extra of type '${type}' is not allowed.`);
             if (!uid) throw new Error(`'uid' is not defined for '${type}'.`);
+            if (!_extras) await _body.fetchExtras(uid);
             if (_extras[type]) throw new Error(`'${type}' is already defined for ${_id}/${uid}.`);
 
             if (type === "like" && _extras.dislike) {

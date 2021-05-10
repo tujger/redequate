@@ -1,22 +1,23 @@
 import {fetchCallable} from "../../controllers/Firebase";
 import {MutualMode} from "./MutualConstants";
 import Pagination from "../../controllers/FirebasePagination";
+import {firebaseMessaging as firebase} from "../../controllers/Firebase";
 
-export const mutualRequestAccept = ({requestId, firebase}) => {
+export const mutualRequestAccept = ({requestId}) => {
     return fetchCallable("mutualAction", {
         key: requestId,
         action: "accept",
     });
 }
 
-export const mutualRequestReject = ({requestId, firebase}) => {
+export const mutualRequestReject = ({requestId}) => {
     return fetchCallable("mutualAction", {
         key: requestId,
         action: "reject",
     });
 }
 
-export const mutualRequest = async ({firebase, currentUserData, mutualId, mutualType, mutualMode = MutualMode.SIMPLEX_QUIET, typeId, message}) => {
+export const mutualRequest = async ({currentUserData, mutualId, mutualType, mutualMode = MutualMode.SIMPLEX_QUIET, typeId, message}) => {
     let ref = firebase.database().ref();
     const uidId = `${currentUserData.id}_${mutualId}`;
     const idUid = `${mutualId}_${currentUserData.id}`;

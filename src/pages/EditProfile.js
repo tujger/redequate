@@ -188,7 +188,7 @@ function EditProfile(props) {
         const checkIfProfileExists = async () => {
             const exists = await firebase.database().ref("users_public").child(userData.id).child("email").once("value").then(snapshot => snapshot.exists());
             if (!exists) {
-                await logoutUser(firebase, store)();
+                await logoutUser(store);
                 refreshAll(store);
                 history.replace(pages.home.route);
                 throw Error(t("User.Profile is not found, forcing log out"));
@@ -206,7 +206,7 @@ function EditProfile(props) {
         }
         const publishImage = async () => {
             if (uppy) {
-                const publishing = await uploadComponentPublish(firebase)({
+                const publishing = await uploadComponentPublish({
                     auth: userData.id,
                     files: uppy._uris,
                     name: "profile",
@@ -257,7 +257,6 @@ function EditProfile(props) {
                 updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
                 if (role !== userData.role) {
                     updateActivity({
-                        firebase,
                         uid: currentUserData.id,
                         type: "User role change",
                         details: {
@@ -341,7 +340,7 @@ function EditProfile(props) {
         const onDeleteComplete = async () => {
             notifySnackbar(t("User.User deleted"));
             if (isSameUser(userData, currentUserData)) {
-                logoutUser(firebase, store)();
+                logoutUser(store);
                 history.replace(pages.home.route);
             } else {
                 history.goBack();
@@ -350,7 +349,6 @@ function EditProfile(props) {
         }
         const publishActivity = async () => {
             updateActivity({
-                firebase,
                 uid: currentUserData.id,
                 type: "User delete",
                 details: userData.toJSON(),

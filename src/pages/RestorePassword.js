@@ -9,10 +9,10 @@ import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
 import {useTranslation} from "react-i18next";
-import {useCurrentUserData} from "../controllers/UserData";
+import {sendPasswordResetEmail, useCurrentUserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useFirebase, usePages} from "../controllers/General";
+import {usePages} from "../controllers/General";
 import {styles} from "../controllers/Theme";
 
 const RestorePassword = ({classes}) => {
@@ -23,7 +23,6 @@ const RestorePassword = ({classes}) => {
     const {email, requesting} = state;
     const pages = usePages();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
     const {t} = useTranslation();
@@ -31,15 +30,16 @@ const RestorePassword = ({classes}) => {
     const requestRestorePassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
-        firebase.auth().sendPasswordResetEmail(email).then(() => {
-            notifySnackbar(t("User.Instructions have been sent to e-mail."));
-            history.push(pages.login.route);
-        }).catch(error => {
-            notifySnackbar(error);
-        }).finally(() => {
-            dispatch(ProgressView.HIDE);
-            setState({...state, requesting: false});
-        });
+        sendPasswordResetEmail(email)
+            .then(() => {
+                notifySnackbar(t("User.Instructions have been sent to e-mail."));
+                history.push(pages.login.route);
+            }).catch(error => {
+                notifySnackbar(error);
+            }).finally(() => {
+                dispatch(ProgressView.HIDE);
+                setState({...state, requesting: false});
+            });
     };
 
     if (currentUserData && currentUserData.id) {

@@ -12,6 +12,7 @@ import ProgressView from "../ProgressView";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import Pagination from "../../controllers/FirebasePagination";
 import ConfirmComponent from "../ConfirmComponent";
+import counterControl from "../../controllers/counterControl";
 
 export default props => {
     const {t} = useTranslation();
@@ -62,7 +63,7 @@ export default props => {
     const pushRequest = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: true});
-        mutualRequest({firebase, currentUserData, message, mutualId, mutualMode, mutualType, typeId})
+        mutualRequest({currentUserData, message, mutualId, mutualMode, mutualType, typeId})
             .then(hasPending => {
                 if (mutualMode === MutualMode.DUPLEX_APPROVE) {
                     setState(state => ({
@@ -109,7 +110,7 @@ export default props => {
         evt.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, hasPending: hasRequest, hasRequest: null, disabled: true}));
-        (isAccept ? mutualRequestAccept : mutualRequestReject)({requestId: `${typeId}/${hasRequest.key}`, firebase})
+        (isAccept ? mutualRequestAccept : mutualRequestReject)({requestId: `${typeId}/${hasRequest.key}`})
             .then(result => {
                 setState(state => ({...state, disabled: false}));
                 dispatch(ProgressView.HIDE);
@@ -165,40 +166,40 @@ export default props => {
                 if (error !== "done") notifySnackbar(error);
             });
         return () => isMounted = false;
-    }, [uidId, typeId, subscribers, firebase]);
+    }, [uidId, typeId, subscribers]);
 
     // noinspection DuplicatedCode
     React.useEffect(() => {
-        const counterRef = firebase.database().ref(`_counters/${mutualId}/mutual/${typeId}_s`);
-        const listener = snapshot => {
-            const subscribers = snapshot.val();
-            setState(state => ({
-                ...state,
-                disabled: false,
-                ...(state.pending === undefined ? {} : {subscribed: state.pending}),
-                subscribers,
-            }));
-        }
-        counterRef.on("value", listener);
-        return () => counterRef.off("value", listener);
-    }, [mutualId, typeId, firebase]);
+        const listener = counterControl({
+            onchange: subscribers => {
+                setState(state => ({
+                    ...state,
+                    disabled: false,
+                    ...(state.pending === undefined ? {} : {subscribed: state.pending}),
+                    subscribers,
+                }))
+            },
+            path: `${mutualId}/mutual/${typeId}_s`
+        })
+        return () => listener();
+    }, [mutualId, typeId]);
 
     // noinspection DuplicatedCode
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
-        const counterRef = firebase.database().ref(`_counters/${mutualId}/mutual/${typeId}`);
-        const listener = snapshot => {
-            const subscribes = snapshot.val();
-            setState(state => ({
-                ...state,
-                disabled: false,
-                ...(state.pending === undefined ? {} : {subscribed: state.pending}),
-                subscribes,
-            }));
-        }
-        counterRef.on("value", listener);
-        return () => counterRef.off("value", listener);
-    }, [mutualId, typeId, firebase, mutualMode]);
+        const listener = counterControl({
+            onchange: subscribes => {
+                setState(state => ({
+                    ...state,
+                    disabled: false,
+                    ...(state.pending === undefined ? {} : {subscribed: state.pending}),
+                    subscribes,
+                }))
+            },
+            path: `${mutualId}/mutual/${typeId}`
+        })
+        return () => listener();
+    }, [mutualId, typeId, mutualMode]);
 
     React.useEffect(() => {
         if (!hasPending) return;
@@ -210,18 +211,18 @@ export default props => {
         }
         pendingRef.on("value", listener)
         return () => pendingRef.off("value", listener);
-    }, [hasPending, firebase, typeId])
+    }, [hasPending, typeId])
 
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
-        const requestCounterRef = firebase.database().ref("_counters").child(currentUserData.id).child("mutualrequests").child(typeId);
-        const listener = snapshot => {
-            const requestsCounter = snapshot.val();
-            setState(state => ({...state, requestsCounter}))
-        }
-        requestCounterRef.on("value", listener)
-        return () => requestCounterRef.off("value", listener);
-    }, [mutualId, typeId, mutualMode, firebase, isSameUser, currentUserData.id])
+        const listener = counterControl({
+            onchange: requestsCounter => {
+                setState(state => ({...state, requestsCounter}))
+            },
+            path: [currentUserData.id, "mutualrequests", typeId]
+        });
+        return () => listener();
+    }, [mutualId, typeId, mutualMode, isSameUser, currentUserData.id])
 
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
@@ -240,7 +241,7 @@ export default props => {
         return () => {
             isMutualRequestsCheckMount = false;
         }
-    }, [typeId, mutualMode, firebase, requestsCounter, idUid])
+    }, [typeId, mutualMode, requestsCounter, idUid])
 
     // console.log(requestsCounter, subscribers, hasPending, hasRequest)
     return <>

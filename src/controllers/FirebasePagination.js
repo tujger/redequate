@@ -31,6 +31,8 @@ function Pagination(
 
     if (baseRef.constructor.name === "String") {
         baseRef = firebase.database().ref(baseRef);
+    } else if (baseRef instanceof Array) {
+        baseRef = firebase.database().ref(baseRef.join("/"));
     }
 
     const next = () => new Promise((resolve, reject) => {

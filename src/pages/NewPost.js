@@ -33,17 +33,17 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const NewPost = (props) => {
+    const classesPost = useStyles();
     const dispatch = useDispatch();
     const history = useHistory();
     const location = useLocation();
+    const metaInfo = useMetaInfo();
     const pages = usePages();
+    const windowData = useWindowData();
     const {classes} = props;
     const {id, reply} = useParams();
     const [state, setState] = React.useState({highlight: reply, text: ""});
     const {imageDescriptors, text, tag, ready} = state;
-    const classesPost = useStyles();
-    const windowData = useWindowData();
-    const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
     const {uploadsAllow, uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality} = settings;
 

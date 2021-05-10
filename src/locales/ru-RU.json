@@ -146,7 +146,7 @@
     "Tag.You are going to change owner to {{person}}.": "Вы собираетесь сменить владельца на {{person}}.",
     "Tag.You can not manage {{label}}": "Вы не можете управлять {{label}}",
 
-    "Upload.Images up to {{maxFileSize}} kb (will be resized to {{maxWidth}}x{{maxHeight}} max)": "Изображения размером до {{maxFileSize}} кб (будут уменьшены до {{maxWidth}}x{{maxHeight}} максимум)",
+    "Upload.Files up to {{maxFileSize}} kb (images will be resized to {{maxWidth}}x{{maxHeight}} max)": "Файлы размером до {{maxFileSize}} кб (изображения будут уменьшены до {{maxWidth}}x{{maxHeight}} максимум)",
     "Upload.Upload": "Загрузить",
 
     "User.Account and all data will be deleted and can not be restored.": "Учетная запись и все данные будут удалены и не подлежат восстановлению.",

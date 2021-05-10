@@ -9,6 +9,7 @@ import InputLabel from "@material-ui/core/InputLabel";
 import Typography from "@material-ui/core/Typography";
 import FormControl from "@material-ui/core/FormControl";
 import Switch from "@material-ui/core/Switch";
+import FormHelperText from "@material-ui/core/FormHelperText";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import DynamicLinksIcon from "@material-ui/icons/Link";
@@ -84,12 +85,21 @@ const Settings = ({classes, uploadable}) => {
         tab,
         translateLimit,
         uploadsAllow,
+        uploadsTypes = [],
         uploadsMaxHeight,
         uploadsMaxSize,
         uploadsMaxWidth,
         uploadsQuality
     } = state;
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
+
+    const parseUploadables = () => {
+        let value = uploadable || [];
+        if (value === true) value = ["images/*"];
+        return value;
+    }
+
+    const uploadableTypes = parseUploadables();
 
     const finallyCallback = () => {
         dispatch(ProgressView.HIDE);
@@ -122,7 +132,6 @@ const Settings = ({classes, uploadable}) => {
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
             .then(() => updateActivity({
-                firebase,
                 uid: currentUserData.id,
                 type: "Maintenance",
                 details: {
@@ -209,6 +218,11 @@ const Settings = ({classes, uploadable}) => {
         }
         const addPreferenceUploads = async () => {
             settings.uploadsAllow = uploadsAllow || null;
+            settings.uploadsTypes = [];
+            if (uploadsAudio) settings.uploadsTypes.push("audio/*");
+            if (uploadsImages) settings.uploadsTypes.push("images/*");
+            if (uploadsVideo) settings.uploadsTypes.push("video/*");
+            if (!settings.uploadsTypes.length) settings.uploadsTypes = null;
             settings.uploadsMaxHeight = uploadsAllow ? +uploadsMaxHeight || 1000 : null;
             settings.uploadsMaxSize = uploadsAllow ? +uploadsMaxSize || 100 : null;
             settings.uploadsMaxWidth = uploadsAllow ? +uploadsMaxWidth || 1000 : null;
@@ -222,7 +236,6 @@ const Settings = ({classes, uploadable}) => {
         const updateServiceActivity = async () => {
             if (Object.keys(details).length > 0) {
                 updateActivity({
-                    firebase,
                     uid: currentUserData.id,
                     type: "Settings updated",
                     details
@@ -355,17 +368,12 @@ const Settings = ({classes, uploadable}) => {
                         </Grid>
                         <Box m={1}/>
                     </>}
-                    <Grid container>
-                        <FormControlLabel
-                            color={"secondary"}
-                            control={<Switch
-                                onChange={handleSwitchMaintenance}
-                                checked={maintenance}
-                            />}
-                            disabled={disabled}
-                            label={maintenance ? "Maintenance in on" : "Maintenance is off"}
-                        />
-                    </Grid>
+                    <Option
+                        checked={maintenance}
+                        disabled={disabled}
+                        onChange={handleSwitchMaintenance}
+                        label={maintenance ? "Maintenance in on" : "Maintenance is off"}
+                    />
                     <Box m={1}/>
                 </>}
                 {(tab === 1 || tab === -1) && <>
@@ -405,18 +413,13 @@ const Settings = ({classes, uploadable}) => {
                         <Typography variant={"button"}>User profiles</Typography>
                     </Grid>}
                     <Box m={1}/>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Blocked names"}
-                            multiline
-                            onChange={handleChange("blockedNames")}
-                            rows={5}
-                            value={blockedNames || ""}
-                        />
-                    </Grid>
+                    <Option
+                        disabled={disabled}
+                        label={"Blocked names"}
+                        multiline
+                        onChange={handleChange("blockedNames")}
+                        rows={5}
+                        value={blockedNames || ""}/>
                     <Box m={1}/>
                 </>}
                 {(tab === 3 || tab === -1) && <>
@@ -424,27 +427,17 @@ const Settings = ({classes, uploadable}) => {
                         <Typography variant={"button"}>Convenience</Typography>
                     </Grid>}
                     <Box m={1}/>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Dynamic links URL prefix"}
-                            onChange={handleChange("dynamicLinksUrlPrefix")}
-                            value={dynamicLinksUrlPrefix || ""}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Allow translate up to, chars/month"}
-                            onChange={handleChange("translateLimit")}
-                            type={"number"}
-                            value={translateLimit || ""}
-                        />
-                    </Grid>
+                    <Option
+                        disabled={disabled}
+                        label={"Dynamic links URL prefix"}
+                        onChange={handleChange("dynamicLinksUrlPrefix")}
+                        value={dynamicLinksUrlPrefix || ""}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Allow translate up to, chars/month"}
+                        onChange={handleChange("translateLimit")}
+                        type={"number"}
+                        value={translateLimit || ""}/>
                     <Box m={1}/>
                 </>}
                 {(tab === 4 || tab === -1) && <>
@@ -452,84 +445,52 @@ const Settings = ({classes, uploadable}) => {
                         <Typography variant={"button"}>Welcome popup</Typography>
                     </Grid>}
                     <Box m={1}/>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Title"}
-                            onChange={handleChange("joinUsTitle")}
-                            value={joinUsTitle || ""}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Message"}
-                            multiline
-                            onChange={handleChange("joinUsText")}
-                            value={joinUsText || ""}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Cancel button label"}
-                            multiline
-                            onChange={handleChange("joinUsCancel")}
-                            value={joinUsCancel || ""}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Confirm button label"}
-                            multiline
-                            onChange={handleChange("joinUsConfirm")}
-                            placeholder={"Join us"}
-                            value={joinUsConfirm || ""}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            label={"Popup on timeout, s"}
-                            onChange={handleChange("joinUsTimeout")}
-                            type={"number"}
-                            value={joinUsTimeout | ""}
-                        />
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            label={"Popup on scroll, px"}
-                            onChange={handleChange("joinUsScroll")}
-                            type={"number"}
-                            value={joinUsScroll || ""}
-                        />
-                    </Grid>
+                    <Option
+                        disabled={disabled}
+                        label={"Title"}
+                        onChange={handleChange("joinUsTitle")}
+                        value={joinUsTitle || ""}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Message"}
+                        multiline
+                        onChange={handleChange("joinUsText")}
+                        value={joinUsText || ""}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Cancel button label"}
+                        multiline
+                        onChange={handleChange("joinUsCancel")}
+                        value={joinUsCancel || ""}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Confirm button label"}
+                        onChange={handleChange("joinUsConfirm")}
+                        placeholder={"Join us"}
+                        value={joinUsConfirm || ""}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Popup on timeout, s"}
+                        onChange={handleChange("joinUsTimeout")}
+                        type={"number"}
+                        value={joinUsTimeout | ""}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Popup on scroll, px"}
+                        onChange={handleChange("joinUsScroll")}
+                        type={"number"}
+                        value={joinUsScroll || ""}/>
                     <Box m={1}/>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"One Tap client id"}
-                            onChange={handleChange("oneTapCliendId")}
-                            placeholder={"One Tap client id"}
-                            value={oneTapCliendId || ""}
-                        />
-                    </Grid>
-                    <Grid container>
+                    <Option
+                        disabled={disabled}
+                        label={"One Tap client id"}
+                        onChange={handleChange("oneTapCliendId")}
+                        placeholder={"One Tap client id"}
+                        value={oneTapCliendId || ""}/>
+                    <FormHelperText>
                         <a href={"https://developers.google.com/identity/one-tap"}
                            target={"_blank"}>Learn more</a>
-                    </Grid>
+                    </FormHelperText>
                     <Box m={1}/>
                 </>}
                 {(tab === 5 || tab === -1) && <>
@@ -537,17 +498,11 @@ const Settings = ({classes, uploadable}) => {
                         <Typography variant={"button"}>Posts</Typography>
                     </Grid>}
                     <Box m={1}/>
-                    <Grid container>
-                        <FormControlLabel
-                            color={"secondary"}
-                            control={<Switch
-                                onChange={handleSwitch("postsAllowEdit")}
-                                checked={postsAllowEdit || false}
-                            />}
-                            disabled={disabled}
-                            label={"Allow edit"}
-                        />
-                    </Grid>
+                    <Option
+                        checked={postsAllowEdit || false}
+                        disabled={disabled}
+                        label={"Allow edit"}
+                        onChange={handleSwitch("postsAllowEdit")}/>
                     <Grid container>
                         <FormControl fullWidth>
                             <InputLabel>Rotate replies</InputLabel>
@@ -570,57 +525,55 @@ const Settings = ({classes, uploadable}) => {
                         <Typography variant={"button"}>Uploads</Typography>
                     </Grid>}
                     <Box m={1}/>
-                    <Grid container>
-                        <FormControlLabel
-                            color={"secondary"}
-                            control={<Switch
-                                onChange={handleSwitch("uploadsAllow")}
-                                checked={uploadsAllow || false}
-                            />}
-                            disabled={disabled}
-                            label={"Allow uploads"}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            label={"Max width, px"}
-                            onChange={handleChange("uploadsMaxWidth")}
-                            type={"number"}
-                            value={uploadsMaxWidth | 1000}
-                        />
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            label={"Max height, px"}
-                            onChange={handleChange("uploadsMaxHeight")}
-                            type={"number"}
-                            value={uploadsMaxHeight || 1000}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Quality for JPEG and PNG, %"}
-                            onChange={handleChange("uploadsQuality")}
-                            type={"number"}
-                            value={uploadsQuality || 75}
-                        />
-                    </Grid>
-                    <Grid container>
-                        <TextField
-                            color={"secondary"}
-                            disabled={disabled}
-                            fullWidth
-                            label={"Limit size, kb"}
-                            onChange={handleChange("uploadsMaxSize")}
-                            type={"number"}
-                            value={uploadsMaxSize || 100}
-                        />
-                    </Grid>
+                    <Option
+                        checked={uploadsAllow || false}
+                        disabled={disabled}
+                        label={"Allow uploads"}
+                        onChange={handleSwitch("uploadsAllow")}/>
+                    {uploadsAllow && <Grid container>
+                        <Grid item><Box m={1}/></Grid>
+                        <Grid item>
+                            {uploadableTypes.includes("audio/*") && <Option
+                                checked={uploadsTypes.includes("audio/*")}
+                                disabled={disabled}
+                                label={"Allow audio/*"}
+                                onChange={handleSwitch("uploadsAudio")}/>}
+                            {uploadableTypes.includes("images/*") && <Option
+                                checked={uploadsTypes.includes("images/*")}
+                                disabled={disabled}
+                                onChange={handleSwitch("uploadsImages")}
+                                label={"Allow images/*"}/>}
+                            {uploadableTypes.includes("video/*") && <Option
+                                checked={uploadsTypes.includes("video/*")}
+                                disabled={disabled}
+                                label={"Allow video/*"}
+                                onChange={handleSwitch("uploadsVideo")}/>}
+                        </Grid>
+                    </Grid>}
+                    <Option
+                        disabled={disabled}
+                        label={"Max width, px"}
+                        onChange={handleChange("uploadsMaxWidth")}
+                        type={"number"}
+                        value={uploadsMaxWidth | 1000}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Max height, px"}
+                        onChange={handleChange("uploadsMaxHeight")}
+                        type={"number"}
+                        value={uploadsMaxHeight || 1000}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Quality for JPEG and PNG, %"}
+                        onChange={handleChange("uploadsQuality")}
+                        type={"number"}
+                        value={uploadsQuality || 75}/>
+                    <Option
+                        disabled={disabled}
+                        label={"Limit size, kb"}
+                        onChange={handleChange("uploadsMaxSize")}
+                        type={"number"}
+                        value={uploadsMaxSize || 100}/>
                     <Box m={1}/>
                 </>}
             </Grid>
@@ -661,3 +614,32 @@ const Settings = ({classes, uploadable}) => {
 };
 
 export default withStyles(stylesCurrent)(withStyles(styles)(Settings));
+
+const Option = ({checked, disabled, label, onChange, value, ...rest}) => {
+
+    if (value !== undefined) {
+        return <Grid container>
+            <TextField
+                {...rest}
+                color={"secondary"}
+                disabled={disabled}
+                fullWidth
+                label={label}
+                onChange={onChange}
+                value={value}
+            />
+        </Grid>
+    }
+
+    return <Grid container>
+        <FormControlLabel
+            color={"secondary"}
+            control={<Switch
+                onChange={onChange}
+                checked={checked}
+            />}
+            disabled={disabled}
+            label={label}
+        />
+    </Grid>
+}

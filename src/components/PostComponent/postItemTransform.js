@@ -10,14 +10,12 @@ export default (
         allowedExtras,
         fetchItemId = item => item.key,
         currentUserData,
-        firebase,
         onItemError,
         type,
         typeId,
     }) => async item => {
 
     currentUserData = currentUserData || useCurrentUserData();
-    firebase = firebase || useFirebase();
     try {
         const postData = await cacheDatas.fetch(fetchItemId(item), id => {
             return PostData({type, allowedExtras}).fetch(id);

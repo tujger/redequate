@@ -54,6 +54,9 @@ const styles = theme => ({
         position: "absolute",
         right: 0,
     },
+    copyright: {
+        fontSize: "x-small",
+    },
 
     bottom: {
         paddingLeft: theme.spacing(1),
@@ -155,7 +158,7 @@ function ResponsiveDrawerLayout(props) {
             }
         }
     }}>
-        <Typography variant={"caption"}>{copyright}</Typography>
+        <Typography className={classes.copyright} variant={"caption"}>{copyright}</Typography>
     </Grid>;
 
     return <div className={classes.container}>

@@ -31,7 +31,7 @@ import {
     useCurrentUserData,
     UserData
 } from "../controllers/UserData";
-import {useFirebase, usePages} from "../controllers/General";
+import {usePages} from "../controllers/General";
 import {fetchCallable} from "../controllers/Firebase";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import LoadingComponent from "../components/LoadingComponent";
@@ -134,7 +134,6 @@ const Profile = (
     const {userData, disabled} = state;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const {id} = useParams();
@@ -228,7 +227,8 @@ const Profile = (
                     onClick={() => {
                         dispatch(ProgressView.SHOW);
                         console.log(currentUserData)
-                        sendVerificationEmail(firebase)
+                        sendVerificationEmail()
+                            .then(() => notifySnackbar("Verification email has been sent"))
                             .catch(notifySnackbar)
                             .finally(() => dispatch(ProgressView.HIDE));
                     }}

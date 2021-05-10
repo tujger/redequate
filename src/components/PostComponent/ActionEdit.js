@@ -8,9 +8,9 @@ import {useMetaInfo, useWindowData} from "../../controllers/General";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
 export default ({postData, mentions, onMenuItemClick, onComplete}) => {
+    const metaInfo = useMetaInfo();
     const windowData = useWindowData();
     const {t} = useTranslation();
-    const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
     const {postsAllowEdit} = settings;
 

@@ -4,7 +4,7 @@ import {useHistory} from "react-router-dom";
 import withStyles from "@material-ui/styles/withStyles";
 import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
-import {useFirebase, useMetaInfo, usePages, useWindowData} from "../../controllers/General";
+import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import {useCurrentUserData, UserData} from "../../controllers/UserData";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
@@ -46,7 +46,6 @@ const stylesCurrent = theme => ({
 export default withStyles(stylesCurrent)((props) => {
     const {allowedExtras, level, postId, classes = {}, type, expand, onChange, expanded: givenExpanded} = props;
     const currentUserData = useCurrentUserData();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const windowData = useWindowData();
@@ -61,7 +60,7 @@ export default withStyles(stylesCurrent)((props) => {
     React.useEffect(() => {
         let isMounted = true;
         const paginationOptions = {
-            ref: firebase.database().ref(type),
+            ref: type,
             equals: postId,
             child: "to",
             order: "desc",
@@ -86,7 +85,7 @@ export default withStyles(stylesCurrent)((props) => {
                 throw {
                     expanded: true,
                     paginationOptions: {
-                        ref: firebase.database().ref(type),
+                        ref: type,
                         equals: expand,
                     },
                     a: 2
@@ -106,7 +105,7 @@ export default withStyles(stylesCurrent)((props) => {
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {
-                return UserData(firebase)
+                return UserData()
                     .fetch(replies[0].value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userReplied => {
                         throw {replies, userReplied};
@@ -202,7 +201,6 @@ export default withStyles(stylesCurrent)((props) => {
                     itemTransform={postItemTransform({
                         allowedExtras,
                         currentUserData,
-                        firebase,
                         type,
                     })}
                     itemComponent={item => <PostComponent

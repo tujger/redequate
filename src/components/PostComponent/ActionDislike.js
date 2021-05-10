@@ -11,13 +11,11 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import CounterComponent from "../CounterComponent";
 
 export default ({postData, classes}) => {
-    const [state, setState] = React.useState({});
-    const {
-        disabled
-    } = state;
+    const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
-    const currentUserData = useCurrentUserData();
+    const [state, setState] = React.useState({});
+    const {disabled} = state;
 
     const handleClickExtra = extraType => evt => {
         evt && evt.stopPropagation();

@@ -3,12 +3,13 @@ import React from "react";
 import {useHistory} from "react-router-dom";
 import {useTranslation} from "react-i18next";
 import {useCurrentUserData} from "../controllers/UserData";
-import {useFirebase, useMetaInfo, usePages} from "../controllers/General";
+import {useFirebase, useMetaInfo, usePages, useStore} from "../controllers/General";
 import {getScrollPosition} from "../controllers/useScrollPosition";
 import ConfirmComponent from "./ConfirmComponent";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
+import {refreshAll} from "../controllers/Store";
 
-const JoinUsComponent = ({label}) => {
+const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
     const [state, setState] = React.useState({});
     const {allowed, show} = state;
     const currentUserData = useCurrentUserData();
@@ -16,6 +17,7 @@ const JoinUsComponent = ({label}) => {
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
+    const store = useStore();
     const {settings} = metaInfo || {};
     const {
         joinUsCancel,
@@ -32,7 +34,6 @@ const JoinUsComponent = ({label}) => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
         setState(state => ({...state, allowed: false, show: false}));
         updateActivity({
-            firebase,
             type: t("JoinUs.Join us"),
             details: {
                 action: "rejected",
@@ -45,7 +46,6 @@ const JoinUsComponent = ({label}) => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
         setState(state => ({...state, allowed: false, show: false}));
         updateActivity({
-            firebase,
             type: t("JoinUs.Join us"),
             details: {
                 action: "accepted",
@@ -60,7 +60,7 @@ const JoinUsComponent = ({label}) => {
             if (currentUserData.id) throw "skip";
         }
         const tryWithOneTap = async () => new Promise((resolve, reject) => {
-            if (!oneTapCliendId) return;
+            if (!oneTapCliendId || !oneTap) return;
             try {
                 const promptCallback = (notification) => {
                     if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
@@ -105,6 +105,7 @@ const JoinUsComponent = ({label}) => {
             }
         })
         const checkIfSettingsAre = async () => {
+            if (!joinUs) throw "skip";
             if (!joinUsTimeout && !joinUsScroll) throw "skip";
             if (!joinUsText) throw "skip";
         }

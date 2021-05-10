@@ -11,7 +11,7 @@ import CardActionArea from "@material-ui/core/CardActionArea";
 import Hidden from "@material-ui/core/Hidden";
 import {useTranslation} from "react-i18next";
 import {mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
-import {useFirebase, usePages, useWindowData} from "../../controllers/General";
+import {usePages, useWindowData} from "../../controllers/General";
 import ProgressView from "../ProgressView";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
@@ -31,7 +31,6 @@ const MutualRequestItem = (
     }) => {
     const pages = usePages();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
@@ -43,7 +42,7 @@ const MutualRequestItem = (
         evt.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true});
-        mutualRequestAccept({requestId: key, firebase})
+        mutualRequestAccept({requestId: key})
             .then(result => {
                 console.log(result);
                 onDelete(result);
@@ -59,7 +58,7 @@ const MutualRequestItem = (
 
     const handleReject = evt => {
         evt.stopPropagation();
-        mutualRequestReject({requestId: key, firebase})
+        mutualRequestReject({requestId: key})
             .then(result => {
                 console.log(result);
                 onDelete(result);

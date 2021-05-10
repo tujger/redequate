@@ -85,11 +85,13 @@ const Signup = ({classes, signup = true, additional}) => {
     };
 
     const signupVerification = response => {
-        return sendVerificationEmail(firebase)
+        return sendVerificationEmail()
             .then(() => {
+                notifySnackbar("Verification email has been sent");
                 setState({...state, requesting: false});
                 history.push(pages.login.route);
             })
+            .catch(notifySnackbar)
     };
 
     const signupError = error => {

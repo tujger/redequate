@@ -64,7 +64,7 @@ function Login(props) {
         setState(state => ({...state, requesting: false}));
         // refreshAll(store);
         window.localStorage.removeItem(pages.login.route);
-        return logoutUser(firebase, store)();
+        return logoutUser(store);
     };
 
     const finallyCallback = () => {
@@ -74,7 +74,7 @@ function Login(props) {
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser(firebase, store)()
+        logoutUser(store)
             .then(() => {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.setCustomParameters({prompt: "select_account"});
@@ -96,7 +96,7 @@ function Login(props) {
     const requestLoginFacebook = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser(firebase, store)()
+        logoutUser(store)
             .then(() => {
                 const provider = new firebase.auth.FacebookAuthProvider();
                 provider.addScope("email");
@@ -117,7 +117,7 @@ function Login(props) {
 
     const requestLoginToken = (token) => {
         dispatch(ProgressView.SHOW);
-        logoutUser(firebase, store)()
+        logoutUser(store)
             .then(() => {
                 setState(state => ({...state, requesting: true}));
                 const credential = firebase.auth.GoogleAuthProvider.credential(token);
@@ -227,7 +227,11 @@ function Login(props) {
             if (!userData.verified) {
                 notifySnackbar({
                     buttonLabel: t("Login.Resend verification"),
-                    onButtonClick: () => sendVerificationEmail(firebase),
+                    onButtonClick: () => {
+                        sendVerificationEmail()
+                            .then(() => notifySnackbar("Verification email has been sent"))
+                            .catch(notifySnackbar)
+                    },
                     priority: "high",
                     title: t("Login.Your account is not yet verified."),
                     variant: "warning",
@@ -402,7 +406,7 @@ function Login(props) {
         } else {
             setState(state => ({...state, requesting: false}));
         }
-    }, [])
+    }, [location.state && location.state.loginWith])
 
     if (requesting) return <LoadingComponent/>
 

@@ -9,13 +9,12 @@ import withStyles from "@material-ui/styles/withStyles";
 import {useTranslation} from "react-i18next";
 import {logoutUser} from "../controllers/UserData";
 import {refreshAll} from "../controllers/Store";
-import {useFirebase, usePages, useStore} from "../controllers/General";
+import {usePages, useStore} from "../controllers/General";
 import LoadingComponent from "../components/LoadingComponent";
 import {styles} from "../controllers/Theme";
 
 const Logout = (props) => {
     const {classes, immediate = true} = props;
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
@@ -23,7 +22,7 @@ const Logout = (props) => {
 
     const doLogout = () => {
         window.localStorage.removeItem(pages.login.route);
-        logoutUser(firebase, store)()
+        logoutUser(store)
             .then(() => {
                 refreshAll(store);
                 history.push(pages.home.route);

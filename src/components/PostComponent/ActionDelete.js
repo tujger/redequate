@@ -5,7 +5,6 @@ import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
 import MenuItem from "@material-ui/core/MenuItem";
 import {useTranslation} from "react-i18next";
-import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
@@ -16,7 +15,6 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
         deletePost,
     } = state;
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const {t} = useTranslation();
 
     const handleClickDelete = evt => {
@@ -33,7 +31,7 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
         setState(state => ({...state, deletePost: false}));
         if (!postData.id) return;
         dispatch(ProgressView.SHOW);
-        firebase.database().ref(type).child(postData.id).set(null)
+        postData.delete()
             .then(() => {
                 notifySnackbar({title: t("Post.Post successfully deleted.")});
                 setTimeout(() => {
