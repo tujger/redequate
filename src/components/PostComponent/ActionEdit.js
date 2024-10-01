@@ -1,8 +1,8 @@
 import React from "react";
-import IconButton from "@material-ui/core/IconButton";
-import EditIcon from "@material-ui/icons/Edit";
-import Grid from "@material-ui/core/Grid";
-import MenuItem from "@material-ui/core/MenuItem";
+import {IconButton} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import {Grid} from "@mui/material";
+import {MenuItem} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo, useWindowData} from "../../controllers/General";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";

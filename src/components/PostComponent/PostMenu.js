@@ -1,8 +1,8 @@
 import React from "react";
-import Menu from "@material-ui/core/Menu";
-import IconButton from "@material-ui/core/IconButton";
-import MenuIcon from "@material-ui/icons/MoreVert";
-import Fade from "@material-ui/core/Fade";
+import {Menu} from "@mui/material";
+import {IconButton} from "@mui/material";
+import MenuIcon from "@mui/icons-material/MoreVert";
+import {Fade} from "@mui/material";
 import ActionShare from "./ActionShare";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import ActionDelete from "./ActionDelete";

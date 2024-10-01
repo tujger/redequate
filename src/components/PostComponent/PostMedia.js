@@ -1,5 +1,5 @@
 import React from "react";
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import {makeStyles} from "@mui/styles";
 import {useHistory} from "react-router-dom";
 import SmartGallery from "react-smart-gallery";
 import Lightbox from "react-image-lightbox";

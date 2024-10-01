@@ -1,5 +1,5 @@
 import React from "react";
-import Hidden from "@material-ui/core/Hidden";
+import {Hidden} from "@mui/material";
 import PostCardLayoutNarrow from "./PostCardLayoutNarrow";
 import PostCardLayoutWide from "./PostCardLayoutWide";
 import ReplyCardLayoutNarrow from "./ReplyCardLayoutNarrow";

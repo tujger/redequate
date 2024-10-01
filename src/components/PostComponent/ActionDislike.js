@@ -1,10 +1,10 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import IconButton from "@material-ui/core/IconButton";
-import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
-import DislikeFilledIcon from "@material-ui/icons/ThumbDown";
-import Grid from "@material-ui/core/Grid";
-import Box from "@material-ui/core/Box";
+import {IconButton} from "@mui/material";
+import DislikeEmptyIcon from "@mui/icons-material/ThumbDownOutlined";
+import DislikeFilledIcon from "@mui/icons-material/ThumbDown";
+import {Grid} from "@mui/material";
+import {Box} from "@mui/material";
 import {delay, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";

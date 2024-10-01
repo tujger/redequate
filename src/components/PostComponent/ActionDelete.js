@@ -1,12 +1,12 @@
 import React from "react";
-import IconButton from "@material-ui/core/IconButton";
-import ClearIcon from "@material-ui/icons/Clear";
-import Grid from "@material-ui/core/Grid";
+import {IconButton} from "@mui/material";
+import ClearIcon from "@mui/icons-material/Clear";
+import {Grid} from "@mui/material";
 import {useDispatch} from "react-redux";
-import MenuItem from "@material-ui/core/MenuItem";
+import {MenuItem} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import ProgressView from "../ProgressView";
+import ProgressView from "../ProgressView.js";
 import ConfirmComponent from "../ConfirmComponent";
 
 export default ({postData, onMenuItemClick, onComplete, type}) => {

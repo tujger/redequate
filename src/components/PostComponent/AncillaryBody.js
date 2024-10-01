@@ -1,6 +1,6 @@
 import React, {forwardRef} from "react";
-import Grid from "@material-ui/core/Grid";
-import withStyles from "@material-ui/styles/withStyles";
+import {Grid} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import {stylesList} from "../../controllers/Theme";
 
 const classesCurrent = theme => ({

@@ -1,5 +1,5 @@
 import React from "react";
-import {withStyles} from "@material-ui/core/styles";
+import {withStyles} from "@mui/styles";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";

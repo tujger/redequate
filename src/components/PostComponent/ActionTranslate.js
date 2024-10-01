@@ -1,8 +1,8 @@
 import React from "react";
-import ReactDOM from "react-dom";
-import IconButton from "@material-ui/core/IconButton";
-import TranslateIcon from "@material-ui/icons/Translate";
-import Grid from "@material-ui/core/Grid";
+import ReactDOM from "react-dom/client";
+import {IconButton} from "@mui/material";
+import TranslateIcon from "@mui/icons-material/Translate";
+import {Grid} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {useTextTranslation} from "../../controllers/textTranslation";
 import {fetchDeviceId, useMetaInfo} from "../../controllers/General";

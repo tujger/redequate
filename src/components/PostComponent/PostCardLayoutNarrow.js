@@ -1,9 +1,9 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import CardHeader from "@material-ui/core/CardHeader";
-import Card from "@material-ui/core/Card";
-import Grid from "@material-ui/core/Grid";
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import {CardHeader} from "@mui/material";
+import {Card} from "@mui/material";
+import {Grid} from "@mui/material";
+import {makeStyles} from "@mui/styles";
 import PostBody from "./PostBody";
 import {useMetaInfo, usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";

@@ -1,5 +1,5 @@
 import React from "react";
-import CardActionArea from "@material-ui/core/CardActionArea";
+import {CardActionArea} from "@mui/material";
 
 export default ({classes, disableClick, handleClickPost, children}) => {
     return disableClick

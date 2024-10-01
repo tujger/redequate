@@ -1,7 +1,7 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
+import {Grid} from "@mui/material";
 import {useHistory} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";

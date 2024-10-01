@@ -1,8 +1,8 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
+import {Grid} from "@mui/material";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 import {cacheDatas, usePages} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
 import AvatarView from "../AvatarView";
