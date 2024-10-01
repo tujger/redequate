@@ -1,5 +1,5 @@
-import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
-import responsiveFontSizes from "@material-ui/core/styles/responsiveFontSizes";
+import responsiveFontSizes from "@mui/material/styles/responsiveFontSizes.js";
+import createMuiTheme from "@mui/material/styles/createTheme.js";
 
 const drawerWidth = 240;
 const iOS = false;//process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);

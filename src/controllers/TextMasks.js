@@ -1,5 +1,5 @@
 import MaskedInput from "react-text-mask";
-import emailMask from "text-mask-addons/dist/emailMask";
+import {emailMask} from "text-mask-addons";
 import React from "react";
 
 export const TextMaskEmail = props => {

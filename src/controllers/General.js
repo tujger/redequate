@@ -1,6 +1,5 @@
 import React from "react";
-
-const DeviceUUID = require("device-uuid");
+import * as DeviceUUID from "device-uuid";
 
 export const fetchDeviceId = () => {
     if (!window.localStorage.getItem("device_id")) {
