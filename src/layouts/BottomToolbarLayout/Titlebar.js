@@ -1,14 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
-import AppBar from "@material-ui/core/AppBar";
-import Button from "@material-ui/core/Button";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-import withStyles from "@material-ui/styles/withStyles";
-import BackIcon from "@material-ui/icons/ChevronLeft";
-import {Link, useHistory, useLocation, withRouter} from "react-router-dom";
+import {AppBar} from "@mui/material";
+import {Button} from "@mui/material";
+import {Toolbar} from "@mui/material";
+import {Typography} from "@mui/material";
+import {withStyles} from "@mui/styles";
+import BackIcon from "@mui/icons-material/ChevronLeft";
+import withRouter from "../../controllers/withRouter.js";
+import {Link, useHistory, useLocation} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
-import ProgressView from "../../components/ProgressView";
+import ProgressView from "../../components/ProgressView.js";
 import {
     currentRole,
     matchRole,

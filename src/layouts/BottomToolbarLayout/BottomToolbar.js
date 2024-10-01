@@ -1,12 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
-import MenuItem from "@material-ui/core/MenuItem";
-import withStyles from "@material-ui/styles/withStyles";
-import MenuList from "@material-ui/core/MenuList";
-import BottomNavigation from "@material-ui/core/BottomNavigation";
-import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
+import {MenuItem} from "@mui/material";
+import {withStyles} from "@mui/styles";
+import {MenuList} from "@mui/material";
+import {BottomNavigation} from "@mui/material";
+import {BottomNavigationAction} from "@mui/material";
 import {Link, matchPath, useHistory, useLocation} from "react-router-dom";
-import Popper from "@material-ui/core/Popper";
+import {Popper} from "@mui/material";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 
 const styles = theme => ({
