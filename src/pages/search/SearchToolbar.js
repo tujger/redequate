@@ -1,10 +1,10 @@
 import React from "react";
-import IconButton from "@material-ui/core/IconButton";
-import BackIcon from "@material-ui/icons/ArrowBack";
+import {IconButton} from "@mui/material";
+import BackIcon from "@mui/icons-material/ArrowBack";
 import {useHistory} from "react-router-dom";
-import Toolbar from "@material-ui/core/Toolbar";
-import ClearIcon from "@material-ui/icons/Clear";
-import InputOrigin from "@material-ui/core/Input";
+import {Toolbar} from "@mui/material";
+import ClearIcon from "@mui/icons-material/Clear";
+import {Input as InputOrigin} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {usePages} from "../../controllers/General";
 

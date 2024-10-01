@@ -1,5 +1,5 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
+import {Grid} from "@mui/material";
 import {useHistory} from "react-router-dom";
 import {useTranslation} from "react-i18next";
 

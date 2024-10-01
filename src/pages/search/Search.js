@@ -1,9 +1,9 @@
+import {withStyles} from "@mui/styles";
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import SearchToolbar from "./SearchToolbar";
-import SearchModal from "./SearchModal";
-import SearchContent from "./SearchContent";
 import {styles} from "../../controllers/Theme";
+import SearchContent from "./SearchContent";
+import SearchModal from "./SearchModal";
+import SearchToolbar from "./SearchToolbar";
 
 const Search = ({toolbar, content, modal, ...props}) => {
     if (content) return <SearchContent {...props}/>

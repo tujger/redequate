@@ -1,12 +1,6 @@
+import BackIcon from "@mui/icons-material/ArrowBack";
+import {Button, DialogActions, DialogContent, DialogTitle, Grid, Hidden, IconButton} from "@mui/material";
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import BackIcon from "@material-ui/icons/ArrowBack";
-import Hidden from "@material-ui/core/Hidden";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
 import ModalComponent from "../../components/ModalComponent";
 import SearchContent from "./SearchContent";
 
