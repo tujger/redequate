@@ -1,7 +1,7 @@
 import React from "react";
 import {connect} from "react-redux";
 import {styles} from "../controllers/Theme";
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 
 const AlertsCounter = ({counter, classes}) => {
     if (!counter) return null;
