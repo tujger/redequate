@@ -1,20 +1,15 @@
+import MailIcon from "@mui/icons-material/Mail";
+import {Box, Button, ButtonGroup, FormHelperText, Grid, TextField} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import React from "react";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
-import MailIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
-import {sendInvitationEmail} from "../../controllers/UserData";
-import {TextMaskEmail} from "../../controllers/TextMasks";
-import ProgressView from "../../components/ProgressView";
+import ProgressView from "../../components/ProgressView.js";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import {TextMaskEmail} from "../../controllers/TextMasks";
 import {styles} from "../../controllers/Theme";
+import {sendInvitationEmail} from "../../controllers/UserData";
 
 const AddUser = ({classes}) => {
     const [state, setState] = React.useState({requesting: false, error: ""});
