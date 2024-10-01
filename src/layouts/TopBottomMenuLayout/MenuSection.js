@@ -1,12 +1,12 @@
 import React from "react";
-import MenuItem from "@material-ui/core/MenuItem";
-import ArrowRightIcon from "@material-ui/icons/ArrowRight";
-import withStyles from "@material-ui/styles/withStyles";
+import {MenuItem} from "@mui/material";
+import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import {withStyles} from "@mui/styles";
 import {Link, useHistory} from "react-router-dom";
-import Paper from "@material-ui/core/Paper";
-import Button from "@material-ui/core/Button";
-import Popper from "@material-ui/core/Popper";
-import MenuList from "@material-ui/core/MenuList";
+import {Paper} from "@mui/material";
+import {Button} from "@mui/material";
+import {Popper} from "@mui/material";
+import {MenuList} from "@mui/material";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 
 const styles = theme => ({

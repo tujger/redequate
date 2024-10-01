@@ -1,10 +1,10 @@
 import React from "react";
-import MenuItem from "@material-ui/core/MenuItem";
-import withStyles from "@material-ui/styles/withStyles";
+import {MenuItem} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import {Link} from "react-router-dom";
-import Grid from "@material-ui/core/Grid";
-import MenuList from "@material-ui/core/MenuList";
-import Typography from "@material-ui/core/Typography";
+import {Grid} from "@mui/material";
+import {MenuList} from "@mui/material";
+import {Typography} from "@mui/material";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 
 const styles = theme => ({

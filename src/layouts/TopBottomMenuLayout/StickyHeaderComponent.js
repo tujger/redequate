@@ -1,6 +1,6 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import ProgressView from "../../components/ProgressView";
+import {withStyles} from "@mui/styles";
+import ProgressView from "../../components/ProgressView.js";
 
 const styles = theme => ({
     sticky: {
