@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
+import {Button} from "@mui/material";
 import {useTranslation} from "react-i18next";
 
 // eslint-disable-next-line react/prop-types

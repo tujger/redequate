@@ -1,6 +1,6 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
+import {Button} from "@mui/material";
+import {ButtonGroup} from "@mui/material";
 import {useTranslation} from "react-i18next";
 
 // eslint-disable-next-line react/prop-types

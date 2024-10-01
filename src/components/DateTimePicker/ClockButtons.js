@@ -1,9 +1,9 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import StartIcon from "@material-ui/icons/Restore";
-import TimeIcon from "@material-ui/icons/Schedule";
-import EndIcon from "@material-ui/icons/Update";
+import {Button} from "@mui/material";
+import {ButtonGroup} from "@mui/material";
+import StartIcon from "@mui/icons-material/Restore";
+import TimeIcon from "@mui/icons-material/Schedule";
+import EndIcon from "@mui/icons-material/Update";
 import {useTranslation} from "react-i18next";
 
 // eslint-disable-next-line react/prop-types

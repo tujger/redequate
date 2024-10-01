@@ -1,10 +1,10 @@
 import React from "react";
 import moment from "moment";
-import Divider from "@material-ui/core/Divider";
-import IconButton from "@material-ui/core/IconButton";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import MenuIcon from "@material-ui/icons/MoreVert";
+import {Divider} from "@mui/material";
+import {IconButton} from "@mui/material";
+import {Menu} from "@mui/material";
+import {MenuItem} from "@mui/material";
+import MenuIcon from "@mui/icons-material/MoreVert";
 import {useTranslation} from "react-i18next";
 
 // eslint-disable-next-line react/prop-types
