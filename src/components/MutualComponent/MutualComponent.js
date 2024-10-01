@@ -1,6 +1,6 @@
 import React from "react";
 import {useDispatch} from "react-redux";
-import TextField from "@material-ui/core/TextField";
+import {TextField} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import ActionComponent from "./ActionComponent";
 import InfoComponent from "../InfoComponent";
@@ -8,7 +8,7 @@ import {MutualMode} from "./MutualConstants";
 import {mutualRequest, mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
 import {useFirebase} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
-import ProgressView from "../ProgressView";
+import ProgressView from "../ProgressView.js";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import Pagination from "../../controllers/FirebasePagination";
 import ConfirmComponent from "../ConfirmComponent";

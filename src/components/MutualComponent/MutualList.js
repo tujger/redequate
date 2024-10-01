@@ -1,6 +1,6 @@
 import React from "react";
 import {useDispatch} from "react-redux";
-import Grid from "@material-ui/core/Grid";
+import {Grid} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import MutualRequestItem from "./MutualRequestItem";
 import MutualSubscribeItem from "./MutualSubscribeItem";
