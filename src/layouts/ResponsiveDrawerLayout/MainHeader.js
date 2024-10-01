@@ -1,6 +1,6 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import withStyles from "@material-ui/styles/withStyles";
+import {Grid} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import {Link} from "react-router-dom";
 import {usePages} from "../../controllers/General";
 

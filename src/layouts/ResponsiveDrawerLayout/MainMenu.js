@@ -1,11 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-import Divider from "@material-ui/core/Divider";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import withStyles from "@material-ui/styles/withStyles";
+import {Divider} from "@mui/material";
+import {List} from "@mui/material";
+import {ListItem} from "@mui/material";
+import {ListItemIcon} from "@mui/material";
+import {ListItemText} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import {Link} from "react-router-dom";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 import LanguageComponent from "../../components/LanguageComponent";

@@ -1,16 +1,16 @@
 import React from "react";
 import PropTypes from "prop-types";
-import AppBar from "@material-ui/core/AppBar";
-import Hidden from "@material-ui/core/Hidden";
-import IconButton from "@material-ui/core/IconButton";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-import withStyles from "@material-ui/styles/withStyles";
-import Menu from "@material-ui/icons/Menu";
+import {AppBar} from "@mui/material";
+import {Hidden} from "@mui/material";
+import {IconButton} from "@mui/material";
+import {Toolbar} from "@mui/material";
+import {Typography} from "@mui/material";
+import {withStyles} from "@mui/styles";
+import Menu from "@mui/icons-material/Menu";
 import {Link, Route, Switch} from "react-router-dom";
 import {connect} from "react-redux";
 import AvatarView from "../../components/AvatarView";
-import ProgressView from "../../components/ProgressView";
+import ProgressView from "../../components/ProgressView.js";
 import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import {usePages} from "../../controllers/General";
 
