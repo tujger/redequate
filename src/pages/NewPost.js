@@ -1,13 +1,13 @@
 import React from "react";
 import {useHistory, useLocation, useParams} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
-import Grid from "@material-ui/core/Grid";
+import {withStyles} from "@mui/styles";
+import {Grid} from "@mui/material";
 import {useDispatch} from "react-redux";
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import {makeStyles} from "@mui/styles";
 import {cacheDatas, useMetaInfo, usePages, useWindowData} from "../controllers/General";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import notifySnackbar from "../controllers/notifySnackbar";
-import ProgressView from "../components/ProgressView";
+import ProgressView from "../components/ProgressView.js";
 import {uploadComponentResize} from "../components/UploadComponent/uploadComponentControls";
 import LoadingComponent from "../components/LoadingComponent";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";

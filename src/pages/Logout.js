@@ -1,17 +1,16 @@
-import React from "react";
-import {useHistory, withRouter} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
+import {Box, Button, Grid} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import PropTypes from "prop-types";
-import {connect} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {logoutUser} from "../controllers/UserData";
-import {refreshAll} from "../controllers/Store";
-import {usePages, useStore} from "../controllers/General";
+import {connect} from "react-redux";
+import {useHistory} from "react-router-dom";
 import LoadingComponent from "../components/LoadingComponent";
+import {usePages, useStore} from "../controllers/General";
+import {refreshAll} from "../controllers/Store";
 import {styles} from "../controllers/Theme";
+import {logoutUser} from "../controllers/UserData";
+import withRouter from "../controllers/withRouter.js";
 
 const Logout = (props) => {
     const {classes, immediate = true} = props;

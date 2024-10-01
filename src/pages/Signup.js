@@ -1,25 +1,21 @@
+import Lock from "@mui/icons-material/Lock";
+import UserIcon from "@mui/icons-material/Mail";
+import {Box, Button, ButtonGroup, Grid, TextField} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import React from "react";
-import {Redirect, useHistory, useParams} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import TextField from "@material-ui/core/TextField";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
-import Lock from "@material-ui/icons/Lock";
-import UserIcon from "@material-ui/icons/Mail";
-import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
 import {useTranslation} from "react-i18next";
-import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
+import {useDispatch} from "react-redux";
+import {Redirect, useHistory, useParams} from "react-router-dom";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
-import ProgressView from "../components/ProgressView";
+import ProgressView from "../components/ProgressView.js";
 import {useFirebase, usePages, useStore} from "../controllers/General";
-import {refreshAll} from "../controllers/Store";
 import notifySnackbar from "../controllers/notifySnackbar";
+import {refreshAll} from "../controllers/Store";
 import {styles} from "../controllers/Theme";
-import GoogleLogo from "../images/google-logo.svg";
+import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
 import FacebookLogo from "../images/facebook-logo.svg";
+import GoogleLogo from "../images/google-logo.svg";
 
 const Signup = ({classes, signup = true, additional}) => {
     const [state, setState] = React.useState({

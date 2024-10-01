@@ -1,25 +1,25 @@
+import AddIcon from "@mui/icons-material/Add";
+import {Grid} from "@mui/material";
+import {makeStyles} from "@mui/styles";
+import {withStyles} from "@mui/styles";
 import React from "react";
-import {useHistory, useParams} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
-import Grid from "@material-ui/core/Grid";
-import {useDispatch} from "react-redux";
-import makeStyles from "@material-ui/core/styles/makeStyles";
-import AddIcon from "@material-ui/icons/Add";
 import {useTranslation} from "react-i18next";
-import {matchRole, useCurrentUserData} from "../controllers/UserData";
-import {cacheDatas, usePages, useWindowData} from "../controllers/General";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import ProgressView from "../components/ProgressView";
-import postItemTransform from "../components/PostComponent/postItemTransform";
-import notifySnackbar from "../controllers/notifySnackbar";
-import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import {useDispatch} from "react-redux";
+import {useHistory, useParams} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
 import JoinUsComponent from "../components/JoinUsComponent";
-import {styles} from "../controllers/Theme";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import LoadingComponent from "../components/LoadingComponent";
+import NavigationToolbar from "../components/NavigationToolbar";
 import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import PostComponent from "../components/PostComponent/PostComponent";
-import NavigationToolbar from "../components/NavigationToolbar";
-import LoadingComponent from "../components/LoadingComponent";
+import postItemTransform from "../components/PostComponent/postItemTransform";
+import ProgressView from "../components/ProgressView.js";
+import {cacheDatas, usePages, useWindowData} from "../controllers/General";
+import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {styles} from "../controllers/Theme";
+import {matchRole, useCurrentUserData} from "../controllers/UserData";
 
 const useStyles = makeStyles(theme => ({
     card: {

@@ -1,53 +1,39 @@
+import ClearIcon from "@mui/icons-material/Clear";
+import MailIcon from "@mui/icons-material/Mail";
+import EmptyAvatar from "@mui/icons-material/Person";
+import {
+    Box,
+    Button,
+    ButtonGroup,
+    FormControlLabel,
+    FormHelperText,
+    Grid,
+    Hidden,
+    IconButton,
+    Switch,
+    TextField
+} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import React from "react";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import TextField from "@material-ui/core/TextField";
-import Box from "@material-ui/core/Box";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
-import Hidden from "@material-ui/core/Hidden";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import Grid from "@material-ui/core/Grid";
-import ClearIcon from "@material-ui/icons/Clear";
-import MailIcon from "@material-ui/icons/Mail";
-import EmptyAvatar from "@material-ui/icons/Person";
-import {Redirect, useHistory, useParams} from "react-router-dom";
-import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
-import withStyles from "@material-ui/styles/withStyles";
-import {
-    logoutUser,
-    matchRole,
-    normalizeSortName,
-    Role,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
-import ProgressView from "../components/ProgressView";
-import {refreshAll} from "../controllers/Store";
-import {
-    cacheDatas,
-    fetchDeviceId,
-    useFirebase,
-    usePages,
-    useStore,
-    useWindowData
-} from "../controllers/General";
-import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
-import notifySnackbar from "../controllers/notifySnackbar";
-import {setupReceivingNotifications} from "../controllers/Notifications";
-import {styles} from "../controllers/Theme";
-import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
-import LoadingComponent from "../components/LoadingComponent";
-import Pagination from "../controllers/FirebasePagination";
+import {useDispatch} from "react-redux";
+import {Redirect, useHistory, useParams} from "react-router-dom";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {
-    uploadComponentClean,
-    uploadComponentPublish
-} from "../components/UploadComponent/uploadComponentControls";
+import LoadingComponent from "../components/LoadingComponent";
+import ProgressView from "../components/ProgressView.js";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
+import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import Pagination from "../controllers/FirebasePagination";
+import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
+import {setupReceivingNotifications} from "../controllers/Notifications";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {refreshAll} from "../controllers/Store";
+import {styles} from "../controllers/Theme";
+import {logoutUser, matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import {updateActivity} from "./admin/audit/auditReducer";
+import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
+import process from "process";
 
 const stylesCurrent = theme => ({
     // image: {

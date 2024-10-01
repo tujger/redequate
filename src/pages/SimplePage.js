@@ -1,6 +1,6 @@
-import React from "react";
+import {withStyles} from "@mui/styles";
 import PropTypes from "prop-types";
-import withStyles from "@material-ui/styles/withStyles";
+import React from "react";
 import {styles} from "../controllers/Theme";
 
 const SimplePage = ({classes, body = "Content of simple page", title = "Simple page"}) => {

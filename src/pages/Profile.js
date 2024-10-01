@@ -1,46 +1,42 @@
-import React from "react";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import Grid from "@material-ui/core/Grid";
-import InputLabel from "@material-ui/core/InputLabel";
-import TextField from "@material-ui/core/TextField";
-import {useHistory, useParams} from "react-router-dom";
-import {useDispatch} from "react-redux";
-import NameIcon from "@material-ui/icons/Person";
-import AddressIcon from "@material-ui/icons/LocationCity";
-import PhoneIcon from "@material-ui/icons/Phone";
-import IconButton from "@material-ui/core/IconButton";
-import EditIcon from "@material-ui/icons/Edit";
-import InfoIcon from "@material-ui/icons/Info";
-import FixIcon from "@material-ui/icons/BugReport";
-import RoleIcon from "@material-ui/icons/Security";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormControl from "@material-ui/core/FormControl";
-import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
-import withStyles from "@material-ui/styles/withStyles";
-import Typography from "@material-ui/core/Typography";
-import Box from "@material-ui/core/Box";
-import {useTranslation} from "react-i18next";
-import ProfileComponentOrigin from "../components/ProfileComponent";
-import ProgressView from "../components/ProgressView";
+import FixIcon from "@mui/icons-material/BugReport";
+import ChatIcon from "@mui/icons-material/ChatBubbleOutline";
+import EditIcon from "@mui/icons-material/Edit";
+import InfoIcon from "@mui/icons-material/Info";
+import AddressIcon from "@mui/icons-material/LocationCity";
+import NameIcon from "@mui/icons-material/Person";
+import PhoneIcon from "@mui/icons-material/Phone";
+import RoleIcon from "@mui/icons-material/Security";
 import {
-    matchRole,
-    Role,
-    sendVerificationEmail,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
-import {usePages} from "../controllers/General";
-import {fetchCallable} from "../controllers/Firebase";
-import {TextMaskPhone} from "../controllers/TextMasks";
-import LoadingComponent from "../components/LoadingComponent";
-import PlacesTextField from "../components/PlacesTextField";
-import {styles} from "../controllers/Theme";
-import NavigationToolbar from "../components/NavigationToolbar";
-import notifySnackbar from "../controllers/notifySnackbar";
+    Box,
+    Button,
+    ButtonGroup,
+    FormControl,
+    Grid,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Select,
+    TextField,
+    Typography
+} from "@mui/material";
+import {withStyles} from "@mui/styles";
+import React from "react";
+import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory, useParams} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
+import LoadingComponent from "../components/LoadingComponent";
 import MetaInfoView from "../components/MetaInfoView";
+import NavigationToolbar from "../components/NavigationToolbar";
+import PlacesTextField from "../components/PlacesTextField";
+import ProfileComponentOrigin from "../components/ProfileComponent";
+import ProgressView from "../components/ProgressView.js";
+import {fetchCallable} from "../controllers/Firebase";
+import {usePages} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {TextMaskPhone} from "../controllers/TextMasks";
+import {styles} from "../controllers/Theme";
+import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 
 const stylesProfile = theme => ({
     root: {
