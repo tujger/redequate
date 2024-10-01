@@ -1,10 +1,10 @@
 import React from "react";
-import Clear from "@material-ui/icons/Clear";
-import IconButton from "@material-ui/core/IconButton";
-import Input from "@material-ui/core/Input";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import Hidden from "@material-ui/core/Hidden";
+import Clear from "@mui/icons-material/Clear";
+import {IconButton} from "@mui/material";
+import {Input} from "@mui/material";
+import {Select} from "@mui/material";
+import {MenuItem} from "@mui/material";
+import {Hidden} from "@mui/material";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 
 export default ({classes, filter, handleChange, mode}) => {
