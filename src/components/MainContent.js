@@ -1,5 +1,5 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 import {Route, Switch, useHistory} from "react-router-dom";
 import {InView} from "react-intersection-observer";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";

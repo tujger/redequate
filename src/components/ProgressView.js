@@ -1,7 +1,7 @@
 import React from "react";
-import LinearProgress from "@material-ui/core/LinearProgress";
+import {LinearProgress} from "@mui/material";
 import {connect} from "react-redux"
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 
 const styles = theme => ({
     invisibleProgress: {

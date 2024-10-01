@@ -1,9 +1,9 @@
 import React from "react";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import Skeleton from "@material-ui/lab/Skeleton";
-import Grid from "@material-ui/core/Grid";
-import withStyles from "@material-ui/styles/withStyles";
+import {Card} from "@mui/material";
+import {CardHeader} from "@mui/material";
+import {Skeleton} from "@mui/material";
+import {Grid} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import AvatarView from "./AvatarView";
 import {stylesList} from "../controllers/Theme";
 

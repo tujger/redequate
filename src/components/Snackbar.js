@@ -1,8 +1,8 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import Snackbar from "@material-ui/core/Snackbar";
-import IconButton from "@material-ui/core/IconButton";
-import CloseIcon from "@material-ui/icons/Close";
+import {Button} from "@mui/material";
+import {Snackbar} from "@mui/material";
+import {IconButton} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import {connect} from "react-redux";
 
 const SimpleSnackbar = props => {

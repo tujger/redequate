@@ -1,18 +1,18 @@
 import React from "react";
 import PropTypes from "prop-types";
-import Card from "@material-ui/core/Card";
-import IconButton from "@material-ui/core/IconButton";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import CardContent from "@material-ui/core/CardContent";
-import CardActions from "@material-ui/core/CardActions";
-import CardMedia from "@material-ui/core/CardMedia";
-import SnackbarContent from "@material-ui/core/SnackbarContent";
-import Collapse from "@material-ui/core/Collapse";
-import Button from "@material-ui/core/Button";
-import CloseIcon from "@material-ui/icons/Close";
-import ExpandIcon from "@material-ui/icons/ExpandMore";
-import CollapseIcon from "@material-ui/icons/ExpandLess";
-import withStyles from "@material-ui/styles/withStyles";
+import {Card} from "@mui/material";
+import {IconButton} from "@mui/material";
+import {CardActionArea} from "@mui/material";
+import {CardContent} from "@mui/material";
+import {CardActions} from "@mui/material";
+import {CardMedia} from "@mui/material";
+import {SnackbarContent} from "@mui/material";
+import {Collapse} from "@mui/material";
+import {Button} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import ExpandIcon from "@mui/icons-material/ExpandMore";
+import CollapseIcon from "@mui/icons-material/ExpandLess";
+import {withStyles} from "@mui/styles";
 
 const styles = theme => ({
     error: {

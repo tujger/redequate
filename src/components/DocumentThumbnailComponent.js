@@ -1,10 +1,10 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {firebaseMessaging as firebase} from "../controllers/Firebase";
-import VideoIcon from "@material-ui/icons/Movie";
-import AudioIcon from "@material-ui/icons/Audiotrack";
-import ImageIcon from "@material-ui/icons/Image";
-import AnyIcon from "@material-ui/icons/InsertDriveFile";
+import VideoIcon from "@mui/icons-material/Movie";
+import AudioIcon from "@mui/icons-material/Audiotrack";
+import ImageIcon from "@mui/icons-material/Image";
+import AnyIcon from "@mui/icons-material/InsertDriveFile";
 
 const fallbacks = {
     image: <ImageIcon/>,

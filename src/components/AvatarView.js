@@ -1,6 +1,6 @@
 import React from "react";
-import Avatar from "@material-ui/core/Avatar";
-import makeStyles from "@material-ui/styles/makeStyles";
+import {Avatar} from "@mui/material";
+import {makeStyles} from "@mui/styles";
 import {useTranslation} from "react-i18next";
 
 const useStyles = bgcolor => makeStyles(theme => ({

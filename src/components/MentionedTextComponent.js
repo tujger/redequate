@@ -1,5 +1,5 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 import Linkify from "react-linkify";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {styles} from "../controllers/Theme";

@@ -1,13 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import FormControl from "@material-ui/core/FormControl";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import IconButton from "@material-ui/core/IconButton";
-import Input from "@material-ui/core/Input";
-import InputAdornment from "@material-ui/core/InputAdornment";
-import InputLabel from "@material-ui/core/InputLabel";
-import Visibility from "@material-ui/icons/Visibility";
-import VisibilityOff from "@material-ui/icons/VisibilityOff";
+import {FormControl} from "@mui/material";
+import {FormHelperText} from "@mui/material";
+import {IconButton} from "@mui/material";
+import {Input} from "@mui/material";
+import {InputAdornment} from "@mui/material";
+import {InputLabel} from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 const PasswordField = props => {
     const {label, onChange, color, helper, disabled = false} = props;

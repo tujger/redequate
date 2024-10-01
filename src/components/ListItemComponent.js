@@ -1,5 +1,5 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 import PropTypes from "prop-types";
 import {useDrag} from "react-use-gesture";
 import notifySnackbar from "../controllers/notifySnackbar";

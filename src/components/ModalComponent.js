@@ -1,6 +1,6 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import Dialog from "@material-ui/core/Dialog";
+import {withStyles} from "@mui/styles";
+import {Dialog} from "@mui/material";
 import {useHistory} from "react-router-dom";
 
 const styles = theme => ({

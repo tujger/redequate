@@ -1,8 +1,8 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import withStyles from "@material-ui/styles/withStyles";
+import {Button} from "@mui/material";
+import {Menu} from "@mui/material";
+import {MenuItem} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import AddToCalendarHOC from "react-add-to-calendar-hoc";
 
 const styles = theme => ({

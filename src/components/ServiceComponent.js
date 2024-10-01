@@ -1,7 +1,7 @@
 import React from "react";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import ListItem from "@material-ui/core/ListItem";
+import {Card} from "@mui/material";
+import {CardHeader} from "@mui/material";
+import {ListItem} from "@mui/material";
 import PropTypes from "prop-types";
 
 const ServiceComponent = props => {

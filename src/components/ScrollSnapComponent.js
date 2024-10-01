@@ -1,6 +1,6 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import makeStyles from "@material-ui/styles/makeStyles/makeStyles";
+import {Grid} from "@mui/material";
+import {makeStyles} from "@mui/styles";
 
 /**
  Implementation in context of

@@ -1,9 +1,9 @@
 import React from "react";
-import createStyles from "@material-ui/styles/createStyles";
-import makeStyles from "@material-ui/styles/makeStyles";
-import DeleteIcon from "@material-ui/icons/Delete";
-import IconButton from "@material-ui/core/IconButton";
-import Tooltip from "@material-ui/core/Tooltip";
+import {createStyles} from "@mui/styles";
+import {makeStyles} from "@mui/styles";
+import DeleteIcon from "@mui/icons-material/Delete";
+import {IconButton} from "@mui/material";
+import {Tooltip} from "@mui/material";
 
 const useStyles = makeStyles(theme => createStyles({
     itemAction: {

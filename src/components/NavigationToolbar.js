@@ -1,9 +1,9 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
-import withStyles from "@material-ui/styles/withStyles";
-import IconButton from "@material-ui/core/IconButton";
-import BackIcon from "@material-ui/icons/ArrowBack";
+import {Grid} from "@mui/material";
+import {Typography} from "@mui/material";
+import {withStyles} from "@mui/styles";
+import {IconButton} from "@mui/material";
+import BackIcon from "@mui/icons-material/ArrowBack";
 import {useHistory} from "react-router-dom";
 import {useTranslation} from "react-i18next";
 
