@@ -1,4 +1,4 @@
-// jest.mock("@material-ui/styles/withStyles");
+// jest.mock("@mui/styles/withStyles");
 import React from "react";
 import {
     matchRole,

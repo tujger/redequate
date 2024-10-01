@@ -1,9 +1,9 @@
 import React from "react";
-import ThemeProvider from "@material-ui/styles/ThemeProvider";
+import {ThemeProvider} from "@mui/styles";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
-import withWidth from "@material-ui/core/withWidth";
+// import {withWidth} from "@mui/material";
 import PropTypes from "prop-types";
 import {SnackbarProvider} from "notistack";
 import {initReactI18next, useTranslation} from "react-i18next";
@@ -40,8 +40,8 @@ import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import localeRu from "./locales/ru-RU.json";
 import localeEn from "./locales/en-EN.json";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
-
-const DeviceUUID = require("device-uuid");
+import * as DeviceUUID from "device-uuid";
+import process from "process";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -50,7 +50,7 @@ const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayo
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 const origin = console.error;
-console.error = function (...args) {
+const console_error = function (...args) {
     if (args[0].toString().indexOf("Material-UI: The key") >= 0
         && args[0].toString().indexOf("provided to the classes") >= 0) {
         return;
@@ -573,4 +573,5 @@ Dispatcher.propTypes = {
     width: PropTypes.string,
 };
 
-export default withWidth()(Dispatcher);
+export default Dispatcher;
+// export default withWidth()(Dispatcher);

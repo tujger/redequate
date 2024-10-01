@@ -1,17 +1,17 @@
 import React from 'react';
 import {render} from 'react-dom';
-import ProgressView from '../../components/ProgressView';
+import ProgressView from '../../components/ProgressView.js';
 import {container, store} from "../common";
 import {act} from "react-dom/test-utils";
-import ThemeProvider from "@material-ui/styles/ThemeProvider";
+import {ThemeProvider} from "@mui/styles";
 import {BrowserRouter} from "react-router-dom";
 import {Provider} from "react-redux";
 import {default as defaultTheme} from "../../controllers/Theme";
-import {progressViewReducer} from '../../components/ProgressView';
+import {progressViewReducer} from '../../components/ProgressView.js';
 
-// jest.mock("@material-ui/styles/withStyles");
+// jest.mock("@mui/styles/withStyles");
 
-// jest.mock("@material-ui/core/LinearProgress", () => ({
+// jest.mock("@mui/material/LinearProgress", () => ({
 //     LinearProgress: props => console.log(props)
 // }));
 

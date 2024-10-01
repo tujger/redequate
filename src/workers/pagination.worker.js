@@ -1,5 +1,5 @@
 /* eslint-disable */
-import {useFirebase} from "../controllers";
+import {useFirebase} from "../controllers.ts";
 
 export const pagination = () => {
     const firebase = useFirebase();
