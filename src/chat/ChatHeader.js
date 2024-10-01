@@ -1,16 +1,16 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import withStyles from "@material-ui/styles/withStyles";
-import IconButton from "@material-ui/core/IconButton";
+import {Grid} from "@mui/material";
+import {withStyles} from "@mui/styles";
+import {IconButton} from "@mui/material";
 import {Link, useHistory} from "react-router-dom";
-import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers";
+import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers.ts";
 import AvatarView from "../components/AvatarView";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
-import ClearIcon from "@material-ui/icons/Clear";
+import ClearIcon from "@mui/icons-material/Clear";
 import ConfirmComponent from "../components/ConfirmComponent";
-import ProgressView from "../components/ProgressView";
+import ProgressView from "../components/ProgressView.js";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {useTranslation} from "react-i18next";
 

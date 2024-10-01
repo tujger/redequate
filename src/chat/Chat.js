@@ -1,12 +1,12 @@
 import React from "react";
 import {useDispatch} from "react-redux";
-import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
-import withStyles from "@material-ui/styles/withStyles";
+import {Grid} from "@mui/material";
+import {TextField} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import {useHistory, useParams} from "react-router-dom";
 import {InView} from "react-intersection-observer";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
-import ProgressView from "../components/ProgressView";
+import ProgressView from "../components/ProgressView.js";
 import LoadingComponent from "../components/LoadingComponent";
 import ChatList from "./ChatList";
 import {ChatMeta} from "./ChatMeta";

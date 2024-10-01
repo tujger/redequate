@@ -1,9 +1,9 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import Grid from "@material-ui/core/Grid";
-import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
+import {withStyles} from "@mui/styles";
+import {Card} from "@mui/material";
+import {CardHeader} from "@mui/material";
+import {Grid} from "@mui/material";
+import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers.ts";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import {stylesList} from "../controllers/Theme";

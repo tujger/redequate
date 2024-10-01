@@ -1,10 +1,10 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
+import {withStyles} from "@mui/styles";
 import {Link, useHistory} from "react-router-dom";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
+import {Card} from "@mui/material";
+import {CardHeader} from "@mui/material";
+import {Grid} from "@mui/material";
+import {CardActionArea} from "@mui/material";
 import {cacheDatas, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import {ChatMeta} from "./ChatMeta";

@@ -1,9 +1,9 @@
 import React from "react";
-import {useWindowData} from "../controllers";
-import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
-import SendIcon from "@material-ui/icons/Send";
-import withStyles from "@material-ui/styles/withStyles";
+import {useWindowData} from "../controllers.ts";
+import {Grid} from "@mui/material";
+import {IconButton} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import {withStyles} from "@mui/styles";
 
 const styles = theme => ({
     inputfield: {
