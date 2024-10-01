@@ -1,28 +1,24 @@
+import AddIcon from "@mui/icons-material/Add";
+import Clear from "@mui/icons-material/Clear";
+import {Grid, Hidden, Input, MenuItem, Select} from "@mui/material";
+import {IconButton} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import Input from "@material-ui/core/Input";
-import IconButton from "@material-ui/core/IconButton";
-import Clear from "@material-ui/icons/Clear";
-import AddIcon from "@material-ui/icons/Add";
-import Hidden from "@material-ui/core/Hidden";
-import Grid from "@material-ui/core/Grid";
 import {Link} from "react-router-dom";
-import {usePages} from "../controllers/General";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import {normalizeSortName} from "../controllers/UserData";
-import NavigationToolbar from "../components/NavigationToolbar";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import Pagination from "../controllers/FirebasePagination";
-import {styles} from "../controllers/Theme";
-import {tagsReducer} from "./tagsReducer";
 import FlexFabComponent from "../components/FlexFabComponent";
-import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../components/MentionedTextComponent";
+import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";
+import NavigationToolbar from "../components/NavigationToolbar";
+import Pagination from "../controllers/FirebasePagination";
+import {usePages} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import {styles} from "../controllers/Theme";
+import {normalizeSortName} from "../controllers/UserData";
+import {tagsReducer} from "./tagsReducer";
 
 const Tags = (props) => {
     const {

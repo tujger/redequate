@@ -1,46 +1,39 @@
+import ClearIcon from "@mui/icons-material/Clear";
+import TagIcon from "@mui/icons-material/Label";
+import {
+    Box,
+    Button,
+    ButtonGroup,
+    FormControl,
+    FormControlLabel,
+    Grid,
+    Hidden,
+    IconButton,
+    Switch,
+    TextField,
+    Typography
+} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import React from "react";
-import {useHistory, useParams} from "react-router-dom";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import Button from "@material-ui/core/Button";
-import Typography from "@material-ui/core/Typography";
-import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
-import Hidden from "@material-ui/core/Hidden";
-import Box from "@material-ui/core/Box";
-import {useDispatch} from "react-redux";
-import Switch from "@material-ui/core/Switch";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import IconButton from "@material-ui/core/IconButton";
-import ClearIcon from "@material-ui/icons/Clear";
-import withStyles from "@material-ui/styles/withStyles";
-import TagIcon from "@material-ui/icons/Label";
 import {useTranslation} from "react-i18next";
-import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
-import ProgressView from "../components/ProgressView";
-import notifySnackbar from "../controllers/notifySnackbar";
-import {
-    uploadComponentClean,
-    uploadComponentPublish
-} from "../components/UploadComponent/uploadComponentControls";
-import LoadingComponent from "../components/LoadingComponent";
-import UploadComponent from "../components/UploadComponent/UploadComponent";
-import MentionsInputComponent from "../components/MentionsInputComponent/MentionsInputComponent";
-import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import {useDispatch} from "react-redux";
+import {useHistory, useParams} from "react-router-dom";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {styles} from "../controllers/Theme";
-import Pagination from "../controllers/FirebasePagination";
-import {
-    matchRole,
-    normalizeSortName,
-    Role,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
-import MentionedTextComponent, {tokenizeText} from "../components/MentionedTextComponent";
-import {mutualRequest} from "../components/MutualComponent";
-import {updateActivity} from "../pages/admin/audit/auditReducer";
+import LoadingComponent from "../components/LoadingComponent";
 import MentionedSelectComponent from "../components/MentionedSelectComponent";
+import MentionedTextComponent, {tokenizeText} from "../components/MentionedTextComponent";
+import MentionsInputComponent from "../components/MentionsInputComponent/MentionsInputComponent";
+import {mutualRequest} from "../components/MutualComponent";
+import ProgressView from "../components/ProgressView.js";
+import UploadComponent from "../components/UploadComponent/UploadComponent";
+import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import Pagination from "../controllers/FirebasePagination";
+import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
+import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {styles} from "../controllers/Theme";
+import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {updateActivity} from "../pages/admin/audit/auditReducer";
 
 const stylesCurrent = theme => ({
     profileImage: {
