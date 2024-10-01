@@ -1,10 +1,10 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import BackIcon from "@material-ui/icons/ArrowBack";
-import DialogActions from "@material-ui/core/DialogActions";
-import SendIcon from "@material-ui/icons/Send";
+import {Grid} from "@mui/material";
+import {Button} from "@mui/material";
+import {IconButton} from "@mui/material";
+import BackIcon from "@mui/icons-material/ArrowBack";
+import {DialogActions} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
 import {useTranslation} from "react-i18next";
 import NavigationToolbar from "../NavigationToolbar";
 
