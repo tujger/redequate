@@ -1,12 +1,12 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import IconButton from "@material-ui/core/IconButton";
-import withStyles from "@material-ui/styles/withStyles";
+import {Grid} from "@mui/material";
+import {CardActionArea} from "@mui/material";
+import {Card} from "@mui/material";
+import {CardHeader} from "@mui/material";
+import {IconButton} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import {useDispatch} from "react-redux";
-import ClearIcon from "@material-ui/icons/Clear";
+import ClearIcon from "@mui/icons-material/Clear";
 import {UserData} from "../../../controllers/UserData";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
@@ -14,7 +14,7 @@ import ItemPlaceholderComponent from "../../../components/ItemPlaceholderCompone
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import {toDateString} from "../../../controllers/DateFormat";
 import {fetchCallable} from "../../../controllers/Firebase";
-import ProgressView from "../../../components/ProgressView";
+import ProgressView from "../../../components/ProgressView.js";
 import {stylesList} from "../../../controllers/Theme";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 

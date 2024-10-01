@@ -1,7 +1,7 @@
 import React from "react";
-import {withRouter} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import withStyles from "@material-ui/styles/withStyles";
+import withRouter from "../../../controllers/withRouter.js";
+import {Button} from "@mui/material";
+import {withStyles} from "@mui/styles";
 import {connect, useDispatch} from "react-redux";
 import Activity from "./Activity";
 import Errors from "./Errors";
