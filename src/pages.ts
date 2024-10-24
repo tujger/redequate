@@ -8,6 +8,7 @@ export {default as EditProfile} from "./pages/EditProfile.js";
 export {default as Home} from "./pages/Home.js";
 export {default as NewPost} from "./pages/NewPost.js";
 export {default as NotFound} from "./pages/NotFound.js";
+export {default as Post} from "./pages/Post.js";
 export {default as Profile, publicFields} from "./pages/Profile.js";
 export {default as RestorePassword} from "./pages/RestorePassword.js";
 export {default as Search} from "./pages/search/Search.js";

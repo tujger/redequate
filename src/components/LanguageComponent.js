@@ -33,6 +33,7 @@ export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
         className={className}
         onChange={handleLanguageChange}
         value={i18n.language || i18n.options.fallbackLng[0]}
+        variant={"standard"}
         {...props}
     >
         {Object.keys(i18n.store.data).map(item => {

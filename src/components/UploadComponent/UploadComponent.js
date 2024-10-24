@@ -171,7 +171,7 @@ const UploadComponent = (
 
     React.useEffect(() => {
         if (!uploadsAllow) return;
-        const uppy = Uppy({
+        const uppy = new Uppy({
             allowMultipleUploads: multi,
             autoProceed: true,
             locale: {

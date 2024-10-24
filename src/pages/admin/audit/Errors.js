@@ -84,6 +84,7 @@ const Errors = (props) => {
                 color={"secondary"}
                 onChange={handleMode}
                 value={errorsMode}
+                variant={"standard"}
             >
                 <MenuItem value={"all"}>All</MenuItem>
             </Select>

@@ -1,13 +1,14 @@
-import MaskedInput from "react-text-mask";
+import {MaskedInput} from "react-text-mask";
 import {emailMask} from "text-mask-addons";
 import React from "react";
 
 export const TextMaskEmail = props => {
     const {inputRef, ...other} = props;
+    return props.children;
     return <MaskedInput
         {...other}
         ref={ref => {
-            inputRef(ref ? ref.inputElement : null);
+            inputRef?.(ref ? ref.inputElement : null);
         }}
         mask={emailMask}
         placeholderChar={"\u2000"}
@@ -17,10 +18,11 @@ export const TextMaskEmail = props => {
 
 export const TextMaskPhone = props => {
     const {inputRef, ...other} = props;
+    return props.children;
     return <MaskedInput
         {...other}
         ref={ref => {
-            inputRef(ref ? ref.inputElement : null);
+            inputRef?.(ref ? ref.inputElement : null);
         }}
         mask={["+", "1", " ", "(", /[1-9]/, /\d/, /\d/, ")", " ", /\d/, /\d/, /\d/, "-", /\d/, /\d/, /\d/, /\d/]}
         placeholderChar={"_"}

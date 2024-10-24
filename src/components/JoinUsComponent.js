@@ -63,13 +63,15 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
             if (!oneTapCliendId || !oneTap) return;
             try {
                 const promptCallback = (notification) => {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    if (notification.getSkippedReason() === 'tap_outside') {
+                        window.google.accounts.id.prompt(promptCallback);
+                    } else if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
                         resolve();
                     } else {
                         reject("skip");
                     }
                 }
-                if (window.google && window.google.accounts && window.google.accounts.id) {
+                if (window.google?.accounts?.id) {
                     window.google.accounts.id.prompt(promptCallback);
                 } else {
                     const scriptNode = document.createElement("script");
@@ -77,6 +79,7 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
                         try {
                             window.google.accounts.id.initialize({
                                 client_id: oneTapCliendId,
+                                // use_fedcm_for_prompt: false,
                                 provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
                                 callback: props => {
                                     try {

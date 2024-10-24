@@ -395,6 +395,7 @@ export const stylesList = theme => ({
         overflow: "initial",
         position: "relative",
         transition: "1s ease background-color",
+        width: "100%",
         "& $root": {
             boxSizing: "border-box",
             [theme.breakpoints.down("sm")]: {

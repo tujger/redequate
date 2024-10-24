@@ -139,7 +139,7 @@ const Post = (props) => {
             roles={pages.reply.roles}
             UploadProps={{camera: !windowData.isNarrow(), multi: true}}
         />}
-        <JoinUsComponent/>
+        {/*<JoinUsComponent/>*/}
     </>
 };
 

@@ -1,15 +1,19 @@
-import React from "react";
 import {ThemeProvider} from "@mui/styles";
-import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
-import PWAPrompt from "react-ios-pwa-prompt";
-import {connect, Provider, useDispatch} from "react-redux";
-// import {withWidth} from "@mui/material";
-import PropTypes from "prop-types";
-import {SnackbarProvider} from "notistack";
-import {initReactI18next, useTranslation} from "react-i18next";
+import {CssBaseline} from "@mui/material";
+import {StyledEngineProvider} from "@mui/material";
+import * as DeviceUUID from "device-uuid";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-import Store, {refreshAll} from "./controllers/Store";
+import {SnackbarProvider} from "notistack";
+import process from "process";
+import PropTypes from "prop-types";
+import React from "react";
+import {initReactI18next, useTranslation} from "react-i18next";
+import PWAPrompt from "react-ios-pwa-prompt";
+import {connect, Provider, useDispatch} from "react-redux";
+import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
+import LoadingComponent from "./components/LoadingComponent";
+import MetaInfoView from "./components/MetaInfoView";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
@@ -21,27 +25,19 @@ import {
     useStore,
     useWindowData
 } from "./controllers/General";
-import LoadingComponent from "./components/LoadingComponent";
-import {
-    matchRole,
-    needAuth,
-    useCurrentUserData,
-    UserData,
-    watchUserChanged
-} from "./controllers/UserData";
-import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
-import {installWrapperControl} from "./controllers/WrapperControl";
-import MetaInfoView from "./components/MetaInfoView";
-import {restoreLanguage} from "./reducers/languageReducer";
 import notifySnackbar from "./controllers/notifySnackbar";
-import {getScrollPosition} from "./controllers/useScrollPosition";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
-import localeRu from "./locales/ru-RU.json";
-import localeEn from "./locales/en-EN.json";
+import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
-import * as DeviceUUID from "device-uuid";
-import process from "process";
+import {colors, createTheme} from "./controllers/Theme";
+import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
+import {getScrollPosition} from "./controllers/useScrollPosition";
+import {installWrapperControl} from "./controllers/WrapperControl";
+import localeEn from "./locales/en-EN.json";
+import localeRu from "./locales/ru-RU.json";
+import {restoreLanguage} from "./reducers/languageReducer";
+import useWidth from "./controllers/useWidth"
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -89,6 +85,18 @@ const console_error = function (...args) {
 
 let oldWidth;
 
+const DispatcherWrapper = ({
+   theme = createTheme({colors: colors()}),
+    ...props
+   }) => {
+    return <StyledEngineProvider injectFirst>
+            <CssBaseline/>
+        <ThemeProvider theme={theme}>
+            <Dispatcher {...props} theme={theme}/>
+        </ThemeProvider>
+    </StyledEngineProvider>
+}
+
 function Dispatcher(props) {
     const {
         firebaseConfig,
@@ -96,9 +104,9 @@ function Dispatcher(props) {
         pages: givenPages,
         title,
         reducers,
-        theme = createTheme({colors: colors()}),
-        width
+        theme,
     } = props;
+    const width = useWidth();
     const [state, setState] = React.useState({store: null});
     const {firebase} = state;
 
@@ -406,25 +414,23 @@ const DispatcherInitialized = (props) => {
     const menu = givenMenu(pages);
 
     if (fatal) {
-        return <ThemeProvider theme={theme}><MetaInfoView
+        return <MetaInfoView
             message={fatal.message}
-        /></ThemeProvider>
+        />
     }
 
     return <Provider store={store}>
-        <ThemeProvider theme={theme}>
-            <BrowserRouter>
-                <SnackbarProvider maxSnack={4} preventDuplicate>
-                    <DispatcherRoutedBody
-                        {...props}
-                        copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
-                        menu={menu}
-                        title={t(title)}
-                    />
-                </SnackbarProvider>
-            </BrowserRouter>
-            <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-        </ThemeProvider>
+        <BrowserRouter>
+            <SnackbarProvider maxSnack={4} preventDuplicate>
+                <DispatcherRoutedBody
+                    {...props}
+                    copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                    menu={menu}
+                    title={t(title)}
+                />
+            </SnackbarProvider>
+        </BrowserRouter>
+        <PWAPrompt promptOnVisit={3} timesToShow={3}/>
     </Provider>;
 }
 
@@ -573,5 +579,4 @@ Dispatcher.propTypes = {
     width: PropTypes.string,
 };
 
-export default Dispatcher;
-// export default withWidth()(Dispatcher);
+export default DispatcherWrapper;

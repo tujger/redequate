@@ -54,8 +54,12 @@ const MentionedTextComponent = (
                     disable = true;
                 }
                 return <span
+                    className={classes.link}
                     key={index}
                 >
+                    {text}
+                </span>
+                const a = <span>
                     <Linkify
                         componentDecorator={(decoratedHref, decoratedText, key) => {
                             if (disable || disableClick) {

@@ -138,6 +138,7 @@ const MentionedSelectComponent = (
             displayEmpty={!label}
             onChange={handleSelect}
             value={selected}
+            variant={"standard"}
         >
             <MenuItem value={""}><em>{placeholder || "<Select>"}</em></MenuItem>
             {items.map((item, index) => {

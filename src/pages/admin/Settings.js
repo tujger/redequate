@@ -508,9 +508,10 @@ const Settings = ({classes, uploadable}) => {
                             <InputLabel>Rotate replies</InputLabel>
                             <Select
                                 color={"secondary"}
+                                displayEmpty={true}
                                 onChange={handleChange("postsRotateReplies")}
                                 value={postsRotateReplies || ""}
-                                displayEmpty={true}
+                                variant={"standard"}
                             >
                                 <MenuItem value={""}>None</MenuItem>
                                 <MenuItem value={"inside"}>Inside post</MenuItem>

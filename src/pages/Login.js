@@ -455,6 +455,7 @@ const LoginLayout = (
                     label={t("User.E-mail")}
                     onChange={onChangeEmail}
                     value={email}
+                    variant={"standard"}
                     // InputProps={{
                     //     inputComponent: TextMaskEmail
                     // }}
@@ -473,6 +474,7 @@ const LoginLayout = (
                     label={t("User.Password")}
                     onChange={onChangePassword}
                     value={password}
+                    variant={"standard"}
                 />
             </Grid>
         </Grid>

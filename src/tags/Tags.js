@@ -126,6 +126,7 @@ const Tags = (props) => {
                     color={"secondary"}
                     onChange={handleMode}
                     value={mode}
+                    variant={"standard"}
                 >
                     <MenuItem value={"all"}>All</MenuItem>
                     <MenuItem value={"hidden"}>Hidden</MenuItem>
@@ -155,6 +156,7 @@ const Tags = (props) => {
                     color={"secondary"}
                     onChange={handleMode}
                     value={mode}
+                    variant={"standard"}
                 >
                     <MenuItem value={"all"}>All</MenuItem>
                     <MenuItem value={"hidden"}>Hidden</MenuItem>

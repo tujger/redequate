@@ -18,6 +18,7 @@ export default ({classes, filter, handleChange, mode}) => {
                     color={"secondary"}
                     onChange={handleChange("mode")}
                     value={mode}
+                    variant={"standard"}
                 >
                     <MenuItem value={"all"}>All users</MenuItem>
                     <MenuItem value={"admins"}>Administrators</MenuItem>
@@ -50,6 +51,7 @@ export default ({classes, filter, handleChange, mode}) => {
                     color={"secondary"}
                     onChange={handleChange("mode")}
                     value={mode}
+                    variant={"standard"}
                 >
                     <MenuItem value={"all"}>All users</MenuItem>
                     <MenuItem value={"admins"}>Administrators</MenuItem>

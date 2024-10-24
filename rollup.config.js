@@ -14,6 +14,7 @@ import del from 'rollup-plugin-delete'
 const plugins = [
     del({targets: ['core/*']}),
     peerDepsExternal(),
+    svgr(),
     resolve({
         preferBuiltins: true
     }),
@@ -26,7 +27,6 @@ const plugins = [
         minimize: true,
         modules: true
     }),
-    svgr(),
     typescript({tsconfig: "./tsconfig.json", declaration: true, "declarationDir": "core"}),
     json(),
     terser(),

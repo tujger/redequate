@@ -145,6 +145,7 @@ const Activity = (props) => {
                         color={"secondary"}
                         onChange={handleMode}
                         value={activityMode}
+                        variant={"standard"}
                     >
                         <MenuItem value={"all"}>All</MenuItem>
                         <MenuItem value={"type"}>By type</MenuItem>

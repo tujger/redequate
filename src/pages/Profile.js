@@ -107,6 +107,7 @@ export const adminFields = [
             <Select
                 onChange={props.onChange}
                 value={props.value}
+                variant={"standard"}
             >
                 {
                     Object.keys(Role).map(key => {
