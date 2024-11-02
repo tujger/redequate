@@ -10,10 +10,10 @@ import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
+import styles from "./styles/PostComponent.module.css";
 
 export default React.forwardRef((props, ref) => {
     const {
-        classes = {},
         className,
         disableClick,
         disableButtons,
@@ -30,22 +30,22 @@ export default React.forwardRef((props, ref) => {
 
     return <Card
         className={[
-            classes.card,
-            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
-            highlighted ? classes.cardHighlighted : "",
+            styles.reply,
+            // pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
+            highlighted ? styles.highlight : "",
             className
         ].join(" ")}
         ref={ref}>
         <CardHeader
-            classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
-            className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post, classes.reply].join(" ")}
+            classes={{content: styles.cardContent, subheader: styles.cardSubheader}}
+            className={[styles.header, styles.headerWithLabel, styles.post, styles.reply].join(" ")}
             avatar={<Link
-                className={level > 1 ? classes.avatarSmallest : classes.avatarSmall}
+                className={level > 1 ? styles.avatarSmallest : styles.avatarSmall}
                 onClick={evt => evt.stopPropagation()}
                 to={pages.user.route + postData.uid}
             >
                 <AvatarView
-                    className={level > 1 ? classes.avatarSmallest : classes.avatarSmall}
+                    className={level > 1 ? styles.avatarSmallest : styles.avatarSmall}
                     image={userData.image}
                     initials={userData.initials}
                     verified={true}
@@ -53,18 +53,18 @@ export default React.forwardRef((props, ref) => {
             </Link>}
             title={<Grid container>
                 <Grid
-                    className={classes.userName}
+                    className={styles.userName}
                     item
                 >
                     <Link
                         to={pages.user.route + userData.id}
                         onClick={evt => evt.stopPropagation()}
-                        className={[classes.label].join(" ")}
+                        className={[styles.label].join(" ")}
                     >{userData.name}</Link>
                 </Grid>
                 {windowData.isNarrow() && <Grid item xs/>}
                 <PostMenu {...props}/>
-                <Grid item className={classes.date} title={new Date(postData.created).toLocaleString()}>
+                <Grid item className={styles.date} title={new Date(postData.created).toLocaleString()}>
                     {toDateString(postData.created)}
                 </Grid>
             </Grid>}
@@ -75,7 +75,7 @@ export default React.forwardRef((props, ref) => {
                     disableClick={!disableClick}
                 />
                 {postData.images && <Grid
-                    className={classes.cardImage}
+                    className={styles.cardImage}
                     container
                 >
                     <PostMedia

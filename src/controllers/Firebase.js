@@ -2,13 +2,13 @@ import firebase from "firebase/compat/app";
 import "./FirebaseImports";
 
 export const firebaseMessaging = firebase;
-const Firebase = firebaseConfig => {
+const Firebase = async firebaseConfig => {
     try {
         console.log("[Firebase] init")
-        firebase.initializeApp(firebaseConfig);
+        await firebase.initializeApp(firebaseConfig);
         firebase.config = firebaseConfig;
         if (firebaseConfig.measurementId) {
-            firebase.analytics();
+            await firebase.analytics();
         }
     } catch (e) {
         console.error(e);

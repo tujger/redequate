@@ -1,12 +1,10 @@
 import React from "react";
-import {withStyles} from "@mui/styles";
 import Linkify from "react-linkify";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
-import {styles} from "../controllers/Theme";
+import styles from "./styles/MentionedTextComponent.module.css";
 
 const MentionedTextComponent = (
     {
-        classes = {text: "", link: ""},
         className = "",
         disableClick,
         maxLength,
@@ -23,7 +21,7 @@ const MentionedTextComponent = (
 
     let length = 0;
 
-    return <span className={[classes.text, className].join(" ")}>
+    return <span className={[styles.text, className].join(" ")}>
         {tokens.map((token, index) => {
             if (maxLength && length > maxLength) return null;
             const mention = mentions.filter(item => item.type === token.type)[0];
@@ -34,7 +32,7 @@ const MentionedTextComponent = (
                 length += text.length;
                 return <component.type
                     {...component.props}
-                    className={[classes.link, mention.className].join(" ")}
+                    className={[styles.link, mention.className].join(" ")}
                     disableClick={disableClick}
                     display={text}
                     id={token.id}
@@ -53,8 +51,8 @@ const MentionedTextComponent = (
                     text = text.substr(0, text.length - (length - maxLength)) + "...";
                     disable = true;
                 }
+                // FIXME
                 return <span
-                    className={classes.link}
                     key={index}
                 >
                     {text}
@@ -64,7 +62,7 @@ const MentionedTextComponent = (
                         componentDecorator={(decoratedHref, decoratedText, key) => {
                             if (disable || disableClick) {
                                 return <span
-                                    className={classes.link}
+                                    className={styles.link}
                                     key={key}
                                 >
                                     {decoratedText}
@@ -72,7 +70,7 @@ const MentionedTextComponent = (
                             } else {
                                 return <a
                                     href={(disable || disableClick) ? "#" : decoratedHref}
-                                    className={classes.link}
+                                    className={styles.link}
                                     key={key}
                                     rel={"noopener noreferrer"}
                                     target={"_blank"}
@@ -88,7 +86,7 @@ const MentionedTextComponent = (
     </span>
 }
 
-export default withStyles(styles)(MentionedTextComponent);
+export default MentionedTextComponent;
 
 const pattern = new RegExp(/((?:\$\[.*?])|(?:[\r\n]+))/g);
 

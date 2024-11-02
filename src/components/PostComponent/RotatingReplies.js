@@ -11,45 +11,10 @@ import Pagination from "../../controllers/FirebasePagination";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import styles from "./styles/PostComponent.module.css";
 
-const stylesCurrent = theme => ({
-    entering: {},
-    leaving: {},
-    root: {
-        height: theme.spacing(4),
-        marginBottom: theme.spacing(1.5),
-        marginTop: theme.spacing(-1.5),
-        paddingTop: theme.spacing(1),
-        overflow: "hidden",
-    },
-    moveable: {
-        height: theme.spacing(4),
-        maxHeight: theme.spacing(4),
-        overflow: "hidden",
-        paddingLeft: theme.spacing(2),
-        transition: "1s ease margin-top",
-        "&$leaving": {
-            marginTop: theme.spacing(-4),
-        }
-    },
-    singleline: {
-        "& br": {
-            display: "none",
-        },
-        "& .MuiCardHeader-content": {
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-        },
-        "& $textSmall": {
-            display: "inline",
-            whiteSpace: "nowrap",
-        }
-    },
-    textSmall: {},
-});
-
-export default withStyles(stylesCurrent)((props) => {
-    const {classes = {}, items: givenItems, mentions, postId, type} = props;
+export default (props) => {
+    const {items: givenItems, mentions, postId, type} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -126,14 +91,14 @@ export default withStyles(stylesCurrent)((props) => {
             const {postData, userData} = props;
             const item = <ItemPlaceholderComponent
                 avatar={<AvatarView
-                    className={classes.avatarSmallest}
+                    className={styles.avatarSmallest}
                     image={userData.image}
                     initials={userData.initials}
                     verified
                 />}
-                className={classes.singleline}
-                label={<span className={classes.textSmall}>
-                    <span className={classes.suggestionName}>
+                className={styles.singleline}
+                label={<span className={styles.textSmall}>
+                    <span className={styles.suggestionName}>
                         {userData.name}
                     </span> <MentionedTextComponent
                     disableClick mentions={mentions}
@@ -151,7 +116,7 @@ export default withStyles(stylesCurrent)((props) => {
         }
         const installAnimation = async () => {
             setTimeout(() => {
-                leavingRef.current && leavingRef.current.classList.add(classes.leaving);
+                leavingRef.current && leavingRef.current.classList.add(styles.leaving);
             }, 10);
         }
         const thrownEvent = async event => {
@@ -213,14 +178,14 @@ export default withStyles(stylesCurrent)((props) => {
     }, []);
 
     if (!item) return null;
-    return <Grid item xs ref={rootRef} className={classes.root} onClick={handleClick}>
+    return <Grid item xs ref={rootRef} className={styles.replies} onClick={handleClick}>
         {itemPrev && <Grid
             children={itemPrev}
             container
             key={Math.random()}
             ref={leavingRef}
-            className={classes.moveable}
+            className={styles.moveable}
         />}
-        <Grid container className={classes.moveable}>{item}</Grid>
+        <Grid container className={styles.moveable}>{item}</Grid>
     </Grid>
-})
+}

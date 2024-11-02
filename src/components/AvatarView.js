@@ -1,29 +1,7 @@
-import React from "react";
 import {Avatar} from "@mui/material";
-import {makeStyles} from "@mui/styles";
+import React from "react";
 import {useTranslation} from "react-i18next";
-
-const useStyles = bgcolor => makeStyles(theme => ({
-    bgcolor: bgcolor ? {
-        backgroundColor: bgcolor,
-        color: theme.palette.getContrastText(bgcolor),
-    } : null,
-    avatarImage: {
-        height: "100%",
-        objectFit: "cover",
-        width: "100%"
-    },
-    admin: {
-        borderWidth: 2,
-        borderColor: "#00ff00",
-        borderStyle: "solid",
-    },
-    notVerified: {
-        borderWidth: 2,
-        borderColor: "#ffff00",
-        borderStyle: "solid",
-    }
-}));
+import styles from "./styles/AvatarView.module.css";
 
 const calculateBgColor = (image, initials) => {
     if (image || !initials) return null;
@@ -41,15 +19,14 @@ const calculateBgColor = (image, initials) => {
 
 const AvatarView = ({admin, className, image, icon, initials, onclick, verified}) => {
     const bgcolor = calculateBgColor(image, initials);
-    const classes = useStyles(bgcolor)();
     const {t} = useTranslation();
 
     return <Avatar
-        className={[verified ? (admin ? classes.admin : null) : classes.notVerified, classes.bgcolor, classes.avatar, className || ""].join(" ")}
+        className={[verified ? (admin ? styles.admin : null) : styles.notVerified, styles.bgcolor, styles.avatar, className || ""].join(" ")}
         onClick={onclick}
         title={verified ? (admin ? t("User.Administrator") : null) : t("User.Not verified")}
     >
-        {image && <img src={image} alt={t("User.Avatar")} className={classes.avatarImage}/>}
+        {image && <img src={image} alt={t("User.Avatar")} className={styles.avatarImage}/>}
         {!image && icon}
         {!image && !icon && initials && initials.substr(0, 2).toUpperCase()}
     </Avatar>

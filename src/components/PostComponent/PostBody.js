@@ -4,8 +4,9 @@ import {Grid} from "@mui/material";
 import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
 import AncillaryBody from "./AncillaryBody";
+import styles from "./styles/PostComponent.module.css";
 
-export default React.forwardRef(({classes, collapsible: givenCollapsible, disableClick, mentions, postData}, ref) => {
+export default React.forwardRef(({collapsible: givenCollapsible, disableClick, mentions, postData}, ref) => {
     const [state, setState] = React.useState({});
     const {
         collapsible = givenCollapsible,
@@ -21,7 +22,7 @@ export default React.forwardRef(({classes, collapsible: givenCollapsible, disabl
     const collapseLength = windowData.isNarrow() ? 260 : 2000;
     const shortened = postData.length > collapseLength;
 
-    return <div className={classes.cardBody}>
+    return <div className={styles.body}>
         <Collapse
             addEndListener={() => {
             }}
@@ -36,7 +37,7 @@ export default React.forwardRef(({classes, collapsible: givenCollapsible, disabl
             />
             <Grid
                 container
-                className={classes.showMore}
+                className={styles.showMore}
                 onClick={handleClickCard}
             >
                 Show more
@@ -52,7 +53,6 @@ export default React.forwardRef(({classes, collapsible: givenCollapsible, disabl
         >
             <MentionedTextComponent
                 disableClick={disableClick}
-                className={classes.text}
                 mentions={mentions}
                 tokens={postData.tokens}
             />

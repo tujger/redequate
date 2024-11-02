@@ -1,0 +1,42 @@
+.languageChange {
+    color: inherit;
+    font-size: inherit;
+
+    &:before {
+        border-color: transparent;
+    }
+
+    &:hover:not(.Mui-disabled):before {
+        border-color: inherit;
+    }
+
+    & .MuiSelect-icon {
+        color: inherit;
+    }
+
+    & .MuiSelect-root {
+        margin-left: 8px;
+        padding-bottom: 6px;
+        padding-top: 6px;
+    }
+}
+
+.profileitem {
+    margin: 4px;
+}
+
+.label {
+    color: inherit;
+    cursor: default;
+    text-decoration: none;
+}
+
+.menusection {
+    padding-right: 16px;
+}
+
+.menuitem {
+    font-size: small;
+    line-height: initial;
+    padding: 4px;
+}

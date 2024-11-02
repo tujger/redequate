@@ -1,0 +1,10 @@
+.text {
+    color: var(--main-color);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-decoration: none;
+}
+.link {
+    color: var(--highlight-color);
+    text-decoration: none;
+}

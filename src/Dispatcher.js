@@ -38,6 +38,7 @@ import localeEn from "./locales/en-EN.json";
 import localeRu from "./locales/ru-RU.json";
 import {restoreLanguage} from "./reducers/languageReducer";
 import useWidth from "./controllers/useWidth"
+import "./styles.css";
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -144,7 +145,7 @@ function Dispatcher(props) {
             return props;
         }
         const initFirebase = async props => {
-            const firebase = Firebase(firebaseConfig);
+            const firebase = await Firebase(firebaseConfig);
             return {...props, firebase};
         }
         const initStore = async props => {
@@ -194,6 +195,7 @@ function Dispatcher(props) {
             const savedUserData = store.getState().currentUserData;
             if (savedUserData && savedUserData.userData) {
                 const userData = new UserData(firebase).fromJSON(savedUserData.userData);
+                console.log({savedUserData, userData, deviceId, store, firebase});
                 return userData.fetch([UserData.ROLE])
                     .then(() => userData.fetchPrivate(deviceId, true))
                     .then(() => ({...props, userData}))

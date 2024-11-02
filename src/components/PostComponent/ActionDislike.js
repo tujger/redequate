@@ -9,8 +9,9 @@ import {delay, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import CounterComponent from "../CounterComponent";
+import styles from "./styles/PostComponent.module.css";
 
-export default ({postData, classes}) => {
+export default ({postData}) => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -42,7 +43,7 @@ export default ({postData, classes}) => {
     return <Grid item>
         <IconButton
             aria-label={"Dislike"}
-            className={classes.counter}
+            className={styles.counter}
             component={"div"}
             onClick={disabled ? undefined : handleClickExtra("dislike")}
             size={"small"}

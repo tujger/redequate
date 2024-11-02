@@ -10,8 +10,9 @@ import {useTranslation} from "react-i18next";
 import {usePages} from "../../controllers/General";
 import CounterComponent from "../CounterComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import styles from "./styles/PostComponent.module.css";
 
-export default ({postData, classes, disableClick}) => {
+export default ({postData, disableClick}) => {
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -19,7 +20,7 @@ export default ({postData, classes, disableClick}) => {
 
     return <Grid item>
         <IconButton
-            className={classes.counter}
+            className={styles.counter}
             component={"div"}
             onClick={event => {
                 event.stopPropagation();

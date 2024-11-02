@@ -2,6 +2,7 @@ import {cacheDatas} from "./General";
 import notifySnackbar from "./notifySnackbar";
 import {restoreLanguage} from "../reducers/languageReducer";
 import {firebaseMessaging} from "./Firebase";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 export const Role = {
     AUTH: "auth",
@@ -17,8 +18,10 @@ export function watchUserChanged(firebase, store) {
     return new Promise((resolve, reject) => {
         try {
             const refreshAction = () => {
+                console.log(currentUserDataInstance)
                 currentUserDataInstance.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
                     .then(userData => {
+                        console.log(userData);
                         useCurrentUserData(userData);
                         store.dispatch({type: "currentUserData", userData});
                         resolve();
@@ -28,6 +31,7 @@ export function watchUserChanged(firebase, store) {
 
             firebase.auth().onAuthStateChanged(async result => {
                 // const ud = new UserData(firebase).fromFirebaseAuth(result.toJSON())
+                console.log(currentUserDataInstance, result)
                 if (!currentUserDataInstance.id || !result) return;
                 let changed = false;
                 if (currentUserDataInstance.role === Role.USER_NOT_VERIFIED && result.emailVerified) {
@@ -415,6 +419,8 @@ export function UserData() {
         },
         fetchPrivate: async (deviceId, force) => {
             if (!_loaded.private || force) {
+                const aaa = firebase.auth().currentUser;
+                console.log("A",_id, firebase.auth(), firebase.database(),  JSON.parse(JSON.stringify(aaa)));
                 if (!deviceId) {
                     const snap = await _fetch(firebase.database().ref("users_private").child(_id));
                     if (snap.exists()) _persisted = true;
@@ -422,6 +428,7 @@ export function UserData() {
                     _loaded = {..._loaded, private: true};
                 } else {
                     const snap = await _fetch(firebase.database().ref("users_private").child(_id).child(deviceId));
+                    console.log("B1",snap);
                     if (snap.exists()) _persisted = true;
                     _private[deviceId] = {..._private[deviceId], ...(snap.val() || {})};
                     _loaded = {..._loaded, private: true};

@@ -7,6 +7,7 @@ import ActionReplies from "./ActionReplies";
 import ActionReply from "./ActionReply";
 import {useWindowData} from "../../controllers/General";
 import ActionTranslate from "./ActionTranslate";
+import styles from "./styles/PostComponent.module.css";
 
 const stylesCurrent = makeStyles(theme => ({
     cardActions: {
@@ -20,15 +21,15 @@ const stylesCurrent = makeStyles(theme => ({
 }));
 
 export default (props) => {
-    const {allowedExtras, ancillaryRef, classes = {}, onChange, showRepliesCounter = true, isReply = false} = props;
+    const {allowedExtras, ancillaryRef, onChange, showRepliesCounter = true, isReply = false} = props;
     const classesCurrent = stylesCurrent();
     const windowData = useWindowData();
 
     const isNarrow = windowData.isNarrow();
 
     return <Grid className={[
-        classes.cardActions,
-        isReply ? classesCurrent.cardActions : "",
+        styles.action,
+        // isReply ? classesCurrent.cardActions : "",
         // isReply ? classesCurrent.cardActionsSmall : ""
     ].join(" ")}>
         {!isNarrow && <ActionTranslate {...props} ancillaryRef={ancillaryRef}/>}

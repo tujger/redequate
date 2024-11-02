@@ -1,0 +1,12 @@
+.menusection {
+    background-color: var(--main-background-color);
+    color: var(--main-color);
+}
+
+.tokenUser {
+    color: #452187
+}
+
+._suggestions {
+    background-color: var(--main-background-color);
+}

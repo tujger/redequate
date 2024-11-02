@@ -1,25 +1,14 @@
-import React from "react";
-import {Button} from "@mui/material";
-import {IconButton} from "@mui/material";
 import ReplyIcon from "@mui/icons-material/ReplyOutlined";
-import {Grid} from "@mui/material";
-import {makeStyles} from "@mui/styles";
+import {Button, Grid, IconButton} from "@mui/material";
+import React from "react";
 import {useTranslation} from "react-i18next";
 import {cacheDatas} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
-
-const stylesCurrent = makeStyles(theme => ({
-    replyButton: {
-        marginLeft: theme.spacing(1.5),
-        padding: 0,
-        textTransform: "none",
-    }
-}));
+import styles from "./styles/PostComponent.module.css";
 
 export default ({icon = true, postData, mentions, onComplete, UploadProps}) => {
     const {t} = useTranslation();
-    const classesCurrent = stylesCurrent();
     return <Grid item>
         <NewPostComponent
             buttonComponent={icon
@@ -32,7 +21,7 @@ export default ({icon = true, postData, mentions, onComplete, UploadProps}) => {
                 /> : <Button
                     aria-label={t("Common.Reply")}
                     children={t("Common.Reply")}
-                    className={classesCurrent.replyButton}
+                    className={styles.replyButton}
                     component={"div"}
                     size={"small"}
                     title={t("Common.Reply")}
@@ -42,7 +31,7 @@ export default ({icon = true, postData, mentions, onComplete, UploadProps}) => {
             // infoComponent={<InfoComponent style={{maxHeight: 100, overflow: "auto"}}
             // >
             //     <MentionedTextComponent
-            //         className={classes.body}
+            //         className={styles.body}
             //         mentions={mentions}
             //         tokens={postData.tokens}
             //     />

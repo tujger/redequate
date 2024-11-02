@@ -6,13 +6,9 @@ import {Grid} from "@mui/material";
 import {MenuList} from "@mui/material";
 import {Typography} from "@mui/material";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import stylesTopBottomMenu from "./styles/TopBottomMenuLayout.module.css";
 
 const styles = theme => ({
-    label: {
-        color: "inherit",
-        cursor: "default",
-        textDecoration: "none",
-    },
     bottommenu: {
         backgroundColor: theme.palette.background.default,
         borderTopWidth: 1,
@@ -20,14 +16,6 @@ const styles = theme => ({
         borderTopColor: theme.palette.grey[500],
         color: theme.palette.getContrastText(theme.palette.background.default),
     },
-    menusection: {
-        paddingRight: theme.spacing(2),
-    },
-    menuitem: {
-        fontSize: "small",
-        lineHeight: "initial",
-        padding: theme.spacing(0.5),
-    }
 });
 
 const MenuSection = props => {
@@ -37,7 +25,7 @@ const MenuSection = props => {
 
     if (!matchRole(first.roles, currentUserData)) return null;
 
-    return <Grid className={classes.menusection}>
+    return <Grid className={[classes.menusection, stylesTopBottomMenu.menusection].join(" ")}>
         <Typography>
             {first.label}
         </Typography>
@@ -50,7 +38,7 @@ const MenuSection = props => {
             const child = <MenuItem
                 button
                 children={item.label}
-                className={[classes.label, classes.menuitem].join(" ")}
+                className={[stylesTopBottomMenu.label, classes.menuitem, stylesTopBottomMenu.menuitem].join(" ")}
                 key={index}
                 /* eslint-disable-next-line react/jsx-handler-names */
                 onClickCapture={item.onClick}
@@ -58,7 +46,7 @@ const MenuSection = props => {
             if (item.component) {
                 return <Link
                     children={child}
-                    className={classes.label}
+                    className={[stylesTopBottomMenu.label].join(" ")}
                     key={index}
                     to={item.route}
                 />

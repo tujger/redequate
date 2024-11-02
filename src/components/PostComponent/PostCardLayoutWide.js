@@ -14,10 +14,10 @@ import {mentionTags} from "../../controllers/mentionTypes";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
 import RotatingReplies from "./RotatingReplies";
+import styles from "./styles/PostComponent.module.css";
 
 export default React.forwardRef((props, ref) => {
     const {
-        classes = {},
         className,
         disableClick,
         disableButtons,
@@ -36,31 +36,29 @@ export default React.forwardRef((props, ref) => {
 
     return <Card
         className={[
-            classes.card,
-            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
-            highlighted ? classes.cardHighlighted : "",
+            styles.container,
+            // pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
+            highlighted ? styles.highlight : "",
             className
         ].join(" ")}
         ref={ref}
     >
         <PostCardWrapper
-            classes={classes}
             disableClick={disableClick}
             handleClickPost={handleClickPost}
         >
             <CardHeader
-                classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
+                classes={{content: styles.cardContent, subheader: styles.cardSubheader}}
                 className={[
-                    classes.cardHeader,
-                    classes.post,
+                    styles.header,
                 ].join(" ")}
                 avatar={<Link
-                    className={classes.avatar}
+                    className={styles.avatar}
                     onClick={evt => evt.stopPropagation()}
                     to={pages.user.route + postData.uid}
                 >
                     <AvatarView
-                        className={level > 1 ? classes.avatarSmallest : classes.avatar}
+                        className={level > 1 ? styles.avatarSmallest : ""}
                         image={userData.image}
                         initials={userData.initials}
                         verified={true}
@@ -68,18 +66,18 @@ export default React.forwardRef((props, ref) => {
                 </Link>}
                 title={<Grid container>
                     <Grid
-                        className={classes.userName}
+                        className={styles.userName}
                         item
                     >
                         <Link
-                            className={[classes.label].join(" ")}
+                            className={[styles.label].join(" ")}
                             onClick={evt => evt.stopPropagation()}
                             to={pages.user.route + userData.id}
                         >{userData.name}</Link>
                     </Grid>
                     <Grid
                         item
-                        className={classes.date}
+                        className={styles.date}
                         title={new Date(postData.created).toLocaleString()}>
                         {toDateString(postData.created)}
                     </Grid>
@@ -101,16 +99,16 @@ export default React.forwardRef((props, ref) => {
                         ref={ancillaryRef}
                     />
                     {postData.images && <Grid
-                        className={classes.cardImage}
+                        className={styles.cardImage}
                         container
                     >
                         <PostMedia
-                            images={postData.images}
+                            images={styles.images}
                             clickable={disableClick}
                         />
                     </Grid>}
-                    <Grid container alignItems={"flex-end"} justify={"flex-end"}>
-                        {postsAllowEdit && postData.edit && <Grid item xs className={classes.date}>
+                    <Grid container alignItems={"flex-end"} justifyContent={"flex-end"}>
+                        {postsAllowEdit && postData.edit && <Grid item xs className={styles.date}>
                             Edited {toDateString(postData.editOf("last").timestamp)}
                         </Grid>}
                         {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}

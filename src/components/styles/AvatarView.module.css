@@ -1,0 +1,26 @@
+.avatar {
+    color: lightgray;
+    box-sizing: border-box;
+    text-decoration: none;
+    width: var(--avatar-normal);
+    height: var(--avatar-normal);
+}
+.bgcolor {
+    background-color: var(--main-background-color);
+    color: var(--main-color);
+}
+.avatarImage {
+      height: 100%;
+      object-fit: cover;
+      width: 100%;
+}
+.admin {
+    border-width: 2px;
+    border-color: #00ff00;
+    border-style: solid;
+}
+.notVerified {
+    border-width: 2px;
+    border-color: #ffff00;
+    border-style: solid;
+}

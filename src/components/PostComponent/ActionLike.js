@@ -18,8 +18,9 @@ import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView.js";
 import Pagination from "../../controllers/FirebasePagination";
 import counter from "../../controllers/counterControl";
+import styles from "./styles/PostComponent.module.css";
 
-export default ({postData, classes}) => {
+export default ({postData}) => {
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const dispatch = useDispatch();
@@ -161,7 +162,7 @@ export default ({postData, classes}) => {
     return <Grid item>
         <IconButton
             aria-label={t("Common.Like")}
-            className={classes.counter}
+            className={styles.counter}
             // disabled={disabled}
             component={"div"}
             onClick={disabled ? undefined : handleClickExtra("like")}
@@ -183,7 +184,7 @@ export default ({postData, classes}) => {
             <IconButton
                 aria-label={"Decrease"}
                 children={<MinusIcon/>}
-                className={classes.counter}
+                className={styles.counter}
                 component={"div"}
                 disabled={disabled}
                 onClick={handleMinus}
@@ -194,7 +195,7 @@ export default ({postData, classes}) => {
             <IconButton
                 aria-label={"Restore"}
                 children={<RestoreIcon/>}
-                className={classes.counter}
+                className={styles.counter}
                 component={"div"}
                 disabled={disabled}
                 onClick={handleRestore}
@@ -205,7 +206,7 @@ export default ({postData, classes}) => {
             <IconButton
                 aria-label={"Increase"}
                 children={<PlusIcon/>}
-                className={classes.counter}
+                className={styles.counter}
                 component={"div"}
                 disabled={disabled}
                 onClick={handlePlus}

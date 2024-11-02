@@ -1,19 +1,11 @@
 import React from "react";
-import {makeStyles} from "@mui/styles";
-import {useHistory} from "react-router-dom";
-import SmartGallery from "react-smart-gallery";
 import Lightbox from "react-image-lightbox";
 import "react-image-lightbox/style.css";
+import {useHistory} from "react-router-dom";
+import SmartGallery from "react-smart-gallery";
 import {useWindowData} from "../../controllers/General";
 import ScrollSnapComponent from "../ScrollSnapComponent";
-
-const stylesCurrent = makeStyles(theme => ({
-    _postMediaLightboxPortal: {
-        backgroundColor: "transparent",
-        position: "fixed",
-        zIndex: 1100,
-    },
-}));
+import styles from "./styles/PostComponent.module.css";
 
 const replaceCommas = symbol => {
     if (symbol === "(") return "%28";
@@ -25,12 +17,11 @@ export default (props) => {
     const {images: imagesGiven} = props;
     const history = useHistory();
     const ref = React.useRef({});
-    const classesCurrent = stylesCurrent();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {selected = null, gallery} = state;
 
-    const images = (imagesGiven || []).map(image => {
+    const images = (imagesGiven || []).map?.(image => {
         image = image.replace(/([()])/g, replaceCommas);
         let value = {href: image, thumbnail: image};
         try {
@@ -61,7 +52,7 @@ export default (props) => {
         }
     }
 
-    if (!images.length) return null;
+    if (!images?.length) return null;
 
     return <>
         {!windowData.isNarrow() && <ScrollSnapComponent
@@ -114,7 +105,7 @@ export default (props) => {
                 onMovePrevRequest={() => {
                     setState(state => ({...state, selected: (selected + images.length - 1) % images.length}))
                 }}
-                reactModalProps={{portalClassName: classesCurrent._postMediaLightboxPortal}}
+                reactModalProps={{portalClassName: styles.lightbox}}
             />
         </div>}
     </>

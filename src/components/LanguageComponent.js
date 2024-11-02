@@ -31,6 +31,7 @@ export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
     if (!i18n || !i18n.options || !i18n.options.resources || Object.keys(i18n.options.resources).length < 2) return null;
     return <Select
         className={className}
+        color={"inherit"}
         onChange={handleLanguageChange}
         value={i18n.language || i18n.options.fallbackLng[0]}
         variant={"standard"}

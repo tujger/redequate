@@ -52,7 +52,7 @@ const NavigationToolbar = props => {
             {button}
         </Grid>
         <Grid item xs>
-            <Grid container alignItems={alignItems} justify={justify}>
+            <Grid container alignItems={alignItems} justifyContent={justify}>
                 {isChildrenLabel ? <Typography variant={"h6"}>{children}</Typography> : children}
             </Grid>
         </Grid>

@@ -1,0 +1,32 @@
+.content {
+    flex: 0 0 auto;
+    padding: 8px;
+}
+.messagebox {
+    height: 320px;
+}
+.preview {
+    object-fit: contain;
+    /*[theme.breakpoints.up("md")]: {*/
+    /*    maxHeight: theme.spacing(4),*/
+    /*},*/
+    /*[theme.breakpoints.down("sm")]: {*/
+    /*    maxHeight: theme.spacing(20),*/
+    /*},*/
+}
+.toolbar {
+    /*...theme.mixins.toolbar,*/
+    background-color: var(--main-background-color);
+    color: var(--main-color);
+}
+@media (max-width: 960px) {
+    :global(.uppy-Dashboard--modal .uppy-Dashboard-inner) {
+        top: 0
+    }
+}
+.actions {
+    color: var(--highlight-color);
+}
+.button {
+    color: inherit;
+}

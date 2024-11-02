@@ -1,35 +1,15 @@
+import {Fab, Tooltip, Zoom} from "@mui/material";
+import {useTheme} from "@mui/styles";
 import React from "react";
-import {Fab} from "@mui/material";
-import {Zoom} from "@mui/material";
-import {Tooltip} from "@mui/material";
-import {withStyles} from "@mui/styles";
-import useTheme from "@mui/material/styles/useTheme.js";
-import {styles} from "../controllers/Theme";
 import {useWindowData} from "../controllers/General";
 import useScrollPosition from "../controllers/useScrollPosition";
-
-const stylesCurrent = theme => ({
-    _common: {
-        position: "fixed",
-        right: theme.spacing(2),
-        transitionDelay: theme.transitions.duration.leavingScreen,//`${expanded ? transitionDuration.exit : 0}ms`,
-        // transitionDelay: "0.5s",//theme.transitions.duration.leavingScreen,
-        // height: theme.spacing(7),
-        // width: theme.spacing(7),
-    },
-    _collapsed: {},
-    _expanded: {
-        // width: "auto",
-    },
-});
+import styles from "./styles/FlexFabComponent.module.css";
 
 const FlexFabComponent = (
     {
         capitalized = false,
         children,
-        classes,
         className,
-        color = "secondary",
         icon,
         label,
         onClick = evt => {
@@ -68,8 +48,7 @@ const FlexFabComponent = (
         >
             <Fab
                 aria-label={label}
-                color={color}
-                className={[classes.fab, classes._common, className, classes._expanded].join(" ")}
+                className={[styles.fab, styles._common, className, styles._expanded].join(" ")}
                 onClick={onClick}
                 style={capitalized ? undefined : {textTransform: "none"}}
                 variant={"extended"}
@@ -86,8 +65,7 @@ const FlexFabComponent = (
         >
             <Fab
                 aria-label={label}
-                color={color}
-                className={[classes.fab, classes._common, className, classes._collapsed].join(" ")}
+                className={[styles.fab, styles._common, className, styles._collapsed].join(" ")}
                 onClick={onClick}
                 variant={"round"}
             >
@@ -98,10 +76,7 @@ const FlexFabComponent = (
     </Wrapper>
 }
 
-export default withStyles(theme => ({
-    ...styles(theme),
-    ...stylesCurrent(theme)
-}))(FlexFabComponent);
+export default FlexFabComponent;
 
 const Wrapper = ({tooltip, children}) => {
     if (tooltip) {

@@ -12,6 +12,7 @@ import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import RotatingReplies from "./RotatingReplies";
+import styles from "./styles/PostComponent.module.css";
 
 const stylesCurrent = theme => ({
     indent: {},
@@ -33,18 +34,10 @@ const stylesCurrent = theme => ({
             [theme.breakpoints.down("sm")]: {},
         }
     },
-    textSmall: {
-        display: "inline-block",
-        fontSize: "90%",
-    },
-    suggestionName: {
-        color: theme.palette.secondary.main,
-        fontWeight: "bold",
-    }
 });
 
-export default withStyles(stylesCurrent)((props) => {
-    const {allowedExtras, level, postId, classes = {}, type, expand, onChange, expanded: givenExpanded} = props;
+export default (props) => {
+    const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = props;
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -145,7 +138,7 @@ export default withStyles(stylesCurrent)((props) => {
     if (!paginationOptions) return null;
     if (postsRotateReplies === "outside" && rotating && replies && replies.length) {
         return <Grid container>
-            <Grid className={classes.indent}/>
+            <Grid className={styles.indent}/>
             <Grid item xs>
                 <RotatingReplies {...props} items={replies}/>
             </Grid>
@@ -155,17 +148,17 @@ export default withStyles(stylesCurrent)((props) => {
     if (!expanded && !userReplied) return null;
     if (!expanded) {
         return <Grid container>
-            <Grid className={classes.indent}/>
+            <Grid className={styles.indent}/>
             <Grid item xs>
                 <ItemPlaceholderComponent
                     avatar={<AvatarView
-                        className={classes.avatarSmallest}
+                        className={styles.avatarSmallest}
                         image={userReplied.image}
                         initials={userReplied.initials}
                         verified
                     />}
-                    label={<span className={classes.textSmall}>
-                        <span className={classes.suggestionName}>
+                    label={<span className={styles.textSmall}>
+                        <span className={styles.suggestionName}>
                             {userReplied.name}
                         </span>
                         {replies && replies.length > 1 ? " and others replied" : " replied"}
@@ -184,7 +177,7 @@ export default withStyles(stylesCurrent)((props) => {
             <Grid item xs>
                 <ItemPlaceholderComponent
                     avatar={null}
-                    label={<span className={classes.textSmall}>
+                    label={<span className={styles.textSmall}>
                         Click here to see the entire thread.
                     </span>}
                     pattern={"flat"}
@@ -192,8 +185,8 @@ export default withStyles(stylesCurrent)((props) => {
                 />
             </Grid>
         </Grid>}
-        <Grid container className={level > 1 ? classes.sectionReply : classes.sectionComment}>
-            {level > 0 && level < MAX_INDENTING_LEVELS && <Grid className={classes.indent}/>}
+        <Grid container className={level > 1 ? styles.sectionReply : styles.sectionComment}>
+            {level > 0 && level < MAX_INDENTING_LEVELS && <Grid className={styles.indent}/>}
             <Grid item xs>
                 <LazyListComponent
                     disableProgress={true}
@@ -205,10 +198,6 @@ export default withStyles(stylesCurrent)((props) => {
                     })}
                     itemComponent={item => <PostComponent
                         {...props}
-                        classes={{
-                            ...classes,
-                            cardActions: [classes.cardActions, classes.cardActionsSmall].join(" "),
-                        }}
                         collapsible={false}
                         disableClick
                         isReply={true}
@@ -226,4 +215,4 @@ export default withStyles(stylesCurrent)((props) => {
         </Grid>
     </>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
-})
+}

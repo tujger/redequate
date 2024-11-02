@@ -1,5 +1,25 @@
-/* add css styles here (optional) */
+:root {
+    --main-font-family: sans-serif;
+    --main-font-size: 12px;
+    --main-font-weight: normal;
+    --main-line-height: normal;
+    --main-color: #101010;
+    --main-background-color: rgb(239, 239, 239);
+    --highlight-color: #3f51b5;
+    --dim-color: #888888;
+    --avatar-small: 40px;
+    --avatar-smallest: 24px;
+    --avatar-normal: 56px;
+}
 
+:global(.MuiInputBase-colorPrimary) {
+    color: var(--main-color);
+}
+:global(.MuiInputBase-colorSecondary) {
+    color: var(--highlight-color);
+}
+
+/* add css styles here (optional) */
 .test {
     display: inline-block;
     margin: 2em auto;

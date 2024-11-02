@@ -9,6 +9,7 @@ import RepliesTree from "./RepliesTree";
 import {cacheDatas, usePages} from "../../controllers/General";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import styles from "./styles/PostComponent.module.css";
 
 const PostComponent = (props) => {
     const {
@@ -87,13 +88,14 @@ const PostComponent = (props) => {
     }
 
     return <>
-        {!onlyReplies && <PostCard key={random} {...inheritProps}/>}
+        {!onlyReplies && <PostCard className={styles.post} key={random} {...inheritProps}/>}
         <RepliesTree
             {...inheritProps}
+            className={styles.tree}
             key={highlight}
             postId={postData.id}
         />
     </>
 }
 
-export default withStyles(stylesList)(PostComponent);
+export default PostComponent;

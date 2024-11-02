@@ -1,19 +1,17 @@
+import TranslateIcon from "@mui/icons-material/Translate";
+import {Grid, IconButton} from "@mui/material";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import {IconButton} from "@mui/material";
-import TranslateIcon from "@mui/icons-material/Translate";
-import {Grid} from "@mui/material";
 import {useTranslation} from "react-i18next";
-import {useTextTranslation} from "../../controllers/textTranslation";
 import {fetchDeviceId, useMetaInfo} from "../../controllers/General";
-import {useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import {useTextTranslation} from "../../controllers/textTranslation";
+import {useCurrentUserData} from "../../controllers/UserData";
 import MentionedTextComponent from "../MentionedTextComponent";
 
 export default (
     {
         ancillaryRef,
-        classes,
         icon = true,
         postData,
         userData,
@@ -121,7 +119,7 @@ export default (
     return <>
         {translated && <Portal targetNode={ancillaryRef.current}>
             <h5>{title}</h5>
-            <MentionedTextComponent classes={classes} text={translated}/>
+            <MentionedTextComponent text={translated}/>
         </Portal>}
         <Grid item>
             <IconButton

@@ -1,11 +1,11 @@
 import React from "react";
 import {CardActionArea} from "@mui/material";
+import styles from "./styles/PostComponent.module.css";
 
-export default ({classes, disableClick, handleClickPost, children}) => {
+export default ({disableClick, handleClickPost, children}) => {
     return disableClick
         ? <>{children}</>
         : <CardActionArea
-            className={classes.root}
             component={"div"}
             onClick={handleClickPost}
         >

@@ -14,7 +14,6 @@ import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
-import {styles} from "../../controllers/Theme";
 import {
     uploadComponentClean,
     uploadComponentPublish
@@ -29,37 +28,7 @@ import Wrapper from "./Wrapper";
 import Images from "./Images";
 import Pagination from "../../controllers/FirebasePagination";
 import Toolbar from "./Toolbar";
-
-const stylesCurrent = theme => ({
-    content: {
-        flex: "0 0 auto",
-        padding: theme.spacing(1),
-    },
-    messagebox: {
-        height: theme.spacing(40),
-    },
-    _preview: {
-        objectFit: "contain",
-        [theme.breakpoints.up("md")]: {
-            maxHeight: theme.spacing(4),
-        },
-        [theme.breakpoints.down("sm")]: {
-            maxHeight: theme.spacing(20),
-        },
-    },
-    toolbar: {
-        ...theme.mixins.toolbar,
-        backgroundColor: theme.palette.primary.main,
-        color: theme.palette.getContrastText(theme.palette.primary.main),
-    },
-    "@global": {
-        [theme.breakpoints.down("xs")]: {
-            ".uppy-Dashboard--modal .uppy-Dashboard-inner": {
-                top: 0,
-            },
-        }
-    },
-});
+import styles from "./styles/NewPostComponent.module.css";
 
 const NewPostComponent = props => {
     const {t} = useTranslation();
@@ -67,7 +36,6 @@ const NewPostComponent = props => {
         _savedText,
         _savedContext,
         buttonComponent,
-        classes,
         context,
         dispatch,
         editPostData,
@@ -447,12 +415,12 @@ const NewPostComponent = props => {
         button={windowData.isNarrow()
             ? <IconButton
                 children={multi ? <ImageAddIcon/> : <ImageIcon/>}
+                className={styles.button}
                 disabled={disabled}
-                style={{color: "inherit"}}
             />
             : <IconButton
                 children={multi ? <ImageAddIcon/> : <ImageIcon/>}
-                color={"secondary"}
+                className={styles.button}
                 disabled={disabled}
                 size={"small"}
             />}
@@ -467,7 +435,6 @@ const NewPostComponent = props => {
 
     const toolbar = ready && <Toolbar
         bottom={!windowData.isNarrow() || inline}
-        classes={classes}
         disabled={disabled}
         onCancel={handleCancel}
         onImagesChange={handleImagesChange}
@@ -488,12 +455,12 @@ const NewPostComponent = props => {
             <Hidden smDown>
                 <DialogTitle>{title}</DialogTitle>
             </Hidden>
-            <DialogContent classes={{root: classes.content}}>
+            <DialogContent classes={{root: styles.content}}>
                 {infoComponent}
                 <React.Suspense fallback={<LoadingComponent/>}>
                     <MentionsInputComponent
                         autofocus={true}
-                        className={classes.messagebox}
+                        className={styles.messagebox}
                         color={"secondary"}
                         disabled={disabled}
                         firebase={firebase}
@@ -508,7 +475,6 @@ const NewPostComponent = props => {
             </DialogContent>
             {(!windowData.isNarrow() || inline) && toolbar}
             <Images
-                classes={classes}
                 disabled={disabled}
                 images={images}
                 onChange={handleImagesChange}
@@ -523,7 +489,4 @@ const mapStateToProps = ({newPostComponentReducer}) => ({
     _savedContext: newPostComponentReducer._savedContext,
 });
 
-export default connect(mapStateToProps)(withStyles(theme => ({
-    ...stylesCurrent(theme),
-    ...styles(theme)
-}))(NewPostComponent));
+export default connect(mapStateToProps)(NewPostComponent);

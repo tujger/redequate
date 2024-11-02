@@ -6,8 +6,9 @@ import {Box} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {uploadComponentClean} from "../UploadComponent/uploadComponentControls";
 import DocumentThumbnailComponent from "../DocumentThumbnailComponent";
+import styles from "./styles/NewPostComponent.module.css";
 
-export default ({classes, disabled, images, onChange, uppy}) => {
+export default ({disabled, images, onChange, uppy}) => {
     const {t} = useTranslation();
 
     const handleSavedImageRemove = index => () => {
@@ -26,7 +27,7 @@ export default ({classes, disabled, images, onChange, uppy}) => {
             {images && images.map((image, index) => {
                 return <Grid item key={index}>
                     <DocumentThumbnailComponent
-                        className={classes._preview}
+                        className={styles.preview}
                         url={image}/>
                     <IconButton
                         children={<ClearIcon/>}
@@ -43,7 +44,7 @@ export default ({classes, disabled, images, onChange, uppy}) => {
                 return <Grid item key={key}>
                     <DocumentThumbnailComponent
                         alt={file.name}
-                        className={classes._preview}
+                        className={styles.preview}
                         title={file.name}
                         url={file.uploadURL}/>
                     <IconButton

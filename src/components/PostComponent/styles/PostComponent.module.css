@@ -1,0 +1,300 @@
+.post {
+    overflow: initial;
+    position: relative;
+    box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12);
+    transition: 1s ease background-color;
+    border-width: 0;
+    margin-bottom: 12px;
+    background-color: #ffffff;
+    width: 100%;
+}
+
+.counter {
+    font-size: 80%;
+    margin-left: 8px;
+}
+
+.replyButton {
+    margin-left: 12px;
+    padding: 0;
+    text-transform: none;
+}
+
+.text {
+    color: gray;
+    display: inline-block;
+    margin-top: 16px;
+    overflow-wrap: break-word;
+    padding-left: 24px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+
+    & h5 {
+        margin-bottom: 0;
+        margin-top: 0;
+    }
+
+    & span {
+        color: gray;
+    }
+
+    &:empty {
+        display: none;
+    }
+}
+
+.body {
+    color: var(--main-color);
+}
+
+.showMore {
+
+}
+
+.action {
+    display: flex;
+}
+
+.container {
+    align-items: flex-start;
+    box-sizing: border-box;
+    overflow: initial;
+    position: relative;
+    box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12);
+    transition: 1s ease background-color;
+    border-width: 0;
+    margin-bottom: 12px;
+    background-color: #ffffff;
+
+    & .header {
+        align-items: flex-start;
+        box-sizing: border-box;
+    }
+
+    &.tree {
+        box-shadow: none;
+        margin-bottom: 8px;
+        background-color: transparent;
+
+        & .header {
+            padding: 0;
+        }
+
+        & .cardContent {
+            padding: 8px;
+            transition: 2s ease background-color;
+            padding-left: 16px;
+            border-radius: 16px;
+            padding-right: 16px;
+            background-color: #ffffff;
+        }
+    }
+}
+
+.highlight {
+
+}
+
+.header {
+
+}
+
+.headerWithLabel {
+
+}
+
+.avatar {
+    width: var(--avatar-normal);
+    height: var(--avatar-normal);
+    text-decoration: none;
+}
+
+.avatarSmallest {
+    width: var(--avatar-smallest);
+    height: var(--avatar-smallest);
+    font-size: 0.8rem;
+}
+
+.avatarSmall {
+    width: var(--avatar-small);
+    height: var(--avatar-small);
+}
+
+.userName {
+    color: var(--highlight-color);
+    font-weight: bolder;
+    margin-right: 4px;
+    text-decoration: none;
+}
+
+.inline {
+    display: inline;
+
+    & > :global(.MuiGrid-root) {
+        display: inline;
+    }
+}
+
+.title {
+
+}
+
+.label {
+    color: inherit;
+    text-decoration: none;
+}
+
+.date {
+    color: var(--dim-color);
+    margin-right: 4px;
+}
+
+.cardImage {
+    max-width: 100%;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    /*flex: 1;*/
+    /*width: auto;*/
+    /*height: auto;*/
+    /*overflow: auto;*/
+    /*position: relative;*/
+    /*max-width: 100%;*/
+    /*max-height: 100%;*/
+    /*object-fit: contain;*/
+    /*object-position: left;*/
+}
+
+.images {
+    gap: 2px;
+    display: flex;
+    flex-flow: nowrap;
+    box-sizing: content-box;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.lightbox {
+    background-color: transparent;
+    position: fixed;
+    z-index: 1100;
+}
+
+.menuButton {
+
+}
+
+.indent {
+
+}
+
+.textSmall {
+
+}
+
+.suggestionName {
+    color: var(--main-color);
+    font-weight: bold;
+}
+
+.sectionReply {
+    & .indent {
+        /*[theme.breakpoints.up("md")]: {*/
+        width: 32px;
+    }
+}
+
+.sectionComment {
+    & .indent {
+        width: 68px;
+    }
+    & .sectionComment {
+        & .avatar {
+            height: var(--avatar-smallest);
+            width: var(--avatar-smallest);
+        }
+    }
+}
+
+.singleline {
+    & br {
+        display: none;
+    }
+
+    & :global(.MuiCardHeader-content) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    & .textSmall {
+        display: inline;
+        font-size: 90%;
+        white-space: nowrap;
+    }
+}
+
+.leaving {
+    margin-top: -32px;
+}
+
+.replies {
+    height: 32px;
+    overflow: hidden;
+    margin-top: -12px;
+    padding-top: 8px;
+    margin-bottom: 12px;
+}
+
+.reply {
+    box-shadow: none;
+    margin-bottom: 8px;
+    background-color: transparent;
+}
+
+.moveable {
+    height: 32px;
+    overflow: hidden;
+    max-height: 32px;
+    transition: 1s ease margin-top;
+    padding-left: 16px;
+}
+
+@media (min-width: 960px) {
+    & .action {
+        justify-content: flex-end;
+    }
+
+    & .body {
+        padding-top: 8px;
+        padding-left: 0;
+        padding-right: 0;
+        padding-bottom: 8px;
+    }
+
+    & .menuButton {
+        top: 4px;
+        right: 0;
+        position: absolute;
+
+        & :global(.MuiSvgIcon-root) {
+            height: 20px;
+        }
+    }
+
+    & .cardImage {
+        margin-top: 8px;
+    }
+
+    & .counter :global(.MuiSvgIcon-root) {
+        height: 20px;
+    }
+
+    & .tree {
+        & .action {
+            & :global(.MuiSvgIcon-root) {
+                height: 16px;
+            }
+        }
+    }
+}

@@ -7,11 +7,11 @@ import {DialogActions} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import {useTranslation} from "react-i18next";
 import NavigationToolbar from "../NavigationToolbar";
+import styles from "./styles/NewPostComponent.module.css";
 
 export default (
     {
         bottom,
-        classes,
         disabled,
         onCancel,
         onSend,
@@ -25,30 +25,37 @@ export default (
         {top && <NavigationToolbar
             backButton={<IconButton
                 children={<BackIcon/>}
+                className={styles.button}
                 disabled={disabled}
                 onClick={onCancel}
             />}
             children={title}
-            className={classes.toolbar}
+            className={styles.toolbar}
             mediumButton={uploadComponent}
             rightButton={<IconButton
                 aria-label={t("Common.Send")}
                 children={<SendIcon/>}
+                className={styles.button}
                 onClick={onSend}
-                style={{color: "inherit"}}
                 title={t("Common.Send")}
             />}
         />}
-        {bottom && <DialogActions>
+        {bottom && <DialogActions
+            className={styles.actions}
+        >
             <Grid item xs>
                 <Grid container>
                     <Grid item>{uploadComponent}</Grid>
                 </Grid>
             </Grid>
-            <Button onClick={onCancel} color={"secondary"} disabled={disabled}>
+            <Button onClick={onCancel}
+                    className={styles.button}
+                    disabled={disabled}>
                 {t("Common.Cancel")}
             </Button>
-            <Button onClick={onSend} color={"secondary"} disabled={disabled}>
+            <Button onClick={onSend}
+                    className={styles.button}
+                    disabled={disabled}>
                 {t("Common.Send")}
             </Button>
         </DialogActions>}
