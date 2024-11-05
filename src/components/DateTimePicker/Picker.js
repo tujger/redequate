@@ -4,9 +4,10 @@ import normalizeDateInput from "./normalizedDateInput";
 import {currentStyles} from "./currentStyles";
 import TimeP from "./TimeP";
 import DateP from "./DateP";
+import classes from "./styles/DateTimePicker.module.css";
 
 export default props => {
-    const {classes, onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;
+    const {onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;
     const date = normalizeDateInput(dateGiven);
     const startGiven = normalizeDateInput(startGiven1);
     const endGiven = normalizeDateInput(endGiven1);

@@ -50,6 +50,7 @@ const Store = (name, reducers) => {
                 saveable[x] = store.getState()[x];
             }
         }
+        console.log(name, saveable)
         window.localStorage.setItem(name, JSON.stringify(saveable));
     });
     return store;

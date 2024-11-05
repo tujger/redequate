@@ -1,0 +1,16 @@
+.range {
+    display: inline-flex;
+    align-items: center;
+
+    & .period {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+}
+.inline {
+    justify-content: space-between;
+    width: 100%;
+}
+.popup {
+
+}

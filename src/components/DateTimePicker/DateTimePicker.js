@@ -26,4 +26,4 @@ DateTimePicker.propTypes = {
     PopoverProps: PropTypes.any,
 };
 
-export default withStyles(styles)(DateTimePicker);
+export default DateTimePicker;

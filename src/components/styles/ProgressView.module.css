@@ -1,0 +1,14 @@
+.invisibleProgress {
+    opacity: 0;
+}
+
+.progress {
+    /*// bottom: theme.spacing(-0.5),*/
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    z-index: 2;
+    /*// [theme.breakpoints.down("sm")]: {*/
+    /*// }*/
+}

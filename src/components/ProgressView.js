@@ -1,53 +1,53 @@
-import React from "react";
-import {LinearProgress} from "@mui/material";
-import {connect} from "react-redux"
-import {withStyles} from "@mui/styles";
+import { LinearProgress } from '@mui/material'
+import React from 'react'
+import { connect } from 'react-redux'
+import styles from './styles/ProgressView.module.css'
 
-const styles = theme => ({
-    invisibleProgress: {
-        opacity: 0,
-    },
-    progress: {
-        // bottom: theme.spacing(-0.5),
-        bottom: 0,
-        left: 0,
-        position: "absolute",
-        right: 0,
-        zIndex: 2,
-        // [theme.breakpoints.down("sm")]: {
-        // }
-    }
-});
-
-const ProgressView = ({show, value = null, classes, className}) => {
+export const ProgressView = ({
+    show,
+    value = null,
+    className
+}) => {
     return <LinearProgress
-        color={"secondary"}
-        variant={value === null ? "indeterminate" : "determinate"}
+        color={'secondary'}
+        variant={value === null ? 'indeterminate' : 'determinate'}
         value={value}
-        className={[classes.progress, show ? "" : classes.invisibleProgress, className].join(" ")}/>
-};
+        className={[styles.progress, show ? '' : styles.invisibleProgress, className].join(' ')}/>
+}
 
-ProgressView.SHOW = {type: "progressView_Show"};
-ProgressView.HIDE = {type: "progressView_Hide"};
+ProgressView.SHOW = { type: 'progressView_Show' }
+ProgressView.HIDE = { type: 'progressView_Hide' }
 
-export const progressViewReducer = (state = {show: false, value: null}, action) => {
+export const progressViewReducer = (state = {
+    show: false,
+    value: null
+}, action) => {
     switch (action.type) {
         case ProgressView.SHOW.type:
             if (action.value) {
-                return {show: true, value: +action.value};
+                return {
+                    show: true,
+                    value: +action.value
+                }
             } else {
-                return {show: true, value: null};
+                return {
+                    show: true,
+                    value: null
+                }
             }
         case ProgressView.HIDE.type:
-            return {show: false, value: null};
+            return {
+                show: false,
+                value: null
+            }
         default:
-            return state;
+            return state
     }
-};
+}
 
-const mapStateToProps = ({progressView}) => ({
+const mapStateToProps = ({ progressView }) => ({
     show: progressView.show,
     value: progressView.value
-});
+})
 
-export default connect(mapStateToProps)(withStyles(styles)(ProgressView));
+export default connect(mapStateToProps)(ProgressView)

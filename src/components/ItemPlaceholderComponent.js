@@ -1,62 +1,64 @@
-import React from "react";
-import {Card} from "@mui/material";
-import {CardHeader} from "@mui/material";
-import {Skeleton} from "@mui/material";
-import {Grid} from "@mui/material";
-import {withStyles} from "@mui/styles";
-import AvatarView from "./AvatarView";
-import {stylesList} from "../controllers/Theme";
+import { Card, CardHeader, Grid, Skeleton } from '@mui/material'
+import React from 'react'
+import AvatarView from './AvatarView'
+import styles from './styles/ItemPlaceholderComponent.module.css'
 
-const ItemPlaceholderComponent = ({avatar, classes, className, label, onClick, pattern}) => (
+const ItemPlaceholderComponent = ({
+    avatar,
+    className,
+    label,
+    onClick,
+    pattern
+}) => (
     <Card
         className={[
-            classes.card,
-            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
+            styles.card,
+            pattern ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : '',
             className,
-        ].join(" ")}
+        ].join(' ')}
         onClick={onClick}
     >
         <CardHeader
             avatar={avatar !== null && (avatar || (label
                 ? <AvatarView
-                    className={classes.avatar}
+                    className={styles.avatar}
                     image={avatar}
                     initials={label}
                     verified={true}
                 />
                 : <Skeleton
-                    animation={label ? false : "wave"}
-                    className={classes.avatar}
-                    variant={"circle"}
+                    animation={label ? false : 'wave'}
+                    className={styles.avatar}
+                    variant={'circle'}
                 />))}
-            className={[classes.cardHeader, "", label ? classes.cardHeaderWithLabel : ""].join(" ")}
+            className={[styles.cardHeader, '', label ? styles.cardHeaderWithLabel : ''].join(' ')}
             disableTypography
             subheader={!label && <>
                 <Skeleton
-                    animation={"wave"}
+                    animation={'wave'}
                     height={12}
-                    style={{marginBottom: 6}}
-                    width={"100%"}
+                    style={{ marginBottom: 6 }}
+                    width={'100%'}
                 />
                 <Grid
-                    className={classes.cardActions}>
+                    className={styles.cardActions}>
                     <Skeleton
                         animation={false}
                         height={10}
-                        style={{marginBottom: 6}}
-                        variant={"rect"}
-                        width={"100%"}
+                        style={{ marginBottom: 6 }}
+                        variant={'rect'}
+                        width={'100%'}
                     />
                 </Grid>
             </>}
             title={label || <Skeleton
-                animation={"wave"}
+                animation={'wave'}
                 height={12}
-                style={{marginBottom: 6}}
-                width={"40%"}
+                style={{ marginBottom: 6 }}
+                width={'40%'}
             />}
         />
     </Card>
 )
 
-export default withStyles(stylesList)(ItemPlaceholderComponent);
+export default ItemPlaceholderComponent
