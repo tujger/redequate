@@ -57,8 +57,7 @@ export default [
         ],
         context: "window",
         external: [
-            ...Object.keys(pkg.peerDependencies),
-            'react', 'react-dom', 'react-datepicker-t', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker-t/dist/react-datepicker.css'
+            ...Object.keys(pkg.peerDependencies)
         ],
         plugins,
     },

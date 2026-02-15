@@ -19,7 +19,7 @@ import {withStyles} from "@mui/styles";
 import {styles} from "../../../controllers/Theme";
 import {auditReducer} from "./auditReducer";
 import ActivityItemComponent from "./ActivityItemComponent";
-import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
+import DateTimePicker from "../../../components/DateTimePicker";
 import {toDateString} from "../../../controllers/DateFormat";
 import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
 import {mentionUsers} from "../../../controllers/mentionTypes";

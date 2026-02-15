@@ -7,10 +7,10 @@ import ClearIcon from "@mui/icons-material/Clear";
 import {Input as InputOrigin} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {usePages} from "../../controllers/General";
+import styles from './styles/Search.module.css'
 
 export default (
     {
-        classes,
         open = false,
         onOpen,
         transformSearch,
@@ -35,7 +35,7 @@ export default (
         if (Input.props.onApply) {
             Input.props.onApply(searchValue);
         } else {
-            history.push(pages.search.route + "?q=" + encodeURIComponent(searchValue));
+            history.push(pages.search?.route + "?q=" + encodeURIComponent(searchValue));
         }
     }
 
@@ -45,8 +45,8 @@ export default (
 
     return <>
         <IconButton
-            className={classes.searchIcon}
-            children={pages.search.icon}
+            className={styles.searchIcon}
+            children={pages.search?.icon}
             onClick={() => {
                 const unblock = history.block(() => {
                     setState(state => ({...state, search: false, unblock: null}));
@@ -62,10 +62,10 @@ export default (
             variant={"text"}
         />
         {search && <>
-            <Toolbar color={"secondary"} className={classes.searchToolbar}>
+            <Toolbar color={"secondary"} className={styles.searchToolbar}>
                 <IconButton
                     children={<BackIcon/>}
-                    className={classes.searchToolbarBack}
+                    className={styles.searchToolbarBack}
                     color={"inherit"}
                     edge={"start"}
                     onClick={closeSearch}
@@ -73,11 +73,11 @@ export default (
                 />
                 <Input.type
                     autoFocus={true}
-                    className={classes.searchToolbarInput}
+                    className={styles.searchToolbarInput}
                     color={"secondary"}
                     endAdornment={<IconButton
                         children={<ClearIcon/>}
-                        className={classes.searchClearIcon}
+                        className={styles.searchClearIcon}
                         onClick={() => {
                             setState({...state, searchValue: ""});
                             inputRef.current && inputRef.current.focus();
@@ -106,8 +106,8 @@ export default (
                     }}
                 />
                 <IconButton
-                    children={pages.search.icon}
-                    className={classes.searchToolbarIcon}
+                    children={pages.search?.icon}
+                    className={styles.searchToolbarIcon}
                     onClick={handleSearch}
                     title={t("Search.Search")}
                     variant={"text"}

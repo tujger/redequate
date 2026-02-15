@@ -3,8 +3,9 @@ import {Button, DialogActions, DialogContent, DialogTitle, Grid, Hidden, IconBut
 import React from "react";
 import ModalComponent from "../../components/ModalComponent";
 import SearchContent from "./SearchContent";
+import styles from './styles/Search.module.css'
 
-export default ({open, onClose, classes, handleSearch, ...props}) => {
+export default ({open, onClose, handleSearch, ...props}) => {
     return <ModalComponent onClose={onClose}>
         <Hidden mdUp>
             <Grid container alignItems={"center"} justify={"space-between"}>
@@ -17,7 +18,7 @@ export default ({open, onClose, classes, handleSearch, ...props}) => {
                     onClick={handleSearch}
                     variant={"contained"}
                     color={"secondary"}
-                    className={classes.button}
+                    className={styles.button}
                 >Search</Button>
             </Grid>
         </Hidden>

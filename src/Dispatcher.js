@@ -1,7 +1,7 @@
 import {ThemeProvider} from "@mui/styles";
 import {CssBaseline} from "@mui/material";
 import {StyledEngineProvider} from "@mui/material";
-import * as DeviceUUID from "device-uuid";
+import {DeviceUUID} from "device-uuid";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import {SnackbarProvider} from "notistack";
@@ -45,6 +45,8 @@ const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDraw
 const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout/TopBottomMenuLayout"));
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+window.ReactLib = React;
 
 const origin = console.error;
 const console_error = function (...args) {
@@ -169,7 +171,7 @@ function Dispatcher(props) {
         const checkIfCompatible = async props => {
             const {t} = props;
             try {
-                const deviceUUID = new DeviceUUID.DeviceUUID();
+                const deviceUUID = new DeviceUUID();
                 const deviceMeta = deviceUUID.parse();
                 const browser = deviceMeta.browser.toLowerCase();
                 const version = parseInt(deviceMeta.version);

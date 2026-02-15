@@ -1,0 +1,69 @@
+.center {
+
+}
+
+.button {
+
+}
+.searchToolbar {
+
+}
+.searchIcon {
+
+}
+.searchToolbarBack {
+
+}
+.searchToolbarInput {
+
+}
+.searchClearIcon {
+
+}
+.searchToolbarIcon {
+
+}
+
+.searchIcon {
+    color: inherit;
+}
+.searchToolbar {
+    position: absolute;
+    right: 0;
+    z-index: 1;
+    /*[theme.breakpoints.up("md")]: {*/
+    /*backgroundColor: theme.palette.background.default,*/
+    /*color: theme.palette.getContrastText(theme.palette.background.default),*/
+    /*paddingRight: theme.spacing(2),*/
+/*},*/
+/*[theme.breakpoints.down("sm")]: {*/
+/*    backgroundColor: theme.palette.primary.main,*/
+/*    bottom: 0,*/
+/*    color: theme.palette.getContrastText(theme.palette.primary.main),*/
+/*    left: 0,*/
+/*    paddingRight: theme.spacing(1),*/
+/*    top: 0,*/
+/*}*/
+}
+.searchToolbarBack {
+    color: inherit;
+}
+.searchToolbarIcon {
+    color: inherit;
+}
+.searchClearIcon {
+    color: inherit;
+    position: absolute;
+    right: 0;
+    top: -1rem;
+}
+.searchToolbarInput {
+    color: inherit;
+    & global(.MuiInput-root),
+    & :global(.MuiInput-input) {
+    color: inherit;
+    }
+    /*[theme.breakpoints.up("md")]: {*/
+    /*    width: theme.spacing(32),*/
+    /*},*/
+}

@@ -2,13 +2,14 @@ import React from "react";
 import {Grid} from "@mui/material";
 import {useHistory} from "react-router-dom";
 import {useTranslation} from "react-i18next";
+import styles from './styles/Search.module.css'
 
-export default ({classes}) => {
+export default () => {
     const history = useHistory();
     const {t} = useTranslation();
 
     const args = new URLSearchParams(history.location.search.replace(/^\?/, ""));
-    return <div className={classes.center}>
+    return <div className={styles.center}>
         <Grid container>
             {t("Search.Search value: {{value}}", {value: args.get("q")})}
         </Grid>

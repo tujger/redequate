@@ -1,41 +1,20 @@
-import {StaticDateTimePicker} from '@mui/x-date-pickers'
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs'
-import {MobileDateTimePicker} from '@mui/x-date-pickers'
-import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider'
-import PropTypes from 'prop-types'
+import {MobileDateTimePicker, StaticDateTimePicker} from '@mui/x-date-pickers'
+import dayjs from 'dayjs';
 import React from 'react'
-import DateRangePicker from "./DateRangePicker.js"
+import styles from "./styles/DateTimePicker.module.css";
 
-const DateTimePicker = ({
-    inline,
-    range,
-    ...props
-}) => {
-    const Picker = React.useMemo(() => {
-        if(range) {
-            return DateRangePicker;
-        } else if(inline) {
-            return StaticDateTimePicker;
-        } else {
-            return MobileDateTimePicker;
-        }
-    }, [inline, range])
+export default ({
+                    inline,
+                    ...props
+                }) => {
+    const [start, setStart] = React.useState(() => dayjs())
+    const [end, setEnd] = React.useState(() => dayjs())
 
-    return <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Picker inline={inline} {...props}/>
-    </LocalizationProvider>
+    const Picker = inline ? StaticDateTimePicker : MobileDateTimePicker;
+
+    return <div className={[styles.range, inline ? styles.inline : styles.popup].join(" ")}>
+        <Picker {...props} value={start} onChange={e => setStart(e)}/>
+        <span className={styles.period}>-</span>
+        <Picker {...props} value={end} onChange={e => setEnd(e)} minDate={start}/>
+    </div>
 }
-
-DateTimePicker.propTypes = {
-    inline: PropTypes.bool,
-    onChange: PropTypes.func.isRequired,
-    // date: PropTypes.objectOf(moment) || undefined || null,
-    // start: PropTypes.objectOf(moment) || undefined || null,
-    // end: PropTypes.objectOf(moment) || undefined || null,
-    extras: PropTypes.bool,
-    range: PropTypes.bool,
-    InputProps: PropTypes.any,
-    PopoverProps: PropTypes.any,
-}
-
-export default DateTimePicker

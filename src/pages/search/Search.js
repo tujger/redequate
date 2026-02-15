@@ -1,6 +1,4 @@
-import {withStyles} from "@mui/styles";
 import React from "react";
-import {styles} from "../../controllers/Theme";
 import SearchContent from "./SearchContent";
 import SearchModal from "./SearchModal";
 import SearchToolbar from "./SearchToolbar";
@@ -13,4 +11,4 @@ const Search = ({toolbar, content, modal, ...props}) => {
     return <SearchContent {...props}/>
 };
 
-export default withStyles(styles)(Search);
+export default Search;

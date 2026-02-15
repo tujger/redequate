@@ -8,20 +8,11 @@ import {useMetaInfo, usePages} from "../controllers/General";
 import MetaInfoView from "./MetaInfoView";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import notifySnackbar from "../controllers/notifySnackbar";
-
-const styles = theme => ({
-    bottom: {},
-    bottomSticky: {},
-    center: {},
-    left: {},
-    right: {},
-    top: {},
-    topSticky: {},
-});
+import styles from "./styles/MainContent.module.css";
 
 const MainContent = props => {
     // eslint-disable-next-line react/prop-types
-    const {classes} = props;
+    const classes = {};
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -30,6 +21,7 @@ const MainContent = props => {
 
     const isDisabled = metaInfo && metaInfo.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
+    console.log("MAIN", props)
     return <>
         <MetaInfoView/>
         {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
@@ -53,6 +45,7 @@ const MainContent = props => {
                         }
                         if (matchRole(item.roles, currentUserData)
                             && !item.disabled && item.component) {
+                            console.log(item, props)
                             return <>
                                 {hasWrapperControlInterface() && <InView
                                     children={null}
@@ -100,4 +93,4 @@ const MainContent = props => {
     </>
 };
 
-export default withStyles(styles)(MainContent);
+export default MainContent;

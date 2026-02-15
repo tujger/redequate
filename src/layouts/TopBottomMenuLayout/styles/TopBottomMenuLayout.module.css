@@ -40,3 +40,84 @@
     line-height: initial;
     padding: 4px;
 }
+
+/*///*/
+
+.indent {
+    /*...theme.typography.button,*/
+    height: 2.5rem;
+}
+.content {
+    /*padding-left: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    /*paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+}
+.headercontainer {
+    position: relative;
+    /*// height: 150,*/
+}
+.stickytop {
+    justify-content: flex-end;
+}
+.topmenu {
+    /*...theme.typography.button,*/
+    background-color: #ffffff88;
+    align-items: center;
+    display: flex;
+    z-index: 2;
+    /*...theme.fetchOverride(theme => theme.customized.topBottomLayout.topmenu),*/
+}
+
+.headertitle {}
+.headerlabel {
+    margin: 1rem;
+}
+.footer {
+    /*flex-basis: theme.mixins.toolbar.minHeight,*/
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+.version {
+    background-color: var(--main-background-color);
+}
+.progress {
+    margin-bottom: -4px;
+}
+.stickyBottom {
+    position: sticky;
+    bottom: 0;
+}
+
+.bottom {}
+.bottomSticky {
+    /*background-color: theme.palette.background.default,*/
+    bottom: 0;
+    /*padding-left: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    /*paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    position: sticky;
+}
+.center {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1rem;
+    /*padding-left: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    /*paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    position: relative;
+}
+.left {}
+.right {}
+.top {
+    /*paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    /*paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+}
+.topSticky {
+    background-color: inherit;
+    /*paddingLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    /*paddingRight: theme.overrides.MuiDrawer.paperAnchorLeft.width,*/
+    position: sticky;
+    z-index: 2;
+    /*...theme.fetchOverride(theme => theme.customized.topBottomLayout.topSticky),*/
+}

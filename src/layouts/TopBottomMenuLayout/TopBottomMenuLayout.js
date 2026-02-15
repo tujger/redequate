@@ -17,6 +17,7 @@ import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {refreshAll} from "../../controllers/Store";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
+import stylesTopBottomMenu from "./styles/TopBottomMenuLayout.module.css";
 
 const stylesCurrent = theme => ({
     indent: {
@@ -116,27 +117,27 @@ function TopBottomMenuLayout(props) {
         </Switch>}
         headerComponent={<headerComponent.type
             {...headerComponent.props}
-            menuComponent={<TopMenu items={menu} className={[classes.topmenu, classes.stickytop].join(" ")}/>}
+            menuComponent={<TopMenu items={menu} className={[stylesTopBottomMenu.topmenu, stylesTopBottomMenu.stickytop].join(" ")}/>}
             title={title}
             wide
         />}
-        menuClassName={classes.stickytop}
+        menuClassName={stylesTopBottomMenu.stickytop}
     >
         <MainContent classes={{
-            bottom: classes.bottom,
-            bottomSticky: classes.bottomSticky,
-            center: classes.center,
-            left: classes.left,
-            right: classes.right,
-            topSticky: classes.topSticky,
-            top: classes.top
+            bottom: stylesTopBottomMenu.bottom,
+            bottomSticky: stylesTopBottomMenu.bottomSticky,
+            center: stylesTopBottomMenu.center,
+            left: stylesTopBottomMenu.left,
+            right: stylesTopBottomMenu.right,
+            topSticky: stylesTopBottomMenu.topSticky,
+            top: stylesTopBottomMenu.top
         }}/>
-        <Grid container className={classes.footer} justify={"center"}>
+        <Grid container className={stylesTopBottomMenu.footer} justify={"center"}>
             <BottomMenu items={menu}/>
             <Grid
                 container
                 justify={"center"}
-                className={classes.version}
+                className={stylesTopBottomMenu.version}
                 onClick={event => {
                     if (!matchRole(Role.ADMIN, currentUserData)) return;
                     counter++;
@@ -152,7 +153,7 @@ function TopBottomMenuLayout(props) {
                 <Typography variant={"caption"}>{copyright}</Typography>
             </Grid>
         </Grid>
-        <div className={[classes.stickyBottom].join(" ")}>{null}</div>
+        <div className={[stylesTopBottomMenu.stickyBottom].join(" ")}>{null}</div>
         {footerComponent}
         <Snackbar/>
         <NotificationsSnackbar/>
@@ -169,4 +170,4 @@ TopBottomMenuLayout.propTypes = {
     title: PropTypes.any,
 };
 
-export default withStyles(stylesCurrent)(TopBottomMenuLayout);
+export default TopBottomMenuLayout;
