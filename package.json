@@ -1,13 +1,16 @@
 {
     "name": "redequate",
-    "version": "1.2.13",
+    "version": "1.2.14",
     "description": "Redequate - React PWA core by Edeqa",
     "author": "tujger",
     "license": "MIT",
     "repository": "tujger/redequate",
     "main": "core/index.js",
     "examples_main": "core/examples/index.js",
-    "engines": {"node": ">=8", "npm": ">=5"},
+    "engines": {
+        "node": ">=8",
+        "npm": ">=5"
+    },
     "scripts": {
         "test core": "cross-env CI=1 NODE_OPTIONS=--openssl-legacy-provider react-scripts test --env=jsdom",
         "test:watch core": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts test --env=jsdom",
@@ -106,5 +109,7 @@
         "rollup-plugin-postcss": "3.1.6",
         "rollup-plugin-url": "3.0.1"
     },
-    "files": ["core"]
+    "files": [
+        "core"
+    ]
 }
