@@ -97,7 +97,7 @@ const stylesCurrent = theme => ({
     }
 });
 
-const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 function EditProfile(props) {
     // eslint-disable-next-line react/prop-types

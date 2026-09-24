@@ -30,7 +30,7 @@ import notifySnackbar from "../controllers/notifySnackbar";
 import {styles} from "../controllers/Theme";
 import LoadingComponent from "../components/LoadingComponent";
 
-const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 function Login(props) {
     const {
