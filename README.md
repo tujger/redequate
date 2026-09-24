@@ -21,16 +21,12 @@ https://github.com/tujger/edeqa-pwa-react-demo
 https://stackoverflow.com/questions/56021112/react-hooks-in-react-library-giving-invalid-hook-call-error
 
 
-Below are the steps I followed :
-1. In Your Library:
+When developing the demo against this local package, React and React DOM must resolve to the same physical packages. From the demo directory, run:
 
-        cd node_modules/react && npm link && cd ../react-dom && npm link && cd .. && cd ..
+        npm run relink
 
-2. In Your Application:
+This links the demo directly to `react` and `react-dom` from this package's `node_modules`, so both projects use the same React instances. Restart the development server after relinking.
 
-        npm link react && npm link react-dom
-
-3. Stop your dev-server and do `npm start` again.
 
 
 If `No Xcode or CLT version detected!` happens:

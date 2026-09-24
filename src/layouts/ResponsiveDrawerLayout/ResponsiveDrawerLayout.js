@@ -24,7 +24,7 @@ import {refreshAll} from "../../controllers/Store";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
 
-const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 let onpopstateBackup;
 

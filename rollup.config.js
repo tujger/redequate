@@ -1,16 +1,16 @@
-import babel from 'rollup-plugin-babel'
-import commonjs from 'rollup-plugin-commonjs'
-import external from 'rollup-plugin-peer-deps-external'
-import postcss from 'rollup-plugin-postcss'
-import resolve from 'rollup-plugin-node-resolve'
-import url from 'rollup-plugin-url'
-import svgr from '@svgr/rollup'
-import del from 'rollup-plugin-delete'
-import json from '@rollup/plugin-json'
+const babel = require('rollup-plugin-babel')
+const commonjs = require('rollup-plugin-commonjs')
+const external = require('rollup-plugin-peer-deps-external')
+const postcss = require('rollup-plugin-postcss')
+const resolve = require('rollup-plugin-node-resolve')
+const url = require('rollup-plugin-url')
+const svgr = require('@svgr/rollup').default
+const del = require('rollup-plugin-delete')
+const json = require('@rollup/plugin-json')
 
-import pkg from './package.json'
+const pkg = require('./package.json')
 
-export default [
+module.exports = [
     {
         inlineDynamicImports: true,
         input: 'src/index.js',
@@ -34,9 +34,20 @@ export default [
                 modules: true,
             }),
             url(),
+            babel({
+                include: '**/src/**',
+            }),
             svgr(),
-            babel(),
             resolve(),
+            babel({
+                include: '**/node_modules/react-ios-pwa-prompt/**',
+                babelrc: false,
+                presets: ['@babel/preset-env'],
+                plugins: [
+                    '@babel/plugin-proposal-nullish-coalescing-operator',
+                    '@babel/plugin-proposal-optional-chaining',
+                ],
+            }),
             commonjs(),
             json(),
         ]
@@ -141,9 +152,23 @@ export default [
         ],
         plugins: [
             external(),
+            postcss({
+                modules: true,
+            }),
             url(),
-            babel(),
+            babel({
+                include: '**/src/**',
+            }),
             resolve(),
+            babel({
+                include: '**/node_modules/react-ios-pwa-prompt/**',
+                babelrc: false,
+                presets: ['@babel/preset-env'],
+                plugins: [
+                    '@babel/plugin-proposal-nullish-coalescing-operator',
+                    '@babel/plugin-proposal-optional-chaining',
+                ],
+            }),
             commonjs(),
             json(),
         ]
