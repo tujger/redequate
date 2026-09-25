@@ -3,7 +3,7 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import "../../themes/Base.module.css";
-import postStyles from "../../styles/PostComponent.module.css";
+import postStyles from "./styles/PostComponent.module.css";
 import PostCard from "./PostCard";
 import RepliesTree from "./RepliesTree";
 import {cacheDatas, usePages} from "../../controllers/General";
@@ -88,14 +88,14 @@ const PostComponent = (props) => {
         type,
     }
 
-    return <>
+    return <div className={classes.root}>
         {!onlyReplies && <PostCard key={random} {...inheritProps}/>}
         <RepliesTree
             {...inheritProps}
             key={highlight}
             postId={postData.id}
         />
-    </>
+    </div>
 }
 
 export default PostComponent;

@@ -5,7 +5,7 @@ export default ({classes, disableClick, handleClickPost, children}) => {
     return disableClick
         ? <>{children}</>
         : <CardActionArea
-            className={classes.root}
+            className={classes.wrapper}
             component={"div"}
             onClick={handleClickPost}
         >

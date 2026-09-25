@@ -5,7 +5,7 @@ import Lightbox from "react-image-lightbox";
 import "react-image-lightbox/style.css";
 import {useWindowData} from "../../controllers/General";
 import ScrollSnapComponent from "../ScrollSnapComponent";
-import postStyles from "../../styles/PostComponent.module.css";
+import postStyles from "./styles/PostComponent.module.css";
 
 const replaceCommas = symbol => {
     if (symbol === "(") return "%28";

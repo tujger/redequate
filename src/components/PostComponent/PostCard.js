@@ -1,11 +1,15 @@
 import React from "react";
-import Hidden from "@material-ui/core/Hidden";
 import PostCardLayoutNarrow from "./PostCardLayoutNarrow";
 import PostCardLayoutWide from "./PostCardLayoutWide";
 import ReplyCardLayoutNarrow from "./ReplyCardLayoutNarrow";
+import {useWindowData} from "../../controllers/General";
 
 export default (props) => {
     const {level, postData, highlight} = props;
+    const windowData = useWindowData();
+    const isNarrow = windowData && windowData.isNarrow
+        ? windowData.isNarrow()
+        : typeof window !== "undefined" && window.innerWidth < 600;
 
     const ref = React.useRef();
     const [state, setState] = React.useState({});
@@ -40,16 +44,10 @@ export default (props) => {
         ref,
     }
 
-    // return React.useMemo(() => {
-    return <>
-        <Hidden mdUp>
-            {level > 0
-                ? <ReplyCardLayoutNarrow {...inheritProps}/>
-                : <PostCardLayoutNarrow {...inheritProps}/>}
-        </Hidden>
-        <Hidden smDown>
-            <PostCardLayoutWide {...inheritProps}/>
-        </Hidden>
-    </>
+    return isNarrow
+        ? (level > 0
+            ? <ReplyCardLayoutNarrow {...inheritProps}/>
+            : <PostCardLayoutNarrow {...inheritProps}/>)
+        : <PostCardLayoutWide {...inheritProps}/>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }
