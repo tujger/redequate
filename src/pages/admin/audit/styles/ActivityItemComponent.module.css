@@ -9,11 +9,10 @@
     overflow: initial;
     position: relative;
     transition: 1s ease background-color;
-    width: 100%;
+}
 
-    &:hover {
-        background-color: rgba(0,0,0,0.05);
-    }
+.card:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .cardFlat {
@@ -23,13 +22,10 @@
 }
 
 .cardActionArea {
-    align-items: stretch;
     box-sizing: border-box;
     cursor: pointer;
-    display: flex;
     min-width: 0;
     overflow: hidden;
-    padding: calc(var(--theme-spacing) * 2);
     position: relative;
     text-align: left;
     width: 100%;
@@ -40,7 +36,6 @@
     outline-offset: -2px;
 }
 
-
 .cardHeader {
     align-items: flex-start;
     box-sizing: border-box;
@@ -49,31 +44,17 @@
     padding: calc(var(--theme-spacing) * 2);
 }
 
-.avatar {
+.avatarWrapper {
+    flex: 0 0 auto;
+    margin-right: calc(var(--theme-spacing) * 1.5);
+}
+
+.avatarSmall {
     box-sizing: border-box;
     color: lightgray;
-    height: calc(var(--theme-spacing) * 7);
-    margin-right: calc(var(--theme-spacing) * 2);
+    height: calc(var(--theme-spacing) * 5);
     text-decoration: none;
-    width: calc(var(--theme-spacing) * 7);
-}
-
-.admin {
-    border-color: #00ff00;
-    border-style: solid;
-    border-width: 2px;
-}
-
-.disabled {
-    border-color: #ff0000;
-    border-style: solid;
-    border-width: 2px;
-}
-
-.notVerified {
-    border-color: #ffff00;
-    border-style: solid;
-    border-width: 2px;
+    width: calc(var(--theme-spacing) * 5);
 }
 
 .cardContent {
@@ -91,12 +72,17 @@
 
 .userName {
     color: var(--theme-color-highlight);
+    cursor: pointer;
     font-weight: bolder;
     letter-spacing: var(--theme-letter-spacing);
-    margin-right: calc(var(--theme-spacing) * .5);
+    margin-right: calc(var(--theme-spacing) * 0.5);
     min-width: 0;
     overflow-wrap: anywhere;
     text-decoration: none;
+}
+
+.userName:hover {
+    text-decoration: underline;
 }
 
 .date {
@@ -107,16 +93,46 @@
     white-space: nowrap;
 }
 
+.details {
+    min-width: 0;
+}
+
+.typeRow {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: var(--theme-spacing);
+    min-width: 0;
+}
+
+.typeRow:hover {
+    color: var(--theme-color-highlight);
+}
+
+.typeIcon {
+    flex: 0 0 auto;
+}
+
 .subheader {
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     word-wrap: break-word;
 }
 
-.cardAction {
-    align-self: flex-start;
-    flex: 0 0 auto;
-    margin-left: calc(var(--theme-spacing) * 2);
+.contextTitle {
+    color: var(--theme-color-secondary);
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    margin: calc(var(--theme-spacing) * 2) 0 var(--theme-spacing);
 }
+
+.contextRow {
+    align-items: baseline;
+    display: flex;
+    gap: var(--theme-spacing);
+    margin-bottom: var(--theme-spacing);
+}
+
 
 /* Compatibility keys used by ItemPlaceholderComponent. */
 .cardHeaderWithLabel {
@@ -132,20 +148,16 @@
     flex: 0 0 auto;
 }
 
+.avatar {
+    box-sizing: border-box;
+    color: lightgray;
+    height: calc(var(--theme-spacing) * 7);
+    text-decoration: none;
+    width: calc(var(--theme-spacing) * 7);
+}
+
 @media (max-width: 599px) {
-    .card {
-        margin-bottom: calc(var(--theme-spacing) * 1.5);
-    }
-
-    .userName {
-        flex: 1 1 auto;
-    }
-
     .date {
         font-size: calc(var(--theme-spacing) * 1.5);
-    }
-
-    .cardAction {
-        margin-left: var(--theme-spacing);
     }
 }

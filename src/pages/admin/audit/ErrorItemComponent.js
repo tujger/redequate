@@ -1,12 +1,6 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import IconButton from "@material-ui/core/IconButton";
-import withStyles from "@material-ui/styles/withStyles";
-import {useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
+import {useDispatch} from "react-redux";
 import {UserData} from "../../../controllers/UserData";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
@@ -15,17 +9,29 @@ import ConfirmComponent from "../../../components/ConfirmComponent";
 import {toDateString} from "../../../controllers/DateFormat";
 import {fetchCallable} from "../../../controllers/Firebase";
 import ProgressView from "../../../components/ProgressView";
-import {stylesList} from "../../../controllers/Theme";
 import notifySnackbar from "../../../controllers/notifySnackbar";
+import baseStyles from "../../../themes/Base.module.css";
+import errorStyles from "./styles/ErrorItemComponent.module.css";
 
-function ErrorItemComponent(props) {
-    const {data, classes, skeleton, label, onUserClick} = props;
+// eslint-disable-next-line react/prop-types
+function ErrorItemComponent({data, classes: givenClasses, skeleton, label, onUserClick}) {
     const dispatch = useDispatch();
     const firebase = useFirebase();
+    const classes = {...baseStyles, ...errorStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
     const {alert, userData, removed} = state;
 
-    const handleClick = (event) => onUserClick(event, userData.id);
+    const handleClick = event => onUserClick(event, userData.id);
+
+    const handleCardClick = () => {
+        setState({...state, alert: true});
+    };
+
+    const handleKeyDown = event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        handleCardClick();
+    };
 
     const handleConfirm = () => {
         dispatch(ProgressView.SHOW);
@@ -68,43 +74,51 @@ function ErrorItemComponent(props) {
     }, [])
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>
-    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>;
+    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
 
-    return <Card className={[classes.card, classes.cardFlat].join(" ")}>
-        <CardActionArea
-            className={classes.root}
-            onClick={() => {
-                setState({...state, alert: true});
-            }}>
-            <CardHeader
-                action={<IconButton component={"div"} onClick={handleRemove}>
-                    <ClearIcon/>
-                </IconButton>}
-                avatar={<div onClick={handleClick}>
-                    <AvatarView
-                        image={userData.image}
-                        initials={userData.name}
-                        onclick={(event) => onUserClick(event, userData.id)}
-                        verified={true}
-                    />
-                </div>}
-                classes={{content: classes.cardContent}}
-                className={[classes.cardHeader, classes.post].join(" ")}
-                subheader={<Grid container>
-                    {(JSON.stringify(data.value.error) || "").substr(0, 100)}
-                </Grid>}
-                title={<Grid container>
-                    <Grid item className={classes.userName}>
-                        <div onClickCapture={handleClick}>
-                            {userData.name}
-                        </div>
-                    </Grid>
-                    <Grid item className={classes.date}>
+    return <div
+        className={[classes.card, classes.cardFlat, classes.cardActionArea, baseStyles.ripple].join(" ")}
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        role='button'
+        tabIndex={0}
+    >
+        <div className={classes.cardHeader}>
+            <div className={classes.avatarWrapper} onClick={handleClick}>
+                <AvatarView
+                    className={classes.avatar}
+                    image={userData.image}
+                    initials={userData.name}
+                    onclick={event => onUserClick(event, userData.id)}
+                    verified={true}
+                />
+            </div>
+            <div className={classes.cardContent}>
+                <div className={classes.titleRow}>
+                    <div className={classes.userName} onClickCapture={handleClick}>
+                        {userData.name}
+                    </div>
+                    <div className={classes.date}>
                         {toDateString(data.value.timestamp)}
-                    </Grid></Grid>}
-            />
-        </CardActionArea>
+                    </div>
+                </div>
+                <div className={classes.subheader}>
+                    {(JSON.stringify(data.value.error) || "").substr(0, 100)}
+                </div>
+            </div>
+            <button
+                aria-label='Remove error'
+                className={classes.removeButton}
+                onClick={event => {
+                    event.stopPropagation();
+                    handleRemove();
+                }}
+                type='button'
+            >
+                <ClearIcon/>
+            </button>
+        </div>
         {alert && <ConfirmComponent
             confirmLabel={"Try to fix"}
             onCancel={() => setState({...state, alert: false})}
@@ -117,7 +131,7 @@ function ErrorItemComponent(props) {
                     : data.value.error
             }</pre>
         </ConfirmComponent>}
-    </Card>
+    </div>
 }
 
-export default withStyles(stylesList)(ErrorItemComponent);
+export default ErrorItemComponent;

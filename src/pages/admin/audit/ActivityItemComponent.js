@@ -1,30 +1,36 @@
-import React from "react";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import Card from "@material-ui/core/Card";
-import Typography from "@material-ui/core/Typography";
-import CardHeader from "@material-ui/core/CardHeader";
-import withStyles from "@material-ui/styles/withStyles";
 import TypeIcon from "@material-ui/icons/ArrowRight";
+import React from "react";
 import Linkify from "react-linkify";
 import {useHistory} from "react-router-dom";
-import {UserData} from "../../../controllers/UserData";
-import {cacheDatas, usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
-import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import ConfirmComponent from "../../../components/ConfirmComponent";
+import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import {toDateString} from "../../../controllers/DateFormat";
-import {stylesList} from "../../../controllers/Theme";
+import {cacheDatas, usePages} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
+import {UserData} from "../../../controllers/UserData";
+import baseStyles from "../../../themes/Base.module.css";
+import activityStyles from "./styles/ActivityItemComponent.module.css";
 
-function ActivityItemComponent(props) {
-    const {data, classes, skeleton, label, onItemClick} = props;
+// eslint-disable-next-line react/prop-types
+function ActivityItemComponent({data, classes: givenClasses, skeleton, label, onItemClick}) {
     const history = useHistory();
     const pages = usePages();
+    const classes = {...baseStyles, ...activityStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
     const {alert, detailTimestamp, userData, removed, details, path, timestamp, type, userDatas = []} = state;
 
-    const handleUserClick = uid => (event) => onItemClick("uid")(event, uid);
+    const handleUserClick = uid => event => onItemClick("uid")(event, uid);
+
+    const handleCardClick = () => {
+        setState({...state, alert: true});
+    };
+
+    const handleKeyDown = event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        handleCardClick();
+    };
 
     React.useEffect(() => {
         let isMounted = true;
@@ -119,47 +125,45 @@ function ActivityItemComponent(props) {
     }, [data])
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>
-    if (skeleton || !type) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>
+    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>;
+    if (skeleton || !type) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
 
-    return <Card className={[classes.card, classes.cardFlat].join(" ")}>
-        <CardActionArea
-            className={classes.root}
-            onClick={() => {
-                setState({...state, alert: true});
-            }}>
-            <CardHeader
-                avatar={<div onClick={handleUserClick(userData.id)}>
-                    <AvatarView
-                        className={classes.avatarSmall}
-                        image={userData.image}
-                        initials={userData.name}
-                        verified={true}
-                    />
-                </div>}
-                classes={{content: classes.cardContent}}
-                className={[classes.cardHeader, classes.post].join(" ")}
-                subheader={<Grid container>
-                    <Grid container onClick={event => onItemClick("type")(event, type)}>
-                        <TypeIcon/>
-                        {type}
-                    </Grid>
-                    <Grid container>
-                        {(JSON.stringify(details) || "").substr(0, 100)}
-                    </Grid>
-                </Grid>}
-                title={<Grid container>
-                    <Grid item className={classes.userName}>
-                        <div onClickCapture={handleUserClick(userData.id)}>
-                            {userData.name}
-                        </div>
-                    </Grid>
-                    <Grid item className={classes.date}>
+    return <div
+        className={[classes.card, classes.cardFlat, classes.cardActionArea, baseStyles.ripple].join(" ")}
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        role='button'
+        tabIndex={0}
+    >
+        <div className={classes.cardHeader}>
+            <div className={classes.avatarWrapper} onClick={handleUserClick(userData.id)}>
+                <AvatarView
+                    className={classes.avatarSmall}
+                    image={userData.image}
+                    initials={userData.name}
+                    verified={true}
+                />
+            </div>
+            <div className={classes.cardContent}>
+                <div className={classes.titleRow}>
+                    <div className={classes.userName} onClickCapture={handleUserClick(userData.id)}>
+                        {userData.name}
+                    </div>
+                    <div className={classes.date}>
                         {toDateString(timestamp)}
-                    </Grid>
-                </Grid>}
-            />
-        </CardActionArea>
+                    </div>
+                </div>
+                <div className={classes.details}>
+                    <div className={classes.typeRow} onClick={event => onItemClick("type")(event, type)}>
+                        <TypeIcon className={classes.typeIcon}/>
+                        <span>{type}</span>
+                    </div>
+                    <div className={classes.subheader}>
+                        {(JSON.stringify(details) || "").substr(0, 100)}
+                    </div>
+                </div>
+            </div>
+        </div>
         {alert && <ConfirmComponent
             cancelLabel={"Close"}
             confirmLabel={null}
@@ -170,13 +174,12 @@ function ActivityItemComponent(props) {
                 typeof details === "object"
                     ? JSON.stringify(details, null, "   ")
                     : details
-            }</pre>
-            </Linkify>
-            <Typography variant={"h6"}>Context</Typography>
-            <Grid container spacing={1}><Grid item>Activity: {type}</Grid></Grid>
-            {userDatas && userDatas.map((item, index) => <Grid container key={index} spacing={1}>
-                <Grid item>{item.key}:</Grid>
-                <Grid item className={classes.userName} onClickCapture={evt => {
+            }</pre></Linkify>
+            <h6 className={classes.contextTitle}>Context</h6>
+            <div className={classes.contextRow}>Activity: {type}</div>
+            {userDatas && userDatas.map((item, index) => <div className={classes.contextRow} key={index}>
+                <span>{item.key}:</span>
+                <span className={classes.userName} onClickCapture={evt => {
                     evt && evt.stopPropagation();
                     if (history.unblock) {
                         history.unblock();
@@ -185,11 +188,11 @@ function ActivityItemComponent(props) {
                     history.push(pages.user.route + item.userData.id)
                 }}>
                     {item.userData.name}
-                </Grid>
-            </Grid>)}
-            {path && <Grid container spacing={1}>
-                <Grid item>Post:</Grid>
-                <Grid item className={classes.userName} onClickCapture={evt => {
+                </span>
+            </div>)}
+            {path && <div className={classes.contextRow}>
+                <span>Post:</span>
+                <span className={classes.userName} onClickCapture={evt => {
                     evt && evt.stopPropagation();
                     if (history.unblock) {
                         history.unblock();
@@ -198,11 +201,11 @@ function ActivityItemComponent(props) {
                     history.push(pages.post.route + path)
                 }}>
                     open if exists
-                </Grid>
-            </Grid>}
-            {detailTimestamp && <Grid container spacing={1}><Grid item>Timestamp: {detailTimestamp}</Grid></Grid>}
+                </span>
+            </div>}
+            {detailTimestamp && <div className={classes.contextRow}>Timestamp: {detailTimestamp}</div>}
         </ConfirmComponent>}
-    </Card>
+    </div>
 }
 
-export default withStyles(stylesList)(ActivityItemComponent);
+export default ActivityItemComponent;

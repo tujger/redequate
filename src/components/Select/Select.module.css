@@ -1,0 +1,58 @@
+.select {
+    color: var(--theme-color-text);
+    font: inherit;
+    min-width: calc(var(--theme-spacing) * 15);
+}
+
+.select :global(.MuiSelect-select) {
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 3.5) var(--theme-spacing) calc(var(--theme-spacing) * 1.5);
+}
+
+.select :global(.MuiSelect-icon) {
+    color: var(--theme-color-secondary);
+    right: var(--theme-spacing);
+}
+
+.select :global(.MuiInput-underline:before) {
+    border-bottom-color: rgb(0 0 0 / 24%);
+}
+
+.select :global(.MuiInput-underline:hover:not(.Mui-disabled):before) {
+    border-bottom-color: var(--theme-color-highlight);
+}
+
+.select :global(.MuiInput-underline:after) {
+    border-bottom-color: var(--theme-color-highlight);
+}
+
+.menu {
+    background-color: var(--theme-color-paper);
+    color: var(--theme-color-text);
+    margin-top: var(--theme-spacing);
+    min-width: calc(var(--theme-spacing) * 18);
+}
+
+.menuList {
+    background-color: var(--theme-color-paper);
+    padding: var(--theme-spacing) 0;
+}
+
+.menuItem {
+    color: var(--theme-color-text);
+    font: inherit;
+    min-height: calc(var(--theme-spacing) * 5);
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 1.5);
+}
+
+.menuItem:hover {
+    background-color: rgb(63 81 181 / 10%);
+}
+
+.menuItem :global(.Mui-selected),
+.menuItem:global(.Mui-selected) {
+    background-color: rgb(63 81 181 / 16%);
+}
+
+.menuItem:global(.Mui-selected:hover) {
+    background-color: rgb(63 81 181 / 24%);
+}

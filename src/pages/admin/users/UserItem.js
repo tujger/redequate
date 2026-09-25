@@ -4,6 +4,7 @@ import {usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import {toDateString} from "../../../controllers/DateFormat";
+import baseStyles from "../../../themes/Base.module.css";
 import userStyles from "./styles/UserItem.module.css";
 
 // eslint-disable-next-line react/prop-types
@@ -11,8 +12,6 @@ function UserItem({data, classes: givenClasses, skeleton, label}) {
     const history = useHistory();
     const pages = usePages();
     const classes = {...userStyles, ...(givenClasses || {})};
-    const rippleId = React.useRef(0);
-    const [ripples, setRipples] = React.useState([]);
     const {value: userData, _date} = data || {};
 
     if (label) {
@@ -27,31 +26,18 @@ function UserItem({data, classes: givenClasses, skeleton, label}) {
         history.push(pages.user.route + userData.id);
     };
 
-    const createRipple = event => {
-        const target = event.currentTarget;
-        const bounds = target.getBoundingClientRect();
-        const x = event.clientX === undefined ? bounds.width / 2 : event.clientX - bounds.left;
-        const y = event.clientY === undefined ? bounds.height / 2 : event.clientY - bounds.top;
-        const size = Math.max(bounds.width, bounds.height) * 2;
-        const id = rippleId.current++;
-
-        setRipples(current => [...current, {id, x, y, size}]);
-    };
-
     const handleKeyDown = event => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        createRipple(event);
         handleClick();
     };
 
     return <div
         aria-label={userData.email}
-        className={[classes.card, classes.cardFlat, classes.cardActionArea].join(" ")}
+        className={[classes.card, classes.cardFlat, classes.cardActionArea, baseStyles.ripple].join(" ")}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        onPointerDown={createRipple}
-        role="button"
+        role='button'
         tabIndex={0}
     >
         <AvatarView
@@ -82,18 +68,6 @@ function UserItem({data, classes: givenClasses, skeleton, label}) {
         {userData.public && <div className={classes.cardAction}>
             {userData.public.provider}
         </div>}
-        <span className={classes.rippleContainer} aria-hidden="true">
-            {ripples.map(ripple => <span
-                className={classes.ripple}
-                key={ripple.id}
-                onAnimationEnd={() => setRipples(current => current.filter(item => item.id !== ripple.id))}
-                style={{
-                    "--ripple-size": `${ripple.size}px`,
-                    "--ripple-x": `${ripple.x}px`,
-                    "--ripple-y": `${ripple.y}px`,
-                }}
-            />)}
-        </span>
     </div>;
 }
 

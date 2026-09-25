@@ -9,11 +9,10 @@
     overflow: initial;
     position: relative;
     transition: 1s ease background-color;
-    width: 100%;
+}
 
-    &:hover {
-        background-color: rgba(0,0,0,0.05);
-    }
+.card:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .cardFlat {
@@ -23,13 +22,10 @@
 }
 
 .cardActionArea {
-    align-items: stretch;
     box-sizing: border-box;
     cursor: pointer;
-    display: flex;
     min-width: 0;
     overflow: hidden;
-    padding: calc(var(--theme-spacing) * 2);
     position: relative;
     text-align: left;
     width: 100%;
@@ -40,40 +36,26 @@
     outline-offset: -2px;
 }
 
-
 .cardHeader {
     align-items: flex-start;
     box-sizing: border-box;
     display: flex;
     min-width: 0;
     padding: calc(var(--theme-spacing) * 2);
+    position: relative;
+}
+
+.avatarWrapper {
+    flex: 0 0 auto;
+    margin-right: calc(var(--theme-spacing) * 1.5);
 }
 
 .avatar {
     box-sizing: border-box;
     color: lightgray;
-    height: calc(var(--theme-spacing) * 7);
-    margin-right: calc(var(--theme-spacing) * 2);
+    height: calc(var(--theme-spacing) * 5);
     text-decoration: none;
-    width: calc(var(--theme-spacing) * 7);
-}
-
-.admin {
-    border-color: #00ff00;
-    border-style: solid;
-    border-width: 2px;
-}
-
-.disabled {
-    border-color: #ff0000;
-    border-style: solid;
-    border-width: 2px;
-}
-
-.notVerified {
-    border-color: #ffff00;
-    border-style: solid;
-    border-width: 2px;
+    width: calc(var(--theme-spacing) * 5);
 }
 
 .cardContent {
@@ -93,7 +75,7 @@
     color: var(--theme-color-highlight);
     font-weight: bolder;
     letter-spacing: var(--theme-letter-spacing);
-    margin-right: calc(var(--theme-spacing) * .5);
+    margin-right: calc(var(--theme-spacing) * 0.5);
     min-width: 0;
     overflow-wrap: anywhere;
     text-decoration: none;
@@ -108,15 +90,38 @@
 }
 
 .subheader {
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     word-wrap: break-word;
 }
 
-.cardAction {
-    align-self: flex-start;
+.removeButton {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
     flex: 0 0 auto;
-    margin-left: calc(var(--theme-spacing) * 2);
+    font-size: 1.5rem;
+    height: calc(var(--theme-spacing) * 6);
+    justify-content: center;
+    line-height: 1;
+    margin: calc(var(--theme-spacing) * -1) calc(var(--theme-spacing) * -1) 0 0;
+    opacity: 0.7;
+    padding: 0;
+    width: calc(var(--theme-spacing) * 6);
 }
+
+.removeButton:hover,
+.removeButton:focus-visible {
+    opacity: 1;
+}
+
+.removeButton:focus-visible {
+    outline: 2px solid var(--theme-color-highlight);
+    outline-offset: -2px;
+}
+
 
 /* Compatibility keys used by ItemPlaceholderComponent. */
 .cardHeaderWithLabel {
@@ -133,19 +138,11 @@
 }
 
 @media (max-width: 599px) {
-    .card {
-        margin-bottom: calc(var(--theme-spacing) * 1.5);
-    }
-
-    .userName {
-        flex: 1 1 auto;
-    }
-
     .date {
         font-size: calc(var(--theme-spacing) * 1.5);
     }
 
-    .cardAction {
-        margin-left: var(--theme-spacing);
+    .removeButton {
+        margin-right: calc(var(--theme-spacing) * -0.5);
     }
 }

@@ -1,0 +1,44 @@
+.topSticky {
+    width: 100%;
+}
+
+.tabButton {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+    box-sizing: border-box;
+    color: var(--theme-color-secondary);
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: var(--theme-letter-spacing);
+    min-height: calc(var(--theme-spacing) * 5);
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 2);
+    position: relative;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tabButton:hover {
+    background-color: rgb(0 0 0 / 6%);
+    color: var(--theme-color-text);
+}
+
+.tabButton:focus-visible {
+    outline: 2px solid var(--theme-color-highlight);
+    outline-offset: -2px;
+}
+
+.tabButtonSelected {
+    border-bottom: 2px solid;
+    color: var(--theme-color-highlight);
+}
+
+.tabButtonSelected::after {
+    background-color: var(--theme-color-highlight);
+    bottom: 0;
+    content: "";
+    height: 2px;
+    left: 0;
+    position: absolute;
+    right: 0;
+}

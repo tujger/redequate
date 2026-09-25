@@ -1,0 +1,49 @@
+.chip.chip {
+    background-color: var(--theme-color-paper);
+    border-radius: calc(var(--theme-spacing) * 2);
+    box-shadow: var(--theme-card-shadow);
+    color: var(--theme-color-text);
+    font: inherit;
+    margin: 0;
+}
+
+.chip :global(.MuiChip-label) {
+    overflow: hidden;
+    padding-left: var(--theme-spacing);
+    padding-right: var(--theme-spacing);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chip :global(.MuiChip-avatar) {
+    height: calc(var(--theme-spacing) * 3);
+    margin-left: var(--theme-spacing);
+    width: calc(var(--theme-spacing) * 3);
+}
+
+.chip :global(.MuiChip-icon) {
+    color: inherit;
+    height: calc(var(--theme-spacing) * 2.5);
+    margin-left: var(--theme-spacing);
+    margin-right: 0;
+    width: calc(var(--theme-spacing) * 2.5);
+}
+
+.chip :global(.MuiChip-deleteIcon) {
+    color: inherit;
+    margin-right: var(--theme-spacing);
+}
+
+.chip:hover {
+    box-shadow: var(--theme-card-shadow);
+}
+
+.chip:global(.MuiChip-colorSecondary) {
+    background-color: var(--theme-color-secondary);
+    color: var(--theme-color-paper);
+}
+
+.chip:global(.MuiChip-colorSecondary) :global(.MuiChip-deleteIcon),
+.chip:global(.MuiChip-colorSecondary) :global(.MuiChip-icon) {
+    color: inherit;
+}

@@ -4,19 +4,11 @@ import RefreshIcon from "@material-ui/icons/Refresh";
 import StartDateIcon from "@material-ui/icons/Today";
 import EndDateIcon from "@material-ui/icons/Event";
 import SortIcon from "@material-ui/icons/Sort";
-import IconButton from "@material-ui/core/IconButton";
-import Popover from "@material-ui/core/Popover";
-import Select from "@material-ui/core/Select";
-import Chip from "@material-ui/core/Chip";
-import Grid from "@material-ui/core/Grid";
-import MenuItem from "@material-ui/core/MenuItem";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useWindowData} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
-import withStyles from "@material-ui/styles/withStyles";
-import {styles} from "../../../controllers/Theme";
 import {auditReducer} from "./auditReducer";
 import ActivityItemComponent from "./ActivityItemComponent";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
@@ -25,15 +17,19 @@ import MentionedSelectComponent from "../../../components/MentionedSelectCompone
 import {mentionUsers} from "../../../controllers/mentionTypes";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
+import activityStyles from "./styles/Activity.module.css";
+import Select from "../../../components/Select/Select";
+import Chip from "../../../components/Chip/Chip";
 
-const Activity = (props) => {
+const Activity = props => {
     const {
-        classes,
+        classes: givenClasses,
         activityMode = "all",
         activityFilterItem,
         activityFilter,
         activitySort = "asc"
     } = props;
+    const classes = {...activityStyles, ...(givenClasses || {})};
     const dispatch = useDispatch();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
@@ -67,7 +63,7 @@ const Activity = (props) => {
         dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activitySort});
     }
 
-    const handleStartDate = (startDate) => {
+    const handleStartDate = startDate => {
         dispatch({type: lazyListComponentReducer.RESET});
         setState({
             ...state,
@@ -76,13 +72,24 @@ const Activity = (props) => {
         });
     };
 
-    const handleEndDate = (endDate) => {
+    const handleEndDate = endDate => {
         dispatch({type: lazyListComponentReducer.RESET});
         setState({
             ...state,
             endDate,
             endDateAnchor: null,
         });
+    };
+
+    const getDatePopoverStyle = anchor => {
+        if (!anchor || !anchor.getBoundingClientRect) {
+            return undefined;
+        }
+        const bounds = anchor.getBoundingClientRect();
+        return {
+            left: bounds.left,
+            top: bounds.bottom,
+        };
     };
 
     let itemTransform = item => item;
@@ -130,28 +137,49 @@ const Activity = (props) => {
         if (!activityFilterItem) return undefined;
         if (activityMode === "uid" && activityFilterItem === "0") return {name: "No user"};
         if (activityMode === "uid") return cacheDatas.get(activityFilterItem);
-        if (activityMode === "type") return {
-            image: null,
-            initials: activityFilterItem,
-            name: activityFilterItem
-        };
+        if (activityMode === "type") {
+            return {
+                image: null,
+                initials: activityFilterItem,
+                name: activityFilterItem
+            };
+        }
     })();
 
+    const clearFilteredItem = () => {
+        dispatch({
+            type: auditReducer.ACTIVITY,
+            activityMode,
+            activitySort
+        });
+        dispatch({type: lazyListComponentReducer.RESET});
+    };
+
+    const clearStartDate = () => {
+        dispatch({type: lazyListComponentReducer.RESET});
+        setState(state => ({...state, startDate: null}));
+    };
+
+    const clearEndDate = () => {
+        dispatch({type: lazyListComponentReducer.RESET});
+        setState(state => ({...state, endDate: null}));
+    };
+
     return <>
-        <Grid container className={classes.topSticky}>
-            <Grid container alignItems={"center"}>
-                <Grid item>
+        <div className={classes.topSticky}>
+            <div className={classes.toolbarRow}>
+                <div className={classes.modeCell}>
                     <Select
-                        color={"secondary"}
                         onChange={handleMode}
+                        options={[
+                            {label: "All", value: "all"},
+                            {label: "By type", value: "type"},
+                            {label: "By person", value: "uid"},
+                        ]}
                         value={activityMode}
-                    >
-                        <MenuItem value={"all"}>All</MenuItem>
-                        <MenuItem value={"type"}>By type</MenuItem>
-                        <MenuItem value={"uid"}>By person</MenuItem>
-                    </Select>
-                </Grid>
-                <Grid item xs>
+                    />
+                </div>
+                <div className={classes.filterCell}>
                     {activityMode === "uid" && !filteredItem && <MentionedSelectComponent
                         combobox
                         mention={{
@@ -169,7 +197,7 @@ const Activity = (props) => {
                     />}
                     {activityMode === "type" && !filteredItem && <MentionedSelectComponent
                         mention={{
-                            pagination: (start) => new Pagination({
+                            pagination: start => new Pagination({
                                 ref: "_activity/types",
                                 order: "asc",
                                 size: 100,
@@ -178,111 +206,108 @@ const Activity = (props) => {
                         }}
                         onChange={handleTypeSelect}
                     />}
-                </Grid>
-                {!windowData.isNarrow() && <Grid item>
-                    <IconButton
-                        aria-label={"start date"}
-                        children={<StartDateIcon/>}
-                        edge={"end"}
-                        onClick={(event) => setState(state => ({
+                </div>
+                {!windowData.isNarrow() && <div className={classes.dateButtons}>
+                    <button
+                        aria-label='start date'
+                        className={classes.iconButton}
+                        onClick={event => setState(state => ({
                             ...state,
-                            startDateAnchor: event.target
+                            startDateAnchor: event.currentTarget
                         }))}
-                    />
-                    &mdash;
-                    <IconButton
-                        aria-label={"end date"}
-                        children={<EndDateIcon/>}
-                        edge={"start"}
-                        onClick={(event) => setState(state => ({
+                        type='button'
+                    >
+                        <StartDateIcon/>
+                    </button>
+                    <span className={classes.separator}>&mdash;</span>
+                    <button
+                        aria-label='end date'
+                        className={classes.iconButton}
+                        onClick={event => setState(state => ({
                             ...state,
-                            endDateAnchor: event.target
+                            endDateAnchor: event.currentTarget
                         }))}
-                    />
-                </Grid>}
-                <Grid item><IconButton
-                    children={<SortIcon/>}
-                    className={"MuiButton-sort-" + activitySort}
+                        type='button'
+                    >
+                        <EndDateIcon/>
+                    </button>
+                </div>}
+                <button
+                    aria-label='Sort activity'
+                    className={[classes.iconButton, activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
                     onClick={handleSortClick}
-                /></Grid>
-                <Grid item>
-                    <IconButton
-                        children={<RefreshIcon/>}
-                        onClick={() => setState({...state, random: Math.random()})}
-                    />
-                </Grid>
-            </Grid>
-            <Grid container alignItems={"flex-start"}>
-                <Grid item xs>
+                    type='button'
+                >
+                    <SortIcon/>
+                </button>
+                <button
+                    aria-label='Refresh activity'
+                    className={classes.iconButton}
+                    onClick={() => setState({...state, random: Math.random()})}
+                    type='button'
+                >
+                    <RefreshIcon/>
+                </button>
+            </div>
+            <div className={classes.filterRow}>
+                <div className={classes.chips}>
                     {filteredItem && <Chip
                         avatar={<AvatarView
                             alt={"Avatar"}
-                            className={classes.avatarSmallest}
                             image={filteredItem.image}
                             initials={filteredItem.name}
                             verified={true}
                         />}
                         label={filteredItem.name}
-                        onDelete={() => {
-                            dispatch({
-                                type: auditReducer.ACTIVITY,
-                                activityMode,
-                                activitySort
-                            });
-                            dispatch({type: lazyListComponentReducer.RESET});
-                        }}
+                        onDelete={clearFilteredItem}
                     />}
                     {activityMode === "type" && !filteredItem && <Chip
-                        avatar={null}
-                        color={"secondary"}
-                        label={"Needs select type"}
+                        color='secondary'
+                        label='Needs select type'
                     />}
                     {activityMode === "uid" && !filteredItem && <Chip
-                        avatar={null}
-                        color={"secondary"}
-                        label={"Needs select person"}
+                        color='secondary'
+                        label='Needs select person'
                     />}
                     {startDate && <Chip
                         avatar={<StartDateIcon/>}
                         label={toDateString(startDate.toDate().getTime())}
-                        onDelete={() => {
-                            dispatch({type: lazyListComponentReducer.RESET});
-                            setState(state => ({...state, startDate: null}));
-                        }}
+                        onDelete={clearStartDate}
                     />}
                     {endDate && <Chip
                         avatar={<EndDateIcon/>}
                         label={toDateString(endDate.toDate().getTime())}
-                        onDelete={() => {
-                            dispatch({type: lazyListComponentReducer.RESET});
-                            setState(state => ({...state, endDate: null}));
-                        }}
+                        onDelete={clearEndDate}
                     />}
-                </Grid>
-                {windowData.isNarrow() && <Grid item>
-                    <IconButton
-                        aria-label={"start date"}
-                        children={<StartDateIcon/>}
-                        edge={"end"}
-                        onClick={(event) => setState(state => ({
+                </div>
+                {windowData.isNarrow() && <div className={classes.dateButtons}>
+                    <button
+                        aria-label='start date'
+                        className={classes.iconButton}
+                        onClick={event => setState(state => ({
                             ...state,
-                            startDateAnchor: event.target
+                            startDateAnchor: event.currentTarget
                         }))}
-                    />
-                    &mdash;
-                    <IconButton
-                        aria-label={"end date"}
-                        children={<EndDateIcon/>}
-                        edge={"start"}
-                        onClick={(event) => setState(state => ({
+                        type='button'
+                    >
+                        <StartDateIcon/>
+                    </button>
+                    <span className={classes.separator}>&mdash;</span>
+                    <button
+                        aria-label='end date'
+                        className={classes.iconButton}
+                        onClick={event => setState(state => ({
                             ...state,
-                            endDateAnchor: event.target
+                            endDateAnchor: event.currentTarget
                         }))}
-                    />
-                </Grid>}
-            </Grid>
-        </Grid>
-        <Grid container className={classes.center}>
+                        type='button'
+                    >
+                        <EndDateIcon/>
+                    </button>
+                </div>}
+            </div>
+        </div>
+        <div className={classes.center}>
             <LazyListComponent
                 key={random}
                 itemComponent={itemComponent}
@@ -291,25 +316,31 @@ const Activity = (props) => {
                 pagination={pagination}
                 placeholder={<ActivityItemComponent skeleton={true}/>}
             />
-        </Grid>
-        {startDateAnchor && <Popover anchorEl={startDateAnchor} open>
+        </div>
+        {startDateAnchor && <div
+            className={classes.datePopover}
+            style={getDatePopoverStyle(startDateAnchor)}
+        >
             <DateTimePicker
-                color={"secondary"}
+                color='secondary'
                 inline
-                label="Start date"
+                label='Start date'
                 onChange={handleStartDate}
                 date={startDate}
             />
-        </Popover>}
-        {endDateAnchor && <Popover anchorEl={endDateAnchor} open>
+        </div>}
+        {endDateAnchor && <div
+            className={classes.datePopover}
+            style={getDatePopoverStyle(endDateAnchor)}
+        >
             <DateTimePicker
-                color={"secondary"}
+                color='secondary'
                 inline
-                label="End date"
+                label='End date'
                 onChange={handleEndDate}
                 date={startDate}
             />
-        </Popover>}
+        </div>}
     </>
 };
 
@@ -320,4 +351,4 @@ const mapStateToProps = ({audit}) => ({
     activitySort: audit.activitySort,
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(Activity));
+export default connect(mapStateToProps)(Activity);

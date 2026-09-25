@@ -1,17 +1,17 @@
 import React from "react";
-import {withRouter} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import withStyles from "@material-ui/styles/withStyles";
 import {connect, useDispatch} from "react-redux";
-import Activity from "./Activity";
-import Errors from "./Errors";
-import {styles} from "../../../controllers/Theme";
-import {usePages, useWindowData} from "../../../controllers/General";
-import {auditReducer} from "./auditReducer";
+import {withRouter} from "react-router-dom";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../../../components/NavigationToolbar";
+import {usePages, useWindowData} from "../../../controllers/General";
+import Activity from "./Activity";
+import {auditReducer} from "./auditReducer";
+import Errors from "./Errors";
+import baseStyles from "../../../themes/Base.module.css";
+import auditStyles from "./styles/Audit.module.css";
 
-const Audit = (props) => {
+// eslint-disable-next-line react/prop-types
+const Audit = props => {
     const dispatch = useDispatch();
     const pages = usePages();
     const windowData = useWindowData();
@@ -20,9 +20,10 @@ const Audit = (props) => {
             <Errors/>,
             <Activity/>
         ],
-        classes,
+        classes: givenClasses,
         tabSelected,
     } = props;
+    const classes = {...baseStyles, ...auditStyles, ...(givenClasses || {})};
 
     const handleChange = tabSelected => () => {
         dispatch({type: auditReducer.SAVE, tabSelected});
@@ -54,17 +55,17 @@ const Audit = (props) => {
                 } catch (e) {
                     console.error(e);
                 }
-                return <Button
-                    children={label}
-                    className={[classes.tabButton, tabSelected === index ? classes.tabButtonSelected : ""].join(" ")}
-                    color={"default"}
+                return <button
+                    className={[classes.tabButton, tabSelected === index ? classes.tabButtonSelected : "", baseStyles.ripple].join(" ")}
                     key={index}
                     onClick={handleChange(index)}
-                    variant={"text"}
-                />
+                    type='button'
+                >
+                    {label}
+                </button>
             })}
         </NavigationToolbar>
-        <selected.type {...props} {...selected.props}/>
+        <selected.type {...props} {...selected.props} classes={classes}/>
     </>
 };
 
@@ -72,6 +73,4 @@ const mapStateToProps = ({audit}) => ({
     tabSelected: audit.tabSelected,
 });
 
-export default connect(mapStateToProps)(withRouter(withStyles((theme) => ({
-    ...styles(theme),
-}))(Audit)));
+export default connect(mapStateToProps)(withRouter(Audit));

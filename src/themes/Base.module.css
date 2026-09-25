@@ -24,3 +24,41 @@
     color: inherit;
     vertical-align: middle;
 }
+
+.ripple {
+    overflow: hidden;
+    position: relative;
+}
+
+.ripple::after {
+    background-color: rgb(0 0 0 / 18%);
+    border-radius: 50%;
+    content: "";
+    height: 0;
+    left: 50%;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 0;
+}
+
+.ripple:active::after {
+    animation: ripple 0.55s ease-out;
+    height: 200%;
+    opacity: 0.32;
+    width: 200%;
+}
+
+@keyframes ripple {
+    0% {
+        opacity: 0.32;
+        transform: translate(-50%, -50%) scale(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
