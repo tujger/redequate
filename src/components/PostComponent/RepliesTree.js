@@ -1,7 +1,6 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
 import {useHistory} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
 import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
@@ -13,37 +12,7 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import RotatingReplies from "./RotatingReplies";
 
-const stylesCurrent = theme => ({
-    indent: {},
-    sectionComment: {
-        "& $indent": {
-            [theme.breakpoints.up("md")]: {
-                width: theme.spacing(8.5)
-            },
-            [theme.breakpoints.down("sm")]: {
-                width: theme.spacing(6.5)
-            },
-        }
-    },
-    sectionReply: {
-        "& $indent": {
-            [theme.breakpoints.up("md")]: {
-                width: theme.spacing(4)
-            },
-            [theme.breakpoints.down("sm")]: {},
-        }
-    },
-    textSmall: {
-        display: "inline-block",
-        fontSize: "90%",
-    },
-    suggestionName: {
-        color: theme.palette.secondary.main,
-        fontWeight: "bold",
-    }
-});
-
-export default withStyles(stylesCurrent)((props) => {
+export default (props) => {
     const {allowedExtras, level, postId, classes = {}, type, expand, onChange, expanded: givenExpanded} = props;
     const currentUserData = useCurrentUserData();
     const history = useHistory();
@@ -226,4 +195,4 @@ export default withStyles(stylesCurrent)((props) => {
         </Grid>
     </>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
-})
+}

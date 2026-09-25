@@ -1,0 +1,6 @@
+.root {
+    --theme-color-paper: #ffffff;
+    --theme-color-background: #efefef;
+    --theme-color-text: #101010;
+    --theme-color-muted: #888888;
+}

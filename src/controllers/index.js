@@ -9,6 +9,7 @@ export {default as PagesPagination} from "./PagesPagination";
 export * from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
 export {colors, createTheme, styles, stylesList} from "./Theme";
+export {default as CssThemeProvider, useCssTheme} from "../themes/ThemeProvider";
 export {
     sendInvitationEmail,
     sendVerificationEmail,

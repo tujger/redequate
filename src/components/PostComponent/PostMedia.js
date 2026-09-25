@@ -1,19 +1,11 @@
 import React from "react";
-import makeStyles from "@material-ui/core/styles/makeStyles";
 import {useHistory} from "react-router-dom";
 import SmartGallery from "react-smart-gallery";
 import Lightbox from "react-image-lightbox";
 import "react-image-lightbox/style.css";
 import {useWindowData} from "../../controllers/General";
 import ScrollSnapComponent from "../ScrollSnapComponent";
-
-const stylesCurrent = makeStyles(theme => ({
-    _postMediaLightboxPortal: {
-        backgroundColor: "transparent",
-        position: "fixed",
-        zIndex: 1100,
-    },
-}));
+import postStyles from "../../styles/PostComponent.module.css";
 
 const replaceCommas = symbol => {
     if (symbol === "(") return "%28";
@@ -25,7 +17,6 @@ export default (props) => {
     const {images: imagesGiven} = props;
     const history = useHistory();
     const ref = React.useRef({});
-    const classesCurrent = stylesCurrent();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {selected = null, gallery} = state;
@@ -114,7 +105,7 @@ export default (props) => {
                 onMovePrevRequest={() => {
                     setState(state => ({...state, selected: (selected + images.length - 1) % images.length}))
                 }}
-                reactModalProps={{portalClassName: classesCurrent._postMediaLightboxPortal}}
+                reactModalProps={{portalClassName: postStyles.postMediaLightboxPortal}}
             />
         </div>}
     </>

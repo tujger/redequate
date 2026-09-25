@@ -1,0 +1,8 @@
+.root {
+    --theme-color-paper: #242424;
+    --theme-color-background: #121212;
+    --theme-color-text: #f2f2f2;
+    --theme-color-muted: #b7b7b7;
+    --theme-color-link: #9ab5ff;
+    --theme-card-shadow: 0 5px 5px -3px rgb(0 0 0 / 45%), 0 8px 10px 1px rgb(0 0 0 / 35%), 0 3px 14px 2px rgb(0 0 0 / 30%);
+}

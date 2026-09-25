@@ -1,0 +1,18 @@
+:global(html) {
+    --theme-spacing: 8px;
+    --theme-font-size: 14px;
+    --theme-letter-spacing: 0.01071em;
+    --theme-color-primary: #4767b6;
+    --theme-color-secondary: #878b97;
+    --theme-color-paper: #ffffff;
+    --theme-color-background: #efefef;
+    --theme-color-text: #101010;
+    --theme-color-muted: #888888;
+    --theme-color-link: #3f51b5;
+    --theme-card-shadow: 0 5px 5px -3px rgb(0 0 0 / 20%), 0 8px 10px 1px rgb(0 0 0 / 14%), 0 3px 14px 2px rgb(0 0 0 / 12%);
+}
+
+.root {
+    color: var(--theme-color-text);
+    font-size: var(--theme-font-size);
+}

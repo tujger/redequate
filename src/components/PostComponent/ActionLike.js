@@ -8,7 +8,6 @@ import MinusIcon from "@material-ui/icons/Remove";
 import RestoreIcon from "@material-ui/icons/Replay";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
-import useTheme from "@material-ui/styles/useTheme";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
 import {delay, usePages} from "../../controllers/General";
@@ -25,7 +24,6 @@ export default ({postData, classes}) => {
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
-    const theme = useTheme();
     const currentUserData = useCurrentUserData();
     const {t} = useTranslation();
 
@@ -166,7 +164,7 @@ export default ({postData, classes}) => {
             component={"div"}
             onClick={disabled ? undefined : handleClickExtra("like")}
             size={"small"}
-            style={postData.extra("like") ? {color: theme.palette.secondary.main} : undefined}
+            style={postData.extra("like") ? {color: "var(--theme-color-secondary)"} : undefined}
             title={t("Common.Like")}
         >
             <CounterComponent

@@ -2,7 +2,6 @@ import React from "react";
 import Grid from "@material-ui/core/Grid";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
 import {cacheDatas, usePages} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
 import AvatarView from "../AvatarView";
@@ -12,43 +11,7 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 
-const stylesCurrent = theme => ({
-    entering: {},
-    leaving: {},
-    root: {
-        height: theme.spacing(4),
-        marginBottom: theme.spacing(1.5),
-        marginTop: theme.spacing(-1.5),
-        paddingTop: theme.spacing(1),
-        overflow: "hidden",
-    },
-    moveable: {
-        height: theme.spacing(4),
-        maxHeight: theme.spacing(4),
-        overflow: "hidden",
-        paddingLeft: theme.spacing(2),
-        transition: "1s ease margin-top",
-        "&$leaving": {
-            marginTop: theme.spacing(-4),
-        }
-    },
-    singleline: {
-        "& br": {
-            display: "none",
-        },
-        "& .MuiCardHeader-content": {
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-        },
-        "& $textSmall": {
-            display: "inline",
-            whiteSpace: "nowrap",
-        }
-    },
-    textSmall: {},
-});
-
-export default withStyles(stylesCurrent)((props) => {
+export default (props) => {
     const {classes = {}, items: givenItems, mentions, postId, type} = props;
     const dispatch = useDispatch();
     const history = useHistory();
@@ -213,7 +176,7 @@ export default withStyles(stylesCurrent)((props) => {
     }, []);
 
     if (!item) return null;
-    return <Grid item xs ref={rootRef} className={classes.root} onClick={handleClick}>
+    return <Grid item xs ref={rootRef} className={classes.rotatingRoot} onClick={handleClick}>
         {itemPrev && <Grid
             children={itemPrev}
             container
@@ -223,4 +186,4 @@ export default withStyles(stylesCurrent)((props) => {
         />}
         <Grid container className={classes.moveable}>{item}</Grid>
     </Grid>
-})
+}

@@ -40,6 +40,7 @@ import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import localeRu from "./locales/ru-RU.json";
 import localeEn from "./locales/en-EN.json";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
+import CssThemeProvider from "./themes/ThemeProvider";
 
 const DeviceUUID = require("device-uuid");
 
@@ -406,24 +407,28 @@ const DispatcherInitialized = (props) => {
     const menu = givenMenu(pages);
 
     if (fatal) {
-        return <ThemeProvider theme={theme}><MetaInfoView
-            message={fatal.message}
-        /></ThemeProvider>
+        return <ThemeProvider theme={theme}>
+            <CssThemeProvider mode={theme.cssMode}>
+                <MetaInfoView message={fatal.message}/>
+            </CssThemeProvider>
+        </ThemeProvider>
     }
 
     return <Provider store={store}>
         <ThemeProvider theme={theme}>
-            <BrowserRouter>
-                <SnackbarProvider maxSnack={4} preventDuplicate>
-                    <DispatcherRoutedBody
-                        {...props}
-                        copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
-                        menu={menu}
-                        title={t(title)}
-                    />
-                </SnackbarProvider>
-            </BrowserRouter>
-            <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+            <CssThemeProvider mode={theme.cssMode}>
+                <BrowserRouter>
+                    <SnackbarProvider maxSnack={4} preventDuplicate>
+                        <DispatcherRoutedBody
+                            {...props}
+                            copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                            menu={menu}
+                            title={t(title)}
+                        />
+                    </SnackbarProvider>
+                </BrowserRouter>
+                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+            </CssThemeProvider>
         </ThemeProvider>
     </Provider>;
 }

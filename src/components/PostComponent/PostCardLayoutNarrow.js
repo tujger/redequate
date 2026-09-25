@@ -3,7 +3,6 @@ import {Link} from "react-router-dom";
 import CardHeader from "@material-ui/core/CardHeader";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
-import makeStyles from "@material-ui/core/styles/makeStyles";
 import PostBody from "./PostBody";
 import {useMetaInfo, usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
@@ -15,16 +14,6 @@ import {mentionTags} from "../../controllers/mentionTypes";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
 import RotatingReplies from "./RotatingReplies";
-
-const stylesCurrent = makeStyles(theme => ({
-    inline: {
-        letterSpacing: theme.typography.body2.letterSpacing,
-        display: "inline",
-        "& > .MuiGrid-root": {
-            display: "inline",
-        }
-    },
-}));
 
 export default React.forwardRef((props, ref) => {
     const {
@@ -39,7 +28,6 @@ export default React.forwardRef((props, ref) => {
         userData,
         highlighted,
     } = props;
-    const classesCurrent = stylesCurrent();
     const pages = usePages();
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
@@ -77,7 +65,7 @@ export default React.forwardRef((props, ref) => {
                 title={<Grid
                     container
                     alignItems={"baseline"}
-                    className={[classesCurrent.inline, classes.cardTitle].join(" ")}>
+                    className={[classes.inline, classes.cardTitle].join(" ")}>
                     <Grid
                         className={classes.userName}
                         item

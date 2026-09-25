@@ -35,7 +35,7 @@ export const colors = ({primary, secondary, ...rest} = {}) => {
     ][month];
 };
 
-export const createTheme = ({colors, customized}) => {
+export const createTheme = ({colors, customized, mode = "day"} = {}) => {
     const customizedDefault = {
         topBottomLayout: {
             title: {
@@ -123,6 +123,8 @@ export const createTheme = ({colors, customized}) => {
         },
         customized: {...customizedDefault},
     }));
+
+    theme.cssMode = mode === "night" ? "night" : "day";
 
     theme.fetchOverride = (callback, defaultValue) => {
         try {

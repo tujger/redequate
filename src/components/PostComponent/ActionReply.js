@@ -3,23 +3,13 @@ import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import ReplyIcon from "@material-ui/icons/ReplyOutlined";
 import Grid from "@material-ui/core/Grid";
-import makeStyles from "@material-ui/core/styles/makeStyles";
 import {useTranslation} from "react-i18next";
 import {cacheDatas} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
-const stylesCurrent = makeStyles(theme => ({
-    replyButton: {
-        marginLeft: theme.spacing(1.5),
-        padding: 0,
-        textTransform: "none",
-    }
-}));
-
-export default ({icon = true, postData, mentions, onComplete, UploadProps}) => {
+export default ({classes = {}, icon = true, postData, mentions, onComplete, UploadProps}) => {
     const {t} = useTranslation();
-    const classesCurrent = stylesCurrent();
     return <Grid item>
         <NewPostComponent
             buttonComponent={icon
@@ -32,7 +22,7 @@ export default ({icon = true, postData, mentions, onComplete, UploadProps}) => {
                 /> : <Button
                     aria-label={t("Common.Reply")}
                     children={t("Common.Reply")}
-                    className={classesCurrent.replyButton}
+                    className={classes.replyButton}
                     component={"div"}
                     size={"small"}
                     title={t("Common.Reply")}
