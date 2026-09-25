@@ -1,25 +1,23 @@
 import React from "react";
-import AddIcon from "@material-ui/icons/Add";
 import {Link} from "react-router-dom";
 import {connect, useDispatch} from "react-redux";
-import Grid from "@material-ui/core/Grid";
-import withStyles from "@material-ui/styles/withStyles";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import UserItem from "./UserItem";
 import Pagination from "../../../controllers/FirebasePagination";
 import {UserData} from "../../../controllers/UserData";
 import {usePages} from "../../../controllers/General";
 import ProgressView from "../../../components/ProgressView";
-import {styles} from "../../../controllers/Theme";
 import {usersReducer} from "./usersReducer";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import AllUsersPagination from "./AllUsersPagination";
 import UsersHeader from "./UsersHeader";
 import FlexFabComponent from "../../../components/FlexFabComponent";
+import userStyles from "./styles/Users.module.css";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
-    const {classes, mode = "all", filter = "", invitation = true} = props;
+    const {classes: givenClasses, mode = "all", filter = "", invitation = true} = props;
+    const classes = {...userStyles, ...(givenClasses || {})};
     const pages = usePages();
     const dispatch = useDispatch();
 
@@ -108,7 +106,7 @@ function Users(props) {
 
     return <>
         <UsersHeader classes={classes} filter={filter} handleChange={handleHeaderChange} mode={mode}/>
-        <Grid container className={classes.center}>
+        <div className={classes.center}>
             <LazyListComponent
                 className={classes.center}
                 pagination={pagination}
@@ -117,7 +115,7 @@ function Users(props) {
                 placeholder={<UserItem skeleton={true}/>}
                 noItemsComponent={<UserItem label={"No users found"}/>}
             />
-        </Grid>
+        </div>
         {/* <ListComponent
             items={items}
             leftAction={listAction({
@@ -167,7 +165,7 @@ function Users(props) {
             to={pages.adduser.route}
         >
             <FlexFabComponent
-                icon={<AddIcon/>}
+                icon={<span className={classes.addIcon} aria-hidden="true">+</span>}
                 label={"Add user"}
             />
         </Link>}
@@ -179,4 +177,4 @@ const mapStateToProps = ({users}) => ({
     mode: users.mode,
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(Users));
+export default connect(mapStateToProps)(Users);

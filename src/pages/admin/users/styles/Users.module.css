@@ -1,0 +1,19 @@
+.center {
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.addIcon {
+    align-items: center;
+    display: inline-flex;
+    font-size: 1.5rem;
+    font-weight: 400;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Compatibility class consumed by the unchanged UsersHeader. */
+.topSticky {
+}
