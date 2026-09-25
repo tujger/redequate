@@ -2,6 +2,7 @@ const babel = require('rollup-plugin-babel')
 const commonjs = require('rollup-plugin-commonjs')
 const external = require('rollup-plugin-peer-deps-external')
 const postcss = require('rollup-plugin-postcss')
+const postcssNested = require('postcss-nested')
 const resolve = require('rollup-plugin-node-resolve')
 const url = require('rollup-plugin-url')
 const svgr = require('@svgr/rollup').default
@@ -32,6 +33,8 @@ module.exports = [
             external(),
             postcss({
                 modules: true,
+                sourceMap: true,
+                plugins: [postcssNested()],
             }),
             url(),
             babel({
@@ -154,6 +157,8 @@ module.exports = [
             external(),
             postcss({
                 modules: true,
+                sourceMap: true,
+                plugins: [postcssNested()],
             }),
             url(),
             babel({

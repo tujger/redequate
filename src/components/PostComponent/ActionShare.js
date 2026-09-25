@@ -1,8 +1,6 @@
 import React from "react";
-import IconButton from "@material-ui/core/IconButton";
-import ShareIcon from "@material-ui/icons/Share";
-import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
+import ShareIcon from "@material-ui/icons/Share";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
 import {usePages} from "../../controllers/General";
@@ -10,7 +8,7 @@ import {share} from "../ShareComponent";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 
-export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
+export default React.forwardRef(({classes = {}, isReply, onMenuItemClick, postData}, ref) => {
     const pages = usePages();
     const dispatch = useDispatch();
     const {t} = useTranslation();
@@ -43,14 +41,14 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
         id={"share"}
     />
 
-    return <Grid item>
-        <IconButton
+    return <div className={classes.action}>
+        <div className={classes.iconButton}
             aria-label={t("Common.Share")}
             children={<ShareIcon/>}
-            component={"div"}
+
             onClick={handleButtonClick}
-            size={"small"}
+
             title={t("Common.Share")}
         />
-    </Grid>
+    </div>
 })

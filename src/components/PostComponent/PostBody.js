@@ -1,6 +1,4 @@
 import React from "react";
-import Collapse from "@material-ui/core/Collapse";
-import Grid from "@material-ui/core/Grid";
 import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
 import AncillaryBody from "./AncillaryBody";
@@ -22,33 +20,22 @@ export default React.forwardRef(({classes, collapsible: givenCollapsible, disabl
     const shortened = postData.length > collapseLength;
 
     return <div className={classes.cardBody}>
-        <Collapse
-            addEndListener={() => {
-            }}
-            in={shortened && collapsed && collapsible}
-            timeout={"auto"}
-            unmountOnExit
-        >
+        {shortened && collapsed && collapsible && <div className={[classes.collapse, classes.collapseOpen].join(" ")}>
             <MentionedTextComponent
                 disableClick={disableClick}
                 mentions={mentions}
                 tokens={postData.tokensByLength(collapseLength)}
             />
-            <Grid
-                container
-                className={classes.showMore}
+            <div
+                className={[classes.layout, classes.showMore].join(" ")}
                 onClick={handleClickCard}
             >
                 Show more
-            </Grid>
-        </Collapse>
-        <Collapse
-            addEndListener={() => {
-            }}
-            in={!shortened || !collapsed || !collapsible}
+            </div>
+        </div>}
+        {(!shortened || !collapsed || !collapsible) && <div
+            className={[classes.collapse, classes.collapseOpen].join(" ")}
             onClick={(shortened && !collapsed) ? handleClickCard : null}
-            timeout={"auto"}
-            unmountOnExit
         >
             <MentionedTextComponent
                 disableClick={disableClick}
@@ -56,10 +43,7 @@ export default React.forwardRef(({classes, collapsible: givenCollapsible, disabl
                 mentions={mentions}
                 tokens={postData.tokens}
             />
-            {/*{postData.image && <Grid container alignItems={"flex-start"}>*/}
-            {/*  <img src={postData.image} alt={"Attachment"} className={classes.cardImage}/>*/}
-            {/*</Grid>}*/}
-        </Collapse>
-        <AncillaryBody ref={ref}/>
+        </div>}
+        <AncillaryBody classes={classes} ref={ref}/>
     </div>
 })

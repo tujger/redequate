@@ -3,7 +3,12 @@ import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import "../../themes/Base.module.css";
-import postStyles from "./styles/PostComponent.module.css";
+import cardStyles from "./styles/PostComponent.module.css";
+import actionStyles from "./styles/PostActions.module.css";
+import textStyles from "./styles/PostText.module.css";
+import replyStyles from "./styles/PostReplies.module.css";
+import motionStyles from "./styles/PostMotion.module.css";
+import mediaStyles from "./styles/PostMedia.module.css";
 import PostCard from "./PostCard";
 import RepliesTree from "./RepliesTree";
 import {cacheDatas, usePages} from "../../controllers/General";
@@ -25,7 +30,15 @@ const PostComponent = (props) => {
         pattern,
         type = "posts",
     } = props;
-    const classes = {...postStyles, ...(props.classes || {})};
+    const classes = {
+        ...cardStyles,
+        ...actionStyles,
+        ...textStyles,
+        ...replyStyles,
+        ...motionStyles,
+        ...mediaStyles,
+        ...(props.classes || {})
+    };
 
     const dispatch = useDispatch();
     const history = useHistory();
@@ -88,14 +101,14 @@ const PostComponent = (props) => {
         type,
     }
 
-    return <div className={classes.root}>
+    return <>
         {!onlyReplies && <PostCard key={random} {...inheritProps}/>}
         <RepliesTree
             {...inheritProps}
             key={highlight}
             postId={postData.id}
         />
-    </div>
+    </>
 }
 
 export default PostComponent;

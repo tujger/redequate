@@ -1,8 +1,5 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import CardHeader from "@material-ui/core/CardHeader";
-import Card from "@material-ui/core/Card";
-import Grid from "@material-ui/core/Grid";
 import PostBody from "./PostBody";
 import {useMetaInfo, usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
@@ -16,109 +13,40 @@ import PostMenu from "./PostMenu";
 import RotatingReplies from "./RotatingReplies";
 
 export default React.forwardRef((props, ref) => {
-    const {
-        classes = {},
-        className,
-        disableClick,
-        disableButtons,
-        handleClickPost,
-        level,
-        pattern,
-        postData,
-        userData,
-        highlighted,
-    } = props;
+    const {classes = {}, className, disableClick, disableButtons, handleClickPost, level, pattern, postData, userData, highlighted} = props;
     const pages = usePages();
-    const metaInfo = useMetaInfo();
-    const {settings = {}} = metaInfo || {};
+    const {settings = {}} = useMetaInfo() || {};
     const {postsRotateReplies, postsAllowEdit} = settings;
     const ancillaryRef = React.useRef();
 
-    return <Card
-        className={[
-            classes.card,
-            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
-            highlighted ? classes.cardHighlighted : "",
-            className
-        ].join(" ")}
-        ref={ref}
-    >
-        <PostCardWrapper
-            classes={classes}
-            disableClick={disableClick}
-            handleClickPost={handleClickPost}
-        >
-            <CardHeader
-                classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
-                className={[
-                    classes.cardHeader,
-                    classes.post,
-                ].join(" ")}
-                avatar={<Link
-                    className={classes.avatar}
-                    onClick={evt => evt.stopPropagation()}
-                    to={pages.user.route + postData.uid}
-                >
-                    <AvatarView
-                        className={level > 1 ? classes.avatarSmallest : classes.avatar}
-                        image={userData.image}
-                        initials={userData.initials}
-                        verified={true}
-                    />
-                </Link>}
-                title={<Grid container>
-                    <Grid
-                        className={classes.userName}
-                        item
-                    >
-                        <Link
-                            className={[classes.label].join(" ")}
-                            onClick={evt => evt.stopPropagation()}
-                            to={pages.user.route + userData.id}
-                        >{userData.name}</Link>
-                    </Grid>
-                    <Grid
-                        item
-                        className={classes.date}
-                        title={new Date(postData.created).toLocaleString()}>
-                        {toDateString(postData.created)}
-                    </Grid>
-                    {postData.targetTag && <Grid item>
-                        - posted to <MentionedTextComponent
-                        mentions={[{
-                            ...mentionTags,
-                            displayTransform: (id, display) => display,
-                            style: {fontWeight: "bold"}
-                        }]}
-                        tokens={[postData.targetTag]}
-                    /></Grid>}
-                    <PostMenu {...props}/>
-                </Grid>}
-                subheader={<>
-                    <PostBody
-                        {...props}
-                        disableClick={!disableClick}
-                        ref={ancillaryRef}
-                    />
-                    {postData.images && <Grid
-                        className={classes.cardImage}
-                        container
-                    >
-                        <PostMedia
-                            images={postData.images}
-                            clickable={disableClick}
-                        />
-                    </Grid>}
-                    <Grid container alignItems={"flex-end"} justify={"flex-end"}>
-                        {postsAllowEdit && postData.edit && <Grid item xs className={classes.date}>
-                            Edited {toDateString(postData.editOf("last").timestamp)}
-                        </Grid>}
+    return <div className={[classes.card, pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "", highlighted ? classes.cardHighlighted : "", className].join(" ")} ref={ref}>
+        <PostCardWrapper classes={classes} disableClick={disableClick} handleClickPost={handleClickPost}>
+            <div className={[classes.cardHeader, classes.post].join(" ")}>
+                <Link className={classes.avatar} onClick={evt => evt.stopPropagation()} to={pages.user.route + postData.uid}>
+                    <AvatarView className={level > 1 ? classes.avatarSmallest : classes.avatar} image={userData.image} initials={userData.initials} verified={true}/>
+                </Link>
+                <div className={classes.cardContent}>
+                    <div className={classes.layout}>
+                        <div className={[classes.layout, classes.userName].join(" ")}>
+                            <Link className={classes.label} onClick={evt => evt.stopPropagation()} to={pages.user.route + userData.id}>{userData.name}</Link>
+                        </div>
+                        <div className={[classes.layout, classes.date].join(" ")} title={new Date(postData.created).toLocaleString()}>{toDateString(postData.created)}</div>
+                        {postData.targetTag && <div className={classes.layout}>
+                            - posted to <MentionedTextComponent mentions={[{...mentionTags, displayTransform: (id, display) => display, style: {fontWeight: "bold"}}]} tokens={[postData.targetTag]}/>
+                        </div>}
+                        <PostMenu {...props}/>
+                    </div>
+                    <PostBody {...props} disableClick={!disableClick} ref={ancillaryRef}/>
+                    {postData.images && <div className={[classes.layout, classes.cardImage].join(" ")}>
+                        <PostMedia images={postData.images} clickable={disableClick}/>
+                    </div>}
+                    <div className={[classes.layout, classes.cardActions].join(" ")}>
+                        {postsAllowEdit && postData.edit && <div className={[classes.layout, classes.date].join(" ")}>Edited {toDateString(postData.editOf("last").timestamp)}</div>}
                         {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
-                    </Grid>
-                </>}
-            />
+                    </div>
+                </div>
+            </div>
         </PostCardWrapper>
-        {level === undefined && postsRotateReplies === "inside" &&
-        <RotatingReplies {...props} postId={postData.id}/>}
-    </Card>
+        {level === undefined && postsRotateReplies === "inside" && <RotatingReplies {...props} postId={postData.id}/>}
+    </div>
 });

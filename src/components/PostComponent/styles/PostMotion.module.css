@@ -1,0 +1,22 @@
+.entering, .leaving {
+}
+
+.rotatingRoot {
+    height: calc(var(--theme-spacing) * 4);
+    margin-bottom: calc(var(--theme-spacing) * 1.5);
+    margin-top: calc(var(--theme-spacing) * -1.5);
+    overflow: hidden;
+    padding-top: var(--theme-spacing);
+}
+
+.moveable {
+    height: calc(var(--theme-spacing) * 4);
+    max-height: calc(var(--theme-spacing) * 4);
+    overflow: hidden;
+    padding-left: calc(var(--theme-spacing) * 2);
+    transition: 1s ease margin-top;
+}
+
+.moveable.leaving {
+    margin-top: calc(var(--theme-spacing) * -4);
+}

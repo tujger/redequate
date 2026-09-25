@@ -5,7 +5,7 @@ import Lightbox from "react-image-lightbox";
 import "react-image-lightbox/style.css";
 import {useWindowData} from "../../controllers/General";
 import ScrollSnapComponent from "../ScrollSnapComponent";
-import postStyles from "./styles/PostComponent.module.css";
+import mediaStyles from "./styles/PostMedia.module.css";
 
 const replaceCommas = symbol => {
     if (symbol === "(") return "%28";
@@ -105,7 +105,7 @@ export default (props) => {
                 onMovePrevRequest={() => {
                     setState(state => ({...state, selected: (selected + images.length - 1) % images.length}))
                 }}
-                reactModalProps={{portalClassName: postStyles.postMediaLightboxPortal}}
+                reactModalProps={{portalClassName: mediaStyles.postMediaLightboxPortal}}
             />
         </div>}
     </>

@@ -1,13 +1,10 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import IconButton from "@material-ui/core/IconButton";
 import LikeEmptyIcon from "@material-ui/icons/FavoriteBorder";
 import LikeFilledIcon from "@material-ui/icons/Favorite";
 import PlusIcon from "@material-ui/icons/Add";
 import MinusIcon from "@material-ui/icons/Remove";
 import RestoreIcon from "@material-ui/icons/Replay";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
 import {delay, usePages} from "../../controllers/General";
@@ -156,14 +153,14 @@ export default ({postData, classes}) => {
     const isAdmin = matchRole([Role.ADMIN], currentUserData);
     const ancillaryStyle = {margin: 0, width: 20};
 
-    return <Grid item>
-        <IconButton
+    return <div className={classes.action}>
+        <div
             aria-label={t("Common.Like")}
-            className={classes.counter}
+            className={[classes.iconButton, classes.counter].join(" ")}
             // disabled={disabled}
-            component={"div"}
+
             onClick={disabled ? undefined : handleClickExtra("like")}
-            size={"small"}
+
             style={postData.extra("like") ? {color: "var(--theme-color-secondary)"} : undefined}
             title={t("Common.Like")}
         >
@@ -171,46 +168,43 @@ export default ({postData, classes}) => {
                 counter={postData.counter("like")}
                 prefix={<>
                     {postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
-                    <Box m={0.5}/>
+                    <div className={classes.box}/>
                 </>}
                 showZero
-                zeroPrefix={<><LikeEmptyIcon/><Box m={0.5}/></>}
+                zeroPrefix={<><LikeEmptyIcon/><div className={classes.box}/></>}
             />
-        </IconButton>
+        </div>
         {isAdmin && <>
-            <IconButton
+            <div
                 aria-label={"Decrease"}
-                children={<MinusIcon/>}
-                className={classes.counter}
-                component={"div"}
+                className={[classes.iconButton, classes.counter].join(" ")}
                 disabled={disabled}
                 onClick={handleMinus}
-                size={"small"}
                 style={ancillaryStyle}
                 title={"Decrease"}
-            />
-            <IconButton
+            >
+                <MinusIcon/>
+            </div>
+            <div
                 aria-label={"Restore"}
-                children={<RestoreIcon/>}
-                className={classes.counter}
-                component={"div"}
+                className={[classes.iconButton, classes.counter].join(" ")}
                 disabled={disabled}
                 onClick={handleRestore}
-                size={"small"}
                 style={ancillaryStyle}
                 title={"Restore"}
-            />
-            <IconButton
+            >
+                <RestoreIcon/>
+            </div>
+            <div
                 aria-label={"Increase"}
-                children={<PlusIcon/>}
-                className={classes.counter}
-                component={"div"}
+                className={[classes.iconButton, classes.counter].join(" ")}
                 disabled={disabled}
                 onClick={handlePlus}
-                size={"small"}
                 style={ancillaryStyle}
                 title={"Increase"}
-            />
+            >
+                <PlusIcon/>
+            </div>
         </>}
-    </Grid>
+    </div>
 }

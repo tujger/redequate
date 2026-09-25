@@ -1,8 +1,5 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import CardHeader from "@material-ui/core/CardHeader";
-import Card from "@material-ui/core/Card";
-import Grid from "@material-ui/core/Grid";
 import PostBody from "./PostBody";
 import {useMetaInfo, usePages} from "../../controllers/General";
 import AvatarView from "../AvatarView";
@@ -34,7 +31,7 @@ export default React.forwardRef((props, ref) => {
     const {postsRotateReplies, postsAllowEdit} = settings;
     const ancillaryRef = React.useRef();
 
-    return <Card
+    return <div
         className={[
             classes.card,
             pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
@@ -47,10 +44,8 @@ export default React.forwardRef((props, ref) => {
             classes={classes}
             disableClick={disableClick}
             handleClickPost={handleClickPost}>
-            <CardHeader
-                classes={{content: classes.cardContent, subheader: classes.cardSubheader}}
-                className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post].join(" ")}
-                avatar={<Link
+            <div className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post].join(" ")}>
+                <Link
                     className={classes.avatarSmall}
                     onClick={evt => evt.stopPropagation()}
                     to={pages.user.route + postData.uid}
@@ -61,65 +56,47 @@ export default React.forwardRef((props, ref) => {
                         initials={userData.initials}
                         verified={true}
                     />
-                </Link>}
-                title={<Grid
-                    container
-                    alignItems={"baseline"}
-                    className={[classes.inline, classes.cardTitle].join(" ")}>
-                    <Grid
-                        className={classes.userName}
-                        item
-                        // onClick={evt => evt.stopPropagation()}
-                    >
-                        <Link
-                            to={pages.user.route + userData.id}
-                            onClick={evt => evt.stopPropagation()}
-                            className={[classes.label].join(" ")}
-                        >{userData.name}</Link>
-                    </Grid>
-                    <PostMenu {...props}/>
-                    {postData.targetTag && <Grid item xs>
-                        posted to <MentionedTextComponent
-                        mentions={[{
-                            ...mentionTags,
-                            displayTransform: (id, display) => display,
-                            style: {fontWeight: "bold"}
-                        }]}
-                        tokens={[postData.targetTag]}
-                    /></Grid>}
-                </Grid>}
-                subheader={<>
-                    <Grid
-                        item
-                        className={classes.date}
-                        title={new Date(postData.created).toLocaleString()}>
+                </Link>
+                <div className={classes.cardContent}>
+                    <div className={[classes.layout, classes.inline, classes.cardTitle].join(" ")}>
+                        <div className={[classes.layout, classes.userName].join(" ")}>
+                            <Link
+                                to={pages.user.route + userData.id}
+                                onClick={evt => evt.stopPropagation()}
+                                className={classes.label}
+                            >{userData.name}</Link>
+                        </div>
+                        <PostMenu {...props}/>
+                        {postData.targetTag && <div className={[classes.layout, classes.layoutGrow].join(" ")}>
+                            posted to <MentionedTextComponent
+                            mentions={[{
+                                ...mentionTags,
+                                displayTransform: (id, display) => display,
+                                style: {fontWeight: "bold"}
+                            }]}
+                            tokens={[postData.targetTag]}
+                        /></div>}
+                    </div>
+                    <div className={[classes.layout, classes.cardSubheader, classes.date].join(" ")}
+                         title={new Date(postData.created).toLocaleString()}>
                         {toDateString(postData.created)}
-                    </Grid>
-                </>}
-            />
+                    </div>
+                </div>
+            </div>
             <PostBody
                 {...props}
                 ref={ancillaryRef}
                 disableClick={!disableClick}
             />
         </PostCardWrapper>
-        {postData.images && <Grid
-            className={classes.cardImage}
-            container
-        >
+        {postData.images && <div className={[classes.layout, classes.cardImage].join(" ")}>
             <PostMedia
                 images={postData.images}
                 mosaic
             />
-        </Grid>}
-        {/*<Grid container alignItems={"flex-end"} justify={"flex-end"}>
-            {postsAllowEdit && postData.edit && <Grid item xs className={classes.date}>
-                Edited {toDateString(postData.editOf("last").timestamp)}
-            </Grid>}
-            {!disableButtons && <PostButtons {...props}/>}
-        </Grid>*/}
+        </div>}
         {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
         {level === undefined && postsRotateReplies === "inside" &&
         <RotatingReplies {...props} postId={postData.id}/>}
-    </Card>
+    </div>
 })

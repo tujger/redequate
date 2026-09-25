@@ -16,3 +16,8 @@
     color: var(--theme-color-text);
     font-size: var(--theme-font-size);
 }
+
+:global(.MuiSvgIcon-root) {
+    color: inherit;
+    vertical-align: middle;
+}

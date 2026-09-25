@@ -1,10 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import IconButton from "@material-ui/core/IconButton";
 import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
 import ChatFilledIcon from "@material-ui/icons/Chat";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
 import {usePages} from "../../controllers/General";
@@ -17,10 +14,10 @@ export default ({postData, classes, disableClick}) => {
     const pages = usePages();
     const {t} = useTranslation();
 
-    return <Grid item>
-        <IconButton
-            className={classes.counter}
-            component={"div"}
+    return <div className={classes.action}>
+        <div
+            className={[classes.iconButton, classes.counter].join(" ")}
+
             onClick={event => {
                 event.stopPropagation();
                 dispatch({type: lazyListComponentReducer.REFRESH});
@@ -28,16 +25,16 @@ export default ({postData, classes, disableClick}) => {
                     onlyReplies: !!postData.counter("replied"),
                 })
             }}
-            size={"small"}
+
             title={t("Post.Replies")}
         >
             <CounterComponent
                 counter={postData.counter("replied")}
                 path={disableClick ? `${postData.id}/replied` : undefined}
-                prefix={<><ChatFilledIcon/><Box m={0.5}/></>}
+                prefix={<><ChatFilledIcon/><div className={classes.box}/></>}
                 showZero
-                zeroPrefix={<><ChatEmptyIcon/><Box m={0.5}/></>}
+                zeroPrefix={<><ChatEmptyIcon/><div className={classes.box}/></>}
             />
-        </IconButton>
-    </Grid>
+        </div>
+    </div>
 }

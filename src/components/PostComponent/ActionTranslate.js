@@ -1,8 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import IconButton from "@material-ui/core/IconButton";
 import TranslateIcon from "@material-ui/icons/Translate";
-import Grid from "@material-ui/core/Grid";
 import {useTranslation} from "react-i18next";
 import {useTextTranslation} from "../../controllers/textTranslation";
 import {fetchDeviceId, useMetaInfo} from "../../controllers/General";
@@ -123,16 +121,16 @@ export default (
             <h5>{title}</h5>
             <MentionedTextComponent classes={classes} text={translated}/>
         </Portal>}
-        <Grid item>
-            <IconButton
+        <div className={classes.action}>
+            <div
                 aria-label={"Translate"}
-                children={<TranslateIcon/>}
-                component={"div"}
+                className={classes.iconButton}
                 onClick={handleClick}
-                size={"small"}
                 title={"Translate"}
-            />
-        </Grid>
+            >
+                <TranslateIcon/>
+            </div>
+        </div>
     </>
 }
 

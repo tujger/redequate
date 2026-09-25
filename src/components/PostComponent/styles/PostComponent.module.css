@@ -1,431 +1,371 @@
-.root {
-    display: contents;
+.card {
+    background-color: var(--theme-color-paper);
+    border-radius: 0.25rem;
+    border-width: 0;
+    box-shadow: var(--theme-card-shadow);
+    font-size: 0.875rem;
+    letter-spacing: var(--theme-letter-spacing);
+    margin-bottom: calc(var(--theme-spacing) * 1.5);
+    overflow: initial;
+    position: relative;
+    transition: 1s ease background-color;
+    width: 100%;
+}
 
-    .avatar,
-    .avatarSmall,
-    .avatarSmallest {
+.card,
+.replyContent {
+
+    & .avatar,
+    & .avatarSmall,
+    & .avatarSmallest {
         color: lightgray;
         text-decoration: none;
     }
 
-    .avatar {
+    & .avatar {
         box-sizing: border-box;
         height: calc(var(--theme-spacing) * 7);
         width: calc(var(--theme-spacing) * 7);
     }
 
-    .avatarSmall {
+    & .avatarSmall {
         font-size: 1rem;
         height: calc(var(--theme-spacing) * 5);
         width: calc(var(--theme-spacing) * 5);
     }
 
-    .avatarSmallest {
+    & .avatarSmallest {
         font-size: 0.8rem;
         height: calc(var(--theme-spacing) * 3);
         width: calc(var(--theme-spacing) * 3);
     }
+}
 
-    .card {
-        background-color: var(--theme-color-paper);
-        border-width: 0;
-        box-shadow: var(--theme-card-shadow);
-        letter-spacing: var(--theme-letter-spacing);
-        margin-bottom: calc(var(--theme-spacing) * 1.5);
-        overflow: initial;
-        position: relative;
-        transition: 1s ease background-color;
-    }
+.cardBordered {
+    border: 1px solid rgb(0 0 0 / 25%);
+    box-shadow: none;
+    margin-bottom: calc(var(--theme-spacing) * .5);
+}
 
-    .cardBordered {
-        border: 1px solid rgb(0 0 0 / 25%);
-        box-shadow: none;
-        margin-bottom: calc(var(--theme-spacing) * .5);
-    }
+.cardCloud {
+    background-color: transparent;
+    box-shadow: none;
+    margin-bottom: var(--theme-spacing);
+}
 
-    .cardCloud {
-        background-color: transparent;
-        box-shadow: none;
-        margin-bottom: var(--theme-spacing);
-    }
+.cardCloud .cardHeader {
+    padding: 0;
+}
 
-    .cardCloud .cardHeader {
-        padding: 0;
-    }
+.cardCloud .cardContent {
+    background-color: var(--theme-color-paper);
+    border-radius: calc(var(--theme-spacing) * 2);
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 2);
+    transition: 2s ease background-color;
+}
 
-    .cardCloud .cardContent {
-        background-color: var(--theme-color-paper);
-        border-radius: calc(var(--theme-spacing) * 2);
-        padding: var(--theme-spacing) calc(var(--theme-spacing) * 2);
-        transition: 2s ease background-color;
-    }
+.cardCloud .cardBody {
+    padding: var(--theme-spacing) 0;
+}
 
-    .cardCloud .cardBody {
-        padding: var(--theme-spacing) 0;
-    }
+.cardCloud .cardActions {
+    margin-right: calc(var(--theme-spacing) * -.5);
+}
 
-    .cardCloud .cardActions {
-        margin-right: calc(var(--theme-spacing) * -.5);
-    }
+.cardCloud .date {
+    right: calc(var(--theme-spacing) * 2.5);
+}
 
-    .cardCloud .date {
-        right: calc(var(--theme-spacing) * 2.5);
-    }
+.cardCloud.cardHighlighted .cardContent {
+    background-color: #b5b5b5;
+}
 
-    .cardCloud.cardHighlighted .cardContent {
-        background-color: #b5b5b5;
-    }
+.cardFlat {
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 2px;
+}
 
-    .cardFlat {
-        border-radius: 0;
-        box-shadow: none;
-        margin-bottom: 2px;
-    }
+.cardTransparent {
+    background-color: transparent;
+    box-shadow: none;
+    margin-bottom: var(--theme-spacing);
+}
 
-    .cardTransparent {
-        background-color: transparent;
-        box-shadow: none;
-        margin-bottom: var(--theme-spacing);
-    }
+.cardTransparent .cardHeader {
+    padding: 0;
+}
 
-    .cardTransparent .cardHeader {
-        padding: 0;
-    }
+.cardHighlighted {
+}
 
-    .cardHighlighted {
-    }
+.cardHeader {
+    align-items: flex-start;
+}
 
-    .cardHeader {
-        align-items: flex-start;
-    }
+.cardHeaderWithLabel {
+    align-items: center;
+    white-space: pre-wrap;
+}
 
-    .cardHeaderWithLabel {
-        align-items: center;
-        white-space: pre-wrap;
-    }
+.cardHeader .cardContent {
+    overflow: auto;
+}
 
-    .cardHeader .cardContent {
-        overflow: auto;
-    }
+.cardSubheader {
+    color: var(--theme-color-text);
+}
 
-    .cardSubheader {
-        color: var(--theme-color-text);
-    }
+.cardImage {
+    flex: 1;
+    height: auto;
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left;
+    overflow: auto;
+    position: relative;
+    width: auto;
+}
 
-    .cardImage {
-        flex: 1;
-        height: auto;
-        max-height: 100%;
-        max-width: 100%;
-        object-fit: contain;
-        object-position: left;
-        overflow: auto;
-        position: relative;
-        width: auto;
-    }
-
-    .cardMenuButton {
+.cardMenuButton {
+    && {
         position: absolute;
         right: calc(var(--theme-spacing) * .5);
         top: calc(var(--theme-spacing) * .5);
     }
+}
 
-    .cardTitle {
+.cardTitle {
+}
+
+.cardActions {
+    display: flex;
+}
+
+.cardActions :global(.MuiSvgIcon-root) {
+    align-items: center;
+    display: inline-flex;
+    font-size: calc(var(--theme-spacing) * 2.5);
+    height: calc(var(--theme-spacing) * 2.5);
+    justify-content: center;
+    line-height: 1;
+    width: calc(var(--theme-spacing) * 2.5);
+}
+
+.cardBody {
+    padding: calc(var(--theme-spacing) * 2);
+}
+
+.date {
+    color: var(--theme-color-muted);
+    margin-right: calc(var(--theme-spacing) * .5);
+}
+
+.icon {
+    height: calc(var(--theme-spacing) * 3);
+}
+
+.iconSmall {
+    height: calc(var(--theme-spacing) * 2);
+}
+
+.wrapper {
+    flex: 0 0 auto;
+}
+
+.inline {
+    display: inline;
+    letter-spacing: var(--theme-letter-spacing);
+}
+
+.inline > .layout {
+    display: inline;
+}
+
+.singleline .cardContent {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.singleline .textSmall {
+    display: inline;
+    white-space: nowrap;
+}
+
+.replyContent {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.userName {
+    color: var(--theme-color-highlight);
+    font-weight: bolder;
+    letter-spacing: var(--theme-letter-spacing);
+    margin-right: calc(var(--theme-spacing) * .5);
+    text-decoration: none;
+}
+
+.textSmall {
+    display: inline-block;
+    font-size: 90%;
+}
+
+.layout {
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.layoutGrow {
+    flex: 1 1 auto;
+}
+
+.cardHeader {
+    display: flex;
+    gap: calc(var(--theme-spacing) * 2);
+    padding: calc(var(--theme-spacing) * 2);
+}
+
+.cardHeaderWithLabel {
+    align-items: center;
+}
+
+.cardContent {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.cardHeader .cardTitle {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+.cardHeader .cardTitle > .layout {
+    display: inline-block;
+}
+
+.wrapper {
+    display: block;
+    width: 100%;
+}
+
+.menu {
+    background-color: var(--theme-color-paper);
+    box-shadow: var(--theme-card-shadow);
+    min-width: calc(var(--theme-spacing) * 18);
+    position: absolute;
+    right: calc(var(--theme-spacing) * .5);
+    top: calc(var(--theme-spacing) * 4);
+    z-index: 10;
+}
+
+.menuItem {
+    cursor: pointer;
+    display: block;
+    padding: calc(var(--theme-spacing) * 1.25) calc(var(--theme-spacing) * 2);
+    white-space: nowrap;
+}
+
+.collapse {
+    overflow: hidden;
+}
+
+@media (max-width: 599px) {
+    .card {
+        margin-bottom: calc(var(--theme-spacing) * 1.5);
+    }
+
+    .cardBordered {
+        left: calc(var(--theme-spacing) * -.5);
+        width: calc(100% + var(--theme-spacing));
+    }
+
+    .cardCloud .cardActions {
+        margin-left: calc(var(--theme-spacing) * -1);
+        margin-right: 0;
+        padding: 0;
+    }
+
+    .cardCloud .date {
+        bottom: calc(var(--theme-spacing) * 1.5);
+        position: absolute;
+        right: calc(var(--theme-spacing) * 2.5);
     }
 
     .cardActions {
-        display: flex;
-    }
-
-    .cardBody {
-        padding: calc(var(--theme-spacing) * 2);
-    }
-
-    .counter {
-        font-size: 80%;
-        margin-left: var(--theme-spacing);
-    }
-
-    .date {
-        color: var(--theme-color-muted);
-        margin-right: calc(var(--theme-spacing) * .5);
-    }
-
-    .hidden {
-        visibility: hidden;
-    }
-
-    .icon {
-        height: calc(var(--theme-spacing) * 3);
-    }
-
-    .iconSmall {
-        height: calc(var(--theme-spacing) * 2);
-    }
-
-    .label {
-        color: inherit;
-        text-decoration: none;
-    }
-
-    .link, .showMore {
-        color: var(--theme-color-highlight);
-    }
-
-    .nounderline {
-        text-decoration: none;
-    }
-
-    .read {
-        color: var(--theme-color-muted);
-    }
-
-    .reply {
-    }
-
-    .wrapper {
-        flex: 0 0 auto;
-    }
-
-    .selected {
-        background-color: var(--theme-color-background);
-    }
-
-    .showMore {
-        margin-top: calc(var(--theme-spacing) * .5);
-    }
-
-    .since {
-        align-items: flex-end;
-        color: var(--theme-color-muted);
-        display: flex;
-        margin-left: var(--theme-spacing);
-    }
-
-    .text {
-        color: var(--theme-color-text);
-        overflow-wrap: break-word;
-        text-decoration: none;
-        word-wrap: break-word;
-    }
-
-    .ancillaryText {
-        color: var(--theme-color-muted);
-        display: inline-block;
-        margin-top: calc(var(--theme-spacing) * 2);
-        padding-left: calc(var(--theme-spacing) * 3);
-        white-space: pre-wrap;
-    }
-
-    .ancillaryText:empty {
-        display: none;
-    }
-
-    .ancillaryText h5 {
-        margin-bottom: 0;
-        margin-top: 0;
-    }
-
-    .ancillaryText span {
-        color: var(--theme-color-muted);
-    }
-
-    .text a {
-        text-decoration: none;
-    }
-
-    .text:empty {
-        border-width: 0;
-        height: calc(var(--theme-spacing) * .5);
-        margin: 0;
-        padding: 0;
-    }
-
-    .unread {
-        color: var(--theme-color-text);
-        font-weight: bolder;
-    }
-
-    .userName {
-        color: var(--theme-color-highlight);
-        font-weight: bolder;
-        letter-spacing: var(--theme-letter-spacing);
-        margin-right: calc(var(--theme-spacing) * .5);
-        text-decoration: none;
-    }
-
-    .textSmall {
-        display: inline-block;
-        font-size: 90%;
-    }
-
-    .suggestionName {
-        color: var(--theme-color-highlight);
-        font-weight: bold;
-    }
-
-    .sectionComment .indent {
-        width: calc(var(--theme-spacing) * 8.5);
-    }
-
-    .sectionReply .indent {
-        width: calc(var(--theme-spacing) * 4);
-    }
-
-    .inline {
-        display: inline;
-        letter-spacing: var(--theme-letter-spacing);
-    }
-
-    .inline > :global(.MuiGrid-root) {
-        display: inline;
-    }
-
-    .replyButton {
-        margin-left: calc(var(--theme-spacing) * 1.5);
-        padding: 0;
-        text-transform: none;
-    }
-
-    .entering, .leaving {
-    }
-
-    .rotatingRoot {
-        height: calc(var(--theme-spacing) * 4);
-        margin-bottom: calc(var(--theme-spacing) * 1.5);
-        margin-top: calc(var(--theme-spacing) * -1.5);
-        overflow: hidden;
+        padding: var(--theme-spacing);
+        padding-bottom: calc(var(--theme-spacing) * .5);
+        padding-left: var(--theme-spacing);
         padding-top: var(--theme-spacing);
     }
 
-    .moveable {
-        height: calc(var(--theme-spacing) * 4);
-        max-height: calc(var(--theme-spacing) * 4);
-        overflow: hidden;
-        padding-left: calc(var(--theme-spacing) * 2);
-        transition: 1s ease margin-top;
+    .cardBody {
+        padding-bottom: var(--theme-spacing);
+        padding-top: 0;
     }
 
-    .moveable.leaving {
-        margin-top: calc(var(--theme-spacing) * -4);
+    .cardHeader .cardTitle {
+        margin-right: calc(var(--theme-spacing) * 3);
     }
 
-    .singleline :global(.MuiCardHeader-content) {
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .cardHeader :global(.MuiSvgIcon-root), .cardActions :global(.MuiSvgIcon-root) {
+        height: calc(var(--theme-spacing) * 2.5);
     }
 
-    .singleline .textSmall {
-        display: inline;
-        white-space: nowrap;
+    .cardMenuButton {
+        margin-top: calc(var(--theme-spacing) * -1);
+        right: calc(var(--theme-spacing) * .5);
+        top: auto;
     }
 
-    .postMediaLightboxPortal {
-        background-color: transparent;
-        position: fixed;
-        z-index: 1100;
+    .cardTitle {
+        color: var(--theme-color-secondary);
+        font-size: 95%;
     }
 
-    @media (max-width: 599px) {
-        .card {
-            margin-bottom: calc(var(--theme-spacing) * 1.5);
-        }
-
-        .cardBordered {
-            left: calc(var(--theme-spacing) * -.5);
-            width: calc(100% + var(--theme-spacing));
-        }
-
-        .cardCloud .cardActions {
-            margin-left: calc(var(--theme-spacing) * -1);
-            margin-right: 0;
-            padding: 0;
-        }
-
-        .cardCloud .date {
-            bottom: calc(var(--theme-spacing) * 1.5);
-            position: absolute;
-            right: calc(var(--theme-spacing) * 2.5);
-        }
-
-        .cardActions {
-            padding: var(--theme-spacing);
-            padding-bottom: calc(var(--theme-spacing) * .5);
-            padding-left: var(--theme-spacing);
-            padding-top: var(--theme-spacing);
-        }
-
-        .cardBody {
-            padding-bottom: var(--theme-spacing);
-            padding-top: 0;
-        }
-
-        .cardHeader .cardTitle {
-            margin-right: calc(var(--theme-spacing) * 3);
-        }
-
-        .cardHeader :global(.MuiSvgIcon-root), .cardActions :global(.MuiSvgIcon-root) {
-            height: calc(var(--theme-spacing) * 2.5);
-        }
-
-        .cardMenuButton {
-            margin-top: calc(var(--theme-spacing) * -1);
-            right: calc(var(--theme-spacing) * .5);
-            top: auto;
-        }
-
-        .cardTitle {
-            color: var(--theme-color-secondary);
-            font-size: 95%;
-        }
-
-        .cardTitle .userName, .cardTitle :global(.Mention-tag-label) {
-            font-size: 110%;
-        }
-
-        .date {
-            font-size: calc(var(--theme-spacing) * 1.5);
-        }
-
-        .icon {
-            height: calc(var(--theme-spacing) * 2.5);
-        }
-
-        .sectionComment .indent {
-            width: calc(var(--theme-spacing) * 6.5);
-        }
-
-        .sectionReply .indent {
-            width: 0;
-        }
+    .cardTitle .userName, .cardTitle :global(.Mention-tag-label) {
+        font-size: 110%;
     }
 
-    @media (min-width: 960px) {
-        .card :global(.MuiSvgIcon-root), .cardActions :global(.MuiSvgIcon-root) {
-            height: calc(var(--theme-spacing) * 2.5);
-        }
+    .date {
+        font-size: calc(var(--theme-spacing) * 1.5);
+    }
 
-        .cardImage {
-            margin-top: var(--theme-spacing);
-        }
+    .icon {
+        height: calc(var(--theme-spacing) * 2.5);
+    }
 
-        .cardBody {
-            padding-bottom: var(--theme-spacing);
-            padding-left: 0;
-            padding-right: 0;
-            padding-top: var(--theme-spacing);
-        }
+}
 
-        .cardActions {
-            justify-content: flex-end;
-        }
+@media (min-width: 960px) {
+    .card :global(.MuiSvgIcon-root), .cardActions :global(.MuiSvgIcon-root) {
+        height: calc(var(--theme-spacing) * 2.5);
+    }
 
-        .date {
-            font-size: inherit;
-        }
+    .cardImage {
+        margin-top: var(--theme-spacing);
+    }
 
-        .cardActionsSmall :global(.MuiSvgIcon-root) {
-            height: calc(var(--theme-spacing) * 2);
-        }
+    .cardBody {
+        padding-bottom: var(--theme-spacing);
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: var(--theme-spacing);
+    }
+
+    .cardActions {
+        justify-content: flex-end;
+    }
+
+    .date {
+        font-size: inherit;
+    }
+
+    .cardActionsSmall :global(.MuiSvgIcon-root) {
+        height: calc(var(--theme-spacing) * 2);
     }
 }

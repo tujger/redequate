@@ -1,15 +1,13 @@
 import React from "react";
-import IconButton from "@material-ui/core/IconButton";
-import ClearIcon from "@material-ui/icons/Clear";
-import Grid from "@material-ui/core/Grid";
-import {useDispatch} from "react-redux";
 import MenuItem from "@material-ui/core/MenuItem";
+import ClearIcon from "@material-ui/icons/Clear";
+import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
 
-export default ({postData, onMenuItemClick, onComplete, type}) => {
+export default ({classes = {}, postData, onMenuItemClick, onComplete, type}) => {
     const [state, setState] = React.useState({});
     const {
         deletePost,
@@ -54,16 +52,16 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
             onClick={handleMenuItemClick}
         />
     } else {
-        element = <Grid item>
-            <IconButton
+        element = <div className={classes.action}>
+            <div className={classes.iconButton}
                 aria-label={t("Common.Delete")}
                 children={<ClearIcon/>}
-                component={"div"}
+
                 onClick={handleClickDelete}
-                size={"small"}
+
                 title={t("Common.Delete")}
             />
-        </Grid>
+        </div>
     }
 
     return <>

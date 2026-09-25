@@ -1,10 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import IconButton from "@material-ui/core/IconButton";
 import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
 import DislikeFilledIcon from "@material-ui/icons/ThumbDown";
-import Grid from "@material-ui/core/Grid";
-import Box from "@material-ui/core/Box";
 import {delay, usePages} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -39,24 +36,24 @@ export default ({postData, classes}) => {
 
     const isPostingAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
 
-    return <Grid item>
-        <IconButton
+    return <div className={classes.action}>
+        <div
             aria-label={"Dislike"}
-            className={classes.counter}
-            component={"div"}
+            className={[classes.iconButton, classes.counter].join(" ")}
+
             onClick={disabled ? undefined : handleClickExtra("dislike")}
-            size={"small"}
+
             title={"Dislike"}
         >
             <CounterComponent
                 counter={postData.counter("dislike")}
                 prefix={<>
                     {postData.extra("like") ? <DislikeFilledIcon/> : <DislikeEmptyIcon/>}
-                    <Box m={0.5}/>
+                    <div className={classes.box}/>
                 </>}
                 showZero
-                zeroPrefix={<><DislikeEmptyIcon/><Box m={0.5}/></>}
+                zeroPrefix={<><DislikeEmptyIcon/><div className={classes.box}/></>}
             />
-        </IconButton>
-    </Grid>
+        </div>
+    </div>
 }

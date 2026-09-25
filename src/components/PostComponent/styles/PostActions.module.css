@@ -1,0 +1,49 @@
+.action {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.counter {
+    font-size: 80%;
+    margin-left: var(--theme-spacing);
+}
+
+.replyButton {
+    margin-left: calc(var(--theme-spacing) * 1.5);
+    padding: 0;
+    text-transform: none;
+}
+
+.button, .iconButton {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: rgba(0, 0, 0, 0.54);
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    min-height: calc(var(--theme-spacing) * 3);
+    min-width: calc(var(--theme-spacing) * 3);
+    padding: calc(var(--theme-spacing) * .5);
+}
+
+.button:hover, .iconButton:hover {
+    background-color: var(--theme-color-background);
+}
+
+.box {
+    display: inline-block;
+    height: calc(var(--theme-spacing) * .5);
+    width: calc(var(--theme-spacing) * .5);
+}
+
+.iconButton :global(.MuiSvgIcon-root) {
+    align-items: center;
+    display: inline-flex;
+    font-size: calc(var(--theme-spacing) * 2.5);
+    height: calc(var(--theme-spacing) * 2.5);
+    justify-content: center;
+    line-height: 1;
+    width: calc(var(--theme-spacing) * 2.5);
+}

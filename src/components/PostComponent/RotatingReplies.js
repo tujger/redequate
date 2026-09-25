@@ -1,5 +1,4 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {cacheDatas, usePages} from "../../controllers/General";
@@ -176,14 +175,13 @@ export default (props) => {
     }, []);
 
     if (!item) return null;
-    return <Grid item xs ref={rootRef} className={classes.rotatingRoot} onClick={handleClick}>
-        {itemPrev && <Grid
+    return <div ref={rootRef} className={[classes.layout, classes.rotatingRoot].join(" ")} onClick={handleClick}>
+        {itemPrev && <div
             children={itemPrev}
-            container
             key={Math.random()}
             ref={leavingRef}
-            className={classes.moveable}
+            className={[classes.layout, classes.moveable].join(" ")}
         />}
-        <Grid container className={classes.moveable}>{item}</Grid>
-    </Grid>
+        <div className={[classes.layout, classes.moveable].join(" ")}>{item}</div>
+    </div>
 }

@@ -1,5 +1,4 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
 import {useHistory} from "react-router-dom";
 import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
@@ -113,19 +112,19 @@ export default (props) => {
 
     if (!paginationOptions) return null;
     if (postsRotateReplies === "outside" && rotating && replies && replies.length) {
-        return <Grid container>
-            <Grid className={classes.indent}/>
-            <Grid item xs>
+        return <div className={classes.replyRow}>
+            <div className={classes.replyIndent}/>
+            <div className={classes.replyContent}>
                 <RotatingReplies {...props} items={replies}/>
-            </Grid>
-        </Grid>
+            </div>
+        </div>
     }
 
     if (!expanded && !userReplied) return null;
     if (!expanded) {
-        return <Grid container>
-            <Grid className={classes.indent}/>
-            <Grid item xs>
+        return <div className={classes.replyRow}>
+            <div className={classes.replyIndent}/>
+            <div className={classes.replyContent}>
                 <ItemPlaceholderComponent
                     avatar={<AvatarView
                         className={classes.avatarSmallest}
@@ -144,13 +143,13 @@ export default (props) => {
                         setState(state => ({...state, expanded: true}));
                     }}
                 />
-            </Grid>
-        </Grid>
+            </div>
+        </div>
     }
 
     return <>
-        {expand && level === 0 && <Grid container>
-            <Grid item xs>
+        {expand && level === 0 && <div className={classes.replyRow}>
+            <div className={classes.replyContent}>
                 <ItemPlaceholderComponent
                     avatar={null}
                     label={<span className={classes.textSmall}>
@@ -159,11 +158,11 @@ export default (props) => {
                     pattern={"flat"}
                     onClick={() => history.push(pages.post.route + postId)}
                 />
-            </Grid>
-        </Grid>}
-        <Grid container className={level > 1 ? classes.sectionReply : classes.sectionComment}>
-            {level > 0 && level < MAX_INDENTING_LEVELS && <Grid className={classes.indent}/>}
-            <Grid item xs>
+            </div>
+        </div>}
+        <div className={[classes.replyRow, level > 1 ? classes.sectionReply : classes.sectionComment].join(" ")}>
+            {level > 0 && level < MAX_INDENTING_LEVELS && <div className={classes.replyIndent}/>}
+            <div className={classes.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
                     pagination={() => new Pagination(paginationOptions)}
@@ -191,8 +190,8 @@ export default (props) => {
                     />}
                     placeholder={<PostComponent avatar={null} skeleton={true} pattern={"cloud"}/>}
                 />
-            </Grid>
-        </Grid>
+            </div>
+        </div>
     </>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

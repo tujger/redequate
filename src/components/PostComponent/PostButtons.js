@@ -1,5 +1,4 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
 import ActionLike from "./ActionLike";
 import ActionDislike from "./ActionDislike";
 import ActionReplies from "./ActionReplies";
@@ -13,19 +12,16 @@ export default (props) => {
 
     const isNarrow = windowData.isNarrow();
 
-    return <Grid className={[
+    return <div className={[classes.layout, [
         classes.cardActions,
         isReply ? classes.cardActionsSmall : "",
         // isReply ? classesCurrent.cardActionsSmall : ""
-    ].join(" ")}>
+    ].join(" ")].join(" ")}>
         {!isNarrow && <ActionTranslate {...props} ancillaryRef={ancillaryRef}/>}
         {allowedExtras.indexOf("like") >= 0 && <ActionLike {...props}/>}
         {allowedExtras.indexOf("dislike") >= 0 && <ActionDislike {...props}/>}
         {(showRepliesCounter && !isReply) && <ActionReplies {...props}/>}
         {isReply && <ActionReply {...props} icon={!isReply || !isNarrow} onComplete={onChange}/>}
         {isNarrow && <ActionTranslate {...props} ancillaryRef={ancillaryRef}/>}
-        {/*{isNarrow && <Grid item xs/>}*/}
-        {/*{!isReply && <ButtonShare {...props}/>}*/}
-        {/*<ButtonDelete {...props}/>*/}
-    </Grid>
+    </div>
 }
