@@ -108,7 +108,6 @@ function Users(props) {
         <UsersHeader classes={classes} filter={filter} handleChange={handleHeaderChange} mode={mode}/>
         <div className={classes.center}>
             <LazyListComponent
-                className={classes.center}
                 pagination={pagination}
                 itemTransform={itemTransform}
                 itemComponent={item => <UserItem key={item.key} data={item}/>}
@@ -116,56 +115,9 @@ function Users(props) {
                 noItemsComponent={<UserItem label={"No users found"}/>}
             />
         </div>
-        {/* <ListComponent
-            items={items}
-            leftAction={listAction({
-                action: (selectedItems) => {
-                    throw Error("'left' is not implemented");
-                },
-                itemButton: {
-                    label: "Check",
-                    icon: <CheckIcon/>,
-                    color: "#008800",
-                },
-                toolbarButton: {
-                    label: "Check all",
-                    icon: <CheckIcon/>,
-                },
-                variant: "warning"
-            })}
-            rightAction={listAction({
-                action: (selectedItems) => {
-                    dispatch(ProgressView.SHOW);
-                    for(let item of selectedItems) {
-                        let index = items.indexOf(item);
-                        console.log("left", items.length, index, item);
-                        items.splice(items.indexOf(item), 1);
-                        notifySnackbar({title: "Removed: " + item.public.name});
-                    }
-                    setState({...state, items});
-                    dispatch(ProgressView.HIDE);
-                },
-                itemButton: {
-                    label: "Delete this",
-                    icon: <DeleteIcon/>,
-                    color: "#ff0000",
-                },
-                toolbarButton: {
-                    label: "Delete all",
-                    icon: <DeleteIcon/>,
-                    ask: "You are going to delete all selected items. Continue?"
-                },
-                variant: "warning"
-            })}
-            emptyComponent={<ServiceComponent text={loading ? "Loading..." : "No users"}/>}
-            itemComponent={<UserComponent pages={pages} store={store} firebase={firebase}/>}
-        /> */}
-        {invitation && <Link
-            key={pages.adduser.route}
-            to={pages.adduser.route}
-        >
+        {invitation && <Link to={pages.adduser.route}>
             <FlexFabComponent
-                icon={<span className={classes.addIcon} aria-hidden="true">+</span>}
+                icon={<span className={classes.addIcon} aria-hidden='true'>+</span>}
                 label={"Add user"}
             />
         </Link>}
