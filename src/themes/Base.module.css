@@ -3,7 +3,7 @@
     --theme-font-size: 16px;
     --theme-letter-spacing: 0.01071em;
     --theme-color-primary: #4767b6;
-    --theme-color-secondary: #878b97;
+    --theme-color-secondary: rgba(0, 0, 0, 0.54);
     --theme-color-paper: #ffffff;
     --theme-color-background: #efefef;
     --theme-color-text: #101010;

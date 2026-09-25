@@ -19,7 +19,7 @@
     align-items: center;
     background: transparent;
     border: 0;
-    color: rgba(0, 0, 0, 0.54);
+    color: var(--theme-color-secondary);
     cursor: pointer;
     display: inline-flex;
     justify-content: center;

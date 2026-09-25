@@ -1,0 +1,180 @@
+.card {
+    background-color: var(--theme-color-paper);
+    border-width: 0;
+    box-shadow: var(--theme-card-shadow);
+    color: var(--theme-color-secondary);
+    font-size: 0.875rem;
+    letter-spacing: var(--theme-letter-spacing);
+    margin-bottom: calc(var(--theme-spacing) * 1.5);
+    overflow: initial;
+    position: relative;
+    transition: 1s ease background-color;
+    width: 100%;
+
+    &:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+}
+
+.cardFlat {
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 2px;
+}
+
+.cardActionArea {
+    align-items: stretch;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+    padding: calc(var(--theme-spacing) * 2);
+    position: relative;
+    text-align: left;
+    width: 100%;
+}
+
+.cardActionArea:focus-visible {
+    outline: 2px solid var(--theme-color-highlight);
+    outline-offset: -2px;
+}
+
+.rippleContainer {
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+.ripple {
+    animation: ripple .55s ease-out;
+    background-color: rgb(0 0 0 / 18%);
+    border-radius: 50%;
+    height: var(--ripple-size);
+    left: var(--ripple-x);
+    position: absolute;
+    top: var(--ripple-y);
+    transform: translate(-50%, -50%) scale(0);
+    width: var(--ripple-size);
+}
+
+@keyframes ripple {
+    0% {
+        opacity: .32;
+        transform: translate(-50%, -50%) scale(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.cardHeader {
+    align-items: flex-start;
+    box-sizing: border-box;
+    display: flex;
+    min-width: 0;
+    padding: calc(var(--theme-spacing) * 2);
+}
+
+.avatar {
+    box-sizing: border-box;
+    color: lightgray;
+    height: calc(var(--theme-spacing) * 7);
+    margin-right: calc(var(--theme-spacing) * 2);
+    text-decoration: none;
+    width: calc(var(--theme-spacing) * 7);
+}
+
+.admin {
+    border-color: #00ff00;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.disabled {
+    border-color: #ff0000;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.notVerified {
+    border-color: #ffff00;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.cardContent {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: auto;
+}
+
+.titleRow {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.userName {
+    color: var(--theme-color-highlight);
+    font-weight: bolder;
+    letter-spacing: var(--theme-letter-spacing);
+    margin-right: calc(var(--theme-spacing) * .5);
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+}
+
+.date {
+    align-items: center;
+    color: var(--theme-color-muted);
+    display: flex;
+    margin-right: calc(var(--theme-spacing) * 3.5);
+    white-space: nowrap;
+}
+
+.subheader {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.cardAction {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    margin-left: calc(var(--theme-spacing) * 2);
+}
+
+/* Compatibility keys used by ItemPlaceholderComponent. */
+.cardHeaderWithLabel {
+    align-items: center;
+    white-space: pre-wrap;
+}
+
+.cardActions {
+    display: flex;
+}
+
+.root {
+    flex: 0 0 auto;
+}
+
+@media (max-width: 599px) {
+    .card {
+        margin-bottom: calc(var(--theme-spacing) * 1.5);
+    }
+
+    .userName {
+        flex: 1 1 auto;
+    }
+
+    .date {
+        font-size: calc(var(--theme-spacing) * 1.5);
+    }
+
+    .cardAction {
+        margin-left: var(--theme-spacing);
+    }
+}
