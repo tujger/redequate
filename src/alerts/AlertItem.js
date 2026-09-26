@@ -1,27 +1,22 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import CardHeader from "@material-ui/core/CardHeader";
-import Card from "@material-ui/core/Card";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {useCurrentUserData} from "../controllers/UserData";
-import {useFirebase, usePages, useWindowData} from "../controllers/General";
+import {useFirebase, usePages} from "../controllers/General";
 import ProgressView from "../components/ProgressView";
 import notifySnackbar from "../controllers/notifySnackbar";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import AvatarView from "../components/AvatarView";
 import {toDateString} from "../controllers/DateFormat";
-import {stylesList} from "../controllers/Theme";
+import baseStyles from "../themes/Base.module.css";
+import alertStyles from "./styles/AlertItem.module.css";
 
-const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
+const AlertItem = ({data, skeleton, label, fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {new: isNew, type, id, timestamp, avatar, title, text, removed, route} = state
 
@@ -59,33 +54,46 @@ const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
     if (label) return <ItemPlaceholderComponent label={label} classes={null} pattern={"flat"}/>
     if (skeleton || !type) return <ItemPlaceholderComponent classes={null} pattern={"flat"}/>;
 
-    return <>
-        <Card className={[classes.card, classes.cardFlat].join(" ")}>
-            <CardActionArea className={classes.root} onClick={handleClick}>
-                <CardHeader
-                    classes={{content: classes.cardContent}}
-                    className={[classes.cardHeader, classes.post].join(" ")}
-                    avatar={<AvatarView className={classes.avatarSmall} icon={avatar} initials={type} verified={true}/>}
-                    title={<Grid container>
-                        <Grid item className={[classes.userName, isNew ? classes.unread : classes.read].join(" ")}>
+    return <div className={[alertStyles.card, alertStyles.cardFlat].join(" ")}>
+        <div
+            className={[alertStyles.root, alertStyles.cardActionArea, baseStyles.ripple].join(" ")}
+            onClick={handleClick}
+            onKeyDown={event => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                handleClick();
+            }}
+            role='button'
+            tabIndex={0}
+        >
+            <div className={alertStyles.cardHeader}>
+                <div className={alertStyles.avatarWrapper}>
+                    <AvatarView
+                        className={alertStyles.avatarSmall}
+                        icon={avatar}
+                        initials={type}
+                        verified={true}
+                    />
+                </div>
+                <div className={alertStyles.cardContent}>
+                    <div className={alertStyles.titleRow}>
+                        <div className={[alertStyles.userName, isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
                             {title}
-                        </Grid>
-                        {windowData.isNarrow() && <Grid item xs/>}
-                        {timestamp && <Grid item className={classes.date} title={new Date(timestamp).toLocaleString()}>
+                        </div>
+                        {timestamp && <div
+                            className={alertStyles.date}
+                            title={new Date(timestamp).toLocaleString()}
+                        >
                             {toDateString(timestamp)}
-                        </Grid>}
-                    </Grid>}
-                    subheader={<>
-                        <Grid container>
-                            <Grid item className={[isNew ? classes.unread : classes.read].join(" ")}>
-                                {text || id}
-                            </Grid>
-                        </Grid>
-                    </>}
-                />
-            </CardActionArea>
-        </Card>
-    </>
+                        </div>}
+                    </div>
+                    <div className={[alertStyles.subheader, isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
+                        {text || id}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
-export default withStyles(stylesList)(AlertItem);
+export default AlertItem;

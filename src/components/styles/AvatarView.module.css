@@ -7,12 +7,12 @@
     flex-shrink: 0;
     font-family: Roboto, Helvetica, Arial, sans-serif;
     font-size: 1.25rem;
-    height: 40px;
+    height: calc(var(--theme-spacing) * 5);
     justify-content: center;
     overflow: hidden;
     position: relative;
     user-select: none;
-    width: 40px;
+    width: calc(var(--theme-spacing) * 5);
 }
 
 .avatarImage {
