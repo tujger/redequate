@@ -1,0 +1,8 @@
+.center {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    padding: var(--theme-spacing);
+    padding-left: 240px;
+    padding-right: 240px;
+}
