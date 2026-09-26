@@ -9,6 +9,7 @@
     overflow: initial;
     position: relative;
     transition: 1s ease background-color;
+    width: 100%;
 }
 
 .cardFlat {
@@ -40,14 +41,18 @@
     padding: calc(var(--theme-spacing) * 2);
 }
 
-.avatarWrapper {
+.avatarLink {
     flex: 0 0 auto;
-    margin-right: calc(var(--theme-spacing) * 1.5);
+    margin-right: calc(var(--theme-spacing) * 2);
+    text-decoration: none;
 }
 
-.avatarSmall {
-    font-size: 1rem;
+.avatar {
+    box-sizing: border-box;
+    color: lightgray;
+    height: calc(var(--theme-spacing) * 7);
     text-decoration: none;
+    width: calc(var(--theme-spacing) * 7);
 }
 
 .cardContent {
@@ -57,31 +62,16 @@
 }
 
 .titleRow {
-    align-items: center;
+    align-items: baseline;
     display: flex;
-    flex-wrap: wrap;
     min-width: 0;
 }
 
 .userName {
-    color: var(--theme-color-highlight);
-    font-weight: bolder;
     letter-spacing: var(--theme-letter-spacing);
     margin-right: calc(var(--theme-spacing) * .5);
     min-width: 0;
     overflow-wrap: anywhere;
-    text-decoration: none;
-}
-
-.date {
-    color: var(--theme-color-muted);
-    margin-right: calc(var(--theme-spacing) * 3.5);
-    white-space: nowrap;
-}
-
-.subheader {
-    overflow-wrap: break-word;
-    word-wrap: break-word;
 }
 
 .read {
@@ -92,13 +82,38 @@
     font-weight: bolder;
 }
 
-.root {
+.presence {
+    border-radius: var(--theme-spacing);
     flex: 0 0 auto;
+    margin-left: var(--theme-spacing);
+    transform: translateY(calc(var(--theme-spacing) * -0.25));
+}
+
+.offline {
+    background-color: #bbbbbb;
+}
+
+.online {
+    background-color: #00bb00;
+}
+
+.message {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+}
+
+@media (min-width: 600px) {
+    .presence {
+        height: calc(var(--theme-spacing) * .5);
+        margin-bottom: calc(var(--theme-spacing) * .5);
+        width: calc(var(--theme-spacing) * .5);
+    }
 }
 
 @media (max-width: 599px) {
-    .date {
-        margin-left: auto;
-        font-size: calc(var(--theme-spacing) * 1.5);
+    .presence {
+        height: var(--theme-spacing);
+        width: var(--theme-spacing);
     }
 }

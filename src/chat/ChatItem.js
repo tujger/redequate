@@ -1,10 +1,10 @@
 import React from "react";
-import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
 import chatStyles from "./styles/ChatItem.module.css";
 
-const ChatItem = (props) => {
+export default (props) => {
     // eslint-disable-next-line react/prop-types
     const {data, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
@@ -69,5 +69,3 @@ const ChatItem = (props) => {
         ><b>NEW</b></InView>}
     </li> */
 }
-
-export default ChatItem;
