@@ -1,51 +1,27 @@
-import React from "react";
-import {connect} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
-import IconButton from "@material-ui/core/IconButton";
-import ImageIcon from "@material-ui/icons/InsertPhoto";
 import ImageAddIcon from "@material-ui/icons/AddPhotoAlternate";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import Hidden from "@material-ui/core/Hidden";
-import DialogContent from "@material-ui/core/DialogContent";
-import {useHistory} from "react-router-dom";
+import ImageIcon from "@material-ui/icons/InsertPhoto";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {newPostComponentReducer} from "./newPostComponentReducer";
+import {connect} from "react-redux";
+import {useHistory} from "react-router-dom";
+import Pagination from "../../controllers/FirebasePagination";
+import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
-import {useFirebase, usePages, useWindowData} from "../../controllers/General";
-import {styles} from "../../controllers/Theme";
-import {
-    uploadComponentClean,
-    uploadComponentPublish
-} from "../UploadComponent/uploadComponentControls";
-import ProgressView from "../ProgressView";
-import LoadingComponent from "../LoadingComponent";
-import UploadComponent from "../UploadComponent/UploadComponent";
-import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
-import {tokenizeText} from "../MentionedTextComponent";
+import useRippleEffect from "../../helpers/useRippleEffect";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
-import Wrapper from "./Wrapper";
+import LoadingComponent from "../LoadingComponent";
+import {tokenizeText} from "../MentionedTextComponent";
+import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
+import ProgressView from "../ProgressView";
+import UploadComponent from "../UploadComponent/UploadComponent";
+import {uploadComponentClean, uploadComponentPublish} from "../UploadComponent/uploadComponentControls";
 import Images from "./Images";
-import Pagination from "../../controllers/FirebasePagination";
+import {newPostComponentReducer} from "./newPostComponentReducer";
+import componentStyles from "./styles/NewPostComponent.module.css";
 import Toolbar from "./Toolbar";
-
-const stylesCurrent = theme => ({
-    content: {
-        flex: "0 0 auto",
-        padding: theme.spacing(1),
-    },
-    messagebox: {
-        height: theme.spacing(40),
-    },
-    "@global": {
-        [theme.breakpoints.down("xs")]: {
-            ".uppy-Dashboard--modal .uppy-Dashboard-inner": {
-                top: 0,
-            },
-        }
-    },
-});
+import Wrapper from "./Wrapper";
 
 const NewPostComponent = props => {
     const {t} = useTranslation();
@@ -53,7 +29,6 @@ const NewPostComponent = props => {
         _savedText,
         _savedContext,
         buttonComponent,
-        classes,
         context,
         dispatch,
         editPostData,
@@ -79,6 +54,7 @@ const NewPostComponent = props => {
     const history = useHistory();
     const pages = usePages();
     const windowData = useWindowData();
+    const onUploadPointerDown = useRippleEffect();
     const [state, setState] = React.useState({});
     const {disabled, hiddenTag, images, open, ready, text, uppy, imageDescriptors} = state;
     const {camera = true, multi = true} = UploadProps;
@@ -429,19 +405,25 @@ const NewPostComponent = props => {
         }
     }, [uppy])
 
+    const uploadButton = <div
+        aria-disabled={disabled}
+        className={[componentStyles.uploadButton, !windowData.isNarrow() && componentStyles.uploadButtonSecondary]
+            .filter(Boolean)
+            .join(" ")}
+        onKeyDown={event => {
+            if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
+            event.preventDefault();
+            event.currentTarget.click();
+        }}
+        onPointerDown={onUploadPointerDown}
+        role='button'
+        tabIndex={disabled ? -1 : 0}
+    >
+        {multi ? <ImageAddIcon/> : <ImageIcon/>}
+    </div>;
+
     const uploadComponent = ready && <UploadComponent
-        button={windowData.isNarrow()
-            ? <IconButton
-                children={multi ? <ImageAddIcon/> : <ImageIcon/>}
-                disabled={disabled}
-                style={{color: "inherit"}}
-            />
-            : <IconButton
-                children={multi ? <ImageAddIcon/> : <ImageIcon/>}
-                color={"secondary"}
-                disabled={disabled}
-                size={"small"}
-            />}
+        button={uploadButton}
         camera={camera}
         firebase={firebase}
         imageDescriptors={imageDescriptors}
@@ -470,15 +452,13 @@ const NewPostComponent = props => {
         />}
         {ready && <Wrapper inline={inline} onClose={handleClose}>
             {(windowData.isNarrow() && !inline) && toolbar}
-            <Hidden smDown>
-                <DialogTitle>{title}</DialogTitle>
-            </Hidden>
-            <DialogContent classes={{root: classes.content}}>
+            <div className={componentStyles.title}>{title}</div>
+            <div className={componentStyles.content}>
                 {infoComponent}
                 <React.Suspense fallback={<LoadingComponent/>}>
                     <MentionsInputComponent
                         autofocus={true}
-                        className={classes.messagebox}
+                        className={componentStyles.messageBox}
                         color={"secondary"}
                         disabled={disabled}
                         firebase={firebase}
@@ -490,7 +470,7 @@ const NewPostComponent = props => {
                         value={text}
                     />
                 </React.Suspense>
-            </DialogContent>
+            </div>
             {(!windowData.isNarrow() || inline) && toolbar}
             <Images
                 disabled={disabled}
@@ -507,7 +487,4 @@ const mapStateToProps = ({newPostComponentReducer}) => ({
     _savedContext: newPostComponentReducer._savedContext,
 });
 
-export default connect(mapStateToProps)(withStyles(theme => ({
-    ...stylesCurrent(theme),
-    ...styles(theme)
-}))(NewPostComponent));
+export default connect(mapStateToProps)(NewPostComponent);

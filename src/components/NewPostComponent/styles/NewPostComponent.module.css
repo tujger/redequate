@@ -1,0 +1,62 @@
+.title {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.0075em;
+    line-height: 1.6;
+    padding: var(--theme-spacing);
+}
+
+.content {
+    flex: 0 0 auto;
+    padding: var(--theme-spacing);
+}
+
+.messageBox {
+    height: calc(var(--theme-spacing) * 40);
+}
+
+.uploadButton {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    min-height: calc(var(--theme-spacing) * 4);
+    min-width: calc(var(--theme-spacing) * 4);
+    padding: calc(var(--theme-spacing) * .5);
+    position: relative;
+
+    &:hover {
+        background-color: var(--theme-color-background);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--theme-color-highlight);
+        outline-offset: -2px;
+    }
+
+    &[aria-disabled="true"] {
+        cursor: default;
+        opacity: .5;
+        pointer-events: none;
+    }
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: calc(var(--theme-spacing) * 3);
+    }
+}
+
+@media (max-width: 959px) {
+    .title {
+        display: none;
+    }
+}
+
+@media (max-width: 599px) {
+    :global(.uppy-Dashboard--modal .uppy-Dashboard-inner) {
+        top: 0;
+    }
+}
