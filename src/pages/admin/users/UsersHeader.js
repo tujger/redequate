@@ -1,79 +1,65 @@
 import React from "react";
 import Clear from "@material-ui/icons/Clear";
-import IconButton from "@material-ui/core/IconButton";
-import Input from "@material-ui/core/Input";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import Hidden from "@material-ui/core/Hidden";
 import NavigationToolbar from "../../../components/NavigationToolbar";
+import Select from "../../../components/Select/Select";
+import baseStyles from "../../../themes/Base.module.css";
+import headerStyles from "./styles/UsersHeader.module.css";
 
-export default ({classes, filter, handleChange, mode}) => {
+// eslint-disable-next-line react/prop-types
+export default ({classes: givenClasses, filter, handleChange, mode}) => {
+    const classes = {...givenClasses, ...headerStyles};
+    const options = [
+        {label: "All users", value: "all"},
+        {label: "Administrators", value: "admins"},
+        {label: "Disabled users", value: "disabled"},
+        {label: "Recently active", value: "active"},
+        {label: "Recently registered", value: "recent"},
+        {label: "Users not verified", value: "notVerified"},
+    ];
+
+    const select = <Select
+        onChange={handleChange("mode")}
+        options={options}
+        value={mode}
+    />;
+
+    const input = mode === "all" && <div className={classes.inputWrapper}>
+        <input
+            autoFocus
+            className={classes.input}
+            onChange={handleChange("filter")}
+            placeholder='Search'
+            value={filter}
+        />
+        {filter && <button
+            aria-label='Clear'
+            className={[classes.clearButton, baseStyles.ripple].join(" ")}
+            onClick={handleChange("clear")}
+            title='Clear'
+            type='button'
+        >
+            <Clear/>
+        </button>}
+    </div>;
+
     return <>
-        <Hidden smDown>
+        <div className={classes.desktopOnly}>
             <NavigationToolbar
                 backButton={null}
                 className={classes.topSticky}
             >
-                <Select
-                    color={"secondary"}
-                    onChange={handleChange("mode")}
-                    value={mode}
-                >
-                    <MenuItem value={"all"}>All users</MenuItem>
-                    <MenuItem value={"admins"}>Administrators</MenuItem>
-                    <MenuItem value={"disabled"}>Disabled users</MenuItem>
-                    <MenuItem value={"active"}>Recently active</MenuItem>
-                    <MenuItem value={"recent"}>Recently registered</MenuItem>
-                    <MenuItem value={"notVerified"}>Users not verified</MenuItem>
-                </Select>
-                {mode === "all" && <Input
-                    autoFocus
-                    color={"secondary"}
-                    endAdornment={filter ? <IconButton
-                        children={<Clear/>}
-                        onClick={handleChange("clear")}
-                        size={"small"}
-                        title={"Clear"}
-                        variant={"text"}
-                    /> : null}
-                    onChange={handleChange("filter")}
-                    placeholder={"Search"}
-                    value={filter}
-                />}
+                {select}
+                {input}
             </NavigationToolbar>
-        </Hidden>
-        <Hidden mdUp>
+        </div>
+        <div className={classes.mobileOnly}>
             <NavigationToolbar
                 backButton={null}
                 className={classes.topSticky}
-                rightButton={<Select
-                    color={"secondary"}
-                    onChange={handleChange("mode")}
-                    value={mode}
-                >
-                    <MenuItem value={"all"}>All users</MenuItem>
-                    <MenuItem value={"admins"}>Administrators</MenuItem>
-                    <MenuItem value={"disabled"}>Disabled users</MenuItem>
-                    <MenuItem value={"active"}>Recently active</MenuItem>
-                    <MenuItem value={"recent"}>Recently registered</MenuItem>
-                    <MenuItem value={"notVerified"}>Users not verified</MenuItem>
-                </Select>}
+                rightButton={select}
             >
-                {mode === "all" && <Input
-                    autoFocus
-                    color={"secondary"}
-                    endAdornment={filter ? <IconButton
-                        children={<Clear/>}
-                        onClick={handleChange("clear")}
-                        size={"small"}
-                        title={"Clear"}
-                        variant={"text"}
-                    /> : null}
-                    onChange={handleChange("filter")}
-                    placeholder={"Search"}
-                    value={filter}
-                />}
+                {input}
             </NavigationToolbar>
-        </Hidden>
+        </div>
     </>
 }

@@ -1,0 +1,82 @@
+.desktopOnly {
+    display: block;
+}
+
+.mobileOnly {
+    display: none;
+}
+
+.inputWrapper {
+    align-items: center;
+    display: inline-flex;
+    min-width: 0;
+    position: relative;
+}
+
+.input {
+    background-color: transparent;
+    border: 0;
+    border-bottom: 1px solid rgb(0 0 0 / 42%);
+    box-sizing: border-box;
+    color: var(--theme-color-text);
+    font: inherit;
+    min-height: calc(var(--theme-spacing) * 5);
+    min-width: calc(var(--theme-spacing) * 20);
+    outline: 0;
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 4) var(--theme-spacing) 0;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input::placeholder {
+    color: var(--theme-color-muted);
+    opacity: 1;
+}
+
+.input:focus {
+    border-bottom-color: var(--theme-color-highlight);
+    box-shadow: 0 1px 0 var(--theme-color-highlight);
+}
+
+.clearButton {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    height: calc(var(--theme-spacing) * 4);
+    justify-content: center;
+    padding: var(--theme-spacing);
+    position: absolute;
+    right: 0;
+    width: calc(var(--theme-spacing) * 4);
+}
+
+.clearButton :global(.MuiSvgIcon-root) {
+    height: calc(var(--theme-spacing) * 2.5);
+    width: calc(var(--theme-spacing) * 2.5);
+}
+
+.clearButton:focus-visible {
+    outline: 2px solid var(--theme-color-highlight);
+    outline-offset: 2px;
+}
+
+@media (max-width: 599px) {
+    .desktopOnly {
+        display: none;
+    }
+
+    .mobileOnly {
+        display: block;
+    }
+
+    .inputWrapper {
+        width: 100%;
+    }
+
+    .input {
+        min-width: 0;
+        width: 100%;
+    }
+}

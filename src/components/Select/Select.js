@@ -1,6 +1,6 @@
-import React from "react";
-import MaterialSelect from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
+import MaterialSelect from "@material-ui/core/Select";
+import React from "react";
 import selectStyles from "./Select.module.css";
 
 // eslint-disable-next-line react/prop-types
