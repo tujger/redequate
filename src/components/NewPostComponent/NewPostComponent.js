@@ -38,15 +38,6 @@ const stylesCurrent = theme => ({
     messagebox: {
         height: theme.spacing(40),
     },
-    _preview: {
-        objectFit: "contain",
-        [theme.breakpoints.up("md")]: {
-            maxHeight: theme.spacing(4),
-        },
-        [theme.breakpoints.down("sm")]: {
-            maxHeight: theme.spacing(20),
-        },
-    },
     toolbar: {
         ...theme.mixins.toolbar,
         backgroundColor: theme.palette.primary.main,
@@ -508,7 +499,6 @@ const NewPostComponent = props => {
             </DialogContent>
             {(!windowData.isNarrow() || inline) && toolbar}
             <Images
-                classes={classes}
                 disabled={disabled}
                 images={images}
                 onChange={handleImagesChange}

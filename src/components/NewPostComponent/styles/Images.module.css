@@ -1,0 +1,55 @@
+.previewGrid {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--theme-spacing);
+    justify-content: center;
+}
+
+.imageItem {
+    align-items: center;
+    display: flex;
+    min-width: 0;
+}
+
+.preview {
+    object-fit: contain;
+    max-height: calc(var(--theme-spacing) * 20);
+}
+
+.removeButton {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--theme-color-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    min-height: calc(var(--theme-spacing) * 4);
+    min-width: calc(var(--theme-spacing) * 4);
+    padding: calc(var(--theme-spacing) * .5);
+
+    &:hover {
+        background-color: var(--theme-color-background);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--theme-color-highlight);
+        outline-offset: -2px;
+    }
+
+    &[aria-disabled="true"] {
+        cursor: default;
+        opacity: .5;
+    }
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: calc(var(--theme-spacing) * 2.5);
+    }
+}
+
+@media (min-width: 960px) {
+    .preview {
+        max-height: calc(var(--theme-spacing) * 4);
+    }
+}

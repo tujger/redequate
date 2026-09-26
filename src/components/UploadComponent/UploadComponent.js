@@ -1,24 +1,24 @@
-import React from "react";
 import Button from "@material-ui/core/Button";
-import VideoIcon from "@material-ui/icons/Movie";
 import AudioIcon from "@material-ui/icons/Audiotrack";
 import FlipIcon from "@material-ui/icons/FlipCameraAndroid";
+import VideoIcon from "@material-ui/icons/Movie";
+import withStyles from "@material-ui/styles/withStyles";
 import Uppy from "@uppy/core";
+import Dashboard from "@uppy/dashboard";
 import ProgressBar from "@uppy/progress-bar";
 import Webcam from "@uppy/webcam";
-import Dashboard from "@uppy/dashboard";
-import {connect} from "react-redux";
 import PropTypes from "prop-types";
-import withStyles from "@material-ui/styles/withStyles";
+import React from "react";
 import ReactDOM from "react-dom";
 import "@uppy/core/dist/style.css";
 import "@uppy/progress-bar/dist/style.css";
 import "@uppy/dashboard/dist/style.css";
 import "@uppy/webcam/dist/style.css";
 import {useTranslation} from "react-i18next";
+import {connect} from "react-redux";
+import {useMetaInfo} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
-import {useMetaInfo, usePages, useStore} from "../../controllers/General";
 
 const MAX_FILE_SIZE = 20 * 1024;
 
@@ -167,7 +167,7 @@ const UploadComponent = (
         quality = uploadsQuality
     } = limits;
 
-    const allowedFileTypes = uploadsTypes || [];
+    const allowedFileTypes = ["image/*"];// uploadsTypes || [];
 
     React.useEffect(() => {
         if (!uploadsAllow) return;

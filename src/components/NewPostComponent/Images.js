@@ -1,13 +1,11 @@
-import React from "react";
-import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
-import Box from "@material-ui/core/Box";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {uploadComponentClean} from "../UploadComponent/uploadComponentControls";
 import DocumentThumbnailComponent from "../DocumentThumbnailComponent";
+import {uploadComponentClean} from "../UploadComponent/uploadComponentControls";
+import imageStyles from "./styles/Images.module.css";
 
-export default ({classes, disabled, images, onChange, uppy}) => {
+export default ({disabled, images, onChange, uppy}) => {
     const {t} = useTranslation();
 
     const handleSavedImageRemove = index => () => {
@@ -20,42 +18,43 @@ export default ({classes, disabled, images, onChange, uppy}) => {
         onChange({images, uppy});
     }
 
-    return <>
-        <Box m={1}/>
-        <Grid container justify={"center"}>
-            {images && images.map((image, index) => {
-                return <Grid item key={index}>
-                    <DocumentThumbnailComponent
-                        className={classes._preview}
-                        url={image}/>
-                    <IconButton
-                        children={<ClearIcon/>}
-                        color={"secondary"}
-                        disabled={disabled}
-                        onClick={handleSavedImageRemove(index)}
-                        size={"small"}
-                        title={t("Post.Remove image")}
-                    />
-                </Grid>
-            })}
-            {uppy && Object.keys(uppy._uris).map((key) => {
-                const file = uppy._uris[key];
-                return <Grid item key={key}>
-                    <DocumentThumbnailComponent
-                        alt={file.name}
-                        className={classes._preview}
-                        title={file.name}
-                        url={file.uploadURL}/>
-                    <IconButton
-                        children={<ClearIcon/>}
-                        color={"secondary"}
-                        disabled={disabled}
-                        onClick={handleImageRemove(key)}
-                        size={"small"}
-                        title={t("Post.Remove image")}
-                    />
-                </Grid>
-            })}
-        </Grid>
-    </>
+    const handleRemoveKeyDown = handler => event => {
+        if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        handler();
+    };
+
+    const removeButton = handler => <div
+        aria-disabled={disabled}
+        className={imageStyles.removeButton}
+        onClick={disabled ? undefined : handler}
+        onKeyDown={handleRemoveKeyDown(handler)}
+        role='button'
+        tabIndex={disabled ? -1 : 0}
+        title={t("Post.Remove image")}
+    >
+        <ClearIcon/>
+    </div>;
+
+    return <div className={imageStyles.previewGrid}>
+        {images && images.map((image, index) => {
+            return <div className={imageStyles.imageItem} key={index}>
+                <DocumentThumbnailComponent
+                    className={imageStyles.preview}
+                    url={image}/>
+                {removeButton(handleSavedImageRemove(index))}
+            </div>
+        })}
+        {uppy && Object.keys(uppy._uris).map((key) => {
+            const file = uppy._uris[key];
+            return <div className={imageStyles.imageItem} key={key}>
+                <DocumentThumbnailComponent
+                    alt={file.name}
+                    className={imageStyles.preview}
+                    title={file.name}
+                    url={file.uploadURL}/>
+                {removeButton(handleImageRemove(key))}
+            </div>
+        })}
+    </div>
 }
