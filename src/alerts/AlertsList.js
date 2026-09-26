@@ -1,9 +1,9 @@
 import React from "react";
-import AlertItem from "./AlertItem";
+import {useTranslation} from "react-i18next";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import Pagination from "../controllers/FirebasePagination";
 import {useCurrentUserData} from "../controllers/UserData";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {useTranslation} from "react-i18next";
+import AlertItem from "./AlertItem";
 
 const AlertsList = ({fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();

@@ -1,13 +1,13 @@
 import React from "react";
-import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {useCurrentUserData} from "../controllers/UserData";
-import {useFirebase, usePages} from "../controllers/General";
-import ProgressView from "../components/ProgressView";
-import notifySnackbar from "../controllers/notifySnackbar";
-import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import {useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
+import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import ProgressView from "../components/ProgressView";
 import {toDateString} from "../controllers/DateFormat";
+import {useFirebase, usePages} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {useCurrentUserData} from "../controllers/UserData";
 import baseStyles from "../themes/Base.module.css";
 import alertStyles from "./styles/AlertItem.module.css";
 
@@ -77,7 +77,8 @@ const AlertItem = ({data, skeleton, label, fetchAlertContent}) => {
                 </div>
                 <div className={alertStyles.cardContent}>
                     <div className={alertStyles.titleRow}>
-                        <div className={[alertStyles.userName, isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
+                        <div
+                            className={[alertStyles.userName, isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
                             {title}
                         </div>
                         {timestamp && <div

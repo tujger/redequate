@@ -1,11 +1,11 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import {alertsCounterReducer} from "./alertsCounterReducer";
-import {useCurrentUserData} from "../controllers/UserData";
-import {MenuBadge, useFirebase, usePages, useStore} from "../controllers/General";
 import Pagination from "../controllers/FirebasePagination";
+import {MenuBadge, useFirebase, usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
+import {useCurrentUserData} from "../controllers/UserData";
+import {alertsCounterReducer} from "./alertsCounterReducer";
 
 const AlertsDaemon = ({fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();

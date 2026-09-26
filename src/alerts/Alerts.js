@@ -1,21 +1,21 @@
-import React from "react";
-import {useDispatch} from "react-redux";
-import AllReadIcon from "@material-ui/icons/ClearAll";
-import AlertsList from "./AlertsList";
 import Clear from "@material-ui/icons/Clear";
-import {alertsCounterReducer} from "./alertsCounterReducer";
-import {alertsVisitReducer} from "./alertsVisitReducer";
-import AlertsDaemon from "./AlertsDaemon";
-import {useCurrentUserData} from "../controllers/UserData";
-import {MenuBadge, useFirebase, usePages} from "../controllers/General";
+import AllReadIcon from "@material-ui/icons/ClearAll";
+import React from "react";
+import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import ConfirmComponent from "../components/ConfirmComponent";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
 import Pagination from "../controllers/FirebasePagination";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import ConfirmComponent from "../components/ConfirmComponent";
-import NavigationToolbar from "../components/NavigationToolbar";
-import {useTranslation} from "react-i18next";
+import {useCurrentUserData} from "../controllers/UserData";
 import baseStyles from "../themes/Base.module.css";
+import {alertsCounterReducer} from "./alertsCounterReducer";
+import AlertsDaemon from "./AlertsDaemon";
+import AlertsList from "./AlertsList";
+import {alertsVisitReducer} from "./alertsVisitReducer";
 import alertStyles from "./styles/Alerts.module.css";
 
 const Alerts = ({daemon, fetchAlertContent, classes: givenClasses}) => {
