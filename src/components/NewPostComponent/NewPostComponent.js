@@ -38,11 +38,6 @@ const stylesCurrent = theme => ({
     messagebox: {
         height: theme.spacing(40),
     },
-    toolbar: {
-        ...theme.mixins.toolbar,
-        backgroundColor: theme.palette.primary.main,
-        color: theme.palette.getContrastText(theme.palette.primary.main),
-    },
     "@global": {
         [theme.breakpoints.down("xs")]: {
             ".uppy-Dashboard--modal .uppy-Dashboard-inner": {
@@ -458,7 +453,6 @@ const NewPostComponent = props => {
 
     const toolbar = ready && <Toolbar
         bottom={!windowData.isNarrow() || inline}
-        classes={classes}
         disabled={disabled}
         onCancel={handleCancel}
         onImagesChange={handleImagesChange}
