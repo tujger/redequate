@@ -1,0 +1,8 @@
+.badge {
+    color: #ff0000;
+    font-size: small;
+    font-weight: bolder;
+    margin-bottom: calc(var(--theme-spacing) * .5);
+    margin-left: calc(var(--theme-spacing) * .5);
+    vertical-align: super;
+}
