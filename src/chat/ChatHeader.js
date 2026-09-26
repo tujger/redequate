@@ -5,6 +5,7 @@ import IconButton from "@material-ui/core/IconButton";
 import {Link, useHistory} from "react-router-dom";
 import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers";
 import AvatarView from "../components/AvatarView";
+import UserName from "../controls/UserName/UserName";
 import {useDispatch} from "react-redux";
 import {stylesList} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -99,8 +100,12 @@ const ChatHeader = ({chatMeta, classes, className, id, userComponent, userData})
                         verified={true}
                     />
                 </Link></Grid>
-                <Grid item className={classes.userName}>
-                    {userComponent(userData)}
+                <Grid item>
+                    <UserName
+                        id={userData.id}
+                    >
+                        {userComponent(userData)}
+                    </UserName>
                 </Grid>
                 <Grid item>
                     <div

@@ -1,7 +1,7 @@
 import React from "react";
 import Clear from "@material-ui/icons/Clear";
 import NavigationToolbar from "../../../components/NavigationToolbar";
-import Select from "../../../components/Select/Select";
+import Select from "../../../controls/Select/Select";
 import baseStyles from "../../../themes/Base.module.css";
 import headerStyles from "./styles/UsersHeader.module.css";
 

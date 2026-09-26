@@ -4,6 +4,7 @@ import {useDispatch} from "react-redux";
 import {Link, useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import UserName from "../controls/UserName/UserName";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {cacheDatas, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
@@ -109,9 +110,12 @@ export default props => {
             </Link>
             <div className={chatStyles.cardContent}>
                 <div className={chatStyles.titleRow}>
-                    <div className={[chatStyles.userName, isNew ? chatStyles.unread : chatStyles.read].join(" ")}>
+                    <UserName
+                        className={[isNew ? chatStyles.unread : chatStyles.read].join(" ")}
+                        id={userData.id}
+                    >
                         {userComponent(userData)}
-                    </div>
+                    </UserName>
                     <div
                         className={[chatStyles.presence, online ? chatStyles.online : chatStyles.offline].join(" ")}
                         title={online ? t("Chat.Online") : t("Chat.Offline")}

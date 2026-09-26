@@ -9,6 +9,7 @@ import {toDateString} from "../../../controllers/DateFormat";
 import {cacheDatas, usePages} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
+import UserName from "../../../controls/UserName/UserName";
 import useRippleEffect from "../../../helpers/useRippleEffect";
 import baseStyles from "../../../themes/Base.module.css";
 import activityStyles from "./styles/ActivityItemComponent.module.css";
@@ -183,16 +184,18 @@ function ActivityItemComponent({data, classes: givenClasses, skeleton, label, on
             <div className={classes.contextRow}>Activity: {type}</div>
             {userDatas && userDatas.map((item, index) => <div className={classes.contextRow} key={index}>
                 <span>{item.key}:</span>
-                <span className={classes.userName} onClickCapture={evt => {
-                    evt && evt.stopPropagation();
-                    if (history.unblock) {
-                        history.unblock();
-                        history.unblock = null;
-                    }
-                    history.push(pages.user.route + item.userData.id)
-                }}>
+                <UserName
+                    id={item.userData.id}
+                    onClick={() => {
+                        if (history.unblock) {
+                            history.unblock();
+                            history.unblock = null;
+                        }
+                        history.push(pages.user.route + item.userData.id)
+                    }}
+                >
                     {item.userData.name}
-                </span>
+                </UserName>
             </div>)}
             {path && <div className={classes.contextRow}>
                 <span>Post:</span>

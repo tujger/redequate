@@ -2,6 +2,7 @@ import React from "react";
 import {useHistory} from "react-router-dom";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
+import UserName from "../../../controls/UserName/UserName";
 import {toDateString} from "../../../controllers/DateFormat";
 import {usePages} from "../../../controllers/General";
 import useRippleEffect from "../../../helpers/useRippleEffect";
@@ -55,9 +56,11 @@ function UserItem({data, classes: givenClasses, skeleton, label}) {
         />
         <div className={classes.cardContent}>
             <div className={classes.titleRow}>
-                <div className={classes.userName}>
+                <UserName
+                    id={userData.id}
+                >
                     {userData.email}
-                </div>
+                </UserName>
                 <div className={classes.date}>
                     {toDateString(_date || userData.public.created)}
                 </div>

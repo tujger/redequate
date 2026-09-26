@@ -11,6 +11,7 @@ import {mentionTags} from "../../controllers/mentionTypes";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
 import RotatingReplies from "./RotatingReplies";
+import UserName from "../../controls/UserName/UserName";
 
 export default React.forwardRef((props, ref) => {
     const {
@@ -60,11 +61,10 @@ export default React.forwardRef((props, ref) => {
                 <div className={classes.cardContent}>
                     <div className={[classes.layout, classes.inline, classes.cardTitle].join(" ")}>
                         <div className={[classes.layout, classes.userName].join(" ")}>
-                            <Link
-                                to={pages.user.route + userData.id}
-                                onClick={evt => evt.stopPropagation()}
+                            <UserName
                                 className={classes.label}
-                            >{userData.name}</Link>
+                                id={userData.id}
+                            >{userData.name}</UserName>
                         </div>
                         <PostMenu {...props}/>
                         {postData.targetTag && <div className={[classes.layout, classes.layoutGrow].join(" ")}>

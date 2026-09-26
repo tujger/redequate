@@ -67,13 +67,6 @@
     min-width: 0;
 }
 
-.userName {
-    letter-spacing: var(--theme-letter-spacing);
-    margin-right: calc(var(--theme-spacing) * .5);
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
 .read {
     font-weight: normal;
 }

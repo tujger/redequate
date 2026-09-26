@@ -89,16 +89,6 @@
     min-width: 0;
 }
 
-.userName {
-    color: var(--theme-color-highlight);
-    font-weight: bolder;
-    letter-spacing: var(--theme-letter-spacing);
-    margin-right: calc(var(--theme-spacing) * .5);
-    min-width: 0;
-    overflow-wrap: anywhere;
-    text-decoration: none;
-}
-
 .date {
     align-items: center;
     color: var(--theme-color-muted);
@@ -135,10 +125,6 @@
 @media (max-width: 599px) {
     .card {
         margin-bottom: calc(var(--theme-spacing) * 1.5);
-    }
-
-    .userName {
-        flex: 1 1 auto;
     }
 
     .date {

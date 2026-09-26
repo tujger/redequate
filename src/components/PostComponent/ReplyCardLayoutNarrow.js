@@ -7,6 +7,7 @@ import {toDateString} from "../../controllers/DateFormat";
 import PostMedia from "./PostMedia";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
+import UserName from "../../controls/UserName/UserName";
 
 export default React.forwardRef((props, ref) => {
     const {classes = {}, className, disableClick, disableButtons, level, pattern, postData, userData, highlighted} = props;
@@ -22,7 +23,7 @@ export default React.forwardRef((props, ref) => {
             <div className={classes.cardContent}>
                 <div className={classes.layout}>
                     <div className={[classes.layout, classes.userName].join(" ")}>
-                        <Link to={pages.user.route + userData.id} onClick={evt => evt.stopPropagation()} className={classes.label}>{userData.name}</Link>
+                        <UserName className={classes.label} id={userData.id}>{userData.name}</UserName>
                     </div>
                     {windowData.isNarrow() && <div className={[classes.layout, classes.layoutGrow].join(" ")}/>}
                     <PostMenu {...props}/>

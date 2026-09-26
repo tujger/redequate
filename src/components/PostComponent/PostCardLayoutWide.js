@@ -11,6 +11,7 @@ import {mentionTags} from "../../controllers/mentionTypes";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
 import RotatingReplies from "./RotatingReplies";
+import UserName from "../../controls/UserName/UserName";
 
 export default React.forwardRef((props, ref) => {
     const {classes = {}, className, disableClick, disableButtons, handleClickPost, level, pattern, postData, userData, highlighted} = props;
@@ -28,7 +29,7 @@ export default React.forwardRef((props, ref) => {
                 <div className={classes.cardContent}>
                     <div className={classes.layout}>
                         <div className={[classes.layout, classes.userName].join(" ")}>
-                            <Link className={classes.label} onClick={evt => evt.stopPropagation()} to={pages.user.route + userData.id}>{userData.name}</Link>
+                            <UserName className={classes.label} id={userData.id}>{userData.name}</UserName>
                         </div>
                         <div className={[classes.layout, classes.date].join(" ")} title={new Date(postData.created).toLocaleString()}>{toDateString(postData.created)}</div>
                         {postData.targetTag && <div className={classes.layout}>

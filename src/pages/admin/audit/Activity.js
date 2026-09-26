@@ -18,8 +18,8 @@ import {mentionUsers} from "../../../controllers/mentionTypes";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
 import activityStyles from "./styles/Activity.module.css";
-import Select from "../../../components/Select/Select";
-import Chip from "../../../components/Chip/Chip";
+import Select from "../../../controls/Select/Select";
+import Chip from "../../../controls/Chip/Chip";
 
 const Activity = props => {
     const {
