@@ -13,6 +13,7 @@
 
 .bottomSticky {
     bottom: 0;
+    box-sizing: border-box;
     position: sticky;
     padding-left: 240px;
     padding-right: 240px;

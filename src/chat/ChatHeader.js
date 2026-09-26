@@ -65,7 +65,7 @@ export default ({chatMeta, className, id, userComponent, userData}) => {
 
     return <>
         <NavigationToolbar
-            className={className}
+            className={[chatHeaderStyles.root, className].join(" ")}
             rightButton={<div
                 aria-label={t("Chat.Delete chat")}
                 className={chatHeaderStyles.deleteButton}
@@ -79,29 +79,27 @@ export default ({chatMeta, className, id, userComponent, userData}) => {
                 <ClearIcon/>
             </div>}
         >
-            <div className={chatHeaderStyles.root}>
-                <Link to={pages.user.route + userData.id} className={chatHeaderStyles.nounderline}>
-                    <AvatarView
-                        image={userData.image}
-                        initials={userData.initials}
-                        verified={true}
-                    />
-                </Link>
-                <UserName id={userData.id}>{userComponent(userData)}</UserName>
-                <div
-                    className={[chatHeaderStyles.presence, online ? chatHeaderStyles.online : chatHeaderStyles.offline].join(" ")}
-                    title={online ? t("Chat.Online") : t("Chat.Offline")}
+            <Link to={pages.user.route + userData.id} className={chatHeaderStyles.nounderline}>
+                <AvatarView
+                    image={userData.image}
+                    initials={userData.initials}
+                    verified={true}
                 />
-                {timestamp > 0 && <div className={chatHeaderStyles.date}>
-                    {toDateString(timestamp)}
-                </div>}
-                {chatMeta.readonly && <div
-                    className={chatHeaderStyles.date}
-                    title={`${userData.name} has removed this chat at his side, so you can not chat here anymore`}
-                >
-                    Read-only
-                </div>}
-            </div>
+            </Link>
+            <UserName id={userData.id}>{userComponent(userData)}</UserName>
+            <div
+                className={[chatHeaderStyles.presence, online ? chatHeaderStyles.online : chatHeaderStyles.offline].join(" ")}
+                title={online ? t("Chat.Online") : t("Chat.Offline")}
+            />
+            {timestamp > 0 && <div className={chatHeaderStyles.date}>
+                {toDateString(timestamp)}
+            </div>}
+            {chatMeta.readonly && <div
+                className={chatHeaderStyles.date}
+                title={`${userData.name} has removed this chat at his side, so you can not chat here anymore`}
+            >
+                Read-only
+            </div>}
         </NavigationToolbar>
         {deleteOpen && <ConfirmComponent
             children={t("Chat.Chat will be deleted for you.")}

@@ -1,0 +1,40 @@
+.messageBox {
+    align-items: flex-start;
+    display: flex;
+    min-width: 0;
+    padding-bottom: var(--theme-spacing);
+    width: 100%;
+}
+
+.inputField {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.sendButton {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--theme-color-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    flex: 0 0 auto;
+    justify-content: center;
+    position: relative;
+}
+
+.sendButton:hover {
+    background-color: var(--theme-color-background);
+}
+
+.sendButton:focus-visible {
+    outline: 2px solid var(--theme-color-highlight);
+    outline-offset: -2px;
+}
+
+.sendButton :global(.MuiSvgIcon-root) {
+    font-size: calc(var(--theme-spacing) * 3);
+}

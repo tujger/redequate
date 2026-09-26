@@ -1,42 +1,9 @@
+import SendIcon from "@material-ui/icons/Send";
 import React from "react";
 import {useWindowData} from "../controllers";
-import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
-import SendIcon from "@material-ui/icons/Send";
-import withStyles from "@material-ui/styles/withStyles";
+import inputStyles from "./styles/ChatInputBox.module.css";
 
-const styles = theme => ({
-    inputfield: {
-        alignItems: "center",
-        display: "flex",
-        overflowX: "auto",
-    },
-    messagebox: {
-        // backgroundColor: theme.palette.background.default,
-        // flexWrap: "nowrap",
-        paddingBottom: theme.spacing(1),
-        [theme.breakpoints.up("md")]: {
-            // marginBottom: theme.spacing(-1),
-            // width: "100%",
-        },
-        [theme.breakpoints.down("md")]: {
-            // bottom: iOS ? theme.spacing(7) : 0,
-            // left: 0,
-            // margin: 0,
-            // padding: theme.spacing(1),
-            // paddingRight: 0,
-            // position: "fixed",
-            // right: 0,
-            // zIndex: 1200,
-            // [theme.breakpoints.up("md")]: {
-            //     marginLeft: theme.overrides.MuiDrawer.paperAnchorLeft.width,
-            // }
-        },
-    },
-});
-
-// eslint-disable-next-line react/prop-types
-const ChatInputBox = React.forwardRef(({classes, className, inputComponent, style={}, onSend}, ref) => {
+export default React.forwardRef(({className, inputComponent, style = {}, onSend}, ref) => {
     const windowData = useWindowData()
     const [state, setState] = React.useState({value: ""});
     const {value} = state;
@@ -51,8 +18,8 @@ const ChatInputBox = React.forwardRef(({classes, className, inputComponent, styl
         setState({...state, value: ""})
     }
 
-    return <Grid container ref={ref} className={[className, classes.messagebox].join(" ")} style={style}>
-        <Grid item xs className={classes.inputfield}>
+    return <div ref={ref} className={[className, inputStyles.messageBox].filter(Boolean).join(" ")} style={style}>
+        <div className={inputStyles.inputField}>
             <inputComponent.type
                 {...inputComponent.props}
                 autofocus={!windowData.isNarrow()}
@@ -69,13 +36,20 @@ const ChatInputBox = React.forwardRef(({classes, className, inputComponent, styl
                 }}
                 value={value}
             />
-        </Grid>
-        <Grid item>
-            <IconButton aria-label={"send message"} onClick={handleSend}>
-                <SendIcon/>
-            </IconButton>
-        </Grid>
-    </Grid>
+        </div>
+        <div
+            aria-label={"send message"}
+            className={inputStyles.sendButton}
+            onClick={handleSend}
+            onKeyDown={event => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                handleSend();
+            }}
+            role='button'
+            tabIndex={0}
+        >
+            <SendIcon/>
+        </div>
+    </div>
 })
-
-export default withStyles(styles)(ChatInputBox)

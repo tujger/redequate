@@ -4,6 +4,8 @@
     flex: 0 0 auto;
     gap: var(--theme-spacing);
     min-width: 0;
+    padding-left: 240px;
+    padding-right: 240px;
     width: 100%;
 }
 
