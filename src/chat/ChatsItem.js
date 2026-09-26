@@ -4,10 +4,10 @@ import {useDispatch} from "react-redux";
 import {Link, useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import UserName from "../controls/UserName/UserName";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {cacheDatas, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
+import UserName from "../controls/UserName/UserName";
 import useRippleEffect from "../helpers/useRippleEffect";
 import {ChatMeta} from "./ChatMeta";
 import chatStyles from "./styles/ChatsItem.module.css";
@@ -26,8 +26,6 @@ export default props => {
 
     const fetchIsNew = () => {
         const latestVisit = chatMeta.lastVisit(currentUserData.id);
-        // console.log(data.created > latestVisit, data.created, latestVisit);
-        // console.log(new Date(data.created).toLocaleString(), new Date(latestVisit).toLocaleString());
         return chatMeta.lastMessage.created > latestVisit;
     }
 

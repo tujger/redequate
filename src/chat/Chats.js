@@ -5,7 +5,7 @@ import {useCurrentUserData} from "../controllers/UserData";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import Pagination from "../controllers/FirebasePagination";
 import ChatsItem from "./ChatsItem";
-import {ChatsDaemon} from "./ChatsDaemon";
+import ChatsDaemon from "./ChatsDaemon";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import Grid from "@material-ui/core/Grid";
 import {styles} from "../controllers/Theme";

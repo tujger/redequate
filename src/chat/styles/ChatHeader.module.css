@@ -1,0 +1,63 @@
+.root {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    gap: var(--theme-spacing);
+    min-width: 0;
+    width: 100%;
+}
+
+.nounderline {
+    text-decoration: none;
+}
+
+.presence {
+    border-radius: 50%;
+    flex: 0 0 auto;
+    height: var(--theme-spacing);
+    width: var(--theme-spacing);
+}
+
+.offline {
+    background-color: #bbbbbb;
+}
+
+.online {
+    background-color: #008800;
+}
+
+.date {
+    color: var(--theme-color-secondary);
+    margin-right: calc(var(--theme-spacing) * .5);
+    white-space: nowrap;
+}
+
+.deleteButton {
+    align-items: center;
+    border-radius: 50%;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.5rem;
+    height: calc(var(--theme-spacing) * 6);
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    position: relative;
+    width: calc(var(--theme-spacing) * 6);
+}
+
+.deleteButton:hover {
+    background-color: rgb(0 0 0 / 4%);
+}
+
+.deleteButton:focus-visible {
+    outline: 2px solid currentcolor;
+    outline-offset: -2px;
+}
+
+@media (max-width: 599px) {
+    .date {
+        font-size: calc(var(--theme-spacing) * 1.5);
+    }
+}

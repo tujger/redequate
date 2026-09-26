@@ -5,17 +5,10 @@ import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../control
 import chatStyles from "./styles/ChatItem.module.css";
 
 export default (props) => {
-    // eslint-disable-next-line react/prop-types
     const {data, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const [state, setState] = React.useState({});
     const {authorData} = state;
-
-    /* const fetchIsNew = () => {
-        const latestVisit = chatMeta[currentUserData.id + "_visit"] || 0;
-        // const latestIncoming = meta[currentUserData.id] || 0;
-        return data.created > latestVisit;
-    } */
 
     React.useEffect(() => {
         if (skeleton) return;
@@ -24,18 +17,13 @@ export default (props) => {
         authorData.fetch(data.uid, [UserData.IMAGE, UserData.NAME])
             .then(() => isMounted && setState({...state, authorData}))
 
-        // setTimeout(() => {
-        //     setState(state => ({...state, shown: true}));
-        // }, 2000)
         return () => {
             isMounted = false;
         }
-        // eslint-disable-next-line
     }, []);
 
     if (skeleton) return <ItemPlaceholderComponent/>;
 
-    // const isNew = fetchIsNew() && !shown;
     const isItemOut = currentUserData.id === data.uid;
 
     if (!authorData) return null;
@@ -53,19 +41,4 @@ export default (props) => {
             </div>
         </div>
     </div>
-
-    /* return <li>
-        {isNew && <InView
-            onChange={(inView) => {
-                if (inView) setState({...state, shown: true});
-            }}
-            ref={ref => {
-                if (!ref) return;
-                setTimeout(() => {
-                    if (ref && ref.node) ref.node.style.display = "";
-                }, 1000)
-            }}
-            style={{display: "none"}}
-        ><b>NEW</b></InView>}
-    </li> */
 }
