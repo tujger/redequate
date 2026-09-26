@@ -1,0 +1,19 @@
+.center {
+    flex-direction: column;
+    flex: 1 1 auto;
+    display: flex;
+    padding: var(--theme-spacing);
+    padding-left: 240px;
+    padding-right: 240px;
+}
+
+.indent {
+    margin-top: calc(var(--theme-spacing) * 10);
+}
+
+.bottomSticky {
+    bottom: 0;
+    position: sticky;
+    padding-left: 240px;
+    padding-right: 240px;
+}
