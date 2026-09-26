@@ -3,8 +3,7 @@ import MaterialSelect from "@material-ui/core/Select";
 import React from "react";
 import selectStyles from "./Select.module.css";
 
-// eslint-disable-next-line react/prop-types
-const Select = ({children, className, MenuProps: givenMenuProps, options = [], ...props}) => {
+export default ({children, className, MenuProps: givenMenuProps, options = [], ...props}) => {
     const menuProps = {
         ...(givenMenuProps || {}),
         MenuListProps: {
@@ -37,5 +36,3 @@ const Select = ({children, className, MenuProps: givenMenuProps, options = [], .
         </MenuItem>)}
     </MaterialSelect>;
 };
-
-export default Select;
