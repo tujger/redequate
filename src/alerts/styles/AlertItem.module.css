@@ -85,7 +85,8 @@
 }
 
 .read {
-    color: #888;
+    contain: none;
+    font-weight: normal;
 }
 
 .unread {

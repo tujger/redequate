@@ -1,7 +1,5 @@
 import React from "react";
 import {useDispatch} from "react-redux";
-import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
 import AllReadIcon from "@material-ui/icons/ClearAll";
 import AlertsList from "./AlertsList";
 import Clear from "@material-ui/icons/Clear";
@@ -15,12 +13,13 @@ import Pagination from "../controllers/FirebasePagination";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import notifySnackbar from "../controllers/notifySnackbar";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {styles} from "../controllers/Theme";
-import withStyles from "@material-ui/styles/withStyles";
 import NavigationToolbar from "../components/NavigationToolbar";
 import {useTranslation} from "react-i18next";
+import baseStyles from "../themes/Base.module.css";
+import alertStyles from "./styles/Alerts.module.css";
 
-const Alerts = ({daemon, fetchAlertContent, classes}) => {
+const Alerts = ({daemon, fetchAlertContent, classes: givenClasses}) => {
+    const classes = givenClasses || {};
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -88,24 +87,30 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
 
     return <>
         <NavigationToolbar
-            className={classes.topSticky}
+            className={[classes.topSticky, alertStyles.toolbar].filter(Boolean).join(" ")}
             backButton={null}
-            mediumButton={<IconButton
+            mediumButton={<button
                 aria-label={t("Common.Clear")}
-                children={<Clear/>}
+                className={[alertStyles.iconButton, baseStyles.ripple].join(" ")}
                 onClick={handleClear}
                 title={t("Common.Clear")}
-            />}
-            rightButton={<IconButton
+                type='button'
+            >
+                <Clear/>
+            </button>}
+            rightButton={<button
                 aria-label={t("Alerts.All read")}
-                children={<AllReadIcon/>}
+                className={[alertStyles.iconButton, baseStyles.ripple].join(" ")}
                 onClick={handleAllRead}
                 title={t("Alerts.All read")}
-            />}
+                type='button'
+            >
+                <AllReadIcon/>
+            </button>}
         />
-        <Grid container className={classes.center}>
+        <div className={[classes.center, alertStyles.list].filter(Boolean).join(" ")}>
             <AlertsList fetchAlertContent={fetchAlertContent}/>
-        </Grid>
+        </div>
         {allRead && <ConfirmComponent
             children={t("Alerts.All alerts will be marked as read.")}
             onCancel={() => setState({...state, allRead: false})}
@@ -123,4 +128,4 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
     </>
 };
 
-export default withStyles(styles)(Alerts);
+export default Alerts;
