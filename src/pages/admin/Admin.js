@@ -1,11 +1,8 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import Card from "@material-ui/core/Card";
-import withStyles from "@material-ui/styles/withStyles";
-import CardHeader from "@material-ui/core/CardHeader";
 import {usePages} from "../../controllers/General";
-import {styles, stylesList} from "../../controllers/Theme";
+import useRippleEffect from "../../helpers/useRippleEffect";
+import adminStyles from "./styles/Admin.module.css";
 
 const Admin = ({fetchMenu, classes = {}}) => {
     const history = useHistory();
@@ -18,24 +15,37 @@ const Admin = ({fetchMenu, classes = {}}) => {
             return 0
         });
 
+    const onPointerDown = useRippleEffect();
+
     const menu = fetchMenu(pages);
 
     return <div className={classes.center}>
         {itemsFlat.map((item, index) => {
             if (item.disabled) return null;
             if (item === pages.admin || !menu.filter(list => list[0] === pages.admin).filter(list => list.indexOf(item) >= 0).length) return null;
-            return <Card key={index} className={[classes.root, classes.card].join(" ")}>
-                <CardActionArea onClick={() => {
-                    history.push(item.route);
-                }}>
-                    <CardHeader subheader={item.label}/>
-                </CardActionArea>
-            </Card>
+            const handleClick = () => {
+                history.push(item.route);
+            };
+
+            const handleKeyDown = event => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                handleClick();
+            };
+
+            return <div
+                className={[adminStyles.card, adminStyles.cardActionArea].join(" ")}
+                key={index}
+                onPointerDown={onPointerDown}
+                onClick={handleClick}
+                onKeyDown={handleKeyDown}
+                role='button'
+                tabIndex={0}
+            >
+                {item.label}
+            </div>
         })}
     </div>
 };
 
-export default withStyles(theme => ({
-    ...styles(theme),
-    ...stylesList(theme)
-}))(Admin);
+export default Admin;

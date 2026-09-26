@@ -26,6 +26,8 @@
 }
 
 .ripple {
+    --ripple-x: 50%;
+    --ripple-y: 50%;
     overflow: hidden;
     position: relative;
 }
@@ -35,11 +37,11 @@
     border-radius: 50%;
     content: "";
     height: 0;
-    left: 50%;
+    left: var(--ripple-x);
     opacity: 0;
     pointer-events: none;
     position: absolute;
-    top: 50%;
+    top: var(--ripple-y);
     transform: translate(-50%, -50%) scale(0);
     width: 0;
 }

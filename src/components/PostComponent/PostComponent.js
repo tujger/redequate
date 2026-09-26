@@ -1,4 +1,5 @@
 import React from "react";
+import useRippleEffect from "../../helpers/useRippleEffect";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
@@ -42,6 +43,7 @@ const PostComponent = (props) => {
 
     const dispatch = useDispatch();
     const history = useHistory();
+    const onPointerDown = useRippleEffect();
     const pages = usePages();
     const [state, setState] = React.useState({expand: givenExpand});
     const {highlight, expand, random} = state;
@@ -98,6 +100,7 @@ const PostComponent = (props) => {
         isReply,
         onChange: handleChange,
         onDelete: handleDelete,
+        onPointerDown,
         type,
     }
 

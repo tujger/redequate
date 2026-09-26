@@ -1,15 +1,16 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import {usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import {toDateString} from "../../../controllers/DateFormat";
-import baseStyles from "../../../themes/Base.module.css";
+import {usePages} from "../../../controllers/General";
+import useRippleEffect from "../../../helpers/useRippleEffect";
 import userStyles from "./styles/UserItem.module.css";
 
 // eslint-disable-next-line react/prop-types
 function UserItem({data, classes: givenClasses, skeleton, label}) {
     const history = useHistory();
+    const onPointerDown = useRippleEffect();
     const pages = usePages();
     const classes = {...userStyles, ...(givenClasses || {})};
     const {value: userData, _date} = data || {};
@@ -34,9 +35,10 @@ function UserItem({data, classes: givenClasses, skeleton, label}) {
 
     return <div
         aria-label={userData.email}
-        className={[classes.card, classes.cardFlat, classes.cardActionArea, baseStyles.ripple].join(" ")}
+        className={[classes.card, classes.cardFlat, classes.cardActionArea].join(" ")}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
+        onPointerDown={onPointerDown}
         role='button'
         tabIndex={0}
     >

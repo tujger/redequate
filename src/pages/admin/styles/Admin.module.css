@@ -1,0 +1,35 @@
+.card {
+    background-color: var(--theme-color-paper);
+    border-width: 0;
+    box-shadow: var(--theme-card-shadow);
+    letter-spacing: var(--theme-letter-spacing);
+    margin-bottom: calc(var(--theme-spacing) * 1.5);
+    overflow: initial;
+    position: relative;
+    width: 100%;
+}
+
+.cardActionArea {
+    align-items: flex-start;
+    box-sizing: border-box;
+    color: var(--theme-color-secondary);
+    cursor: pointer;
+    display: block;
+    flex: 0 0 auto;
+    min-width: 0;
+    overflow: hidden;
+    padding: calc(var(--theme-spacing) * 2);
+    position: relative;
+    text-align: left;
+    text-transform: uppercase;
+    width: 100%;
+}
+
+.cardActionArea:hover {
+    background-color: rgb(0 0 0 / 5%);
+}
+
+.cardActionArea:focus-visible {
+    outline: 2px solid var(--theme-color-highlight);
+    outline-offset: -2px;
+}

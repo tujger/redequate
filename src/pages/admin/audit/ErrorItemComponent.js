@@ -1,15 +1,16 @@
-import React from "react";
 import ClearIcon from "@material-ui/icons/Clear";
+import React from "react";
 import {useDispatch} from "react-redux";
-import {UserData} from "../../../controllers/UserData";
-import {cacheDatas, useFirebase} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
-import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import ConfirmComponent from "../../../components/ConfirmComponent";
+import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
+import ProgressView from "../../../components/ProgressView";
 import {toDateString} from "../../../controllers/DateFormat";
 import {fetchCallable} from "../../../controllers/Firebase";
-import ProgressView from "../../../components/ProgressView";
+import {cacheDatas, useFirebase} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
+import {UserData} from "../../../controllers/UserData";
+import useRippleEffect from "../../../helpers/useRippleEffect";
 import baseStyles from "../../../themes/Base.module.css";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 
@@ -17,6 +18,7 @@ import errorStyles from "./styles/ErrorItemComponent.module.css";
 function ErrorItemComponent({data, classes: givenClasses, skeleton, label, onUserClick}) {
     const dispatch = useDispatch();
     const firebase = useFirebase();
+    const onPointerDown = useRippleEffect();
     const classes = {...baseStyles, ...errorStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
     const {alert, userData, removed} = state;
@@ -78,9 +80,10 @@ function ErrorItemComponent({data, classes: givenClasses, skeleton, label, onUse
     if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
 
     return <div
-        className={[classes.card, classes.cardFlat, classes.cardActionArea, baseStyles.ripple].join(" ")}
+        className={[classes.card, classes.cardFlat, classes.cardActionArea].join(" ")}
         onClick={handleCardClick}
         onKeyDown={handleKeyDown}
+        onPointerDown={onPointerDown}
         role='button'
         tabIndex={0}
     >
