@@ -1,17 +1,15 @@
 import React from "react";
-import {Route, Switch, useHistory} from "react-router-dom";
 import {InView} from "react-intersection-observer";
-import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
+import {Route, Switch, useHistory} from "react-router-dom";
 import LoadingComponent from "../components/LoadingComponent";
 import {useMetaInfo, usePages} from "../controllers/General";
-import MetaInfoView from "./MetaInfoView";
-import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import notifySnackbar from "../controllers/notifySnackbar";
+import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
+import MetaInfoView from "./MetaInfoView";
 import styles from "./styles/MainContent.module.css";
 
-const MainContent = props => {
-    // eslint-disable-next-line react/prop-types
-    const {classes} = props;
+export default props => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -57,7 +55,6 @@ const MainContent = props => {
                                 />}
                                 <item.component.type
                                     {...props}
-                                    classes={classes}
                                     {...item.component.props}
                                 />
                             </>
@@ -81,7 +78,6 @@ const MainContent = props => {
                         if (item !== pages.login && item !== pages.logout) return null;
                         return <item.component.type
                             {...props}
-                            classes={classes}
                             {...item.component.props} />
                     }}
                 />
@@ -89,5 +85,3 @@ const MainContent = props => {
         </React.Suspense>}
     </div>
 };
-
-export default MainContent;
