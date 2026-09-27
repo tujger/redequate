@@ -75,11 +75,11 @@ const ConfirmComponent = props => {
         }}
     >
         <div
-            aria-modal="true"
+            aria-modal={"true"}
             className={styles.dialog}
             onClick={event => event.stopPropagation()}
             ref={dialogRef}
-            role="dialog"
+            role={"dialog"}
         >
             {title && <div className={styles.title}>{title}</div>}
             {message || children ? <div className={styles.content}>
@@ -92,7 +92,7 @@ const ConfirmComponent = props => {
                     className={[styles.button, cancelVariant === "contained" && styles.buttonContained, cancelClassName]
                         .filter(Boolean)
                         .join(" ")}
-                    type="button"
+                    type={"button"}
                     {...cancelButtonProps}
                     onClick={onCancel}
                     onPointerDown={onCancelPointerDown}
@@ -105,7 +105,7 @@ const ConfirmComponent = props => {
                         .filter(Boolean)
                         .join(" ")}
                     style={confirmGivenStyle}
-                    type="button"
+                    type={"button"}
                     {...confirmButtonProps}
                     onClick={onConfirm}
                     onPointerDown={onConfirmPointerDown}
