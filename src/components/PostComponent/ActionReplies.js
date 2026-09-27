@@ -18,7 +18,6 @@ export default ({postData, disableClick}) => {
     return <div className={actionStyles.action}>
         <div
             className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
-
             onClick={event => {
                 event.stopPropagation();
                 dispatch({type: lazyListComponentReducer.REFRESH});
@@ -26,15 +25,18 @@ export default ({postData, disableClick}) => {
                     onlyReplies: !!postData.counter("replied"),
                 })
             }}
-
             title={t("Post.Replies")}
         >
             <CounterComponent
                 counter={postData.counter("replied")}
                 path={disableClick ? `${postData.id}/replied` : undefined}
-                prefix={<><ChatFilledIcon/><div className={actionStyles.box}/></>}
+                prefix={<><ChatFilledIcon/>
+                    <div className={actionStyles.box}/>
+                </>}
                 showZero
-                zeroPrefix={<><ChatEmptyIcon/><div className={actionStyles.box}/></>}
+                zeroPrefix={<><ChatEmptyIcon/>
+                    <div className={actionStyles.box}/>
+                </>}
             />
         </div>
     </div>

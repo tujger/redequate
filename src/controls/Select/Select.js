@@ -2,8 +2,9 @@ import MenuItem from "@material-ui/core/MenuItem";
 import MaterialSelect from "@material-ui/core/Select";
 import React from "react";
 import selectStyles from "./Select.module.css";
+import Fade from "@material-ui/core/Fade";
 
-export default ({children, className, MenuProps: givenMenuProps, options = [], ...props}) => {
+export default ({children, className, iconMenu, MenuProps: givenMenuProps, options = [], ...props}) => {
     const menuProps = {
         ...(givenMenuProps || {}),
         MenuListProps: {
@@ -20,11 +21,12 @@ export default ({children, className, MenuProps: givenMenuProps, options = [], .
                 givenMenuProps && givenMenuProps.PaperProps && givenMenuProps.PaperProps.className,
             ].filter(Boolean).join(" "),
         },
+        TransitionComponent: Fade,
     };
 
     return <MaterialSelect
         {...props}
-        className={[selectStyles.select, className].filter(Boolean).join(" ")}
+        className={[selectStyles.select, iconMenu && selectStyles.iconMenu, className].filter(Boolean).join(" ")}
         MenuProps={menuProps}
     >
         {children || options.map(option => <MenuItem

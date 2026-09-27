@@ -1,10 +1,10 @@
-import React from "react";
-import actionStyles from "./styles/PostActions.module.css";
 import MenuItem from "@material-ui/core/MenuItem";
 import EditIcon from "@material-ui/icons/Edit";
+import React from "react";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo, useWindowData} from "../../controllers/General";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
+import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData, mentions, onMenuItemClick, onComplete}) => {
     const metaInfo = useMetaInfo();
@@ -25,28 +25,25 @@ export default ({postData, mentions, onMenuItemClick, onComplete}) => {
             children={t("Common.Edit")}
             id={"edit"}
             onClick={handleMenuItemClick}
+            value={"edit"}
         />
     } else {
         element = <div className={actionStyles.action}>
             <div className={actionStyles.iconButton}
-                aria-label={t("Common.Edit")}
-                children={<EditIcon/>}
-
-
-                title={t("Common.Edit")}
+                 aria-label={t("Common.Edit")}
+                 children={<EditIcon/>}
+                 title={t("Common.Edit")}
             />
         </div>
     }
 
-    return <>
-        <NewPostComponent
-            buttonComponent={element}
-            context={postData.id}
-            mentions={mentions}
-            onComplete={onComplete}
-            editPostData={postData}
-            title={t("Post.Edit post")}
-            UploadProps={{camera: !windowData.isNarrow(), multi: true}}
-        />
-    </>
+    return <NewPostComponent
+        buttonComponent={element}
+        context={postData.id}
+        mentions={mentions}
+        onComplete={onComplete}
+        editPostData={postData}
+        title={t("Post.Edit post")}
+        UploadProps={{camera: !windowData.isNarrow(), multi: true}}
+    />
 }

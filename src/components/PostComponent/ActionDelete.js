@@ -51,15 +51,14 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
             children={t("Common.Delete")}
             id={"delete"}
             onClick={handleMenuItemClick}
+            value={"delete"}
         />
     } else {
         element = <div className={actionStyles.action}>
             <div className={actionStyles.iconButton}
                 aria-label={t("Common.Delete")}
                 children={<ClearIcon/>}
-
                 onClick={handleClickDelete}
-
                 title={t("Common.Delete")}
             />
         </div>

@@ -25,7 +25,9 @@ When developing the demo against this local package, React and React DOM must re
 
         npm run relink
 
-This links the demo directly to `react` and `react-dom` from this package's `node_modules`, so both projects use the same React instances. Restart the development server after relinking.
+This links the demo's `react` and `react-dom` to the canonical copies already installed in this package's `node_modules`. The library's copies are not changed when another project is relinked, so multiple projects can run at the same time. Restart the development server after relinking.
+
+All projects using this local setup must use compatible versions of React and React DOM. The current projects use version `17.0.1`.
 
 
 

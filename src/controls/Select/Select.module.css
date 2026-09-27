@@ -27,12 +27,69 @@
     }
 }
 
+.iconMenu {
+    && {
+        border-radius: 50%;
+        min-width: 0;
+        padding: 0;
+    }
+
+    &&&&:after,
+    &&&&:before {
+        border-width: 0;
+    }
+
+    &:hover {
+        background-color: var(--theme-color-background);
+    }
+
+    && :global(.MuiSelect-select) {
+        align-items: center;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        height: calc(var(--theme-spacing) * 2);
+        padding: calc(var(--theme-spacing) * 1);
+        width: calc(var(--theme-spacing) * 2);
+
+        &:focus {
+            background-color: inherit;
+        }
+    }
+
+    & :global(.MuiSelect-icon),
+    & :global(.MuiInput-underline:before),
+    & :global(.MuiInput-underline:after),
+    & :global(.MuiInput-underline:hover:not(.Mui-disabled):before) {
+        display: none;
+    }
+}
+
 
 .menu {
     background-color: var(--theme-color-paper);
     color: var(--theme-color-text);
     margin-top: var(--theme-spacing);
     min-width: calc(var(--theme-spacing) * 18);
+}
+
+.menu :global(.MuiMenuItem-root) {
+    color: var(--theme-color-text);
+    font: inherit;
+    min-height: calc(var(--theme-spacing) * 5);
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 1.5);
+}
+
+.menu :global(.MuiMenuItem-root:hover) {
+    background-color: rgb(63 81 181 / 10%);
+}
+
+.menu :global(.MuiMenuItem-root.Mui-selected) {
+    background-color: rgb(63 81 181 / 16%);
+}
+
+.menu :global(.MuiMenuItem-root.Mui-selected:hover) {
+    background-color: rgb(63 81 181 / 24%);
 }
 
 .menuList {

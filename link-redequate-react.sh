@@ -15,10 +15,18 @@ for dependency in react react-dom; do
         exit 1
     fi
 
-    if [ -L "$library_dependency" ] && [ "$(readlink "$library_dependency")" = "$project_dependency" ]; then
+    if [ ! -d "$library_dependency" ]; then
+        echo "Missing canonical library dependency: $library_dependency" >&2
+        exit 1
+    fi
+
+    canonical_dependency=$(CDPATH= cd -- "$library_dependency" && pwd -P)
+    project_dependency_realpath=$(CDPATH= cd -- "$project_dependency" && pwd -P)
+
+    if [ "$project_dependency_realpath" = "$canonical_dependency" ]; then
         continue
     fi
 
-    rm -rf "$library_dependency"
-    ln -s "$project_dependency" "$library_dependency"
+    rm -rf "$project_dependency"
+    ln -s "$canonical_dependency" "$project_dependency"
 done

@@ -172,7 +172,9 @@ export default ({postData}) => {
                     <div className={actionStyles.box}/>
                 </>}
                 showZero
-                zeroPrefix={<><LikeEmptyIcon/><div className={actionStyles.box}/></>}
+                zeroPrefix={<><LikeEmptyIcon/>
+                    <div className={actionStyles.box}/>
+                </>}
             />
         </div>
         {isAdmin && <>

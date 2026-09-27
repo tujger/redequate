@@ -1,12 +1,12 @@
-import React from "react";
-import actionStyles from "./styles/PostActions.module.css";
-import {useHistory} from "react-router-dom";
-import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
 import DislikeFilledIcon from "@material-ui/icons/ThumbDown";
+import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
+import React from "react";
+import {useHistory} from "react-router-dom";
 import {delay, usePages} from "../../controllers/General";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import CounterComponent from "../CounterComponent";
+import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData}) => {
     const currentUserData = useCurrentUserData();
@@ -41,9 +41,7 @@ export default ({postData}) => {
         <div
             aria-label={"Dislike"}
             className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
-
             onClick={disabled ? undefined : handleClickExtra("dislike")}
-
             title={"Dislike"}
         >
             <CounterComponent
@@ -53,7 +51,9 @@ export default ({postData}) => {
                     <div className={actionStyles.box}/>
                 </>}
                 showZero
-                zeroPrefix={<><DislikeEmptyIcon/><div className={actionStyles.box}/></>}
+                zeroPrefix={<><DislikeEmptyIcon/>
+                    <div className={actionStyles.box}/>
+                </>}
             />
         </div>
     </div>

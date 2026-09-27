@@ -1,13 +1,13 @@
-import React from "react";
-import actionStyles from "./styles/PostActions.module.css";
 import MenuItem from "@material-ui/core/MenuItem";
 import ShareIcon from "@material-ui/icons/Share";
-import {useDispatch} from "react-redux";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
 import {usePages} from "../../controllers/General";
-import {share} from "../ShareComponent";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
+import {share} from "../ShareComponent";
+import actionStyles from "./styles/PostActions.module.css";
 
 export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     const pages = usePages();
@@ -28,28 +28,28 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
         dispatch(ProgressView.SHOW);
         postData.fetchPath()
             .then(path => share({
-                shortify: isReply,
-                url: window.location.origin + pages.post.route + path
+                shortify: isReply, url: window.location.origin + pages.post.route + path
             }))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }
 
-    if (onMenuItemClick) return <MenuItem
-        children={t("Common.Share")}
-        ref={ref}
-        onClick={handleMenuItemClick}
-        id={"share"}
-    />
+    if (onMenuItemClick) {
+        return <MenuItem
+            children={t("Common.Share")}
+            ref={ref}
+            onClick={handleMenuItemClick}
+            id={"share"}
+            value={"share"}
+        />
+    }
 
     return <div className={actionStyles.action}>
         <div className={actionStyles.iconButton}
-            aria-label={t("Common.Share")}
-            children={<ShareIcon/>}
-
-            onClick={handleButtonClick}
-
-            title={t("Common.Share")}
+             aria-label={t("Common.Share")}
+             children={<ShareIcon/>}
+             onClick={handleButtonClick}
+             title={t("Common.Share")}
         />
     </div>
 })
