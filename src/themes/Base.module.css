@@ -7,6 +7,7 @@
     --theme-color-paper: #ffffff;
     --theme-color-paper-alt: #def6fc;
     --theme-color-background: #efefef;
+    --theme-color-focus: rgba(0, 0, 0, 0.04);
     --theme-color-text: #101010;
     --theme-color-muted: #888888;
     --theme-color-highlight: #3f51b5;
