@@ -6,7 +6,7 @@ import NewPostComponent from "../NewPostComponent/NewPostComponent";
 import SelectItem from "../../controls/Select/SelectItem";
 import actionStyles from "./styles/PostActions.module.css";
 
-export default ({postData, mentions, onMenuItemClick, onComplete}) => {
+export default ({postData, mentions, onMenuItemClick, onComplete, ...selectProps}) => {
     const metaInfo = useMetaInfo();
     const windowData = useWindowData();
     const {t} = useTranslation();
@@ -15,6 +15,11 @@ export default ({postData, mentions, onMenuItemClick, onComplete}) => {
 
     const handleMenuItemClick = evt => {
         onMenuItemClick(evt);
+    }
+
+    const handleSelectItemClick = evt => {
+        handleMenuItemClick(evt);
+        selectProps.onClick && selectProps.onClick(evt);
     }
 
     if (!postsAllowEdit) return null;
@@ -31,10 +36,11 @@ export default ({postData, mentions, onMenuItemClick, onComplete}) => {
     if (onMenuItemClick) return <SelectItem
         children={<NewPostComponent
             {...newPostProps}
-            buttonComponent={<div>{t("Common.Edit")}</div>}
+            buttonComponent={<div onClick={handleMenuItemClick}>{t("Common.Edit")}</div>}
         />}
+        {...selectProps}
         id={"edit"}
-        onClick={handleMenuItemClick}
+        onClick={handleSelectItemClick}
         value={"edit"}
     />;
 

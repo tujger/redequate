@@ -9,7 +9,7 @@ import {share} from "../ShareComponent";
 import SelectItem from "../../controls/Select/SelectItem";
 import actionStyles from "./styles/PostActions.module.css";
 
-export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
+export default React.forwardRef(({isReply, onMenuItemClick, postData, ...selectProps}, ref) => {
     const pages = usePages();
     const dispatch = useDispatch();
     const {t} = useTranslation();
@@ -17,6 +17,11 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     const handleMenuItemClick = evt => {
         sharePath();
         onMenuItemClick(evt);
+    }
+
+    const handleSelectItemClick = evt => {
+        handleMenuItemClick(evt);
+        selectProps.onClick && selectProps.onClick(evt);
     }
 
     const handleButtonClick = evt => {
@@ -37,8 +42,9 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     if (onMenuItemClick) {
         return <SelectItem
             children={t("Common.Share")}
+            {...selectProps}
             ref={ref}
-            onClick={handleMenuItemClick}
+            onClick={handleSelectItemClick}
             id={"share"}
             value={"share"}
         />

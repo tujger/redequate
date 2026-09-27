@@ -8,7 +8,7 @@ import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
 import SelectItem from "../../controls/Select/SelectItem";
 
-export default ({postData, onMenuItemClick, onComplete, type}) => {
+export default ({postData, onMenuItemClick, onComplete, type, ...selectProps}) => {
     const [state, setState] = React.useState({});
     const {
         deletePost,
@@ -24,6 +24,11 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
     const handleMenuItemClick = evt => {
         setState(state => ({...state, deletePost: true}));
         onMenuItemClick(evt);
+    }
+
+    const handleSelectItemClick = evt => {
+        handleMenuItemClick(evt);
+        selectProps.onClick && selectProps.onClick(evt);
     }
 
     const handleConfirmDeletion = () => {
@@ -46,32 +51,33 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
     }
 
     const confirm = deletePost && <ConfirmComponent
-            children={t("Post.Your post and all replies will be deleted.")}
-            confirmLabel={t("Common.Delete")}
-            critical
-            open={true}
-            onCancel={handleCancelDeletion}
-            onConfirm={handleConfirmDeletion}
-            title={t("Post.Delete post?")}
-        />;
+        children={t("Post.Your post and all replies will be deleted.")}
+        confirmLabel={t("Common.Delete")}
+        critical
+        open={true}
+        onCancel={handleCancelDeletion}
+        onConfirm={handleConfirmDeletion}
+        title={t("Post.Delete post?")}
+    />;
 
     if (onMenuItemClick) return <SelectItem
         children={<>
             {t("Common.Delete")}
             {confirm}
         </>}
+        {...selectProps}
         id={"delete"}
-        onClick={handleMenuItemClick}
+        onClick={handleSelectItemClick}
         value={"delete"}
     />;
 
     return <>
         <div className={actionStyles.action}>
             <div className={actionStyles.iconButton}
-                aria-label={t("Common.Delete")}
-                children={<ClearIcon/>}
-                onClick={handleClickDelete}
-                title={t("Common.Delete")}
+                 aria-label={t("Common.Delete")}
+                 children={<ClearIcon/>}
+                 onClick={handleClickDelete}
+                 title={t("Common.Delete")}
             />
         </div>
         {confirm}

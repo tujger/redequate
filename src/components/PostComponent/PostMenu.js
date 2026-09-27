@@ -10,15 +10,24 @@ import cardStyles from "./styles/PostComponent.module.css";
 export default (props) => {
     const {onChange, onDelete, postData} = props;
     const currentUserData = useCurrentUserData();
+    const [open, setOpen] = React.useState(false);
 
     const isDeleteAllowed = currentUserData && !currentUserData.disabled
         && (postData.uid === currentUserData.id || matchRole([Role.ADMIN], currentUserData));
 
-    const handleMenuClick = event => {
+    const handleMenuTrigger = event => {
         event.stopPropagation();
     };
 
-    const handleMenuClose = event => event && event.stopPropagation();
+    const handleMenuOpen = event => {
+        event && event.stopPropagation();
+        setOpen(true);
+    };
+
+    const handleMenuClose = event => {
+        event && event.stopPropagation();
+        setOpen(false);
+    };
 
     const items = [];
     items.push(<ActionShare
@@ -49,11 +58,15 @@ export default (props) => {
         displayEmpty
         iconMenu
         IconComponent={() => null}
-        onClick={handleMenuClick}
-        onMouseDown={handleMenuClick}
+        onChange={handleMenuClose}
+        onClick={handleMenuTrigger}
+        onMouseDown={handleMenuTrigger}
+        onOpen={handleMenuOpen}
+        onClose={handleMenuClose}
         MenuProps={{
             keepMounted: true,
         }}
+        open={open}
         renderValue={() => <MenuIcon/>}
         value={""}
     >

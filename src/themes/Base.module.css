@@ -21,6 +21,12 @@
     font-size: var(--theme-font-size);
 }
 
+.error {
+    && {
+        color: #ff0000;
+    }
+}
+
 :global(.MuiSvgIcon-root) {
     color: inherit;
     vertical-align: middle;
