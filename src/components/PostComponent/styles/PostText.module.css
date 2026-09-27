@@ -70,6 +70,7 @@
     border-width: 0;
     height: calc(var(--theme-spacing) * .5);
     margin: 0;
+    margin-bottom: var(--post-text-empty-margin-bottom, 0);
     padding: 0;
 }
 

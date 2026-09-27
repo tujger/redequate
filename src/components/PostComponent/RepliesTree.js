@@ -15,8 +15,7 @@ import replyStyles from "./styles/PostReplies.module.css";
 import textStyles from "./styles/PostText.module.css";
 
 export default (props) => {
-    const {allowedExtras, level, postId, classes: givenClasses = {}, type, expand, onChange, expanded: givenExpanded} = props;
-    const classes = {...cardStyles, ...replyStyles, ...textStyles, ...givenClasses};
+    const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = props;
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -116,9 +115,9 @@ export default (props) => {
 
     if (!paginationOptions) return null;
     if (postsRotateReplies === "outside" && rotating && replies && replies.length) {
-        return <div className={classes.replyRow}>
-            <div className={classes.replyIndent}/>
-            <div className={classes.replyContent}>
+        return <div className={replyStyles.replyRow}>
+            <div className={replyStyles.replyIndent}/>
+            <div className={cardStyles.replyContent}>
                 <RotatingReplies {...props} items={replies}/>
             </div>
         </div>
@@ -126,18 +125,18 @@ export default (props) => {
 
     if (!expanded && !userReplied) return null;
     if (!expanded) {
-        return <div className={classes.replyRow}>
-            <div className={classes.replyIndent}/>
-            <div className={classes.replyContent}>
+        return <div className={replyStyles.replyRow}>
+            <div className={replyStyles.replyIndent}/>
+            <div className={cardStyles.replyContent}>
                 <ItemPlaceholderComponent
                     avatar={<AvatarView
-                        className={classes.avatarSmallest}
+                        className={cardStyles.avatarSmallest}
                         image={userReplied.image}
                         initials={userReplied.initials}
                         verified
                     />}
-                    label={<span className={classes.textSmall}>
-                        <span className={classes.suggestionName}>
+                    label={<span className={cardStyles.textSmall}>
+                        <span className={textStyles.suggestionName}>
                             {userReplied.name}
                         </span>
                         {replies && replies.length > 1 ? " and others replied" : " replied"}
@@ -152,11 +151,11 @@ export default (props) => {
     }
 
     return <>
-        {expand && level === 0 && <div className={classes.replyRow}>
-            <div className={classes.replyContent}>
+        {expand && level === 0 && <div className={replyStyles.replyRow}>
+            <div className={cardStyles.replyContent}>
                 <ItemPlaceholderComponent
                     avatar={null}
-                    label={<span className={classes.textSmall}>
+                    label={<span className={cardStyles.textSmall}>
                         Click here to see the entire thread.
                     </span>}
                     pattern={"flat"}
@@ -164,9 +163,9 @@ export default (props) => {
                 />
             </div>
         </div>}
-        <div className={[classes.replyRow, level > 1 ? classes.sectionReply : classes.sectionComment].join(" ")}>
-            {level > 0 && level < MAX_INDENTING_LEVELS && <div className={classes.replyIndent}/>}
-            <div className={classes.replyContent}>
+        <div className={[replyStyles.replyRow, level > 1 ? replyStyles.sectionReply : replyStyles.sectionComment].join(" ")}>
+            {level > 0 && level < MAX_INDENTING_LEVELS && <div className={replyStyles.replyIndent}/>}
+            <div className={cardStyles.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
                     pagination={() => new Pagination(paginationOptions)}
@@ -177,10 +176,6 @@ export default (props) => {
                     })}
                     itemComponent={item => <PostComponent
                         {...props}
-                        classes={{
-                            ...classes,
-                            cardActions: [classes.cardActions, classes.cardActionsSmall].join(" "),
-                        }}
                         collapsible={false}
                         disableClick
                         isReply={true}

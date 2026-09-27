@@ -8,29 +8,37 @@ import PostMedia from "./PostMedia";
 import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
 import UserName from "../../controls/UserName/UserName";
+import cardStyles from "./styles/PostComponent.module.css";
+import replyStyles from "./styles/PostReplies.module.css";
+import textStyles from "./styles/PostText.module.css";
 
 export default React.forwardRef((props, ref) => {
-    const {classes = {}, className, disableClick, disableButtons, level, pattern, postData, userData, highlighted} = props;
+    const {className, disableClick, disableButtons, level, pattern, postData, style, userData, highlighted} = props;
     const pages = usePages();
     const windowData = useWindowData();
     const ancillaryRef = React.useRef();
 
-    return <div className={[classes.card, pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "", highlighted ? classes.cardHighlighted : "", className].join(" ")} ref={ref}>
-        <div className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post, classes.reply].join(" ")}>
-            <Link className={level > 1 ? classes.avatarSmallest : classes.avatarSmall} onClick={evt => evt.stopPropagation()} to={pages.user.route + postData.uid}>
-                <AvatarView className={level > 1 ? classes.avatarSmallest : classes.avatarSmall} image={userData.image} initials={userData.initials} verified={true}/>
+    return <div className={[
+        cardStyles.card,
+        pattern && cardStyles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`],
+        highlighted && cardStyles.cardHighlighted,
+        className,
+    ].filter(Boolean).join(" ")} ref={ref} style={style}>
+        <div className={[cardStyles.cardHeader, cardStyles.cardHeaderWithLabel, replyStyles.reply].join(" ")}>
+            <Link className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall} onClick={evt => evt.stopPropagation()} to={pages.user.route + postData.uid}>
+                <AvatarView className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall} image={userData.image} initials={userData.initials} verified={true}/>
             </Link>
-            <div className={classes.cardContent}>
-                <div className={classes.layout}>
-                    <div className={[classes.layout, classes.userName].join(" ")}>
-                        <UserName className={classes.label} id={userData.id}>{userData.name}</UserName>
+            <div className={cardStyles.cardContent}>
+                <div className={cardStyles.layout}>
+                    <div className={[cardStyles.layout, cardStyles.userName].join(" ")}>
+                        <UserName className={textStyles.label} id={userData.id}>{userData.name}</UserName>
                     </div>
-                    {windowData.isNarrow() && <div className={[classes.layout, classes.layoutGrow].join(" ")}/>}
+                    {windowData.isNarrow() && <div className={[cardStyles.layout, cardStyles.layoutGrow].join(" ")}/>}
                     <PostMenu {...props}/>
-                    <div className={[classes.layout, classes.date].join(" ")} title={new Date(postData.created).toLocaleString()}>{toDateString(postData.created)}</div>
+                    <div className={[cardStyles.layout, cardStyles.date].join(" ")} title={new Date(postData.created).toLocaleString()}>{toDateString(postData.created)}</div>
                 </div>
                 <PostBody {...props} ref={ancillaryRef} disableClick={!disableClick}/>
-                {postData.images && <div className={[classes.layout, classes.cardImage].join(" ")}>
+                {postData.images && <div className={[cardStyles.layout, cardStyles.cardImage].join(" ")}>
                     <PostMedia images={postData.images} mosaic/>
                 </div>}
                 {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}

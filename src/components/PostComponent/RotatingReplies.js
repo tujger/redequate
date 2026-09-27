@@ -9,12 +9,12 @@ import Pagination from "../../controllers/FirebasePagination";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import cardStyles from "./styles/PostComponent.module.css";
 import motionStyles from "./styles/PostMotion.module.css";
 import textStyles from "./styles/PostText.module.css";
 
 export default (props) => {
-    const {classes = {}, items: givenItems, mentions, postId, type} = props;
-    const componentClasses = {...textStyles, ...motionStyles, ...classes};
+    const {items: givenItems, mentions, postId, type} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -91,14 +91,14 @@ export default (props) => {
             const {postData, userData} = props;
             const item = <ItemPlaceholderComponent
                 avatar={<AvatarView
-                    className={componentClasses.avatarSmallest}
+                    className={cardStyles.avatarSmallest}
                     image={userData.image}
                     initials={userData.initials}
                     verified
                 />}
-                className={componentClasses.singleline}
-                label={<span className={componentClasses.textSmall}>
-                    <span className={componentClasses.suggestionName}>
+                className={motionStyles.singleline}
+                label={<span className={cardStyles.textSmall}>
+                    <span className={textStyles.suggestionName}>
                         {userData.name}
                     </span> <MentionedTextComponent
                     disableClick mentions={mentions}
@@ -116,7 +116,12 @@ export default (props) => {
         }
         const installAnimation = async () => {
             setTimeout(() => {
-                leavingRef.current && leavingRef.current.classList.add(componentClasses.leaving);
+                if (leavingRef.current) {
+                    leavingRef.current.className = [
+                        leavingRef.current.className,
+                        motionStyles.leaving,
+                    ].filter(Boolean).join(" ");
+                }
             }, 10);
         }
         const thrownEvent = async event => {
@@ -178,13 +183,13 @@ export default (props) => {
     }, []);
 
     if (!item) return null;
-    return <div ref={rootRef} className={[componentClasses.layout, componentClasses.rotatingRoot].join(" ")} onClick={handleClick}>
+    return <div ref={rootRef} className={[cardStyles.layout, motionStyles.rotatingRoot].join(" ")} onClick={handleClick}>
         {itemPrev && <div
             children={itemPrev}
             key={Math.random()}
             ref={leavingRef}
-            className={[componentClasses.layout, componentClasses.moveable].join(" ")}
+            className={[cardStyles.layout, motionStyles.moveable].join(" ")}
         />}
-        <div className={[componentClasses.layout, componentClasses.moveable].join(" ")}>{item}</div>
+        <div className={[cardStyles.layout, motionStyles.moveable].join(" ")}>{item}</div>
     </div>
 }

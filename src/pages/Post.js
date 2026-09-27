@@ -24,17 +24,6 @@ import LoadingComponent from "../components/LoadingComponent";
 const useStyles = makeStyles(theme => ({
     card: {
     },
-    cardImage: {
-        marginBottom: theme.spacing(1),
-        marginTop: theme.spacing(1),
-        // maxHeight: "100%",
-        maxWidth: "100%",
-    },
-    text: {
-        "&:empty": {
-            marginBottom: theme.spacing(1),
-        },
-    },
     replyButton: {
         textTransform: "none",
     }
@@ -99,7 +88,6 @@ const Post = (props) => {
             <PostComponent
                 {...props}
                 allowedExtras={allowedExtras}
-                classes={{text: classesPost.text, cardImage: classesPost.cardImage}}
                 className={classesPost.card}
                 collapsible={false}
                 disableClick={true}
@@ -111,6 +99,11 @@ const Post = (props) => {
                 // pattern={"bordered"}
                 postData={postData}
                 level={0}
+                style={{
+                    "--post-card-image-margin-bottom": "var(--theme-spacing)",
+                    "--post-card-image-margin-top": "var(--theme-spacing)",
+                    "--post-text-empty-margin-bottom": "var(--theme-spacing)",
+                }}
                 type={type}
                 UploadProps={{camera: !windowData.isNarrow(), multi: true}}
                 userData={userData}

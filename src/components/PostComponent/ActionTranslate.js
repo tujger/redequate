@@ -13,7 +13,6 @@ import MentionedTextComponent from "../MentionedTextComponent";
 export default (
     {
         ancillaryRef,
-        classes,
         icon = true,
         postData,
         userData,
@@ -21,7 +20,6 @@ export default (
         onComplete,
         UploadProps
     }) => {
-    classes = {...textStyles, ...actionStyles, ...(classes || {})};
     const textTranslation = useTextTranslation();
     const [state, setState] = React.useState({});
     const {show, translated, title} = state;
@@ -122,12 +120,12 @@ export default (
     return <>
         {translated && <Portal targetNode={ancillaryRef.current}>
             <h5>{title}</h5>
-            <MentionedTextComponent classes={classes} text={translated}/>
+            <MentionedTextComponent className={textStyles.text} text={translated}/>
         </Portal>}
-        <div className={classes.action}>
+        <div className={actionStyles.action}>
             <div
                 aria-label={"Translate"}
-                className={classes.iconButton}
+                className={actionStyles.iconButton}
                 onClick={handleClick}
                 title={"Translate"}
             >

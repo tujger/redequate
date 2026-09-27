@@ -8,8 +8,7 @@ import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import CounterComponent from "../CounterComponent";
 
-export default ({postData, classes}) => {
-    classes = {...actionStyles, ...(classes || {})};
+export default ({postData}) => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -38,10 +37,10 @@ export default ({postData, classes}) => {
 
     const isPostingAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
 
-    return <div className={classes.action}>
+    return <div className={actionStyles.action}>
         <div
             aria-label={"Dislike"}
-            className={[classes.iconButton, classes.counter].join(" ")}
+            className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
 
             onClick={disabled ? undefined : handleClickExtra("dislike")}
 
@@ -51,10 +50,10 @@ export default ({postData, classes}) => {
                 counter={postData.counter("dislike")}
                 prefix={<>
                     {postData.extra("like") ? <DislikeFilledIcon/> : <DislikeEmptyIcon/>}
-                    <div className={classes.box}/>
+                    <div className={actionStyles.box}/>
                 </>}
                 showZero
-                zeroPrefix={<><DislikeEmptyIcon/><div className={classes.box}/></>}
+                zeroPrefix={<><DislikeEmptyIcon/><div className={actionStyles.box}/></>}
             />
         </div>
     </div>

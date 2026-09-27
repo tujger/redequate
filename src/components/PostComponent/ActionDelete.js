@@ -8,8 +8,7 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
 
-export default ({classes = {}, postData, onMenuItemClick, onComplete, type}) => {
-    classes = {...actionStyles, ...classes};
+export default ({postData, onMenuItemClick, onComplete, type}) => {
     const [state, setState] = React.useState({});
     const {
         deletePost,
@@ -54,8 +53,8 @@ export default ({classes = {}, postData, onMenuItemClick, onComplete, type}) => 
             onClick={handleMenuItemClick}
         />
     } else {
-        element = <div className={classes.action}>
-            <div className={classes.iconButton}
+        element = <div className={actionStyles.action}>
+            <div className={actionStyles.iconButton}
                 aria-label={t("Common.Delete")}
                 children={<ClearIcon/>}
 

@@ -1,10 +1,11 @@
 import React from "react";
+import cardStyles from "./styles/PostComponent.module.css";
 
-export default ({classes, disableClick, handleClickPost, children}) => {
+export default ({disableClick, handleClickPost, children}) => {
     return disableClick
         ? <>{children}</>
         : <div
-            className={classes.wrapper}
+            className={cardStyles.wrapper}
             onClick={handleClickPost}
         >
             {children}

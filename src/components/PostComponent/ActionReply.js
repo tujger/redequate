@@ -6,13 +6,12 @@ import {cacheDatas} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
-export default ({classes = {}, icon = true, postData, mentions, onComplete, UploadProps}) => {
-    classes = {...actionStyles, ...classes};
+export default ({icon = true, postData, mentions, onComplete, UploadProps}) => {
     const {t} = useTranslation();
-    return <div className={classes.action}>
+    return <div className={actionStyles.action}>
         <NewPostComponent
             buttonComponent={icon
-                ? <div className={classes.iconButton}
+                ? <div className={actionStyles.iconButton}
                     aria-label={t("Common.Reply")}
                     children={<ReplyIcon/>}
 
@@ -21,7 +20,7 @@ export default ({classes = {}, icon = true, postData, mentions, onComplete, Uplo
                 /> : <div
                     aria-label={t("Common.Reply")}
                     children={t("Common.Reply")}
-                    className={[classes.button, classes.replyButton].join(" ")}
+                    className={[actionStyles.button, actionStyles.replyButton].join(" ")}
 
 
                     title={t("Common.Reply")}
@@ -31,7 +30,6 @@ export default ({classes = {}, icon = true, postData, mentions, onComplete, Uplo
             // infoComponent={<InfoComponent style={{maxHeight: 100, overflow: "auto"}}
             // >
             //     <MentionedTextComponent
-            //         className={classes.body}
             //         mentions={mentions}
             //         tokens={postData.tokens}
             //     />

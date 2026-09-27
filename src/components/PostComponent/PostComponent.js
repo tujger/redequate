@@ -3,12 +3,10 @@ import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {cacheDatas, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import useRippleEffect from "../../helpers/useRippleEffect";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import PostCard from "./PostCard";
 import RepliesTree from "./RepliesTree";
-import cardStyles from "./styles/PostComponent.module.css";
 
 const PostComponent = (props) => {
     const {
@@ -25,14 +23,8 @@ const PostComponent = (props) => {
         pattern,
         type = "posts",
     } = props;
-    const classes = {
-        ...cardStyles,
-        ...(props.classes || {})
-    };
-
     const dispatch = useDispatch();
     const history = useHistory();
-    const onPointerDown = useRippleEffect();
     const pages = usePages();
     const [state, setState] = React.useState({expand: givenExpand});
     const {highlight, expand, random} = state;
@@ -78,7 +70,6 @@ const PostComponent = (props) => {
 
     const inheritProps = {
         ...props,
-        classes,
         allowedExtras,
         collapsible,
         disableClick,
@@ -89,7 +80,6 @@ const PostComponent = (props) => {
         isReply,
         onChange: handleChange,
         onDelete: handleDelete,
-        onPointerDown,
         type,
     }
 

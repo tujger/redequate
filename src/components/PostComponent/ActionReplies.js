@@ -9,16 +9,15 @@ import {usePages} from "../../controllers/General";
 import CounterComponent from "../CounterComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 
-export default ({postData, classes, disableClick}) => {
-    classes = {...actionStyles, ...(classes || {})};
+export default ({postData, disableClick}) => {
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
     const {t} = useTranslation();
 
-    return <div className={classes.action}>
+    return <div className={actionStyles.action}>
         <div
-            className={[classes.iconButton, classes.counter].join(" ")}
+            className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
 
             onClick={event => {
                 event.stopPropagation();
@@ -33,9 +32,9 @@ export default ({postData, classes, disableClick}) => {
             <CounterComponent
                 counter={postData.counter("replied")}
                 path={disableClick ? `${postData.id}/replied` : undefined}
-                prefix={<><ChatFilledIcon/><div className={classes.box}/></>}
+                prefix={<><ChatFilledIcon/><div className={actionStyles.box}/></>}
                 showZero
-                zeroPrefix={<><ChatEmptyIcon/><div className={classes.box}/></>}
+                zeroPrefix={<><ChatEmptyIcon/><div className={actionStyles.box}/></>}
             />
         </div>
     </div>

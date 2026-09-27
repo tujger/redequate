@@ -9,8 +9,7 @@ import {share} from "../ShareComponent";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 
-export default React.forwardRef(({classes = {}, isReply, onMenuItemClick, postData}, ref) => {
-    classes = {...actionStyles, ...classes};
+export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     const pages = usePages();
     const dispatch = useDispatch();
     const {t} = useTranslation();
@@ -43,8 +42,8 @@ export default React.forwardRef(({classes = {}, isReply, onMenuItemClick, postDa
         id={"share"}
     />
 
-    return <div className={classes.action}>
-        <div className={classes.iconButton}
+    return <div className={actionStyles.action}>
+        <div className={actionStyles.iconButton}
             aria-label={t("Common.Share")}
             children={<ShareIcon/>}
 

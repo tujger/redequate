@@ -12,10 +12,11 @@ import PostButtons from "./PostButtons";
 import PostMenu from "./PostMenu";
 import RotatingReplies from "./RotatingReplies";
 import UserName from "../../controls/UserName/UserName";
+import cardStyles from "./styles/PostComponent.module.css";
+import textStyles from "./styles/PostText.module.css";
 
 export default React.forwardRef((props, ref) => {
     const {
-        classes = {},
         className,
         disableClick,
         disableButtons,
@@ -23,6 +24,7 @@ export default React.forwardRef((props, ref) => {
         level,
         pattern,
         postData,
+        style,
         userData,
         highlighted,
     } = props;
@@ -34,40 +36,40 @@ export default React.forwardRef((props, ref) => {
 
     return <div
         className={[
-            classes.card,
-            pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : "",
-            highlighted ? classes.cardHighlighted : "",
-            className
-        ].join(" ")}
+            cardStyles.card,
+            pattern && cardStyles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`],
+            highlighted && cardStyles.cardHighlighted,
+            className,
+        ].filter(Boolean).join(" ")}
         ref={ref}
+        style={style}
     >
         <PostCardWrapper
-            classes={classes}
             disableClick={disableClick}
             handleClickPost={handleClickPost}>
-            <div className={[classes.cardHeader, classes.cardHeaderWithLabel, classes.post].join(" ")}>
+            <div className={[cardStyles.cardHeader, cardStyles.cardHeaderWithLabel].join(" ")}>
                 <Link
-                    className={classes.avatarSmall}
+                    className={cardStyles.avatarSmall}
                     onClick={evt => evt.stopPropagation()}
                     to={pages.user.route + postData.uid}
                 >
                     <AvatarView
-                        className={classes.avatarSmall}
+                        className={cardStyles.avatarSmall}
                         image={userData.image}
                         initials={userData.initials}
                         verified={true}
                     />
                 </Link>
-                <div className={classes.cardContent}>
-                    <div className={[classes.layout, classes.inline, classes.cardTitle].join(" ")}>
-                        <div className={[classes.layout, classes.userName].join(" ")}>
+                <div className={cardStyles.cardContent}>
+                    <div className={[cardStyles.layout, cardStyles.inline, cardStyles.cardTitle].join(" ")}>
+                        <div className={[cardStyles.layout, cardStyles.userName].join(" ")}>
                             <UserName
-                                className={classes.label}
+                                className={textStyles.label}
                                 id={userData.id}
                             >{userData.name}</UserName>
                         </div>
                         <PostMenu {...props}/>
-                        {postData.targetTag && <div className={[classes.layout, classes.layoutGrow].join(" ")}>
+                        {postData.targetTag && <div className={[cardStyles.layout, cardStyles.layoutGrow].join(" ")}>
                             posted to <MentionedTextComponent
                             mentions={[{
                                 ...mentionTags,
@@ -77,7 +79,7 @@ export default React.forwardRef((props, ref) => {
                             tokens={[postData.targetTag]}
                         /></div>}
                     </div>
-                    <div className={[classes.layout, classes.cardSubheader, classes.date].join(" ")}
+                    <div className={[cardStyles.layout, cardStyles.cardSubheader, cardStyles.date].join(" ")}
                          title={new Date(postData.created).toLocaleString()}>
                         {toDateString(postData.created)}
                     </div>
@@ -89,7 +91,7 @@ export default React.forwardRef((props, ref) => {
                 disableClick={!disableClick}
             />
         </PostCardWrapper>
-        {postData.images && <div className={[classes.layout, classes.cardImage].join(" ")}>
+        {postData.images && <div className={[cardStyles.layout, cardStyles.cardImage].join(" ")}>
             <PostMedia
                 images={postData.images}
                 mosaic

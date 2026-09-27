@@ -6,8 +6,7 @@ import {useTranslation} from "react-i18next";
 import {useMetaInfo, useWindowData} from "../../controllers/General";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
-export default ({classes = {}, postData, mentions, onMenuItemClick, onComplete}) => {
-    classes = {...actionStyles, ...classes};
+export default ({postData, mentions, onMenuItemClick, onComplete}) => {
     const metaInfo = useMetaInfo();
     const windowData = useWindowData();
     const {t} = useTranslation();
@@ -28,8 +27,8 @@ export default ({classes = {}, postData, mentions, onMenuItemClick, onComplete})
             onClick={handleMenuItemClick}
         />
     } else {
-        element = <div className={classes.action}>
-            <div className={classes.iconButton}
+        element = <div className={actionStyles.action}>
+            <div className={actionStyles.iconButton}
                 aria-label={t("Common.Edit")}
                 children={<EditIcon/>}
 

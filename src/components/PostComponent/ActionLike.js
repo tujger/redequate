@@ -16,8 +16,7 @@ import ProgressView from "../ProgressView";
 import Pagination from "../../controllers/FirebasePagination";
 import counter from "../../controllers/counterControl";
 
-export default ({postData, classes}) => {
-    classes = {...actionStyles, ...(classes || {})};
+export default ({postData}) => {
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const dispatch = useDispatch();
@@ -155,10 +154,10 @@ export default ({postData, classes}) => {
     const isAdmin = matchRole([Role.ADMIN], currentUserData);
     const ancillaryStyle = {margin: 0, width: 20};
 
-    return <div className={classes.action}>
+    return <div className={actionStyles.action}>
         <div
             aria-label={t("Common.Like")}
-            className={[classes.iconButton, classes.counter].join(" ")}
+            className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
             // disabled={disabled}
 
             onClick={disabled ? undefined : handleClickExtra("like")}
@@ -170,16 +169,16 @@ export default ({postData, classes}) => {
                 counter={postData.counter("like")}
                 prefix={<>
                     {postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
-                    <div className={classes.box}/>
+                    <div className={actionStyles.box}/>
                 </>}
                 showZero
-                zeroPrefix={<><LikeEmptyIcon/><div className={classes.box}/></>}
+                zeroPrefix={<><LikeEmptyIcon/><div className={actionStyles.box}/></>}
             />
         </div>
         {isAdmin && <>
             <div
                 aria-label={"Decrease"}
-                className={[classes.iconButton, classes.counter].join(" ")}
+                className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
                 disabled={disabled}
                 onClick={handleMinus}
                 style={ancillaryStyle}
@@ -189,7 +188,7 @@ export default ({postData, classes}) => {
             </div>
             <div
                 aria-label={"Restore"}
-                className={[classes.iconButton, classes.counter].join(" ")}
+                className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
                 disabled={disabled}
                 onClick={handleRestore}
                 style={ancillaryStyle}
@@ -199,7 +198,7 @@ export default ({postData, classes}) => {
             </div>
             <div
                 aria-label={"Increase"}
-                className={[classes.iconButton, classes.counter].join(" ")}
+                className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
                 disabled={disabled}
                 onClick={handlePlus}
                 style={ancillaryStyle}
