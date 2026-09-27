@@ -2,6 +2,7 @@
 }
 
 .rotatingRoot {
+    display: flex;
     height: calc(var(--theme-spacing) * 4);
     margin-bottom: calc(var(--theme-spacing) * 1.5);
     margin-top: calc(var(--theme-spacing) * -1.5);

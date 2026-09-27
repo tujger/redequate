@@ -1,16 +1,13 @@
 import React from "react";
-import Select from "@material-ui/core/Select";
-import FormControl from "@material-ui/core/FormControl";
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {tokenizeText} from "./MentionedTextComponent";
 import MentionsInputComponent from "./MentionsInputComponent/MentionsInputComponent";
 import {useFirebase} from "../controllers/General";
+import Select from "../controls/Select/Select";
+import styles from "./styles/MentionedSelectComponent.module.css";
 
 const MentionedSelectComponent = (
     {
-        classes = {},
         className,
         combobox,
         disabled,
@@ -118,33 +115,31 @@ const MentionedSelectComponent = (
         />
     }
 
-    const Wrapper = ({children}) => {
-        if (label) {
-            return <FormControl
-                fullWidth
-            >
-                <InputLabel>{label}</InputLabel>
-                {children}
-            </FormControl>
-        }
-        return children;
-    }
+    const select = <Select
+        className={[styles.select, className].filter(Boolean).join(" ")}
+        disabled={disabled}
+        displayEmpty={!label}
+        fullWidth={Boolean(label)}
+        onChange={handleSelect}
+        options={[
+            {
+                label: <em className={styles.placeholder}>{placeholder || "<Select>"}</em>,
+                value: "",
+            },
+            ...items.map(item => ({
+                label: item.display,
+                value: item.id,
+            })),
+        ]}
+        value={selected}
+    />;
 
-    return <Wrapper>
-        <Select
-            className={[classes.root, className].join(" ")}
-            color={"secondary"}
-            disabled={disabled}
-            displayEmpty={!label}
-            onChange={handleSelect}
-            value={selected}
-        >
-            <MenuItem value={""}><em>{placeholder || "<Select>"}</em></MenuItem>
-            {items.map((item, index) => {
-                return <MenuItem key={index} value={item.id}>{item.display}</MenuItem>
-            })}
-        </Select>
-    </Wrapper>
+    if (label) return <div className={styles.field}>
+        <span className={styles.label}>{label}</span>
+        {select}
+    </div>;
+
+    return select;
 }
 
 export default MentionedSelectComponent;

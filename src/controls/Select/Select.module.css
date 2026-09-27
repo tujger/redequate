@@ -6,7 +6,9 @@
     }
 
     && :global(.MuiSelect-select) {
-        padding: var(--theme-spacing) calc(var(--theme-spacing) * 3.5) var(--theme-spacing) calc(var(--theme-spacing) * 1.5);
+        padding: calc(var(--theme-spacing) * 0.75);
+        padding-left: 0;
+        padding-right: calc(var(--theme-spacing) * 4);
     }
 
     & :global(.MuiSelect-icon) {
