@@ -1,5 +1,4 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
 import {Route, Switch, useHistory} from "react-router-dom";
 import {InView} from "react-intersection-observer";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
@@ -8,16 +7,7 @@ import {useMetaInfo, usePages} from "../controllers/General";
 import MetaInfoView from "./MetaInfoView";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import notifySnackbar from "../controllers/notifySnackbar";
-
-const styles = theme => ({
-    bottom: {},
-    bottomSticky: {},
-    center: {},
-    left: {},
-    right: {},
-    top: {},
-    topSticky: {},
-});
+import styles from "./styles/MainContent.module.css";
 
 const MainContent = props => {
     // eslint-disable-next-line react/prop-types
@@ -30,7 +20,7 @@ const MainContent = props => {
 
     const isDisabled = metaInfo && metaInfo.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
-    return <>
+    return <div className={styles.root}>
         <MetaInfoView/>
         {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
@@ -97,7 +87,7 @@ const MainContent = props => {
                 />
             })}</Switch>
         </React.Suspense>}
-    </>
+    </div>
 };
 
-export default withStyles(styles)(MainContent);
+export default MainContent;
