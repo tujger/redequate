@@ -1,4 +1,5 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
 import MenuItem from "@material-ui/core/MenuItem";
 import ClearIcon from "@material-ui/icons/Clear";
 import {useDispatch} from "react-redux";
@@ -8,6 +9,7 @@ import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
 
 export default ({classes = {}, postData, onMenuItemClick, onComplete, type}) => {
+    classes = {...actionStyles, ...classes};
     const [state, setState] = React.useState({});
     const {
         deletePost,

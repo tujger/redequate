@@ -1,4 +1,5 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
 import {useTranslation} from "react-i18next";
 import ReplyIcon from "@material-ui/icons/ReplyOutlined";
 import {cacheDatas} from "../../controllers/General";
@@ -6,6 +7,7 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
 export default ({classes = {}, icon = true, postData, mentions, onComplete, UploadProps}) => {
+    classes = {...actionStyles, ...classes};
     const {t} = useTranslation();
     return <div className={classes.action}>
         <NewPostComponent

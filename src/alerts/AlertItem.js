@@ -8,10 +8,11 @@ import {toDateString} from "../controllers/DateFormat";
 import {useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
-import baseStyles from "../themes/Base.module.css";
+import useRippleEffect from "../helpers/useRippleEffect";
 import alertStyles from "./styles/AlertItem.module.css";
 
 const AlertItem = ({data, skeleton, label, fetchAlertContent}) => {
+    const onPointerDown = useRippleEffect();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -56,13 +57,14 @@ const AlertItem = ({data, skeleton, label, fetchAlertContent}) => {
 
     return <div className={[alertStyles.card, alertStyles.cardFlat].join(" ")}>
         <div
-            className={[alertStyles.root, alertStyles.cardActionArea, baseStyles.ripple].join(" ")}
+            className={[alertStyles.root, alertStyles.cardActionArea].join(" ")}
             onClick={handleClick}
             onKeyDown={event => {
                 if (event.key !== "Enter" && event.key !== " ") return;
                 event.preventDefault();
                 handleClick();
             }}
+            onPointerDown={onPointerDown}
             role='button'
             tabIndex={0}
         >

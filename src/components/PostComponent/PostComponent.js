@@ -1,20 +1,14 @@
 import React from "react";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
+import {cacheDatas, usePages} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {useHistory} from "react-router-dom";
-import {useDispatch} from "react-redux";
-import "../../themes/Base.module.css";
-import cardStyles from "./styles/PostComponent.module.css";
-import actionStyles from "./styles/PostActions.module.css";
-import textStyles from "./styles/PostText.module.css";
-import replyStyles from "./styles/PostReplies.module.css";
-import motionStyles from "./styles/PostMotion.module.css";
-import mediaStyles from "./styles/PostMedia.module.css";
+import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import PostCard from "./PostCard";
 import RepliesTree from "./RepliesTree";
-import {cacheDatas, usePages} from "../../controllers/General";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
-import notifySnackbar from "../../controllers/notifySnackbar";
+import cardStyles from "./styles/PostComponent.module.css";
 
 const PostComponent = (props) => {
     const {
@@ -33,11 +27,6 @@ const PostComponent = (props) => {
     } = props;
     const classes = {
         ...cardStyles,
-        ...actionStyles,
-        ...textStyles,
-        ...replyStyles,
-        ...motionStyles,
-        ...mediaStyles,
         ...(props.classes || {})
     };
 

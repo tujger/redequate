@@ -1,4 +1,6 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
+import textStyles from "./styles/PostText.module.css";
 import ReactDOM from "react-dom";
 import TranslateIcon from "@material-ui/icons/Translate";
 import {useTranslation} from "react-i18next";
@@ -19,6 +21,7 @@ export default (
         onComplete,
         UploadProps
     }) => {
+    classes = {...textStyles, ...actionStyles, ...(classes || {})};
     const textTranslation = useTextTranslation();
     const [state, setState] = React.useState({});
     const {show, translated, title} = state;

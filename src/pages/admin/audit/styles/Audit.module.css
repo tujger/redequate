@@ -29,7 +29,6 @@
 }
 
 .tabButtonSelected {
-    border-bottom: 2px solid;
     color: var(--theme-color-highlight);
 }
 

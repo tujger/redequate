@@ -1,12 +1,13 @@
-import React from "react";
 import Clear from "@material-ui/icons/Clear";
+import React from "react";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import Select from "../../../controls/Select/Select";
-import baseStyles from "../../../themes/Base.module.css";
+import useRippleEffect from "../../../helpers/useRippleEffect";
 import headerStyles from "./styles/UsersHeader.module.css";
 
 // eslint-disable-next-line react/prop-types
 export default ({classes: givenClasses, filter, handleChange, mode}) => {
+    const onPointerDown = useRippleEffect();
     const classes = {...givenClasses, ...headerStyles};
     const options = [
         {label: "All users", value: "all"},
@@ -33,8 +34,9 @@ export default ({classes: givenClasses, filter, handleChange, mode}) => {
         />
         {filter && <button
             aria-label='Clear'
-            className={[classes.clearButton, baseStyles.ripple].join(" ")}
+            className={[classes.clearButton].join(" ")}
             onClick={handleChange("clear")}
+            onPointerDown={onPointerDown}
             title='Clear'
             type='button'
         >

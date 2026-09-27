@@ -8,7 +8,6 @@ import useRippleEffect from "../../../helpers/useRippleEffect";
 import Activity from "./Activity";
 import {auditReducer} from "./auditReducer";
 import Errors from "./Errors";
-import baseStyles from "../../../themes/Base.module.css";
 import auditStyles from "./styles/Audit.module.css";
 
 // eslint-disable-next-line react/prop-types
@@ -25,7 +24,7 @@ const Audit = props => {
         classes: givenClasses,
         tabSelected,
     } = props;
-    const classes = {...baseStyles, ...auditStyles, ...(givenClasses || {})};
+    const classes = {...auditStyles, ...(givenClasses || {})};
 
     const handleChange = tabSelected => () => {
         dispatch({type: auditReducer.SAVE, tabSelected});
@@ -58,7 +57,7 @@ const Audit = props => {
                     console.error(e);
                 }
                 return <button
-                    className={[classes.tabButton, tabSelected === index ? classes.tabButtonSelected : "", baseStyles.ripple].join(" ")}
+                    className={[classes.tabButton, tabSelected === index ? classes.tabButtonSelected : ""].join(" ")}
                     key={index}
                     onClick={handleChange(index)}
                     onPointerDown={onPointerDown}

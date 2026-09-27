@@ -21,11 +21,12 @@
 .iconButton {
     align-items: center;
     border: 0;
+    border-radius: calc(var(--theme-spacing) * .5);
     cursor: pointer;
     display: inline-flex;
     min-height: calc(var(--theme-spacing) * 4);
     min-width: calc(var(--theme-spacing) * 4);
-    padding: calc(var(--theme-spacing) * .5);
+    padding: calc(var(--theme-spacing) * .5) var(--theme-spacing);
 
     &:hover {
         background-color: var(--theme-color-background);

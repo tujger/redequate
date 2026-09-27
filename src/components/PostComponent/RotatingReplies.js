@@ -9,9 +9,12 @@ import Pagination from "../../controllers/FirebasePagination";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import motionStyles from "./styles/PostMotion.module.css";
+import textStyles from "./styles/PostText.module.css";
 
 export default (props) => {
     const {classes = {}, items: givenItems, mentions, postId, type} = props;
+    const componentClasses = {...textStyles, ...motionStyles, ...classes};
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -88,14 +91,14 @@ export default (props) => {
             const {postData, userData} = props;
             const item = <ItemPlaceholderComponent
                 avatar={<AvatarView
-                    className={classes.avatarSmallest}
+                    className={componentClasses.avatarSmallest}
                     image={userData.image}
                     initials={userData.initials}
                     verified
                 />}
-                className={classes.singleline}
-                label={<span className={classes.textSmall}>
-                    <span className={classes.suggestionName}>
+                className={componentClasses.singleline}
+                label={<span className={componentClasses.textSmall}>
+                    <span className={componentClasses.suggestionName}>
                         {userData.name}
                     </span> <MentionedTextComponent
                     disableClick mentions={mentions}
@@ -113,7 +116,7 @@ export default (props) => {
         }
         const installAnimation = async () => {
             setTimeout(() => {
-                leavingRef.current && leavingRef.current.classList.add(classes.leaving);
+                leavingRef.current && leavingRef.current.classList.add(componentClasses.leaving);
             }, 10);
         }
         const thrownEvent = async event => {
@@ -175,13 +178,13 @@ export default (props) => {
     }, []);
 
     if (!item) return null;
-    return <div ref={rootRef} className={[classes.layout, classes.rotatingRoot].join(" ")} onClick={handleClick}>
+    return <div ref={rootRef} className={[componentClasses.layout, componentClasses.rotatingRoot].join(" ")} onClick={handleClick}>
         {itemPrev && <div
             children={itemPrev}
             key={Math.random()}
             ref={leavingRef}
-            className={[classes.layout, classes.moveable].join(" ")}
+            className={[componentClasses.layout, componentClasses.moveable].join(" ")}
         />}
-        <div className={[classes.layout, classes.moveable].join(" ")}>{item}</div>
+        <div className={[componentClasses.layout, componentClasses.moveable].join(" ")}>{item}</div>
     </div>
 }

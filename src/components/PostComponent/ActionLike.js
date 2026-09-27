@@ -1,4 +1,5 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
 import {useHistory} from "react-router-dom";
 import LikeEmptyIcon from "@material-ui/icons/FavoriteBorder";
 import LikeFilledIcon from "@material-ui/icons/Favorite";
@@ -16,6 +17,7 @@ import Pagination from "../../controllers/FirebasePagination";
 import counter from "../../controllers/counterControl";
 
 export default ({postData, classes}) => {
+    classes = {...actionStyles, ...(classes || {})};
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const dispatch = useDispatch();

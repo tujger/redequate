@@ -11,7 +11,6 @@ import {cacheDatas, useFirebase} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
 import useRippleEffect from "../../../helpers/useRippleEffect";
-import baseStyles from "../../../themes/Base.module.css";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 
 // eslint-disable-next-line react/prop-types
@@ -19,7 +18,7 @@ function ErrorItemComponent({data, classes: givenClasses, skeleton, label, onUse
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const onPointerDown = useRippleEffect();
-    const classes = {...baseStyles, ...errorStyles, ...(givenClasses || {})};
+    const classes = {...errorStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
     const {alert, userData, removed} = state;
 

@@ -2,8 +2,11 @@ import React from "react";
 import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
 import AncillaryBody from "./AncillaryBody";
+import cardStyles from "./styles/PostComponent.module.css";
+import textStyles from "./styles/PostText.module.css";
 
 export default React.forwardRef(({classes, collapsible: givenCollapsible, disableClick, mentions, postData}, ref) => {
+    classes = {...cardStyles, ...textStyles, ...(classes || {})};
     const [state, setState] = React.useState({});
     const {
         collapsible = givenCollapsible,

@@ -1,4 +1,5 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
 import {useHistory} from "react-router-dom";
 import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
 import ChatFilledIcon from "@material-ui/icons/Chat";
@@ -9,6 +10,7 @@ import CounterComponent from "../CounterComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 
 export default ({postData, classes, disableClick}) => {
+    classes = {...actionStyles, ...(classes || {})};
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();

@@ -1,4 +1,5 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
 import MenuItem from "@material-ui/core/MenuItem";
 import ShareIcon from "@material-ui/icons/Share";
 import {useDispatch} from "react-redux";
@@ -9,6 +10,7 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 
 export default React.forwardRef(({classes = {}, isReply, onMenuItemClick, postData}, ref) => {
+    classes = {...actionStyles, ...classes};
     const pages = usePages();
     const dispatch = useDispatch();
     const {t} = useTranslation();

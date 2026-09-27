@@ -11,7 +11,6 @@ import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
 import UserName from "../../../controls/UserName/UserName";
 import useRippleEffect from "../../../helpers/useRippleEffect";
-import baseStyles from "../../../themes/Base.module.css";
 import activityStyles from "./styles/ActivityItemComponent.module.css";
 
 // eslint-disable-next-line react/prop-types
@@ -19,7 +18,7 @@ function ActivityItemComponent({data, classes: givenClasses, skeleton, label, on
     const history = useHistory();
     const onPointerDown = useRippleEffect();
     const pages = usePages();
-    const classes = {...baseStyles, ...activityStyles, ...(givenClasses || {})};
+    const classes = {...activityStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
     const {alert, detailTimestamp, userData, removed, details, path, timestamp, type, userDatas = []} = state;
 

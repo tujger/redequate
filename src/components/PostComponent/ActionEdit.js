@@ -1,4 +1,5 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
 import MenuItem from "@material-ui/core/MenuItem";
 import EditIcon from "@material-ui/icons/Edit";
 import {useTranslation} from "react-i18next";
@@ -6,6 +7,7 @@ import {useMetaInfo, useWindowData} from "../../controllers/General";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
 
 export default ({classes = {}, postData, mentions, onMenuItemClick, onComplete}) => {
+    classes = {...actionStyles, ...classes};
     const metaInfo = useMetaInfo();
     const windowData = useWindowData();
     const {t} = useTranslation();

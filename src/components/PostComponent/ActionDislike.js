@@ -1,4 +1,5 @@
 import React from "react";
+import actionStyles from "./styles/PostActions.module.css";
 import {useHistory} from "react-router-dom";
 import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
 import DislikeFilledIcon from "@material-ui/icons/ThumbDown";
@@ -8,6 +9,7 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import CounterComponent from "../CounterComponent";
 
 export default ({postData, classes}) => {
+    classes = {...actionStyles, ...(classes || {})};
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();

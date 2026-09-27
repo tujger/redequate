@@ -10,9 +10,13 @@ import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import RotatingReplies from "./RotatingReplies";
+import cardStyles from "./styles/PostComponent.module.css";
+import replyStyles from "./styles/PostReplies.module.css";
+import textStyles from "./styles/PostText.module.css";
 
 export default (props) => {
-    const {allowedExtras, level, postId, classes = {}, type, expand, onChange, expanded: givenExpanded} = props;
+    const {allowedExtras, level, postId, classes: givenClasses = {}, type, expand, onChange, expanded: givenExpanded} = props;
+    const classes = {...cardStyles, ...replyStyles, ...textStyles, ...givenClasses};
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();

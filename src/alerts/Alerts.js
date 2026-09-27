@@ -11,7 +11,7 @@ import Pagination from "../controllers/FirebasePagination";
 import {MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
-import baseStyles from "../themes/Base.module.css";
+import useRippleEffect from "../helpers/useRippleEffect";
 import {alertsCounterReducer} from "./alertsCounterReducer";
 import AlertsDaemon from "./AlertsDaemon";
 import AlertsList from "./AlertsList";
@@ -21,6 +21,7 @@ import alertStyles from "./styles/Alerts.module.css";
 const Alerts = ({daemon, fetchAlertContent, classes: givenClasses}) => {
     const classes = givenClasses || {};
     const currentUserData = useCurrentUserData();
+    const onPointerDown = useRippleEffect();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const pages = usePages();
@@ -91,8 +92,9 @@ const Alerts = ({daemon, fetchAlertContent, classes: givenClasses}) => {
             backButton={null}
             mediumButton={<button
                 aria-label={t("Common.Clear")}
-                className={[alertStyles.iconButton, baseStyles.ripple].join(" ")}
+                className={[alertStyles.iconButton].join(" ")}
                 onClick={handleClear}
+                onPointerDown={onPointerDown}
                 title={t("Common.Clear")}
                 type='button'
             >
@@ -100,8 +102,9 @@ const Alerts = ({daemon, fetchAlertContent, classes: givenClasses}) => {
             </button>}
             rightButton={<button
                 aria-label={t("Alerts.All read")}
-                className={[alertStyles.iconButton, baseStyles.ripple].join(" ")}
+                className={[alertStyles.iconButton].join(" ")}
                 onClick={handleAllRead}
+                onPointerDown={onPointerDown}
                 title={t("Alerts.All read")}
                 type='button'
             >
