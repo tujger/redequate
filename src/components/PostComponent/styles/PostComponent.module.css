@@ -329,7 +329,7 @@
         font-size: 95%;
     }
 
-    .cardTitle .userName, .cardTitle :global(.Mention-tag-label) {
+    .cardTitle .userName {
         font-size: 110%;
     }
 

@@ -1,0 +1,11 @@
+.user,
+.tag {
+    && {
+        color: var(--theme-color-highlight);
+    }
+}
+
+.target {
+    font-size: 110%;
+    font-weight: bold;
+}

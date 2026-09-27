@@ -665,7 +665,7 @@ export const stylesList = theme => ({
         [theme.breakpoints.down("sm")]: {
             color: theme.palette.secondary.main,
             fontSize: "95%",
-            "& .Mention-tag-label, & $userName": {
+            "& $userName": {
                 fontSize: "110%",
             }
         },

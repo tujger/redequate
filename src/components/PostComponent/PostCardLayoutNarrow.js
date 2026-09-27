@@ -14,6 +14,7 @@ import RotatingReplies from "./RotatingReplies";
 import UserName from "../../controls/UserName/UserName";
 import cardStyles from "./styles/PostComponent.module.css";
 import textStyles from "./styles/PostText.module.css";
+import mentionStyles from "../../controllers/styles/MentionTypes.module.css";
 
 export default React.forwardRef((props, ref) => {
     const {
@@ -73,8 +74,8 @@ export default React.forwardRef((props, ref) => {
                             posted to <MentionedTextComponent
                             mentions={[{
                                 ...mentionTags,
+                                className: [mentionTags.className, mentionStyles.target].join(" "),
                                 displayTransform: (id, display) => display,
-                                style: {fontWeight: "bold"}
                             }]}
                             tokens={[postData.targetTag]}
                         /></div>}

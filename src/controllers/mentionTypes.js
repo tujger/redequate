@@ -3,6 +3,7 @@ import {Link} from "react-router-dom";
 import Pagination from "./FirebasePagination";
 import {normalizeSortName} from "./UserData";
 import {usePages} from "./General";
+import mentionStyles from "./styles/MentionTypes.module.css";
 
 const ComponentUser = ({children, disableClick, display, label, id, className, style, ...rest}) => {
     const pages = usePages();
@@ -27,7 +28,7 @@ const ComponentTag = ({children, disableClick, display, label, id, className, st
 }
 
 export const mentionUsers = {
-    className: "Mention-user-label",
+    className: mentionStyles.user,
     displayTransform: (id, display) => "@" + display,
     markup: "$[user:__id__:__display__]",
     pagination: (start) => new Pagination({
@@ -37,7 +38,6 @@ export const mentionUsers = {
         start: normalizeSortName(start),
         order: "asc"
     }),
-    style: {color: "#3f51b5"},
     transform: item => ({id: item.key, display: item.value.name || item.value.email}),
     trigger: "@",
     type: "user",
@@ -45,7 +45,7 @@ export const mentionUsers = {
 };
 
 export const mentionTags = {
-    className: "Mention-tag-label",
+    className: mentionStyles.tag,
     displayTransform: (id, display) => "#" + display,
     markup: "$[tag:__id__:__display__]",
     pagination: (start) => new Pagination({
@@ -55,7 +55,6 @@ export const mentionTags = {
         start: normalizeSortName(start),
         order: "asc"
     }),
-    style: {color: "#3f51b5"},
     transform: item => ({id: item.value.id, display: item.value.label}),
     trigger: "#",
     type: "tag",
