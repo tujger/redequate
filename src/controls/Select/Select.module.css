@@ -1,11 +1,11 @@
 .select {
     && {
-        color: var(--theme-color-text);
+        color: inherit;
         font: inherit;
-        min-width: calc(var(--theme-spacing) * 15);
+        min-width: calc(var(--theme-spacing) * 5);
     }
 
-    & :global(.MuiSelect-select) {
+    && :global(.MuiSelect-select) {
         padding: var(--theme-spacing) calc(var(--theme-spacing) * 3.5) var(--theme-spacing) calc(var(--theme-spacing) * 1.5);
     }
 

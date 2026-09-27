@@ -1,12 +1,11 @@
 import React from "react";
-import MenuItem from "@material-ui/core/MenuItem";
-import Select from "@material-ui/core/Select";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux"
-import notifySnackbar from "../controllers/notifySnackbar";
-import {languageReducer} from "../reducers/languageReducer";
-import {useCurrentUserData} from "../controllers/UserData";
 import {fetchDeviceId} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {useCurrentUserData} from "../controllers/UserData";
+import Select from "../controls/Select/Select";
+import {languageReducer} from "../reducers/languageReducer";
 
 const mapStateToProps = ({language}) => ({
     locale: language.locale,
@@ -29,14 +28,15 @@ export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
     }
 
     if (!i18n || !i18n.options || !i18n.options.resources || Object.keys(i18n.options.resources).length < 2) return null;
+
     return <Select
         className={className}
         onChange={handleLanguageChange}
+        options={Object.keys(i18n.store.data).map(item => ({
+            label: t("Language." + item),
+            value: item,
+        }))}
         value={i18n.language || i18n.options.fallbackLng[0]}
         {...props}
-    >
-        {Object.keys(i18n.store.data).map(item => {
-            return <MenuItem value={item} key={item}>{t("Language." + item)}</MenuItem>
-        })}
-    </Select>
+    />
 });
