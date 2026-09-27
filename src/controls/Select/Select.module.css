@@ -100,7 +100,7 @@
 .menuItem {
     color: var(--theme-color-text);
     font: inherit;
-    min-height: calc(var(--theme-spacing) * 5);
+    line-height: 1.5;
     padding: var(--theme-spacing) calc(var(--theme-spacing) * 1.5);
 
     &:hover {

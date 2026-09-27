@@ -1,4 +1,3 @@
-import MenuItem from "@material-ui/core/MenuItem";
 import ShareIcon from "@material-ui/icons/Share";
 import React from "react";
 import {useTranslation} from "react-i18next";
@@ -7,6 +6,7 @@ import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import {share} from "../ShareComponent";
+import SelectItem from "../../controls/Select/SelectItem";
 import actionStyles from "./styles/PostActions.module.css";
 
 export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
@@ -35,7 +35,7 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     }
 
     if (onMenuItemClick) {
-        return <MenuItem
+        return <SelectItem
             children={t("Common.Share")}
             ref={ref}
             onClick={handleMenuItemClick}
