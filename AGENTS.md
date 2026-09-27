@@ -12,3 +12,4 @@
 - Use `useRippleEffect` for interactive controls that behave like buttons or navigation actions when visible Material UI-like press feedback is appropriate.
 - Do not add ripple effects to passive containers, layout wrappers, loading placeholders, or components whose child already owns the interaction.
 - When planning a component conversion, explicitly identify interactive elements that need ripple feedback and state whether ripple is required, unnecessary, or blocked by a child component API.
+- Always structure CSS by selector ownership: keep shared properties in the owning class, nest pseudo-classes, attribute selectors, and dependent descendants under that class, keep independent component classes at the top level, and keep all at-rules at the top level.
