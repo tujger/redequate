@@ -14,7 +14,7 @@ import EditIcon from "@material-ui/icons/Edit";
 import InfoIcon from "@material-ui/icons/Info";
 import FixIcon from "@material-ui/icons/BugReport";
 import RoleIcon from "@material-ui/icons/Security";
-import Select from "@material-ui/core/Select";
+import Select from "../controls/Select/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import ChatIcon from "@material-ui/icons/ChatBubbleOutline";

@@ -1,7 +1,7 @@
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import withStyles from "@material-ui/styles/withStyles";
-import Select from "@material-ui/core/Select";
+import Select from "../controls/Select/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import Input from "@material-ui/core/Input";
 import IconButton from "@material-ui/core/IconButton";

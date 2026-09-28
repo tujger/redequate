@@ -10,7 +10,7 @@ import Typography from "@material-ui/core/Typography";
 import FormControl from "@material-ui/core/FormControl";
 import Switch from "../../controls/Switch/Switch";
 import FormHelperText from "@material-ui/core/FormHelperText";
-import Select from "@material-ui/core/Select";
+import Select from "../../controls/Select/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import DynamicLinksIcon from "@material-ui/icons/Link";
 import UploadsIcon from "@material-ui/icons/CloudUpload";
