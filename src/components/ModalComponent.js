@@ -1,33 +1,15 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import Dialog from "@material-ui/core/Dialog";
+import ReactDOM from "react-dom";
+import styles from "./styles/ModalComponent.module.css";
 import {useHistory} from "react-router-dom";
 
-const styles = theme => ({
-    modal: {
-        [theme.breakpoints.up("sm")]: {
-            width: "60%",
-        },
-        [theme.breakpoints.down("xs")]: {
-            borderRadius: 0,
-            bottom: 0,
-            justifyContent: "flex-start",
-            left: 0,
-            margin: 0,
-            maxHeight: "initial",
-            right: 0,
-            position: "fixed",
-            top: 0,
-        },
-    },
-});
-
-const ModalComponent = ({onClose, classes, children}) => {
+export default ({onClose, children}) => {
     const history = useHistory();
+    const handleClose = event => onClose?.(event);
 
     React.useEffect(() => {
-        const unblock = history.block(() => {
-            onClose();
+        const unblock = history.block(event => {
+            handleClose(event);
             history.unblock = null;
             return false;
         })
@@ -38,9 +20,33 @@ const ModalComponent = ({onClose, classes, children}) => {
         }
     })
 
-    return <Dialog open={true} classes={{paper: classes.modal}} onClose={onClose}>
-        {children}
-    </Dialog>
-}
+    React.useEffect(() => {
+        const handleKeyDown = event => {
+            if (event.key !== "Escape") return;
+            event.stopPropagation();
+            handleClose(event);
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [onClose]);
 
-export default withStyles(styles)(ModalComponent);
+    const handleBackdropClick = event => {
+        if (event.target === event.currentTarget) handleClose(event);
+    };
+
+    const modal = <div
+        className={styles.root}
+        onClick={handleBackdropClick}
+    >
+        <div
+            aria-modal={"true"}
+            className={styles.dialog}
+            onClick={event => event.stopPropagation()}
+            role={"dialog"}
+        >
+            {children}
+        </div>
+    </div>;
+
+    return typeof document === "undefined" ? modal : ReactDOM.createPortal(modal, document.body);
+}

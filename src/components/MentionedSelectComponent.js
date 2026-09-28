@@ -6,7 +6,7 @@ import {useFirebase} from "../controllers/General";
 import Select from "../controls/Select/Select";
 import styles from "./styles/MentionedSelectComponent.module.css";
 
-const MentionedSelectComponent = (
+export default (
     {
         className,
         combobox,
@@ -141,5 +141,3 @@ const MentionedSelectComponent = (
 
     return select;
 }
-
-export default MentionedSelectComponent;

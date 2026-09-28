@@ -3,7 +3,7 @@ import Linkify from "react-linkify";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import styles from "./styles/MentionedTextComponent.module.css";
 
-const MentionedTextComponent = (
+export default (
     {
         className = "",
         disableClick,
@@ -80,8 +80,6 @@ const MentionedTextComponent = (
         })}
     </span>
 }
-
-export default MentionedTextComponent;
 
 const pattern = new RegExp(/((?:\$\[.*?])|(?:[\r\n]+))/g);
 

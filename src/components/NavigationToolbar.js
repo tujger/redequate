@@ -5,7 +5,7 @@ import {useTranslation} from "react-i18next";
 import useRippleEffect from "../helpers/useRippleEffect";
 import styles from "./styles/NavigationToolbar.module.css";
 
-const NavigationToolbar = props => {
+export default props => {
     const {t} = useTranslation();
     const {
         alignItems = "center",
@@ -68,5 +68,3 @@ const NavigationToolbar = props => {
         </div>
     </div>
 };
-
-export default NavigationToolbar;
