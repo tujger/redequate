@@ -1,20 +1,12 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import Box from "@material-ui/core/Box";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
-import Hidden from "@material-ui/core/Hidden";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import Grid from "@material-ui/core/Grid";
 import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import EmptyAvatar from "@material-ui/icons/Person";
 import {Redirect, useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
-import withStyles from "@material-ui/styles/withStyles";
 import {
     logoutUser,
     matchRole,
@@ -36,7 +28,6 @@ import {
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {setupReceivingNotifications} from "../controllers/Notifications";
-import {styles} from "../controllers/Theme";
 import TextField from "../controls/TextField/TextField";
 import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
@@ -48,54 +39,7 @@ import {
 } from "../components/UploadComponent/uploadComponentControls";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {updateActivity} from "./admin/audit/auditReducer";
-
-const stylesCurrent = theme => ({
-    // image: {
-    //     color: "darkgray",
-    //     marginBottom: theme.spacing(1),
-    //     objectFit: "cover",
-    //     [theme.breakpoints.up("sm")]: {
-    //         height: theme.spacing(18),
-    //         width: theme.spacing(18),
-    //     },
-    //     [theme.breakpoints.down("sm")]: {
-    //         height: theme.spacing(24),
-    //         width: theme.spacing(24),
-    //     },
-    // },
-    profileImage: {
-        [theme.breakpoints.down("sm")]: {
-            width: theme.spacing(25),
-        },
-    },
-    label: {
-        color: "inherit",
-        cursor: "default",
-        textDecoration: "none",
-    },
-    photo: {
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "start",
-        position: "relative",
-        [theme.breakpoints.down("sm")]: {
-            width: "100%",
-        },
-    },
-    clearImage: {
-        backgroundColor: "transparent",
-        position: "absolute",
-        right: 0,
-        top: 0,
-        [theme.breakpoints.up("sm")]: {
-            color: "white",
-        },
-    },
-    content: {
-        flexDirection: "row"
-    }
-});
+import styles from "./styles/EditProfile.module.css";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -104,7 +48,6 @@ function EditProfile(props) {
     let {
         adminFields: adminFieldsGiven = adminFields,
         allowDelete = true,
-        classes,
         notifications = true,
         publicFields = publicFieldsDefault,
         uploadable = true,
@@ -447,34 +390,29 @@ function EditProfile(props) {
         return <Redirect to={pages.editprofile.route}/>
     }
 
-    return <Grid className={classes.center} container>
-        <Box m={0.5}/>
-        <Grid container className={classes.profile} spacing={1}>
-            <Grid item className={classes.profileFieldImage}>
+    return <div className={styles.center}>
+        <div className={styles.profile}>
+            <div className={styles.profileFieldImage}>
                 {image
-                    ? <img src={image} alt={t("User.User photo")} className={classes.profileImage}/>
-                    : <EmptyAvatar className={classes.profileImage}/>}
-                {image && <Hidden smDown>
-                    <IconButton
-                        aria-label={t("Common.Clear")}
-                        children={<ClearIcon/>}
-                        className={classes.clearImage}
-                        onClick={() => {
-                            setState(state => ({...state, image: "", uppy: null}));
-                        }}
-                        title={t("Common.Clear")}
-                    />
-                </Hidden>}
-                <Grid container justify={"center"}>
+                    ? <img src={image} alt={t("User.User photo")} className={styles.profileImage}/>
+                    : <EmptyAvatar className={styles.profileImage}/>}
+                {image && <Button
+                    aria-label={t("Common.Clear")}
+                    className={[styles.clearImage, styles.desktopOnly].join(" ")}
+                    icon={<ClearIcon/>}
+                    onClick={() => {
+                        setState(state => ({...state, image: "", uppy: null}));
+                    }}
+                    title={t("Common.Clear")}
+                    variant={"text"}
+                />}
+                <div className={styles.photoActions}>
                     {uploadable && <React.Suspense fallback={<LoadingComponent/>}>
                         <UploadComponent
                             button={<Button
-                                aria-label={t("User.Set image")}
                                 children={windowData.isNarrow() ? t("User.Set image") : t("Common.Change")}
-                                color={"secondary"}
                                 fullWidth={!windowData.isNarrow()}
                                 title={t("User.Set image")}
-                                variant={"contained"}
                             />}
                             camera={false}
                             color={"primary"}
@@ -485,47 +423,43 @@ function EditProfile(props) {
                             variant={"contained"}
                         />
                     </React.Suspense>}
-                    {image && <Hidden mdUp>
-                        <Button
-                            aria-label={t("Common.Clear")}
-                            children={t("Common.Clear")}
-                            color={"secondary"}
-                            onClick={() => {
-                                setState(state => ({...state, image: "", uppy: null}));
-                            }}
-                            title={t("Common.Clear")}
-                            variant={"contained"}
-                        />
-                    </Hidden>}
-                </Grid>
-            </Grid>
-            <Grid item className={classes.profileFields} xs>
-                <Grid container spacing={1} alignItems={"flex-end"}>
-                    <Grid item>
+                    {image && <Button
+                        className={styles.mobileOnly}
+                        onClick={() => {
+                            setState(state => ({...state, image: "", uppy: null}));
+                        }}
+                        title={t("Common.Clear")}
+                    >
+                        {t("Common.Clear")}
+                    </Button>}
+                </div>
+            </div>
+            <div className={styles.profileFields}>
+                <div className={styles.fieldRow}>
+                    <div className={styles.fieldIcon}>
                         <MailIcon/>
-                    </Grid>
-                    <Grid item xs>
+                    </div>
+                    <div className={styles.fieldControl}>
                         <TextField
-                            color={"secondary"}
                             disabled
                             fullWidth
                             label={t("User.E-mail")}
                             value={userData.email || ""}
                         />
-                    </Grid>
-                </Grid>
+                    </div>
+                </div>
                 {userData.public && fields && fields.map(field => {
                     if (field.editComponent === null) return null;
                     const editComponent = field.editComponent || <TextField/>;
                     const missedRequired = requiredError.indexOf(field.id) >= 0;
                     const uniqueRequired = uniqueError.indexOf(field.id) >= 0;
                     return <React.Fragment key={field.id}>
-                        <Box m={1}/>
-                        <Grid container spacing={1} wrap={"nowrap"} alignItems={"flex-end"}>
-                            <Grid item>
+                        <div className={styles.fieldSpacer}/>
+                        <div className={styles.fieldRow}>
+                            <div className={styles.fieldIcon}>
                                 {field.icon}
-                            </Grid>
-                            <Grid item xs>
+                            </div>
+                            <div className={styles.fieldControl}>
                                 {editComponent instanceof Function
                                     ? editComponent({
                                         ...editComponent.props,
@@ -561,72 +495,65 @@ function EditProfile(props) {
                                         required={field.required}
                                         value={state[field.id] || ""}
                                     />}
-                                {missedRequired || uniqueRequired
-                                    ? <FormHelperText error>{missedRequired
+                                {(missedRequired || uniqueRequired) &&
+                                    <span className={styles.helperError}>{missedRequired
                                         ? t("Common.Please enter value")
                                         : (uniqueRequired
                                             ? t("User.This name is already taken")
-                                            : null)}</FormHelperText>
-                                    : null}
-                            </Grid>
-                        </Grid>
+                                            : null)}</span>}
+                            </div>
+                        </div>
                     </React.Fragment>
                 })}
                 {isNotificationsAvailable && <>
-                    <Box m={1}/>
-                    <Grid container><FormControlLabel
-                        control={
-                            <Switch
-                                disabled={disabled}
-                                checked={Boolean(userData.private[fetchDeviceId()] && userData.private[fetchDeviceId()].notification)}
-                                onChange={handleNotifications}
-                            />
-                        }
-                        label={t("User.Get notifications")}
-                    /></Grid>
-                </>}
-                <Box m={2}/>
-                {isFirstLogin && <ButtonGroup
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    size={"large"}
-                    variant={"contained"}
-                >
-                    <Button
-                        children={t("User.Register")}
-                        onClick={saveUser}
-                    />
-                </ButtonGroup>}
-                {!isFirstLogin && <ButtonGroup
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    size={"large"}
-                    variant={"contained"}
-                >
-                    <Button
-                        children={t("Common.Save")}
-                        onClick={saveUser}
-                    />
-                    <Button
-                        children={t("Common.Cancel")}
-                        onClick={() => history.goBack()}
-                    />
-                </ButtonGroup>}
-                {isDeleteAllowed && <>
-                    <Box m={8}/>
-                    <Grid container justify={"center"}>
-                        <Button
-                            children={t("User.Delete account")}
-                            onClick={handleClickDelete}
-                            style={{color: "#ff0000"}}
-                            variant={"text"}
+                    <div className={styles.fieldSpacer}/>
+                    <label className={styles.notifications}>
+                        <Switch
+                            disabled={disabled}
+                            checked={Boolean(userData.private[fetchDeviceId()] && userData.private[fetchDeviceId()].notification)}
+                            onChange={handleNotifications}
                         />
-                    </Grid>
+                        <span>{t("User.Get notifications")}</span>
+                    </label>
                 </>}
-            </Grid>
-        </Grid>
+                <div className={styles.largeSpacer}/>
+                {isFirstLogin && <div className={styles.actionGroup}>
+                    <Button
+                        disabled={disabled}
+                        fullWidth
+                        onClick={saveUser}
+                    >
+                        {t("User.Register")}
+                    </Button>
+                </div>}
+                {!isFirstLogin && <div className={styles.actionGroup}>
+                    <Button
+                        disabled={disabled}
+                        fullWidth
+                        onClick={saveUser}
+                    >
+                        {t("Common.Save")}
+                    </Button>
+                    <Button
+                        disabled={disabled}
+                        fullWidth
+                        onClick={() => history.goBack()}
+                    >
+                        {t("Common.Cancel")}
+                    </Button>
+                </div>}
+                {isDeleteAllowed && <>
+                    <Button
+                        className={styles.deleteAction}
+                        onClick={handleClickDelete}
+                        color={"alert"}
+                        variant={"text"}
+                    >
+                        {t("User.Delete account")}
+                    </Button>
+                </>}
+            </div>
+        </div>
         {isDeleteAllowed && deleteOpen && <ConfirmComponent
             confirmLabel={t("Common.Delete")}
             critical
@@ -638,7 +565,7 @@ function EditProfile(props) {
             <br/>
             {t("Common.WARNING! This action will be proceeded immediately!")}
         </ConfirmComponent>}
-    </Grid>
+    </div>;
 }
 
-export default withStyles(stylesCurrent)(withStyles(styles)(EditProfile));
+export default EditProfile;

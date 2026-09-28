@@ -2,6 +2,7 @@
     --theme-spacing: 8px;
     --theme-font-size: 16px;
     --theme-letter-spacing: 0.01071em;
+    --theme-color-error: #ff0000;
     --theme-color-primary: #3f51b5;
     --theme-color-primary-alt: #ffffff;
     --theme-color-secondary: rgba(0, 0, 0, 0.54);
@@ -46,7 +47,7 @@
 
 .error {
     && {
-        color: #ff0000;
+        color: var(--theme-color-error);
     }
 }
 

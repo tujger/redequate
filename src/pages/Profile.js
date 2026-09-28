@@ -3,7 +3,6 @@ import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import Grid from "@material-ui/core/Grid";
 import InputLabel from "@material-ui/core/InputLabel";
-import TextField from "@material-ui/core/TextField";
 import {useHistory, useParams} from "react-router-dom";
 import {useDispatch} from "react-redux";
 import NameIcon from "@material-ui/icons/Person";
@@ -41,6 +40,7 @@ import NavigationToolbar from "../components/NavigationToolbar";
 import notifySnackbar from "../controllers/notifySnackbar";
 import FlexFabComponent from "../components/FlexFabComponent";
 import SystemAlert from "../components/SystemAlert";
+import TextField from "../controls/TextField/TextField";
 
 const stylesProfile = theme => ({
     root: {
@@ -124,7 +124,7 @@ export const adminFields = [
 
 const Profile = (
     {
-        publicFields = publicFields,
+        publicFields: publicFieldsApplied = publicFields,
         privateFields,
         classes,
         ProfileComponent = <ProfileComponentOrigin/>,
@@ -210,7 +210,7 @@ const Profile = (
             <ProfileComponent.type
                 {...ProfileComponent.props}
                 provider={provider}
-                publicFields={publicFields}
+                publicFields={publicFieldsApplied}
                 userData={userData}
             />
             <ButtonGroup

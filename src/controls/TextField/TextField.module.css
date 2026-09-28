@@ -6,6 +6,12 @@
     min-width: 0;
     overflow: hidden;
     position: relative;
+
+    &:hover .clearButton,
+    &:focus-within .clearButton {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 
 .hasLabel {
@@ -50,6 +56,24 @@
     &::placeholder {
         color: var(--theme-color-muted);
         opacity: .7;
+    }
+}
+
+.hasClear .input {
+    padding-right: calc(var(--theme-spacing) * 4);
+}
+
+.clearButton {
+    bottom: 0;
+    opacity: 0;
+    padding: calc(var(--theme-spacing) * .25);
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    transition: opacity 150ms ease-in-out;
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: 1.25rem;
     }
 }
 

@@ -74,6 +74,9 @@ module.exports = [
             Theme: 'src/controllers/Theme.js',
             uploadComponentControls: 'src/components/UploadComponent/uploadComponentControls',
 
+            // controls
+            TextField: 'src/controls/TextField/TextField.js',
+
             // components
             AvatarView: 'src/components/AvatarView.js',
             ButtonAddEvent: 'src/components/ButtonAddEvent.js',
@@ -95,7 +98,7 @@ module.exports = [
             ProgressView: 'src/components/ProgressView.js',
             ProfileComponent: 'src/components/ProfileComponent.js',
             ShareComponent: 'src/components/ShareComponent.js',
-            MetaInfoView: 'src/components/MetaInfoView.js',
+            SystemAlert: 'src/components/SystemAlert.js',
             UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
 
             // layouts

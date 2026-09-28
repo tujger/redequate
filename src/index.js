@@ -2,6 +2,7 @@ export * from "./alerts";
 export * from "./chat";
 export * from "./components";
 export * from "./controllers";
+export * from "./controls";
 export * from "./images";
 export * from "./layouts";
 export * from "./pages";

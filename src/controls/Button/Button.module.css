@@ -92,6 +92,10 @@
     color: var(--theme-color-secondary);
 }
 
+.alert {
+    color: var(--theme-color-error);
+}
+
 .inherit {
     color: inherit;
 }
