@@ -29,8 +29,8 @@
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
-    min-height: calc(var(--theme-spacing) * 5);
-    min-width: calc(var(--theme-spacing) * 5);
+    min-height: calc(var(--theme-spacing) * 4);
+    min-width: calc(var(--theme-spacing) * 4);
     padding: var(--theme-spacing);
 }
 
