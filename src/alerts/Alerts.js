@@ -11,7 +11,7 @@ import Pagination from "../controllers/FirebasePagination";
 import {MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
-import useRippleEffect from "../helpers/useRippleEffect";
+import Button from "../controls/Button/Button";
 import {alertsCounterReducer} from "./alertsCounterReducer";
 import AlertsDaemon from "./AlertsDaemon";
 import AlertsList from "./AlertsList";
@@ -21,7 +21,6 @@ import alertStyles from "./styles/Alerts.module.css";
 const Alerts = ({daemon, fetchAlertContent, classes: givenClasses}) => {
     const classes = givenClasses || {};
     const currentUserData = useCurrentUserData();
-    const onPointerDown = useRippleEffect();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const pages = usePages();
@@ -88,30 +87,24 @@ const Alerts = ({daemon, fetchAlertContent, classes: givenClasses}) => {
 
     return <>
         <NavigationToolbar
-            className={[classes.topSticky, alertStyles.toolbar].filter(Boolean).join(" ")}
             backButton={null}
-            mediumButton={<button
-                aria-label={t("Common.Clear")}
-                className={[alertStyles.iconButton].join(" ")}
+            mediumButton={<Button
+                aria-label={"Clear"}
+                color={"secondary"}
+                icon={<Clear/>}
                 onClick={handleClear}
-                onPointerDown={onPointerDown}
                 title={t("Common.Clear")}
-                type='button'
-            >
-                <Clear/>
-            </button>}
-            rightButton={<button
-                aria-label={t("Alerts.All read")}
-                className={[alertStyles.iconButton].join(" ")}
+                variant={"text"}
+            />}
+            rightButton={<Button
+                color={"secondary"}
+                icon={<AllReadIcon/>}
                 onClick={handleAllRead}
-                onPointerDown={onPointerDown}
                 title={t("Alerts.All read")}
-                type='button'
-            >
-                <AllReadIcon/>
-            </button>}
+                variant={"text"}
+            />}
         />
-        <div className={[classes.center, alertStyles.list].filter(Boolean).join(" ")}>
+        <div className={[alertStyles.list].filter(Boolean).join(" ")}>
             <AlertsList fetchAlertContent={fetchAlertContent}/>
         </div>
         {allRead && <ConfirmComponent

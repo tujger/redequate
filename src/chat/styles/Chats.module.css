@@ -1,7 +1,5 @@
 .center {
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
     padding: var(--theme-spacing);
     padding-left: var(--theme-content-padding-left);
     padding-right: var(--theme-content-padding-right);

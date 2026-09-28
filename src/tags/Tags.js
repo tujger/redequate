@@ -1,23 +1,24 @@
-import React from "react";
-import {connect, useDispatch} from "react-redux";
-import Select from "../controls/Select/Select";
-import Clear from "@material-ui/icons/Clear";
 import AddIcon from "@material-ui/icons/Add";
-import Button from "../controls/Button/Button";
+import Clear from "@material-ui/icons/Clear";
+import React from "react";
+import {useTranslation} from "react-i18next";
+import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
-import {usePages} from "../controllers/General";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import {normalizeSortName} from "../controllers/UserData";
-import NavigationToolbar from "../components/NavigationToolbar";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import Pagination from "../controllers/FirebasePagination";
-import {tagsReducer} from "./tagsReducer";
 import FlexFabComponent from "../components/FlexFabComponent";
-import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../components/MentionedTextComponent";
+import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";
+import NavigationToolbar from "../components/NavigationToolbar";
+import Pagination from "../controllers/FirebasePagination";
+import {usePages} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import {normalizeSortName} from "../controllers/UserData";
+import Button from "../controls/Button/Button";
+import Select from "../controls/Select/Select";
 import styles from "./styles/Tags.module.css";
+import {tagsReducer} from "./tagsReducer";
 
 const Tags = (props) => {
     const {
@@ -32,6 +33,7 @@ const Tags = (props) => {
     const dispatch = useDispatch();
     const pages = usePages();
     const mode = forceMode || inheritMode;
+    const {t} = useTranslation();
 
     const itemComponent = item => {
         return <MutualSubscribeItem
@@ -124,10 +126,7 @@ const Tags = (props) => {
             break;
     }
     return <>
-        <NavigationToolbar
-            backButton={null}
-            className={styles.toolbar}
-        >
+        <NavigationToolbar backButton={null}>
             <Select
                 color={"secondary"}
                 onChange={handleMode}
@@ -142,12 +141,11 @@ const Tags = (props) => {
                     value={filter}
                 />
                 {filter && <Button
-                    aria-label={"Clear"}
                     color={"secondary"}
                     icon={<Clear/>}
                     onClick={handleClearFilter}
                     size={"small"}
-                    title={"Clear"}
+                    title={t("Common.Clear")}
                     variant={"text"}
                 />}
             </div>}
