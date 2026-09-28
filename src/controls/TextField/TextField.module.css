@@ -19,7 +19,7 @@
 }
 
 .label {
-    color: inherit;
+    color: var(--theme-color-secondary);
     cursor: text;
     font-size: 1rem;
     left: 0;

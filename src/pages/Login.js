@@ -7,15 +7,10 @@ import {
     UserData
 } from "../controllers/UserData";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
 import PropTypes from "prop-types";
 import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
 import {useTranslation} from "react-i18next";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
@@ -26,9 +21,10 @@ import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/Gen
 import {refreshAll} from "../controllers/Store";
 import ConfirmComponent from "../components/ConfirmComponent";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {styles} from "../controllers/Theme";
 import LoadingComponent from "../components/LoadingComponent";
+import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
+import styles from "./styles/Login.module.css";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -430,7 +426,6 @@ function Login(props) {
 const LoginLayout = (
     {
         agreementComponent,
-        classes,
         disabled,
         email,
         logo,
@@ -448,16 +443,15 @@ const LoginLayout = (
     const history = useHistory();
     const {t} = useTranslation();
 
-    return <Grid container className={classes.center}>
+    return <div className={styles.center}>
         {logo}
-        <Box m={1}/>
-        <Grid container spacing={1} alignItems={"flex-end"}>
-            <Grid item>
+        <div className={styles.spacer}/>
+        <div className={styles.fieldRow}>
+            <div className={styles.fieldIcon}>
                 <UserIcon/>
-            </Grid>
-            <Grid item xs>
+            </div>
+            <div className={styles.fieldControl}>
                 <TextField
-                    color={"secondary"}
                     disabled={disabled}
                     fullWidth
                     label={t("User.E-mail")}
@@ -467,89 +461,80 @@ const LoginLayout = (
                     //     inputComponent: TextMaskEmail
                     // }}
                 />
-            </Grid>
-        </Grid>
-        <Box m={1}/>
-        <Grid container spacing={1} alignItems={"flex-end"}>
-            <Grid item>
+            </div>
+        </div>
+        <div className={styles.spacer}/>
+        <div className={styles.fieldRow}>
+            <div className={styles.fieldIcon}>
                 <Lock/>
-            </Grid>
-            <Grid item xs>
+            </div>
+            <div className={styles.fieldControl}>
                 <PasswordField
-                    color={"secondary"}
                     disabled={disabled}
                     label={t("User.Password")}
                     onChange={onChangePassword}
                     value={password}
                 />
-            </Grid>
-        </Grid>
-        <Box m={2}/>
-        <ButtonGroup
-            color={"secondary"}
-            disabled={disabled}
-            fullWidth
-            size={"large"}
-            variant={"contained"}
-        >
+            </div>
+        </div>
+        <div className={styles.largeSpacer}/>
+        <div className={[styles.buttonGroup, styles.fullWidth].join(" ")}>
             <Button
-                children={t("Common.Continue")}
+                disabled={disabled}
                 fullWidth
                 onClick={onRequestLogin}
-            />
+            >
+                {t("Common.Continue")}
+            </Button>
             <Button
-                children={t("Common.Cancel")}
+                disabled={disabled}
                 fullWidth
                 onClick={() => history.goBack()}
-            />
-        </ButtonGroup>
-        <Box m={1}/>
-        <ButtonGroup
-            color={"default"}
-            disabled={disabled}
-            fullWidth
-            size={"large"}
-            variant={"text"}
-        >
+            >
+                {t("Common.Cancel")}
+            </Button>
+        </div>
+        <div className={styles.spacer}/>
+        <div className={[styles.buttonGroup, styles.fullWidth].join(" ")}>
             {signup && <Button
-                children={t("Login.Create account")}
+                color={"secondary"}
                 fullWidth
                 onClick={() => history.push(pages.signup.route)}
-                size={"small"}
-            />}
-            <Button
-                children={t("Login.Forgot password?")}
-                fullWidth
-                onClick={() => history.push(pages.restore.route)}
-                size={"small"}
-            />
-        </ButtonGroup>
-        <Box m={1}/>
-        <Grid container alignItems={"center"} justify={"center"} spacing={1}>
+                variant={"text"}
+            >
+                {t("Login.Create account")}
+            </Button>}
             <Button
                 color={"secondary"}
+                fullWidth
+                onClick={() => history.push(pages.restore.route)}
+                variant={"text"}
+            >
+                {t("Login.Forgot password?")}
+            </Button>
+        </div>
+        <div className={styles.spacer}/>
+        <div className={styles.socialActions}>
+            <Button
                 disabled={disabled}
                 onClick={onRequestGoogle}
-                size={"large"}
                 variant={"text"}
             >
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
-                <Box m={0.5}/>
+                <span className={styles.iconSpacer}/>
                 {t("Login.Login with")} Google
             </Button>
             <Button
-                color={"secondary"}
                 disabled={disabled}
                 onClick={onRequestFacebook}
-                size={"large"}
                 variant={"text"}
             >
                 <img src={FacebookLogo} width={20} height={20} alt={""}/>
-                <Box m={0.5}/>
+                <span className={styles.iconSpacer}/>
                 {t("Login.Login with")} Facebook
             </Button>
-        </Grid>
-        <Box m={1}/>
+        </div>
+        <div className={styles.spacer}/>
         {agreementComponent && <ConfirmComponent
             confirmLabel={t("Login.Agree")}
             modal
@@ -561,7 +546,7 @@ const LoginLayout = (
                 {...agreementComponent.props}
             />
         </ConfirmComponent>}
-    </Grid>
+    </div>
 }
 
 Login.propTypes = {
@@ -589,4 +574,4 @@ LoginLayout.propTypes = {
     signup: PropTypes.bool
 };
 
-export default withRouter(withStyles(styles)(Login));
+export default withRouter(Login);
