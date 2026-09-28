@@ -2,6 +2,7 @@ import React from "react";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import {useHistory} from "react-router-dom";
 import {useTranslation} from "react-i18next";
+import Button from "../controls/Button/Button";
 import useRippleEffect from "../helpers/useRippleEffect";
 import styles from "./styles/NavigationToolbar.module.css";
 
@@ -18,19 +19,18 @@ export default props => {
         style,
     } = props;
     const history = useHistory();
-    const defaultBackButton = <div
-        aria-label={t("Common.Back")}
+    const defaultBackButton = <Button
+        color={"secondary"}
+        icon={<BackIcon/>}
         onKeyDown={event => {
             if (event.key !== "Enter" && event.key !== " ") return;
             event.preventDefault();
             history.goBack();
         }}
-        role={"button"}
         tabIndex={0}
         title={t("Common.Back")}
-    >
-        <BackIcon/>
-    </div>;
+    />;
+
     const givenBackButton = backButton === undefined ? defaultBackButton : backButton;
     const onBackPointerDown = useRippleEffect();
     const isDefaultBackButton = givenBackButton === defaultBackButton;
@@ -40,7 +40,7 @@ export default props => {
         onClick: givenBackButton.props.onClick || (() => history.goBack()),
         onPointerDown: isDefaultBackButton ? onBackPointerDown : givenBackButton.props.onPointerDown,
         style: isDefaultBackButton
-            ? {color: "inherit", ...(givenBackButton.props.style || {})}
+            ? {...(givenBackButton.props.style || {})}
             : givenBackButton.props.style,
     });
 

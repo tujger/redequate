@@ -40,7 +40,7 @@ export default props => {
     return <div
         {...otherProps}
         aria-disabled={disabled || undefined}
-        aria-label={title ?? label}
+        aria-label={title}
         className={[
             styles.button,
             styles[currentVariant],
