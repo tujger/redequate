@@ -171,7 +171,10 @@
 }
 
 .date {
+    align-items: center;
     color: var(--theme-color-muted);
+    display: inline-flex;
+    flex: 1;
     margin-right: calc(var(--theme-spacing) * .5);
 }
 

@@ -1,0 +1,114 @@
+.profile {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.profileFieldImage {
+    flex: 0 0 auto;
+    color: darkgray;
+    position: relative;
+}
+
+.profileFields {
+    align-items: flex-start;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.profileField {
+    align-items: center;
+    display: flex;
+    justify-content: flex-start;
+    max-width: 100%;
+    width: 100%;
+
+    & > * {
+        max-width: 100%;
+    }
+}
+
+.profileImage {
+    object-fit: cover;
+}
+
+.signedWith {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: var(--theme-spacing);
+}
+
+.providerLogo {
+    align-self: flex-end;
+}
+
+.bodyText {
+    font-size: 0.875rem;
+    line-height: 1.43;
+    max-width: 100%;
+}
+
+@media (min-width: 600px) {
+    .profile {
+        flex-flow: row nowrap;
+    }
+
+    .profileFieldImage {
+        box-sizing: content-box;
+        display: flex;
+        justify-content: center;
+        margin-right: calc(var(--theme-spacing) * 2);
+        max-width: calc(var(--theme-spacing) * 30);
+        width: calc(var(--theme-spacing) * 18);
+    }
+
+    .profileImage {
+        height: calc(var(--theme-spacing) * 18);
+        min-height: calc(var(--theme-spacing) * 18);
+        width: 100%;
+    }
+
+    .profileFields {
+        justify-content: flex-start;
+        width: auto;
+    }
+
+    .profileField {
+        width: auto;
+    }
+}
+
+@media (max-width: 599px) {
+    .profileFields {
+        margin-bottom: calc(var(--theme-spacing) * 2);
+        width: 100%;
+    }
+
+    .profileFieldImage {
+        max-width: 100%;
+        text-align: center;
+        width: 100%;
+    }
+
+    .profileImage {
+        height: calc(var(--theme-spacing) * 25);
+        min-height: calc(var(--theme-spacing) * 25);
+        width: calc(var(--theme-spacing) * 25);
+    }
+
+    .profileField {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .signedWith {
+        flex-direction: column-reverse;
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+}
