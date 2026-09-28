@@ -1,13 +1,14 @@
-import React from "react";
-import actionStyles from "./styles/PostActions.module.css";
-import {useHistory} from "react-router-dom";
-import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
 import ChatFilledIcon from "@material-ui/icons/Chat";
-import {useDispatch} from "react-redux";
+import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
 import {usePages} from "../../controllers/General";
+import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData, disableClick}) => {
     const dispatch = useDispatch();
@@ -16,8 +17,11 @@ export default ({postData, disableClick}) => {
     const {t} = useTranslation();
 
     return <div className={actionStyles.action}>
-        <div
-            className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+        <Button
+            aria-label={t("Post.Replies")}
+            className={actionStyles.iconButton}
+            color={"secondary"}
+            icon={postData.counter("replied") ? <ChatFilledIcon/> : <ChatEmptyIcon/>}
             onClick={event => {
                 event.stopPropagation();
                 dispatch({type: lazyListComponentReducer.REFRESH});
@@ -26,18 +30,14 @@ export default ({postData, disableClick}) => {
                 })
             }}
             title={t("Post.Replies")}
+            variant={"text"}
         >
+            <div className={actionStyles.box}/>
             <CounterComponent
                 counter={postData.counter("replied")}
                 path={disableClick ? `${postData.id}/replied` : undefined}
-                prefix={<><ChatFilledIcon/>
-                    <div className={actionStyles.box}/>
-                </>}
                 showZero
-                zeroPrefix={<><ChatEmptyIcon/>
-                    <div className={actionStyles.box}/>
-                </>}
             />
-        </div>
+        </Button>
     </div>
 }

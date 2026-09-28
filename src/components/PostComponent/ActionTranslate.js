@@ -1,14 +1,15 @@
+import TranslateIcon from "@material-ui/icons/Translate";
 import React from "react";
+import ReactDOM from "react-dom";
+import {useTranslation} from "react-i18next";
+import {fetchDeviceId, useMetaInfo} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {useTextTranslation} from "../../controllers/textTranslation";
+import {useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
+import MentionedTextComponent from "../MentionedTextComponent";
 import actionStyles from "./styles/PostActions.module.css";
 import textStyles from "./styles/PostText.module.css";
-import ReactDOM from "react-dom";
-import TranslateIcon from "@material-ui/icons/Translate";
-import {useTranslation} from "react-i18next";
-import {useTextTranslation} from "../../controllers/textTranslation";
-import {fetchDeviceId, useMetaInfo} from "../../controllers/General";
-import {useCurrentUserData} from "../../controllers/UserData";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import MentionedTextComponent from "../MentionedTextComponent";
 
 export default (
     {
@@ -67,7 +68,7 @@ export default (
         }
         const translateText = async props => {
             const {target, source, text} = props;
-            const {text:textTranslated, source:updatedSource = source} = await textTranslation.translateTo({
+            const {text: textTranslated, source: updatedSource = source} = await textTranslation.translateTo({
                 source,
                 target,
                 text
@@ -109,8 +110,6 @@ export default (
     }
 
     React.useEffect(() => {
-        // return;
-        // console.log(textTranslation);
         if (!translateLimit) return;
         if (!textTranslation.isAvailable()) return;
         setState(state => ({...state, show: true}));
@@ -123,14 +122,15 @@ export default (
             <MentionedTextComponent className={textStyles.text} text={translated}/>
         </Portal>}
         <div className={actionStyles.action}>
-            <div
+            <Button
                 aria-label={"Translate"}
                 className={actionStyles.iconButton}
+                color={"secondary"}
+                icon={<TranslateIcon/>}
                 onClick={handleClick}
                 title={"Translate"}
-            >
-                <TranslateIcon/>
-            </div>
+                variant={"text"}
+            />
         </div>
     </>
 }

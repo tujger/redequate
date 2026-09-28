@@ -219,9 +219,9 @@ const Settings = ({classes, uploadable}) => {
         const addPreferenceUploads = async () => {
             settings.uploadsAllow = uploadsAllow || null;
             settings.uploadsTypes = [];
-            if (uploadsAudio) settings.uploadsTypes.push("audio/*");
-            if (uploadsImages) settings.uploadsTypes.push("images/*");
-            if (uploadsVideo) settings.uploadsTypes.push("video/*");
+            if (settings.uploadsAudio) settings.uploadsTypes.push("audio/*");
+            if (settings.uploadsImages) settings.uploadsTypes.push("images/*");
+            if (settings.uploadsVideo) settings.uploadsTypes.push("video/*");
             if (!settings.uploadsTypes.length) settings.uploadsTypes = null;
             settings.uploadsMaxHeight = uploadsAllow ? +uploadsMaxHeight || 1000 : null;
             settings.uploadsMaxSize = uploadsAllow ? +uploadsMaxSize || 100 : null;

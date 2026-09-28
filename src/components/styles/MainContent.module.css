@@ -2,6 +2,7 @@
     --main-content-inline-padding: var(--theme-spacing);
     --main-content-spacing: var(--theme-spacing);
 
+    background-color: inherit;
     box-sizing: border-box;
     max-width: 100%;
     min-width: 0;

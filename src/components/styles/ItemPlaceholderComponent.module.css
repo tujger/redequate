@@ -7,6 +7,7 @@
     overflow: initial;
     position: relative;
     transition: 1s ease background-color;
+    width: 100%;
 }
 
 .cardBordered {

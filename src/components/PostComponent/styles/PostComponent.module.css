@@ -143,6 +143,7 @@
 
 .cardMenuButton {
     && {
+        color: var(--theme-color-secondary);
         position: absolute;
         right: calc(var(--theme-spacing) * .5);
         top: calc(var(--theme-spacing) * .5);
@@ -154,16 +155,6 @@
 
 .cardActions {
     display: flex;
-}
-
-.cardActions :global(.MuiSvgIcon-root) {
-    align-items: center;
-    display: inline-flex;
-    font-size: calc(var(--theme-spacing) * 2.5);
-    height: calc(var(--theme-spacing) * 2.5);
-    justify-content: center;
-    line-height: 1;
-    width: calc(var(--theme-spacing) * 2.5);
 }
 
 .cardBody {

@@ -1,5 +1,6 @@
 import React from "react";
 import actionStyles from "./styles/PostActions.module.css";
+import Button from "../../controls/Button/Button";
 import {useTranslation} from "react-i18next";
 import ReplyIcon from "@material-ui/icons/ReplyOutlined";
 import {cacheDatas} from "../../controllers/General";
@@ -11,21 +12,22 @@ export default ({icon = true, postData, mentions, onComplete, UploadProps}) => {
     return <div className={actionStyles.action}>
         <NewPostComponent
             buttonComponent={icon
-                ? <div className={actionStyles.iconButton}
+                ? <Button
                     aria-label={t("Common.Reply")}
-                    children={<ReplyIcon/>}
-
-
+                    className={actionStyles.iconButton}
+                    color={"secondary"}
+                    icon={<ReplyIcon/>}
                     title={t("Common.Reply")}
-                /> : <div
+                    variant={"text"}
+                /> : <Button
                     aria-label={t("Common.Reply")}
-                    children={t("Common.Reply")}
                     className={[actionStyles.button, actionStyles.replyButton].join(" ")}
-
-
+                    color={"secondary"}
+                    variant={"text"}
                     title={t("Common.Reply")}
-
-                />}
+                >
+                    {t("Common.Reply")}
+                </Button>}
             context={postData.id}
             // infoComponent={<InfoComponent style={{maxHeight: 100, overflow: "auto"}}
             // >

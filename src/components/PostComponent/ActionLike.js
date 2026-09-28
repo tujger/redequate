@@ -1,20 +1,21 @@
-import React from "react";
-import actionStyles from "./styles/PostActions.module.css";
-import {useHistory} from "react-router-dom";
-import LikeEmptyIcon from "@material-ui/icons/FavoriteBorder";
-import LikeFilledIcon from "@material-ui/icons/Favorite";
 import PlusIcon from "@material-ui/icons/Add";
+import LikeFilledIcon from "@material-ui/icons/Favorite";
+import LikeEmptyIcon from "@material-ui/icons/FavoriteBorder";
 import MinusIcon from "@material-ui/icons/Remove";
 import RestoreIcon from "@material-ui/icons/Replay";
-import {useDispatch} from "react-redux";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
+import counter from "../../controllers/counterControl";
+import Pagination from "../../controllers/FirebasePagination";
 import {delay, usePages} from "../../controllers/General";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
-import Pagination from "../../controllers/FirebasePagination";
-import counter from "../../controllers/counterControl";
+import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData}) => {
     const [state, setState] = React.useState({});
@@ -155,59 +156,57 @@ export default ({postData}) => {
     const ancillaryStyle = {margin: 0, width: 20};
 
     return <div className={actionStyles.action}>
-        <div
+        <Button
             aria-label={t("Common.Like")}
             className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+            color={"secondary"}
             // disabled={disabled}
-
+            icon={postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
             onClick={disabled ? undefined : handleClickExtra("like")}
-
-            style={postData.extra("like") ? {color: "var(--theme-color-secondary)"} : undefined}
+            // style={postData.extra("like") ? {color: "var(--theme-color-secondary)"} : undefined}
             title={t("Common.Like")}
+            variant={"text"}
         >
+            <div className={actionStyles.box}/>
             <CounterComponent
                 counter={postData.counter("like")}
-                prefix={<>
-                    {postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
-                    <div className={actionStyles.box}/>
-                </>}
                 showZero
-                zeroPrefix={<><LikeEmptyIcon/>
-                    <div className={actionStyles.box}/>
-                </>}
             />
-        </div>
+        </Button>
         {isAdmin && <>
-            <div
+            <Button
                 aria-label={"Decrease"}
                 className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+                color={"secondary"}
                 disabled={disabled}
+                icon={<MinusIcon/>}
                 onClick={handleMinus}
-                style={ancillaryStyle}
+                // style={ancillaryStyle}
                 title={"Decrease"}
-            >
-                <MinusIcon/>
-            </div>
-            <div
+                variant={"text"}
+            />
+            <Button
                 aria-label={"Restore"}
                 className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+                color={"secondary"}
                 disabled={disabled}
+                icon={<RestoreIcon/>}
                 onClick={handleRestore}
-                style={ancillaryStyle}
+                // style={ancillaryStyle}
                 title={"Restore"}
-            >
-                <RestoreIcon/>
-            </div>
-            <div
+                variant={"text"}
+            />
+            <Button
                 aria-label={"Increase"}
                 className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+                color={"secondary"}
                 disabled={disabled}
+                icon={<PlusIcon/>}
                 onClick={handlePlus}
-                style={ancillaryStyle}
+                // style={ancillaryStyle}
                 title={"Increase"}
-            >
-                <PlusIcon/>
-            </div>
+                variant={"text"}
+            />
         </>}
     </div>
 }
