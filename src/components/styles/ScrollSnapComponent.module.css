@@ -1,0 +1,42 @@
+.list {
+    box-sizing: content-box;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: calc(var(--theme-spacing) * 0.25);
+    padding-bottom: var(--theme-spacing);
+    -webkit-overflow-scrolling: touch;
+}
+
+.horizontal {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+}
+
+.vertical {
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+
+    & .item {
+        height: calc(var(--theme-spacing) * 20);
+    }
+}
+
+.item {
+    flex: 0 0 auto;
+    height: calc(var(--theme-spacing) * 20);
+    object-fit: cover;
+    scroll-snap-align: var(--scroll-snap-align, center);
+    width: calc(var(--theme-spacing) * 20);
+
+    & img {
+        height: 100%;
+    }
+}
+
+.fullHeight {
+    height: 100vh;
+
+    & .item {
+        height: 100vh;
+    }
+}
