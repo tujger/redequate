@@ -12,6 +12,7 @@ import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
 import ChatList from "./ChatList";
 import {ChatMeta} from "./ChatMeta";
+import baseStyles from "../themes/Base.module.css";
 import chatStyles from "./styles/Chat.module.css";
 
 const Chat = (props) => {
@@ -99,7 +100,7 @@ const Chat = (props) => {
             userData={userData}
         />}
         <div
-            className={chatStyles.center}
+            className={baseStyles.content}
             ref={containerRef}
         >
             <ChatList

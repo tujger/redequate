@@ -210,7 +210,6 @@ const Activity = props => {
                 </div>
                 {!windowData.isNarrow() && <div className={classes.dateButtons}>
                     <Button
-                        color={"secondary"}
                         icon={<StartDateIcon/>}
                         onClick={event => setState(state => ({
                             ...state,
@@ -220,7 +219,6 @@ const Activity = props => {
                     />
                     <span className={classes.separator}>&mdash;</span>
                     <Button
-                        color={"secondary"}
                         icon={<EndDateIcon/>}
                         onClick={event => setState(state => ({
                             ...state,
@@ -231,14 +229,12 @@ const Activity = props => {
                 </div>}
                 <Button
                     className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
-                    color={"secondary"}
                     icon={<SortIcon/>}
                     onClick={handleSortClick}
                     title={"Sort activity"}
                 />
                 <Button
                     className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
-                    color={"secondary"}
                     icon={<RefreshIcon/>}
                     onClick={() => setState({...state, random: Math.random()})}
                     title={"Refresh activity"}
@@ -276,29 +272,23 @@ const Activity = props => {
                     />}
                 </div>
                 {windowData.isNarrow() && <div className={classes.dateButtons}>
-                    <button
-                        aria-label='start date'
-                        className={classes.iconButton}
+                    <Button
+                        icon={<StartDateIcon/>}
                         onClick={event => setState(state => ({
                             ...state,
                             startDateAnchor: event.currentTarget
                         }))}
-                        type='button'
-                    >
-                        <StartDateIcon/>
-                    </button>
+                        title={"Start date"}
+                    />
                     <span className={classes.separator}>&mdash;</span>
-                    <button
-                        aria-label='end date'
-                        className={classes.iconButton}
+                    <Button
+                        icon={<EndDateIcon/>}
                         onClick={event => setState(state => ({
                             ...state,
                             endDateAnchor: event.currentTarget
                         }))}
-                        type='button'
-                    >
-                        <EndDateIcon/>
-                    </button>
+                        title={"End date"}
+                    />
                 </div>}
             </div>
         </div>

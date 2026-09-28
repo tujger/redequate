@@ -9,6 +9,7 @@ import notifySnackbar from "../controllers/notifySnackbar";
 import {usePages} from "../controllers/General";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/RestorePassword.module.css";
 
 const RestorePassword = () => {
@@ -42,7 +43,7 @@ const RestorePassword = () => {
         return <Redirect to={pages.profile.route}/>
     }
 
-    return <div className={styles.center}>
+    return <div className={baseStyles.content}>
         <div className={styles.fieldRow}>
             <div className={styles.fieldIcon}>
                 <UserIcon/>

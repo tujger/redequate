@@ -39,6 +39,7 @@ import {
 } from "../components/UploadComponent/uploadComponentControls";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {updateActivity} from "./admin/audit/auditReducer";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/EditProfile.module.css";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -390,7 +391,7 @@ function EditProfile(props) {
         return <Redirect to={pages.editprofile.route}/>
     }
 
-    return <div className={styles.center}>
+    return <div className={baseStyles.content}>
         <div className={styles.profile}>
             <div className={styles.profileFieldImage}>
                 {image

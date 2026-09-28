@@ -24,6 +24,7 @@ import notifySnackbar from "../controllers/notifySnackbar";
 import LoadingComponent from "../components/LoadingComponent";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Login.module.css";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -443,7 +444,7 @@ const LoginLayout = (
     const history = useHistory();
     const {t} = useTranslation();
 
-    return <div className={styles.center}>
+    return <div className={baseStyles.content}>
         {logo}
         <div className={styles.spacer}/>
         <div className={styles.fieldRow}>

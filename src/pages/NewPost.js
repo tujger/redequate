@@ -9,7 +9,7 @@ import {uploadComponentResize} from "../components/UploadComponent/uploadCompone
 import {cacheDatas, useMetaInfo, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import styles from "./styles/NewPost.module.css";
+import baseStyles from "../themes/Base.module.css";
 
 export default () => {
     const dispatch = useDispatch();
@@ -126,7 +126,7 @@ export default () => {
     }, [location]);
 
     if (!ready) return <LoadingComponent/>
-    return <div className={styles.center}>
+    return <div className={baseStyles.content}>
         <NewPostComponent
             buttonComponent={null}
             context={"newpost" + JSON.stringify({text, tag})}

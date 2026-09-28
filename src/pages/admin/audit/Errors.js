@@ -16,6 +16,7 @@ import Chip from "../../../controls/Chip/Chip";
 import Select from "../../../controls/Select/Select";
 import {auditReducer} from "./auditReducer";
 import ErrorItemComponent from "./ErrorItemComponent";
+import baseStyles from "../../../themes/Base.module.css";
 import errorStyles from "./styles/Errors.module.css";
 
 // eslint-disable-next-line react/prop-types
@@ -75,13 +76,11 @@ const Errors = props => {
         <NavigationToolbar
             backButton={null}
             mediumButton={<Button
-                color={"secondary"}
                 icon={<ClearIcon/>}
                 onClick={() => setState({...state, deleteOpen: true})}
                 title={"Clear errors"}
             />}
             rightButton={<Button
-                color={"secondary"}
                 icon={<RefreshIcon/>}
                 onClick={() => setState({...state, random: Math.random()})}
                 title={"Refresh errors"}
@@ -103,7 +102,7 @@ const Errors = props => {
                 onDelete={clearFilteredUser}
             />}
         </NavigationToolbar>
-        <div className={errorStyles.list}>
+        <div className={[baseStyles.content, classes.list].filter(Boolean).join(" ")}>
             <LazyListComponent
                 key={random}
                 itemComponent={item => <ErrorItemComponent

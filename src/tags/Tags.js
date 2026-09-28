@@ -17,6 +17,7 @@ import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {normalizeSortName} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tags.module.css";
 import {tagsReducer} from "./tagsReducer";
 
@@ -150,7 +151,7 @@ const Tags = (props) => {
                 />}
             </div>}
         </NavigationToolbar>
-        <div className={styles.list}>
+        <div className={baseStyles.content}>
             <LazyListComponent
                 itemComponent={itemComponent}
                 itemTransform={itemTransform}

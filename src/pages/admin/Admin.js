@@ -1,8 +1,9 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
 import {usePages} from "../../controllers/General";
-import useRippleEffect from "../../helpers/useRippleEffect";
+import Button from "../../controls/Button/Button";
 import adminStyles from "./styles/Admin.module.css";
+import baseStyles from "../../themes/Base.module.css";
 
 const Admin = ({fetchMenu, classes = {}}) => {
     const history = useHistory();
@@ -15,11 +16,9 @@ const Admin = ({fetchMenu, classes = {}}) => {
             return 0
         });
 
-    const onPointerDown = useRippleEffect();
-
     const menu = fetchMenu(pages);
 
-    return <div className={classes.center}>
+    return <div className={baseStyles.content}>
         {itemsFlat.map((item, index) => {
             if (item.disabled) return null;
             if (item === pages.admin || !menu.filter(list => list[0] === pages.admin).filter(list => list.indexOf(item) >= 0).length) return null;
@@ -33,17 +32,16 @@ const Admin = ({fetchMenu, classes = {}}) => {
                 handleClick();
             };
 
-            return <div
-                className={[adminStyles.card, adminStyles.cardActionArea].join(" ")}
+            return <Button
+                className={[adminStyles.button].join(" ")}
                 key={index}
-                onPointerDown={onPointerDown}
                 onClick={handleClick}
                 onKeyDown={handleKeyDown}
-                role='button'
                 tabIndex={0}
+                title={item.label}
             >
                 {item.label}
-            </div>
+            </Button>
         })}
     </div>
 };

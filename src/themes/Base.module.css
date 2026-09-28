@@ -40,6 +40,12 @@
     }
 }
 
+.content {
+    box-sizing: border-box;
+    padding: var(--theme-spacing) var(--theme-content-padding-right) var(--theme-spacing) var(--theme-content-padding-left);
+    width: var(--theme-content-width);
+}
+
 .root {
     color: var(--theme-color-text);
     font-size: var(--theme-font-size);

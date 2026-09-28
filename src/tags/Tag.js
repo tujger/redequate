@@ -27,6 +27,7 @@ import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {matchRole, Role, useCurrentUserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tag.module.css";
 
 export default ({allowOwner = true}) => {
@@ -125,7 +126,7 @@ export default ({allowOwner = true}) => {
                 url={window.location.origin + pages.tag.route + tag.value.id}
             />}
         />
-        <div className={styles.profileContainer}>
+        <div className={baseStyles.content}>
             <div className={styles.profile}>
                 {tag.value.image && <div className={styles.profileFieldImage}>
                     <img
@@ -163,7 +164,7 @@ export default ({allowOwner = true}) => {
                 </div>
             </div>
         </div>
-        <div className={styles.posts}>
+        <div className={baseStyles.content}>
             <LazyListComponent
                 itemComponent={item => <PostComponent
                     key={item.id}

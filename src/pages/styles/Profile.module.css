@@ -1,9 +1,3 @@
-.center {
-    box-sizing: border-box;
-    padding: var(--theme-spacing) var(--theme-content-padding-right) var(--theme-spacing) var(--theme-content-padding-left);
-    width: var(--theme-content-width);
-}
-
 .actions {
     align-self: flex-start;
     display: flex;
@@ -40,11 +34,4 @@
 
 .roleSelect {
     width: 100%;
-}
-
-@media (max-width: 599px) {
-    .center {
-        padding-left: var(--theme-spacing);
-        padding-right: var(--theme-spacing);
-    }
 }

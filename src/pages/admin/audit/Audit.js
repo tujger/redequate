@@ -4,6 +4,7 @@ import {withRouter} from "react-router-dom";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import {usePages, useWindowData} from "../../../controllers/General";
+import Button from "../../../controls/Button/Button";
 import useRippleEffect from "../../../helpers/useRippleEffect";
 import Activity from "./Activity";
 import {auditReducer} from "./auditReducer";
@@ -54,15 +55,15 @@ const Audit = props => {
                 } catch (e) {
                     console.error(e);
                 }
-                return <button
+                return <Button
                     className={[classes.tabButton, tabSelected === index ? classes.tabButtonSelected : ""].join(" ")}
                     key={index}
                     onClick={handleChange(index)}
-                    onPointerDown={onPointerDown}
-                    type='button'
+                    title={label}
+                    variant={"text"}
                 >
                     {label}
-                </button>
+                </Button>
             })}
         </NavigationToolbar>
         <selected.type {...props} {...selected.props} classes={classes}/>

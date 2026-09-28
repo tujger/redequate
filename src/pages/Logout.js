@@ -8,6 +8,7 @@ import {usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import {logoutUser} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Logout.module.css";
 
 const Logout = (props) => {
@@ -37,7 +38,7 @@ const Logout = (props) => {
             <LoadingComponent text={t("Login.Logging out...")}/>
         </div>;
     }
-    return <div className={styles.center}>
+    return <div className={baseStyles.content}>
         <div className={styles.content}>
             {t("Login.Do you want to log out?")}
         </div>

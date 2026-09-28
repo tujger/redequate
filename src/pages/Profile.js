@@ -25,6 +25,7 @@ import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} fr
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Profile.module.css";
 
 export const publicFields = [
@@ -162,7 +163,7 @@ const Profile = (
                 title={t("Common.Edit")}
             />}
         />
-        <div className={styles.center}>
+        <div className={baseStyles.content}>
             {userData.disabled && <SystemAlert
                 message={
                     <h4>{t("User.Account is suspended. Please contact with administrator.")}</h4>}

@@ -7,7 +7,7 @@ import Pagination from "../controllers/FirebasePagination";
 import {useCurrentUserData} from "../controllers/UserData";
 import ChatsDaemon from "./ChatsDaemon";
 import ChatsItem from "./ChatsItem";
-import chatStyles from "./styles/Chats.module.css";
+import baseStyles from "../themes/Base.module.css";
 
 export default (
     {
@@ -34,7 +34,7 @@ export default (
         />
     }
 
-    return <div className={chatStyles.center}>
+    return <div className={baseStyles.content}>
         <LazyListComponent
             cache={"chats"}
             itemComponent={item => <ChatsItem

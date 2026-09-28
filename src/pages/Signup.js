@@ -15,6 +15,7 @@ import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
 import GoogleLogo from "../images/google-logo.svg";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Signup.module.css";
 
 const Signup = ({signup = true, additional}) => {
@@ -120,7 +121,7 @@ const Signup = ({signup = true, additional}) => {
         return <Redirect to={pages.profile.route}/>
     }
 
-    return <div className={styles.center}>
+    return <div className={baseStyles.content}>
         {requestPasswordFor && <div className={styles.passwordPrompt}>
             <h4>{t("User.Please create password for your account.")}</h4>
         </div>}

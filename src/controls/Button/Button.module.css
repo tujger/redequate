@@ -52,10 +52,11 @@
 
     &.secondary {
         background-color: var(--theme-color-secondary);
+        color: var(--theme-color-secondary-alt);
 
         &:hover {
-            background-color: var(--theme-color-secondary);
-            color: var(--theme-color-secondary-alt);
+            background-color: var(--theme-color-highlight);
+            color: var(--theme-color-highlight-alt);
         }
     }
 }

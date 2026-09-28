@@ -16,6 +16,7 @@ import {cacheDatas, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {matchRole, useCurrentUserData} from "../controllers/UserData";
+import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Post.module.css";
 
 export default (props) => {
@@ -71,7 +72,7 @@ export default (props) => {
 
     return <>
         <NavigationToolbar/>
-        <div className={styles.center}>
+        <div className={baseStyles.content}>
             <PostComponent
                 {...props}
                 allowedExtras={allowedExtras}

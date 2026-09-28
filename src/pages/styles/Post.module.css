@@ -1,9 +1,3 @@
-.center {
-    box-sizing: border-box;
-    padding: var(--theme-spacing) var(--theme-content-padding-right) var(--theme-spacing) var(--theme-content-padding-left);
-    width: var(--theme-content-width);
-}
-
 .post {
     --post-card-image-margin-bottom: var(--theme-spacing);
     --post-card-image-margin-top: var(--theme-spacing);
