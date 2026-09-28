@@ -2,7 +2,6 @@ import React from "react";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "../controls/Switch/Switch";
@@ -38,6 +37,7 @@ import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/Wra
 import notifySnackbar from "../controllers/notifySnackbar";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import {styles} from "../controllers/Theme";
+import TextField from "../controls/TextField/TextField";
 import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import LoadingComponent from "../components/LoadingComponent";
 import Pagination from "../controllers/FirebasePagination";

@@ -9,7 +9,6 @@ import {
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import TextField from "@material-ui/core/TextField";
 import Box from "@material-ui/core/Box";
 import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
@@ -29,6 +28,7 @@ import ConfirmComponent from "../components/ConfirmComponent";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {styles} from "../controllers/Theme";
 import LoadingComponent from "../components/LoadingComponent";
+import TextField from "../controls/TextField/TextField";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
