@@ -8,7 +8,7 @@ import TextField from "@material-ui/core/TextField";
 import Hidden from "@material-ui/core/Hidden";
 import Box from "@material-ui/core/Box";
 import {useDispatch} from "react-redux";
-import Switch from "@material-ui/core/Switch";
+import Switch from "../controls/Switch/Switch";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import IconButton from "@material-ui/core/IconButton";

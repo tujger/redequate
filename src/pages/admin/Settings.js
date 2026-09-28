@@ -8,7 +8,7 @@ import ButtonGroup from "@material-ui/core/ButtonGroup";
 import InputLabel from "@material-ui/core/InputLabel";
 import Typography from "@material-ui/core/Typography";
 import FormControl from "@material-ui/core/FormControl";
-import Switch from "@material-ui/core/Switch";
+import Switch from "../../controls/Switch/Switch";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
