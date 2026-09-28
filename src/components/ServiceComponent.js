@@ -1,18 +1,16 @@
 import React from "react";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import ListItem from "@material-ui/core/ListItem";
 import PropTypes from "prop-types";
+import styles from "./styles/ServiceComponent.module.css";
 
 const ServiceComponent = props => {
     const {text} = props;
-    return <ListItem alignItems={"flex-start"} disableGutters={true}>
-        <Card raised>
-            <CardHeader
-                subheader={text}
-            />
-        </Card>
-    </ListItem>
+    return <div className={styles.item}>
+        <div className={styles.card}>
+            <div className={styles.header}>
+                <div className={styles.subheader}>{text}</div>
+            </div>
+        </div>
+    </div>
 };
 
 ServiceComponent.propTypes = {
