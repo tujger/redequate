@@ -25,17 +25,18 @@ export default React.forwardRef((props, ref) => {
         className,
     ].filter(Boolean).join(" ")} ref={ref} style={style}>
         <div className={[cardStyles.cardHeader, cardStyles.cardHeaderWithLabel, replyStyles.reply].join(" ")}>
-            <Link className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall} onClick={evt => evt.stopPropagation()} to={pages.user.route + postData.uid}>
-                <AvatarView className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall} image={userData.image} initials={userData.initials} verified={true}/>
+            <Link className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall}
+                  onClick={evt => evt.stopPropagation()} to={pages.user.route + postData.uid}>
+                <AvatarView className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall}
+                            image={userData.image} initials={userData.initials} verified={true}/>
             </Link>
             <div className={cardStyles.cardContent}>
                 <div className={cardStyles.layout}>
-                    <div className={[cardStyles.layout, cardStyles.userName].join(" ")}>
-                        <UserName className={textStyles.label} id={userData.id}>{userData.name}</UserName>
-                    </div>
+                    <UserName className={textStyles.label} id={userData.id}>{userData.name}</UserName>
                     {windowData.isNarrow() && <div className={[cardStyles.layout, cardStyles.layoutGrow].join(" ")}/>}
                     <PostMenu {...props}/>
-                    <div className={[cardStyles.layout, cardStyles.date].join(" ")} title={new Date(postData.created).toLocaleString()}>{toDateString(postData.created)}</div>
+                    <div className={[cardStyles.layout, cardStyles.date].join(" ")}
+                         title={new Date(postData.created).toLocaleString()}>{toDateString(postData.created)}</div>
                 </div>
                 <PostBody {...props} ref={ancillaryRef} disableClick={!disableClick}/>
                 {postData.images && <div className={[cardStyles.layout, cardStyles.cardImage].join(" ")}>

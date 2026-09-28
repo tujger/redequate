@@ -1,5 +1,6 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
+import UserName from "../../controls/UserName/UserName";
 import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
@@ -136,9 +137,7 @@ export default (props) => {
                         verified
                     />}
                     label={<span className={cardStyles.textSmall}>
-                        <span className={textStyles.suggestionName}>
-                            {userReplied.name}
-                        </span>
+                        <UserName id={userReplied.id}>{userReplied.name}</UserName>
                         {replies && replies.length > 1 ? " and others replied" : " replied"}
                     </span>}
                     pattern={"transparent"}

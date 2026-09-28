@@ -1,8 +1,6 @@
 .user,
 .tag {
-    && {
-        color: var(--theme-color-highlight);
-    }
+    contain: none;
 }
 
 .target {

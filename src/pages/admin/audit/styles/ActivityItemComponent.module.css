@@ -71,7 +71,7 @@
 }
 
 .userName {
-    color: var(--theme-color-highlight);
+    color: var(--theme-color-primary);
     cursor: pointer;
     font-weight: bolder;
     letter-spacing: var(--theme-letter-spacing);
@@ -106,7 +106,7 @@
 }
 
 .typeRow:hover {
-    color: var(--theme-color-highlight);
+    color: var(--theme-color-primary);
 }
 
 .typeIcon {

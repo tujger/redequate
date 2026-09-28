@@ -8,10 +8,11 @@ import {toDateString} from "../controllers/DateFormat";
 import {useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
+import UserName from "../controls/UserName/UserName";
 import useRippleEffect from "../helpers/useRippleEffect";
 import alertStyles from "./styles/AlertItem.module.css";
 
-const AlertItem = ({data, skeleton, label, fetchAlertContent}) => {
+export default ({data, skeleton, label, fetchAlertContent}) => {
     const onPointerDown = useRippleEffect();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
@@ -79,10 +80,10 @@ const AlertItem = ({data, skeleton, label, fetchAlertContent}) => {
                 </div>
                 <div className={alertStyles.cardContent}>
                     <div className={alertStyles.titleRow}>
-                        <div
-                            className={[alertStyles.userName, isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
-                            {title}
-                        </div>
+                        <UserName
+                            className={[isNew ? alertStyles.unread : alertStyles.read].join(" ")}
+                            id={currentUserData.id}
+                        >{title}</UserName>
                         {timestamp && <div
                             className={alertStyles.date}
                             title={new Date(timestamp).toLocaleString()}
@@ -98,5 +99,3 @@ const AlertItem = ({data, skeleton, label, fetchAlertContent}) => {
         </div>
     </div>
 }
-
-export default AlertItem;

@@ -1,5 +1,5 @@
 .fab {
-    --fab-background: var(--theme-color-highlight);
+    --fab-background: var(--theme-color-primary);
     --fab-color: var(--theme-color-paper);
 
     align-items: center;

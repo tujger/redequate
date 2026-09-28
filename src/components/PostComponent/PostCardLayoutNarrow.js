@@ -63,12 +63,10 @@ export default React.forwardRef((props, ref) => {
                 </Link>
                 <div className={cardStyles.cardContent}>
                     <div className={[cardStyles.layout, cardStyles.inline, cardStyles.cardTitle].join(" ")}>
-                        <div className={[cardStyles.layout, cardStyles.userName].join(" ")}>
                             <UserName
                                 className={textStyles.label}
                                 id={userData.id}
                             >{userData.name}</UserName>
-                        </div>
                         <PostMenu {...props}/>
                         {postData.targetTag && <div className={[cardStyles.layout, cardStyles.layoutGrow].join(" ")}>
                             posted to <MentionedTextComponent

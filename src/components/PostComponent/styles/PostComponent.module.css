@@ -205,14 +205,6 @@
     min-width: 0;
 }
 
-.userName {
-    color: var(--theme-color-highlight);
-    font-weight: bolder;
-    letter-spacing: var(--theme-letter-spacing);
-    margin-right: calc(var(--theme-spacing) * .5);
-    text-decoration: none;
-}
-
 .textSmall {
     display: inline-block;
     font-size: 90%;

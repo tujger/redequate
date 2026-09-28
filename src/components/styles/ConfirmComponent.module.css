@@ -47,7 +47,7 @@
     background: transparent;
     border: 0;
     border-radius: calc(var(--theme-spacing) / 2);
-    color: var(--theme-color-highlight);
+    color: var(--theme-color-primary);
     cursor: pointer;
     font: inherit;
     font-weight: 500;

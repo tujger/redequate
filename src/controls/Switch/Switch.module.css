@@ -39,7 +39,7 @@
 }
 
 .checked .track {
-    background-color: var(--theme-color-highlight);
+    background-color: var(--theme-color-primary);
 }
 
 .checked .thumb {

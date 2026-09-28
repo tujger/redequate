@@ -29,11 +29,11 @@
 }
 
 .tabButtonSelected {
-    color: var(--theme-color-highlight);
+    color: var(--theme-color-primary);
 }
 
 .tabButtonSelected::after {
-    background-color: var(--theme-color-highlight);
+    background-color: var(--theme-color-primary);
     bottom: 0;
     content: "";
     height: 2px;
