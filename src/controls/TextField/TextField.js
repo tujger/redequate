@@ -13,6 +13,7 @@ export default props => {
         fullWidth = false,
         helper,
         id,
+        inputComponent,
         label,
         onClear,
         onBlur,
@@ -58,6 +59,23 @@ export default props => {
         onBlur && onBlur(event);
     };
 
+    const inputProps = {
+        ...otherProps,
+        "aria-invalid": error || undefined,
+        className: styles.input,
+        disabled,
+        id,
+        onBlur: handleBlur,
+        onChange,
+        onFocus: handleFocus,
+        placeholder,
+        type,
+        value,
+    };
+    const inputRefCallback = input => {
+        inputRef.current = input;
+    };
+
     return <label
         className={[
             styles.field,
@@ -84,20 +102,9 @@ export default props => {
             title={"Clear"}
             variant={"text"}
         />}
-        <input
-            {...otherProps}
-            aria-invalid={error || undefined}
-            className={styles.input}
-            disabled={disabled}
-            id={id}
-            ref={inputRef}
-            onBlur={handleBlur}
-            onChange={onChange}
-            onFocus={handleFocus}
-            placeholder={placeholder}
-            type={type}
-            value={value}
-        />
+        {inputComponent
+            ? React.createElement(inputComponent, {...inputProps, inputRef: inputRefCallback})
+            : <input {...inputProps} ref={inputRef}/>}
         {helper && <span className={styles.helper}>{helper}</span>}
     </label>;
 };

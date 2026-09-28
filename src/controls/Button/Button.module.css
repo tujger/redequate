@@ -101,6 +101,7 @@
 }
 
 .small {
+    font-size: 0.8rem;
     min-height: calc(var(--theme-spacing) * 4);
     padding-left: var(--theme-spacing);
     padding-right: var(--theme-spacing);

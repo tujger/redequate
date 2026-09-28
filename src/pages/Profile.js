@@ -1,57 +1,31 @@
-import React from "react";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import Grid from "@material-ui/core/Grid";
-import InputLabel from "@material-ui/core/InputLabel";
-import {useHistory, useParams} from "react-router-dom";
-import {useDispatch} from "react-redux";
-import NameIcon from "@material-ui/icons/Person";
-import AddressIcon from "@material-ui/icons/LocationCity";
-import PhoneIcon from "@material-ui/icons/Phone";
-import IconButton from "@material-ui/core/IconButton";
+import FixIcon from "@material-ui/icons/BugReport";
+import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
 import EditIcon from "@material-ui/icons/Edit";
 import InfoIcon from "@material-ui/icons/Info";
-import FixIcon from "@material-ui/icons/BugReport";
+import AddressIcon from "@material-ui/icons/LocationCity";
+import NameIcon from "@material-ui/icons/Person";
+import PhoneIcon from "@material-ui/icons/Phone";
 import RoleIcon from "@material-ui/icons/Security";
-import Select from "../controls/Select/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormControl from "@material-ui/core/FormControl";
-import ChatIcon from "@material-ui/icons/ChatBubbleOutline";
-import withStyles from "@material-ui/styles/withStyles";
-import Typography from "@material-ui/core/Typography";
-import Box from "@material-ui/core/Box";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory, useParams} from "react-router-dom";
+import FlexFabComponent from "../components/FlexFabComponent";
+import LoadingComponent from "../components/LoadingComponent";
+import NavigationToolbar from "../components/NavigationToolbar";
+import PlacesTextField from "../components/PlacesTextField";
 import ProfileComponentOrigin from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
-import {
-    matchRole,
-    Role,
-    sendVerificationEmail,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
-import {usePages} from "../controllers/General";
-import {fetchCallable} from "../controllers/Firebase";
-import {TextMaskPhone} from "../controllers/TextMasks";
-import LoadingComponent from "../components/LoadingComponent";
-import PlacesTextField from "../components/PlacesTextField";
-import {styles} from "../controllers/Theme";
-import NavigationToolbar from "../components/NavigationToolbar";
-import notifySnackbar from "../controllers/notifySnackbar";
-import FlexFabComponent from "../components/FlexFabComponent";
 import SystemAlert from "../components/SystemAlert";
+import {fetchCallable} from "../controllers/Firebase";
+import {usePages} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {TextMaskPhone} from "../controllers/TextMasks";
+import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
+import Button from "../controls/Button/Button";
+import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
-
-const stylesProfile = theme => ({
-    root: {
-        [theme.breakpoints.down("sm")]: {
-            textAlign: "center",
-        },
-    },
-    buttons: null,
-    edit: null,
-    logout: null,
-});
+import styles from "./styles/Profile.module.css";
 
 export const publicFields = [
     {
@@ -60,15 +34,15 @@ export const publicFields = [
         label: "User.Name",
         required: true,
         unique: true,
-        viewComponent: userData => <Typography variant={"h6"}>{userData.name}</Typography>
+        viewComponent: userData => <h6 className={styles.name}>{userData.name}</h6>
     },
     {
         id: "created",
         label: "User.Date since",
         editComponent: null,
         viewComponent: userData => <>
-            <Typography variant={"caption"}>Since {userData.created}</Typography>
-            <Box m={1}/>
+            <small className={styles.caption}>Since {userData.created}</small>
+            <div className={styles.fieldSpacer}/>
         </>
     },
     {
@@ -84,9 +58,7 @@ export const publicFields = [
         label: "User.Phone",
         icon: <PhoneIcon/>,
         editComponent: <TextField
-            InputProps={{
-                inputComponent: TextMaskPhone
-            }}
+            inputComponent={TextMaskPhone}
         />
     },
 ]
@@ -104,21 +76,17 @@ export const adminFields = [
         id: "role",
         label: "Role",
         icon: <RoleIcon/>,
-        editComponent: props => <FormControl {...props}>
-            <InputLabel shrink>
-                Role
-            </InputLabel>
+        editComponent: props => <label className={styles.roleField}>
+            <span className={styles.roleLabel} id={"profile-role-label"}>Role</span>
             <Select
+                aria-labelledby={"profile-role-label"}
+                className={styles.roleSelect}
+                disabled={props.disabled}
                 onChange={props.onChange}
+                options={Object.keys(Role).map(key => ({label: key, value: Role[key]}))}
                 value={props.value}
-            >
-                {
-                    Object.keys(Role).map(key => {
-                        return <MenuItem key={key} value={Role[key]}>{key}</MenuItem>
-                    })
-                }
-            </Select>
-        </FormControl>
+            />
+        </label>
     },
 ]
 
@@ -126,7 +94,6 @@ const Profile = (
     {
         publicFields: publicFieldsApplied = publicFields,
         privateFields,
-        classes,
         ProfileComponent = <ProfileComponentOrigin/>,
         provider,
     }) => {
@@ -182,23 +149,20 @@ const Profile = (
     if (!userData) return <LoadingComponent/>;
     return <>
         <NavigationToolbar
-            className={classes.top}
-            mediumButton={isCurrentUserAdmin && <IconButton
-                aria-label={t("Common.Fix possible errors")}
-                children={<FixIcon/>}
+            mediumButton={isCurrentUserAdmin && <Button
+                icon={<FixIcon/>}
                 onClick={fixErrors}
                 title={t("Common.Fix possible errors")}
             />}
-            rightButton={isEditAllowed && <IconButton
-                aria-label={t("Common.Edit")}
-                children={<EditIcon/>}
+            rightButton={isEditAllowed && <Button
+                icon={<EditIcon/>}
                 onClick={() => {
                     history.push(isSameUser ? pages.editprofile.route : pages.edituser.route + userData.id)
                 }}
                 title={t("Common.Edit")}
             />}
         />
-        <Grid container className={classes.center}>
+        <div className={styles.center}>
             {userData.disabled && <SystemAlert
                 message={
                     <h4>{t("User.Account is suspended. Please contact with administrator.")}</h4>}
@@ -213,28 +177,24 @@ const Profile = (
                 publicFields={publicFieldsApplied}
                 userData={userData}
             />
-            <ButtonGroup
-                className={classes.buttons}
-                color={"secondary"}
-                disabled={disabled}
-                size={"large"}
-                variant={"contained"}
-            >
+            <div className={styles.actions}>
                 {!currentUserData.verified && currentUserData.email && !currentUserData.disabled &&
-                <Button
-                    children={t("User.Resend verification")}
-                    className={classes.resendVerification}
-                    onClick={() => {
-                        dispatch(ProgressView.SHOW);
-                        console.log(currentUserData)
-                        sendVerificationEmail()
-                            .then(() => notifySnackbar("Verification email has been sent"))
-                            .catch(notifySnackbar)
-                            .finally(() => dispatch(ProgressView.HIDE));
-                    }}
-                />}
-            </ButtonGroup>
-        </Grid>
+                    <Button
+                        disabled={disabled}
+                        onClick={() => {
+                            dispatch(ProgressView.SHOW);
+                            console.log(currentUserData)
+                            sendVerificationEmail()
+                                .then(() => notifySnackbar("Verification email has been sent"))
+                                .catch(notifySnackbar)
+                                .finally(() => dispatch(ProgressView.HIDE));
+                        }}
+                        variant={"contained"}
+                    >
+                        {t("User.Resend verification")}
+                    </Button>}
+            </div>
+        </div>
         {(isSameUser || !pages.chat || pages.chat.disabled)
             ? null
             : <FlexFabComponent
@@ -246,7 +206,4 @@ const Profile = (
     </>;
 };
 
-export default withStyles((theme) => ({
-    ...styles(theme),
-    ...stylesProfile(theme),
-}))(Profile);
+export default Profile;

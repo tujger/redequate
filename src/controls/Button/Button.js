@@ -8,7 +8,7 @@ export default props => {
     const {
         children,
         className,
-        color = "primary",
+        color = undefined,
         disabled = false,
         fullWidth = false,
         icon,
@@ -17,13 +17,13 @@ export default props => {
         onPointerDown: givenOnPointerDown,
         size = "medium",
         title = undefined,
-        variant,
+        variant = undefined,
         ...otherProps
     } = props;
     const isIconOnly = icon && children == null;
     const givenVariant = variant || (icon ? "text" : "contained");
     const currentVariant = variants.includes(givenVariant) ? givenVariant : "contained";
-    const colorClass = styles[color] || styles.primary;
+    const colorClass = styles[color] || (currentVariant === "text" ? styles.secondary : styles.primary);
     const sizeClass = styles[size] || "";
     const onPointerDown = useRippleEffect(givenOnPointerDown);
     const onKeyDown = event => {

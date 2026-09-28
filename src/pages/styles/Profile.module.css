@@ -1,0 +1,50 @@
+.center {
+    box-sizing: border-box;
+    padding: var(--theme-spacing) var(--theme-content-padding-right) var(--theme-spacing) var(--theme-content-padding-left);
+    width: var(--theme-content-width);
+}
+
+.actions {
+    align-self: flex-start;
+    display: flex;
+}
+
+.name {
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.caption {
+    font-size: .75rem;
+    letter-spacing: .033em;
+    line-height: 1.66;
+}
+
+.fieldSpacer {
+    height: var(--theme-spacing);
+}
+
+.roleField {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.roleLabel {
+    color: var(--theme-color-text);
+    font-size: .75rem;
+    line-height: 1.66;
+}
+
+.roleSelect {
+    width: 100%;
+}
+
+@media (max-width: 599px) {
+    .center {
+        padding-left: var(--theme-spacing);
+        padding-right: var(--theme-spacing);
+    }
+}
