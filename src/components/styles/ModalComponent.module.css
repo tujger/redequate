@@ -1,6 +1,5 @@
 .root {
     align-items: center;
-    background-color: rgb(0 0 0 / 32%);
     bottom: 0;
     display: flex;
     justify-content: center;
@@ -12,6 +11,12 @@
     z-index: 1300;
 }
 
+.backdrop {
+    background-color: rgb(0 0 0 / 32%);
+    inset: 0;
+    position: absolute;
+}
+
 .dialog {
     background-color: var(--theme-color-paper);
     box-shadow: var(--theme-dialog-shadow);
@@ -21,7 +26,9 @@
     max-height: calc(100vh - var(--theme-spacing) * 6);
     outline: 0;
     overflow: hidden;
+    position: relative;
     width: 60%;
+    z-index: 1;
 }
 
 @media (max-width: 599px) {

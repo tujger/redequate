@@ -250,7 +250,6 @@ const NewPostComponent = props => {
         });
         setState(state => ({...state, text: "", hiddenTag: null, images: null, uppy: null}));
         handleClose(evt);
-        onClose();
     }
 
     const handleClose = evt => {
