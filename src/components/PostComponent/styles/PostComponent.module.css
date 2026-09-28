@@ -13,7 +13,7 @@
     background-color: var(--theme-color-paper);
     border-radius: 0.25rem;
     border-width: 0;
-    box-shadow: var(--theme-card-shadow);
+    box-shadow: var(--theme-post-shadow);
     font-size: 0.875rem;
     letter-spacing: var(--theme-letter-spacing);
     margin-bottom: calc(var(--theme-spacing) * 1.5);
