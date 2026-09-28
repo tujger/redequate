@@ -1,25 +1,26 @@
+import EndDateIcon from "@material-ui/icons/Event";
+import RefreshIcon from "@material-ui/icons/Refresh";
+import SortIcon from "@material-ui/icons/Sort";
+import StartDateIcon from "@material-ui/icons/Today";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
-import RefreshIcon from "@material-ui/icons/Refresh";
-import StartDateIcon from "@material-ui/icons/Today";
-import EndDateIcon from "@material-ui/icons/Event";
-import SortIcon from "@material-ui/icons/Sort";
+import AvatarView from "../../../components/AvatarView";
+import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
+import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
+import {toDateString} from "../../../controllers/DateFormat";
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useWindowData} from "../../../controllers/General";
-import AvatarView from "../../../components/AvatarView";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
-import {auditReducer} from "./auditReducer";
-import ActivityItemComponent from "./ActivityItemComponent";
-import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
-import {toDateString} from "../../../controllers/DateFormat";
-import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
 import {mentionUsers} from "../../../controllers/mentionTypes";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
-import activityStyles from "./styles/Activity.module.css";
-import Select from "../../../controls/Select/Select";
+import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
+import Select from "../../../controls/Select/Select";
+import ActivityItemComponent from "./ActivityItemComponent";
+import {auditReducer} from "./auditReducer";
+import activityStyles from "./styles/Activity.module.css";
 
 const Activity = props => {
     const {
@@ -208,46 +209,40 @@ const Activity = props => {
                     />}
                 </div>
                 {!windowData.isNarrow() && <div className={classes.dateButtons}>
-                    <button
-                        aria-label='start date'
-                        className={classes.iconButton}
+                    <Button
+                        color={"secondary"}
+                        icon={<StartDateIcon/>}
                         onClick={event => setState(state => ({
                             ...state,
                             startDateAnchor: event.currentTarget
                         }))}
-                        type='button'
-                    >
-                        <StartDateIcon/>
-                    </button>
+                        title={"Start date"}
+                    />
                     <span className={classes.separator}>&mdash;</span>
-                    <button
-                        aria-label='end date'
-                        className={classes.iconButton}
+                    <Button
+                        color={"secondary"}
+                        icon={<EndDateIcon/>}
                         onClick={event => setState(state => ({
                             ...state,
                             endDateAnchor: event.currentTarget
                         }))}
-                        type='button'
-                    >
-                        <EndDateIcon/>
-                    </button>
+                        title={"End date"}
+                    />
                 </div>}
-                <button
-                    aria-label='Sort activity'
-                    className={[classes.iconButton, activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
+                <Button
+                    className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
+                    color={"secondary"}
+                    icon={<SortIcon/>}
                     onClick={handleSortClick}
-                    type='button'
-                >
-                    <SortIcon/>
-                </button>
-                <button
-                    aria-label='Refresh activity'
-                    className={classes.iconButton}
+                    title={"Sort activity"}
+                />
+                <Button
+                    className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
+                    color={"secondary"}
+                    icon={<RefreshIcon/>}
                     onClick={() => setState({...state, random: Math.random()})}
-                    type='button'
-                >
-                    <RefreshIcon/>
-                </button>
+                    title={"Refresh activity"}
+                />
             </div>
             <div className={classes.filterRow}>
                 <div className={classes.chips}>

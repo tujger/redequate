@@ -1,11 +1,3 @@
-.desktopOnly {
-    display: block;
-}
-
-.mobileOnly {
-    display: none;
-}
-
 .inputWrapper {
     align-items: center;
     display: inline-flex;

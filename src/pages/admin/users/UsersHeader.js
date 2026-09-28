@@ -44,24 +44,10 @@ export default ({classes: givenClasses, filter, handleChange, mode}) => {
         </button>}
     </div>;
 
-    return <>
-        <div className={classes.desktopOnly}>
-            <NavigationToolbar
-                backButton={null}
-                className={classes.topSticky}
-            >
-                {select}
-                {input}
-            </NavigationToolbar>
-        </div>
-        <div className={classes.mobileOnly}>
-            <NavigationToolbar
-                backButton={null}
-                className={classes.topSticky}
-                rightButton={select}
-            >
-                {input}
-            </NavigationToolbar>
-        </div>
-    </>
+    return <NavigationToolbar
+        backButton={null}
+    >
+        {select}
+        {input}
+    </NavigationToolbar>
 }

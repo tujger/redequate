@@ -1,8 +1,3 @@
-.topSticky {
-    position: relative;
-    width: 100%;
-}
-
 .toolbarRow,
 .filterRow {
     align-items: center;

@@ -16,6 +16,7 @@ export default props => {
         onKeyDown: givenOnKeyDown,
         onPointerDown: givenOnPointerDown,
         size = "medium",
+        title = undefined,
         variant,
         ...otherProps
     } = props;
@@ -39,6 +40,7 @@ export default props => {
     return <div
         {...otherProps}
         aria-disabled={disabled || undefined}
+        aria-label={title ?? label}
         className={[
             styles.button,
             styles[currentVariant],
@@ -54,6 +56,7 @@ export default props => {
         onPointerDown={disabled ? undefined : onPointerDown}
         role={"button"}
         tabIndex={disabled ? -1 : 0}
+        title={title}
     >
         {icon}
         {children}

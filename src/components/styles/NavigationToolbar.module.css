@@ -1,16 +1,15 @@
 .toolbar {
     align-items: var(--navigation-align-items, center);
+    background-color: inherit;
     box-sizing: border-box;
     display: flex;
     min-height: calc(var(--theme-spacing) * 5);
-    width: 100%;
-
-    z-index: 2;
-    position: sticky;
     padding-left: var(--theme-content-padding-left);
     padding-right: var(--theme-content-padding-right);
+    position: sticky;
+    top: var(--theme-header-collapsed);
     width: var(--theme-content-width);
-    background-color: inherit;
+    z-index: 2;
 }
 
 .side {

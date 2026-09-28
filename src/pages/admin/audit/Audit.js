@@ -38,8 +38,6 @@ const Audit = props => {
             alignItems={"flex-end"}
             justify={"center"}
             backButton={null}
-            className={classes.topSticky}
-            style={windowData.isNarrow() ? {padding: 0} : undefined}
         >
             {children.map((child, index) => {
                 let label = "";

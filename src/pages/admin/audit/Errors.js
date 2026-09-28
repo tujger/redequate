@@ -1,20 +1,21 @@
-import React from "react";
-import {connect, useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
 import RefreshIcon from "@material-ui/icons/Refresh";
+import React from "react";
+import {connect, useDispatch} from "react-redux";
+import AvatarView from "../../../components/AvatarView";
+import ConfirmComponent from "../../../components/ConfirmComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
-import Select from "../../../controls/Select/Select";
-import Chip from "../../../controls/Chip/Chip";
+import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import NavigationToolbar from "../../../components/NavigationToolbar";
+import ProgressView from "../../../components/ProgressView";
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
-import ProgressView from "../../../components/ProgressView";
-import ErrorItemComponent from "./ErrorItemComponent";
-import ConfirmComponent from "../../../components/ConfirmComponent";
-import AvatarView from "../../../components/AvatarView";
 import notifySnackbar from "../../../controllers/notifySnackbar";
-import NavigationToolbar from "../../../components/NavigationToolbar";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import Button from "../../../controls/Button/Button";
+import Chip from "../../../controls/Chip/Chip";
+import Select from "../../../controls/Select/Select";
 import {auditReducer} from "./auditReducer";
+import ErrorItemComponent from "./ErrorItemComponent";
 import errorStyles from "./styles/Errors.module.css";
 
 // eslint-disable-next-line react/prop-types
@@ -73,23 +74,18 @@ const Errors = props => {
     return <>
         <NavigationToolbar
             backButton={null}
-            className={classes.topSticky}
-            mediumButton={<button
-                aria-label='Clear errors'
-                className={classes.iconButton}
+            mediumButton={<Button
+                color={"secondary"}
+                icon={<ClearIcon/>}
                 onClick={() => setState({...state, deleteOpen: true})}
-                type='button'
-            >
-                <ClearIcon/>
-            </button>}
-            rightButton={<button
-                aria-label='Refresh errors'
-                className={classes.iconButton}
+                title={"Clear errors"}
+            />}
+            rightButton={<Button
+                color={"secondary"}
+                icon={<RefreshIcon/>}
                 onClick={() => setState({...state, random: Math.random()})}
-                type='button'
-            >
-                <RefreshIcon/>
-            </button>}
+                title={"Refresh errors"}
+            />}
         >
             <Select
                 onChange={handleMode}
@@ -107,7 +103,7 @@ const Errors = props => {
                 onDelete={clearFilteredUser}
             />}
         </NavigationToolbar>
-        <div className={classes.center}>
+        <div className={errorStyles.list}>
             <LazyListComponent
                 key={random}
                 itemComponent={item => <ErrorItemComponent
