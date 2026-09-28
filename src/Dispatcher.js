@@ -32,7 +32,7 @@ import {
 import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import {installWrapperControl} from "./controllers/WrapperControl";
-import MetaInfoView from "./components/MetaInfoView";
+import SystemAlert from "./components/SystemAlert";
 import {restoreLanguage} from "./reducers/languageReducer";
 import notifySnackbar from "./controllers/notifySnackbar";
 import {getScrollPosition} from "./controllers/useScrollPosition";
@@ -409,7 +409,7 @@ const DispatcherInitialized = (props) => {
     if (fatal) {
         return <ThemeProvider theme={theme}>
             <CssThemeProvider mode={theme.cssMode}>
-                <MetaInfoView message={fatal.message}/>
+                <SystemAlert message={fatal.message}/>
             </CssThemeProvider>
         </ThemeProvider>
     }

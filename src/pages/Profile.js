@@ -40,7 +40,7 @@ import {styles} from "../controllers/Theme";
 import NavigationToolbar from "../components/NavigationToolbar";
 import notifySnackbar from "../controllers/notifySnackbar";
 import FlexFabComponent from "../components/FlexFabComponent";
-import MetaInfoView from "../components/MetaInfoView";
+import SystemAlert from "../components/SystemAlert";
 
 const stylesProfile = theme => ({
     root: {
@@ -199,11 +199,11 @@ const Profile = (
             />}
         />
         <Grid container className={classes.center}>
-            {userData.disabled && <MetaInfoView
+            {userData.disabled && <SystemAlert
                 message={
                     <h4>{t("User.Account is suspended. Please contact with administrator.")}</h4>}
             />}
-            {!userData.verified && <MetaInfoView
+            {!userData.verified && <SystemAlert
                 message={
                     <h4>{t("User.You still have email not verified. Some features will not be available. If you were already verified please log out and log in again.")}</h4>}
             />}

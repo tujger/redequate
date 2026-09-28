@@ -6,7 +6,7 @@ import {useMetaInfo, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
-import MetaInfoView from "./MetaInfoView";
+import SystemAlert from "./SystemAlert";
 import styles from "./styles/MainContent.module.css";
 
 export default props => {
@@ -19,7 +19,7 @@ export default props => {
     const isDisabled = metaInfo && metaInfo.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
     return <div className={styles.root}>
-        <MetaInfoView/>
+        <SystemAlert/>
         {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
                 return <Route
