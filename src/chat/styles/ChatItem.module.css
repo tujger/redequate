@@ -9,7 +9,7 @@
     margin-left: 10%;
 
     & .textWrapper {
-        background-color: var(--theme-color-paper-alt);
+        background-color: var(--theme-color-surface-alt);
     }
 }
 

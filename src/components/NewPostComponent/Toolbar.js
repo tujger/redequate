@@ -2,6 +2,7 @@ import BackIcon from "@material-ui/icons/ArrowBack";
 import SendIcon from "@material-ui/icons/Send";
 import React from "react";
 import {useTranslation} from "react-i18next";
+import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import NavigationToolbar from "../NavigationToolbar";
 import toolbarStyles from "./styles/Toolbar.module.css";
@@ -58,8 +59,8 @@ export default (
         />}
         {bottom && <div className={toolbarStyles.actions}>
             <div className={toolbarStyles.upload}>{uploadComponent}</div>
-            {actionButton(t("Common.Cancel"), onCancel, t("Common.Cancel"))}
-            {actionButton(t("Common.Send"), onSend, t("Common.Send"))}
+            <Button onClick={onCancel} variant={"text"}>{t("Common.Cancel")}</Button>
+            <Button onClick={onSend} variant={"text"}>{t("Common.Send")}</Button>
         </div>}
     </>
 };
