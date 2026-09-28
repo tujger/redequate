@@ -1,20 +1,17 @@
-import React from "react";
-import {useHistory, withRouter} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
 import PropTypes from "prop-types";
-import {connect} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {logoutUser} from "../controllers/UserData";
-import {refreshAll} from "../controllers/Store";
-import {usePages, useStore} from "../controllers/General";
+import {connect} from "react-redux";
+import {useHistory, withRouter} from "react-router-dom";
 import LoadingComponent from "../components/LoadingComponent";
-import {styles} from "../controllers/Theme";
+import {usePages, useStore} from "../controllers/General";
+import {refreshAll} from "../controllers/Store";
+import {logoutUser} from "../controllers/UserData";
+import Button from "../controls/Button/Button";
+import styles from "./styles/Logout.module.css";
 
 const Logout = (props) => {
-    const {classes, immediate = true} = props;
+    const {immediate = true} = props;
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
@@ -36,34 +33,26 @@ const Logout = (props) => {
     }, [])
 
     if (immediate) {
-        return <Grid container>
-            <Box m={1}/>
+        return <div className={styles.immediate}>
             <LoadingComponent text={t("Login.Logging out...")}/>
-            <Box m={1}/>
-        </Grid>;
+        </div>;
     }
-    return <Grid container className={classes.center}>
-        <Box m={0.5}/>
-        <Grid container spacing={1} alignItems={"flex-end"}>
+    return <div className={styles.center}>
+        <div className={styles.content}>
             {t("Login.Do you want to log out?")}
-        </Grid>
-        <Box m={1}/>
-        <Grid container spacing={1} alignItems={"flex-end"}>
-            <Button
-                size={"large"}
-                children={t("Login.Logout")}
-                color={"secondary"}
-                onClick={() => {
-                    doLogout();
-                }}
-                variant={"contained"}
-            />
-        </Grid>
-    </Grid>
+        </div>
+        <Button
+            onClick={() => {
+                doLogout();
+            }}
+        >
+            {t("Login.Logout")}
+        </Button>
+    </div>
 };
 
 Logout.propTypes = {
     immediate: PropTypes.bool,
 };
 
-export default connect()(withRouter(withStyles(styles)(Logout)));
+export default connect()(withRouter(Logout));
