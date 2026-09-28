@@ -111,7 +111,6 @@ const Post = (props) => {
         </Grid>
         {matchRole(pages.reply.roles, currentUserData) && <NewPostComponent
             buttonComponent={<FlexFabComponent
-                className={classesPost.replyButton}
                 icon={<AddIcon/>}
                 label={t("Post.Add comment")}
             />}

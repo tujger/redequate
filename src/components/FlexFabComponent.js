@@ -7,7 +7,7 @@ const FlexFabComponent = ({
     capitalized = false,
     children,
     className,
-    color = "secondary",
+    color = "primary",
     icon,
     label,
     onClick = evt => {

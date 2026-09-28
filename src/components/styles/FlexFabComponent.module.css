@@ -21,7 +21,7 @@
     z-index: 1;
 
     &:hover {
-        background-color: var(--fab-background);
+        background-color: var(--theme-color-highlight);
     }
 
     &:focus-visible {
@@ -61,7 +61,7 @@
 }
 
 .secondary {
-    --fab-background: var(--theme-color-highlight);
+    --fab-background: var(--theme-color-secondary);
 }
 
 .expanded {

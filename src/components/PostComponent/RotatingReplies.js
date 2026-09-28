@@ -1,14 +1,15 @@
 import React from "react";
-import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
+import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas, usePages} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import {UserData} from "../../controllers/UserData";
+import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import Pagination from "../../controllers/FirebasePagination";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import MentionedTextComponent from "../MentionedTextComponent";
 import cardStyles from "./styles/PostComponent.module.css";
 import motionStyles from "./styles/PostMotion.module.css";
 import textStyles from "./styles/PostText.module.css";
@@ -98,11 +99,11 @@ export default (props) => {
                 />}
                 className={motionStyles.singleline}
                 label={<span className={cardStyles.textSmall}>
-                    <span className={textStyles.suggestionName}>
-                        {userData.name}
-                    </span> <MentionedTextComponent
-                    disableClick mentions={mentions}
-                    text={postData.text.substr(0, 200)}/>
+                    <UserName id={userData.id}>{userData.name}</UserName>
+                    <MentionedTextComponent
+                        disableClick mentions={mentions}
+                        text={postData.text.substr(0, 200)}
+                    />
                 </span>}
                 pattern={"transparent"}
             />;
@@ -183,7 +184,11 @@ export default (props) => {
     }, []);
 
     if (!item) return null;
-    return <div ref={rootRef} className={[cardStyles.layout, motionStyles.rotatingRoot].join(" ")} onClick={handleClick}>
+    return <div
+        className={[cardStyles.layout, motionStyles.rotatingRoot].join(" ")}
+        onClick={handleClick}
+        ref={rootRef}
+    >
         {itemPrev && <div
             children={itemPrev}
             key={Math.random()}

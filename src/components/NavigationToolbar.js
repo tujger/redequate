@@ -32,13 +32,13 @@ export default props => {
     />;
 
     const givenBackButton = backButton === undefined ? defaultBackButton : backButton;
-    const onBackPointerDown = useRippleEffect();
+    const onBackPointerDown = useRippleEffect(givenBackButton?.props.onPointerDown);
     const isDefaultBackButton = givenBackButton === defaultBackButton;
 
     const button = givenBackButton && React.cloneElement(givenBackButton, {
         className: [styles.backButton, givenBackButton.props.className].filter(Boolean).join(" "),
         onClick: givenBackButton.props.onClick || (() => history.goBack()),
-        onPointerDown: isDefaultBackButton ? onBackPointerDown : givenBackButton.props.onPointerDown,
+        onPointerDown: onBackPointerDown,
         style: isDefaultBackButton
             ? {...(givenBackButton.props.style || {})}
             : givenBackButton.props.style,
