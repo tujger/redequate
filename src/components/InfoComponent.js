@@ -1,14 +1,15 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
+import styles from "./styles/InfoComponent.module.css";
 
 const InfoComponent = ({children, prefix, suffix, variant = "caption", className, style}) => {
     if (!children) return null;
-    return <Grid item className={className} style={style}>
-        <Typography variant={variant}>
+    const variantClass = styles[variant] || styles.caption;
+
+    return <div className={[styles.info, variantClass, className].filter(Boolean).join(" ")} style={style}>
+        <span>
             {prefix} {children} {suffix}
-        </Typography>
-    </Grid>
+        </span>
+    </div>
 }
 
 export default InfoComponent;

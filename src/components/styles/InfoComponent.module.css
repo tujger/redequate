@@ -1,0 +1,10 @@
+.info {
+    min-width: 0;
+}
+
+.caption {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.03333em;
+    line-height: 1.66;
+}
