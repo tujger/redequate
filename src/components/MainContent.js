@@ -7,7 +7,6 @@ import notifySnackbar from "../controllers/notifySnackbar";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import SystemAlert from "./SystemAlert";
-import styles from "./styles/MainContent.module.css";
 
 export default props => {
     const currentUserData = useCurrentUserData();
@@ -18,7 +17,7 @@ export default props => {
 
     const isDisabled = metaInfo && metaInfo.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
-    return <div className={styles.root}>
+    return <>
         <SystemAlert/>
         {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
@@ -83,5 +82,5 @@ export default props => {
                 />
             })}</Switch>
         </React.Suspense>}
-    </div>
+    </>
 };

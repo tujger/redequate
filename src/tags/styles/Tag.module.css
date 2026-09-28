@@ -1,0 +1,129 @@
+.profileContainer {
+    box-sizing: border-box;
+    padding: var(--theme-spacing);
+    padding-left: var(--theme-content-padding-left);
+    padding-right: var(--theme-content-padding-right);
+    width: var(--theme-content-width);
+}
+
+.profile {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.profileFieldImage {
+    color: darkgray;
+    position: relative;
+}
+
+.profileFields {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.profileField {
+    align-items: center;
+    display: flex;
+    justify-content: flex-start;
+    max-width: 100%;
+    width: 100%;
+
+    & > * {
+        max-width: 100%;
+    }
+}
+
+.profileActions {
+    gap: var(--theme-spacing);
+}
+
+.profileImage {
+    border-radius: calc(var(--theme-spacing) * 2);
+    object-fit: cover;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.bodyText {
+    font-size: 0.875rem;
+    line-height: 1.43;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.posts {
+    box-sizing: border-box;
+    padding: var(--theme-spacing);
+    padding-left: var(--theme-content-padding-left);
+    padding-right: var(--theme-content-padding-right);
+    width: var(--theme-content-width);
+}
+
+@media (min-width: 600px) {
+    .profile {
+        flex-flow: row nowrap;
+    }
+
+    .profileFieldImage {
+        box-sizing: content-box;
+        display: flex;
+        justify-content: center;
+        margin-right: calc(var(--theme-spacing) * 2);
+        max-width: calc(var(--theme-spacing) * 30);
+        width: calc(var(--theme-spacing) * 18);
+    }
+
+    .profileImage {
+        height: calc(var(--theme-spacing) * 18);
+        min-height: calc(var(--theme-spacing) * 18);
+        width: 100%;
+    }
+
+    .profileFields {
+        flex: 1;
+        justify-content: flex-start;
+        width: auto;
+    }
+
+    .profileField {
+        justify-content: flex-start;
+        width: auto;
+    }
+}
+
+@media (max-width: 599px) {
+    .profile {
+        flex-direction: column;
+    }
+
+    .profileFields {
+        margin-bottom: calc(var(--theme-spacing) * 2);
+        width: 100%;
+    }
+
+    .profileFieldImage {
+        max-width: 100%;
+        text-align: center;
+        width: 100%;
+    }
+
+    .profileImage {
+        height: calc(var(--theme-spacing) * 25);
+        min-height: calc(var(--theme-spacing) * 25);
+        width: 100%;
+    }
+
+    .profileField {
+        justify-content: center;
+        text-align: center;
+    }
+}

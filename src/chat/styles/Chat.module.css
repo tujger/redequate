@@ -3,8 +3,9 @@
     flex: 1 1 auto;
     display: flex;
     padding: var(--theme-spacing);
-    padding-left: 240px;
-    padding-right: 240px;
+    padding-left: var(--theme-content-padding-left);
+    padding-right: var(--theme-content-padding-right);
+    width: var(--theme-content-width);
 }
 
 .indent {
@@ -15,6 +16,7 @@
     bottom: 0;
     box-sizing: border-box;
     position: sticky;
-    padding-left: 240px;
-    padding-right: 240px;
+    padding-left: var(--theme-content-padding-left);
+    padding-right: var(--theme-content-padding-right);
+    width: var(--theme-content-width);
 }

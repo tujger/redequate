@@ -3,6 +3,7 @@
     display: flex;
     flex-direction: column;
     padding: var(--theme-spacing);
-    padding-left: 240px;
-    padding-right: 240px;
+    padding-left: var(--theme-content-padding-left);
+    padding-right: var(--theme-content-padding-right);
+    width: var(--theme-content-width);
 }
