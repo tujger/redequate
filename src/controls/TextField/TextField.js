@@ -1,5 +1,5 @@
-import React from "react";
 import ClearIcon from "@material-ui/icons/Clear";
+import React from "react";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import Button from "../Button/Button";
 import styles from "./TextField.module.css";
@@ -14,7 +14,7 @@ export default props => {
         helper,
         id,
         inputComponent,
-        label,
+        label = undefined,
         onClear,
         onBlur,
         onChange,
@@ -38,7 +38,8 @@ export default props => {
         event.stopPropagation();
         const clearEvent = {
             currentTarget: event.currentTarget,
-            persist: () => {},
+            persist: () => {
+            },
             target: {
                 name: otherProps.name,
                 value: "",
@@ -93,18 +94,21 @@ export default props => {
     >
         {label && <span className={styles.label}>{label}</span>}
         {canClear && <Button
-            aria-label={"Clear"}
             className={styles.clearButton}
-            color={"inherit"}
             icon={<ClearIcon/>}
             onClick={handleClear}
             size={"small"}
             title={"Clear"}
-            variant={"text"}
         />}
         {inputComponent
-            ? React.createElement(inputComponent, {...inputProps, inputRef: inputRefCallback})
-            : <input {...inputProps} ref={inputRef}/>}
+            ? React.createElement(inputComponent, {
+                ...inputProps,
+                inputRef: inputRefCallback
+            })
+            : <input
+                {...inputProps}
+                ref={inputRef}
+            />}
         {helper && <span className={styles.helper}>{helper}</span>}
     </label>;
 };

@@ -1,5 +1,4 @@
 import AddIcon from "@material-ui/icons/Add";
-import Clear from "@material-ui/icons/Clear";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect, useDispatch} from "react-redux";
@@ -15,10 +14,9 @@ import Pagination from "../controllers/FirebasePagination";
 import {usePages} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {normalizeSortName} from "../controllers/UserData";
-import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
+import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
-import styles from "./styles/Tags.module.css";
 import {tagsReducer} from "./tagsReducer";
 
 const Tags = (props) => {
@@ -134,22 +132,11 @@ const Tags = (props) => {
                 options={modeOptions}
                 value={mode}
             />
-            {mode === "all" && <div className={styles.filter}>
-                <input
-                    className={styles.input}
-                    onChange={handleFilter}
-                    placeholder={"Search"}
-                    value={filter}
-                />
-                {filter && <Button
-                    color={"secondary"}
-                    icon={<Clear/>}
-                    onClick={handleClearFilter}
-                    size={"small"}
-                    title={t("Common.Clear")}
-                    variant={"text"}
-                />}
-            </div>}
+            {mode === "all" && <TextField
+                onChange={handleFilter}
+                placeholder={"Search"}
+                value={filter}
+            />}
         </NavigationToolbar>
         <div className={baseStyles.content}>
             <LazyListComponent

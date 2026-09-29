@@ -1,14 +1,10 @@
-import Clear from "@material-ui/icons/Clear";
 import React from "react";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import Select from "../../../controls/Select/Select";
-import useRippleEffect from "../../../helpers/useRippleEffect";
-import headerStyles from "./styles/UsersHeader.module.css";
+import TextField from "../../../controls/TextField/TextField";
 
 // eslint-disable-next-line react/prop-types
 export default ({classes: givenClasses, filter, handleChange, mode}) => {
-    const onPointerDown = useRippleEffect();
-    const classes = {...givenClasses, ...headerStyles};
     const options = [
         {label: "All users", value: "all"},
         {label: "Administrators", value: "admins"},
@@ -24,29 +20,14 @@ export default ({classes: givenClasses, filter, handleChange, mode}) => {
         value={mode}
     />;
 
-    const input = mode === "all" && <div className={classes.inputWrapper}>
-        <input
-            autoFocus
-            className={classes.input}
-            onChange={handleChange("filter")}
-            placeholder='Search'
-            value={filter}
-        />
-        {filter && <button
-            aria-label='Clear'
-            className={[classes.clearButton].join(" ")}
-            onClick={handleChange("clear")}
-            onPointerDown={onPointerDown}
-            title='Clear'
-            type='button'
-        >
-            <Clear/>
-        </button>}
-    </div>;
+    const input = mode === "all" && <TextField
+        autoFocus
+        onChange={handleChange("filter")}
+        placeholder={"Search"}
+        value={filter}
+    />;
 
-    return <NavigationToolbar
-        backButton={null}
-    >
+    return <NavigationToolbar backButton={null}>
         {select}
         {input}
     </NavigationToolbar>

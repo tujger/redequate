@@ -26,19 +26,6 @@ export default (
         handler();
     };
 
-    const actionButton = (label, handler, children) => <div
-        aria-disabled={disabled}
-        className={toolbarStyles.actionButton}
-        onClick={disabled ? undefined : handler}
-        onKeyDown={handleKeyDown(handler)}
-        onPointerDown={onPointerDown}
-        role='button'
-        tabIndex={disabled ? -1 : 0}
-        title={label}
-    >
-        {children}
-    </div>;
-
     return <>
         {top && <NavigationToolbar
             backButton={<div
@@ -55,12 +42,18 @@ export default (
             children={title}
             className={toolbarStyles.toolbar}
             mediumButton={uploadComponent}
-            rightButton={actionButton(t("Common.Send"), onSend, <SendIcon/>)}
+            rightButton={<Button
+                color={"secondary"}
+                disabled={disabled}
+                icon={<SendIcon/>}
+                onClick={onSend}
+                title={t("Common.Send")}
+            />}
         />}
         {bottom && <div className={toolbarStyles.actions}>
             <div className={toolbarStyles.upload}>{uploadComponent}</div>
             <Button onClick={onCancel} variant={"text"}>{t("Common.Cancel")}</Button>
-            <Button color={"primary"} onClick={onSend} variant={"text"}>{t("Common.Send")}</Button>
+            <Button color={"primary"} disabled={disabled} onClick={onSend} variant={"text"}>{t("Common.Send")}</Button>
         </div>}
     </>
 };

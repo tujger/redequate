@@ -57,6 +57,7 @@ const NewPostComponent = props => {
     const windowData = useWindowData();
     const onUploadPointerDown = useRippleEffect();
     const [state, setState] = React.useState({});
+    const isSendingRef = React.useRef(false);
     const {disabled, hiddenTag, images, open, ready, text, uppy, imageDescriptors} = state;
     const {camera = true, multi = true} = UploadProps;
 
@@ -78,8 +79,11 @@ const NewPostComponent = props => {
     }
 
     const handleSend = () => {
+        if (disabled || isSendingRef.current) return;
+        isSendingRef.current = true;
+        setState(state => ({...state, disabled: true}));
+
         const preparePublishing = async () => {
-            setState(state => ({...state, disabled: true}));
             dispatch(ProgressView.SHOW);
         }
         const checkIfTextChanged = async () => {
@@ -208,6 +212,7 @@ const NewPostComponent = props => {
             onComplete({key: snapshot.key})
         }
         const finalizePublishing = async () => {
+            isSendingRef.current = false;
             setState(state => ({...state, disabled: false}));
             dispatch(ProgressView.HIDE);
         }
