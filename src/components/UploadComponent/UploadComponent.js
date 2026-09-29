@@ -17,7 +17,7 @@ import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useMetaInfo} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import styles from "./UploadComponent.module.css";
+import styles from "./styles/UploadComponent.module.css";
 import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
 
 const MAX_FILE_SIZE = 20 * 1024;
