@@ -2,7 +2,7 @@
     && {
         color: inherit;
         font: inherit;
-        min-width: calc(var(--theme-spacing) * 5);
+        min-width: calc(var(--theme-spacing) * 4.5);
     }
 
     && :global(.MuiSelect-select) {

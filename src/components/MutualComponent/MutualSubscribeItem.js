@@ -118,7 +118,7 @@ const MutualSubscribeItem = (
             verified={true}
         />
         <div className={styles.cardContent}>
-            <div className={[styles.title, hasMenu && styles.hasMenu].filter(Boolean).join(" ")}>
+            <div className={[styles.title].filter(Boolean).join(" ")}>
                 <b className={styles.itemName}>{userData.name}</b>
                 {counter && <span className={styles.counter}>
                     <CounterComponent
@@ -132,28 +132,6 @@ const MutualSubscribeItem = (
                     className={styles.date}
                     title={new Date(value.timestamp).toLocaleString()}
                 >{toDateString(value.timestamp)}</span>}
-                {hasMenu && <Select
-                    className={styles.menuButton}
-                    disabled={disabled}
-                    displayEmpty
-                    iconMenu
-                    IconComponent={() => null}
-                    inputProps={{"aria-label": menuLabel}}
-                    MenuProps={{keepMounted: true}}
-                    onChange={handleUnsubscribe}
-                    onClick={event => event.stopPropagation()}
-                    onMouseDown={event => event.stopPropagation()}
-                    onPointerDown={onMenuPointerDown}
-                    onOpen={handleMenuOpen}
-                    onClose={handleMenuClose}
-                    open={menuOpen}
-                    options={[{
-                        label: menuLabel + (isSameUser ? "" : " - force as Admin"),
-                        value: "unsubscribe",
-                    }]}
-                    renderValue={() => <MenuIcon/>}
-                    value={""}
-                />}
             </div>
             <div className={styles.message}>{value.message}</div>
         </div>

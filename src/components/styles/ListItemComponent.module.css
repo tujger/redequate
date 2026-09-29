@@ -30,3 +30,10 @@
     touch-action: pan-y;
     width: 100%;
 }
+
+.menuButton {
+    color: var(--theme-color-secondary);
+    position: absolute !important;
+    right: calc(var(--theme-spacing) * .5);
+    top: calc(var(--theme-spacing) * .5);
+}

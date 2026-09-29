@@ -1,48 +1,17 @@
 import React from "react";
-import List from "@material-ui/core/List";
-import Toolbar from "@material-ui/core/Toolbar";
-import IconButton from "@material-ui/core/IconButton";
-import withStyles from "@material-ui/styles/withStyles";
-import Grid from "@material-ui/core/Grid";
-import Tooltip from "@material-ui/core/Tooltip";
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import Button from "@material-ui/core/Button";
 import ClearIcon from "@material-ui/icons/Clear";
 import CheckAllIcon from "@material-ui/icons/DoneAll";
 import SortIcon from "@material-ui/icons/Sort";
 import PropTypes from "prop-types";
+import Button from "../controls/Button/Button";
 import ListItemComponent from "./ListItemComponent";
 import ListAction from "./ListAction";
+import ModalComponent from "./ModalComponent";
 import notifySnackbar from "../controllers/notifySnackbar";
-
-const styles = theme => ({
-    counter: {
-        alignItems: "center",
-        display: "flex",
-        flex: "auto",
-    },
-    list: {
-        paddingTop: 0,
-    },
-    toolbar: {
-        backgroundColor: theme.palette.background.default,
-        justifyContent: "flex-end",
-        marginLeft: -theme.spacing(1),
-        marginRight: -theme.spacing(1),
-        opacity: 0.9,
-        position: "sticky",
-        top: 0,
-        zIndex: 1,
-    }
-});
+import styles from "./styles/ListComponent.module.css";
 
 const ListComponent = props => {
     let {
-        classes,
         items,
         emptyComponent,
         itemComponent,
@@ -52,6 +21,11 @@ const ListComponent = props => {
 
     const [state, setState] = React.useState({/*sortType: "createDate", sortReverse: false, */countSelected: 0});
     const {countSelected, action = false} = state;
+    const cancelButtonRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (action) cancelButtonRef.current?.focus();
+    }, [action]);
 
     items = items.sort((first, second) => {
         if (["fromDate", "toDate", "createDate"].indexOf(state.sortType) >= 0) {
@@ -131,20 +105,22 @@ const ListComponent = props => {
     }
 
     return <React.Fragment>
-        <Toolbar className={classes.toolbar}>
-            {countSelected ? <Grid item className={classes.counter}>
+        <div className={styles.toolbar}>
+            {countSelected ? <div className={styles.counter}>
                 {countSelected} selected
-            </Grid> : null}
-            {countSelected ? <Tooltip title={"Select all"}>
-                <IconButton size={"medium"} onClick={selectAll} aria-label={"Select all"} onContextMenu={hiddenContextMenu}>
-                    <CheckAllIcon/>
-                </IconButton>
-            </Tooltip> : null}
-            {countSelected ? <Tooltip title={"Unselect all"}>
-                <IconButton aria-label={"Unselect all"} size={"medium"} onClick={unselectAll} onContextMenu={hiddenContextMenu}>
-                    <ClearIcon/>
-                </IconButton>
-            </Tooltip> : null}
+            </div> : null}
+            {countSelected ? <Button
+                icon={<CheckAllIcon/>}
+                onClick={selectAll}
+                onContextMenu={hiddenContextMenu}
+                title={"Select all"}
+            /> : null}
+            {countSelected ? <Button
+                icon={<ClearIcon/>}
+                onClick={unselectAll}
+                onContextMenu={hiddenContextMenu}
+                title={"Unselect all"}
+            /> : null}
             {countSelected && leftAction ? <leftAction.toolbarButton.type
                 {...leftAction.toolbarButton.props}
                 onClick={() => actionAll(leftAction)}
@@ -155,13 +131,13 @@ const ListComponent = props => {
                 onClick={() => actionAll(rightAction)}
                 onContextMenu={hiddenContextMenu}
             /> : null}
-            {!countSelected ? <Tooltip title={"Sort"}>
-                <IconButton aria-label={"Sort"} size={"medium"} onContextMenu={hiddenContextMenu}>
-                    <SortIcon/>
-                </IconButton>
-            </Tooltip> : null}
-        </Toolbar>
-        <List className={classes.list}>
+            {!countSelected ? <Button
+                icon={<SortIcon/>}
+                onContextMenu={hiddenContextMenu}
+                title={"Sort"}
+            /> : null}
+        </div>
+        <div className={styles.list}>
             {items.map((item, index) => <ListItemComponent
                 key={index + JSON.stringify(item)}
                 onContextMenu={evt => selectItem(evt, item)}
@@ -175,30 +151,24 @@ const ListComponent = props => {
                 />
             </ListItemComponent>)}
             {!items.length && emptyComponent}
-        </List>
-        <Dialog
-            open={!!action}
-            onClose={cancelDialog}
-            aria-labelledby="draggable-dialog-title"
-        >
-            <DialogTitle style={{cursor: "move"}} id="draggable-dialog-title">
+        </div>
+        {action && <ModalComponent ariaLabelledBy={"list-action-dialog-title"} onClose={cancelDialog}>
+            <div className={styles.dialogTitle} id={"list-action-dialog-title"}>
                 {action.askTitle || "Title"}
-            </DialogTitle>
-            <DialogContent>
-                <DialogContentText>
-                    {action.ask || "Question"}
-                </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-                <Button aria-label={"Cancel"} autoFocus onClick={cancelDialog} color="primary">
+            </div>
+            <div className={styles.dialogContent}>
+                {action.ask || "Question"}
+            </div>
+            <div className={styles.dialogActions}>
+                <Button color={"primary"} onClick={cancelDialog} ref={cancelButtonRef} variant={"text"}>
                     Cancel
                 </Button>
-                <Button aria-label={"Delete"} onClick={() => actionAllConfirmed(action)}
-                        color={action.variant === "warning" ? "secondary" : "primary"}>
+                <Button onClick={() => actionAllConfirmed(action)}
+                        color={action.variant === "warning" ? "secondary" : "primary"} variant={"text"}>
                     Delete
                 </Button>
-            </DialogActions>
-        </Dialog>
+            </div>
+        </ModalComponent>}
     </React.Fragment>
 };
 
@@ -210,4 +180,4 @@ ListComponent.propTypes = {
     rightAction: PropTypes.objectOf(ListAction),
 };
 
-export default withStyles(styles)(ListComponent);
+export default ListComponent;

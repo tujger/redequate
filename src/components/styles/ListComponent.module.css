@@ -1,0 +1,51 @@
+.toolbar {
+    align-items: center;
+    background-color: var(--theme-color-background);
+    box-sizing: border-box;
+    display: flex;
+    justify-content: flex-end;
+    margin-left: calc(var(--theme-spacing) * -1);
+    margin-right: calc(var(--theme-spacing) * -1);
+    min-height: calc(var(--theme-spacing) * 8);
+    opacity: 0.9;
+    padding: 0 calc(var(--theme-spacing) * 3);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.counter {
+    align-items: center;
+    display: flex;
+    flex: auto;
+}
+
+.list {
+    padding-bottom: var(--theme-spacing);
+}
+
+.dialogTitle {
+    font-size: var(--theme-font-size-large);
+    font-weight: 500;
+    padding: calc(var(--theme-spacing) * 2) calc(var(--theme-spacing) * 3);
+}
+
+.dialogContent {
+    color: var(--theme-color-text);
+    overflow: auto;
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 3);
+}
+
+.dialogActions {
+    align-items: center;
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--theme-spacing);
+}
+
+@media (max-width: 599px) {
+    .toolbar {
+        min-height: calc(var(--theme-spacing) * 7);
+        padding: 0 calc(var(--theme-spacing) * 2);
+    }
+}

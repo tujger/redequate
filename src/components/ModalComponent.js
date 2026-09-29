@@ -5,6 +5,7 @@ import styles from "./styles/ModalComponent.module.css";
 
 export default (
     {
+        ariaLabelledBy,
         children,
         closeOnBackdropClick = true,
         onClose,
@@ -55,6 +56,7 @@ export default (
         />
         <div
             aria-modal={"true"}
+            aria-labelledby={ariaLabelledBy}
             className={styles.dialog}
             onBeforeInput={stopPropagation}
             onChange={stopPropagation}

@@ -118,7 +118,7 @@ export default (props) => {
         >
             {children}
             {!isNarrow && menu && <Select
-                className={cardStyles.cardMenuButton}
+                className={styles.menuButton}
                 displayEmpty
                 iconMenu
                 IconComponent={() => null}
