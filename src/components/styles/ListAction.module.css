@@ -1,0 +1,32 @@
+.itemAction {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    left: var(--theme-spacing);
+    position: absolute;
+    right: var(--theme-spacing);
+}
+
+.itemIcon {
+    align-items: center;
+    border-radius: 50%;
+    box-sizing: border-box;
+    color: var(--list-action-color);
+    display: flex;
+    height: calc(var(--theme-spacing) * 6);
+    justify-content: center;
+    width: calc(var(--theme-spacing) * 6);
+
+    &.selected {
+        background-color: var(--list-action-color);
+        color: var(--list-action-contrast);
+    }
+}
+
+.label {
+    color: transparent;
+
+    &.selected {
+        color: var(--list-action-color);
+    }
+}

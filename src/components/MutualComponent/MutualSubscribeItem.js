@@ -104,10 +104,10 @@ const MutualSubscribeItem = (
             action: handleUnsubscribe,
             itemButton: (props) => <div {...props}>Unsubscribe</div>
         }}
-        menu={[{
+        menu={hasMenu ? [{
             label: menuLabel + (isSameUser ? "" : " - force as Admin"),
             value: "unsubscribe",
-        }]}
+        }] : undefined}
         onClickCapture={handleOpen}
         onKeyDown={handleKeyDown}
     >

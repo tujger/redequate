@@ -1,33 +1,28 @@
 import React from "react";
-import createStyles from "@material-ui/styles/createStyles";
-import makeStyles from "@material-ui/styles/makeStyles";
 import DeleteIcon from "@material-ui/icons/Delete";
-import IconButton from "@material-ui/core/IconButton";
-import Tooltip from "@material-ui/core/Tooltip";
+import Button from "../controls/Button/Button";
+import styles from "./styles/ListAction.module.css";
 
-const useStyles = makeStyles(theme => createStyles({
-    itemAction: {
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-        left: theme.spacing(1),
-        right: theme.spacing(1),
-        position: "absolute"
-    },
-    button: {
-        color: props => props.color
-    },
-    buttonSelected: {
-        backgroundColor: props => props.color,
-        color: props => theme.palette.getContrastText(props.color),
-    },
-    label: {
-        color: "transparent"
-    },
-    labelSelected: {
-        color: props => props.color
+const getContrastText = color => {
+    let channels;
+    const hex = typeof color === "string" && color.match(/^#([\da-f]{3}|[\da-f]{6})$/i);
+    const rgb = typeof color === "string" && color.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)$/i);
+
+    if (hex) {
+        const value = hex[1].length === 3 ? [...hex[1]].map(digit => digit + digit).join("") : hex[1];
+        channels = [0, 2, 4].map(index => parseInt(value.slice(index, index + 2), 16));
+    } else if (rgb) {
+        channels = rgb.slice(1, 4).map(Number);
+    } else {
+        return "rgba(0, 0, 0, 0.87)";
     }
-}));
+
+    const values = channels.map(value => value / 255).map(value =>
+        value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4)
+    );
+    const luminance = 0.2126 * values[0] + 0.7152 * values[1] + 0.0722 * values[2];
+    return (luminance + 0.05) / 0.05 >= 3 ? "rgba(0, 0, 0, 0.87)" : "#fff";
+};
 
 const listAction = props => {
     const {action, itemButton, toolbarButton, variant} = props;
@@ -35,33 +30,25 @@ const listAction = props => {
     const {label: itemButtonLabel, icon: itemButtonIcon = <DeleteIcon/>, color = "#00ff00"} = itemButton;
     const {label: toolbarButtonLabel, icon: toolbarButtonIcon = <DeleteIcon/>, ask} = toolbarButton;
 
-    const classes = useStyles({color: color});
+    const contrastText = getContrastText(color);
 
     return {
-        action: action,
-        ask: ask,
+        action,
+        ask,
         askTitle: toolbarButtonLabel,
-        itemButton: props => (<div
-            className={classes.itemAction}
-            style={props.style || ""}>
-            <IconButton
-                children={itemButtonIcon}
-                className={[classes.button, props.selected ? classes.buttonSelected : ""].join(" ")}
-            />
-            <span
-                children={itemButtonLabel}
-                className={[classes.label, props.selected ? classes.labelSelected : ""].join(" ")}
-            />
-        </div>),
-        toolbarButton: (<Tooltip title={toolbarButtonLabel}>
-            <IconButton
-                children={toolbarButtonIcon}
-                size={"medium"}
-                // onClick={action}
-                // onContextMenu={() => {console.log("oncontextmenu")}}
-            />
-        </Tooltip>),
-        variant: variant,
+        itemButton: itemProps => <div
+            className={[styles.itemAction, itemProps.className].filter(Boolean).join(" ")}
+            style={{...itemProps.style, "--list-action-color": color, "--list-action-contrast": contrastText}}
+        >
+            <span className={[styles.itemIcon, itemProps.selected && styles.selected].filter(Boolean).join(" ")}>
+                {itemButtonIcon}
+            </span>
+            <span className={[styles.label, itemProps.selected && styles.selected].filter(Boolean).join(" ")}>
+                {itemButtonLabel}
+            </span>
+        </div>,
+        toolbarButton: <Button icon={toolbarButtonIcon} size={"medium"} title={toolbarButtonLabel}/>,
+        variant,
     }
 };
 

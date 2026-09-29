@@ -123,7 +123,7 @@ export default (props) => {
                 iconMenu
                 IconComponent={() => null}
                 onChange={onContextMenu}
-                onClick={event => {
+                onClickCapture={event => {
                     event.stopPropagation();
                 }}
                 renderValue={() => <MenuIcon/>}
@@ -132,7 +132,7 @@ export default (props) => {
                 {menu.map((item, index) => <SelectItem
                     children={item.label}
                     key={index}
-                    onClick={event => {
+                    onClickCapture={event => {
                         event.stopPropagation();
                         onMenuSelect?.(event, item);
                     }}
