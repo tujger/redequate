@@ -15,7 +15,9 @@ export default props => {
         onClick,
         onKeyDown: givenOnKeyDown,
         onPointerDown: givenOnPointerDown,
+        role = "button",
         size = "medium",
+        tabIndex: givenTabIndex = 0,
         title = undefined,
         variant = undefined,
         ...otherProps
@@ -54,8 +56,8 @@ export default props => {
         onClick={disabled ? undefined : onClick}
         onKeyDown={disabled ? undefined : onKeyDown}
         onPointerDown={disabled ? undefined : onPointerDown}
-        role={"button"}
-        tabIndex={disabled ? -1 : 0}
+        role={role}
+        tabIndex={disabled ? -1 : givenTabIndex}
         title={title}
     >
         {icon}

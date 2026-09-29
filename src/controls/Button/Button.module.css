@@ -9,13 +9,9 @@
     min-height: calc(var(--theme-spacing) * 4.5);
     outline: 0;
     padding: 0 calc(var(--theme-spacing) * 2);
+    position: relative;
     text-transform: uppercase;
     transition: background-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
-
-    &:focus-visible {
-        outline: calc(var(--theme-spacing) / 4) solid var(--theme-color-highlight);
-        outline-offset: calc(var(--theme-spacing) / 4);
-    }
 }
 
 .contained {
@@ -102,7 +98,7 @@
 }
 
 .small {
-    font-size: 0.8rem;
+    font-size: 0.825rem;
     min-height: calc(var(--theme-spacing) * 4);
     padding-left: var(--theme-spacing);
     padding-right: var(--theme-spacing);

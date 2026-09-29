@@ -10,6 +10,7 @@ import {fetchCallable} from "../../../controllers/Firebase";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
+import Button from "../../../controls/Button/Button";
 import useRippleEffect from "../../../helpers/useRippleEffect";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 
@@ -109,17 +110,15 @@ function ErrorItemComponent({data, classes: givenClasses, skeleton, label, onUse
                     {(JSON.stringify(data.value.error) || "").substr(0, 100)}
                 </div>
             </div>
-            <button
-                aria-label='Remove error'
+            <Button
                 className={classes.removeButton}
+                icon={<ClearIcon/>}
                 onClick={event => {
                     event.stopPropagation();
                     handleRemove();
                 }}
-                type='button'
-            >
-                <ClearIcon/>
-            </button>
+                title={"Remove error"}
+            />
         </div>
         {alert && <ConfirmComponent
             confirmLabel={"Try to fix"}

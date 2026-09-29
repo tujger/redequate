@@ -75,7 +75,13 @@ module.exports = [
             uploadComponentControls: 'src/components/UploadComponent/uploadComponentControls',
 
             // controls
+            Button: 'src/controls/Button/Button.js',
+            Chip: 'src/controls/Chip/Chip.js',
+            Select: 'src/controls/Select/Select.js',
+            Switch: 'src/controls/Switch/Switch.js',
+            Tabs: 'src/controls/Tabs/Tabs.js',
             TextField: 'src/controls/TextField/TextField.js',
+            UserName: 'src/controls/UserName/UserName.js',
 
             // components
             AvatarView: 'src/components/AvatarView.js',
