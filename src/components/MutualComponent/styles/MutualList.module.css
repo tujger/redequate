@@ -1,0 +1,9 @@
+.fallbackItem {
+    border-bottom: 1px solid lightgray;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+    width: 100%;
+}

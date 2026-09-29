@@ -1,4 +1,3 @@
-import Grid from "@material-ui/core/Grid";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
@@ -11,6 +10,7 @@ import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentRe
 import {MutualListMode} from "./MutualConstants";
 import MutualRequestItem from "./MutualRequestItem";
 import MutualSubscribeItem from "./MutualSubscribeItem";
+import styles from "./styles/MutualList.module.css";
 
 export default props => {
     const {t} = useTranslation();
@@ -107,12 +107,12 @@ export default props => {
         } else if (mode === MutualListMode.STAMPS) {
             throw Error("'itemComponent' is not defined")
         }
-        return item => <Grid
+        return item => <div
             {...ItemProps}
-            children={JSON.stringify(item, null, " ")}
-            container
+            className={[styles.fallbackItem, ItemProps?.className].filter(Boolean).join(" ")}
             key={item.key + "_" + mixedId}
-            style={{whiteSpace: "pre-wrap", marginBottom: "16px", borderBottom: "solid lightgray 1px"}}/>
+            style={undefined}
+        >{JSON.stringify(item, null, " ")}</div>
     }
 
     const fetchItemTransform = () => {
