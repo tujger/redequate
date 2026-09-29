@@ -42,6 +42,7 @@ const NewPostComponent = props => {
         onError = error => notifySnackbar(error),
         onClose = () => console.log("[NewPost] onClose()"),
         onComplete = ({key}) => console.log("[NewPost] onComplete({key})", {key}),
+        openRequest = 0,
         replyTo,
         roles = [Role.ADMIN, Role.USER],
         tag: givenTag,
@@ -58,6 +59,7 @@ const NewPostComponent = props => {
     const onUploadPointerDown = useRippleEffect();
     const [state, setState] = React.useState({});
     const isSendingRef = React.useRef(false);
+    const previousOpenRequest = React.useRef(openRequest);
     const {disabled, hiddenTag, images, open, ready, text, uppy, imageDescriptors} = state;
     const {camera = true, multi = true} = UploadProps;
 
@@ -77,6 +79,12 @@ const NewPostComponent = props => {
             buttonComponent.props.onClick(evt);
         }
     }
+
+    React.useEffect(() => {
+        if (openRequest === previousOpenRequest.current) return;
+        previousOpenRequest.current = openRequest;
+        handleOpen();
+    }, [openRequest]);
 
     const handleSend = () => {
         if (disabled || isSendingRef.current) return;

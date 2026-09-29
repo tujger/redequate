@@ -8,16 +8,13 @@ import styles from "./styles/ButtonAddEvent.module.css";
 let anchor;
 
 const Dropdown = ({children, isOpen, onRequestClose}) => <Select
+    anchorEl={anchor}
     className={styles.dropdownSelect}
     displayEmpty
-    IconComponent={() => null}
-    MenuProps={{
-        anchorEl: anchor,
-        keepMounted: true,
-    }}
     onClose={onRequestClose}
     open={isOpen}
     renderValue={() => null}
+    tabIndex={-1}
     value={""}
 >
     {React.Children.map(children, (item, index) => <SelectItem

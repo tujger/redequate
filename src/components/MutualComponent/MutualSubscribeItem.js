@@ -8,7 +8,6 @@ import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import Select from "../../controls/Select/Select";
-import useRippleEffect from "../../helpers/useRippleEffect";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
@@ -38,7 +37,6 @@ const MutualSubscribeItem = (
     const [disabled, setDisabled] = React.useState(false);
     const [menuOpen, setMenuOpen] = React.useState(false);
     const {key, userData = {}, value} = data;
-    const onMenuPointerDown = useRippleEffect(event => event.stopPropagation());
     const patternClass = pattern
         ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
         : styles.cardFlat;
@@ -172,13 +170,11 @@ const MutualSubscribeItem = (
                     disabled={disabled}
                     displayEmpty
                     iconMenu
-                    IconComponent={() => null}
                     inputProps={{"aria-label": menuLabel}}
-                    MenuProps={{keepMounted: true}}
                     onChange={handleUnsubscribe}
                     onClick={event => event.stopPropagation()}
                     onMouseDown={event => event.stopPropagation()}
-                    onPointerDown={onMenuPointerDown}
+                    onPointerDown={event => event.stopPropagation()}
                     onOpen={handleMenuOpen}
                     onClose={handleMenuClose}
                     open={menuOpen}

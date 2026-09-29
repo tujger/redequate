@@ -8,11 +8,9 @@ import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
 import SelectItem from "../../controls/Select/SelectItem";
 
-export default ({postData, onMenuItemClick, onComplete, type, ...selectProps}) => {
+export default ({postData, modalOnly = false, onMenuItemClick, onComplete, onRequestClose, open, type, ...selectProps}) => {
     const [state, setState] = React.useState({});
-    const {
-        deletePost,
-    } = state;
+    const deletePost = modalOnly ? open : state.deletePost;
     const dispatch = useDispatch();
     const {t} = useTranslation();
 
@@ -33,6 +31,7 @@ export default ({postData, onMenuItemClick, onComplete, type, ...selectProps}) =
 
     const handleConfirmDeletion = () => {
         setState(state => ({...state, deletePost: false}));
+        onRequestClose && onRequestClose();
         if (!postData.id) return;
         dispatch(ProgressView.SHOW);
         postData.delete()
@@ -48,6 +47,7 @@ export default ({postData, onMenuItemClick, onComplete, type, ...selectProps}) =
 
     const handleCancelDeletion = () => {
         setState(state => ({...state, deletePost: false}));
+        onRequestClose && onRequestClose();
     }
 
     const confirm = deletePost && <ConfirmComponent
@@ -59,6 +59,8 @@ export default ({postData, onMenuItemClick, onComplete, type, ...selectProps}) =
         onConfirm={handleConfirmDeletion}
         title={t("Post.Delete post?")}
     />;
+
+    if (modalOnly) return confirm;
 
     if (onMenuItemClick) return <SelectItem
         children={<>

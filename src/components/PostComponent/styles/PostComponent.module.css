@@ -143,7 +143,6 @@
 
 .cardMenuButton {
     && {
-        color: var(--theme-color-secondary);
         position: absolute;
         right: calc(var(--theme-spacing) * .5);
         top: calc(var(--theme-spacing) * .5);

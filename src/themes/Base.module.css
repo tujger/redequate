@@ -3,7 +3,7 @@
     --theme-font-size-base: 16px;
     --theme-font-size-regular: 0.875rem;
     --theme-font-size-small: 0.825rem;
-    --theme-font-size-large: 1rem;
+    --theme-font-size-large: 1.2rem;
     --theme-letter-spacing: 0.01071em;
     --theme-color-error: #ff0000;
     --theme-color-primary: #3f51b5;
@@ -15,7 +15,7 @@
     --theme-color-surface-alt: #def6fc;
     --theme-color-background: #efefef;
     --theme-color-background-alt: #101010;
-    --theme-color-focus: rgba(0, 0, 0, 0.04);
+    --theme-color-focus: rgba(0, 0, 0, 0.08);
     --theme-color-text: #101010;
     --theme-color-muted: #888888;
     --theme-color-highlight: rgb(44, 56, 126);

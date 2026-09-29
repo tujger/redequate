@@ -120,7 +120,6 @@ export default (props) => {
                 className={styles.menuButton}
                 displayEmpty
                 iconMenu
-                IconComponent={() => null}
                 onChange={onContextMenu}
                 onClickCapture={event => {
                     event.stopPropagation();

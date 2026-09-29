@@ -6,7 +6,7 @@ import NewPostComponent from "../NewPostComponent/NewPostComponent";
 import SelectItem from "../../controls/Select/SelectItem";
 import actionStyles from "./styles/PostActions.module.css";
 
-export default ({postData, mentions, onMenuItemClick, onComplete, ...selectProps}) => {
+export default ({postData, mentions, modalOnly = false, onMenuItemClick, onComplete, openRequest, ...selectProps}) => {
     const metaInfo = useMetaInfo();
     const windowData = useWindowData();
     const {t} = useTranslation();
@@ -29,9 +29,12 @@ export default ({postData, mentions, onMenuItemClick, onComplete, ...selectProps
         mentions,
         onComplete,
         editPostData: postData,
+        openRequest,
         title: t("Post.Edit post"),
         UploadProps: {camera: !windowData.isNarrow(), multi: true},
     };
+
+    if (modalOnly) return <NewPostComponent {...newPostProps}/>;
 
     if (onMenuItemClick) return <SelectItem
         children={<NewPostComponent
