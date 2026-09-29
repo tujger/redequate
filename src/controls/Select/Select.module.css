@@ -31,9 +31,8 @@
 
 .iconMenu {
     && {
-        border-radius: 50%;
-        min-width: 0;
-        padding: 0;
+        height: calc(var(--theme-spacing) * 4.5);
+        width: calc(var(--theme-spacing) * 4.5);
     }
 
     &&&&:after,
@@ -47,12 +46,9 @@
 
     && :global(.MuiSelect-select) {
         align-items: center;
-        border-radius: 50%;
         display: flex;
         justify-content: center;
-        height: calc(var(--theme-spacing) * 2);
-        padding: calc(var(--theme-spacing) * 1);
-        width: calc(var(--theme-spacing) * 2);
+        padding: 0;
 
         &:focus {
             background-color: inherit;
@@ -117,4 +113,8 @@
     &:global(.Mui-selected:hover) {
         background-color: rgb(63 81 181 / 24%);
     }
+}
+
+@media (max-width: 599px) {
+
 }

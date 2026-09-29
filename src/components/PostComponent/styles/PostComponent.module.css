@@ -305,7 +305,6 @@
     }
 
     .cardMenuButton {
-        margin-top: calc(var(--theme-spacing) * -1);
         right: calc(var(--theme-spacing) * .5);
         top: auto;
     }

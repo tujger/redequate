@@ -63,26 +63,32 @@ export default React.forwardRef((props, ref) => {
                 </Link>
                 <div className={cardStyles.cardContent}>
                     <div className={[cardStyles.layout, cardStyles.inline, cardStyles.cardTitle].join(" ")}>
-                            <UserName
-                                className={textStyles.label}
-                                id={userData.id}
-                            >{userData.name}</UserName>
-                        <PostMenu {...props}/>
-                        {postData.targetTag && <div className={[cardStyles.layout, cardStyles.layoutGrow].join(" ")}>
+                        <UserName className={textStyles.label} id={userData.id}>
+                            {userData.name}
+                        </UserName>
+                        {postData.targetTag && <div
+                            className={[cardStyles.layout, cardStyles.layoutGrow].join(" ")}
+                        >
                             posted to <MentionedTextComponent
-                            mentions={[{
-                                ...mentionTags,
-                                className: [mentionTags.className, mentionStyles.target].join(" "),
-                                displayTransform: (id, display) => display,
-                            }]}
-                            tokens={[postData.targetTag]}
-                        /></div>}
+                                mentions={[
+                                    {
+                                        ...mentionTags,
+                                        className: [mentionTags.className, mentionStyles.target].join(" "),
+                                        displayTransform: (id, display) => display,
+                                    }
+                                ]}
+                                tokens={[postData.targetTag]}
+                            />
+                        </div>}
                     </div>
-                    <div className={[cardStyles.layout, cardStyles.cardSubheader, cardStyles.date].join(" ")}
-                         title={new Date(postData.created).toLocaleString()}>
+                    <div
+                        className={[cardStyles.layout, cardStyles.cardSubheader, cardStyles.date].join(" ")}
+                        title={new Date(postData.created).toLocaleString()}
+                    >
                         {toDateString(postData.created)}
                     </div>
                 </div>
+                <PostMenu {...props}/>
             </div>
             <PostBody
                 {...props}
@@ -98,6 +104,6 @@ export default React.forwardRef((props, ref) => {
         </div>}
         {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
         {level === undefined && postsRotateReplies === "inside" &&
-        <RotatingReplies {...props} postId={postData.id}/>}
+            <RotatingReplies {...props} postId={postData.id}/>}
     </div>
 })

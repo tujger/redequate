@@ -83,12 +83,18 @@
 }
 
 @media (max-width: 599px) {
+    .profile {
+        flex-direction: column;
+    }
+
     .profileFields {
         margin-bottom: calc(var(--theme-spacing) * 2);
         width: 100%;
     }
 
     .profileFieldImage {
+        display: flex;
+        justify-content: center;
         max-width: 100%;
         text-align: center;
         width: 100%;

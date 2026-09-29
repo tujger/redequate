@@ -3,6 +3,7 @@ import MaterialSelect from "@material-ui/core/Select";
 import React from "react";
 import selectStyles from "./Select.module.css";
 import Fade from "@material-ui/core/Fade";
+import buttonStyles from "../Button/Button.module.css";
 
 export default ({children, className, iconMenu, MenuProps: givenMenuProps, options = [], ...props}) => {
     const menuProps = {
@@ -26,7 +27,13 @@ export default ({children, className, iconMenu, MenuProps: givenMenuProps, optio
 
     return <MaterialSelect
         {...props}
-        className={[selectStyles.select, iconMenu && selectStyles.iconMenu, className].filter(Boolean).join(" ")}
+        className={[
+            selectStyles.select,
+            iconMenu && selectStyles.iconMenu,
+            iconMenu && buttonStyles.button,
+            iconMenu && buttonStyles.iconButton,
+            className
+        ].filter(Boolean).join(" ")}
         MenuProps={menuProps}
     >
         {children || options.map(option => <MenuItem
