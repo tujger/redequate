@@ -1,19 +1,19 @@
+import AddIcon from "@material-ui/icons/Add";
 import React from "react";
-import {Link} from "react-router-dom";
 import {connect, useDispatch} from "react-redux";
-import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
-import UserItem from "./UserItem";
-import Pagination from "../../../controllers/FirebasePagination";
-import {UserData} from "../../../controllers/UserData";
-import {usePages} from "../../../controllers/General";
-import ProgressView from "../../../components/ProgressView";
-import {usersReducer} from "./usersReducer";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
-import AllUsersPagination from "./AllUsersPagination";
-import UsersHeader from "./UsersHeader";
+import {Link} from "react-router-dom";
 import FlexFabComponent from "../../../components/FlexFabComponent";
+import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
+import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import ProgressView from "../../../components/ProgressView";
+import Pagination from "../../../controllers/FirebasePagination";
+import {usePages} from "../../../controllers/General";
+import {UserData} from "../../../controllers/UserData";
 import baseStyles from "../../../themes/Base.module.css";
-import styles from "./styles/Users.module.css";
+import AllUsersPagination from "./AllUsersPagination";
+import UserItem from "./UserItem";
+import UsersHeader from "./UsersHeader";
+import {usersReducer} from "./usersReducer";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
@@ -117,7 +117,7 @@ function Users(props) {
         </div>
         {invitation && <Link to={pages.adduser.route}>
             <FlexFabComponent
-                icon={<span className={styles.addIcon} aria-hidden='true'>+</span>}
+                icon={<AddIcon/>}
                 label={"Add user"}
             />
         </Link>}

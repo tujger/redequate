@@ -2,7 +2,6 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import Button from "../controls/Button/Button";
 import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
-import useRippleEffect from "../helpers/useRippleEffect";
 import baseStyles from "../themes/Base.module.css";
 import ModalComponent from "./ModalComponent";
 import styles from "./styles/ConfirmComponent.module.css";

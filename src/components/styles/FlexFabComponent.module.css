@@ -75,6 +75,10 @@
     min-height: 0;
     padding: 0;
     width: calc(var(--theme-spacing) * 7);
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: 1.5rem;
+    }
 }
 
 .visible {
