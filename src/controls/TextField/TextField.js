@@ -17,12 +17,14 @@ export default props => {
         id,
         inputComponent = undefined,
         label = undefined,
+        multiline = false,
         onBlur,
         onClear,
         onChange,
         onFocus,
         onPointerDown: givenOnPointerDown,
         placeholder,
+        rows = 1,
         type = "text",
         value,
         ...otherProps
@@ -65,19 +67,40 @@ export default props => {
     const inputProps = {
         ...otherProps,
         "aria-invalid": error || undefined,
-        className: [styles.input, endAdornment && styles.inputWithAdornment].filter(Boolean).join(" "),
+        className: [
+            styles.input,
+            endAdornment && styles.inputWithAdornment,
+            multiline && styles.multiline,
+        ].filter(Boolean).join(" "),
         disabled,
         id,
         onBlur: handleBlur,
         onChange,
         onFocus: handleFocus,
         placeholder,
-        type,
         value,
     };
     const inputRefCallback = input => {
         inputRef.current = input;
     };
+    const input = inputComponent
+        ? React.createElement(inputComponent, {
+            ...inputProps,
+            type,
+            ...(multiline ? {multiline, rows} : {}),
+            inputRef: inputRefCallback
+        })
+        : multiline
+            ? <textarea
+                {...inputProps}
+                rows={rows}
+                ref={inputRef}
+            />
+            : <input
+                {...inputProps}
+                type={type}
+                ref={inputRef}
+            />;
     const clearButton = canClear && <Button
         className={styles.adornment}
         icon={<ClearIcon/>}
@@ -111,15 +134,7 @@ export default props => {
             {clearButton}
             {endAdornmentUpdated}
         </span>
-        {inputComponent
-            ? React.createElement(inputComponent, {
-                ...inputProps,
-                inputRef: inputRefCallback
-            })
-            : <input
-                {...inputProps}
-                ref={inputRef}
-            />}
+        {input}
         {helper && <span className={styles.helper}>{helper}</span>}
     </label>;
 };

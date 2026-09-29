@@ -20,6 +20,7 @@
 
 .profileField {
     align-items: center;
+    column-gap: calc(var(--theme-spacing) * 0.5);
     display: flex;
     justify-content: flex-start;
     max-width: 100%;

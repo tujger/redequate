@@ -64,6 +64,12 @@
     contain: none;
 }
 
+.multiline {
+    line-height: 1.5;
+    padding: calc(var(--theme-spacing) / 2) 0;
+    resize: none;
+}
+
 .endAdornment {
     align-items: center;
     display: flex;

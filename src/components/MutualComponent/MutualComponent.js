@@ -1,7 +1,7 @@
 import React from "react";
 import {useDispatch} from "react-redux";
-import TextField from "@material-ui/core/TextField";
 import {useTranslation} from "react-i18next";
+import TextField from "../../controls/TextField/TextField";
 import ActionComponent from "./ActionComponent";
 import InfoComponent from "../InfoComponent";
 import {MutualMode} from "./MutualConstants";
@@ -32,7 +32,7 @@ export default props => {
         pendingLabel = t("Mutual.Waiting for response"),
         pendingComponent = <ActionComponent label={pendingLabel}/>,
         rejectLabel = t("Mutual.Reject"),
-        rejectComponent = <ActionComponent label={rejectLabel}/>,
+        rejectComponent = <ActionComponent label={rejectLabel} color={"secondary"} variant={"outlined"}/>,
         subscribeLabel = t("Mutual.Subscribe"),
         subscribeComponent = <ActionComponent label={subscribeLabel}/>,
         typeId,
@@ -165,7 +165,9 @@ export default props => {
             .catch(error => {
                 if (error !== "done") notifySnackbar(error);
             });
-        return () => isMounted = false;
+        return () => {
+            isMounted = false;
+        };
     }, [uidId, typeId, subscribers]);
 
     // noinspection DuplicatedCode
@@ -299,6 +301,7 @@ export default props => {
             title={t("Mutual.Send the specialized message with your invitation.")}
         >
             <TextField
+                clearable={false}
                 color={"secondary"}
                 fullWidth
                 label={t("Mutual.Message")}

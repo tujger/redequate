@@ -3,22 +3,10 @@
     text-transform: initial;
 }
 
-@media (min-width: 960px) {
-    .action {
-        margin-bottom: var(--theme-spacing);
-        margin-top: var(--theme-spacing);
-    }
-}
-
 @media (max-width: 599px) {
     .action {
         margin-left: calc(var(--theme-spacing) / 2);
         margin-right: calc(var(--theme-spacing) / 2);
         margin-top: var(--theme-spacing);
-    }
-
-    .actionContained {
-        min-width: calc(var(--theme-spacing) * 25);
-        width: 50%;
     }
 }
