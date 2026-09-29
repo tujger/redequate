@@ -1,0 +1,32 @@
+.root {
+    align-items: center;
+    display: flex;
+    position: relative;
+    transition: height 0.2s;
+    width: 100%;
+}
+
+.leftAction,
+.rightAction {
+    align-items: center;
+    color: var(--theme-color-primary);
+    display: flex;
+    flex-direction: column;
+    left: var(--theme-spacing);
+    position: absolute;
+    right: var(--theme-spacing);
+}
+
+.leftActionButton {
+    contain: none;
+}
+
+.rightActionButton {
+    contain: none;
+}
+
+.content {
+    position: relative;
+    touch-action: pan-y;
+    width: 100%;
+}

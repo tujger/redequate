@@ -10,7 +10,7 @@
     color: var(--fab-color);
     cursor: pointer;
     display: flex;
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     justify-content: center;
     min-height: calc(var(--theme-spacing) * 6);
     outline: 0;
@@ -36,7 +36,7 @@
             bottom: calc(100% + var(--theme-spacing));
             color: var(--theme-color-paper);
             content: attr(data-tooltip);
-            font-size: calc(var(--theme-font-size) * .875);
+            font-size: var(--theme-font-size-regular);
             max-width: calc(var(--theme-spacing) * 30);
             opacity: 0;
             padding: var(--theme-spacing);

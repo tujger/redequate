@@ -1,6 +1,6 @@
 .chatItem {
     color: var(--theme-color-secondary);
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     margin-bottom: calc(var(--theme-spacing) * .5);
     position: relative;
 }
@@ -50,7 +50,7 @@
 .timestamp {
     bottom: calc(var(--theme-spacing) * .5);
     color: var(--theme-color-muted);
-    font-size: calc(var(--theme-spacing) * 1.25);
+    font-size: var(--theme-font-size-small);
     position: absolute;
     right: var(--theme-spacing);
 }

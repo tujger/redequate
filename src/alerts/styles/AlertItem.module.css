@@ -3,7 +3,7 @@
     border-width: 0;
     box-shadow: var(--theme-card-shadow);
     color: var(--theme-color-secondary);
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     letter-spacing: var(--theme-letter-spacing);
     margin-bottom: calc(var(--theme-spacing) * 1.5);
     overflow: initial;
@@ -89,6 +89,5 @@
 @media (max-width: 599px) {
     .date {
         margin-left: auto;
-        font-size: calc(var(--theme-spacing) * 1.5);
     }
 }

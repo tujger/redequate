@@ -1,78 +1,37 @@
+import MenuIcon from "@material-ui/icons/MoreVert";
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import PropTypes from "prop-types";
 import {useDrag} from "react-use-gesture";
+import {useWindowData} from "../controllers";
 import notifySnackbar from "../controllers/notifySnackbar";
+import Select from "../controls/Select/Select";
+import SelectItem from "../controls/Select/SelectItem";
+import useRippleEffect from "../helpers/useRippleEffect";
+import cardStyles from "./PostComponent/styles/PostComponent.module.css";
+import styles from "./styles/ListItemComponent.module.css";
 
-const styles = theme => ({
-    root: {
-        alignItems: "center",
-        display: "flex",
-        position: "relative",
-        transition: "height .2s",
-    },
-    leftAction: {
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-        left: theme.spacing(1),
-        position: "absolute"
-    },
-    leftActionButton: {
-        color: "#ff0000",
-    },
-    leftActionButtonSelected: {
-        backgroundColor: "#ff0000",
-        color: theme.palette.getContrastText("#ff0000"),
-    },
-    leftActionLabel: {
-        color: "#ff0000",
-    },
-    rightAction: {
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-        right: theme.spacing(1),
-        position: "absolute"
-    },
-    rightActionButton: {
-        color: "#00aa00",
-    },
-    rightActionButtonSelected: {
-        backgroundColor: "#00aa00",
-        color: theme.palette.getContrastText("#00aa00"),
-    },
-    rightActionLabel: {
-        color: "#00aa00",
-    },
-    content: {
-        position: "relative",
-        width: "100%"
-    }
-});
-
-const calculateOpacityIndent = () => {
-    let indent;
-    // if (isMobile) {
-    //     indent = window.innerWidth / 3;
-    // } else {
-        indent = window.innerWidth / 5;
-        if (indent > 100) indent = 100;
-    // }
-    return indent;
-};
-const calculateActionIndent = calculateOpacityIndent;
-
-function ListItemComponent(props) {
-    const {classes, children, leftAction, rightAction, onClickCapture, onContextMenu} = props;
+export default (props) => {
+    const {
+        className = "",
+        children,
+        disabled = false,
+        leftAction = undefined,
+        menu = undefined,
+        rightAction = undefined,
+        onClickCapture = undefined,
+        onContextMenu = undefined,
+        onMenuSelect = undefined,
+        onKeyDown = undefined
+    } = props;
+    const onPointerDown = useRippleEffect();
+    const windowData = useWindowData();
+    const isNarrow = windowData.isNarrow();
 
     const [state, setState] = React.useState({});
     const {x, dragging, removing, ref, removed, random} = state;
 
-    const opacityIndent = calculateOpacityIndent();
     const actionIndent = calculateActionIndent();
 
-    const bind = useDrag(evt => {
+    const bind = useDrag(async evt => {
         const {down, movement: [mx]} = evt;
         if (down && Math.abs(mx) < 10) return;
         let x = mx;
@@ -80,9 +39,9 @@ function ListItemComponent(props) {
         try {
             if (!down) {
                 if (leftAction && mx > actionIndent) {
-                    removing = leftAction.action([children.props.data]);
+                    removing = await leftAction.action(evt);
                 } else if (rightAction && mx < -actionIndent) {
-                    removing = rightAction.action([children.props.data]);
+                    removing = await rightAction.action(evt);
                 }
                 x = 0;
             } else {
@@ -98,7 +57,7 @@ function ListItemComponent(props) {
             setState({...state, dragging: down, x: x, removing})
         }
     });
-    const bind_ = (process.env.NODE_ENV === "development") ? bind : () => {
+    const bind_ = isNarrow && (process.env.NODE_ENV === "development") ? bind : () => {
     };
 
     React.useEffect(() => {
@@ -123,14 +82,21 @@ function ListItemComponent(props) {
     }
 
     if (removed) return null;
-    return <div className={classes.root} ref={ref} key={random}>
-        {leftAction && leftAction.itemButton({
+    return <div
+        className={styles.root} ref={ref} key={random}
+        onKeyDown={onKeyDown}
+        onPointerDown={disabled ? undefined : onPointerDown}
+        tabIndex={disabled ? -1 : 0}
+    >
+        {isNarrow && leftAction && leftAction.itemButton({
+            className: [styles.leftAction, styles.leftActionButton].join(" "),
             selected: x > actionIndent,
-            style: {right: "auto", opacity: (x || 0) / opacityIndent}
+            style: {right: "auto", opacity: (x || 0) / actionIndent}
         })}
-        {rightAction && rightAction.itemButton({
+        {isNarrow && rightAction && rightAction.itemButton({
+            className: [styles.rightAction, styles.rightActionButton].join(" "),
             selected: x < -actionIndent,
-            style: {left: "auto", opacity: -(x || 0) / opacityIndent}
+            style: {left: "auto", opacity: -(x || 0) / actionIndent}
         })}
         <div
             {...bind_()}
@@ -147,20 +113,40 @@ function ListItemComponent(props) {
                     }
                 }
             })}
-            className={classes.content}
-            style={{left: x, touchAction: "pan-y"}}
+            className={[styles.content, className].filter(Boolean).join(" ")}
+            style={{left: x}}
         >
             {children}
+            {!isNarrow && menu && <Select
+                className={cardStyles.cardMenuButton}
+                displayEmpty
+                iconMenu
+                IconComponent={() => null}
+                onChange={onContextMenu}
+                onClick={event => {
+                    event.stopPropagation();
+                }}
+                renderValue={() => <MenuIcon/>}
+                value={""}
+            >
+                {menu.map((item, index) => <SelectItem
+                    children={item.label}
+                    key={index}
+                    onClick={event => {
+                        event.stopPropagation();
+                        onMenuSelect?.(event, item);
+                    }}
+                    // onClick={handleSelectItemClick}
+                    value={item.value}
+                />)}
+            </Select>}
         </div>
     </div>
 }
 
-ListItemComponent.propTypes = {
-    children: PropTypes.any,
-    leftAction: PropTypes.func,
-    onClickCapture: PropTypes.func,
-    onContextMenu: PropTypes.func,
-    rightAction: PropTypes.element,
-};
-
-export default withStyles(styles)(ListItemComponent);
+const calculateActionIndent = () => {
+    let indent;
+    indent = window.innerWidth / 5;
+    if (indent > 100) indent = 100;
+    return indent;
+}

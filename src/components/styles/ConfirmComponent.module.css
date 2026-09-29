@@ -1,5 +1,5 @@
 .title {
-    font-size: calc(var(--theme-font-size) * 1.25);
+    font-size: var(--theme-font-size-large);
     font-weight: 900;
     padding: calc(var(--theme-spacing) * 3);
 }

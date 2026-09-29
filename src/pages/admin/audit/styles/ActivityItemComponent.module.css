@@ -3,7 +3,7 @@
     border-width: 0;
     box-shadow: var(--theme-card-shadow);
     color: var(--theme-color-secondary);
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     letter-spacing: var(--theme-letter-spacing);
     margin-bottom: calc(var(--theme-spacing) * 1.5);
     overflow: initial;
@@ -89,6 +89,7 @@
     align-items: center;
     color: var(--theme-color-muted);
     display: flex;
+    font-size: var(--theme-font-size-small);
     margin-right: calc(var(--theme-spacing) * 3.5);
     white-space: nowrap;
 }
@@ -120,7 +121,7 @@
 
 .contextTitle {
     color: var(--theme-color-secondary);
-    font-size: 1.25rem;
+    font-size: var(--theme-font-size-large);
     font-weight: 500;
     line-height: 1.6;
     margin: calc(var(--theme-spacing) * 2) 0 var(--theme-spacing);
@@ -154,10 +155,4 @@
     height: calc(var(--theme-spacing) * 7);
     text-decoration: none;
     width: calc(var(--theme-spacing) * 7);
-}
-
-@media (max-width: 599px) {
-    .date {
-        font-size: calc(var(--theme-spacing) * 1.5);
-    }
 }

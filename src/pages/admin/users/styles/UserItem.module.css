@@ -3,7 +3,7 @@
     border-width: 0;
     box-shadow: var(--theme-card-shadow);
     color: var(--theme-color-secondary);
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     letter-spacing: var(--theme-letter-spacing);
     margin-bottom: calc(var(--theme-spacing) * 1.5);
     overflow: initial;
@@ -93,6 +93,7 @@
     align-items: center;
     color: var(--theme-color-muted);
     display: flex;
+    font-size: var(--theme-font-size-small);
     margin-right: calc(var(--theme-spacing) * 3.5);
     white-space: nowrap;
 }
@@ -125,10 +126,6 @@
 @media (max-width: 599px) {
     .card {
         margin-bottom: calc(var(--theme-spacing) * 1.5);
-    }
-
-    .date {
-        font-size: calc(var(--theme-spacing) * 1.5);
     }
 
     .cardAction {

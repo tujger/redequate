@@ -12,6 +12,7 @@ import useRippleEffect from "../../helpers/useRippleEffect";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import ListItemComponent from "../ListItemComponent";
 import ProgressView from "../ProgressView";
 import styles from "./styles/MutualItem.module.css";
 
@@ -37,7 +38,6 @@ const MutualSubscribeItem = (
     const [disabled, setDisabled] = React.useState(false);
     const [menuOpen, setMenuOpen] = React.useState(false);
     const {key, userData = {}, value} = data;
-    const onPointerDown = useRippleEffect();
     const onMenuPointerDown = useRippleEffect(event => event.stopPropagation());
     const patternClass = pattern
         ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
@@ -63,7 +63,7 @@ const MutualSubscribeItem = (
     };
 
     const handleUnsubscribe = event => {
-        event.stopPropagation();
+        event.stopPropagation?.();
         setMenuOpen(false);
         console.log("handleUnsubscribe", key, typeId, currentUserData.id, value);
         dispatch(ProgressView.SHOW);
@@ -81,6 +81,7 @@ const MutualSubscribeItem = (
                 setDisabled(false);
             })
             .finally(() => dispatch(ProgressView.HIDE));
+        return true;
     };
 
     const handleMenuOpen = event => {
@@ -96,12 +97,74 @@ const MutualSubscribeItem = (
     if (label) return <ItemPlaceholderComponent label={label} classes={styles} pattern={"flat"}/>;
     if (skeleton) return <ItemPlaceholderComponent classes={styles} pattern={"flat"}/>;
 
+    return <ListItemComponent
+        className={[styles.card, styles.item, patternClass, value.hidden && styles.hidden].filter(Boolean).join(" ")}
+        disabled={disabled}
+        leftAction={{
+            action: handleUnsubscribe,
+            itemButton: (props) => <div {...props}>Unsubscribe</div>
+        }}
+        menu={[{
+            label: menuLabel + (isSameUser ? "" : " - force as Admin"),
+            value: "unsubscribe",
+        }]}
+        onClickCapture={handleOpen}
+        onKeyDown={handleKeyDown}
+    >
+        <AvatarView
+            className={styles.avatar}
+            image={userData.image}
+            initials={userData.initials}
+            verified={true}
+        />
+        <div className={styles.cardContent}>
+            <div className={[styles.title, hasMenu && styles.hasMenu].filter(Boolean).join(" ")}>
+                <b className={styles.itemName}>{userData.name}</b>
+                {counter && <span className={styles.counter}>
+                    <CounterComponent
+                        live
+                        path={`${key}/mutual/${typeId}_s`}
+                        prefix={"- "}
+                        suffix={" follower(s)"}
+                    />
+                </span>}
+                {value.timestamp && <span
+                    className={styles.date}
+                    title={new Date(value.timestamp).toLocaleString()}
+                >{toDateString(value.timestamp)}</span>}
+                {hasMenu && <Select
+                    className={styles.menuButton}
+                    disabled={disabled}
+                    displayEmpty
+                    iconMenu
+                    IconComponent={() => null}
+                    inputProps={{"aria-label": menuLabel}}
+                    MenuProps={{keepMounted: true}}
+                    onChange={handleUnsubscribe}
+                    onClick={event => event.stopPropagation()}
+                    onMouseDown={event => event.stopPropagation()}
+                    onPointerDown={onMenuPointerDown}
+                    onOpen={handleMenuOpen}
+                    onClose={handleMenuClose}
+                    open={menuOpen}
+                    options={[{
+                        label: menuLabel + (isSameUser ? "" : " - force as Admin"),
+                        value: "unsubscribe",
+                    }]}
+                    renderValue={() => <MenuIcon/>}
+                    value={""}
+                />}
+            </div>
+            <div className={styles.message}>{value.message}</div>
+        </div>
+    </ListItemComponent>
+    // classes, children, leftAction, rightAction, onClickCapture, onContextMenu
+
     return <div
         aria-disabled={disabled || undefined}
         className={[styles.card, styles.item, patternClass, value.hidden && styles.hidden].filter(Boolean).join(" ")}
         onClick={handleOpen}
         onKeyDown={handleKeyDown}
-        onPointerDown={disabled ? undefined : onPointerDown}
         role={"button"}
         tabIndex={disabled ? -1 : 0}
     >

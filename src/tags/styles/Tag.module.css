@@ -38,7 +38,7 @@
 }
 
 .title {
-    font-size: 1.25rem;
+    font-size: var(--theme-font-size-large);
     font-weight: 500;
     line-height: 1.6;
     margin: 0;
@@ -46,7 +46,7 @@
 }
 
 .bodyText {
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     line-height: 1.43;
     margin: 0;
     white-space: pre-wrap;

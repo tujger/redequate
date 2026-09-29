@@ -5,7 +5,7 @@
     cursor: pointer;
     display: inline-flex;
     font: inherit;
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     justify-content: center;
     min-height: calc(var(--theme-spacing) * 4.5);
     outline: 0;
@@ -95,13 +95,14 @@
 }
 
 .small {
-    font-size: 0.825rem;
+    font-size: var(--theme-font-size-small);
     min-height: calc(var(--theme-spacing) * 4);
     padding-left: var(--theme-spacing);
     padding-right: var(--theme-spacing);
 }
 
 .large {
+    font-size: var(--theme-font-size-large);
     min-height: calc(var(--theme-spacing) * 6);
     padding-left: calc(var(--theme-spacing) * 3);
     padding-right: calc(var(--theme-spacing) * 3);
@@ -139,7 +140,6 @@
 
 @media (max-width: 599px) {
     .button {
-        font-size: 1rem;
         min-height: calc(var(--theme-spacing) * 6);
     }
 

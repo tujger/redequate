@@ -14,7 +14,7 @@
     border-radius: 0.25rem;
     border-width: 0;
     box-shadow: var(--theme-post-shadow);
-    font-size: 0.875rem;
+    font-size: var(--theme-font-size-regular);
     letter-spacing: var(--theme-letter-spacing);
     margin-bottom: calc(var(--theme-spacing) * 1.5);
     overflow: initial;
@@ -207,7 +207,7 @@
 
 .textSmall {
     display: inline-block;
-    font-size: 90%;
+    font-size: var(--theme-font-size-small);
 }
 
 .cardHeader {
@@ -311,15 +311,15 @@
 
     .cardTitle {
         color: var(--theme-color-secondary);
-        font-size: 95%;
+        font-size: var(--theme-font-size-small);
     }
 
     .cardTitle .userName {
-        font-size: 110%;
+        font-size: var(--theme-font-size-large);
     }
 
     .date {
-        font-size: calc(var(--theme-spacing) * 1.5);
+        font-size: var(--theme-font-size-small);
     }
 
     .icon {
