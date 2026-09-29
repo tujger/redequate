@@ -6,7 +6,6 @@ import notifySnackbar from "../controllers/notifySnackbar";
 import Select from "../controls/Select/Select";
 import SelectItem from "../controls/Select/SelectItem";
 import useRippleEffect from "../helpers/useRippleEffect";
-import cardStyles from "./PostComponent/styles/PostComponent.module.css";
 import styles from "./styles/ListItemComponent.module.css";
 
 export default (props) => {
