@@ -1,46 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import styles from "./styles/ModalComponent.module.css";
 import {useHistory} from "react-router-dom";
+import styles from "./styles/ModalComponent.module.css";
 
-let pageScrollLockCount = 0;
-let previousPageOverflow;
-
-const lockPageScroll = () => {
-    if (pageScrollLockCount === 0) {
-        previousPageOverflow = {
-            body: document.body.style.overflow,
-            documentElement: document.documentElement.style.overflow,
-        };
-        document.body.style.overflow = "hidden";
-        document.documentElement.style.overflow = "hidden";
-    }
-    pageScrollLockCount += 1;
-};
-
-const unlockPageScroll = () => {
-    pageScrollLockCount = Math.max(0, pageScrollLockCount - 1);
-    if (pageScrollLockCount !== 0 || !previousPageOverflow) return;
-    document.body.style.overflow = previousPageOverflow.body;
-    document.documentElement.style.overflow = previousPageOverflow.documentElement;
-    previousPageOverflow = undefined;
-};
-
-export default ({
-    children,
-    closeOnBackdropClick = true,
-    enableBackScroll = false,
-    onClose,
-}) => {
+export default (
+    {
+        children,
+        closeOnBackdropClick = true,
+        onClose,
+    }) => {
     const history = useHistory();
     const onCloseRef = React.useRef(onClose);
     onCloseRef.current = onClose;
-
-    React.useEffect(() => {
-        if (enableBackScroll) return undefined;
-        lockPageScroll();
-        return unlockPageScroll;
-    }, [enableBackScroll]);
 
     React.useEffect(() => {
         const unblock = history.block(() => {
@@ -80,6 +51,7 @@ export default ({
                 event.stopPropagation();
                 onCloseRef.current?.(event);
             } : undefined}
+            onWheel={stopPropagation}
         />
         <div
             aria-modal={"true"}
@@ -106,10 +78,10 @@ export default ({
             onPaste={stopPropagation}
             onPointerDown={stopPropagation}
             onPointerUp={stopPropagation}
+            onScroll={stopPropagation}
             onSubmit={stopPropagation}
             onTouchEnd={stopPropagation}
             onTouchStart={stopPropagation}
-            onWheel={stopPropagation}
             role={"dialog"}
         >
             {children}
