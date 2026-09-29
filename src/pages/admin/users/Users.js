@@ -12,12 +12,12 @@ import {lazyListComponentReducer} from "../../../components/LazyListComponent/la
 import AllUsersPagination from "./AllUsersPagination";
 import UsersHeader from "./UsersHeader";
 import FlexFabComponent from "../../../components/FlexFabComponent";
-import userStyles from "./styles/Users.module.css";
+import baseStyles from "../../../themes/Base.module.css";
+import styles from "./styles/Users.module.css";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
-    const {classes: givenClasses, mode = "all", filter = "", invitation = true} = props;
-    const classes = {...userStyles, ...(givenClasses || {})};
+    const {mode = "all", filter = "", invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
 
@@ -105,8 +105,8 @@ function Users(props) {
     }
 
     return <>
-        <UsersHeader classes={classes} filter={filter} handleChange={handleHeaderChange} mode={mode}/>
-        <div className={classes.center}>
+        <UsersHeader filter={filter} handleChange={handleHeaderChange} mode={mode}/>
+        <div className={[baseStyles.content].join(" ")}>
             <LazyListComponent
                 pagination={pagination}
                 itemTransform={itemTransform}
@@ -117,7 +117,7 @@ function Users(props) {
         </div>
         {invitation && <Link to={pages.adduser.route}>
             <FlexFabComponent
-                icon={<span className={classes.addIcon} aria-hidden='true'>+</span>}
+                icon={<span className={styles.addIcon} aria-hidden='true'>+</span>}
                 label={"Add user"}
             />
         </Link>}
