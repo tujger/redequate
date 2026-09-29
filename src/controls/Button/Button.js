@@ -4,7 +4,7 @@ import styles from "./Button.module.css";
 
 const variants = ["contained", "outlined", "text"];
 
-export default props => {
+export default React.forwardRef((props, ref) => {
     const {
         children,
         className,
@@ -56,6 +56,7 @@ export default props => {
         onClick={disabled ? undefined : onClick}
         onKeyDown={disabled ? undefined : onKeyDown}
         onPointerDown={disabled ? undefined : onPointerDown}
+        ref={ref}
         role={role}
         tabIndex={disabled ? -1 : givenTabIndex}
         title={title}
@@ -63,4 +64,4 @@ export default props => {
         {icon}
         {children}
     </div>;
-};
+});

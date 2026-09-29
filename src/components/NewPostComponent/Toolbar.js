@@ -60,7 +60,7 @@ export default (
         {bottom && <div className={toolbarStyles.actions}>
             <div className={toolbarStyles.upload}>{uploadComponent}</div>
             <Button onClick={onCancel} variant={"text"}>{t("Common.Cancel")}</Button>
-            <Button onClick={onSend} variant={"text"}>{t("Common.Send")}</Button>
+            <Button color={"primary"} onClick={onSend} variant={"text"}>{t("Common.Send")}</Button>
         </div>}
     </>
 };
