@@ -7,10 +7,11 @@
     overflow: hidden;
     position: relative;
 
-    &:hover .clearButton,
-    &:focus-within .clearButton {
-        opacity: 1;
-        pointer-events: auto;
+    &:hover {
+        & .endAdornment {
+            opacity: 1;
+            pointer-events: auto;
+        }
     }
 }
 
@@ -59,19 +60,25 @@
     }
 }
 
-.hasClear .input {
-    /*padding-right: calc(var(--theme-spacing) * 4);*/
+.inputWithAdornment {
+    contain: none;
 }
 
-.clearButton {
-    bottom: 0;
-    filter: drop-shadow(1px 0 0 var(--theme-color-background)) drop-shadow(-1px 0 0 var(--theme-color-background)) drop-shadow(0 1px 0 var(--theme-color-background)) drop-shadow(0 -1px 0 var(--theme-color-background)) drop-shadow(1px 1px 0 var(--theme-color-background)) drop-shadow(-1px -1px 0 var(--theme-color-background)) drop-shadow(1px -1px 0 var(--theme-color-background)) drop-shadow(-1px 1px 0 var(--theme-color-background));
+.endAdornment {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    height: calc(var(--theme-spacing) * 4);
     opacity: 0;
-    padding: calc(var(--theme-spacing) * .25);
     pointer-events: none;
     position: absolute;
     right: 0;
     transition: opacity 150ms ease-in-out;
+}
+
+.adornment {
+    filter: drop-shadow(1px 0 0 var(--theme-color-background)) drop-shadow(-1px 0 0 var(--theme-color-background)) drop-shadow(0 1px 0 var(--theme-color-background)) drop-shadow(0 -1px 0 var(--theme-color-background)) drop-shadow(1px 1px 0 var(--theme-color-background)) drop-shadow(-1px -1px 0 var(--theme-color-background)) drop-shadow(1px -1px 0 var(--theme-color-background)) drop-shadow(-1px 1px 0 var(--theme-color-background));
+    padding: 0;
 
     & :global(.MuiSvgIcon-root) {
         font-size: 1.25rem;

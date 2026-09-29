@@ -1,60 +1,41 @@
-import React from "react";
-import PropTypes from "prop-types";
-import FormControl from "@material-ui/core/FormControl";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import IconButton from "@material-ui/core/IconButton";
-import Input from "@material-ui/core/Input";
-import InputAdornment from "@material-ui/core/InputAdornment";
-import InputLabel from "@material-ui/core/InputLabel";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
+import React from "react";
+import Button from "../controls/Button/Button";
+import TextField from "../controls/TextField/TextField";
 
-const PasswordField = props => {
-    const {label, onChange, color, helper, disabled = false} = props;
-    const [values, setValues] = React.useState({
-        password: "",
-        show: false
-    });
+export default props => {
+    const {
+        color = undefined,
+        disabled = false,
+        helper = undefined,
+        label = undefined,
+        onChange,
+        value = "",
+    } = props;
+    const [show, setShow] = React.useState(false);
 
-    const handleClickShow = () => {
-        setValues({...values, show: !values.show});
-    };
-
-    const handleChange = (event) => {
-        setValues({...values, password: event.target.value});
-        onChange(event);
-    };
-
-    return <FormControl fullWidth>
-        <InputLabel color={color}>{label}</InputLabel>
-        <Input
-            color={color}
+    return <TextField
+        clearable={false}
+        color={color}
+        disabled={disabled}
+        endAdornment={<Button
             disabled={disabled}
-            onChange={handleChange}
-            type={values.show ? "text" : "password"}
-            value={values.password}
-            error={!!helper}
-            endAdornment={
-                <InputAdornment position={"end"}>
-                    <IconButton
-                        aria-label={"toggle password visibility"}
-                        onClick={handleClickShow}
-                        onMouseDown={event => event.preventDefault()}
-                    >
-                        {values.show ? <Visibility/> : <VisibilityOff/>}
-                    </IconButton>
-                </InputAdornment>
-            }
-        />
-        {helper && <FormHelperText error>{helper}</FormHelperText>}
-    </FormControl>
-};
-
-PasswordField.propTypes = {
-    label: PropTypes.string,
-    onChange: PropTypes.func,
-    helper: PropTypes.string,
-    disabled: PropTypes.bool
-};
-
-export default PasswordField;
+            icon={show ? <Visibility/> : <VisibilityOff/>}
+            onClick={() => setShow(current => !current)}
+            onPointerDown={event => {
+                event.preventDefault();
+                event.stopPropagation();
+            }}
+            size={"small"}
+            title={"Toggle password visibility"}
+        />}
+        error={!!helper}
+        fullWidth
+        helper={helper}
+        label={label}
+        onChange={onChange}
+        type={show ? "text" : "password"}
+        value={value}
+    />
+}

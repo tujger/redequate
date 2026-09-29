@@ -7,16 +7,18 @@ import styles from "./TextField.module.css";
 export default props => {
     const {
         className,
+        clearable = true,
         color = "primary",
         disabled = false,
+        endAdornment = undefined,
         error = false,
         fullWidth = false,
         helper,
         id,
-        inputComponent,
+        inputComponent = undefined,
         label = undefined,
-        onClear,
         onBlur,
+        onClear,
         onChange,
         onFocus,
         onPointerDown: givenOnPointerDown,
@@ -30,7 +32,7 @@ export default props => {
     const inputRef = React.useRef(null);
     const hasValue = value !== undefined && value !== null && value !== "";
     const active = focused || hasValue;
-    const canClear = hasValue && !disabled && (onChange || onClear);
+    const canClear = clearable && hasValue && !disabled && (onChange || onClear);
     const onPointerDown = useRippleEffect(givenOnPointerDown);
 
     const handleClear = event => {
@@ -63,7 +65,7 @@ export default props => {
     const inputProps = {
         ...otherProps,
         "aria-invalid": error || undefined,
-        className: styles.input,
+        className: [styles.input, endAdornment && styles.inputWithAdornment].filter(Boolean).join(" "),
         disabled,
         id,
         onBlur: handleBlur,
@@ -76,6 +78,18 @@ export default props => {
     const inputRefCallback = input => {
         inputRef.current = input;
     };
+    const clearButton = canClear && <Button
+        className={styles.adornment}
+        icon={<ClearIcon/>}
+        onClick={handleClear}
+        size={"small"}
+        title={"Clear"}
+    />;
+    const endAdornmentUpdated = endAdornment && React.cloneElement(endAdornment, {
+        className: styles.adornment,
+        size: "small",
+        variant: "text"
+    })
 
     return <label
         className={[
@@ -93,13 +107,10 @@ export default props => {
         onPointerDown={disabled ? undefined : onPointerDown}
     >
         {label && <span className={styles.label}>{label}</span>}
-        {canClear && <Button
-            className={styles.clearButton}
-            icon={<ClearIcon/>}
-            onClick={handleClear}
-            size={"small"}
-            title={"Clear"}
-        />}
+        <span className={styles.endAdornment}>
+            {clearButton}
+            {endAdornmentUpdated}
+        </span>
         {inputComponent
             ? React.createElement(inputComponent, {
                 ...inputProps,
