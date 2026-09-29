@@ -132,6 +132,7 @@
     width: 100%;
 }
 
+.button[aria-disabled="true"],
 .disabled {
     box-shadow: none;
     cursor: default;

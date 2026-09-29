@@ -3,17 +3,46 @@ import ReactDOM from "react-dom";
 import styles from "./styles/ModalComponent.module.css";
 import {useHistory} from "react-router-dom";
 
-export default ({onClose, children}) => {
+let pageScrollLockCount = 0;
+let previousPageOverflow;
+
+const lockPageScroll = () => {
+    if (pageScrollLockCount === 0) {
+        previousPageOverflow = {
+            body: document.body.style.overflow,
+            documentElement: document.documentElement.style.overflow,
+        };
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
+    }
+    pageScrollLockCount += 1;
+};
+
+const unlockPageScroll = () => {
+    pageScrollLockCount = Math.max(0, pageScrollLockCount - 1);
+    if (pageScrollLockCount !== 0 || !previousPageOverflow) return;
+    document.body.style.overflow = previousPageOverflow.body;
+    document.documentElement.style.overflow = previousPageOverflow.documentElement;
+    previousPageOverflow = undefined;
+};
+
+export default ({onClose, children, enableBackScroll = false}) => {
     const history = useHistory();
     const onCloseRef = React.useRef(onClose);
+
+    React.useEffect(() => {
+        if (enableBackScroll) return undefined;
+        lockPageScroll();
+        return unlockPageScroll;
+    }, [enableBackScroll]);
 
     React.useEffect(() => {
         onCloseRef.current = onClose;
     }, [onClose]);
 
     React.useEffect(() => {
-        const unblock = history.block(event => {
-            onCloseRef.current?.(event);
+        const unblock = history.block(() => {
+            onCloseRef.current?.();
             return false;
         });
         return () => {

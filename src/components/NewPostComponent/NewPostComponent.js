@@ -9,6 +9,7 @@ import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import LoadingComponent from "../LoadingComponent";
@@ -404,22 +405,18 @@ const NewPostComponent = props => {
         }
     }, [uppy])
 
-    const uploadButton = <div
-        aria-disabled={disabled}
-        className={[componentStyles.uploadButton, !windowData.isNarrow() && componentStyles.uploadButtonSecondary]
-            .filter(Boolean)
-            .join(" ")}
+    const uploadButton = <Button
+        color={"primary"}
+        disabled={disabled}
+        icon={multi ? <ImageAddIcon/> : <ImageIcon/>}
         onKeyDown={event => {
             if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
             event.preventDefault();
             event.currentTarget.click();
         }}
-        onPointerDown={onUploadPointerDown}
-        role='button'
         tabIndex={disabled ? -1 : 0}
-    >
-        {multi ? <ImageAddIcon/> : <ImageIcon/>}
-    </div>;
+        title={t("Post.Add image")}
+    />;
 
     const uploadComponent = ready && <UploadComponent
         button={uploadButton}

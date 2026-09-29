@@ -1,6 +1,7 @@
 import ClearIcon from "@material-ui/icons/Clear";
 import React from "react";
 import {useTranslation} from "react-i18next";
+import Button from "../../controls/Button/Button";
 import DocumentThumbnailComponent from "../DocumentThumbnailComponent";
 import {uploadComponentClean} from "../UploadComponent/uploadComponentControls";
 import imageStyles from "./styles/Images.module.css";
@@ -24,17 +25,15 @@ export default ({disabled, images, onChange, uppy}) => {
         handler();
     };
 
-    const removeButton = handler => <div
-        aria-disabled={disabled}
+    const removeButton = handler => <Button
         className={imageStyles.removeButton}
+        disabled={disabled}
+        icon={<ClearIcon/>}
         onClick={disabled ? undefined : handler}
         onKeyDown={handleRemoveKeyDown(handler)}
-        role='button'
         tabIndex={disabled ? -1 : 0}
         title={t("Post.Remove image")}
-    >
-        <ClearIcon/>
-    </div>;
+    />;
 
     return <div className={imageStyles.previewGrid}>
         {images && images.map((image, index) => {
