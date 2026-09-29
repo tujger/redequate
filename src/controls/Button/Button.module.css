@@ -57,38 +57,37 @@
     }
 }
 
-.outlined {
+.outlined,
+.text {
     background-color: transparent;
-    border: 1px solid currentcolor;
+
+    &.primary {
+        color: var(--theme-color-primary);
+    }
+
+    &.secondary {
+        color: var(--theme-color-secondary);
+    }
+
+    &.alert {
+        color: var(--theme-color-error);
+    }
 
     &:hover {
         background-color: var(--theme-color-focus);
     }
 }
 
-.text {
-    background-color: transparent;
-    border: 0;
+.outlined {
+    border: 1px solid currentcolor;
+}
 
-    &:hover {
-        background-color: var(--theme-color-focus);
-    }
+.text {
+    border: 0;
 }
 
 .default {
     color: rgb(0 0 0 / 87%);
-}
-
-.primary {
-    color: var(--theme-color-primary);
-}
-
-.secondary {
-    color: var(--theme-color-secondary);
-}
-
-.alert {
-    color: var(--theme-color-error);
 }
 
 .inherit {

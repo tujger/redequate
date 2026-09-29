@@ -26,19 +26,21 @@ const unlockPageScroll = () => {
     previousPageOverflow = undefined;
 };
 
-export default ({onClose, children, enableBackScroll = false}) => {
+export default ({
+    children,
+    closeOnBackdropClick = true,
+    enableBackScroll = false,
+    onClose,
+}) => {
     const history = useHistory();
     const onCloseRef = React.useRef(onClose);
+    onCloseRef.current = onClose;
 
     React.useEffect(() => {
         if (enableBackScroll) return undefined;
         lockPageScroll();
         return unlockPageScroll;
     }, [enableBackScroll]);
-
-    React.useEffect(() => {
-        onCloseRef.current = onClose;
-    }, [onClose]);
 
     React.useEffect(() => {
         const unblock = history.block(() => {
@@ -74,7 +76,10 @@ export default ({onClose, children, enableBackScroll = false}) => {
         <div
             aria-hidden={"true"}
             className={styles.backdrop}
-            onClick={event => onCloseRef.current?.(event)}
+            onClick={closeOnBackdropClick ? event => {
+                event.stopPropagation();
+                onCloseRef.current?.(event);
+            } : undefined}
         />
         <div
             aria-modal={"true"}

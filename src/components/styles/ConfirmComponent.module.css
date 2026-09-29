@@ -1,32 +1,6 @@
-.root {
-    align-items: center;
-    background-color: rgb(0 0 0 / 32%);
-    bottom: 0;
-    display: flex;
-    justify-content: center;
-    left: 0;
-    padding: calc(var(--theme-spacing) * 3);
-    position: fixed;
-    right: 0;
-    top: 0;
-    z-index: 1300;
-}
-
-.dialog {
-    background-color: var(--theme-color-paper);
-    box-shadow: var(--theme-card-shadow);
-    color: var(--theme-color-text);
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - var(--theme-spacing) * 6);
-    outline: 0;
-    overflow: hidden;
-    width: 60%;
-}
-
 .title {
     font-size: calc(var(--theme-font-size) * 1.25);
-    font-weight: 500;
+    font-weight: 900;
     padding: calc(var(--theme-spacing) * 3);
 }
 
@@ -83,6 +57,7 @@
     .dialog {
         border-radius: 0;
         max-height: none;
+        position: relative;
         width: 100%;
     }
 }
