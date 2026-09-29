@@ -65,6 +65,7 @@
 
 .clearButton {
     bottom: 0;
+    filter: drop-shadow(1px 0 0 var(--theme-color-background)) drop-shadow(-1px 0 0 var(--theme-color-background)) drop-shadow(0 1px 0 var(--theme-color-background)) drop-shadow(0 -1px 0 var(--theme-color-background)) drop-shadow(1px 1px 0 var(--theme-color-background)) drop-shadow(-1px -1px 0 var(--theme-color-background)) drop-shadow(1px -1px 0 var(--theme-color-background)) drop-shadow(-1px 1px 0 var(--theme-color-background));
     opacity: 0;
     padding: calc(var(--theme-spacing) * .25);
     pointer-events: none;

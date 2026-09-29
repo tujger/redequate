@@ -1,0 +1,163 @@
+.profile {
+    align-items: flex-start;
+    display: flex;
+    gap: var(--theme-spacing);
+    flex-flow: row nowrap;
+}
+
+.profileFieldImage {
+    color: darkgray;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: var(--theme-spacing);
+    justify-content: center;
+    margin-right: calc(var(--theme-spacing) * 2);
+    max-width: calc(var(--theme-spacing) * 30);
+    position: relative;
+    width: calc(var(--theme-spacing) * 18);
+}
+
+.profileImage {
+    height: calc(var(--theme-spacing) * 18);
+    min-height: calc(var(--theme-spacing) * 18);
+    object-fit: cover;
+    width: 100%;
+}
+
+.clearImageDesktop {
+    background-color: transparent;
+    color: white;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.clearImageMobile {
+    display: none;
+}
+
+.imageActions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--theme-spacing);
+    justify-content: center;
+    width: 100%;
+}
+
+.profileFields {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.profileField {
+    display: flex;
+    justify-content: flex-start;
+    max-width: 100%;
+    width: 100%;
+
+    & > * {
+        max-width: 100%;
+    }
+}
+
+.description {
+    height: 120px;
+}
+
+.ownerField {
+    width: 100%;
+}
+
+.spacer {
+    flex: 0 0 calc(var(--theme-spacing) * 2);
+}
+
+.imageSearch {
+    font-size: .875rem;
+}
+
+.deactivate {
+    align-items: center;
+    color: var(--theme-color-error);
+    cursor: pointer;
+    display: inline-flex;
+    gap: var(--theme-spacing);
+}
+
+.actions {
+    display: flex;
+    gap: var(--theme-spacing);
+    width: 100%;
+
+    & > * {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
+
+.deleteAction {
+    display: flex;
+    justify-content: center;
+    margin-top: calc(var(--theme-spacing) * 8);
+    width: 100%;
+}
+
+@media (max-width: 959px) {
+    .profileImage {
+        border-radius: calc(var(--theme-spacing) * 2);
+    }
+
+    .clearImageDesktop {
+        display: none;
+    }
+
+    .clearImageMobile {
+        display: block;
+    }
+}
+
+@media (max-width: 599px) {
+    .profile {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .profileFieldImage {
+        max-width: 100%;
+        margin-right: 0;
+        text-align: center;
+        width: 100%;
+    }
+
+    .profileImage {
+        height: calc(var(--theme-spacing) * 25);
+        min-height: calc(var(--theme-spacing) * 25);
+        width: 100%;
+    }
+
+    .profileFields {
+        margin-bottom: calc(var(--theme-spacing) * 2);
+        width: 100%;
+    }
+
+    .profileField {
+        align-items: center;
+        justify-content: center;
+        text-align: initial;
+    }
+}
+
+@media (min-width: 960px) {
+    .clearImageDesktop {
+        display: inline-flex;
+    }
+
+    .clearImageMobile {
+        display: none;
+    }
+}
