@@ -3,7 +3,6 @@
         background-color: var(--theme-color-paper);
         color: var(--theme-color-secondary);
         cursor: pointer;
-        flex: 0 0 auto;
         justify-content: flex-start;
         margin-bottom: calc(var(--theme-spacing) * 1.5);
         width: 100%;
