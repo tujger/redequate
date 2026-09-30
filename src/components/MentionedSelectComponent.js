@@ -1,9 +1,9 @@
 import React from "react";
+import {useFirebase} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
+import Select from "../controls/Select/Select";
 import {tokenizeText} from "./MentionedTextComponent";
 import MentionsInputComponent from "./MentionsInputComponent/MentionsInputComponent";
-import {useFirebase} from "../controllers/General";
-import Select from "../controls/Select/Select";
 import styles from "./styles/MentionedSelectComponent.module.css";
 
 export default (
@@ -116,7 +116,7 @@ export default (
     }
 
     const select = <Select
-        className={[styles.select, className].filter(Boolean).join(" ")}
+        className={[className].filter(Boolean).join(" ")}
         disabled={disabled}
         displayEmpty={!label}
         fullWidth={Boolean(label)}

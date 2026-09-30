@@ -10,10 +10,6 @@
     line-height: 1.5;
 }
 
-.select {
-    width: 100%;
-}
-
 .placeholder {
     color: var(--theme-color-muted);
 }
