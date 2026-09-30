@@ -1,5 +1,7 @@
 .root {
     align-items: center;
+    background-color: var(--theme-header-menu-background-color);
+    color: var(--theme-header-menu-color);
     display: flex;
 }
 

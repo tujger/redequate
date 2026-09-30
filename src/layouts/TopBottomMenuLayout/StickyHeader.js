@@ -1,33 +1,12 @@
 import React from "react";
-import PropTypes from "prop-types";
-import withStyles from "@material-ui/styles/withStyles";
+import styles from "./styles/StickyHeader.module.css";
 
-// noinspection JSUnusedLocalSymbols
-const styles = (theme) => ({
-    container: {
-        backgroundColor: theme.palette.background.default,
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-    },
-    stickyBottom: {
-        position: "sticky",
-        bottom: 0
-    },
-});
+export default props => {
+    const {className, children, headerComponent, stickyBottom} = props;
 
-const StickyHeader = props => {
-    const {classes, className, children, headerComponent, stickyBottom} = props;
-
-    return <div className={[classes.container, className].join(" ")}>
+    return <div className={[styles.container, className].filter(Boolean).join(" ")}>
         {headerComponent}
         {children}
-        <div className={[classes.stickyBottom].join(" ")}>{stickyBottom}</div>
+        <div className={styles.stickyBottom}>{stickyBottom}</div>
     </div>
 };
-
-StickyHeader.propTypes = {
-    children: PropTypes.any,
-};
-
-export default withStyles(styles)(StickyHeader);

@@ -1,87 +1,60 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
 import ProgressView from "../../components/ProgressView";
+import styles from "./styles/StickyHeaderComponent.module.css";
 
-const styles = theme => ({
-    sticky: {
-        display: "flex",
-        flexBasis: theme.mixins.toolbar.minHeight,
-        flexGrow: 0,
-        flexShrink: 0,
-        justifyContent: "flex-end",
-        // height: theme.mixins.toolbar.minHeight,
-        position: "sticky",
-        top: 0,
-        zIndex: 2
-    },
-    stickycollapsed: {
-        // backgroundImage: "url("+header +")",
-        backgroundRepeat: "no-repeat",
-        backgroundPositionY: "bottom",
-    },
-    title: {
-        fontSize: "2.5rem",
-        left: theme.spacing(1),
-        position: "fixed",
-        top: theme.spacing(1),
-        transition: "150ms",
-        zIndex: 3,
-        ...theme.fetchOverride(theme => theme.customized.topBottomLayout.title),
-    },
-    titlecollapsed: {
-        alignItems: "center",
-        display: "flex",
-        fontSize: "1.875rem",
-        height: theme.mixins.toolbar.minHeight,
-        top: 0,
-    },
-    content: {
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        flexBasis: theme.spacing(16),
-        flexGrow: 0,
-        flexShrink: 0,
-        // height: theme.spacing(16),
-        zIndex: 2,
-    },
-    observer: {
-        height: 0,
-        marginTop: -theme.mixins.toolbar.minHeight
-    }
-});
-
-export const StickyHeaderComponent = withStyles(styles)(({classes, content, image, menuComponent, title, titleClassName}) => {
-    const [state, setState] = React.useState({collapsed: false});
-    const {collapsed} = state;
-    const refObserver = React.createRef();
+export const StickyHeaderComponent = ({content, image, menuComponent, title, titleClassName}) => {
+    const [collapsed, setCollapsed] = React.useState(false);
+    const refContent = React.useRef(null);
+    const refObserver = React.useRef(null);
+    const refSticky = React.useRef(null);
+    const refTitle = React.useRef(null);
 
     React.useEffect(() => {
-        const observer = new window.IntersectionObserver((entries) => {
-            entries.map(entry => {
-                setState(state => ({...state, collapsed: !entry.isIntersecting}));
-                return null;
-            })
-        }, {
-            threshold: new Array(101).fill(0).map((v, i) => i * 0.01),
-        });
-        observer.observe(refObserver.current);
+        let frame = null;
+
+        const updateProgress = () => {
+            const distance = refContent.current.offsetHeight - refSticky.current.offsetHeight;
+            const observerTop = refObserver.current.getBoundingClientRect().top;
+            const progress = distance > 0
+                ? Math.max(0, Math.min(1, 1 - observerTop / distance))
+                : 1;
+
+            refTitle.current.style.setProperty("--title-collapse-progress", progress);
+            setCollapsed(progress === 1);
+        };
+
+        const scheduleUpdate = () => {
+            if (frame !== null) return;
+            frame = window.requestAnimationFrame(() => {
+                frame = null;
+                updateProgress();
+            });
+        };
+
+        updateProgress();
+        document.addEventListener("scroll", scheduleUpdate, {capture: true, passive: true});
+        window.addEventListener("resize", scheduleUpdate);
+
         return () => {
-            observer.disconnect();
-        }
-        // eslint-disable-next-line
+            document.removeEventListener("scroll", scheduleUpdate, true);
+            window.removeEventListener("resize", scheduleUpdate);
+            if (frame !== null) window.cancelAnimationFrame(frame);
+        };
     }, []);
 
+    const imageStyle = image ? {backgroundImage: `url(${image})`} : undefined;
+
     return <>
+        <div ref={refContent} className={styles.content} style={imageStyle}>{content}</div>
+        <div ref={refObserver} className={styles.observer}/>
         <div
-            className={[classes.title, collapsed ? classes.titlecollapsed : null, titleClassName].join(" ")}>{title}</div>
-        <div className={classes.content} style={{backgroundImage: `url(${image})`}}>{content}</div>
-        <div ref={refObserver} className={classes.observer}/>
-        <div
-            className={[classes.sticky, collapsed ? classes.stickycollapsed : null].join(" ")}
-            style={collapsed ? {backgroundImage: `url(${image})`} : null}
+            ref={refSticky}
+            className={[styles.sticky, collapsed && styles.collapsed].filter(Boolean).join(" ")}
+            style={collapsed ? imageStyle : undefined}
         >
+            <div ref={refTitle} className={[styles.title, titleClassName].filter(Boolean).join(" ")}>{title}</div>
             {menuComponent}
             <ProgressView/>
         </div>
     </>
-})
+};

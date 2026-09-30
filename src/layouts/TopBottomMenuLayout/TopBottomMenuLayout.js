@@ -35,12 +35,12 @@ const stylesCurrent = theme => ({
         justifyContent: "flex-end",
     },
     topmenu: {
-        ...theme.typography.button,
-        backgroundColor: "#ffffff88",
-        alignItems: "center",
-        display: "flex",
-        zIndex: 2,
-        ...theme.fetchOverride(theme => theme.customized.topBottomLayout.topmenu),
+        // ...theme.typography.button,
+        // backgroundColor: "#ffffff88",
+        // alignItems: "center",
+        // display: "flex",
+        // zIndex: 2,
+        // ...theme.fetchOverride(theme => theme.customized.topBottomLayout.topmenu),
     },
 
     headertitle: {},

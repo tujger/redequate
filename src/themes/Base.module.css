@@ -26,6 +26,9 @@
 
     --theme-header-collapsed: calc(var(--theme-spacing) * 7);
     --theme-header-expanded: calc(var(--theme-spacing) * 16);
+    --theme-header-menu-background-color: inherit;
+    --theme-header-menu-color: inherit;
+    --theme-header-title-color: inherit;
 
     --theme-content-padding-left: 240px;
     --theme-content-padding-right: 240px;
