@@ -1,4 +1,3 @@
-import TextField from "@material-ui/core/TextField";
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
@@ -8,11 +7,12 @@ import ProgressView from "../components/ProgressView";
 import {cacheDatas, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
+import TextField from "../controls/TextField/TextField";
+import baseStyles from "../themes/Base.module.css";
 import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
 import ChatList from "./ChatList";
 import {ChatMeta} from "./ChatMeta";
-import baseStyles from "../themes/Base.module.css";
 import chatStyles from "./styles/Chat.module.css";
 
 const Chat = (props) => {
