@@ -1,0 +1,33 @@
+.root {
+    min-width: 0;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.menu {
+    background-color: var(--theme-color-paper);
+    box-shadow: var(--theme-dialog-shadow);
+    box-sizing: border-box;
+    color: var(--theme-color-text);
+    max-height: calc(var(--theme-spacing) * 30);
+    overflow: auto;
+    position: fixed;
+    z-index: 1301;
+}
+
+.option {
+    cursor: pointer;
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 2);
+
+    &:hover,
+    &.active {
+        background-color: var(--theme-color-focus);
+    }
+}
+
+.status {
+    color: var(--theme-color-muted);
+    padding: var(--theme-spacing) calc(var(--theme-spacing) * 2);
+}
