@@ -34,7 +34,7 @@
     border-radius: 50%;
     height: var(--theme-spacing);
     position: absolute;
-    right: calc(var(--theme-spacing) / 2);
+    right: 0;
     top: calc(var(--theme-spacing) / 2);
     width: var(--theme-spacing);
 }

@@ -1,0 +1,23 @@
+.root {
+    align-items: center;
+    display: flex;
+}
+
+.sectionButton {
+    color: inherit;
+    text-decoration: none;
+}
+
+.languageChange {
+    --select-color: inherit;
+    --select-size: inherit;
+
+    box-shadow: none;
+    padding: 0 calc(var(--theme-spacing));
+}
+
+.profileLink {
+    color: inherit;
+    margin: calc(var(--theme-spacing) / 2);
+    text-decoration: none;
+}
