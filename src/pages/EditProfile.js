@@ -436,6 +436,10 @@ function EditProfile(props) {
                     const editComponent = field.editComponent || <TextField/>;
                     const missedRequired = requiredError.indexOf(field.id) >= 0;
                     const uniqueRequired = uniqueError.indexOf(field.id) >= 0;
+                    const handleChange = ev => {
+                        const value = ev.target.value || "";
+                        setState(state => ({...state, [field.id]: value}));
+                    };
                     return <React.Fragment key={field.id}>
                         <div className={styles.fieldSpacer}/>
                         <div className={styles.fieldRow}>
@@ -451,13 +455,7 @@ function EditProfile(props) {
                                         error: missedRequired || uniqueRequired,
                                         fullWidth: true,
                                         label: t(field.label),
-                                        onChange: ev => {
-                                            ev.persist();
-                                            setState(state => ({
-                                                ...state,
-                                                [field.id]: ev.target.value || ""
-                                            }));
-                                        },
+                                        onChange: handleChange,
                                         required: field.required,
                                         value: state[field.id] || ""
                                     })
@@ -468,13 +466,7 @@ function EditProfile(props) {
                                         error={missedRequired || uniqueRequired}
                                         fullWidth
                                         label={t(field.label)}
-                                        onChange={ev => {
-                                            ev.persist();
-                                            setState(state => ({
-                                                ...state,
-                                                [field.id]: ev.target.value || ""
-                                            }));
-                                        }}
+                                        onChange={handleChange}
                                         required={field.required}
                                         value={state[field.id] || ""}
                                     />}
