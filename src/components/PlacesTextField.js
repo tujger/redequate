@@ -1,8 +1,7 @@
+import {GeoCode} from "geo-coder-t";
 import React from "react";
 import ReactDOM from "react-dom";
 import {useTranslation} from "react-i18next";
-import {GeoCode} from "geo-coder-t";
-import PropTypes from "prop-types";
 import TextField from "../controls/TextField/TextField";
 import styles from "./styles/PlacesTextField.module.css";
 
