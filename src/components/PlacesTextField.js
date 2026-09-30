@@ -1,36 +1,41 @@
-import {GeoCode} from "geo-coder-t";
 import React from "react";
 import ReactDOM from "react-dom";
 import {useTranslation} from "react-i18next";
+import {useMetaInfo} from "../controllers/General";
 import TextField from "../controls/TextField/TextField";
+import selectStyles from "../controls/Select/Select.module.css";
 import styles from "./styles/PlacesTextField.module.css";
 
-const featureTypes = {
-    citystate: ["city", "state"],
-    latlng: ["lat", "lng"],
-    formatted: [],
-};
+const geoapifyTypes = ["country", "state", "city", "postcode", "street", "amenity", "locality"];
 const directTypes = ["formatted", "short_usps", "short_ru", "lat", "lng", "latlng", "citystate"];
 let nextListId = 0;
 
 const formatOptions = (results, type) => {
     const seen = new Set();
     return results.map(result => {
-        const address = {...result.address};
-        const rawAddress = result.raw?.address || {};
-        address.city = address.city || rawAddress.locality;
+        const city = result.city || result.municipality || result.village || result.town;
+        const state = result.state_code || result.state;
+        const address = {
+            ...result,
+            city,
+            state,
+            locality: city,
+            road: result.street,
+            house_number: result.housenumber,
+        };
         const tokens = [
-            rawAddress.house_number,
-            rawAddress.road,
-            rawAddress.locality,
-            rawAddress.state,
-            rawAddress.country,
-            rawAddress.postcode,
+            result.housenumber,
+            result.street,
+            city,
+            state,
+            result.country,
+            result.postcode,
         ].filter(Boolean);
         const data = {
             ...result,
             address,
-            latlng: `${result.lat},${result.lng}`,
+            lng: result.lon,
+            latlng: `${result.lat},${result.lon}`,
             citystate: [address.city, address.state].filter(Boolean).join(", "),
             short_usps: tokens.join(", "),
             short_ru: [...tokens].reverse().join(", "),
@@ -59,6 +64,7 @@ export default props => {
         ...fieldProps
     } = props;
     const {t} = useTranslation();
+    const geoapifyApiKey = useMetaInfo()?.settings?.geoapifyApiKey;
     const anchorRef = React.useRef(null);
     const menuRef = React.useRef(null);
     const taskRef = React.useRef(null);
@@ -83,7 +89,7 @@ export default props => {
         setLoading(false);
         setOpen(false);
         setActiveIndex(-1);
-    }, [disabled, type, cancelSearch]);
+    }, [disabled, type, geoapifyApiKey, cancelSearch]);
 
     React.useEffect(() => () => cancelSearch(), [cancelSearch]);
 
@@ -145,7 +151,7 @@ export default props => {
         setOptions([]);
         setActiveIndex(-1);
         onChange?.(event, text);
-        if (disabled || !text.trim()) {
+        if (disabled || !geoapifyApiKey || !text.trim()) {
             setLoading(false);
             setOpen(false);
             return;
@@ -156,10 +162,23 @@ export default props => {
         setOpen(true);
         taskRef.current = setTimeout(() => {
             taskRef.current = null;
-            const geoCode = new GeoCode("osm", {featuretype: featureTypes[type] || type});
-            geoCode.geolookup(text).then(results => {
+            const url = new URL("https://api.geoapify.com/v1/geocode/autocomplete");
+            url.searchParams.set("text", text);
+            url.searchParams.set("format", "json");
+            url.searchParams.set("limit", "10");
+            url.searchParams.set("apiKey", geoapifyApiKey);
+            const searchType = type === "citystate" ? "locality" : type;
+            if (geoapifyTypes.includes(searchType)) url.searchParams.set("type", searchType);
+            window.fetch(url.toString()).then(response => {
+                if (!response.ok) throw Error(`Geoapify request failed: ${response.status}`);
+                return response.json();
+            }).then(({results}) => {
                 if (request !== requestRef.current) return;
-                const items = formatOptions(results, type);
+                const matches = Array.isArray(results) ? results : [];
+                const filtered = type === "citystate"
+                    ? matches.filter(result => result.result_type === "city" || result.result_type === "state")
+                    : matches;
+                const items = formatOptions(filtered, type);
                 setOptions(items);
                 setLoading(false);
                 setOpen(items.length > 0);
@@ -203,23 +222,29 @@ export default props => {
     };
 
     const menu = open && typeof document !== "undefined" && ReactDOM.createPortal(<div
-        className={styles.menu}
-        id={listId.current}
+        className={[selectStyles.menu, styles.menu].join(" ")}
         ref={menuRef}
-        role={"listbox"}
         style={position}
     >
-        {loading && <div className={styles.status} role={"status"}>{t("Common.Loading...")}</div>}
-        {!loading && options.map((option, index) => <div
-            aria-selected={index === activeIndex}
-            className={[styles.option, index === activeIndex && styles.active].filter(Boolean).join(" ")}
-            id={`${listId.current}-option-${index}`}
-            key={option.title}
-            onClick={() => handleSelect(option)}
-            onMouseEnter={() => setActiveIndex(index)}
-            onPointerDown={event => event.preventDefault()}
-            role={"option"}
-        >{option.title}</div>)}
+        <div id={listId.current} role={"listbox"}>
+            {loading && <div className={styles.status} role={"status"}>{t("Common.Loading...")}</div>}
+            {!loading && options.map((option, index) => <div
+                aria-selected={index === activeIndex}
+                className={selectStyles.menuItem}
+                data-selected={index === activeIndex}
+                id={`${listId.current}-option-${index}`}
+                key={option.title}
+                onClick={() => handleSelect(option)}
+                onMouseEnter={() => setActiveIndex(index)}
+                onPointerDown={event => event.preventDefault()}
+                role={"option"}
+            >{option.title}</div>)}
+        </div>
+        {!loading && options.length > 0 && <div className={styles.attribution} onPointerDown={event => event.preventDefault()}>
+            <a href={"https://www.geoapify.com/"} rel={"noopener noreferrer"} target={"_blank"}>Powered by Geoapify</a>
+            {" · "}
+            <a href={"https://www.openstreetmap.org/copyright"} rel={"noopener noreferrer"} target={"_blank"}>© OpenStreetMap contributors</a>
+        </div>}
     </div>, document.body);
 
     return <div className={[styles.root, fullWidth && styles.fullWidth].filter(Boolean).join(" ")} ref={anchorRef}>
@@ -229,6 +254,7 @@ export default props => {
             aria-autocomplete={"list"}
             aria-controls={open ? listId.current : undefined}
             aria-expanded={open}
+            autoComplete={"off"}
             className={className}
             disabled={disabled}
             fullWidth={fullWidth}

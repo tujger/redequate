@@ -1,5 +1,5 @@
 .root {
-    width: 100%;
+    width: auto;
 
     & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn),
     & :global(.uppy-Dashboard--modal .uppy-Dashboard-close),

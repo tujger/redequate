@@ -1,33 +1,34 @@
-import React from "react";
+import PostIcon from "@material-ui/icons/ChatBubbleOutline";
+import UploadsIcon from "@material-ui/icons/CloudUpload";
+import AllIcon from "@material-ui/icons/ExpandMore";
+import DynamicLinksIcon from "@material-ui/icons/Link";
+import JoinUsIcon from "@material-ui/icons/PanTool";
+import SupportIcon from "@material-ui/icons/Person";
+import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
+import MaintenanceIcon from "@material-ui/icons/Settings";
 import PropTypes from "prop-types";
+import React from "react";
+import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
+import ConfirmComponent from "../../components/ConfirmComponent";
+import LoadingComponent from "../../components/LoadingComponent";
+import MentionedSelectComponent from "../../components/MentionedSelectComponent";
+import {tokenizeText} from "../../components/MentionedTextComponent";
+import ProgressView from "../../components/ProgressView";
+import Pagination from "../../controllers/FirebasePagination";
+import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
+import {mentionUsers} from "../../controllers/mentionTypes";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {useCurrentUserData, UserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import Select from "../../controls/Select/Select";
 import Switch from "../../controls/Switch/Switch";
 import Tabs from "../../controls/Tabs/Tabs";
 import TextField from "../../controls/TextField/TextField";
-import DynamicLinksIcon from "@material-ui/icons/Link";
-import UploadsIcon from "@material-ui/icons/CloudUpload";
-import SupportIcon from "@material-ui/icons/Person";
-import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
-import MaintenanceIcon from "@material-ui/icons/Settings";
-import JoinUsIcon from "@material-ui/icons/PanTool";
-import PostIcon from "@material-ui/icons/ChatBubbleOutline";
-import AllIcon from "@material-ui/icons/ExpandMore";
-import {useDispatch} from "react-redux";
-import {useHistory} from "react-router-dom";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
-import ProgressView from "../../components/ProgressView";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
-import LoadingComponent from "../../components/LoadingComponent";
-import ConfirmComponent from "../../components/ConfirmComponent";
-import {mentionUsers} from "../../controllers/mentionTypes";
-import Pagination from "../../controllers/FirebasePagination";
-import MentionedSelectComponent from "../../components/MentionedSelectComponent";
-import {updateActivity} from "./audit/auditReducer";
-import {tokenizeText} from "../../components/MentionedTextComponent";
-import styles from "./styles/Settings.module.css";
 import baseStyles from "../../themes/Base.module.css";
+import {updateActivity} from "./audit/auditReducer";
+import styles from "./styles/Settings.module.css";
 
 const Settings = ({uploadable}) => {
     const currentUserData = useCurrentUserData();
@@ -36,6 +37,7 @@ const Settings = ({uploadable}) => {
     const history = useHistory();
     const windowData = useWindowData();
     const isNarrow = windowData.isNarrow();
+    const {t} = useTranslation();
     const {maintenance: maintenanceGiven} = useMetaInfo();
     const [state, setState] = React.useState({
         error: null,
@@ -48,6 +50,7 @@ const Settings = ({uploadable}) => {
         disabled,
         blockedNames,
         dynamicLinksUrlPrefix,
+        geoapifyApiKey,
         joinUsCancel,
         joinUsConfirm,
         joinUsScroll,
@@ -184,6 +187,9 @@ const Settings = ({uploadable}) => {
         const addPreferenceTranslateLimit = async () => {
             settings.translateLimit = +translateLimit || null;
         }
+        const addPreferenceGeoapifyApiKey = async () => {
+            settings.geoapifyApiKey = geoapifyApiKey || null;
+        }
         const addPreferenceJoinUs = async () => {
             settings.joinUsCancel = joinUsCancel || null;
             settings.joinUsConfirm = joinUsConfirm || null;
@@ -237,6 +243,7 @@ const Settings = ({uploadable}) => {
             .then(addSupport)
             .then(addPreferenceDynamicLinksUrlPrefix)
             .then(addPreferenceTranslateLimit)
+            .then(addPreferenceGeoapifyApiKey)
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
             .then(addPreferenceUploads)
@@ -387,15 +394,20 @@ const Settings = ({uploadable}) => {
                 {isNarrow && <h2 className={styles.sectionHeading}>Convenience</h2>}
                 <Option
                     disabled={disabled}
-                    label={"Dynamic links URL prefix"}
+                    label={t("Settings.Dynamic links URL prefix")}
                     onChange={handleChange("dynamicLinksUrlPrefix")}
                     value={dynamicLinksUrlPrefix || ""}/>
                 <Option
                     disabled={disabled}
-                    label={"Allow translate up to, chars/month"}
+                    label={t("Settings.Allow translate up to, chars/month")}
                     onChange={handleChange("translateLimit")}
                     type={"number"}
                     value={translateLimit || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={t("Settings.Geoapify API key")}
+                    onChange={handleChange("geoapifyApiKey")}
+                    value={geoapifyApiKey || ""}/>
             </>}
             {(tab === 4 || tab === -1) && <>
                 {isNarrow && <h2 className={styles.sectionHeading}>Welcome popup</h2>}

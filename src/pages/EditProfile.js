@@ -1,45 +1,28 @@
-import React from "react";
-import Button from "../controls/Button/Button";
-import Switch from "../controls/Switch/Switch";
 import ClearIcon from "@material-ui/icons/Clear";
 import MailIcon from "@material-ui/icons/Mail";
 import EmptyAvatar from "@material-ui/icons/Person";
-import {Redirect, useHistory, useParams} from "react-router-dom";
-import {useDispatch} from "react-redux";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {
-    logoutUser,
-    matchRole,
-    normalizeSortName,
-    Role,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
-import ProgressView from "../components/ProgressView";
-import {refreshAll} from "../controllers/Store";
-import {
-    cacheDatas,
-    fetchDeviceId,
-    useFirebase,
-    usePages,
-    useStore,
-    useWindowData
-} from "../controllers/General";
-import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
-import notifySnackbar from "../controllers/notifySnackbar";
-import {setupReceivingNotifications} from "../controllers/Notifications";
-import TextField from "../controls/TextField/TextField";
-import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
-import LoadingComponent from "../components/LoadingComponent";
-import Pagination from "../controllers/FirebasePagination";
+import {useDispatch} from "react-redux";
+import {Redirect, useHistory, useParams} from "react-router-dom";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {
-    uploadComponentClean,
-    uploadComponentPublish
-} from "../components/UploadComponent/uploadComponentControls";
+import LoadingComponent from "../components/LoadingComponent";
+import ProgressView from "../components/ProgressView";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
-import {updateActivity} from "./admin/audit/auditReducer";
+import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import Pagination from "../controllers/FirebasePagination";
+import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
+import {setupReceivingNotifications} from "../controllers/Notifications";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {refreshAll} from "../controllers/Store";
+import {logoutUser, matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
+import Button from "../controls/Button/Button";
+import Switch from "../controls/Switch/Switch";
+import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
+import {updateActivity} from "./admin/audit/auditReducer";
+import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import styles from "./styles/EditProfile.module.css";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -398,14 +381,13 @@ function EditProfile(props) {
                     ? <img src={image} alt={t("User.User photo")} className={styles.profileImage}/>
                     : <EmptyAvatar className={styles.profileImage}/>}
                 {image && <Button
-                    aria-label={t("Common.Clear")}
                     className={[styles.clearImage, styles.desktopOnly].join(" ")}
+                    color={"inherit"}
                     icon={<ClearIcon/>}
                     onClick={() => {
                         setState(state => ({...state, image: "", uppy: null}));
                     }}
                     title={t("Common.Clear")}
-                    variant={"text"}
                 />}
                 <div className={styles.photoActions}>
                     {uploadable && <React.Suspense fallback={<LoadingComponent/>}>

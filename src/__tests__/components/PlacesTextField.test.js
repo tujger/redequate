@@ -1,34 +1,38 @@
 import React from "react";
 import {render, unmountComponentAtNode} from "react-dom";
 import {act, Simulate} from "react-dom/test-utils";
-import {GeoCode} from "geo-coder-t";
+import {useMetaInfo} from "../../controllers/General";
 import PlacesTextField from "../../components/PlacesTextField";
+import selectStyles from "../../controls/Select/Select.module.css";
+import styles from "../../components/styles/PlacesTextField.module.css";
 
-const mockLookup = jest.fn();
-
-jest.mock("geo-coder-t", () => ({
-    GeoCode: jest.fn().mockImplementation(() => ({geolookup: mockLookup})),
-}), {virtual: true});
+jest.mock("../../controllers/General", () => ({useMetaInfo: jest.fn()}));
 jest.mock("@material-ui/icons/Clear", () => () => null, {virtual: true});
 jest.mock("react-i18next", () => ({
     useTranslation: () => ({t: value => value}),
 }), {virtual: true});
 
 const place = (name, city) => ({
-    address: {state: "CA"},
     formatted: name,
+    city,
+    state: "California",
+    state_code: "CA",
+    street: "Main",
     lat: 1,
-    lng: 2,
-    raw: {address: {locality: city, road: "Main", state: "CA"}},
+    lon: 2,
+    result_type: "city",
 });
+const response = results => ({ok: true, json: () => Promise.resolve({results})});
 
 describe("PlacesTextField", () => {
     let container;
+    let originalFetch;
 
     beforeEach(() => {
         jest.useFakeTimers();
-        mockLookup.mockReset();
-        GeoCode.mockClear();
+        originalFetch = window.fetch;
+        window.fetch = jest.fn();
+        useMetaInfo.mockReturnValue({settings: {geoapifyApiKey: "test-key"}});
         container = document.createElement("div");
         document.body.appendChild(container);
     });
@@ -36,6 +40,7 @@ describe("PlacesTextField", () => {
     afterEach(() => {
         act(() => { unmountComponentAtNode(container); });
         container.remove();
+        window.fetch = originalFetch;
         jest.useRealTimers();
     });
 
@@ -57,27 +62,45 @@ describe("PlacesTextField", () => {
         return {input: container.querySelector("input"), changes};
     };
 
-    it("passes typed text to onChange and selects a formatted suggestion", async () => {
-        mockLookup.mockResolvedValue([place("Oak Street", "Oakland"), place("Oak Street", "Oakland")]);
-        const {input, changes} = renderField({type: "formatted", fullWidth: true});
-        act(() => { input.focus(); });
-        act(() => { Simulate.change(input, {target: {value: "Oak"}}); });
-        expect(changes[0]).toEqual({value: "Oak", option: "Oak"});
-        expect(mockLookup).not.toHaveBeenCalled();
-
+    const advanceSearch = async () => {
         await act(async () => {
             jest.advanceTimersByTime(500);
             await Promise.resolve();
+            await Promise.resolve();
         });
-        expect(mockLookup).toHaveBeenCalledWith("Oak");
+    };
+
+    it("requests Geoapify and selects a deduplicated formatted suggestion", async () => {
+        window.fetch.mockResolvedValue(response([place("Oak Street", "Oakland"), place("Oak Street", "Oakland")]));
+        const {input, changes} = renderField({type: "formatted", fullWidth: true});
+        expect(input.getAttribute("autocomplete")).toBe("off");
+        act(() => { input.focus(); });
+        act(() => { Simulate.change(input, {target: {value: "Oak"}}); });
+        expect(changes[0]).toEqual({value: "Oak", option: "Oak"});
+        expect(window.fetch).not.toHaveBeenCalled();
+
+        await advanceSearch();
+        const url = new URL(window.fetch.mock.calls[0][0]);
+        expect(url.origin + url.pathname).toBe("https://api.geoapify.com/v1/geocode/autocomplete");
+        expect(url.searchParams.get("text")).toBe("Oak");
+        expect(url.searchParams.get("apiKey")).toBe("test-key");
+        expect(url.searchParams.get("format")).toBe("json");
+        expect(url.searchParams.get("limit")).toBe("10");
+        expect(url.searchParams.has("type")).toBe(false);
         const options = document.body.querySelectorAll('[role="option"]');
         expect(options).toHaveLength(1);
+        expect(options[0].closest(`.${selectStyles.menu}`)).not.toBeNull();
+        expect(options[0].classList.contains(selectStyles.menuItem)).toBe(true);
+        expect(document.body.querySelector('[role="listbox"]').querySelector("a")).toBeNull();
+        expect(document.body.querySelectorAll(`.${styles.attribution} a`)).toHaveLength(2);
         act(() => { Simulate.pointerDown(options[0]); });
         act(() => { options[0].click(); });
         expect(changes[1].value).toBe("Oak Street");
         expect(changes[1].option.title).toBe("Oak Street");
+        expect(changes[1].option.data).toMatchObject({lat: 1, lng: 2, citystate: "Oakland, CA", address: {city: "Oakland", state: "CA"}});
         expect(input.value).toBe("Oak Street");
         expect(document.body.querySelector('[role="listbox"]')).toBeNull();
+        expect(document.body.querySelector(`.${styles.attribution}`)).toBeNull();
 
         act(() => { container.querySelector('[title="Clear"]').click(); });
         expect(changes[2].value).toBe("");
@@ -85,45 +108,49 @@ describe("PlacesTextField", () => {
         expect(document.activeElement).toBe(input);
     });
 
-    it("ignores a stale lookup and supports keyboard selection", async () => {
+    it("ignores stale responses and selects a city or state from the keyboard", async () => {
         let resolveFirst;
-        mockLookup
+        window.fetch
             .mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve; }))
-            .mockResolvedValueOnce([place("Second", "Sacramento")]);
+            .mockResolvedValueOnce(response([place("Second", "Sacramento"), {...place("District", "Sacramento"), result_type: "district"}]));
         const {input, changes} = renderField({type: "citystate"});
         act(() => { input.focus(); });
         act(() => { Simulate.change(input, {target: {value: "First"}}); });
         act(() => { jest.advanceTimersByTime(500); });
         act(() => { Simulate.change(input, {target: {value: "Second"}}); });
+        await advanceSearch();
         await act(async () => {
-            jest.advanceTimersByTime(500);
-            await Promise.resolve();
-        });
-        await act(async () => {
-            resolveFirst([place("First", "Fresno")]);
+            resolveFirst(response([place("First", "Fresno")]));
             await Promise.resolve();
         });
 
-        expect(GeoCode).toHaveBeenCalledWith("osm", {featuretype: ["city", "state"]});
+        expect(new URL(window.fetch.mock.calls[1][0]).searchParams.get("type")).toBe("locality");
         expect(document.body.querySelectorAll('[role="option"]')).toHaveLength(1);
         act(() => { Simulate.keyDown(input, {key: "ArrowDown"}); });
         act(() => { Simulate.keyDown(input, {key: "Enter"}); });
         expect(changes[changes.length - 1].value).toBe("Sacramento, CA");
     });
 
-    it("clears suggestions and loading after a failed lookup", async () => {
-        mockLookup.mockRejectedValue(new Error("Network unavailable"));
+    it("clears suggestions after HTTP failure and does not search empty text", async () => {
+        window.fetch.mockResolvedValue({ok: false, status: 403});
         const {input} = renderField({});
         act(() => { input.focus(); });
         act(() => { Simulate.change(input, {target: {value: "Oak"}}); });
-        await act(async () => {
-            jest.advanceTimersByTime(500);
-            await Promise.resolve();
-        });
+        await advanceSearch();
         expect(document.body.querySelector('[role="listbox"]')).toBeNull();
 
         act(() => { Simulate.change(input, {target: {value: ""}}); });
         act(() => { jest.advanceTimersByTime(500); });
-        expect(mockLookup).toHaveBeenCalledTimes(1);
+        expect(window.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not request without a configured key", () => {
+        useMetaInfo.mockReturnValue({settings: {}});
+        const {input, changes} = renderField({});
+        act(() => { Simulate.change(input, {target: {value: "Oak"}}); });
+        act(() => { jest.advanceTimersByTime(500); });
+        expect(changes[0].value).toBe("Oak");
+        expect(window.fetch).not.toHaveBeenCalled();
+        expect(document.body.querySelector('[role="listbox"]')).toBeNull();
     });
 });
