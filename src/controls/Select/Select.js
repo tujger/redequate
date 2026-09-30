@@ -30,6 +30,7 @@ export default (
         open: givenOpen,
         options = [],
         renderValue,
+        size = undefined,
         tabIndex: givenTabIndex = 0,
         value,
         ...otherProps
@@ -224,6 +225,8 @@ export default (
                 className,
                 color === "secondary" && styles.secondary,
                 color === "primary" && styles.primary,
+                size === "small" && styles.small,
+                size === "large" && styles.large,
             ].filter(Boolean).join(" ")}
             onClick={disabled ? undefined : handleTriggerClick}
             onKeyDown={handleTriggerKeyDown}

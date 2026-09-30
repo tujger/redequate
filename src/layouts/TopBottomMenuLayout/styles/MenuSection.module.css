@@ -1,0 +1,82 @@
+.section {
+    display: inline-flex;
+    position: relative;
+}
+
+.nestedSection {
+    display: block;
+    width: 100%;
+
+    & .menu {
+        left: 100%;
+        right: auto;
+        top: 0;
+    }
+
+    & .openLeft {
+        left: auto;
+        right: 100%;
+    }
+}
+
+.trigger {
+    padding: 0 calc(var(--theme-spacing));
+}
+
+.nestedTrigger {
+    display: contents;
+    font: inherit;
+    text-transform: inherit;
+}
+
+.badge {
+    background-color: #f00;
+    border-radius: 50%;
+    height: var(--theme-spacing);
+    position: absolute;
+    right: calc(var(--theme-spacing) / 2);
+    top: calc(var(--theme-spacing) / 2);
+    width: var(--theme-spacing);
+}
+
+.endIcon {
+    display: inline-flex;
+    margin-left: var(--theme-spacing);
+}
+
+.menu {
+    background-color: var(--theme-color-paper);
+    box-shadow: var(--theme-card-shadow);
+    color: var(--theme-color-text);
+    font-size: var(--theme-font-size-regular);
+    font-weight: 400;
+    min-width: calc(var(--theme-spacing) * 18);
+    padding: var(--theme-spacing) 0;
+    position: absolute;
+    right: 0;
+    text-transform: none;
+    top: 100%;
+    z-index: 3;
+}
+
+.portalMenu {
+    left: var(--menu-left);
+    position: fixed;
+    right: auto;
+    top: var(--menu-top);
+    z-index: 1200;
+}
+
+.positionPending {
+    visibility: hidden;
+}
+
+.item {
+    align-items: center;
+    border-radius: 0;
+    display: flex;
+    justify-content: space-between;
+    text-decoration: none;
+    text-transform: none;
+    width: 100%;
+}

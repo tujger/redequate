@@ -3,7 +3,7 @@ import {Link} from "react-router-dom";
 import Button from "../../controls/Button/Button";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 import useRippleEffect from "../../helpers/useRippleEffect";
-import styles from "./BottomMenu.module.css";
+import styles from "./styles/BottomMenu.module.css";
 
 const MenuLink = ({item}) => {
     const onPointerDown = useRippleEffect();

@@ -1,5 +1,6 @@
 .select {
     --select-color: var(--theme-color-text);
+    --select-size: var(--theme-font-size-regular);
 
     align-items: center;
     border-width: 0;
@@ -9,6 +10,7 @@
     cursor: pointer;
     display: inline-flex;
     font: inherit;
+    font-size: var(--select-size);
     min-height: calc(var(--theme-spacing) * 4);
     min-width: calc(var(--theme-spacing) * 4);
     outline: 0;
@@ -35,6 +37,14 @@
 
 .secondary {
     --select-color: var(--theme-color-secondary);
+}
+
+.small {
+    --select-size: var(--theme-font-size-small);
+}
+
+.large {
+    --select-size: var(--theme-font-size-large);
 }
 
 .value {
@@ -104,6 +114,7 @@
     color: inherit;
     cursor: pointer;
     font: inherit;
+    font-size: var(--theme-font-size-base);
     line-height: 1.5;
     min-height: calc(var(--theme-spacing) * 4.5);
     outline: 0;
