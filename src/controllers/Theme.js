@@ -271,48 +271,6 @@ export const styles = theme => ({
             width: "100%",
         },
     },
-    searchIcon: {
-        color: "inherit",
-    },
-    searchToolbar: {
-        position: "absolute",
-        right: 0,
-        zIndex: 1,
-        [theme.breakpoints.up("md")]: {
-            backgroundColor: theme.palette.background.default,
-            color: theme.palette.getContrastText(theme.palette.background.default),
-            paddingRight: theme.spacing(2),
-        },
-        [theme.breakpoints.down("sm")]: {
-            backgroundColor: theme.palette.primary.main,
-            bottom: 0,
-            color: theme.palette.getContrastText(theme.palette.primary.main),
-            left: 0,
-            paddingRight: theme.spacing(1),
-            top: 0,
-        }
-    },
-    searchToolbarBack: {
-        color: "inherit",
-    },
-    searchToolbarIcon: {
-        color: "inherit",
-    },
-    searchClearIcon: {
-        color: "inherit",
-        position: "absolute",
-        right: 0,
-        top: theme.spacing(-1),
-    },
-    searchToolbarInput: {
-        color: "inherit",
-        "& .MuiInput-root, & .MuiInput-input": {
-            color: "inherit",
-        },
-        [theme.breakpoints.up("md")]: {
-            width: theme.spacing(32),
-        },
-    },
     superIndex: {
         color: "#ff0000",
         fontSize: "small",
