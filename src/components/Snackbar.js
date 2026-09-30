@@ -1,40 +1,56 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import Snackbar from "@material-ui/core/Snackbar";
-import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
 import {connect} from "react-redux";
+import Button from "../controls/Button/Button";
+import styles from "./styles/Snackbar.module.css";
 
 const SimpleSnackbar = props => {
     const {open, message, buttonText, dispatch} = props;
+    const timerRef = React.useRef(null);
 
-    const onButtonClick = () => {
+    const handleClose = () => {
         dispatch(SimpleSnackbar.HIDE);
     };
 
-    const handleClose = (event, reason) => {
-        if (reason === "clickaway") {
-            return;
-        }
-        dispatch(SimpleSnackbar.HIDE);
-    };
+    const pauseTimer = React.useCallback(() => {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+    }, []);
 
-    return <Snackbar
-        anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "left",
-        }}
-        open={open}
-        autoHideDuration={6000}
-        onClose={handleClose}
-        message={message}
-        action={<>
-            <Button color={"primary"} size={"small"} onClick={onButtonClick} children={buttonText}/>
-            <IconButton size={"small"} aria-label={"close"} color={"inherit"} onClick={handleClose}>
-                <CloseIcon fontSize={"small"}/>
-            </IconButton>
-        </>}
-    />
+    const startTimer = React.useCallback(delay => {
+        pauseTimer();
+        timerRef.current = setTimeout(() => dispatch(SimpleSnackbar.HIDE), delay);
+    }, [dispatch, pauseTimer]);
+
+    React.useEffect(() => {
+        if (!open) return undefined;
+        startTimer(6000);
+        const handleFocus = () => startTimer(3000);
+        window.addEventListener("blur", pauseTimer);
+        window.addEventListener("focus", handleFocus);
+        return () => {
+            pauseTimer();
+            window.removeEventListener("blur", pauseTimer);
+            window.removeEventListener("focus", handleFocus);
+        };
+    }, [open, message, buttonText, startTimer, pauseTimer]);
+
+    if (!open) return null;
+
+    return <div
+        className={styles.root}
+        onMouseEnter={pauseTimer}
+        onMouseLeave={() => startTimer(3000)}
+        role={"alert"}
+    >
+        <div className={styles.message}>{message}</div>
+        <div className={styles.actions}>
+            <Button color={"primary"} onClick={handleClose} size={"small"} variant={"text"}>
+                {buttonText}
+            </Button>
+            <Button color={"inherit"} icon={<CloseIcon fontSize={"small"}/>} onClick={handleClose} size={"small"} title={"Close"}/>
+        </div>
+    </div>;
 };
 
 SimpleSnackbar.SHOW = "snackbar_Show";
