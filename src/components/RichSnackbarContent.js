@@ -51,17 +51,23 @@ export default React.forwardRef((props, ref) => {
             >{message}</div>
             <div className={styles.headerActions}>
                 {buttonLabel && !cardShown && <Button
+                    color={"inherit"}
                     onClick={handleAction}
+                    size={"small"}
                     variant={"text"}
                 >{buttonLabel}</Button>}
                 {hasCard && <Button
+                    color={"inherit"}
                     icon={cardShown ? <CollapseIcon fontSize={"small"}/> : <ExpandIcon fontSize={"small"}/>}
                     onClick={() => setExpanded(value => !value)}
+                    size={"small"}
                     title={cardShown ? "Collapse" : "Expand"}
                 />}
                 {(!buttonLabel || onButtonClick) && <Button
+                    color={"inherit"}
                     icon={<CloseIcon fontSize={"small"}/>}
                     onClick={() => closeHandler()}
+                    size={"small"}
                     title={"Close"}
                 />}
             </div>
