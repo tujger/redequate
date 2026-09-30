@@ -1,6 +1,6 @@
 .root {
-    background-color: var(--theme-color-background);
-    border-top: 1px solid #9e9e9e;
+    border-top: 1px solid var(--theme-color-secondary);
+    column-gap: calc(var(--theme-spacing) * 2);
     color: var(--theme-color-text);
     display: flex;
     justify-content: center;
@@ -8,7 +8,7 @@
 }
 
 .section {
-    padding-right: calc(var(--theme-spacing) * 2);
+    contain: none;
 }
 
 .heading {
