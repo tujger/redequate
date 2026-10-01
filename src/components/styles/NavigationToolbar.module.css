@@ -14,6 +14,7 @@
 
 .side {
     align-items: inherit;
+    align-self: flex-start;
     display: flex;
     flex: 0 0 auto;
 }
@@ -23,6 +24,7 @@
     column-gap: calc(var(--theme-spacing) * 0.5);
     display: flex;
     flex: 1 1 auto;
+    flex-wrap: wrap;
     justify-content: var(--navigation-justify, flex-start);
     min-width: 0;
 }

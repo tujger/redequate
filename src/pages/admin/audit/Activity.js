@@ -9,6 +9,7 @@ import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
+import NavigationToolbar from "../../../components/NavigationToolbar";
 import {toDateString} from "../../../controllers/DateFormat";
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useWindowData} from "../../../controllers/General";
@@ -21,6 +22,7 @@ import Select from "../../../controls/Select/Select";
 import ActivityItemComponent from "./ActivityItemComponent";
 import {auditReducer} from "./auditReducer";
 import activityStyles from "./styles/Activity.module.css";
+import ClearIcon from "@material-ui/icons/Clear";
 
 const Activity = props => {
     const {
@@ -167,7 +169,41 @@ const Activity = props => {
     };
 
     return <>
-        <div className={classes.topSticky}>
+        <NavigationToolbar
+            backButton={null}
+            mediumButton={<>
+                {!windowData.isNarrow() && <div className={classes.dateButtons}>
+                    <Button
+                        icon={<StartDateIcon/>}
+                        onClick={event => setState(state => ({
+                            ...state,
+                            startDateAnchor: event.currentTarget
+                        }))}
+                        title={"Start date"}
+                    />
+                    <span className={classes.separator}>&mdash;</span>
+                    <Button
+                        icon={<EndDateIcon/>}
+                        onClick={event => setState(state => ({
+                            ...state,
+                            endDateAnchor: event.currentTarget
+                        }))}
+                        title={"End date"}
+                    />
+                </div>}
+            <Button
+                className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
+                icon={<SortIcon/>}
+                onClick={handleSortClick}
+                title={"Sort activity"}
+            />
+        </>}
+            rightButton={<Button
+                    icon={<RefreshIcon/>}
+                    onClick={() => setState({...state, random: Math.random()})}
+                    title={"Refresh activity"}
+                />}
+        >
             <div className={classes.toolbarRow}>
                 <div className={classes.modeCell}>
                     <Select
@@ -208,37 +244,6 @@ const Activity = props => {
                         onChange={handleTypeSelect}
                     />}
                 </div>
-                {!windowData.isNarrow() && <div className={classes.dateButtons}>
-                    <Button
-                        icon={<StartDateIcon/>}
-                        onClick={event => setState(state => ({
-                            ...state,
-                            startDateAnchor: event.currentTarget
-                        }))}
-                        title={"Start date"}
-                    />
-                    <span className={classes.separator}>&mdash;</span>
-                    <Button
-                        icon={<EndDateIcon/>}
-                        onClick={event => setState(state => ({
-                            ...state,
-                            endDateAnchor: event.currentTarget
-                        }))}
-                        title={"End date"}
-                    />
-                </div>}
-                <Button
-                    className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
-                    icon={<SortIcon/>}
-                    onClick={handleSortClick}
-                    title={"Sort activity"}
-                />
-                <Button
-                    className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
-                    icon={<RefreshIcon/>}
-                    onClick={() => setState({...state, random: Math.random()})}
-                    title={"Refresh activity"}
-                />
             </div>
             <div className={classes.filterRow}>
                 <div className={classes.chips}>
@@ -291,7 +296,7 @@ const Activity = props => {
                     />
                 </div>}
             </div>
-        </div>
+        </NavigationToolbar>
         <div className={classes.center}>
             <LazyListComponent
                 key={random}
