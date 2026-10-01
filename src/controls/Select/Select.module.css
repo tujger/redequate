@@ -31,6 +31,10 @@
     }
 }
 
+.inherit {
+    --select-color: inherit;
+}
+
 .primary {
     --select-color: var(--theme-color-primary);
 }

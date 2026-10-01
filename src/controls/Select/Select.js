@@ -141,8 +141,9 @@ export default (
                 iconMenu && buttonStyles.button,
                 iconMenu && buttonStyles.iconButton,
                 className,
-                color === "secondary" && styles.secondary,
+                color === "inherit" && styles.inherit,
                 color === "primary" && styles.primary,
+                color === "secondary" && styles.secondary,
                 size === "small" && styles.small,
                 size === "large" && styles.large,
             ].filter(Boolean).join(" ")}

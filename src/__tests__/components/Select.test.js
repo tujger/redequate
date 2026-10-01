@@ -107,4 +107,23 @@ describe("Select", () => {
         expect(document.querySelector('[role="listbox"]')).toBeNull();
         anchor.remove();
     });
+
+    it("positions a controlled menu when it starts open without an external anchor", () => {
+        const originalRect = HTMLElement.prototype.getBoundingClientRect;
+        HTMLElement.prototype.getBoundingClientRect = function () {
+            return this.getAttribute("role") === "combobox"
+                ? {left: 40, right: 140, top: 20, bottom: 60, width: 100}
+                : {left: 0, right: 0, top: 0, bottom: 0, width: 0};
+        };
+        try {
+            act(() => {
+                render(<Select open options={[{label: "Save", value: "save"}]} value=""/>, container);
+            });
+            const menu = document.querySelector('[role="listbox"]');
+            expect(menu.style.left).toBe("40px");
+            expect(menu.style.minWidth).toBe("100px");
+        } finally {
+            HTMLElement.prototype.getBoundingClientRect = originalRect;
+        }
+    });
 });
