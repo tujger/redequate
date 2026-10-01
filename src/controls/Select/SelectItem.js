@@ -1,11 +1,17 @@
 import React from "react";
-import selectStyles from "./Select.module.css";
+import useRippleEffect from "../../helpers/useRippleEffect";
+import menuStyles from "../Menu/Menu.module.css";
 
-export default React.forwardRef(({children, className, value, ...props}, ref) => <div
+export default React.forwardRef(({children, className, onPointerDown: givenOnPointerDown, value, ...props}, ref) => {
+    const onPointerDown = useRippleEffect(givenOnPointerDown);
+
+    return <div
         {...props}
-        className={[selectStyles.menuItem, className].filter(Boolean).join(" ")}
+        className={[menuStyles.menuItem, className].filter(Boolean).join(" ")}
         data-value={props["data-value"] ?? value}
+        onPointerDown={onPointerDown}
         ref={ref}
     >
         {children}
-    </div>);
+    </div>;
+});

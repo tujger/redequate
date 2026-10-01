@@ -65,11 +65,23 @@ const renderEntries = (items, renderItem, closeTree) => items.map((entry, index)
     </React.Fragment>;
 });
 
-const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, closeOnBlur = false,
-    closeOnMouseLeave = false, containerRef, id, items, minWidth = false, onClose, open,
-    placement = "below", renderItem, role = "menu"}) => {
+const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, className, closeOnBlur = false,
+    closeOnMouseLeave = false, containerRef, id, items, load, matchAnchorWidth = false, minWidth = false,
+    offset, onClose, onDisplayedOptionsChange, onLoadError, onLoaded, open, options,
+    placement = "below", positionKey, reloadKey, renderItem, role = "menu", staleMs = 0}) => {
     const menuRef = React.useRef(null);
+    const loadRef = React.useRef(load);
+    const onLoadedRef = React.useRef(onLoaded);
+    const onLoadErrorRef = React.useRef(onLoadError);
+    const onDisplayedOptionsChangeRef = React.useRef(onDisplayedOptionsChange);
     const [position, setPosition] = React.useState({left: 0, top: 0, width: 0});
+    const [lazyState, setLazyState] = React.useState({options: [], loading: false});
+    loadRef.current = load;
+    onLoadedRef.current = onLoaded;
+    onLoadErrorRef.current = onLoadError;
+    onDisplayedOptionsChangeRef.current = onDisplayedOptionsChange;
+    const lazy = options === undefined && Boolean(load);
+    const displayedOptions = lazy ? lazyState.options : options || [];
     const getAnchor = () => anchorEl?.current || (anchorEl?.getBoundingClientRect ? anchorEl : null);
 
     const updatePosition = React.useCallback(() => {
@@ -77,18 +89,62 @@ const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, closeOnBl
         if (!anchor?.getBoundingClientRect || !menuRef.current) return;
         const rect = anchor.getBoundingClientRect();
         const menu = menuRef.current;
-        const width = Math.max(menu.offsetWidth, minWidth ? rect.width : 0);
+        const anchorWidth = Math.max(0, Math.min(rect.width, window.innerWidth - 16));
+        const width = matchAnchorWidth ? anchorWidth : Math.max(menu.offsetWidth, minWidth ? rect.width : 0);
         const height = menu.offsetHeight;
         const desiredLeft = placement === "below-end" ? rect.right - width : rect.left;
         const left = Math.max(8, Math.min(desiredLeft, window.innerWidth - width - 8));
-        const below = rect.bottom + (placement === "below" ? 8 : 0);
-        const above = rect.top - height - (placement === "below" ? 8 : 0);
+        const gap = offset === undefined ? (placement === "below" ? 8 : 0) : offset;
+        const below = rect.bottom + gap;
+        const above = rect.top - height - gap;
         const top = below + height <= window.innerHeight - 8 || above < 8
             ? Math.max(8, Math.min(below, window.innerHeight - height - 8))
             : above;
-        setPosition(current => current.left === left && current.top === top && current.width === rect.width
-            ? current : {left, top, width: rect.width});
-    }, [anchorEl, minWidth, placement]);
+        const positionWidth = matchAnchorWidth ? width : rect.width;
+        setPosition(current => current.left === left && current.top === top && current.width === positionWidth
+            ? current : {left, top, width: positionWidth});
+    }, [anchorEl, matchAnchorWidth, minWidth, offset, placement]);
+
+    React.useEffect(() => {
+        if (!open || !lazy) {
+            setLazyState(current => current.options.length || current.loading
+                ? {options: [], loading: false} : current);
+            return undefined;
+        }
+
+        let active = true;
+        const controller = new AbortController();
+        setLazyState(current => ({options: staleMs > 0 ? current.options : [], loading: true}));
+        const staleTimer = staleMs > 0 ? setTimeout(() => {
+            if (active) setLazyState(current => current.loading ? {...current, options: []} : current);
+        }, staleMs) : null;
+
+        const run = async () => {
+            try {
+                const loaded = await loadRef.current({signal: controller.signal});
+                if (!active) return;
+                const nextOptions = Array.isArray(loaded) ? loaded : [];
+                clearTimeout(staleTimer);
+                setLazyState({options: nextOptions, loading: false});
+                onLoadedRef.current?.(nextOptions);
+            } catch (error) {
+                if (!active || controller.signal.aborted) return;
+                clearTimeout(staleTimer);
+                setLazyState({options: [], loading: false});
+                onLoadErrorRef.current?.(error);
+            }
+        };
+        run();
+        return () => {
+            active = false;
+            controller.abort();
+            clearTimeout(staleTimer);
+        };
+    }, [open, lazy, reloadKey, staleMs]);
+
+    React.useEffect(() => {
+        if (open && lazy) onDisplayedOptionsChangeRef.current?.(displayedOptions);
+    }, [open, lazy, displayedOptions]);
 
     React.useLayoutEffect(() => {
         if (!open) return undefined;
@@ -103,7 +159,7 @@ const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, closeOnBl
             window.removeEventListener("resize", updatePosition);
             document.removeEventListener("scroll", updatePosition, true);
         };
-    }, [open, autoFocus, updatePosition]);
+    }, [open, autoFocus, positionKey, lazyState.options, lazyState.loading, updatePosition]);
 
     React.useEffect(() => {
         if (!open || backdrop) return undefined;
@@ -167,7 +223,7 @@ const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, closeOnBl
             }}
         />}
         <div
-            className={[styles.menu, role === "menu" && styles.actionMenu].filter(Boolean).join(" ")}
+            className={[styles.menu, role === "menu" && styles.actionMenu, className].filter(Boolean).join(" ")}
             id={id}
             onBlur={event => {
                 if (closeOnBlur && !menuRef.current?.contains(event.relatedTarget)
@@ -186,9 +242,12 @@ const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, closeOnBl
             }}
             role={role}
             style={{left: position.left, minWidth: minWidth ? position.width : undefined,
-                top: position.top}}
+                top: position.top, width: matchAnchorWidth ? position.width : undefined}}
         >
-            {items ? renderEntries(items, renderItem, onClose) : children}
+            {items ? renderEntries(items, renderItem, onClose)
+                : typeof children === "function"
+                    ? children({options: displayedOptions, loading: lazy && lazyState.loading})
+                    : children}
         </div>
     </>, document.body);
 };
