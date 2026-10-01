@@ -99,6 +99,10 @@
     min-height: calc(var(--theme-spacing) * 4);
     padding-left: var(--theme-spacing);
     padding-right: var(--theme-spacing);
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: 150%;
+    }
 }
 
 .large {
