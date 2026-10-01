@@ -3,11 +3,13 @@ import {render, unmountComponentAtNode} from "react-dom";
 import {act} from "react-dom/test-utils";
 import Menu from "../../controls/Menu/Menu";
 
-describe("Menu lazy loading", () => {
+describe("Menu", () => {
     let container;
+    let viewportHeight;
 
     beforeEach(() => {
         jest.useFakeTimers();
+        viewportHeight = window.innerHeight;
         container = document.createElement("div");
         document.body.appendChild(container);
     });
@@ -15,6 +17,7 @@ describe("Menu lazy loading", () => {
     afterEach(() => {
         act(() => { unmountComponentAtNode(container); });
         container.remove();
+        Object.defineProperty(window, "innerHeight", {configurable: true, value: viewportHeight});
         jest.useRealTimers();
     });
 
@@ -80,5 +83,76 @@ describe("Menu lazy loading", () => {
         });
         expect(document.body.textContent).toContain("New");
         expect(document.body.textContent).not.toContain("Old");
+    });
+
+    it("aligns origin points and preserves the default gap", () => {
+        container.getBoundingClientRect = () => ({left: 100, right: 180, top: 100, bottom: 140, width: 80, height: 40});
+        show({open: true});
+        const menu = document.body.querySelector('[role="status"]').parentElement;
+        Object.defineProperties(menu, {
+            offsetWidth: {configurable: true, value: 120},
+            scrollHeight: {configurable: true, value: 80},
+        });
+        act(() => { document.dispatchEvent(new Event("scroll")); });
+        expect(menu.style.left).toBe("100px");
+        expect(menu.style.top).toBe("148px");
+
+        show({open: true, offset: 0,
+            anchorOrigin: {vertical: "bottom", horizontal: "right"},
+            transformOrigin: {vertical: "top", horizontal: "right"}});
+        expect(menu.style.left).toBe("60px");
+        expect(menu.style.top).toBe("140px");
+        expect(menu.style.transformOrigin).toBe("120px 0px");
+
+        show({open: true, offset: 0,
+            anchorOrigin: {vertical: "top", horizontal: "center"},
+            transformOrigin: {vertical: "bottom", horizontal: "center"}});
+        expect(menu.style.left).toBe("80px");
+        expect(menu.style.top).toBe("20px");
+        expect(menu.style.transformOrigin).toBe("60px 80px");
+    });
+
+    it("supports numeric origins and keeps the menu inside the screen horizontally", () => {
+        let left = 100;
+        container.getBoundingClientRect = () => ({left, right: left + 80, top: 200, bottom: 240, width: 80, height: 40});
+        show({open: true, offset: 7,
+            anchorOrigin: {vertical: 10, horizontal: 20},
+            transformOrigin: {vertical: 5, horizontal: 8}});
+        const menu = document.body.querySelector('[role="status"]').parentElement;
+        Object.defineProperties(menu, {
+            offsetWidth: {configurable: true, value: 120},
+            scrollHeight: {configurable: true, value: 80},
+        });
+        act(() => { document.dispatchEvent(new Event("scroll")); });
+        expect(menu.style.left).toBe("112px");
+        expect(menu.style.top).toBe("205px");
+        expect(menu.style.transformOrigin).toBe("8px 5px");
+
+        left = window.innerWidth - 40;
+        act(() => { document.dispatchEvent(new Event("scroll")); });
+        expect(menu.style.left).toBe(`${window.innerWidth - 128}px`);
+    });
+
+    it("flips to the roomier vertical side and scrolls when neither side fits", () => {
+        Object.defineProperty(window, "innerHeight", {configurable: true, value: 300});
+        let top = 100;
+        container.getBoundingClientRect = () => ({left: 100, right: 180, top, bottom: top + 40, width: 80, height: 40});
+        show({open: true});
+        const menu = document.body.querySelector('[role="status"]').parentElement;
+        Object.defineProperties(menu, {
+            offsetWidth: {configurable: true, value: 120},
+            scrollHeight: {configurable: true, value: 200},
+        });
+        act(() => { document.dispatchEvent(new Event("scroll")); });
+        expect(menu.style.top).toBe("148px");
+        expect(menu.style.maxHeight).toBe("144px");
+        expect(menu.style.overflowY).toBe("auto");
+
+        top = 220;
+        act(() => { document.dispatchEvent(new Event("scroll")); });
+        expect(menu.style.top).toBe("12px");
+        expect(menu.style.maxHeight).toBe("204px");
+        expect(menu.style.overflowY).toBe("");
+        expect(menu.style.transformOrigin).toBe("0px 200px");
     });
 });

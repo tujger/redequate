@@ -134,13 +134,15 @@ export default ({items, className}) => {
         </nav>
         <Menu
             anchorEl={openIndex === null ? null : triggerRefs.current[openIndex]}
+            anchorOrigin={{vertical: "top", horizontal: "center"}}
             closeOnMouseLeave
             containerRef={menuRef}
             items={openItems}
+            offset={0}
             onClose={closeMenu}
             open={Boolean(openSection && openItems.length)}
-            placement="above-center"
             renderItem={renderItem}
+            transformOrigin={{vertical: "bottom", horizontal: "center"}}
         />
     </>;
 };

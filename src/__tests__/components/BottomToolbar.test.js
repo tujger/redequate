@@ -83,5 +83,56 @@ describe("BottomToolbar", () => {
         act(() => { Simulate.contextMenu(other); });
         act(() => { document.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true})); });
         expect(document.querySelector('[role="menu"]')).toBeNull();
+        expect(document.activeElement).toBe(other);
+    });
+
+    it("positions the menu above its trigger and updates it on scroll", () => {
+        const trigger = container.querySelector("nav [role=button]");
+        let top = 150;
+        trigger.getBoundingClientRect = () => ({left: 100, right: 180, top, bottom: top + 40, width: 80});
+        act(() => { Simulate.click(trigger); });
+        const menu = document.querySelector('[role="menu"]');
+        Object.defineProperties(menu, {
+            offsetWidth: {configurable: true, value: 120},
+            scrollHeight: {configurable: true, value: 200},
+        });
+
+        act(() => { document.dispatchEvent(new Event("scroll")); });
+        expect(menu.style.left).toBe("80px");
+        expect(menu.style.top).toBe("190px");
+        expect(menu.style.maxHeight).toBe(`${window.innerHeight - 198}px`);
+        expect(menu.style.overflowY).toBe("");
+
+        top = 250;
+        act(() => { document.dispatchEvent(new Event("scroll")); });
+        expect(menu.style.top).toBe("50px");
+        expect(menu.style.maxHeight).toBe("242px");
+
+        top = 300;
+        act(() => { window.dispatchEvent(new Event("resize")); });
+        expect(menu.style.top).toBe("100px");
+    });
+
+    it("navigates with arrows and activates a button only once with Enter", () => {
+        const action = jest.fn();
+        const withActions = [[
+            items[0][0],
+            {label: "Disabled", disabled: true},
+            {label: "First", onClick: action},
+            {label: "Second", onClick: action},
+        ]];
+        act(() => { render(<BottomToolbar items={withActions}/>, container); });
+        const trigger = container.querySelector("nav [role=button]");
+        act(() => { Simulate.click(trigger); });
+        const menu = document.querySelector('[role="menu"]');
+        const entries = menu.querySelectorAll('[role="menuitem"]');
+        expect(entries).toHaveLength(2);
+        expect(document.activeElement).toBe(entries[0]);
+
+        act(() => { Simulate.keyDown(entries[0], {key: "ArrowDown"}); });
+        expect(document.activeElement).toBe(entries[1]);
+        act(() => { Simulate.keyDown(entries[1], {key: "Enter"}); });
+        expect(action).toHaveBeenCalledTimes(1);
+        expect(document.querySelector('[role="menu"]')).toBeNull();
     });
 });
