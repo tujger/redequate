@@ -67,8 +67,12 @@ const MenuSection = ({badge = {}, items, className, endIcon}) => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const visible = filterItems(menu, currentUserData);
-    const hasMenu = visible.length > 0;
+    const hasMenu = visible.length > 1 || (visible.length === 1 && Array.isArray(visible[0]) && visible[0].length > 1);
     const hasBadge = menu.some(item => !Array.isArray(item) && badge[item.route]);
+
+    React.useEffect(() => {
+        if (!hasMenu) setOpen(false);
+    }, [hasMenu]);
 
     if (!first || !allowed(first, currentUserData)) return null;
 

@@ -31,6 +31,7 @@ export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
 
     return <Select
         className={className}
+        color={"inherit"}
         onChange={handleLanguageChange}
         options={Object.keys(i18n.store.data).map(item => ({
             label: t("Language." + item),

@@ -15,7 +15,7 @@ jest.mock("react-router-dom", () => {
     };
 });
 jest.mock("../../controllers/UserData", () => ({
-    matchRole: () => true,
+    matchRole: roles => roles !== "blocked",
     useCurrentUserData: () => ({id: "user"}),
 }));
 
@@ -68,27 +68,80 @@ describe("MenuSection", () => {
         const menu = document.querySelector('[role="menu"]');
         right = 300;
         act(() => { document.dispatchEvent(new Event("scroll")); });
-        expect(menu.style.left).toBe("300px");
+        expect(menu.style.left).toBe("150px");
 
         act(() => { Simulate.keyDown(menu, {key: "Escape"}); });
         expect(document.querySelector('[role="menu"]')).toBeNull();
     });
 
-    it("treats a one-item array as a normal action", () => {
-        const onClick = jest.fn();
+    it("keeps the section button but hides a menu with one ordinary item", () => {
+        const sectionClick = jest.fn();
+        const menuClick = jest.fn();
+        act(() => {
+            render(<MenuSection items={[
+                {label: "Section", onClick: sectionClick, route: "/section"},
+                {label: "Only", onClick: menuClick, route: "/only"},
+            ]}/>, container);
+        });
+        const button = container.querySelector('[role="button"]');
+        expect(button.textContent).toBe("Section");
+        expect(button.getAttribute("aria-haspopup")).toBeNull();
+        expect(button.getAttribute("aria-expanded")).toBeNull();
+        act(() => { Simulate.mouseEnter(button); });
+        act(() => { Simulate.keyDown(button, {key: "ArrowDown"}); });
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+        act(() => { button.click(); });
+        expect(sectionClick).toHaveBeenCalledTimes(1);
+        expect(menuClick).not.toHaveBeenCalled();
+        expect(mockPush).toHaveBeenCalledWith("/section");
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
+    it("hides a menu whose sole item is an array with one entry", () => {
+        const sectionClick = jest.fn();
+        const menuClick = jest.fn();
+        act(() => {
+            render(<MenuSection items={[
+                {label: "Section", onClick: sectionClick, route: "/section"},
+                [{label: "Only", onClick: menuClick, route: "/only"}],
+            ]}/>, container);
+        });
+        const button = container.querySelector('[role="button"]');
+        act(() => { button.click(); });
+        expect(sectionClick).toHaveBeenCalledTimes(1);
+        expect(menuClick).not.toHaveBeenCalled();
+        expect(mockPush).toHaveBeenCalledWith("/section");
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
+    it("counts only permitted and enabled menu items", () => {
         act(() => {
             render(<MenuSection items={[
                 {label: "Section", route: "/section"},
-                [{label: "Only", onClick, route: "/only"}],
+                {label: "Visible", route: "/visible"},
+                {label: "Blocked", roles: "blocked", route: "/blocked"},
+                {label: "Disabled", disabled: true, route: "/disabled"},
             ]}/>, container);
         });
-        act(() => { container.querySelector('[role="button"]').click(); });
-        const item = document.querySelector('[role="menuitem"]');
-        expect(item.textContent).toBe("Only");
-        expect(item.getAttribute("aria-haspopup")).toBeNull();
-        act(() => { item.click(); });
-        expect(onClick).toHaveBeenCalledTimes(1);
-        expect(mockPush).toHaveBeenCalledWith("/only");
+        const button = container.querySelector('[role="button"]');
+        act(() => { Simulate.mouseEnter(button); });
+        act(() => { button.click(); });
+        expect(button.getAttribute("aria-haspopup")).toBeNull();
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+        expect(mockPush).toHaveBeenCalledWith("/section");
+    });
+
+    it("does not reopen a menu after its visible items shrink to one", () => {
+        const first = {label: "Section", route: "/section"};
+        const one = {label: "One", route: "/one"};
+        const two = {label: "Two", route: "/two"};
+        act(() => { render(<MenuSection items={[first, one, two]}/>, container); });
+        act(() => { Simulate.mouseEnter(container.querySelector('[role="button"]')); });
+        expect(document.querySelector('[role="menu"]')).not.toBeNull();
+
+        act(() => { render(<MenuSection items={[first, one]}/>, container); });
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+        act(() => { render(<MenuSection items={[first, one, two]}/>, container); });
         expect(document.querySelector('[role="menu"]')).toBeNull();
     });
 
@@ -123,6 +176,7 @@ describe("MenuSection", () => {
             ]}/>, container);
         });
         act(() => { Simulate.mouseEnter(container.querySelector('[role="button"]')); });
+        expect(container.querySelector('[role="button"]').getAttribute("aria-haspopup")).toBe("menu");
         const more = document.querySelector('[role="menuitem"]');
         act(() => { more.click(); });
         expect(selectorClick).not.toHaveBeenCalled();

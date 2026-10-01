@@ -11,12 +11,9 @@
 }
 
 .languageChange {
-    --select-color: inherit;
-    --select-size: inherit;
-
     box-shadow: none;
     padding: 0 calc(var(--theme-spacing));
-    text-transform: capitalize;
+    text-transform: uppercase;
 }
 
 .profileLink {
