@@ -82,7 +82,7 @@ const styles = theme => ({
 function BottomToolbarLayout(props) {
     const {classes, footerComponent, menu} = props;
 
-    return <div className={classes.container}>
+    return <div className={classes.container} data-bottom-toolbar>
         <CssBaseline/>
         <Titlebar
             {...props}
