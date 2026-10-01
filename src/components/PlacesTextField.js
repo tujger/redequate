@@ -1,9 +1,9 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo} from "../controllers/General";
+import Menu from "../controls/Menu/Menu";
+import SelectItem from "../controls/Select/SelectItem";
 import TextField from "../controls/TextField/TextField";
-import selectStyles from "../controls/Select/Select.module.css";
 import styles from "./styles/PlacesTextField.module.css";
 
 const geoapifyTypes = ["country", "state", "city", "postcode", "street", "amenity", "locality"];
@@ -66,134 +66,72 @@ export default props => {
     const {t} = useTranslation();
     const geoapifyApiKey = useMetaInfo()?.settings?.geoapifyApiKey;
     const anchorRef = React.useRef(null);
-    const menuRef = React.useRef(null);
-    const taskRef = React.useRef(null);
-    const requestRef = React.useRef(0);
     const listId = React.useRef(null);
     if (!listId.current) listId.current = `redequate-places-${++nextListId}`;
-    const [options, setOptions] = React.useState([]);
-    const [loading, setLoading] = React.useState(false);
     const [open, setOpen] = React.useState(false);
     const [activeIndex, setActiveIndex] = React.useState(-1);
-    const [position, setPosition] = React.useState({left: 0, top: 0, width: 0});
-
-    const cancelSearch = React.useCallback(() => {
-        clearTimeout(taskRef.current);
-        taskRef.current = null;
-        requestRef.current += 1;
-    }, []);
 
     React.useEffect(() => {
-        cancelSearch();
-        setOptions([]);
-        setLoading(false);
         setOpen(false);
         setActiveIndex(-1);
-    }, [disabled, type, geoapifyApiKey, cancelSearch]);
-
-    React.useEffect(() => () => cancelSearch(), [cancelSearch]);
+    }, [disabled, type, geoapifyApiKey]);
 
     React.useEffect(() => {
         if (value) return;
-        cancelSearch();
-        setOptions([]);
-        setLoading(false);
         setOpen(false);
         setActiveIndex(-1);
-    }, [value, cancelSearch]);
-
-    React.useEffect(() => {
-        if (!open) return undefined;
-        const handleOutside = event => {
-            if (anchorRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) return;
-            cancelSearch();
-            setLoading(false);
-            setOpen(false);
-            setActiveIndex(-1);
-        };
-        document.addEventListener("pointerdown", handleOutside);
-        return () => document.removeEventListener("pointerdown", handleOutside);
-    }, [open, cancelSearch]);
-
-    React.useLayoutEffect(() => {
-        if (!open) return undefined;
-        const updatePosition = () => {
-            const rect = anchorRef.current?.getBoundingClientRect();
-            if (!rect) return;
-            const width = Math.min(rect.width, window.innerWidth - 16);
-            const height = Math.min(menuRef.current?.offsetHeight || 240, 240);
-            const above = rect.top - height - 4;
-            const below = rect.bottom + 4;
-            const top = below + height > window.innerHeight - 8 && above >= 8 ? above : below;
-            const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
-            setPosition(current => current.left === left && current.top === top && current.width === width
-                ? current : {left, top, width});
-        };
-        updatePosition();
-        window.addEventListener("resize", updatePosition);
-        document.addEventListener("scroll", updatePosition, true);
-        return () => {
-            window.removeEventListener("resize", updatePosition);
-            document.removeEventListener("scroll", updatePosition, true);
-        };
-    }, [open, options.length, loading]);
+    }, [value]);
 
     const closeMenu = () => {
-        cancelSearch();
-        setLoading(false);
         setOpen(false);
         setActiveIndex(-1);
     };
 
-    const handleInputChange = event => {
-        const text = event.target.value;
-        cancelSearch();
-        setOptions([]);
-        setActiveIndex(-1);
-        onChange?.(event, text);
-        if (disabled || !geoapifyApiKey || !text.trim()) {
-            setLoading(false);
-            setOpen(false);
-            return;
-        }
-
-        const request = requestRef.current;
-        setLoading(true);
-        setOpen(true);
-        taskRef.current = setTimeout(() => {
-            taskRef.current = null;
+    const loadPlaces = React.useCallback(({signal}) => new Promise((resolve, reject) => {
+        let timer;
+        const abort = () => {
+            clearTimeout(timer);
+            signal.removeEventListener("abort", abort);
+            const error = new Error("Aborted");
+            error.name = "AbortError";
+            reject(error);
+        };
+        signal.addEventListener("abort", abort, {once: true});
+        timer = setTimeout(async () => {
             const url = new URL("https://api.geoapify.com/v1/geocode/autocomplete");
-            url.searchParams.set("text", text);
+            url.searchParams.set("text", value);
             url.searchParams.set("format", "json");
             url.searchParams.set("limit", "10");
             url.searchParams.set("apiKey", geoapifyApiKey);
             const searchType = type === "citystate" ? "locality" : type;
             if (geoapifyTypes.includes(searchType)) url.searchParams.set("type", searchType);
-            window.fetch(url.toString()).then(response => {
+            try {
+                const response = await window.fetch(url.toString(), {signal});
                 if (!response.ok) throw Error(`Geoapify request failed: ${response.status}`);
-                return response.json();
-            }).then(({results}) => {
-                if (request !== requestRef.current) return;
+                const {results} = await response.json();
                 const matches = Array.isArray(results) ? results : [];
                 const filtered = type === "citystate"
                     ? matches.filter(result => result.result_type === "city" || result.result_type === "state")
                     : matches;
-                const items = formatOptions(filtered, type);
-                setOptions(items);
-                setLoading(false);
-                setOpen(items.length > 0);
-            }).catch(() => {
-                if (request !== requestRef.current) return;
-                setOptions([]);
-                setLoading(false);
-                setOpen(false);
-            });
+                resolve(formatOptions(filtered, type));
+            } catch (error) {
+                reject(error);
+            } finally {
+                signal.removeEventListener("abort", abort);
+            }
         }, 500);
+        if (signal.aborted) abort();
+    }), [geoapifyApiKey, type, value]);
+
+    const handleInputChange = event => {
+        const text = event.target.value;
+        setActiveIndex(-1);
+        onChange?.(event, text);
+        setOpen(!disabled && Boolean(geoapifyApiKey) && Boolean(text.trim()));
     };
 
     const handleSelect = option => {
         closeMenu();
-        setOptions([]);
         onChange?.({
             target: {name, value: option.title},
             persist: () => {},
@@ -203,34 +141,46 @@ export default props => {
     const handleKeyDown = event => {
         givenOnKeyDown?.(event);
         if (event.defaultPrevented || disabled) return;
+        const visibleOptions = document.getElementById(listId.current)?.querySelectorAll('[role="option"]') || [];
         if (event.key === "Escape" && open) {
             event.preventDefault();
             event.stopPropagation();
             closeMenu();
         } else if (event.key === "Tab" && open) {
             closeMenu();
-        } else if ((event.key === "ArrowDown" || event.key === "ArrowUp") && options.length) {
+        } else if ((event.key === "ArrowDown" || event.key === "ArrowUp") && visibleOptions.length) {
             event.preventDefault();
             setOpen(true);
             setActiveIndex(index => event.key === "ArrowDown"
-                ? (index + 1) % options.length
-                : (index - 1 + options.length) % options.length);
-        } else if (event.key === "Enter" && open && activeIndex >= 0) {
+                ? (index + 1) % visibleOptions.length
+                : (index - 1 + visibleOptions.length) % visibleOptions.length);
+        } else if (event.key === "Enter" && open && activeIndex >= 0 && activeIndex < visibleOptions.length) {
             event.preventDefault();
-            handleSelect(options[activeIndex]);
+            visibleOptions[activeIndex].click();
         }
     };
 
-    const menu = open && typeof document !== "undefined" && ReactDOM.createPortal(<div
-        className={[selectStyles.menu, styles.menu].join(" ")}
-        ref={menuRef}
-        style={position}
+    const menu = <Menu
+        anchorEl={anchorRef}
+        autoFocus={false}
+        className={styles.menu}
+        load={loadPlaces}
+        matchAnchorWidth
+        offset={4}
+        onClose={closeMenu}
+        onDisplayedOptionsChange={items => setActiveIndex(index => index < items.length ? index : -1)}
+        onLoadError={closeMenu}
+        onLoaded={items => { if (!items.length) closeMenu(); }}
+        open={open}
+        reloadKey={`${type}:${geoapifyApiKey}:${value}`}
+        role={null}
+        staleMs={1000}
     >
-        <div id={listId.current} role={"listbox"}>
-            {loading && <div className={styles.status} role={"status"}>{t("Common.Loading...")}</div>}
-            {!loading && options.map((option, index) => <div
+        {({options}) => <>
+            <div id={listId.current} role={"listbox"}>
+                {!options.length && <div className={styles.status} role={"status"}>{t("Common.Loading...")}</div>}
+                {options.map((option, index) => <SelectItem
                 aria-selected={index === activeIndex}
-                className={selectStyles.menuItem}
                 data-selected={index === activeIndex}
                 id={`${listId.current}-option-${index}`}
                 key={option.title}
@@ -238,14 +188,15 @@ export default props => {
                 onMouseEnter={() => setActiveIndex(index)}
                 onPointerDown={event => event.preventDefault()}
                 role={"option"}
-            >{option.title}</div>)}
-        </div>
-        {!loading && options.length > 0 && <div className={styles.attribution} onPointerDown={event => event.preventDefault()}>
-            <a href={"https://www.geoapify.com/"} rel={"noopener noreferrer"} target={"_blank"}>Powered by Geoapify</a>
-            {" · "}
-            <a href={"https://www.openstreetmap.org/copyright"} rel={"noopener noreferrer"} target={"_blank"}>© OpenStreetMap contributors</a>
-        </div>}
-    </div>, document.body);
+                >{option.title}</SelectItem>)}
+            </div>
+            {options.length > 0 && <div className={styles.attribution} onPointerDown={event => event.preventDefault()}>
+                <a href={"https://www.geoapify.com/"} rel={"noopener noreferrer"} target={"_blank"}>Powered by Geoapify</a>
+                {" · "}
+                <a href={"https://www.openstreetmap.org/copyright"} rel={"noopener noreferrer"} target={"_blank"}>© OpenStreetMap contributors</a>
+            </div>}
+        </>}
+    </Menu>;
 
     return <div className={[styles.root, fullWidth && styles.fullWidth].filter(Boolean).join(" ")} ref={anchorRef}>
         <TextField
@@ -265,7 +216,7 @@ export default props => {
             }}
             onChange={handleInputChange}
             onFocus={event => {
-                if (options.length || loading) setOpen(true);
+                if (!disabled && geoapifyApiKey && String(value).trim()) setOpen(true);
                 onFocus?.(event);
             }}
             onKeyDown={handleKeyDown}

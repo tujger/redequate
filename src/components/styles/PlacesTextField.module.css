@@ -8,6 +8,7 @@
 
 .menu {
     max-height: calc(var(--theme-spacing) * 30);
+    min-width: 0;
 }
 
 .status {
