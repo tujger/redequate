@@ -1,0 +1,26 @@
+.header {
+    align-items: flex-start;
+    background-color: var(--theme-color-secondary);
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: var(--theme-color-secondary-alt);
+    display: flex;
+    height: 120px;
+    justify-content: space-between;
+}
+
+.name {
+    align-items: center;
+    display: flex;
+    font-size: calc(var(--theme-spacing) * 3);
+    font-weight: bolder;
+    margin-left: calc(var(--theme-spacing) * 2);
+    min-height: calc(var(--theme-spacing) * 7);
+}
+
+.label {
+    color: inherit;
+    cursor: default;
+    display: inline-block;
+    text-decoration: none;
+}

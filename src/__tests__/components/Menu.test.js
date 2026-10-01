@@ -44,6 +44,30 @@ describe("Menu", () => {
         expect(document.body.textContent).toContain("Supplied");
     });
 
+    it("renders inline at its call site with every nested level visible", () => {
+        const labels = [];
+        act(() => {
+            render(<Menu inline items={[
+                {label: "First"},
+                [{label: "Hidden selector"}, {label: "Second"},
+                    [{label: "Hidden deeper selector"}, {label: "Third"}]],
+                [{label: "Single"}],
+            ]} renderItem={item => {
+                labels.push(item.label);
+                return <div role="menuitem" tabIndex={-1}>{item.label}</div>;
+            }}/>, container);
+        });
+
+        const menu = container.querySelector('[role="menu"]');
+        expect(menu).not.toBeNull();
+        expect(menu.parentElement).toBe(container);
+        expect(menu.style.position).toBe("");
+        expect(Array.from(menu.querySelectorAll('[role="menuitem"]')).map(item => item.textContent))
+            .toEqual(["First", "Second", "Third", "Single"]);
+        expect(labels).not.toContain("Hidden selector");
+        expect(labels).not.toContain("Hidden deeper selector");
+    });
+
     it("keeps old options for one second, then shows loading until the replacement arrives", async () => {
         let resolveNext;
         const load = jest.fn()

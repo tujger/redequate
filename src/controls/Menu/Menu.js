@@ -49,20 +49,29 @@ const MenuBranch = ({item, items, renderItem, closeTree}) => {
         }}
         ref={branchRef}
     >
-        {renderItem(item, {selector: true, open, onActivate: activate,
-            onHover: () => window.innerWidth > 599 && setOpen(true), closeTree})}
+        {renderItem(item, {
+            selector: true, open, onActivate: activate,
+            onHover: () => window.innerWidth > 599 && setOpen(true), closeTree
+        })}
         {open && <div className={styles.submenu} ref={submenuRef} role="menu">
             {renderEntries(items, renderItem, closeTree)}
         </div>}
     </div>;
 };
 
-const renderEntries = (items, renderItem, closeTree) => items.map((entry, index) => {
+const renderEntries = (items, renderItem, closeTree, inline = false) => items.map((entry, index) => {
     if (Array.isArray(entry)) {
         if (!entry.length) return null;
-        if (entry.length === 1) return <React.Fragment key={index}>
-            {renderItem(entry[0], {selector: false, closeTree})}
-        </React.Fragment>;
+        if (entry.length === 1) {
+            return <React.Fragment key={index}>
+                {renderItem(entry[0], {selector: false, closeTree})}
+            </React.Fragment>;
+        }
+        if (inline) {
+            return <React.Fragment key={index}>
+                {renderEntries(entry.slice(1), renderItem, closeTree, true)}
+            </React.Fragment>;
+        }
         return <MenuBranch
             closeTree={closeTree}
             item={entry[0]}
@@ -76,11 +85,37 @@ const renderEntries = (items, renderItem, closeTree) => items.map((entry, index)
     </React.Fragment>;
 });
 
-const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, backdrop = false, children, className, closeOnBlur = false,
-    closeOnMouseLeave = false, containerRef, id, items, load, matchAnchorWidth = false, minWidth = false,
-    offset = 8, onClose, onDisplayedOptionsChange, onLoadError, onLoaded, open, options,
-    positionKey, reloadKey, renderItem, role = "menu", staleMs = 0,
-    transformOrigin = defaultTransformOrigin}) => {
+const Menu = (
+    {
+        anchorEl,
+        anchorOrigin = defaultAnchorOrigin,
+        autoFocus = true,
+        backdrop = false,
+        children,
+        className,
+        closeOnBlur = false,
+        closeOnMouseLeave = false,
+        containerRef,
+        id,
+        inline = false,
+        items,
+        load,
+        matchAnchorWidth = false,
+        minWidth = false,
+        offset = 8,
+        onClose,
+        onDisplayedOptionsChange,
+        onLoadError,
+        onLoaded,
+        open,
+        options,
+        positionKey,
+        reloadKey,
+        renderItem,
+        role = "menu",
+        staleMs = 0,
+        transformOrigin = defaultTransformOrigin
+    }) => {
     const menuRef = React.useRef(null);
     const loadRef = React.useRef(load);
     const onLoadedRef = React.useRef(onLoaded);
@@ -93,6 +128,7 @@ const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, b
     onLoadErrorRef.current = onLoadError;
     onDisplayedOptionsChangeRef.current = onDisplayedOptionsChange;
     const lazy = options === undefined && Boolean(load);
+    const visible = inline || open;
     const displayedOptions = lazy ? lazyState.options : options || [];
     const getAnchor = () => anchorEl?.current || (anchorEl?.getBoundingClientRect ? anchorEl : null);
 
@@ -137,16 +173,18 @@ const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, b
         const top = Math.max(8, Math.min(desiredTop, window.innerHeight - height - 8));
         const positionWidth = matchAnchorWidth ? width : rect.width;
         setPosition(current => current.left === left && current.top === top && current.width === positionWidth
-            && current.maxHeight === maxHeight && current.overflowY === (menuHeight > maxHeight ? "auto" : undefined)
-            && current.transformOrigin === `${originOffset(transformHorizontal, width)}px ${transformY}px`
-            ? current : {left, top, width: positionWidth, maxHeight,
+        && current.maxHeight === maxHeight && current.overflowY === (menuHeight > maxHeight ? "auto" : undefined)
+        && current.transformOrigin === `${originOffset(transformHorizontal, width)}px ${transformY}px`
+            ? current : {
+                left, top, width: positionWidth, maxHeight,
                 overflowY: menuHeight > maxHeight ? "auto" : undefined,
-                transformOrigin: `${originOffset(transformHorizontal, width)}px ${transformY}px`});
+                transformOrigin: `${originOffset(transformHorizontal, width)}px ${transformY}px`
+            });
     }, [anchorEl, anchorOrigin.horizontal, anchorOrigin.vertical, matchAnchorWidth, minWidth, offset,
         transformOrigin.horizontal, transformOrigin.vertical]);
 
     React.useEffect(() => {
-        if (!open || !lazy) {
+        if (!visible || !lazy) {
             setLazyState(current => current.options.length || current.loading
                 ? {options: [], loading: false} : current);
             return undefined;
@@ -180,14 +218,14 @@ const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, b
             controller.abort();
             clearTimeout(staleTimer);
         };
-    }, [open, lazy, reloadKey, staleMs]);
+    }, [visible, lazy, reloadKey, staleMs]);
 
     React.useEffect(() => {
-        if (open && lazy) onDisplayedOptionsChangeRef.current?.(displayedOptions);
-    }, [open, lazy, displayedOptions]);
+        if (visible && lazy) onDisplayedOptionsChangeRef.current?.(displayedOptions);
+    }, [visible, lazy, displayedOptions]);
 
     React.useLayoutEffect(() => {
-        if (!open) return undefined;
+        if (!open || inline) return undefined;
         updatePosition();
         if (autoFocus) {
             const selected = menuRef.current?.querySelector('[data-selected="true"]');
@@ -199,35 +237,35 @@ const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, b
             window.removeEventListener("resize", updatePosition);
             document.removeEventListener("scroll", updatePosition, true);
         };
-    }, [open, autoFocus, positionKey, lazyState.options, lazyState.loading, updatePosition]);
+    }, [open, inline, autoFocus, positionKey, lazyState.options, lazyState.loading, updatePosition]);
 
     React.useEffect(() => {
-        if (!open || backdrop) return undefined;
+        if (!open || inline || backdrop) return undefined;
         const handleOutside = event => {
             if (!menuRef.current?.contains(event.target) && !getAnchor()?.contains(event.target)) onClose?.(event);
         };
         document.addEventListener("pointerdown", handleOutside, true);
         return () => document.removeEventListener("pointerdown", handleOutside, true);
-    }, [open, backdrop, anchorEl, onClose]);
+    }, [open, inline, backdrop, anchorEl, onClose]);
 
-    if (!open || typeof document === "undefined") return null;
+    if (!visible || typeof document === "undefined") return null;
 
     const handleKeyDown = event => {
         if (event.defaultPrevented) return;
-        if (event.key === "Escape") {
+        if (!inline && event.key === "Escape") {
             event.preventDefault();
             event.stopPropagation();
             onClose?.(event);
             getAnchor()?.focus();
             return;
         }
-        if (event.key === "Tab") {
+        if (!inline && event.key === "Tab") {
             onClose?.(event);
             return;
         }
         const currentMenu = event.target.closest('[role="menu"], [role="listbox"]');
         if (!currentMenu || !menuRef.current?.contains(currentMenu)) return;
-        if (event.key === "ArrowRight" && event.target.parentElement?.classList.contains(styles.branch)) {
+        if (!inline && event.key === "ArrowRight" && event.target.parentElement?.classList.contains(styles.branch)) {
             event.preventDefault();
             event.stopPropagation();
             if (event.target.parentElement.getAttribute("data-open") !== "true") event.target.click();
@@ -253,8 +291,8 @@ const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, b
         entries[nextIndex].focus();
     };
 
-    return ReactDOM.createPortal(<>
-        {backdrop && <div
+    const menu = <>
+        {!inline && backdrop && <div
             aria-hidden="true"
             className={styles.backdrop}
             data-testid="select-backdrop"
@@ -264,36 +302,40 @@ const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, b
             }}
         />}
         <div
-            className={[styles.menu, role === "menu" && styles.actionMenu, className].filter(Boolean).join(" ")}
+            className={[styles.menu, role === "menu" && styles.actionMenu, inline && styles.inline, className].filter(Boolean).join(" ")}
             id={id}
             onBlur={event => {
                 if (closeOnBlur && !menuRef.current?.contains(event.relatedTarget)
                     && !getAnchor()?.contains(event.relatedTarget)) onClose?.(event);
             }}
-            onClick={event => event.stopPropagation()}
+            onClick={inline ? undefined : event => event.stopPropagation()}
             onKeyDown={handleKeyDown}
             onMouseLeave={event => {
                 if (closeOnMouseLeave && !menuRef.current?.contains(event.relatedTarget)
                     && !getAnchor()?.contains(event.relatedTarget)) onClose?.(event);
             }}
-            onPointerDown={event => event.stopPropagation()}
+            onPointerDown={inline ? undefined : event => event.stopPropagation()}
             ref={node => {
                 menuRef.current = node;
                 if (containerRef) containerRef.current = node;
             }}
             role={role}
-            style={{left: position.left, maxHeight: position.maxHeight,
+            style={inline ? undefined : {
+                left: position.left, maxHeight: position.maxHeight,
                 minWidth: minWidth ? position.width : undefined,
                 overflowY: position.overflowY,
                 top: position.top, transformOrigin: position.transformOrigin,
-                width: matchAnchorWidth ? position.width : undefined}}
+                width: matchAnchorWidth ? position.width : undefined
+            }}
         >
-            {items ? renderEntries(items, renderItem, onClose)
+            {items ? renderEntries(items, renderItem, onClose, inline)
                 : typeof children === "function"
                     ? children({options: displayedOptions, loading: lazy && lazyState.loading})
                     : children}
         </div>
-    </>, document.body);
+    </>;
+
+    return inline ? menu : ReactDOM.createPortal(menu, document.body);
 };
 
 export default Menu;
