@@ -1,25 +1,37 @@
 import ArrowRightIcon from "@material-ui/icons/ArrowRight";
 import React from "react";
-import ReactDOM from "react-dom";
 import {Link, useHistory} from "react-router-dom";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
-import selectStyles from "../../controls/Select/Select.module.css";
+import Menu from "../../controls/Menu/Menu";
+import menuStyles from "../../controls/Menu/Menu.module.css";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MenuSection.module.css";
+
+const allowed = (item, userData) => !item.disabled && matchRole(item.roles, userData);
+
+const filterItems = (items, userData) => items.reduce((result, entry) => {
+    if (Array.isArray(entry)) {
+        if (!entry.length || !allowed(entry[0], userData)) return result;
+        const nested = filterItems(entry, userData);
+        if (nested.length) result.push(nested);
+    } else if (entry && allowed(entry, userData)) result.push(entry);
+    return result;
+}, []);
 
 const MenuLink = ({item, onClose, userData}) => {
     const onPointerDown = useRippleEffect();
 
     return <Link
-        className={[selectStyles.menuItem, styles.item].join(" ")}
+        className={[menuStyles.menuItem, styles.item].join(" ")}
         onClick={event => {
             event.stopPropagation();
-            onClose();
+            onClose(event);
         }}
         onClickCapture={item.onClick}
         onPointerDown={onPointerDown}
-        role={"menuitem"}
+        role="menuitem"
+        tabIndex={-1}
         to={item.route}
     >
         {item.label}
@@ -27,193 +39,124 @@ const MenuLink = ({item, onClose, userData}) => {
     </Link>;
 };
 
-const MenuSection = ({badge = {}, items, className, endIcon, nested = false, onCloseTree}) => {
+const MenuSelector = ({item, onActivate, onHover, open, userData}) => {
+    const onPointerDown = useRippleEffect();
+
+    return <div
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={[menuStyles.menuItem, styles.item, styles.selector].join(" ")}
+        onClick={onActivate}
+        onMouseEnter={onHover}
+        onPointerDown={onPointerDown}
+        role="menuitem"
+        tabIndex={-1}
+    >
+        {item.label}
+        {item.adornment && userData && item.adornment(userData)}
+        <ArrowRightIcon aria-hidden="true" className={styles.submenuIcon}/>
+    </div>;
+};
+
+const MenuSection = ({badge = {}, items, className, endIcon}) => {
     const [first, ...menu] = items;
     const [open, setOpen] = React.useState(false);
-    const [openLeft, setOpenLeft] = React.useState(false);
-    const [menuPosition, setMenuPosition] = React.useState(null);
     const sectionRef = React.useRef(null);
     const triggerRef = React.useRef(null);
     const menuRef = React.useRef(null);
     const currentUserData = useCurrentUserData();
     const history = useHistory();
-
-    const allowedItems = menu.filter(item => Array.isArray(item)
-        ? item[0] && matchRole(item[0].roles, currentUserData)
-        : !item.disabled && matchRole(item.roles, currentUserData));
-    const hasMenu = allowedItems.length > 0;
+    const visible = filterItems(menu, currentUserData);
+    const hasMenu = visible.length > 0;
     const hasBadge = menu.some(item => !Array.isArray(item) && badge[item.route]);
-    const containsTarget = React.useCallback(target => target?.nodeType && (
-        sectionRef.current?.contains(target) || menuRef.current?.contains(target)
-    ), []);
 
-    const updateMenuPosition = React.useCallback(() => {
-        if (!triggerRef.current || !menuRef.current) return;
-        const rect = triggerRef.current.getBoundingClientRect();
-        const width = menuRef.current.offsetWidth;
-        const height = menuRef.current.offsetHeight;
-        const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
-        const above = rect.top - height;
-        const below = rect.bottom;
-        const top = below + height <= window.innerHeight - 8 || above < 8
-            ? Math.max(8, Math.min(below, window.innerHeight - height - 8))
-            : above;
-        setMenuPosition(current => current?.left === left && current?.top === top ? current : {left, top});
-    }, []);
+    if (!first || !allowed(first, currentUserData)) return null;
 
-    React.useEffect(() => {
-        if (!open) return undefined;
-        const handleOutsidePointerDown = event => {
-            if (!containsTarget(event.target)) setOpen(false);
-        };
-        document.addEventListener("pointerdown", handleOutsidePointerDown, true);
-        return () => document.removeEventListener("pointerdown", handleOutsidePointerDown, true);
-    }, [open, containsTarget]);
-
-    React.useLayoutEffect(() => {
-        if (!open || nested) return undefined;
-        updateMenuPosition();
-        window.addEventListener("resize", updateMenuPosition);
-        document.addEventListener("scroll", updateMenuPosition, true);
-        return () => {
-            window.removeEventListener("resize", updateMenuPosition);
-            document.removeEventListener("scroll", updateMenuPosition, true);
-        };
-    }, [open, nested, updateMenuPosition]);
-
-    React.useLayoutEffect(() => {
-        if (!open || !nested || !triggerRef.current || !menuRef.current) return;
-        const right = triggerRef.current.getBoundingClientRect().right;
-        setOpenLeft(right + menuRef.current.offsetWidth > window.innerWidth - 8);
-    }, [open, nested]);
-
-    if (!first || !matchRole(first.roles, currentUserData)) return null;
-
-    const closeTree = () => {
-        setOpen(false);
-        onCloseTree?.();
+    const closeMenu = () => setOpen(false);
+    const renderItem = (item, {selector, open: branchOpen, onActivate, onHover, closeTree}) => {
+        if (selector) return <MenuSelector
+            item={item}
+            onActivate={onActivate}
+            onHover={onHover}
+            open={branchOpen}
+            userData={currentUserData}
+        />;
+        if (item.component) return <MenuLink
+            item={item}
+            onClose={closeTree}
+            userData={currentUserData}
+        />;
+        return <Button
+            className={[menuStyles.menuItem, styles.item].join(" ")}
+            color="inherit"
+            onClick={event => {
+                item.onClick?.(event);
+                if (item.route) history.push(item.route);
+                closeTree(event);
+            }}
+            role="menuitem"
+            tabIndex={-1}
+            variant="text"
+        >
+            {item.label}
+            {item.adornment && currentUserData && item.adornment(currentUserData)}
+        </Button>;
     };
-
-    const focusFirstItem = () => {
-        requestAnimationFrame(() => menuRef.current?.querySelector('[role="menuitem"]')?.focus());
-    };
-
-    const handleTriggerKeyDown = event => {
-        if (!hasMenu || event.key !== (nested ? "ArrowRight" : "ArrowDown")) return;
-        event.preventDefault();
-        event.stopPropagation();
-        setOpen(true);
-        focusFirstItem();
-    };
-
-    const handleKeyDown = event => {
-        if (event.key === "Escape" && open) {
-            event.preventDefault();
-            event.stopPropagation();
-            setOpen(false);
-            triggerRef.current?.focus();
-            return;
-        }
-        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-        const currentMenu = event.target.closest('[role="menu"]');
-        if (!currentMenu || !containsTarget(currentMenu)) return;
-        const entries = Array.from(currentMenu.querySelectorAll('[role="menuitem"]'))
-            .filter(entry => entry.closest('[role="menu"]') === currentMenu);
-        if (!entries.length) return;
-        event.preventDefault();
-        event.stopPropagation();
-        const index = entries.indexOf(event.target);
-        entries[(index + (event.key === "ArrowDown" ? 1 : entries.length - 1)) % entries.length].focus();
-    };
-
-    const dropdown = open && hasMenu && <div
-        className={[styles.menu, !nested && styles.portalMenu, !nested && !menuPosition && styles.positionPending, openLeft && styles.openLeft].filter(Boolean).join(" ")}
-        onBlur={event => {
-            if (!containsTarget(event.relatedTarget)) setOpen(false);
-        }}
-        onKeyDown={handleKeyDown}
-        onMouseLeave={event => {
-            if (!containsTarget(event.relatedTarget)) setOpen(false);
-        }}
-        ref={menuRef}
-        role="menu"
-        style={!nested ? {
-            "--menu-left": `${menuPosition?.left ?? 0}px`,
-            "--menu-top": `${menuPosition?.top ?? 0}px`,
-        } : undefined}
-    >
-        {menu.map((item, index) => {
-            if (Array.isArray(item)) {
-                return <MenuSection
-                    className={[selectStyles.menuItem, styles.item].join(" ")}
-                    badge={{}}
-                    endIcon={<ArrowRightIcon/>}
-                    items={item}
-                    key={index}
-                    nested
-                    onCloseTree={closeTree}
-                />;
-            }
-            if (item.disabled || !matchRole(item.roles, currentUserData)) return null;
-            if (item.component) {
-                return <MenuLink
-                    item={item}
-                    key={index}
-                    onClose={closeTree}
-                    userData={currentUserData}
-                />;
-            }
-            return <Button
-                className={[selectStyles.menuItem, styles.item].join(" ")}
-                color={"inherit"}
-                key={index}
-                onClick={event => {
-                    item.onClick?.(event);
-                    closeTree();
-                }}
-                role={"menuitem"}
-                variant={"text"}
-            >
-                {item.label}
-                {item.adornment && currentUserData && item.adornment(currentUserData)}
-            </Button>;
-        })}
-    </div>;
-
-    const SectionButton = nested ? "div" : Button;
 
     return <div
-        className={[className, styles.section, nested && styles.nestedSection].filter(Boolean).join(" ")}
+        className={[className, styles.section].filter(Boolean).join(" ")}
         onBlur={event => {
-            if (!containsTarget(event.relatedTarget)) setOpen(false);
+            if (!sectionRef.current?.contains(event.relatedTarget)
+                && !menuRef.current?.contains(event.relatedTarget)) closeMenu();
         }}
-        onKeyDown={handleKeyDown}
-        onMouseEnter={() => hasMenu && setOpen(true)}
+        onMouseEnter={() => hasMenu && window.innerWidth > 599 && setOpen(true)}
         onMouseLeave={event => {
-            if (!containsTarget(event.relatedTarget)) setOpen(false);
+            if (!sectionRef.current?.contains(event.relatedTarget)
+                && !menuRef.current?.contains(event.relatedTarget)) closeMenu();
         }}
         ref={sectionRef}
     >
-        <SectionButton
+        <Button
             aria-expanded={hasMenu ? open : undefined}
             aria-haspopup={hasMenu ? "menu" : undefined}
-            className={[styles.trigger, nested && styles.nestedTrigger].filter(Boolean).join(" ")}
-            color={"inherit"}
+            className={styles.trigger}
+            color="inherit"
             onClick={event => {
                 event.stopPropagation();
-                history.push(first.route);
-                closeTree();
+                if (hasMenu) {
+                    setOpen(current => window.innerWidth <= 599 ? !current : true);
+                    // return;
+                }
+                first.onClick?.(event);
+                if (first.route) history.push(first.route);
             }}
-            onKeyDown={handleTriggerKeyDown}
+            onKeyDown={event => {
+                if (hasMenu && ["ArrowDown", "ArrowRight"].includes(event.key)) {
+                    event.preventDefault();
+                    setOpen(true);
+                }
+            }}
+            onMouseEnter={() => hasMenu && window.innerWidth > 599 && setOpen(true)}
             ref={triggerRef}
-            role={nested ? "menuitem" : "button"}
-            variant={"text"}
+            variant="text"
         >
             {first.label}
             {hasBadge && <span className={styles.badge}/>}
             {endIcon && <span className={styles.endIcon}>{endIcon}</span>}
-        </SectionButton>
-        {nested || typeof document === "undefined" ? dropdown : dropdown && ReactDOM.createPortal(dropdown, document.body)}
+        </Button>
+        <Menu
+            anchorEl={triggerRef}
+            anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+            closeOnBlur
+            closeOnMouseLeave
+            containerRef={menuRef}
+            items={visible}
+            offset={0}
+            onClose={closeMenu}
+            open={open && hasMenu}
+            renderItem={renderItem}
+            transformOrigin={{vertical: "top", horizontal: "center"}}
+        />
     </div>;
 };
 
