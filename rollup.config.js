@@ -77,6 +77,7 @@ module.exports = [
             // controls
             Button: 'src/controls/Button/Button.js',
             Chip: 'src/controls/Chip/Chip.js',
+            Menu: 'src/controls/Menu/Menu.js',
             Select: 'src/controls/Select/Select.js',
             Switch: 'src/controls/Switch/Switch.js',
             Tabs: 'src/controls/Tabs/Tabs.js',
