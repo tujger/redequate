@@ -16,6 +16,7 @@
 
     box-shadow: none;
     padding: 0 calc(var(--theme-spacing));
+    text-transform: capitalize;
 }
 
 .profileLink {
