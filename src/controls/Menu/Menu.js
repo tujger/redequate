@@ -3,6 +3,17 @@ import ReactDOM from "react-dom";
 import styles from "./Menu.module.css";
 
 const focusFirst = menu => menu?.querySelector('[role="menuitem"], [role="option"]')?.focus();
+const defaultAnchorOrigin = {vertical: "bottom", horizontal: "left"};
+const defaultTransformOrigin = {vertical: "top", horizontal: "left"};
+
+const originOffset = (origin, length) => {
+    if (typeof origin === "number") return origin;
+    if (origin === "center") return length / 2;
+    if (origin === "bottom" || origin === "right") return length;
+    return 0;
+};
+
+const oppositeOrigin = origin => origin === "top" ? "bottom" : "top";
 
 const MenuBranch = ({item, items, renderItem, closeTree}) => {
     const [open, setOpen] = React.useState(false);
@@ -65,10 +76,11 @@ const renderEntries = (items, renderItem, closeTree) => items.map((entry, index)
     </React.Fragment>;
 });
 
-const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, className, closeOnBlur = false,
+const Menu = ({anchorEl, anchorOrigin = defaultAnchorOrigin, autoFocus = true, backdrop = false, children, className, closeOnBlur = false,
     closeOnMouseLeave = false, containerRef, id, items, load, matchAnchorWidth = false, minWidth = false,
-    offset, onClose, onDisplayedOptionsChange, onLoadError, onLoaded, open, options,
-    placement = "below", positionKey, reloadKey, renderItem, role = "menu", staleMs = 0}) => {
+    offset = 8, onClose, onDisplayedOptionsChange, onLoadError, onLoaded, open, options,
+    positionKey, reloadKey, renderItem, role = "menu", staleMs = 0,
+    transformOrigin = defaultTransformOrigin}) => {
     const menuRef = React.useRef(null);
     const loadRef = React.useRef(load);
     const onLoadedRef = React.useRef(onLoaded);
@@ -91,19 +103,47 @@ const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, className
         const menu = menuRef.current;
         const anchorWidth = Math.max(0, Math.min(rect.width, window.innerWidth - 16));
         const width = matchAnchorWidth ? anchorWidth : Math.max(menu.offsetWidth, minWidth ? rect.width : 0);
-        const height = menu.offsetHeight;
-        const desiredLeft = placement === "below-end" ? rect.right - width : rect.left;
+        const menuHeight = menu.scrollHeight || menu.offsetHeight;
+        const anchorHorizontal = anchorOrigin.horizontal ?? defaultAnchorOrigin.horizontal;
+        const anchorVertical = anchorOrigin.vertical ?? defaultAnchorOrigin.vertical;
+        const transformHorizontal = transformOrigin.horizontal ?? defaultTransformOrigin.horizontal;
+        const transformVertical = transformOrigin.vertical ?? defaultTransformOrigin.vertical;
+        const anchorX = rect.left + originOffset(anchorHorizontal, rect.width);
+        const desiredLeft = anchorX - originOffset(transformHorizontal, width);
         const left = Math.max(8, Math.min(desiredLeft, window.innerWidth - width - 8));
-        const gap = offset === undefined ? (placement === "below" ? 8 : 0) : offset;
-        const below = rect.bottom + gap;
-        const above = rect.top - height - gap;
-        const top = below + height <= window.innerHeight - 8 || above < 8
-            ? Math.max(8, Math.min(below, window.innerHeight - height - 8))
-            : above;
+        const edgePair = anchorVertical === "bottom" && transformVertical === "top"
+            || anchorVertical === "top" && transformVertical === "bottom";
+        let resolvedAnchorVertical = anchorVertical;
+        let resolvedTransformVertical = transformVertical;
+        if (edgePair) {
+            const available = anchorVertical === "bottom"
+                ? window.innerHeight - rect.bottom - offset - 8 : rect.top - offset - 8;
+            const oppositeAvailable = anchorVertical === "bottom"
+                ? rect.top - offset - 8 : window.innerHeight - rect.bottom - offset - 8;
+            if (menuHeight > available && oppositeAvailable > available) {
+                resolvedAnchorVertical = oppositeOrigin(anchorVertical);
+                resolvedTransformVertical = oppositeOrigin(transformVertical);
+            }
+        }
+        const maxHeight = Math.max(0, edgePair
+            ? resolvedAnchorVertical === "bottom"
+                ? window.innerHeight - rect.bottom - offset - 8 : rect.top - offset - 8
+            : window.innerHeight - 16);
+        const height = Math.min(menuHeight, maxHeight);
+        const anchorY = rect.top + originOffset(resolvedAnchorVertical, rect.height ?? rect.bottom - rect.top);
+        const transformY = originOffset(resolvedTransformVertical, height);
+        const gap = edgePair ? (resolvedAnchorVertical === "bottom" ? offset : -offset) : 0;
+        const desiredTop = anchorY - transformY + gap;
+        const top = Math.max(8, Math.min(desiredTop, window.innerHeight - height - 8));
         const positionWidth = matchAnchorWidth ? width : rect.width;
         setPosition(current => current.left === left && current.top === top && current.width === positionWidth
-            ? current : {left, top, width: positionWidth});
-    }, [anchorEl, matchAnchorWidth, minWidth, offset, placement]);
+            && current.maxHeight === maxHeight && current.overflowY === (menuHeight > maxHeight ? "auto" : undefined)
+            && current.transformOrigin === `${originOffset(transformHorizontal, width)}px ${transformY}px`
+            ? current : {left, top, width: positionWidth, maxHeight,
+                overflowY: menuHeight > maxHeight ? "auto" : undefined,
+                transformOrigin: `${originOffset(transformHorizontal, width)}px ${transformY}px`});
+    }, [anchorEl, anchorOrigin.horizontal, anchorOrigin.vertical, matchAnchorWidth, minWidth, offset,
+        transformOrigin.horizontal, transformOrigin.vertical]);
 
     React.useEffect(() => {
         if (!open || !lazy) {
@@ -173,6 +213,7 @@ const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, className
     if (!open || typeof document === "undefined") return null;
 
     const handleKeyDown = event => {
+        if (event.defaultPrevented) return;
         if (event.key === "Escape") {
             event.preventDefault();
             event.stopPropagation();
@@ -241,8 +282,11 @@ const Menu = ({anchorEl, autoFocus = true, backdrop = false, children, className
                 if (containerRef) containerRef.current = node;
             }}
             role={role}
-            style={{left: position.left, minWidth: minWidth ? position.width : undefined,
-                top: position.top, width: matchAnchorWidth ? position.width : undefined}}
+            style={{left: position.left, maxHeight: position.maxHeight,
+                minWidth: minWidth ? position.width : undefined,
+                overflowY: position.overflowY,
+                top: position.top, transformOrigin: position.transformOrigin,
+                width: matchAnchorWidth ? position.width : undefined}}
         >
             {items ? renderEntries(items, renderItem, onClose)
                 : typeof children === "function"
