@@ -209,7 +209,6 @@ function ResponsiveDrawerLayout(props) {
         <MainAppbar
             className={classes.appbar}
             {...props}
-            classes={{}}
             onHamburgerClick={handleDrawerToggle}
         />
         <Typography className={classes.indent}/>

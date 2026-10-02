@@ -15,7 +15,7 @@ const originOffset = (origin, length) => {
 
 const oppositeOrigin = origin => origin === "top" ? "bottom" : "top";
 
-const MenuBranch = ({item, items, renderItem, closeTree}) => {
+const MenuBranch = ({color, item, items, renderItem, closeTree}) => {
     const [open, setOpen] = React.useState(false);
     const [openLeft, setOpenLeft] = React.useState(false);
     const branchRef = React.useRef(null);
@@ -54,12 +54,12 @@ const MenuBranch = ({item, items, renderItem, closeTree}) => {
             onHover: () => window.innerWidth > 599 && setOpen(true), closeTree
         })}
         {open && <div className={styles.submenu} ref={submenuRef} role="menu">
-            {renderEntries(items, renderItem, closeTree)}
+            {renderEntries({color, items, renderItem, closeTree})}
         </div>}
     </div>;
 };
 
-const renderEntries = (items, renderItem, closeTree, inline = false) => items.map((entry, index) => {
+const renderEntries = ({color, items, renderItem, closeTree, inline = false}) => items.map((entry, index) => {
     if (Array.isArray(entry)) {
         if (!entry.length) return null;
         if (entry.length === 1) {
@@ -69,11 +69,12 @@ const renderEntries = (items, renderItem, closeTree, inline = false) => items.ma
         }
         if (inline) {
             return <React.Fragment key={index}>
-                {renderEntries(entry.slice(1), renderItem, closeTree, true)}
+                {renderEntries({items: entry.slice(1), renderItem, closeTree, inline: true})}
             </React.Fragment>;
         }
         return <MenuBranch
             closeTree={closeTree}
+            color={color}
             item={entry[0]}
             items={entry.slice(1)}
             key={index}
@@ -95,6 +96,7 @@ const Menu = (
         className,
         closeOnBlur = false,
         closeOnMouseLeave = false,
+        color = undefined,
         containerRef,
         id,
         inline = false,
@@ -293,16 +295,24 @@ const Menu = (
 
     const menu = <>
         {!inline && backdrop && <div
-            aria-hidden="true"
+            aria-hidden={"true"}
             className={styles.backdrop}
-            data-testid="select-backdrop"
+            data-testid={"select-backdrop"}
             onClick={event => {
                 event.stopPropagation();
                 onClose?.(event);
             }}
         />}
         <div
-            className={[styles.menu, role === "menu" && styles.actionMenu, inline && styles.inline, className].filter(Boolean).join(" ")}
+            className={[
+                color === "inherit" && styles.inherit,
+                color === "primary" && styles.primary,
+                color === "secondary" && styles.secondary,
+                styles.menu,
+                role === "menu" && styles.actionMenu,
+                inline && styles.inline,
+                className
+            ].filter(Boolean).join(" ")}
             id={id}
             onBlur={event => {
                 if (closeOnBlur && !menuRef.current?.contains(event.relatedTarget)
@@ -328,7 +338,7 @@ const Menu = (
                 width: matchAnchorWidth ? position.width : undefined
             }}
         >
-            {items ? renderEntries(items, renderItem, onClose, inline)
+            {items ? renderEntries({color, items, renderItem, onClose, inline})
                 : typeof children === "function"
                     ? children({options: displayedOptions, loading: lazy && lazyState.loading})
                     : children}

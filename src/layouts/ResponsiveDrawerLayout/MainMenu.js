@@ -80,7 +80,7 @@ export default ({items, onClick}) => {
     };
 
     return <div className={["MuiMainMenu-root", styles.root].join(" ")}>
-        <Menu inline items={menuItems} renderItem={renderItem}/>
+        <Menu color={"secondary"} inline items={menuItems} renderItem={renderItem}/>
         <div className={styles.languageRow}>
             <LanguageComponent fullWidth/>
         </div>

@@ -1,0 +1,105 @@
+.appbar {
+    background-color: var(--theme-color-primary);
+    box-shadow: var(--theme-card-shadow);
+    color: var(--theme-color-primary-alt);
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 100%;
+    z-index: 1100;
+}
+
+.toolbar {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    min-height: calc(var(--theme-spacing) * 8);
+    padding: 0 calc(var(--theme-spacing) * 3);
+}
+
+.hamburger {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    flex: none;
+    height: calc(var(--theme-spacing) * 6);
+    justify-content: center;
+    margin-left: calc(var(--theme-spacing) * -1.5);
+    padding: calc(var(--theme-spacing) * 1.5);
+    position: relative;
+    width: calc(var(--theme-spacing) * 6);
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--theme-color-focus);
+    }
+}
+
+.badge {
+    background-color: var(--theme-color-error);
+    border-radius: 50%;
+    height: var(--theme-spacing);
+    left: var(--theme-spacing);
+    position: absolute;
+    top: var(--theme-spacing);
+    width: var(--theme-spacing);
+}
+
+.title {
+    flex: 1 1 auto;
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.0075em;
+    line-height: 1.6;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.label {
+    color: inherit;
+    cursor: default;
+    display: flex;
+    text-decoration: none;
+}
+
+.logo {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    height: calc(var(--theme-spacing) * 8);
+}
+
+.logoImage {
+    height: 100%;
+}
+
+.progress {
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+}
+
+@media (max-width: 599px) {
+    .toolbar {
+        min-height: calc(var(--theme-spacing) * 7);
+        padding: 0 calc(var(--theme-spacing) * 2);
+    }
+
+    .logo {
+        height: calc(var(--theme-spacing) * 7);
+    }
+}
+
+@media (min-width: 960px) {
+    .progress {
+        left: 240px;
+    }
+}

@@ -25,7 +25,12 @@
 
 .icon {
     display: inline-flex;
-    flex: 0 0 calc(var(--theme-spacing) * 7);
+    flex: 0 0 calc(var(--theme-spacing) * 6);
+
+    & :global(.MuiSvgIcon-root) {
+        height: calc(var(--theme-font-size-base) * 1.5);
+        width: calc(var(--theme-font-size-base) * 1.5);
+    }
 }
 
 .label {
