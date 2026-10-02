@@ -338,7 +338,7 @@ const Menu = (
                 width: matchAnchorWidth ? position.width : undefined
             }}
         >
-            {items ? renderEntries({color, items, renderItem, onClose, inline})
+            {items ? renderEntries({color, items, renderItem, closeTree: onClose, inline})
                 : typeof children === "function"
                     ? children({options: displayedOptions, loading: lazy && lazyState.loading})
                     : children}

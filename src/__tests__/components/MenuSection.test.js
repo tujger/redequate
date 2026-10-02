@@ -189,6 +189,25 @@ describe("MenuSection", () => {
         expect(document.querySelector('[role="menu"]')).toBeNull();
     });
 
+    it("closes the whole menu after clicking a nested link", () => {
+        const linkClick = jest.fn();
+        act(() => {
+            render(<MenuSection items={[
+                {label: "Section", route: "/section"},
+                [{label: "More"}, {label: "Leaf", component: true, onClick: linkClick, route: "/leaf"}],
+            ]}/>, container);
+        });
+
+        act(() => { Simulate.mouseEnter(container.querySelector('[role="button"]')); });
+        act(() => { document.querySelector('[aria-haspopup="menu"][role="menuitem"]').click(); });
+        const link = document.querySelector('a[role="menuitem"][href="/leaf"]');
+        expect(link).not.toBeNull();
+
+        act(() => { link.click(); });
+        expect(linkClick).toHaveBeenCalledTimes(1);
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
     it("toggles a mobile submenu on click", () => {
         const width = window.innerWidth;
         Object.defineProperty(window, "innerWidth", {configurable: true, value: 375});
