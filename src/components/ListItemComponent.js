@@ -1,4 +1,3 @@
-import MenuIcon from "@material-ui/icons/MoreVert";
 import React from "react";
 import {useDrag} from "react-use-gesture";
 import {useWindowData} from "../controllers";
@@ -124,7 +123,6 @@ export default (props) => {
                 onClickCapture={event => {
                     event.stopPropagation();
                 }}
-                renderValue={() => <MenuIcon/>}
                 value={""}
             >
                 {menu.map((item, index) => <SelectItem

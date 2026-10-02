@@ -1,4 +1,3 @@
-import MenuIcon from "@material-ui/icons/MoreVert";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
@@ -182,7 +181,6 @@ const MutualSubscribeItem = (
                         label: menuLabel + (isSameUser ? "" : " - force as Admin"),
                         value: "unsubscribe",
                     }]}
-                    renderValue={() => <MenuIcon/>}
                     value={""}
                 />}
             </div>

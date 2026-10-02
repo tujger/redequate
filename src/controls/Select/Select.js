@@ -5,7 +5,9 @@ import useRippleEffect from "../../helpers/useRippleEffect";
 import buttonStyles from "../Button/Button.module.css";
 import Menu from "../Menu/Menu";
 import styles from "./Select.module.css";
+import SelectDivider from "./SelectDivider";
 import SelectItem from "./SelectItem";
+import MenuIcon from "@material-ui/icons/MoreVert";
 
 let nextMenuId = 0;
 
@@ -86,9 +88,12 @@ export default (
 
     const items = children
         ? React.Children.toArray(children)
-        : options.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>);
+        : options.map((option, index) => option === "-"
+            ? <SelectDivider key={`divider-${index}`}/>
+            : <SelectItem id={option.id} key={option.value} value={option.value}>{option.label}</SelectItem>);
     const menuItems = items.map(item => {
         if (!React.isValidElement(item)) return item;
+        if (item.type === SelectDivider) return item;
         const selected = item.props.value === value;
         return React.cloneElement(item, {
             "aria-selected": iconMenu ? undefined : selected,
@@ -108,12 +113,15 @@ export default (
             tabIndex: -1,
         });
     });
-    const selectedItem = items.find(item => React.isValidElement(item) && item.props.value === value);
+    const selectedItem = items.find(item => React.isValidElement(item)
+        && item.type !== SelectDivider && item.props.value === value);
     const display = renderValue
         ? renderValue(value)
-        : value === "" && !displayEmpty
-            ? null
-            : selectedItem?.props.children;
+        : iconMenu
+            ? <MenuIcon/>
+            : value === "" && !displayEmpty
+                ? null
+                : selectedItem?.props.children;
     const menu = <Menu
         anchorEl={anchorEl || triggerRef}
         backdrop
@@ -157,8 +165,9 @@ export default (
         >
             <span className={styles.value}>{display}</span>
             {!iconMenu && (open
-                ? <ArrowDropUpIcon aria-hidden={"true"} className={styles.arrow} data-testid={"select-arrow-up"}/>
-                : <ArrowDropDownIcon aria-hidden={"true"} className={styles.arrow} data-testid={"select-arrow-down"}/>
+                    ? <ArrowDropUpIcon aria-hidden={"true"} className={styles.arrow} data-testid={"select-arrow-up"}/>
+                    :
+                    <ArrowDropDownIcon aria-hidden={"true"} className={styles.arrow} data-testid={"select-arrow-down"}/>
             )}
         </div>
         {menu}

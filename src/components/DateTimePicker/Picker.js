@@ -3,7 +3,7 @@ import React from "react";
 import {currentStyles} from "./currentStyles";
 import DateWrapper from "./DateWrapper";
 import normalizeDateInput from "./normalizedDateInput";
-import TimeP from "./TimeP";
+import TimeP from "./TimeWrapper";
 
 export default props => {
     const {classes, onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;

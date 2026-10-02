@@ -60,6 +60,36 @@ describe("Select", () => {
         expect(container.querySelector('[data-testid^="select-arrow-"]')).toBeNull();
     });
 
+    it("renders a divider without making it selectable or focusable", () => {
+        const onChange = jest.fn();
+        act(() => {
+            render(<Select
+                iconMenu
+                onChange={onChange}
+                options={[{label: "First", value: "first"}, "-", {label: "Second", value: "second"}]}
+                value=""
+            />, container);
+        });
+
+        act(() => { container.querySelector('[role="button"]').click(); });
+        const menu = document.querySelector('[role="menu"]');
+        const divider = menu.querySelector('[role="separator"]');
+        expect(divider).not.toBeNull();
+        expect(divider.hasAttribute("tabindex")).toBe(false);
+        expect(divider.hasAttribute("data-select-option")).toBe(false);
+        expect(menu.querySelectorAll('[role="menuitem"]')).toHaveLength(2);
+        expect(document.activeElement.textContent).toBe("First");
+
+        act(() => { divider.click(); });
+        expect(onChange).not.toHaveBeenCalled();
+        expect(document.querySelector('[role="menu"]')).not.toBeNull();
+        act(() => { Simulate.keyDown(menu, {key: "ArrowDown"}); });
+        expect(document.activeElement.textContent).toBe("Second");
+        act(() => { Simulate.keyDown(menu, {key: "Enter"}); });
+        expect(onChange.mock.calls[0][0].target.value).toBe("second");
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
     it("opens and selects with the keyboard", () => {
         const onChange = jest.fn();
         act(() => {

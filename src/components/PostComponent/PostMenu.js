@@ -1,4 +1,3 @@
-import MenuIcon from "@material-ui/icons/MoreVert";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo} from "../../controllers/General";
@@ -75,7 +74,6 @@ export default (props) => {
             onOpen={handleMenuOpen}
             onClose={handleMenuClose}
             open={open}
-            renderValue={() => <MenuIcon/>}
             value={""}
         >
             {items}

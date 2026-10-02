@@ -74,6 +74,7 @@
 .iconMenu {
     border: 0;
     box-shadow: none;
+    flex: 0 0 calc(var(--theme-spacing) * 4.5);
     height: calc(var(--theme-spacing) * 4.5);
     justify-content: center;
     padding: 0;

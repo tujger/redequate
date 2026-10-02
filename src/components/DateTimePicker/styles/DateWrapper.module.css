@@ -63,11 +63,6 @@
     width: 100%;
 }
 
-.todayAction {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
 @media (max-width: 599px) {
     .calendar {
         font-size: .875rem;

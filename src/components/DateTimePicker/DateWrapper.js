@@ -139,7 +139,7 @@ export default props => {
             start={start}
         />}
         {range && <div className={styles.rangeActions}>
-            <div className={styles.todayAction}><TodayButton onClick={onTodayClick} show={showToday()}/></div>
+            <TodayButton onClick={onTodayClick} show={showToday()}/>
             <Extras onSelect={onExtraSelect} range show={showToday() && extras}/>
         </div>}
         <style>{style}</style>
