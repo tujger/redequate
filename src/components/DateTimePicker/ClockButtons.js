@@ -11,7 +11,7 @@ export default ({show, range, date, start, end, onClick}) => {
     const {t} = useTranslation();
 
     if (!show) return null;
-    return <div className={styles.group} role="group">
+    return <div className={styles.group} role={"group"}>
         {!range && date && <Button
             color={"secondary"}
             fullWidth
