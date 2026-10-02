@@ -1,6 +1,7 @@
 .container {
     --bottom-toolbar-inline-start: calc(240px + var(--theme-spacing));
 
+    background-color: var(--theme-color-background);
     display: flex;
     flex-direction: column;
     position: relative;

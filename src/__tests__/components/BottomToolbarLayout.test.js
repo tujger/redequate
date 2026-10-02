@@ -5,11 +5,6 @@ import MainContent from "../../components/MainContent";
 import BottomToolbarLayout from "../../layouts/BottomToolbarLayout/BottomToolbarLayout";
 import styles from "../../layouts/BottomToolbarLayout/styles/BottomToolbarLayout.module.css";
 
-jest.mock("@material-ui/core/CssBaseline", () => () => null, {virtual: true});
-jest.mock("@material-ui/core/Typography", () => props => {
-    const React = require("react");
-    return React.createElement("p", props);
-}, {virtual: true});
 jest.mock("../../components/MainContent", () => jest.fn(() => null));
 jest.mock("../../layouts/BottomToolbarLayout/BottomToolbar", () => jest.fn(() => null));
 jest.mock("../../layouts/BottomToolbarLayout/Titlebar", () => () => null);
@@ -39,7 +34,9 @@ describe("BottomToolbarLayout", () => {
         const root = container.firstChild;
         expect(root.classList.contains(styles.container)).toBe(true);
         expect(root.hasAttribute("data-bottom-toolbar")).toBe(true);
-        expect(root.querySelector(`.${styles.indent}`)).not.toBeNull();
+        const indent = root.querySelector(`.${styles.indent}`);
+        expect(indent.tagName).toBe("DIV");
+        expect(indent.getAttribute("aria-hidden")).toBe("true");
         expect(root.textContent).toContain("Footer");
         const classes = MainContent.mock.calls[0][0].classes;
         expect(Object.values(classes).every(Boolean)).toBe(true);

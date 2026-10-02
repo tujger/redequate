@@ -1,5 +1,3 @@
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Typography from "@material-ui/core/Typography";
 import React from "react";
 import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
 import MainContent from "../../components/MainContent";
@@ -13,9 +11,8 @@ export default (props) => {
     const {footerComponent, menu} = props;
 
     return <div className={styles.container} data-bottom-toolbar>
-        <CssBaseline/>
         <Titlebar {...props}/>
-        <Typography className={styles.indent}/>
+        <div aria-hidden="true" className={styles.indent}/>
         <MainContent classes={{
             bottom: styles.bottom,
             bottomSticky: styles.bottomSticky,

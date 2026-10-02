@@ -2,6 +2,7 @@
     --drawer-offset: 0px;
     --toolbar-height: calc(var(--theme-spacing) * 8);
 
+    background-color: var(--theme-color-background);
     display: flex;
     flex-direction: column;
     position: relative;
