@@ -119,15 +119,15 @@
     min-width: calc(var(--theme-spacing) * 3);
     padding: var(--theme-spacing);
     width: calc(var(--theme-spacing) * 3);
+
 }
 
-.fab {
-    border-radius: 50%;
-    height: calc(var(--theme-spacing) * 7);
-    min-height: calc(var(--theme-spacing) * 7);
-    min-width: calc(var(--theme-spacing) * 7);
-    padding: var(--theme-spacing);
-    width: calc(var(--theme-spacing) * 7);
+.withIcon {
+    & :global(.MuiSvgIcon-root) {
+        padding-left: calc(var(--theme-spacing) / 2);
+        padding-right: calc(var(--theme-spacing) / 2);
+        font-size: 125%;
+    }
 }
 
 .fullWidth {

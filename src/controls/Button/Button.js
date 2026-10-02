@@ -46,6 +46,7 @@ export default React.forwardRef((props, ref) => {
         className={[
             styles.button,
             styles[currentVariant],
+            icon && !isIconOnly && styles.withIcon,
             isIconOnly && styles.iconButton,
             disabled && styles.disabled,
             colorClass,
