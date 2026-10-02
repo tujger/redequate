@@ -1,6 +1,5 @@
 import CssBaseline from "@material-ui/core/CssBaseline";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
-import PropTypes from "prop-types";
 import React from "react";
 import ReactDOM from "react-dom";
 import {useTranslation} from "react-i18next";
@@ -38,7 +37,7 @@ const useNarrow = () => {
     return narrow;
 };
 
-function ResponsiveDrawerLayout(props) {
+export default (props) => {
     const {container, footerComponent, menu, title, headerComponent = <HeaderComponent/>, copyright} = props;
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [swipeProgress, setSwipeProgress] = React.useState(null);
@@ -279,16 +278,3 @@ function ResponsiveDrawerLayout(props) {
         <DispatchedConfirmComponent open={false}/>
     </div>;
 }
-
-ResponsiveDrawerLayout.propTypes = {
-    container: PropTypes.instanceOf(typeof Element === "undefined" ? Object : Element),
-    copyright: PropTypes.any,
-    firebase: PropTypes.any,
-    headerImage: PropTypes.string,
-    menu: PropTypes.array,
-    name: PropTypes.string,
-    pages: PropTypes.object,
-    title: PropTypes.string,
-};
-
-export default ResponsiveDrawerLayout;

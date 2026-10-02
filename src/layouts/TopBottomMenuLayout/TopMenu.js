@@ -35,12 +35,6 @@ const TopMenu = props => {
     </div>
 };
 
-TopMenu.propTypes = {
-    badge: PropTypes.object,
-    className: PropTypes.string,
-    items: PropTypes.array,
-};
-
 const mapStateToProps = ({topMenuReducer}) => ({
     badge: topMenuReducer.badge,
 });

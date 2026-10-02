@@ -58,7 +58,7 @@ const MenuSelector = ({item, onActivate, onHover, open, userData}) => {
     </div>;
 };
 
-const MenuSection = ({badge = {}, items, className, endIcon}) => {
+export default ({badge = {}, items, className, endIcon}) => {
     const [first, ...menu] = items;
     const [open, setOpen] = React.useState(false);
     const sectionRef = React.useRef(null);
@@ -163,5 +163,3 @@ const MenuSection = ({badge = {}, items, className, endIcon}) => {
         />
     </div>;
 };
-
-export default MenuSection;

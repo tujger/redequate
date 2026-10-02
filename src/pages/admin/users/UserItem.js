@@ -2,14 +2,14 @@ import React from "react";
 import {useHistory} from "react-router-dom";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
-import UserName from "../../../controls/UserName/UserName";
 import {toDateString} from "../../../controllers/DateFormat";
 import {usePages} from "../../../controllers/General";
+import UserName from "../../../controls/UserName/UserName";
 import useRippleEffect from "../../../helpers/useRippleEffect";
 import userStyles from "./styles/UserItem.module.css";
 
 // eslint-disable-next-line react/prop-types
-function UserItem({data, classes: givenClasses, skeleton, label}) {
+export default ({data, classes: givenClasses, skeleton, label}) => {
     const history = useHistory();
     const onPointerDown = useRippleEffect();
     const pages = usePages();
@@ -75,5 +75,3 @@ function UserItem({data, classes: givenClasses, skeleton, label}) {
         </div>}
     </div>;
 }
-
-export default UserItem;

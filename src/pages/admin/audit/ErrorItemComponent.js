@@ -15,7 +15,7 @@ import useRippleEffect from "../../../helpers/useRippleEffect";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 
 // eslint-disable-next-line react/prop-types
-function ErrorItemComponent({data, classes: givenClasses, skeleton, label, onUserClick}) {
+export default ({data, classes: givenClasses, skeleton, label, onUserClick}) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const onPointerDown = useRippleEffect();
@@ -134,5 +134,3 @@ function ErrorItemComponent({data, classes: givenClasses, skeleton, label, onUse
         </ConfirmComponent>}
     </div>
 }
-
-export default ErrorItemComponent;

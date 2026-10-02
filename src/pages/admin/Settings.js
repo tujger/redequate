@@ -30,7 +30,7 @@ import baseStyles from "../../themes/Base.module.css";
 import {updateActivity} from "./audit/auditReducer";
 import styles from "./styles/Settings.module.css";
 
-const Settings = ({uploadable}) => {
+export default ({uploadable}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -573,12 +573,6 @@ const Settings = ({uploadable}) => {
             </label>
         </ConfirmComponent>}
     </div>
-};
-
-export default Settings;
-
-Settings.propTypes = {
-    uploadable: PropTypes.oneOfType([PropTypes.bool, PropTypes.arrayOf(PropTypes.string)]),
 };
 
 const Option = ({checked, disabled, label, multiline, onChange, rows, value, ...rest}) => {

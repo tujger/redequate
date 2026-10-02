@@ -1,7 +1,7 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import Button from "../../controls/Button/Button";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/BottomMenu.module.css";
 
@@ -50,8 +50,6 @@ const MenuSection = ({items}) => {
     </div>;
 };
 
-const BottomMenu = ({items, className}) => <nav className={[styles.root, className].filter(Boolean).join(" ")}>
+export default ({items, className}) => <nav className={[styles.root, className].filter(Boolean).join(" ")}>
     {items.map((list, index) => <MenuSection items={list} key={index}/>)}
 </nav>;
-
-export default BottomMenu;

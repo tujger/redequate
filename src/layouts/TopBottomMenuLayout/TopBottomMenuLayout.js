@@ -1,21 +1,20 @@
 import React from "react";
-import PropTypes from "prop-types";
 import {useTranslation} from "react-i18next";
-import BottomMenu from "./BottomMenu";
+import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
+import HeaderComponent from "../../components/HeaderComponent";
 import MainContent from "../../components/MainContent";
 import Snackbar from "../../components/Snackbar";
-import StickyHeader from "./StickyHeader";
-import TopMenu from "./TopMenu";
-import {NotificationsSnackbar} from "../../controllers/Notifications";
 import {enableDisabledPages, useStore} from "../../controllers/General";
-import HeaderComponent from "../../components/HeaderComponent";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
-import {refreshAll} from "../../controllers/Store";
+import {NotificationsSnackbar} from "../../controllers/Notifications";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
+import {refreshAll} from "../../controllers/Store";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import BottomMenu from "./BottomMenu";
+import StickyHeader from "./StickyHeader";
 import styles from "./styles/TopBottomMenuLayout.module.css";
+import TopMenu from "./TopMenu";
 
-function TopBottomMenuLayout(props) {
+export default (props) => {
     const {menu, title, footerComponent, headerComponent = <HeaderComponent/>, random, copyright} = props;
     const {t} = useTranslation();
     const currentUserData = useCurrentUserData();
@@ -61,14 +60,3 @@ function TopBottomMenuLayout(props) {
         <DispatchedConfirmComponent open={false}/>
     </StickyHeader>
 }
-
-TopBottomMenuLayout.propTypes = {
-    copyright: PropTypes.any,
-    footerComponent: PropTypes.node,
-    menu: PropTypes.array,
-    headerComponent: PropTypes.element,
-    random: PropTypes.any,
-    title: PropTypes.any,
-};
-
-export default TopBottomMenuLayout;

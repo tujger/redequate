@@ -2,10 +2,10 @@ import React from "react";
 import {useHistory} from "react-router-dom";
 import {usePages} from "../../controllers/General";
 import Button from "../../controls/Button/Button";
-import adminStyles from "./styles/Admin.module.css";
 import baseStyles from "../../themes/Base.module.css";
+import adminStyles from "./styles/Admin.module.css";
 
-const Admin = ({fetchMenu, classes = {}}) => {
+export default ({fetchMenu, classes = {}}) => {
     const history = useHistory();
     const pages = usePages();
     const itemsFlat = Object.keys(pages)
@@ -45,5 +45,3 @@ const Admin = ({fetchMenu, classes = {}}) => {
         })}
     </div>
 };
-
-export default Admin;

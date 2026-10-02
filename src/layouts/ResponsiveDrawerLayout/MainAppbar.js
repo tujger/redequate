@@ -1,12 +1,11 @@
-import React from "react";
-import PropTypes from "prop-types";
 import Menu from "@material-ui/icons/Menu";
-import {Link, Route, Switch} from "react-router-dom";
+import React from "react";
 import {connect} from "react-redux";
+import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
-import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import {usePages} from "../../controllers/General";
+import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MainAppbar.module.css";
 
@@ -60,26 +59,21 @@ function MainAppbar(props) {
                 </Switch>
             </h6>
             {pages.search && <pages.search.component.type {...pages.search.component.type.props} toolbar/>}
-            {currentUserData.id && <Link to={pages.profile.route} className={styles.label} onPointerDown={onPointerDown}>
-                <AvatarView
-                    admin={currentRole(currentUserData) === Role.ADMIN}
-                    image={currentUserData.image}
-                    initials={currentUserData.initials}
-                    verified={currentUserData.verified}
-                />
-            </Link>}
+            {currentUserData.id &&
+                <Link to={pages.profile.route} className={styles.label} onPointerDown={onPointerDown}>
+                    <AvatarView
+                        admin={currentRole(currentUserData) === Role.ADMIN}
+                        image={currentUserData.image}
+                        initials={currentUserData.initials}
+                        verified={currentUserData.verified}
+                    />
+                </Link>}
         </div>
         <div className={styles.progress}>
             <ProgressView/>
         </div>
     </header>
 }
-
-MainAppbar.propTypes = {
-    title: PropTypes.any,
-    pages: PropTypes.object,
-    onHamburgerClick: PropTypes.func
-};
 
 const mapStateToProps = ({mainAppbarReducer}) => ({
     label: mainAppbarReducer.label,

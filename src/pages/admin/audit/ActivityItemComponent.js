@@ -14,7 +14,7 @@ import useRippleEffect from "../../../helpers/useRippleEffect";
 import activityStyles from "./styles/ActivityItemComponent.module.css";
 
 // eslint-disable-next-line react/prop-types
-function ActivityItemComponent({data, classes: givenClasses, skeleton, label, onItemClick}) {
+export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => {
     const history = useHistory();
     const onPointerDown = useRippleEffect();
     const pages = usePages();
@@ -213,5 +213,3 @@ function ActivityItemComponent({data, classes: givenClasses, skeleton, label, on
         </ConfirmComponent>}
     </div>
 }
-
-export default ActivityItemComponent;
