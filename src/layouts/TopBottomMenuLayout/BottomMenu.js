@@ -38,10 +38,10 @@ const MenuSection = ({items}) => {
 
                 return <Button
                     className={styles.item}
-                    color="inherit"
+                    color={"inherit"}
                     key={index}
                     onClick={item.onClick}
-                    variant="text"
+                    variant={"text"}
                 >
                     {item.label}
                 </Button>;
