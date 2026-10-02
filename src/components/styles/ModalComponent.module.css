@@ -31,10 +31,32 @@
     z-index: 1;
 }
 
+.anchored {
+    & .backdrop {
+        background-color: transparent;
+    }
+
+    & .dialog {
+        bottom: auto;
+        left: 0;
+        position: fixed;
+        right: auto;
+        top: 0;
+        width: max-content;
+    }
+}
+
 @media (max-width: 599px) {
     .root {
         align-items: stretch;
         padding: 0;
+
+        &.anchored .dialog {
+            bottom: auto;
+            max-height: calc(100vh - var(--theme-spacing) * 2);
+            right: auto;
+            width: max-content;
+        }
     }
 
     .dialog {

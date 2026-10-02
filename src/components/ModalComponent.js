@@ -5,6 +5,7 @@ import styles from "./styles/ModalComponent.module.css";
 
 export default (
     {
+        anchorEl,
         ariaLabelledBy,
         children,
         closeOnBackdropClick = true,
@@ -12,9 +13,46 @@ export default (
     }) => {
     const history = useHistory();
     const onCloseRef = React.useRef(onClose);
+    const dialogRef = React.useRef(null);
+    const [position, setPosition] = React.useState(null);
     onCloseRef.current = onClose;
 
+    React.useLayoutEffect(() => {
+        if (!anchorEl) return undefined;
+        const updatePosition = () => {
+            const anchor = anchorEl.current || anchorEl;
+            const dialog = dialogRef.current;
+            if (!anchor?.getBoundingClientRect || !dialog) return;
+            const rect = anchor.getBoundingClientRect();
+            const margin = 8;
+            const width = Math.min(dialog.offsetWidth, window.innerWidth - margin * 2);
+            const height = dialog.scrollHeight || dialog.offsetHeight;
+            const below = window.innerHeight - rect.bottom - margin;
+            const above = rect.top - margin;
+            const placeBelow = height <= below || below >= above;
+            const maxHeight = Math.max(0, (placeBelow ? below : above) - margin);
+            const visibleHeight = Math.min(height, maxHeight);
+            const left = Math.max(margin, Math.min(rect.left + rect.width / 2 - width / 2,
+                window.innerWidth - width - margin));
+            const top = placeBelow ? rect.bottom : rect.top - visibleHeight;
+            setPosition(current => current?.left === left && current?.top === top && current?.maxHeight === maxHeight
+                ? current : {left, top, maxHeight});
+        };
+        updatePosition();
+        dialogRef.current?.focus();
+        const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updatePosition);
+        observer?.observe(dialogRef.current);
+        window.addEventListener("resize", updatePosition);
+        document.addEventListener("scroll", updatePosition, true);
+        return () => {
+            observer?.disconnect();
+            window.removeEventListener("resize", updatePosition);
+            document.removeEventListener("scroll", updatePosition, true);
+        };
+    }, [anchorEl]);
+
     React.useEffect(() => {
+        if (!history?.block) return undefined;
         const unblock = history.block(() => {
             onCloseRef.current?.();
             return false;
@@ -43,7 +81,7 @@ export default (
     };
 
     const modal = <div
-        className={styles.root}
+        className={[styles.root, anchorEl && styles.anchored].filter(Boolean).join(" ")}
     >
         <div
             aria-hidden={"true"}
@@ -84,7 +122,10 @@ export default (
             onSubmit={stopPropagation}
             onTouchEnd={stopPropagation}
             onTouchStart={stopPropagation}
+            ref={dialogRef}
             role={"dialog"}
+            style={anchorEl ? position || {visibility: "hidden"} : undefined}
+            tabIndex={anchorEl ? -1 : undefined}
         >
             {children}
         </div>

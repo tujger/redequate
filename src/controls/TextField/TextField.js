@@ -105,6 +105,7 @@ export default props => {
         className={styles.adornment}
         icon={<ClearIcon/>}
         onClick={handleClear}
+        onPointerDown={event => event.stopPropagation()}
         size={"small"}
         title={"Clear"}
     />;
