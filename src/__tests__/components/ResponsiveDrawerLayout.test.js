@@ -12,7 +12,6 @@ const mockRefreshAll = jest.fn();
 const mockNotifySnackbar = jest.fn();
 const mockUser = {id: "admin", role: "admin"};
 
-jest.mock("@material-ui/core/CssBaseline", () => () => null, {virtual: true});
 jest.mock("@material-ui/icons/ChevronLeft", () => () => <span data-testid="close-icon"/>, {virtual: true});
 jest.mock("react-i18next", () => ({useTranslation: () => ({t: value => value})}), {virtual: true});
 jest.mock("../../layouts/ResponsiveDrawerLayout/MainAppbar", () => jest.fn(({onHamburgerClick, className}) =>
