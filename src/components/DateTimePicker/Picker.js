@@ -1,9 +1,9 @@
-import React from "react";
 import moment from "moment";
-import normalizeDateInput from "./normalizedDateInput";
+import React from "react";
 import {currentStyles} from "./currentStyles";
+import DateWrapper from "./DateWrapper";
+import normalizeDateInput from "./normalizedDateInput";
 import TimeP from "./TimeP";
-import DateP from "./DateP";
 
 export default props => {
     const {classes, onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;
@@ -111,9 +111,8 @@ export default props => {
             time={{date: date, start: startSelected, end: endSelected}[showClock]}
         />
     } else {
-        return <DateP
+        return <DateWrapper
             {...otherprops}
-            classes={classes}
             date={date}
             end={endSelected}
             onClockClick={onClockClick}
