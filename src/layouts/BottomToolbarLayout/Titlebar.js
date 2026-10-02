@@ -1,19 +1,12 @@
-import React from "react";
-import PropTypes from "prop-types";
 import BackIcon from "@material-ui/icons/ChevronLeft";
+import React from "react";
 import {Link, useHistory, useLocation} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
+import {usePages} from "../../controllers/General";
+import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
-import {
-    currentRole,
-    matchRole,
-    needAuth,
-    Role,
-    useCurrentUserData
-} from "../../controllers/UserData";
-import {usePages} from "../../controllers/General";
 import styles from "./styles/Titlebar.module.css";
 
 export default (props) => {

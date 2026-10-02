@@ -1,14 +1,13 @@
-import React from "react";
-import PropTypes from "prop-types";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Typography from "@material-ui/core/Typography";
-import BottomToolbar from "./BottomToolbar";
-import Titlebar from "./Titlebar";
+import React from "react";
+import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
 import MainContent from "../../components/MainContent";
 import Snackbar from "../../components/Snackbar";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
-import DispatchedConfirmComponent from "../../components/DispatchedConfirmComponent";
+import BottomToolbar from "./BottomToolbar";
 import styles from "./styles/BottomToolbarLayout.module.css";
+import Titlebar from "./Titlebar";
 
 export default (props) => {
     const {footerComponent, menu} = props;
