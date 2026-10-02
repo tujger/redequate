@@ -1,17 +1,16 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
 import TimeKeeper from "react-timekeeper";
+import styles from "./styles/TimeWrapper.module.css";
 
-// eslint-disable-next-line react/prop-types
-export default ({classes, time, onSelect, style}) => <React.Fragment>
-    <TimeKeeper
-        className={[classes._clock, classes.clock].join(" ")}
-        closeOnMinuteSelect
-        doneButton={() => <Button style={{display: "none"}} children={""}/>}
-        hour24Mode={false}
-        onDoneClick={onSelect}
-        time={time ? {hour: time.hours(), minute: time.minutes()} : null}
-        switchToMinuteOnHourSelect
-    />
-    <style>{style}</style>
-</React.Fragment>
+export default ({time, onSelect}) => {
+    return <div className={styles.clock}>
+        <TimeKeeper
+            closeOnMinuteSelect
+            doneButton={() => <button hidden type={"button"}/>}
+            hour24Mode={false}
+            onDoneClick={onSelect}
+            time={time ? {hour: time.hours(), minute: time.minutes()} : null}
+            switchToMinuteOnHourSelect
+        />
+    </div>;
+};

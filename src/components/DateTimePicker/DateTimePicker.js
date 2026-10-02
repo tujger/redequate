@@ -6,11 +6,11 @@ import InputPicker from "./InputPicker";
 import {styles} from "./currentStyles";
 
 const DateTimePicker = props => {
-    const {inline, ...otherprops} = props;
+    const {classes, inline, ...otherprops} = props;
     if (inline) {
         return <Picker {...otherprops}/>
     } else {
-        return <InputPicker {...otherprops}/>
+        return <InputPicker {...otherprops} classes={classes}/>
     }
 };
 

@@ -1,41 +1,17 @@
 import moment from "moment";
 import React from "react";
-import {currentStyles} from "./currentStyles";
 import DateWrapper from "./DateWrapper";
 import normalizeDateInput from "./normalizedDateInput";
-import TimeP from "./TimeWrapper";
+import TimeWrapper from "./TimeWrapper";
 
 export default props => {
-    const {classes, onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;
+    const {onChange, date: dateGiven, start: startGiven1, end: endGiven1, range, ...otherprops} = props;
     const date = normalizeDateInput(dateGiven);
     const startGiven = normalizeDateInput(startGiven1);
     const endGiven = normalizeDateInput(endGiven1);
 
     const [state, setState] = React.useState({showClock: null, start: startGiven, end: endGiven});
     const {showClock, start, end} = state;
-
-    const clockStyles = `.react-timekeeper {
-            box-shadow: ${currentStyles.clockContainer.boxShadow};
-            background-color: ${currentStyles.clockContainer.backgroundColor};
-            width: 100%;
-        }
-        .react-timekeeper__clock-wrapper {
-            background-color: ${currentStyles.clockWrapper.backgroundColor};
-            padding: ${currentStyles.clockWrapper.padding}px;
-          }
-          .react-timekeeper__top-bar {
-            background-color: ${currentStyles.header.backgroundColor};
-            border-bottom: ${currentStyles.header.borderBottomWidth}px ${currentStyles.header.borderBottomStyle} ${currentStyles.header.borderBottomColor};
-            padding: ${currentStyles.header.padding}px;
-            text-align: center;
-          }
-          .react-timekeeper__clock {
-            background-color: ${currentStyles.clock.backgroundColor};
-          }
-          .react-timekeeper__clock-hours > span,
-          .react-timekeeper__clock-minutes > span {
-            color: ${currentStyles.clock.color};
-          }`;
 
     const onClockSelect = value => {
         let changing = {
@@ -104,10 +80,8 @@ export default props => {
     const endSelected = end === undefined ? endGiven : end;
 
     if (showClock) {
-        return <TimeP
-            classes={classes}
+        return <TimeWrapper
             onSelect={onClockSelect}
-            style={clockStyles}
             time={{date: date, start: startSelected, end: endSelected}[showClock]}
         />
     } else {
