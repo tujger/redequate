@@ -78,13 +78,6 @@ export const styles = theme => {
                 width: "2rem"
             },
         },
-        sublabel: {
-            fontSize: ".65rem",
-            padding: 0,
-            [theme.breakpoints.down("xs")]: {
-                fontSize: ".7rem",
-            },
-        },
         popper: {
             paddingBottom: theme.spacing(1),
             paddingLeft: theme.spacing(1),

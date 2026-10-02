@@ -118,7 +118,7 @@ export default props => {
         timeFormat={"HH:mm"}
         timeIntervals={15}
     >
-        <DateButtons {...props} onClick={onDateClick}/>
+        <DateButtons date={date} end={end} onClick={onDateClick} start={start}/>
         {!range && <ButtonGroup>
             <ClockButtons date={date} onClick={onClockClick} show={!range && !monthPicker && date}/>
             <TodayButton onClick={onTodayClick} show={showToday()}/>
