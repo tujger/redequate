@@ -1,4 +1,3 @@
-import CssBaseline from "@material-ui/core/CssBaseline";
 import ChevronLeft from "@material-ui/icons/ChevronLeft";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -253,7 +252,7 @@ export default (props) => {
         </div>, container || document.body);
 
     return <div className={styles.container}>
-        <CssBaseline/>
+        {/*<CssBaseline/>*/}
         {narrow ? temporaryDrawer : <nav aria-label="Navigation menu" className={styles.drawer}>
             {drawerContent}
         </nav>}
