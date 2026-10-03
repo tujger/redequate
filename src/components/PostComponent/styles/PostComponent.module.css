@@ -162,7 +162,7 @@
 
 .date {
     align-items: center;
-    color: var(--theme-color-muted);
+    color: var(--theme-color-secondary);
     display: inline-flex;
     flex: 1;
     margin-right: calc(var(--theme-spacing) * .5);
@@ -328,10 +328,6 @@
 }
 
 @media (min-width: 960px) {
-    .card :global(.MuiSvgIcon-root), .cardActions :global(.MuiSvgIcon-root) {
-        height: calc(var(--theme-spacing) * 2.5);
-    }
-
     .cardImage {
         margin-top: var(--theme-spacing);
     }

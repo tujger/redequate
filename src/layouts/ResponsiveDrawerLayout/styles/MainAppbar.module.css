@@ -19,25 +19,7 @@
 }
 
 .hamburger {
-    align-items: center;
-    background: transparent;
-    border: 0;
-    border-radius: 50%;
-    color: inherit;
-    cursor: pointer;
-    display: inline-flex;
-    flex: none;
-    height: calc(var(--theme-spacing) * 6);
-    justify-content: center;
     margin-left: calc(var(--theme-spacing) * -1.5);
-    padding: calc(var(--theme-spacing) * 1.5);
-    position: relative;
-    width: calc(var(--theme-spacing) * 6);
-
-    &:hover,
-    &:focus-visible {
-        background-color: var(--theme-color-focus);
-    }
 }
 
 .badge {

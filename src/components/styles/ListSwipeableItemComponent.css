@@ -28,6 +28,8 @@
 .content {
     position: relative;
     touch-action: pan-y;
+    margin: calc(var(--theme-spacing) / 2);
+    margin-bottom: 0;
     width: 100%;
 }
 
@@ -36,4 +38,10 @@
     position: absolute !important;
     right: calc(var(--theme-spacing) * .5);
     top: calc(var(--theme-spacing) * .5);
+}
+
+@media (max-width: 599px) {
+    .content {
+        margin: var(--theme-spacing);
+    }
 }

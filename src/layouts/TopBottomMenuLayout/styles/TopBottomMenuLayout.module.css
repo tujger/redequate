@@ -13,7 +13,6 @@
 }
 
 .version {
-    background-color: var(--theme-color-background);
     display: flex;
     justify-content: center;
     width: 100%;
@@ -27,7 +26,6 @@
 }
 
 .bottomSticky {
-    background-color: var(--theme-color-background);
     bottom: 0;
     padding-left: var(--theme-content-padding-left);
     padding-right: var(--theme-content-padding-right);

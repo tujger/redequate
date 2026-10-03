@@ -49,7 +49,7 @@
 
 .timestamp {
     bottom: calc(var(--theme-spacing) * .5);
-    color: var(--theme-color-muted);
+    color: var(--theme-color-secondary);
     font-size: var(--theme-font-size-small);
     position: absolute;
     right: var(--theme-spacing);

@@ -6,6 +6,7 @@ import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
 import {usePages} from "../../controllers/General";
 import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MainAppbar.module.css";
 
@@ -20,16 +21,16 @@ function MainAppbar(props) {
     return <header className={styles.appbar}>
         <div className={[styles.toolbar, className].filter(Boolean).join(" ")}>
             {onHamburgerClick
-                ? <button
-                    aria-label="open drawer"
+                ? <Button
                     className={styles.hamburger}
+                    color={"inherit"}
+                    icon={<Menu/>}
                     onClick={onHamburgerClick}
-                    onPointerDown={onPointerDown}
-                    type="button"
+                    title={"Open drawer"}
+                    variant={"text"}
                 >
-                    <Menu/>
                     {badge && badge !== 0 ? <span className={styles.badge}/> : null}
-                </button>
+                </Button>
                 : null}
             <h6 className={styles.title}>
                 <Switch>

@@ -91,7 +91,7 @@
 
 .date {
     align-items: center;
-    color: var(--theme-color-muted);
+    color: var(--theme-color-secondary);
     display: flex;
     font-size: var(--theme-font-size-small);
     margin-right: calc(var(--theme-spacing) * 3.5);

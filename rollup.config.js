@@ -59,6 +59,8 @@ module.exports = [
         input: {
             index: 'src/index.js',
             Dispatcher: 'src/Dispatcher.js',
+            styles1: 'src/themes/Base.module.css',
+            styles2: 'src/themes/styles.js',
 
             // controllers
             DateFormat: 'src/controllers/DateFormat.js',
@@ -143,7 +145,6 @@ module.exports = [
             __dateTimePicker: 'src/components/DateTimePicker/DateTimePicker.js',
             __firebase: 'src/controllers/Firebase.js',
             __lazyMentionsInputComponent: 'src/components/MentionsInputComponent/LazyMentionsComponent.js',
-            __mainContent: 'src/components/MainContent.js',
             __mutualComponentControls: 'src/components/MutualComponent/mutualComponentControls.js',
             __mutualConstants: 'src/components/MutualComponent/MutualConstants.js',
             __newPostComponentReducer: 'src/components/NewPostComponent/newPostComponentReducer.js',

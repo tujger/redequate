@@ -11,7 +11,11 @@ export default props => {
         <MentionsInputComponent
             firebase={firebase}
             {...props}
-            className={[styles.root, props.className].filter(Boolean).join(" ")}
+            className={[
+                styles.root,
+                props.className,
+                props.multiline && styles.multiline
+            ].filter(Boolean).join(" ")}
         />
     </React.Suspense>
 }

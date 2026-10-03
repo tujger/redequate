@@ -10,7 +10,7 @@ import Select from "../../controls/Select/Select";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import ListItemComponent from "../ListItemComponent";
+import ListSwipeableItemComponent from "../ListSwipeableItemComponent";
 import ProgressView from "../ProgressView";
 import styles from "./styles/MutualItem.module.css";
 
@@ -94,7 +94,7 @@ const MutualSubscribeItem = (
     if (label) return <ItemPlaceholderComponent label={label} classes={styles} pattern={"flat"}/>;
     if (skeleton) return <ItemPlaceholderComponent classes={styles} pattern={"flat"}/>;
 
-    return <ListItemComponent
+    return <ListSwipeableItemComponent
         className={[styles.card, styles.item, patternClass, value.hidden && styles.hidden].filter(Boolean).join(" ")}
         disabled={disabled}
         leftAction={{
@@ -132,7 +132,7 @@ const MutualSubscribeItem = (
             </div>
             <div className={styles.message}>{value.message}</div>
         </div>
-    </ListItemComponent>
+    </ListSwipeableItemComponent>
     // classes, children, leftAction, rightAction, onClickCapture, onContextMenu
 
     return <div

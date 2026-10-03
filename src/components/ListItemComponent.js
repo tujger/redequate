@@ -1,148 +1,179 @@
 import React from "react";
-import {useDrag} from "react-use-gesture";
-import {useWindowData} from "../controllers";
-import notifySnackbar from "../controllers/notifySnackbar";
-import Select from "../controls/Select/Select";
-import SelectItem from "../controls/Select/SelectItem";
-import useRippleEffect from "../helpers/useRippleEffect";
-import styles from "./styles/ListItemComponent.module.css";
+import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
+import {toDateString} from "../../controllers/DateFormat";
+import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import Select from "../../controls/Select/Select";
+import AvatarView from "../AvatarView";
+import CounterComponent from "../CounterComponent";
+import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import ListSwipeableItemComponent from "../ListSwipeableItemComponent";
+import ProgressView from "../ProgressView";
+import styles from "./styles/ListItemComponent.css";
 
-export default (props) => {
-    const {
-        className = "",
-        children,
-        disabled = false,
-        leftAction = undefined,
-        menu = undefined,
-        rightAction = undefined,
-        onClickCapture = undefined,
-        onContextMenu = undefined,
-        onMenuSelect = undefined,
-        onKeyDown = undefined
-    } = props;
-    const onPointerDown = useRippleEffect();
-    const windowData = useWindowData();
-    const isNarrow = windowData.isNarrow();
+export default (
+    {
+        primary = undefined,
+        secondary = undefined,
+        body = undefined,
+        label,
+        onClick = undefined,
+        pattern,
+        skeleton,
+        ...props
+    }) => {
+    const dispatch = useDispatch();
+    const firebase = useFirebase();
+    const history = useHistory();
+    const [disabled, setDisabled] = React.useState(false);
+    const [menuOpen, setMenuOpen] = React.useState(false);
+    const {key, userData = {}, value} = data;
+    const patternClass = pattern
+        ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
+        : styles.cardFlat;
+    const isSameUser = value && value.uid === currentUserData.id;
+    const isAdminUser = matchRole([Role.ADMIN], currentUserData);
+    const menuLabel = unsubscribeLabel === undefined ? t("Mutual.Unsubscribe") : unsubscribeLabel;
+    const hasMenu = menuLabel && (isSameUser || isAdminUser);
 
-    const [state, setState] = React.useState({});
-    const {x, dragging, removing, ref, removed, random} = state;
-
-    const actionIndent = calculateActionIndent();
-
-    const bind = useDrag(async evt => {
-        const {down, movement: [mx]} = evt;
-        if (down && Math.abs(mx) < 10) return;
-        let x = mx;
-        let removing = false;
-        try {
-            if (!down) {
-                if (leftAction && mx > actionIndent) {
-                    removing = await leftAction.action(evt);
-                } else if (rightAction && mx < -actionIndent) {
-                    removing = await rightAction.action(evt);
-                }
-                x = 0;
-            } else {
-                if (mx > 0 && !leftAction) x = 0;
-                else if (mx < 0 && !rightAction) x = 0;
-            }
-        } catch (e) {
-            console.error(e);
-            notifySnackbar({title: e.message, variant: "error"});
-            x = 0;
+    const handleOpen = () => {
+        if (disabled) return;
+        if (!type || type === "users_public") {
+            history.push(pages.user.route + userData.id);
+        } else {
+            history.push(pages[type].route + value.id);
         }
-        if (ref && ref.current) {
-            setState({...state, dragging: down, x: x, removing})
-        }
-    });
-    const bind_ = isNarrow && (process.env.NODE_ENV === "development") ? bind : () => {
     };
 
-    React.useEffect(() => {
-        const ref = React.createRef();
-        setState({...state, ref});
-    }, []);
+    const handleKeyDown = event => {
+        if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        handleOpen();
+    };
 
-    if (removing) {
-        const sizes = ref.current.getBoundingClientRect();
-        ref.current.style.height = sizes.height + "px";
-        ref.current.style.overflowY = "hidden";
-        setTimeout(() => {
-            try {
-                ref.current.style.height = "0";
-                setTimeout(() => {
-                    setState({...state, removing: false, removed: true});
-                }, 200);
-            } catch (e) {
-                console.error(e);
-            }
-        }, 50);
-    }
+    const handleUnsubscribe = event => {
+        event.stopPropagation?.();
+        setMenuOpen(false);
+        console.log("handleUnsubscribe", key, typeId, currentUserData.id, value);
+        dispatch(ProgressView.SHOW);
+        setDisabled(true);
+        cacheDatas.remove(key);
+        cacheDatas.remove(value.id);
+        firebase.database().ref("mutual").child(typeId).child(key).set(null)
+            .then(() => onDelete({key, value}))
+            .catch(error => {
+                if (error && error.code === "PERMISSION_DENIED") {
+                    notifySnackbar(new Error(t("Mutual.Can't unsubscribe")));
+                } else {
+                    notifySnackbar(error);
+                }
+                setDisabled(false);
+            })
+            .finally(() => dispatch(ProgressView.HIDE));
+        return true;
+    };
 
-    if (removed) return null;
+    const handleMenuOpen = event => {
+        event?.stopPropagation();
+        setMenuOpen(true);
+    };
+
+    const handleMenuClose = event => {
+        event?.stopPropagation();
+        setMenuOpen(false);
+    };
+
+    if (label) return <ItemPlaceholderComponent label={label} classes={styles} pattern={"flat"}/>;
+    if (skeleton) return <ItemPlaceholderComponent classes={styles} pattern={"flat"}/>;
+
+    return <ListSwipeableItemComponent
+        className={[styles.card, styles.item, patternClass, value.hidden && styles.hidden].filter(Boolean).join(" ")}
+        disabled={disabled}
+        leftAction={{
+            action: handleUnsubscribe,
+            itemButton: (props) => <div {...props}>Unsubscribe</div>
+        }}
+        menu={hasMenu ? [{
+            label: menuLabel + (isSameUser ? "" : " - force as Admin"),
+            value: "unsubscribe",
+        }] : undefined}
+        onClickCapture={handleOpen}
+        onKeyDown={handleKeyDown}
+    >
+        {avatar}
+        <div className={styles.cardContent}>
+            <div className={[styles.title].filter(Boolean).join(" ")}>
+                <b className={styles.itemName}>{userData.name}</b>
+                {counter && <span className={styles.counter}>
+                    <CounterComponent
+                        live
+                        path={`${key}/mutual/${typeId}_s`}
+                        prefix={"- "}
+                        suffix={" follower(s)"}
+                    />
+                </span>}
+                {value.timestamp && <span
+                    className={styles.date}
+                    title={new Date(value.timestamp).toLocaleString()}
+                >{toDateString(value.timestamp)}</span>}
+            </div>
+            <div className={styles.message}>{value.message}</div>
+        </div>
+    </ListSwipeableItemComponent>
+    // classes, children, leftAction, rightAction, onClickCapture, onContextMenu
+
     return <div
-        className={styles.root} ref={ref} key={random}
-        onKeyDown={onKeyDown}
-        onPointerDown={disabled ? undefined : onPointerDown}
+        className={[styles.card, styles.item, patternClass, value.hidden && styles.hidden].filter(Boolean).join(" ")}
+        onClick={handleOpen}
+        onKeyDown={handleKeyDown}
+        role={"button"}
         tabIndex={disabled ? -1 : 0}
     >
-        {isNarrow && leftAction && leftAction.itemButton({
-            className: [styles.leftAction, styles.leftActionButton].join(" "),
-            selected: x > actionIndent,
-            style: {right: "auto", opacity: (x || 0) / actionIndent}
-        })}
-        {isNarrow && rightAction && rightAction.itemButton({
-            className: [styles.rightAction, styles.rightActionButton].join(" "),
-            selected: x < -actionIndent,
-            style: {left: "auto", opacity: -(x || 0) / actionIndent}
-        })}
-        <div
-            {...bind_()}
-            onContextMenu={onContextMenu ? evt => {
-                onContextMenu(evt);
-                setState({...state, random: Math.random()})
-            } : null}
-            onClickCapture={onClickCapture || (event => {
-                if (dragging) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    if (x === 0) {
-                        setState({...state, dragging: false, x: 0});
-                    }
-                }
-            })}
-            className={[styles.content, className].filter(Boolean).join(" ")}
-            style={{left: x}}
-        >
-            {children}
-            {!isNarrow && menu && <Select
-                className={styles.menuButton}
-                displayEmpty
-                iconMenu
-                onChange={onContextMenu}
-                onClickCapture={event => {
-                    event.stopPropagation();
-                }}
-                value={""}
-            >
-                {menu.map((item, index) => <SelectItem
-                    children={item.label}
-                    key={index}
-                    onClickCapture={event => {
-                        event.stopPropagation();
-                        onMenuSelect?.(event, item);
-                    }}
-                    // onClick={handleSelectItemClick}
-                    value={item.value}
-                />)}
-            </Select>}
+        <AvatarView
+            className={styles.avatar}
+            image={userData.image}
+            initials={userData.initials}
+            verified={true}
+        />
+        <div className={styles.cardContent}>
+            <div className={[styles.title, hasMenu && styles.hasMenu].filter(Boolean).join(" ")}>
+                <b className={styles.itemName}>{userData.name}</b>
+                {counter && <span className={styles.counter}>
+                    <CounterComponent
+                        live
+                        path={`${key}/mutual/${typeId}_s`}
+                        prefix={"- "}
+                        suffix={" follower(s)"}
+                    />
+                </span>}
+                {value.timestamp && <span
+                    className={styles.date}
+                    title={new Date(value.timestamp).toLocaleString()}
+                >{toDateString(value.timestamp)}</span>}
+                {hasMenu && <Select
+                    className={styles.menuButton}
+                    disabled={disabled}
+                    displayEmpty
+                    iconMenu
+                    inputProps={{"aria-label": menuLabel}}
+                    onChange={handleUnsubscribe}
+                    onClick={event => event.stopPropagation()}
+                    onMouseDown={event => event.stopPropagation()}
+                    onPointerDown={event => event.stopPropagation()}
+                    onOpen={handleMenuOpen}
+                    onClose={handleMenuClose}
+                    open={menuOpen}
+                    options={[{
+                        label: menuLabel + (isSameUser ? "" : " - force as Admin"),
+                        value: "unsubscribe",
+                    }]}
+                    value={""}
+                />}
+            </div>
+            <div className={styles.message}>{value.message}</div>
         </div>
-    </div>
-}
-
-const calculateActionIndent = () => {
-    let indent;
-    indent = window.innerWidth / 5;
-    if (indent > 100) indent = 100;
-    return indent;
-}
+    </div>;
+};

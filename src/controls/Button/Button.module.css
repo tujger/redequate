@@ -1,5 +1,6 @@
 .button {
     align-items: center;
+    background-color: transparent;
     border-radius: calc(var(--theme-spacing) / 2);
     color: inherit;
     cursor: pointer;
@@ -13,11 +14,18 @@
     position: relative;
     text-transform: uppercase;
     transition: background-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
+
+    &:hover {
+        background-color: var(--theme-color-highlight);
+        color: var(--theme-color-highlight-alt);
+    }
 }
 
 .contained {
+    background-color: var(--button-color);
     border: 0;
     box-shadow: var(--theme-card-shadow);
+    color: var(--button-color-alt);
 
     &:hover {
         box-shadow: var(--theme-card-shadow);
@@ -26,56 +34,12 @@
     &.disabled {
         background-color: rgba(0, 0, 0, 0.26);
     }
-
-    &.default {
-        background-color: #e0e0e0;
-        color: rgb(0 0 0 / 87%);
-
-        &:hover {
-            background-color: #d5d5d5;
-        }
-    }
-
-    &.primary {
-        background-color: var(--theme-color-primary);
-        color: var(--theme-color-primary-alt);
-
-        &:hover {
-            background-color: var(--theme-color-highlight);
-            color: var(--theme-color-highlight-alt);
-        }
-    }
-
-    &.secondary {
-        background-color: var(--theme-color-secondary);
-        color: var(--theme-color-secondary-alt);
-
-        &:hover {
-            background-color: var(--theme-color-highlight);
-            color: var(--theme-color-highlight-alt);
-        }
-    }
 }
 
 .outlined,
 .text {
     background-color: transparent;
-
-    &.primary {
-        color: var(--theme-color-primary);
-    }
-
-    &.secondary {
-        color: var(--theme-color-secondary);
-    }
-
-    &.alert {
-        color: var(--theme-color-error);
-    }
-
-    &:hover {
-        background-color: var(--theme-color-focus);
-    }
+    color: var(--button-color);
 }
 
 .outlined {
@@ -86,12 +50,33 @@
     border: 0;
 }
 
+.primary {
+    --button-color: var(--theme-color-primary);
+    --button-color-alt: var(--theme-color-primary-alt);
+}
+
+.secondary {
+    --button-color: var(--theme-color-secondary);
+    --button-color-alt: var(--theme-color-secondary-alt);
+}
+
+.alert {
+    --button-color: var(--theme-color-error);
+    --button-color-alt: var(--theme-color-primary-alt);
+}
+
 .default {
-    color: rgb(0 0 0 / 87%);
+    --button-color: rgb(0 0 0 / 87%);
+    --button-color-alt: #e0e0e0;
 }
 
 .inherit {
-    color: inherit;
+    contain: none;
+}
+
+.disabled {
+    --button-color: var(--theme-color-muted);
+    --button-color-alt: var(--theme-color-primary-alt);
 }
 
 .small {
@@ -114,6 +99,7 @@
 
 .iconButton {
     border-radius: 50%;
+    font-size: calc(var(--theme-spacing) * 3);
     height: calc(var(--theme-spacing) * 3);
     min-height: calc(var(--theme-spacing) * 3);
     min-width: calc(var(--theme-spacing) * 3);

@@ -13,7 +13,6 @@ import {refreshAll} from "../../controllers/Store";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers/WrapperControl";
 import Button from "../../controls/Button/Button";
-import useRippleEffect from "../../helpers/useRippleEffect";
 import MainAppbar from "./MainAppbar";
 import MainMenu from "./MainMenu";
 import styles from "./styles/ResponsiveDrawerLayout.module.css";
@@ -48,7 +47,6 @@ export default (props) => {
     const {t} = useTranslation();
     const currentUserData = useCurrentUserData();
     const store = useStore();
-    const onClosePointerDown = useRippleEffect();
 
     const closeDrawer = React.useCallback(() => setMobileOpen(false), []);
     const openDrawer = React.useCallback(() => setMobileOpen(true), []);
@@ -252,7 +250,6 @@ export default (props) => {
         </div>, container || document.body);
 
     return <div className={styles.container}>
-        {/*<CssBaseline/>*/}
         {narrow ? temporaryDrawer : <nav aria-label="Navigation menu" className={styles.drawer}>
             {drawerContent}
         </nav>}
@@ -262,15 +259,7 @@ export default (props) => {
             onHamburgerClick={narrow ? toggleDrawer : undefined}
         />
         <div className={styles.indent}/>
-        <MainContent classes={{
-            bottom: styles.bottom,
-            bottomSticky: styles.bottomSticky,
-            center: styles.center,
-            left: styles.left,
-            right: styles.right,
-            topSticky: styles.topSticky,
-            top: styles.top
-        }}/>
+        <MainContent/>
         {footerComponent}
         <Snackbar/>
         <NotificationsSnackbar/>

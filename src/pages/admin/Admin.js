@@ -34,7 +34,9 @@ export default ({fetchMenu, classes = {}}) => {
 
             return <Button
                 className={[adminStyles.button].join(" ")}
+                color={"secondary"}
                 key={index}
+                fullWidth
                 onClick={handleClick}
                 onKeyDown={handleKeyDown}
                 tabIndex={0}

@@ -8,4 +8,17 @@
             background-color: var(--theme-color-focus);
         }
     }
+
+    &&:before {
+        border-color: var(--theme-color-muted);
+    }
+
+    & :global(.MuiInput-root) {
+        font-size: var(--theme-font-size-regular);
+        min-height: calc(var(--theme-spacing) * 4);
+    }
+}
+
+.multiline {
+    min-height: calc(var(--theme-spacing) * 20);
 }

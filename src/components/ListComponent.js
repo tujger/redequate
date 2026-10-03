@@ -4,7 +4,7 @@ import CheckAllIcon from "@material-ui/icons/DoneAll";
 import SortIcon from "@material-ui/icons/Sort";
 import PropTypes from "prop-types";
 import Button from "../controls/Button/Button";
-import ListItemComponent from "./ListItemComponent";
+import ListSwipeableItemComponent from "./ListSwipeableItemComponent";
 import ListAction from "./ListAction";
 import ModalComponent from "./ModalComponent";
 import notifySnackbar from "../controllers/notifySnackbar";
@@ -138,7 +138,7 @@ const ListComponent = props => {
             /> : null}
         </div>
         <div className={styles.list}>
-            {items.map((item, index) => <ListItemComponent
+            {items.map((item, index) => <ListSwipeableItemComponent
                 key={index + JSON.stringify(item)}
                 onContextMenu={evt => selectItem(evt, item)}
                 onClickCapture={countSelected ? (evt => selectItem(evt, item)) : null}
@@ -149,7 +149,7 @@ const ListComponent = props => {
                     {...itemComponent.props}
                     data={item}
                 />
-            </ListItemComponent>)}
+            </ListSwipeableItemComponent>)}
             {!items.length && emptyComponent}
         </div>
         {action && <ModalComponent ariaLabelledBy={"list-action-dialog-title"} onClose={cancelDialog}>

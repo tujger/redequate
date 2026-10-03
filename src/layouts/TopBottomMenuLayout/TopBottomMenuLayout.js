@@ -13,6 +13,7 @@ import BottomMenu from "./BottomMenu";
 import StickyHeader from "./StickyHeader";
 import styles from "./styles/TopBottomMenuLayout.module.css";
 import TopMenu from "./TopMenu";
+import baseStyles from "../../themes/Base.module.css";
 
 export default (props) => {
     const {menu, title, footerComponent, headerComponent = <HeaderComponent/>, random, copyright} = props;
@@ -30,11 +31,7 @@ export default (props) => {
             wide
         />}
     >
-        <MainContent classes={{
-            bottomSticky: styles.bottomSticky,
-            center: styles.center,
-            top: styles.top
-        }}/>
+        <MainContent/>
         <footer className={styles.footer}>
             <BottomMenu items={menu}/>
             <div

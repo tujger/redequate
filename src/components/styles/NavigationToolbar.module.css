@@ -26,6 +26,7 @@
     flex: 1 1 auto;
     flex-wrap: wrap;
     justify-content: var(--navigation-justify, flex-start);
+    margin-left: var(--theme-spacing);
     min-width: 0;
 }
 
