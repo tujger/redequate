@@ -29,11 +29,16 @@ const getContrastText = bgcolor => {
     return contrastWithDark >= 3 ? "rgba(0, 0, 0, 0.87)" : "#fff";
 }
 
-const AvatarView = ({admin, className, image, icon, initials, onclick, verified}) => {
+const AvatarView = ({admin, className, image, icon, initials, onclick, size = undefined, verified}) => {
     const bgcolor = calculateBgColor(image, initials);
     const {t} = useTranslation();
     const statusClass = verified ? (admin ? classes.admin : "") : classes.notVerified;
-    const classNames = [classes.avatar, statusClass, className || ""].filter(Boolean).join(" ");
+    const classNames = [
+        classes.avatar,
+        statusClass,
+        className || "",
+        size === "small" && classes.small
+    ].filter(Boolean).join(" ");
     const style = bgcolor ? {
         "--avatar-background-color": bgcolor,
         "--avatar-text-color": getContrastText(bgcolor),

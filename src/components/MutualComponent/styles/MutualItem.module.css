@@ -35,16 +35,6 @@
         }
     }
 
-    &.cardFlat {
-        border-radius: 0;
-        box-shadow: none;
-        margin-bottom: 2px;
-
-        & .date {
-            margin-right: calc(var(--theme-spacing) * 3.5);
-        }
-    }
-
     &.cardInvite {
         background-color: transparent;
         box-shadow: none;
@@ -55,22 +45,7 @@
 }
 
 .item {
-    align-items: flex-start;
-    box-sizing: border-box;
-    cursor: pointer;
-    display: flex;
-    min-width: 0;
-    outline: 0;
-    padding: calc(var(--theme-spacing) * 2);
-
-    &:focus-visible {
-        outline: 2px solid var(--theme-color-focus);
-        outline-offset: -2px;
-    }
-
-    &[aria-disabled="true"] {
-        cursor: default;
-    }
+    contain: none;
 }
 
 .cardHeaderWithLabel {
@@ -89,7 +64,7 @@
 
 .avatar {
     height: calc(var(--theme-spacing) * 7);
-    margin-right: calc(var(--theme-spacing) * 2);
+    /*margin-right: calc(var(--theme-spacing) * 2);*/
     width: calc(var(--theme-spacing) * 7);
 }
 

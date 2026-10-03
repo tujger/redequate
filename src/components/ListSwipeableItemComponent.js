@@ -13,12 +13,12 @@ export default (props) => {
         children,
         disabled = false,
         leftAction = undefined,
-        menu = undefined,
         rightAction = undefined,
         onClickCapture = undefined,
         onContextMenu = undefined,
         onMenuSelect = undefined,
-        onKeyDown = undefined
+        onKeyDown = undefined,
+        tabIndex = undefined
     } = props;
     const onPointerDown = useRippleEffect();
     const windowData = useWindowData();
@@ -84,13 +84,20 @@ export default (props) => {
         className={styles.root} ref={ref} key={random}
         onKeyDown={onKeyDown}
         onPointerDown={disabled ? undefined : onPointerDown}
-        tabIndex={disabled ? -1 : 0}
+        tabIndex={tabIndex ?? disabled ? -1 : 0}
     >
-        {isNarrow && leftAction && leftAction.itemButton({
-            className: [styles.leftAction, styles.leftActionButton].join(" "),
-            selected: x > actionIndent,
-            style: {right: "auto", opacity: (x || 0) / actionIndent}
-        })}
+        {isNarrow && leftAction && [
+            leftAction.itemButton && leftAction.itemButton({
+                className: [styles.leftAction, styles.leftActionButton].join(" "),
+                selected: x > actionIndent,
+                style: {right: "auto", opacity: (x || 0) / actionIndent}
+            }),
+            leftAction.label && <div
+                className={[styles.leftAction, styles.leftActionButton].join(" ")}
+                selected={x > actionIndent}
+                style={{right: "auto", opacity: (x || 0) / actionIndent}}
+            >{leftAction.label}</div>
+        ].filter(Boolean)}
         {isNarrow && rightAction && rightAction.itemButton({
             className: [styles.rightAction, styles.rightActionButton].join(" "),
             selected: x < -actionIndent,
@@ -98,10 +105,9 @@ export default (props) => {
         })}
         <div
             {...bind_()}
-            onContextMenu={onContextMenu ? evt => {
-                onContextMenu(evt);
-                setState({...state, random: Math.random()})
-            } : null}
+            // onContextMenu={onContextMenu ? evt => {
+            //     onContextMenu(evt);
+            //     setState({...state, random: Math.random()})
             onClickCapture={onClickCapture || (event => {
                 if (dragging) {
                     event.stopPropagation();
@@ -115,27 +121,6 @@ export default (props) => {
             style={{left: x}}
         >
             {children}
-            {!isNarrow && menu && <Select
-                className={styles.menuButton}
-                displayEmpty
-                iconMenu
-                onChange={onContextMenu}
-                onClickCapture={event => {
-                    event.stopPropagation();
-                }}
-                value={""}
-            >
-                {menu.map((item, index) => <SelectItem
-                    children={item.label}
-                    key={index}
-                    onClickCapture={event => {
-                        event.stopPropagation();
-                        onMenuSelect?.(event, item);
-                    }}
-                    // onClick={handleSelectItemClick}
-                    value={item.value}
-                />)}
-            </Select>}
         </div>
     </div>
 }

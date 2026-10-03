@@ -55,9 +55,9 @@ export default React.forwardRef((props, ref) => {
                     to={pages.user.route + postData.uid}
                 >
                     <AvatarView
-                        className={cardStyles.avatarSmall}
                         image={userData.image}
                         initials={userData.initials}
+                        size={"small"}
                         verified={true}
                     />
                 </Link>

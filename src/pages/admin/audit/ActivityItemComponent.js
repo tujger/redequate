@@ -5,18 +5,16 @@ import {useHistory} from "react-router-dom";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
-import {toDateString} from "../../../controllers/DateFormat";
+import ListItemComponent from "../../../components/ListItemComponent";
 import {cacheDatas, usePages} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
 import UserName from "../../../controls/UserName/UserName";
-import useRippleEffect from "../../../helpers/useRippleEffect";
 import activityStyles from "./styles/ActivityItemComponent.module.css";
 
 // eslint-disable-next-line react/prop-types
 export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => {
     const history = useHistory();
-    const onPointerDown = useRippleEffect();
     const pages = usePages();
     const classes = {...activityStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
@@ -130,43 +128,30 @@ export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => 
     if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>;
     if (skeleton || !type) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
 
-    return <div
-        className={[classes.card, classes.cardFlat, classes.cardActionArea].join(" ")}
-        onClick={handleCardClick}
-        onKeyDown={handleKeyDown}
-        onPointerDown={onPointerDown}
-        role='button'
-        tabIndex={0}
-    >
-        <div className={classes.cardHeader}>
-            <div className={classes.avatarWrapper} onClick={handleUserClick(userData.id)}>
-                <AvatarView
-                    className={classes.avatarSmall}
-                    image={userData.image}
-                    initials={userData.name}
-                    verified={true}
-                />
+    return <>
+        <ListItemComponent
+            avatar={<AvatarView
+                image={userData.image}
+                initials={userData.name}
+                onclick={handleUserClick(userData.id)}
+                size={"small"}
+                verified={true}
+            />}
+            timestamp={timestamp}
+            title={<div className={classes.userName} onClickCapture={handleUserClick(userData.id)}>
+                {userData.name}
+            </div>}
+            onClick={handleCardClick}
+            onKeyDown={handleKeyDown}
+        >
+            <div className={classes.typeRow} onClick={event => onItemClick("type")(event, type)}>
+                <TypeIcon className={classes.typeIcon}/>
+                <span>{type}</span>
             </div>
-            <div className={classes.cardContent}>
-                <div className={classes.titleRow}>
-                    <div className={classes.userName} onClickCapture={handleUserClick(userData.id)}>
-                        {userData.name}
-                    </div>
-                    <div className={classes.date}>
-                        {toDateString(timestamp)}
-                    </div>
-                </div>
-                <div className={classes.details}>
-                    <div className={classes.typeRow} onClick={event => onItemClick("type")(event, type)}>
-                        <TypeIcon className={classes.typeIcon}/>
-                        <span>{type}</span>
-                    </div>
-                    <div className={classes.subheader}>
-                        {(JSON.stringify(details) || "").substr(0, 100)}
-                    </div>
-                </div>
+            <div className={classes.subheader}>
+                {(JSON.stringify(details) || "").substr(0, 100)}
             </div>
-        </div>
+        </ListItemComponent>
         {alert && <ConfirmComponent
             cancelLabel={"Close"}
             confirmLabel={null}
@@ -211,5 +196,5 @@ export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => 
             </div>}
             {detailTimestamp && <div className={classes.contextRow}>Timestamp: {detailTimestamp}</div>}
         </ConfirmComponent>}
-    </div>
+    </>
 }

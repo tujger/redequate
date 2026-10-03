@@ -1,10 +1,18 @@
-.card {
-    background-color: var(--theme-color-paper);
+.item {
+    align-items: flex-start;
     border-width: 0;
-    box-shadow: var(--theme-card-shadow);
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    gap: calc(var(--theme-spacing) * 2);
     letter-spacing: var(--theme-letter-spacing);
+    margin: calc(var(--theme-spacing) / 2);
     margin-bottom: calc(var(--theme-spacing) * 1.5);
+    margin-bottom: 0;
+    min-width: 0;
+    outline: 0;
     overflow: initial;
+    padding: calc(var(--theme-spacing) * 2);
     position: relative;
     transition: 1s ease background-color;
     width: 100%;
@@ -35,50 +43,31 @@
         }
     }
 
-    &.cardFlat {
-        border-radius: 0;
-        box-shadow: none;
-        margin-bottom: 2px;
+}
 
-        & .date {
-            margin-right: calc(var(--theme-spacing) * 3.5);
-        }
-    }
+.contained {
+    background-color: var(--theme-color-paper);
+    box-shadow: var(--theme-card-shadow);
+}
 
-    &.cardInvite {
-        background-color: transparent;
-        box-shadow: none;
-        display: flex;
-        font-size: var(--theme-font-size-large);
-        padding: calc(var(--theme-spacing) * 3);
+.flat {
+    contain: none;
+}
+
+.cloud {
+    contain: none;
+}
+
+.cardFlat {
+    border-radius: 0;
+    box-shadow: none;
+
+    & .date {
+        margin-right: calc(var(--theme-spacing) * 3.5);
     }
 }
 
-.item {
-    align-items: flex-start;
-    box-sizing: border-box;
-    cursor: pointer;
-    display: flex;
-    min-width: 0;
-    outline: 0;
-    padding: calc(var(--theme-spacing) * 2);
-
-    &:focus-visible {
-        outline: 2px solid var(--theme-color-focus);
-        outline-offset: -2px;
-    }
-
-    &[aria-disabled="true"] {
-        cursor: default;
-    }
-}
-
-.cardHeaderWithLabel {
-    align-items: center;
-    white-space: pre-wrap;
-}
-
-.cardContent {
+.content {
     display: grid;
     flex: 1 1 auto;
     grid-template-areas: "title" "message" "actions";
@@ -87,14 +76,8 @@
     overflow: auto;
 }
 
-.avatar {
-    height: calc(var(--theme-spacing) * 7);
-    margin-right: calc(var(--theme-spacing) * 2);
-    width: calc(var(--theme-spacing) * 7);
-}
-
-.title {
-    align-items: center;
+.header {
+    align-items: baseline;
     display: flex;
     font-size: var(--theme-font-size-regular);
     grid-area: title;
@@ -102,7 +85,19 @@
     min-width: 0;
 }
 
-.date {
+.title {
+    color: var(--theme-color-primary);
+    display: flex;
+    font-weight: bolder;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.subtitle {
+    font-size: var(--theme-font-size-small);
+}
+
+.timestamp {
     align-items: center;
     color: #888;
     display: flex;
@@ -112,15 +107,33 @@
     white-space: nowrap;
 }
 
-.message {
+.children {
     color: rgb(0 0 0 / 60%);
     font-size: var(--theme-font-size-regular);
     font-weight: 400;
     grid-area: message;
     letter-spacing: 0.01071em;
     line-height: 1.43;
-    overflow-wrap: anywhere;
+    /*overflow-wrap: anywhere;*/
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
+
+.menuPosition {
+    color: var(--theme-color-secondary);
+    position: absolute !important;
+    right: calc(var(--theme-spacing) * .5);
+    top: calc(var(--theme-spacing) * .5);
+}
+
+.avatar {
+    height: calc(var(--theme-spacing) * 7);
+    margin-right: calc(var(--theme-spacing) * 2);
+    width: calc(var(--theme-spacing) * 7);
+}
+
+
+
 
 .actions {
     display: none;
@@ -130,20 +143,6 @@
 
 .hidden {
     opacity: 0.5;
-}
-
-.itemName {
-    color: var(--theme-color-primary);
-    font-weight: bolder;
-    margin-right: calc(var(--theme-spacing) * 0.5);
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-.counter {
-    font-size: var(--theme-font-size-small);
-    margin-left: var(--theme-spacing);
-    order: 2;
 }
 
 .hasMenu {

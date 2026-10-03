@@ -50,11 +50,7 @@
 }
 
 .avatar {
-    box-sizing: border-box;
-    color: lightgray;
     height: calc(var(--theme-spacing) * 7);
-    margin-right: calc(var(--theme-spacing) * 2);
-    text-decoration: none;
     width: calc(var(--theme-spacing) * 7);
 }
 
@@ -104,9 +100,7 @@
 }
 
 .cardAction {
-    align-self: flex-start;
-    flex: 0 0 auto;
-    margin-left: calc(var(--theme-spacing) * 2);
+    font-size: var(--theme-font-size-small);
 }
 
 /* Compatibility keys used by ItemPlaceholderComponent. */

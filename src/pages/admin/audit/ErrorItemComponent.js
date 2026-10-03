@@ -4,22 +4,18 @@ import {useDispatch} from "react-redux";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
+import ListItemComponent from "../../../components/ListItemComponent";
 import ProgressView from "../../../components/ProgressView";
-import {toDateString} from "../../../controllers/DateFormat";
 import {fetchCallable} from "../../../controllers/Firebase";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
 import Button from "../../../controls/Button/Button";
-import useRippleEffect from "../../../helpers/useRippleEffect";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 
-// eslint-disable-next-line react/prop-types
-export default ({data, classes: givenClasses, skeleton, label, onUserClick}) => {
+export default ({data, skeleton, label, onUserClick}) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
-    const onPointerDown = useRippleEffect();
-    const classes = {...errorStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
     const {alert, userData, removed} = state;
 
@@ -76,50 +72,41 @@ export default ({data, classes: givenClasses, skeleton, label, onUserClick}) => 
     }, [])
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>;
-    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
+    if (label) return <ItemPlaceholderComponent classes={errorStyles} label={label} pattern={"flat"}/>;
+    if (skeleton || !userData) return <ItemPlaceholderComponent classes={errorStyles} pattern={"flat"}/>;
 
-    return <div
-        className={[classes.card, classes.cardFlat, classes.cardActionArea].join(" ")}
-        onClick={handleCardClick}
-        onKeyDown={handleKeyDown}
-        onPointerDown={onPointerDown}
-        role='button'
-        tabIndex={0}
-    >
-        <div className={classes.cardHeader}>
-            <div className={classes.avatarWrapper} onClick={handleClick}>
-                <AvatarView
-                    className={classes.avatar}
-                    image={userData.image}
-                    initials={userData.name}
-                    onclick={event => onUserClick(event, userData.id)}
-                    verified={true}
-                />
-            </div>
-            <div className={classes.cardContent}>
-                <div className={classes.titleRow}>
-                    <div className={classes.userName} onClickCapture={handleClick}>
-                        {userData.name}
-                    </div>
-                    <div className={classes.date}>
-                        {toDateString(data.value.timestamp)}
-                    </div>
-                </div>
-                <div className={classes.subheader}>
-                    {(JSON.stringify(data.value.error) || "").substr(0, 100)}
-                </div>
-            </div>
-            <Button
-                className={classes.removeButton}
+    return <>
+        <ListItemComponent
+            avatar={<AvatarView
+                image={userData.image}
+                initials={userData.name}
+                onclick={event => onUserClick(event, userData.id)}
+                size={"small"}
+                verified={true}
+            />}
+            leftAction={{
+                action: handleRemove,
+                label: "Remove"
+            }}
+            tabIndex={0}
+            timestamp={data.value.timestamp}
+            title={<div className={errorStyles.userName} onClickCapture={handleClick}>
+                {userData.name}
+            </div>}
+            menu={<Button
+                className={errorStyles.removeButton}
                 icon={<ClearIcon/>}
                 onClick={event => {
                     event.stopPropagation();
                     handleRemove();
                 }}
                 title={"Remove error"}
-            />
-        </div>
+            />}
+            onClick={handleCardClick}
+            onKeyDown={handleKeyDown}
+        >
+            {(JSON.stringify(data.value.error) || "").substr(0, 100)}
+        </ListItemComponent>
         {alert && <ConfirmComponent
             confirmLabel={"Try to fix"}
             onCancel={() => setState({...state, alert: false})}
@@ -132,5 +119,5 @@ export default ({data, classes: givenClasses, skeleton, label, onUserClick}) => 
                     : data.value.error
             }</pre>
         </ConfirmComponent>}
-    </div>
+    </>
 }

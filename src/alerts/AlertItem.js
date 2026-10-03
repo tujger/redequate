@@ -3,17 +3,15 @@ import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import ListItemComponent from "../components/ListItemComponent";
 import ProgressView from "../components/ProgressView";
-import {toDateString} from "../controllers/DateFormat";
 import {useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
 import UserName from "../controls/UserName/UserName";
-import useRippleEffect from "../helpers/useRippleEffect";
 import alertStyles from "./styles/AlertItem.module.css";
 
 export default ({data, skeleton, label, fetchAlertContent}) => {
-    const onPointerDown = useRippleEffect();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -56,46 +54,27 @@ export default ({data, skeleton, label, fetchAlertContent}) => {
     if (label) return <ItemPlaceholderComponent label={label} classes={null} pattern={"flat"}/>
     if (skeleton || !type) return <ItemPlaceholderComponent classes={null} pattern={"flat"}/>;
 
-    return <div className={[alertStyles.card, alertStyles.cardFlat].join(" ")}>
-        <div
-            className={[alertStyles.root, alertStyles.cardActionArea].join(" ")}
-            onClick={handleClick}
-            onKeyDown={event => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                handleClick();
-            }}
-            onPointerDown={onPointerDown}
-            role='button'
-            tabIndex={0}
-        >
-            <div className={alertStyles.cardHeader}>
-                <div className={alertStyles.avatarWrapper}>
-                    <AvatarView
-                        className={alertStyles.avatarSmall}
-                        icon={avatar}
-                        initials={type}
-                        verified={true}
-                    />
-                </div>
-                <div className={alertStyles.cardContent}>
-                    <div className={alertStyles.titleRow}>
-                        <UserName
-                            className={[isNew ? alertStyles.unread : alertStyles.read].join(" ")}
-                            id={currentUserData.id}
-                        >{title}</UserName>
-                        {timestamp && <div
-                            className={alertStyles.date}
-                            title={new Date(timestamp).toLocaleString()}
-                        >
-                            {toDateString(timestamp)}
-                        </div>}
-                    </div>
-                    <div className={[alertStyles.subheader, isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
-                        {text || id}
-                    </div>
-                </div>
-            </div>
+    return <ListItemComponent
+        avatar={<AvatarView
+            icon={avatar}
+            initials={type}
+            size={"small"}
+            verified={true}
+        />}
+        timestamp={timestamp}
+        title={<UserName
+            className={[isNew ? alertStyles.unread : alertStyles.read].join(" ")}
+            id={currentUserData.id}
+        >{title}</UserName>}
+        onClick={handleClick}
+        onKeyDown={event => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            handleClick();
+        }}
+    >
+        <div className={[isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
+            {text || id}
         </div>
-    </div>
+    </ListItemComponent>
 }

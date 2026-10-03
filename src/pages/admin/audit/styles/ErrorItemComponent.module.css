@@ -45,19 +45,6 @@
     position: relative;
 }
 
-.avatarWrapper {
-    flex: 0 0 auto;
-    margin-right: calc(var(--theme-spacing) * 1.5);
-}
-
-.avatar {
-    box-sizing: border-box;
-    color: lightgray;
-    height: calc(var(--theme-spacing) * 5);
-    text-decoration: none;
-    width: calc(var(--theme-spacing) * 5);
-}
-
 .cardContent {
     flex: 1 1 auto;
     min-width: 0;
@@ -93,10 +80,6 @@
 .subheader {
     overflow-wrap: anywhere;
     word-wrap: break-word;
-}
-
-.removeButton {
-    margin: calc(var(--theme-spacing) * -1) calc(var(--theme-spacing) * -1) 0 0;
 }
 
 /* Compatibility keys used by ItemPlaceholderComponent. */

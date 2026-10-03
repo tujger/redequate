@@ -19,6 +19,7 @@ import {UserData} from "../../../controllers/UserData";
 import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
 import Select from "../../../controls/Select/Select";
+import baseStyles from "../../../themes/Base.module.css";
 import ActivityItemComponent from "./ActivityItemComponent";
 import {auditReducer} from "./auditReducer";
 import activityStyles from "./styles/Activity.module.css";
@@ -26,13 +27,11 @@ import ClearIcon from "@material-ui/icons/Clear";
 
 const Activity = props => {
     const {
-        classes: givenClasses,
         activityMode = "all",
         activityFilterItem,
         activityFilter,
         activitySort = "asc"
     } = props;
-    const classes = {...activityStyles, ...(givenClasses || {})};
     const dispatch = useDispatch();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
@@ -172,7 +171,7 @@ const Activity = props => {
         <NavigationToolbar
             backButton={null}
             mediumButton={<>
-                {!windowData.isNarrow() && <div className={classes.dateButtons}>
+                {!windowData.isNarrow() && <div className={activityStyles.dateButtons}>
                     <Button
                         icon={<StartDateIcon/>}
                         onClick={event => setState(state => ({
@@ -181,7 +180,7 @@ const Activity = props => {
                         }))}
                         title={"Start date"}
                     />
-                    <span className={classes.separator}>&mdash;</span>
+                    <span className={activityStyles.separator}>&mdash;</span>
                     <Button
                         icon={<EndDateIcon/>}
                         onClick={event => setState(state => ({
@@ -192,7 +191,7 @@ const Activity = props => {
                     />
                 </div>}
             <Button
-                className={[activitySort === "asc" ? classes.sortAsc : classes.sortDesc].join(" ")}
+                className={[activitySort === "asc" ? activityStyles.sortAsc : activityStyles.sortDesc].join(" ")}
                 icon={<SortIcon/>}
                 onClick={handleSortClick}
                 title={"Sort activity"}
@@ -204,8 +203,8 @@ const Activity = props => {
                     title={"Refresh activity"}
                 />}
         >
-            <div className={classes.toolbarRow}>
-                <div className={classes.modeCell}>
+            <div className={activityStyles.toolbarRow}>
+                <div className={activityStyles.modeCell}>
                     <Select
                         onChange={handleMode}
                         options={[
@@ -216,7 +215,7 @@ const Activity = props => {
                         value={activityMode}
                     />
                 </div>
-                <div className={classes.filterCell}>
+                <div className={activityStyles.filterCell}>
                     {activityMode === "uid" && !filteredItem && <MentionedSelectComponent
                         combobox
                         mention={{
@@ -245,8 +244,8 @@ const Activity = props => {
                     />}
                 </div>
             </div>
-            <div className={classes.filterRow}>
-                <div className={classes.chips}>
+            <div className={activityStyles.filterRow}>
+                <div className={activityStyles.chips}>
                     {filteredItem && <Chip
                         avatar={<AvatarView
                             alt={"Avatar"}
@@ -276,7 +275,7 @@ const Activity = props => {
                         onDelete={clearEndDate}
                     />}
                 </div>
-                {windowData.isNarrow() && <div className={classes.dateButtons}>
+                {windowData.isNarrow() && <div className={activityStyles.dateButtons}>
                     <Button
                         icon={<StartDateIcon/>}
                         onClick={event => setState(state => ({
@@ -285,7 +284,7 @@ const Activity = props => {
                         }))}
                         title={"Start date"}
                     />
-                    <span className={classes.separator}>&mdash;</span>
+                    <span className={activityStyles.separator}>&mdash;</span>
                     <Button
                         icon={<EndDateIcon/>}
                         onClick={event => setState(state => ({
@@ -297,7 +296,7 @@ const Activity = props => {
                 </div>}
             </div>
         </NavigationToolbar>
-        <div className={classes.center}>
+        <div className={[baseStyles.content, activityStyles.center].filter(Boolean).join(" ")}>
             <LazyListComponent
                 key={random}
                 itemComponent={itemComponent}
@@ -308,7 +307,7 @@ const Activity = props => {
             />
         </div>
         {startDateAnchor && <div
-            className={classes.datePopover}
+            className={activityStyles.datePopover}
             style={getDatePopoverStyle(startDateAnchor)}
         >
             <DateTimePicker
@@ -320,7 +319,7 @@ const Activity = props => {
             />
         </div>}
         {endDateAnchor && <div
-            className={classes.datePopover}
+            className={activityStyles.datePopover}
             style={getDatePopoverStyle(endDateAnchor)}
         >
             <DateTimePicker

@@ -10,6 +10,7 @@ import Select from "../../controls/Select/Select";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import ListItemComponent from "../ListItemComponent";
 import ListSwipeableItemComponent from "../ListSwipeableItemComponent";
 import ProgressView from "../ProgressView";
 import styles from "./styles/MutualItem.module.css";
@@ -94,8 +95,22 @@ const MutualSubscribeItem = (
     if (label) return <ItemPlaceholderComponent label={label} classes={styles} pattern={"flat"}/>;
     if (skeleton) return <ItemPlaceholderComponent classes={styles} pattern={"flat"}/>;
 
-    return <ListSwipeableItemComponent
-        className={[styles.card, styles.item, patternClass, value.hidden && styles.hidden].filter(Boolean).join(" ")}
+    return <ListItemComponent
+        avatar={<AvatarView
+            image={userData.image}
+            initials={userData.initials}
+            verified={true}
+        />}
+        timestamp={value.timestamp}
+        title={<b className={styles.itemName}>{userData.name}</b>}
+        subtitle={<span className={styles.counter}>
+                    <CounterComponent
+                        live
+                        path={`${key}/mutual/${typeId}_s`}
+                        prefix={"- "}
+                        suffix={" follower(s)"}
+                    />
+                </span>}
         disabled={disabled}
         leftAction={{
             action: handleUnsubscribe,
@@ -105,34 +120,11 @@ const MutualSubscribeItem = (
             label: menuLabel + (isSameUser ? "" : " - force as Admin"),
             value: "unsubscribe",
         }] : undefined}
-        onClickCapture={handleOpen}
+        onClick={handleOpen}
         onKeyDown={handleKeyDown}
     >
-        <AvatarView
-            className={styles.avatar}
-            image={userData.image}
-            initials={userData.initials}
-            verified={true}
-        />
-        <div className={styles.cardContent}>
-            <div className={[styles.title].filter(Boolean).join(" ")}>
-                <b className={styles.itemName}>{userData.name}</b>
-                {counter && <span className={styles.counter}>
-                    <CounterComponent
-                        live
-                        path={`${key}/mutual/${typeId}_s`}
-                        prefix={"- "}
-                        suffix={" follower(s)"}
-                    />
-                </span>}
-                {value.timestamp && <span
-                    className={styles.date}
-                    title={new Date(value.timestamp).toLocaleString()}
-                >{toDateString(value.timestamp)}</span>}
-            </div>
-            <div className={styles.message}>{value.message}</div>
-        </div>
-    </ListSwipeableItemComponent>
+        {value.message}
+    </ListItemComponent>
     // classes, children, leftAction, rightAction, onClickCapture, onContextMenu
 
     return <div

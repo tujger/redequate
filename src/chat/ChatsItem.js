@@ -5,6 +5,7 @@ import {Link, useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import ListItemComponent from "../components/ListItemComponent";
 import {cacheDatas, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import UserName from "../controls/UserName/UserName";
@@ -85,47 +86,37 @@ export default props => {
         handleClick(event);
     };
 
-    return <div
-        className={[chatStyles.card, chatStyles.cardFlat, chatStyles.cardActionArea].join(" ")}
+    return <ListItemComponent
+        avatar={<Link
+            onClick={event => event.stopPropagation()}
+            to={pages.user.route + userData.id}
+        >
+            <AvatarView
+                image={userData.image}
+                initials={userData.initials}
+                verified={true}
+            />
+        </Link>}
+        title={<>
+            <UserName
+                className={[isNew ? chatStyles.unread : chatStyles.read].join(" ")}
+                id={userData.id}
+            >
+                {userComponent(userData)}
+            </UserName>
+            <div
+                className={[chatStyles.presence, online ? chatStyles.online : chatStyles.offline].join(" ")}
+                title={online ? t("Chat.Online") : t("Chat.Offline")}
+            />
+        </>}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
-        onPointerDown={onPointerDown}
-        role='button'
-        tabIndex={0}
     >
-        <div className={chatStyles.cardHeader}>
-            <Link
-                className={chatStyles.avatarLink}
-                onClick={event => event.stopPropagation()}
-                to={pages.user.route + userData.id}
-            >
-                <AvatarView
-                    className={chatStyles.avatar}
-                    image={userData.image}
-                    initials={userData.initials}
-                    verified={true}
-                />
-            </Link>
-            <div className={chatStyles.cardContent}>
-                <div className={chatStyles.titleRow}>
-                    <UserName
-                        className={[isNew ? chatStyles.unread : chatStyles.read].join(" ")}
-                        id={userData.id}
-                    >
-                        {userComponent(userData)}
-                    </UserName>
-                    <div
-                        className={[chatStyles.presence, online ? chatStyles.online : chatStyles.offline].join(" ")}
-                        title={online ? t("Chat.Online") : t("Chat.Offline")}
-                    />
-                </div>
-                <div className={[chatStyles.message, isNew ? chatStyles.unread : chatStyles.read].join(" ")}>
-                    {textComponent(
-                        (cacheDatas.get(chatMeta.lastMessage.uid) || {}).name
-                        + ": " + chatMeta.lastMessage.text
-                    )}
-                </div>
-            </div>
+        <div className={[isNew ? chatStyles.unread : chatStyles.read].join(" ")}>
+            {textComponent(
+                (cacheDatas.get(chatMeta.lastMessage.uid) || {}).name
+                + ": " + chatMeta.lastMessage.text
+            )}
         </div>
-    </div>
+    </ListItemComponent>
 }

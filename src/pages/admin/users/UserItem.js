@@ -2,16 +2,14 @@ import React from "react";
 import {useHistory} from "react-router-dom";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
-import {toDateString} from "../../../controllers/DateFormat";
+import ListItemComponent from "../../../components/ListItemComponent";
 import {usePages} from "../../../controllers/General";
 import UserName from "../../../controls/UserName/UserName";
-import useRippleEffect from "../../../helpers/useRippleEffect";
 import userStyles from "./styles/UserItem.module.css";
 
 // eslint-disable-next-line react/prop-types
 export default ({data, classes: givenClasses, skeleton, label}) => {
     const history = useHistory();
-    const onPointerDown = useRippleEffect();
     const pages = usePages();
     const classes = {...userStyles, ...(givenClasses || {})};
     const {value: userData, _date} = data || {};
@@ -34,18 +32,9 @@ export default ({data, classes: givenClasses, skeleton, label}) => {
         handleClick();
     };
 
-    return <div
-        aria-label={userData.email}
-        className={[classes.card, classes.cardFlat, classes.cardActionArea].join(" ")}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        onPointerDown={onPointerDown}
-        role='button'
-        tabIndex={0}
-    >
-        <AvatarView
+    return <ListItemComponent
+        avatar={<AvatarView
             className={[
-                classes.avatar,
                 userData.role === "userNotVerified" ? classes.notVerified : "",
                 userData.role === "admin" ? classes.admin : "",
                 userData.role === "disabled" ? classes.disabled : "",
@@ -53,25 +42,18 @@ export default ({data, classes: givenClasses, skeleton, label}) => {
             image={userData.image}
             initials={userData.initials}
             verified={true}
-        />
-        <div className={classes.cardContent}>
-            <div className={classes.titleRow}>
-                <UserName
-                    id={userData.id}
-                >
-                    {userData.email}
-                </UserName>
-                <div className={classes.date}>
-                    {toDateString(_date || userData.public.created)}
-                </div>
-            </div>
-            <div className={classes.subheader}>
-                {userData.name}<br/>
-                {userData.public.address}
-            </div>
-        </div>
-        {userData.public && <div className={classes.cardAction}>
+        />}
+        timestamp={_date || userData.public.created}
+        title={<UserName id={userData.id}>
+            {userData.email}
+        </UserName>}
+        menu={userData.public && <div className={classes.cardAction}>
             {userData.public.provider}
         </div>}
-    </div>;
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+    >
+        {userData.name}<br/>
+        {userData.public.address}
+    </ListItemComponent>
 }
