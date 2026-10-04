@@ -23,35 +23,6 @@
     width: 100%;
 }
 
-.card,
-.replyContent {
-
-    & .avatar,
-    & .avatarSmall,
-    & .avatarSmallest {
-        color: lightgray;
-        text-decoration: none;
-    }
-
-    & .avatar {
-        box-sizing: border-box;
-        height: calc(var(--theme-spacing) * 7);
-        width: calc(var(--theme-spacing) * 7);
-    }
-
-    & .avatarSmall {
-        font-size: 1rem;
-        height: calc(var(--theme-spacing) * 5);
-        width: calc(var(--theme-spacing) * 5);
-    }
-
-    & .avatarSmallest {
-        font-size: 0.8rem;
-        height: calc(var(--theme-spacing) * 3);
-        width: calc(var(--theme-spacing) * 3);
-    }
-}
-
 .cardBordered {
     border: 1px solid rgb(0 0 0 / 25%);
     box-shadow: none;
@@ -127,37 +98,8 @@
     color: var(--theme-color-text);
 }
 
-.cardImage {
-    flex: 1;
-    height: auto;
-    margin-bottom: var(--post-card-image-margin-bottom, 0);
-    margin-top: var(--post-card-image-margin-top, 0);
-    max-height: 100%;
-    max-width: 100%;
-    object-fit: contain;
-    object-position: left;
-    overflow: auto;
-    position: relative;
-    width: auto;
-}
-
-.cardMenuButton {
-    && {
-        position: absolute;
-        right: calc(var(--theme-spacing) * .5);
-        top: calc(var(--theme-spacing) * .5);
-    }
-}
-
-.cardTitle {
-}
-
 .cardActions {
     display: flex;
-}
-
-.cardBody {
-    padding: calc(var(--theme-spacing) * 2);
 }
 
 .date {
@@ -165,7 +107,6 @@
     color: var(--theme-color-secondary);
     display: inline-flex;
     flex: 1;
-    margin-right: calc(var(--theme-spacing) * .5);
 }
 
 .icon {
@@ -290,22 +231,12 @@
         padding-top: var(--theme-spacing);
     }
 
-    .cardBody {
-        padding-bottom: var(--theme-spacing);
-        padding-top: 0;
-    }
-
     .cardHeader .cardTitle {
         margin-right: calc(var(--theme-spacing) * 3);
     }
 
     .cardHeader :global(.MuiSvgIcon-root), .cardActions :global(.MuiSvgIcon-root) {
         height: calc(var(--theme-spacing) * 2.5);
-    }
-
-    .cardMenuButton {
-        right: calc(var(--theme-spacing) * .5);
-        top: auto;
     }
 
     .cardTitle {
@@ -328,23 +259,8 @@
 }
 
 @media (min-width: 960px) {
-    .cardImage {
-        margin-top: var(--theme-spacing);
-    }
-
-    .cardBody {
-        padding-bottom: var(--theme-spacing);
-        padding-left: 0;
-        padding-right: 0;
-        padding-top: var(--theme-spacing);
-    }
-
     .cardActions {
         justify-content: flex-end;
-    }
-
-    .date {
-        font-size: inherit;
     }
 
     .cardActionsSmall :global(.MuiSvgIcon-root) {

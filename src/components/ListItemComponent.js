@@ -19,7 +19,7 @@ export default (
         onClick = undefined,
         pattern,
         skeleton,
-        variant = "contained",
+        variant = "flat",
         ...props
     }) => {
     const onPointerDown = useRippleEffect();
@@ -56,12 +56,12 @@ export default (
         {...props}
         className={[
             styles.item,
-            patternClass,
+            // patternClass,
             styles[variant],
             className
         ].filter(Boolean).join(" ")}
         disabled={disabled}
-        onClickCapture={handleOpen}
+        onClick={handleOpen}
         onKeyDown={handleKeyDown}
         onPointerDown={onClick ? onPointerDown : undefined}
     >

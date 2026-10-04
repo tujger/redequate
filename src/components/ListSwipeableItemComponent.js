@@ -2,8 +2,6 @@ import React from "react";
 import {useDrag} from "react-use-gesture";
 import {useWindowData} from "../controllers";
 import notifySnackbar from "../controllers/notifySnackbar";
-import Select from "../controls/Select/Select";
-import SelectItem from "../controls/Select/SelectItem";
 import useRippleEffect from "../helpers/useRippleEffect";
 import styles from "./styles/ListSwipeableItemComponent.css";
 
@@ -14,10 +12,7 @@ export default (props) => {
         disabled = false,
         leftAction = undefined,
         rightAction = undefined,
-        onClickCapture = undefined,
-        onContextMenu = undefined,
-        onMenuSelect = undefined,
-        onKeyDown = undefined,
+        onClick = undefined,
         tabIndex = undefined
     } = props;
     const onPointerDown = useRippleEffect();
@@ -82,7 +77,6 @@ export default (props) => {
     if (removed) return null;
     return <div
         className={styles.root} ref={ref} key={random}
-        onKeyDown={onKeyDown}
         onPointerDown={disabled ? undefined : onPointerDown}
         tabIndex={tabIndex ?? disabled ? -1 : 0}
     >
@@ -108,7 +102,7 @@ export default (props) => {
             // onContextMenu={onContextMenu ? evt => {
             //     onContextMenu(evt);
             //     setState({...state, random: Math.random()})
-            onClickCapture={onClickCapture || (event => {
+            onClick={onClick || (event => {
                 if (dragging) {
                     event.stopPropagation();
                     event.preventDefault();

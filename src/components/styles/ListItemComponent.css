@@ -6,9 +6,6 @@
     display: flex;
     gap: calc(var(--theme-spacing) * 2);
     letter-spacing: var(--theme-letter-spacing);
-    margin: calc(var(--theme-spacing) / 2);
-    margin-bottom: calc(var(--theme-spacing) * 1.5);
-    margin-bottom: 0;
     min-width: 0;
     outline: 0;
     overflow: initial;
@@ -17,7 +14,7 @@
     transition: 1s ease background-color;
     width: 100%;
 
-    &.cardBordered {
+    /*&.cardBordered {
         border: 1px solid rgb(0 0 0 / 25%);
         box-shadow: none;
         margin-bottom: calc(var(--theme-spacing) * 0.5);
@@ -41,17 +38,23 @@
         &.cardHighlighted .cardContent {
             background-color: #b5b5b5;
         }
-    }
+    }*/
+
+}
+
+.flat {
+    background-color: var(--theme-color-paper);
+    margin-bottom: calc(var(--theme-spacing) * 0.25);
 
 }
 
 .contained {
     background-color: var(--theme-color-paper);
-    box-shadow: var(--theme-card-shadow);
-}
-
-.flat {
-    contain: none;
+    border-radius: calc(var(--theme-spacing) / 2);
+    box-shadow: var(--theme-card-shadow-contained);
+    /*margin: calc(var(--theme-spacing) / 2);*/
+    margin-bottom: calc(var(--theme-spacing) * 1.5);
+    /*margin-bottom: 0;*/
 }
 
 .cloud {
@@ -83,6 +86,7 @@
     grid-area: title;
     min-height: calc(var(--theme-spacing) * 3);
     min-width: 0;
+    padding-bottom: calc(var(--theme-spacing) * 0.5);
 }
 
 .title {

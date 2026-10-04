@@ -1,5 +1,5 @@
 .action {
-    contain: none;
+    display: flex;
 }
 
 .replyButton {
@@ -10,16 +10,8 @@
 
 .button, .iconButton {
     border-radius: 50%;
-    /*font-size: 80%;*/
-    /*height: auto;*/
     min-height: calc(var(--theme-spacing) * 3);
-    /*min-width: calc(var(--theme-spacing) * 3);*/
-    padding: calc(var(--theme-spacing) * .5);
-    /*width: auto;*/
-
-    &:hover {
-        background-color: var(--theme-color-background);
-    }
+    padding: calc(var(--theme-spacing) * .1);
 }
 
 .box {
