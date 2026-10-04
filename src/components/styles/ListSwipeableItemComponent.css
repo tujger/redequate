@@ -30,9 +30,3 @@
     touch-action: pan-y;
     width: 100%;
 }
-
-@media (max-width: 599px) {
-    .content {
-        margin: var(--theme-spacing);
-    }
-}

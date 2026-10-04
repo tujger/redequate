@@ -87,6 +87,7 @@
 
     &:hover {
         background-color: var(--theme-color-focus);
+        color: var(--theme-color-focus-alt);
     }
 
     & :global(.MuiSvgIcon-root) {

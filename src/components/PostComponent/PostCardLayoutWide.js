@@ -25,7 +25,7 @@ export default React.forwardRef((props, ref) => {
         disableButtons,
         handleClickPost,
         level,
-        pattern,
+        pattern = "contained",
         postData,
         style,
         userData,
@@ -39,8 +39,13 @@ export default React.forwardRef((props, ref) => {
     return <ListItemComponent
         avatar={<Link className={cardStyles.avatar} onClick={evt => evt.stopPropagation()}
                       to={pages.user.route + postData.uid}>
-            <AvatarView className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatar}
-                        image={userData.image} initials={userData.initials} verified={true}/>
+            <AvatarView
+                // className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatar}
+                        image={userData.image}
+                initials={userData.initials}
+                size={level > 1 ? "smaller" : undefined}
+                verified={true}
+            />
         </Link>}
         className={[
             highlighted && cardStyles.cardHighlighted,
@@ -57,7 +62,7 @@ export default React.forwardRef((props, ref) => {
         timestamp={postData.created}
         title={<UserName className={textStyles.label} id={userData.id}>{userData.name}</UserName>}
         // onKeyDown={handleKeyDown}
-        variant={"contained"}
+        variant={pattern}
     >
         <PostBody {...props} disableClick={!disableClick} ref={ancillaryRef}/>
         {postData.images && <div className={[cardStyles.layout, cardStyles.cardImage].join(" ")}>
@@ -81,8 +86,13 @@ export default React.forwardRef((props, ref) => {
             <div className={cardStyles.cardHeader}>
                 <Link className={cardStyles.avatar} onClick={evt => evt.stopPropagation()}
                       to={pages.user.route + postData.uid}>
-                    <AvatarView className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatar}
-                                image={userData.image} initials={userData.initials} verified={true}/>
+                    <AvatarView
+                        className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatar}
+                                image={userData.image}
+                        initials={userData.initials}
+                        size={isReply ? "small" : undefined}
+                        verified={true}
+                    />
                 </Link>
                 <div className={cardStyles.cardContent}>
                     <div className={cardStyles.layout}>

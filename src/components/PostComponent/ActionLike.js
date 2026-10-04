@@ -153,13 +153,12 @@ export default ({postData}) => {
 
     const isPostingAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
     const isAdmin = matchRole([Role.ADMIN], currentUserData);
-    const ancillaryStyle = {margin: 0, width: 20};
 
     return <div className={actionStyles.action}>
         <Button
             aria-label={t("Common.Like")}
             className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
-            color={"secondary"}
+            color={postData.extra("like") ? "primary" : "secondary"}
             // disabled={disabled}
             icon={postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
             onClick={disabled ? undefined : handleClickExtra("like")}
@@ -168,11 +167,11 @@ export default ({postData}) => {
             variant={"text"}
         >
             <div className={actionStyles.box}/>
-            <CounterComponent
-                counter={postData.counter("like")}
-                showZero
-            />
         </Button>
+        <CounterComponent
+            counter={postData.counter("like")}
+            showZero
+        />
         {isAdmin && <>
             <Button
                 aria-label={"Decrease"}

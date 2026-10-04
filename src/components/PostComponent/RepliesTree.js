@@ -1,19 +1,18 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import UserName from "../../controls/UserName/UserName";
-import PostComponent from "./PostComponent";
-import postItemTransform from "./postItemTransform";
-import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
-import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
+import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import notifySnackbar from "../../controllers/notifySnackbar";
+import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import PostComponent from "./PostComponent";
+import postItemTransform from "./postItemTransform";
 import RotatingReplies from "./RotatingReplies";
 import cardStyles from "./styles/PostComponent.module.css";
 import replyStyles from "./styles/PostReplies.module.css";
-import textStyles from "./styles/PostText.module.css";
 
 export default (props) => {
     const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = props;
@@ -131,9 +130,10 @@ export default (props) => {
             <div className={cardStyles.replyContent}>
                 <ItemPlaceholderComponent
                     avatar={<AvatarView
-                        className={cardStyles.avatarSmallest}
+                        // className={cardStyles.avatarSmallest}
                         image={userReplied.image}
                         initials={userReplied.initials}
+                        size={"small"}
                         verified
                     />}
                     label={<span className={cardStyles.textSmall}>

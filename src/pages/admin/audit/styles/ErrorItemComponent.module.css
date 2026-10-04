@@ -95,9 +95,3 @@
 .root {
     flex: 0 0 auto;
 }
-
-@media (max-width: 599px) {
-    .removeButton {
-        margin-right: calc(var(--theme-spacing) * -0.5);
-    }
-}

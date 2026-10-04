@@ -27,7 +27,7 @@ import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
-import {getScrollPosition} from "./controllers/useScrollPosition";
+import {getScrollPosition} from "./helpers/useScrollPosition";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import useBreakpoint from "./helpers/useBreakpoint";
 import localeEn from "./locales/en-EN.json";

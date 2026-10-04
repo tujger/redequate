@@ -58,17 +58,24 @@
 }
 
 .cloud {
-    contain: none;
-}
+    margin-bottom: calc(var(--theme-spacing) * 1);
+    padding: 0;
 
-.cardFlat {
-    border-radius: 0;
-    box-shadow: none;
-
-    & .date {
-        margin-right: calc(var(--theme-spacing) * 3.5);
+    & > .content {
+        background-color: var(--theme-color-paper);
+        border-radius: calc(var(--theme-spacing) * 2);
+        padding: calc(var(--theme-spacing) * 2);
     }
 }
+
+/*.cardFlat {*/
+/*    border-radius: 0;*/
+/*    box-shadow: none;*/
+
+/*    & .date {*/
+/*        margin-right: calc(var(--theme-spacing) * 3.5);*/
+/*    }*/
+/*}*/
 
 .content {
     display: grid;
@@ -139,43 +146,37 @@
 
 
 
-.actions {
-    display: none;
-    gap: calc(var(--theme-spacing) * 0.5);
-    grid-area: actions;
-}
 
-.hidden {
-    opacity: 0.5;
-}
+/*.hidden {*/
+/*    opacity: 0.5;*/
+/*}*/
 
-.hasMenu {
-    min-height: calc(var(--theme-spacing) * 4.5);
-    padding-right: calc(var(--theme-spacing) * 5);
-    position: relative;
-}
+/*.hasMenu {*/
+/*    min-height: calc(var(--theme-spacing) * 4.5);*/
+/*    padding-right: calc(var(--theme-spacing) * 5);*/
+/*    position: relative;*/
+/*}*/
 
-.menuButton {
-    position: absolute;
-    right: 0;
-    top: 0;
-}
+/*.menuButton {*/
+/*    position: absolute;*/
+/*    right: 0;*/
+/*    top: 0;*/
+/*}*/
 
 @media (max-width: 599px) {
-    .actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: var(--theme-spacing);
+    .flat {
+        margin: calc(var(--theme-spacing) * 0.5);
+        margin-top: 0;
     }
 
-    .cardBordered {
-        left: calc(var(--theme-spacing) * -0.5);
-        width: calc(100% + var(--theme-spacing));
-    }
+    /*.cardBordered {*/
+    /*    left: calc(var(--theme-spacing) * -0.5);*/
+    /*    width: calc(100% + var(--theme-spacing));*/
+    /*}*/
 
-    .cardInvite {
-        bottom: 0;
-        position: fixed;
-        top: 0;
-    }
+    /*.cardInvite {*/
+    /*    bottom: 0;*/
+    /*    position: fixed;*/
+    /*    top: 0;*/
+    /*}*/
 }

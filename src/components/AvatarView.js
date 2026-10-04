@@ -37,7 +37,8 @@ const AvatarView = ({admin, className, image, icon, initials, onclick, size = un
         classes.avatar,
         statusClass,
         className || "",
-        size === "small" && classes.small
+        size === "small" && classes.small,
+        size === "smaller" && classes.smaller
     ].filter(Boolean).join(" ");
     const style = bgcolor ? {
         "--avatar-background-color": bgcolor,

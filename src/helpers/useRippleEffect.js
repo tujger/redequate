@@ -3,6 +3,7 @@ import baseStyles from "../themes/Base.module.css";
 
 export default (callback = undefined) => {
     return useCallback((event) => {
+        event.stopPropagation();
         const node = event.currentTarget;
         const rect = node.getBoundingClientRect();
 

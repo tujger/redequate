@@ -3,7 +3,7 @@ import {useTranslation} from "react-i18next";
 import {useHistory} from "react-router-dom";
 import {useFirebase, useMetaInfo, usePages, useStore} from "../controllers/General";
 import {useCurrentUserData} from "../controllers/UserData";
-import {getScrollPosition} from "../controllers/useScrollPosition";
+import {getScrollPosition} from "../helpers/useScrollPosition";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
 import ConfirmComponent from "./ConfirmComponent";
 

@@ -43,3 +43,9 @@
     height: calc(var(--theme-spacing) * 5);
     width: calc(var(--theme-spacing) * 5);
 }
+
+.smaller {
+    font-size: 0.8rem;
+    height: calc(var(--theme-spacing) * 3);
+    width: calc(var(--theme-spacing) * 3);
+}

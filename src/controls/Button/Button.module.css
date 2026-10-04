@@ -16,8 +16,8 @@
     transition: background-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
 
     &:hover {
-        background-color: var(--theme-color-highlight);
-        color: var(--theme-color-highlight-alt);
+        background-color: var(--theme-color-focus);
+        color: var(--theme-color-focus-alt);
     }
 }
 

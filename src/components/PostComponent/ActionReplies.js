@@ -33,11 +33,11 @@ export default ({postData, disableClick}) => {
             variant={"text"}
         >
             <div className={actionStyles.box}/>
-            <CounterComponent
-                counter={postData.counter("replied")}
-                path={disableClick ? `${postData.id}/replied` : undefined}
-                showZero
-            />
         </Button>
+        <CounterComponent
+            counter={postData.counter("replied")}
+            path={disableClick ? `${postData.id}/replied` : undefined}
+            showZero
+        />
     </div>
 }

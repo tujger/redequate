@@ -1,5 +1,5 @@
 import React from "react";
-import useScrollPosition from "../controllers/useScrollPosition";
+import useScrollPosition from "../helpers/useScrollPosition";
 import useRippleEffect from "../helpers/useRippleEffect";
 import styles from "./styles/FlexFabComponent.module.css";
 
