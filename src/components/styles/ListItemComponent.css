@@ -102,7 +102,7 @@
 
 .timestamp {
     align-items: center;
-    color: #888;
+    color: var(--theme-color-secondary);
     display: flex;
     flex: 0 0 auto;
     font-size: calc(var(--theme-spacing) * 1.5);

@@ -83,6 +83,7 @@ export default ({chatMeta, className, id, userComponent, userData}) => {
                 <AvatarView
                     image={userData.image}
                     initials={userData.initials}
+                    size={"small"}
                     verified={true}
                 />
             </Link>

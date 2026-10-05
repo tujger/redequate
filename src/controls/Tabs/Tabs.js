@@ -49,7 +49,12 @@ export default ({className, children = undefined, items = [], onChange, value}) 
             resizeObserver && resizeObserver.disconnect();
             typeof window !== "undefined" && window.removeEventListener("resize", updateScrollState);
         };
-    }, [items]);
+    }, [items, children]);
+
+    const fromChildren = children?.map?.((child, index) => {
+        const {children, onClick} = child.props || {};
+        return {label: children, onClick, value: items.length + 1 + index};
+    }).filter(Boolean) || [];
 
     const handleKeyDown = (event, index) => {
         let nextIndex = index;
@@ -87,11 +92,17 @@ export default ({className, children = undefined, items = [], onChange, value}) 
             ref={tabsRef}
             role={"tablist"}
         >
-            {items.map((item, index) => <Button
+            {[...items, ...fromChildren].map((item, index) => <Button
                 aria-selected={index === selectedIndex}
                 className={[styles.tab, index === selectedIndex && styles.tabSelected].filter(Boolean).join(" ")}
                 color={index === selectedIndex ? "primary" : "secondary"}
-                onClick={() => onChange && onChange(item.value)}
+                onClick={() => {
+                    if (item.onClick) {
+                        return item.onClick();
+                    } else {
+                        return onChange && onChange(item.value);
+                    }
+                }}
                 onKeyDown={event => handleKeyDown(event, index)}
                 role={"tab"}
                 size={"small"}
@@ -106,7 +117,6 @@ export default ({className, children = undefined, items = [], onChange, value}) 
                     </>
                     : item.label}
             </Button>)}
-            {children}
         </div>
         {scrollState.overflow && <Button
             aria-label={"Scroll tabs right"}

@@ -1,13 +1,12 @@
 import React from "react";
-import PropTypes from "prop-types";
 import {connect} from "react-redux";
 import {Link} from "react-router-dom";
-import {currentRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import AvatarView from "../../components/AvatarView";
+import LanguageComponent from "../../components/LanguageComponent";
 import {usePages} from "../../controllers/General";
+import {currentRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import MenuSection from "./MenuSection";
-import LanguageComponent from "../../components/LanguageComponent";
 import styles from "./styles/TopMenu.module.css";
 
 const TopMenu = props => {
@@ -29,6 +28,7 @@ const TopMenu = props => {
                 admin={currentRole(currentUserData) === Role.ADMIN}
                 image={currentUserData.image}
                 initials={currentUserData.initials}
+                size={"small"}
                 verified={currentUserData.verified}
             />
         </Link>}

@@ -30,16 +30,16 @@ export default (
     const [disabled, setDisabled] = React.useState(false);
     const [menuOpen, setMenuOpen] = React.useState(false);
 
-    const handleOpen = () => {
+    const handleOpen = (event) => {
         if (disabled) return;
         if (disableClick) return;
-        onClick?.();
+        onClick?.(event);
     };
 
     const handleKeyDown = event => {
         if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
         event.preventDefault();
-        handleOpen();
+        handleOpen(event);
     };
 
     const handleMenuOpen = event => {
