@@ -59,8 +59,6 @@ module.exports = [
         input: {
             index: 'src/index.js',
             Dispatcher: 'src/Dispatcher.js',
-            styles1: 'src/themes/Base.module.css',
-            styles2: 'src/themes/styles.js',
 
             // controllers
             DateFormat: 'src/controllers/DateFormat.js',
