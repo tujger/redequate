@@ -1,8 +1,7 @@
 import React from "react";
-import PostCardLayoutNarrow from "./PostCardLayoutNarrow";
-import PostCardLayoutWide from "./PostCardLayoutWide";
-import ReplyCardLayoutNarrow from "./ReplyCardLayoutNarrow";
 import {useWindowData} from "../../controllers/General";
+import PostCardLayout from "./PostCardLayout";
+import ReplyCardLayout from "./ReplyCardLayout";
 
 export default (props) => {
     const {level, postData, highlight} = props;
@@ -46,8 +45,8 @@ export default (props) => {
 
     return isNarrow
         ? (level > 0
-            ? <ReplyCardLayoutNarrow {...inheritProps}/>
-            : <PostCardLayoutNarrow {...inheritProps}/>)
-        : <PostCardLayoutWide {...inheritProps}/>
+            ? <ReplyCardLayout {...inheritProps}/>
+            : <PostCardLayout {...inheritProps} pattern={"vertical"}/>)
+        : <PostCardLayout {...inheritProps}/>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

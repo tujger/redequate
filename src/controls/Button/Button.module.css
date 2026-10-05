@@ -14,11 +14,6 @@
     position: relative;
     text-transform: uppercase;
     transition: background-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
-
-    &:hover {
-        background-color: var(--theme-color-focus);
-        color: var(--theme-color-focus-alt);
-    }
 }
 
 .contained {
@@ -29,6 +24,7 @@
 
     &:hover {
         box-shadow: var(--theme-card-shadow);
+        background-color: color-mix(in srgb, var(--button-color) 85%, black);
     }
 
     &.disabled {
@@ -40,6 +36,10 @@
 .text {
     background-color: transparent;
     color: var(--button-color);
+
+    &:hover {
+        background-color: var(--theme-color-focus);
+    }
 }
 
 .outlined {

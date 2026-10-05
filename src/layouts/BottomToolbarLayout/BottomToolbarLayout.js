@@ -10,7 +10,7 @@ import Titlebar from "./Titlebar";
 export default (props) => {
     const {footerComponent, menu} = props;
 
-    return <div className={styles.container} data-bottom-toolbar>
+    return <div className={["BottomToolbarLayout", styles.container].join(" ")} data-bottom-toolbar>
         <Titlebar {...props}/>
         <div aria-hidden="true" className={styles.indent}/>
         <MainContent classes={{

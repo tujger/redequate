@@ -66,6 +66,7 @@ function MainAppbar(props) {
                         admin={currentRole(currentUserData) === Role.ADMIN}
                         image={currentUserData.image}
                         initials={currentUserData.initials}
+                        size={"small"}
                         verified={currentUserData.verified}
                     />
                 </Link>}

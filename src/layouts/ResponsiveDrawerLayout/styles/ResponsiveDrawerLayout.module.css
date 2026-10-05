@@ -1,6 +1,7 @@
 .container {
     --drawer-offset: 0px;
     --toolbar-height: calc(var(--theme-spacing) * 8);
+    --theme-content-padding-right: 0;
 
     display: flex;
     flex-direction: column;
@@ -136,9 +137,11 @@
     position: relative;
 }
 
-.left {}
+.left {
+}
 
-.right {}
+.right {
+}
 
 .top {
     flex: 0 0 auto;

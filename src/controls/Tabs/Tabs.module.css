@@ -78,3 +78,12 @@
         display: inline-flex;
     }
 }
+
+
+:global(.ResponsiveDrawerLayout),
+:global(.BottomToolbarLayout) {
+    .toolbar {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}

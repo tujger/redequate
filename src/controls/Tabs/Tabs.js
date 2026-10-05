@@ -4,7 +4,7 @@ import React from "react";
 import Button from "../Button/Button";
 import styles from "./Tabs.module.css";
 
-export default ({className, items = [], onChange, value}) => {
+export default ({className, children = undefined, items = [], onChange, value}) => {
     const tabsRef = React.useRef(null);
     const selectedIndex = items.findIndex(item => item.value === value);
     const [scrollState, setScrollState] = React.useState({
@@ -106,6 +106,7 @@ export default ({className, items = [], onChange, value}) => {
                     </>
                     : item.label}
             </Button>)}
+            {children}
         </div>
         {scrollState.overflow && <Button
             aria-label={"Scroll tabs right"}

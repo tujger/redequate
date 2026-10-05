@@ -21,12 +21,7 @@
     z-index: 1;
 
     &:hover {
-        background-color: var(--theme-color-highlight);
-    }
-
-    &:focus-visible {
-        outline: calc(var(--theme-spacing) / 4) solid var(--theme-color-highlight);
-        outline-offset: calc(var(--theme-spacing) / 4);
+        background-color: color-mix(in srgb, var(--theme-color-primary) 85%, black);
     }
 
     &[data-tooltip] {

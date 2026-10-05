@@ -10,7 +10,11 @@ import styles from "./styles/ListItemComponent.css";
 export default (
     {
         avatar = undefined,
+        avatarInTitle = false,
         className = undefined,
+        disableClick = false,
+        header = undefined,
+        footer = undefined,
         menu = undefined,
         title = undefined,
         subtitle = undefined,
@@ -25,12 +29,10 @@ export default (
     const onPointerDown = useRippleEffect();
     const [disabled, setDisabled] = React.useState(false);
     const [menuOpen, setMenuOpen] = React.useState(false);
-    const patternClass = pattern
-        ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
-        : styles.cardFlat;
 
     const handleOpen = () => {
         if (disabled) return;
+        if (disableClick) return;
         onClick?.();
     };
 
@@ -56,49 +58,60 @@ export default (
         {...props}
         className={[
             styles.item,
-            // patternClass,
+            disableClick ? undefined : styles.clickable,
             styles[variant],
             className
         ].filter(Boolean).join(" ")}
         disabled={disabled}
         onClick={handleOpen}
         onKeyDown={handleKeyDown}
-        onPointerDown={onClick ? onPointerDown : undefined}
+        onPointerDown={(onClick && !disabled && !disableClick) ? onPointerDown : undefined}
     >
-        {avatar}
+        {header && <div className={styles.header}>
+            {header}
+        </div>}
         <div className={styles.content}>
-            <div className={[styles.header].filter(Boolean).join(" ")}>
-                {title && <div className={styles.title}>{title}</div>}
-                {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
-                {timestamp && <span
-                    className={styles.timestamp}
-                    title={new Date(timestamp).toLocaleString()}
-                >{toDateString(timestamp)}</span>}
+            {variant !== "vertical" && avatar}
+            <div className={styles.body}>
+                {variant === "vertical" && <div className={styles.avatar}>
+                    {avatar}
+                </div>}
+                <div className={[styles.titles].filter(Boolean).join(" ")}>
+                    {title && <div className={styles.title}>{title}</div>}
+                    {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+                    {timestamp && <span
+                        className={styles.timestamp}
+                        title={new Date(timestamp).toLocaleString()}
+                    >{toDateString(timestamp)}</span>}
+                </div>
+                {children && <div className={styles.children}>{children}</div>}
             </div>
-            {children && <div className={styles.children}>{children}</div>}
-            {menu?.map && <Select
-                className={styles.menuPosition}
-                displayEmpty
-                iconMenu
-                // onChange={onContextMenu}
+        </div>
+        {footer && <div className={styles.footer}>
+            {footer}
+        </div>}
+        {menu?.map && <Select
+            className={styles.menuPosition}
+            displayEmpty
+            iconMenu
+            // onChange={onContextMenu}
+            onClickCapture={event => {
+                event.stopPropagation();
+            }}
+            value={""}
+        >
+            {menu.map((item, index) => <SelectItem
+                children={item.label}
+                key={index}
                 onClickCapture={event => {
                     event.stopPropagation();
+                    onMenuSelect?.(event, item);
                 }}
-                value={""}
-            >
-                {menu.map((item, index) => <SelectItem
-                    children={item.label}
-                    key={index}
-                    onClickCapture={event => {
-                        event.stopPropagation();
-                        onMenuSelect?.(event, item);
-                    }}
-                    // onClick={handleSelectItemClick}
-                    value={item.value}
-                />)}
-            </Select>}
-            {menu && !menu.map && <div className={styles.menuPosition}>{menu}</div>}
-        </div>
+                // onClick={handleSelectItemClick}
+                value={item.value}
+            />)}
+        </Select>}
+        {menu && !menu.map && <div className={styles.menuPosition}>{menu}</div>}
     </ListSwipeableItemComponent>
     // classes, children, leftAction, rightAction, onClickCapture, onContextMenu
 

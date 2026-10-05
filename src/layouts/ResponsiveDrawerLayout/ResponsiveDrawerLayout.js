@@ -249,7 +249,7 @@ export default (props) => {
             </nav>
         </div>, container || document.body);
 
-    return <div className={styles.container}>
+    return <div className={["ResponsiveDrawerLayout", styles.container].join(" ")}>
         {narrow ? temporaryDrawer : <nav aria-label="Navigation menu" className={styles.drawer}>
             {drawerContent}
         </nav>}

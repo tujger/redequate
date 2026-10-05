@@ -41,3 +41,12 @@
     font-weight: 500;
     margin: 0;
 }
+
+
+:global(.ResponsiveDrawerLayout),
+:global(.BottomToolbarLayout) {
+    .toolbar {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}

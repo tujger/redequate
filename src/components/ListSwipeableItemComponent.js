@@ -2,7 +2,6 @@ import React from "react";
 import {useDrag} from "react-use-gesture";
 import {useWindowData} from "../controllers";
 import notifySnackbar from "../controllers/notifySnackbar";
-import useRippleEffect from "../helpers/useRippleEffect";
 import styles from "./styles/ListSwipeableItemComponent.css";
 
 export default (props) => {
@@ -13,9 +12,9 @@ export default (props) => {
         leftAction = undefined,
         rightAction = undefined,
         onClick = undefined,
+        onPointerDown = undefined,
         tabIndex = undefined
     } = props;
-    const onPointerDown = useRippleEffect();
     const windowData = useWindowData();
     const isNarrow = windowData.isNarrow();
 
@@ -77,7 +76,7 @@ export default (props) => {
     if (removed) return null;
     return <div
         className={styles.root} ref={ref} key={random}
-        onPointerDown={disabled ? undefined : onPointerDown}
+        onPointerDown={onPointerDown}
         tabIndex={tabIndex ?? disabled ? -1 : 0}
     >
         {isNarrow && leftAction && [

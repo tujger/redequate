@@ -1,13 +1,14 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import PostBody from "./PostBody";
-import {usePages, useWindowData} from "../../controllers/General";
-import AvatarView from "../AvatarView";
 import {toDateString} from "../../controllers/DateFormat";
-import PostMedia from "./PostMedia";
-import PostButtons from "./PostButtons";
-import PostMenu from "./PostMenu";
+import {usePages, useWindowData} from "../../controllers/General";
 import UserName from "../../controls/UserName/UserName";
+import AvatarView from "../AvatarView";
+import ListItemComponent from "../ListItemComponent";
+import PostBody from "./PostBody";
+import PostButtons from "./PostButtons";
+import PostMedia from "./PostMedia";
+import PostMenu from "./PostMenu";
 import cardStyles from "./styles/PostComponent.module.css";
 import replyStyles from "./styles/PostReplies.module.css";
 import textStyles from "./styles/PostText.module.css";
@@ -17,6 +18,39 @@ export default React.forwardRef((props, ref) => {
     const pages = usePages();
     const windowData = useWindowData();
     const ancillaryRef = React.useRef();
+
+    return <ListItemComponent
+        avatar={<Link
+            className={cardStyles.avatar}
+            // className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall}
+            onClick={evt => evt.stopPropagation()}
+            to={pages.user.route + postData.uid}
+        >
+            <AvatarView
+                // className={level > 1 ? cardStyles.avatarSmallest : cardStyles.avatarSmall}
+                image={userData.image}
+                initials={userData.initials}
+                size={level > 1 ? "smaller" : undefined}
+                verified={true}
+            />
+        </Link>}
+        className={[
+            highlighted && cardStyles.cardHighlighted,
+        ].filter(Boolean).join(" ")}
+        disableClick={disableClick}
+        menu={<PostMenu {...props}/>}
+        // onClick={handleClickPost}
+        timestamp={postData.created}
+        title={<UserName className={textStyles.label} id={userData.id}>{userData.name}</UserName>}
+        // onKeyDown={handleKeyDown}
+        variant={pattern}
+    >
+        <PostBody {...props} ref={ancillaryRef} disableClick={!disableClick}/>
+        {postData.images && <div className={[cardStyles.layout, cardStyles.cardImage].join(" ")}>
+            <PostMedia images={postData.images} mosaic/>
+        </div>}
+        {!disableButtons && <PostButtons {...props} ancillaryRef={ancillaryRef}/>}
+    </ListItemComponent>
 
     return <div className={[
         cardStyles.card,
