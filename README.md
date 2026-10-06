@@ -16,16 +16,48 @@ Copy example app and make necessary changes.
 
 https://github.com/tujger/edeqa-pwa-react-demo
 
+Choose a CSS palette by passing a theme component to `Dispatcher`:
+
+```jsx
+import {Dispatcher, ThemeDayNight, ThemeSeason} from "redequate";
+
+<Dispatcher theme={<ThemeSeason/>} {...props}/>;
+// Or use <ThemeDayNight/> for approximate local sunrise and sunset.
+```
+
+Without `theme`, `Dispatcher` uses the base palette. `ThemeSeason` selects colors by the local month. `ThemeDayNight` uses approximate daylight hours for each season without requesting location access.
+
+For a custom palette, `Theme` mounts the CSS when rendered and removes it on unmount. When building a theme inside redequate with its Rollup configuration, a regular CSS import provides the stylesheet text:
+
+```jsx
+import {Theme} from "redequate";
+import styles from "./styles.css";
+
+<Theme theme={styles}/>;
+```
+
+For a Create React App consumer, place `theme.css` in `public/` and pass its URL instead. CRA's normal CSS import applies styles globally and cannot be removed with the theme:
+
+```jsx
+import {Dispatcher, Theme} from "redequate";
+
+<Dispatcher theme={<Theme theme={{href: `${process.env.PUBLIC_URL}/theme.css`}}/>} {...props}/>;
+```
+
+Both forms replace the mounted stylesheet when `theme` changes. The CSS can set palette variables with `:root { --theme-color-primary: #6750a4; }`.
+
 ## Troubleshooting
 
 https://stackoverflow.com/questions/56021112/react-hooks-in-react-library-giving-invalid-hook-call-error
 
 
-When developing the demo against this local package, React and React DOM must resolve to the same physical packages. From the demo directory, run:
+When developing the adjacent TheWhiskyTalks app against this local package, React and React DOM must resolve to the same physical packages. After installing dependencies, run `npm run relink` from either the `redequate` or `thewhiskytalks` directory, then start the redequate watcher and the app:
 
         npm run relink
+        npm run "start core"  # in redequate
+        npm run "start secured"  # in thewhiskytalks
 
-This links the demo's `react` and `react-dom` to the canonical copies already installed in this package's `node_modules`. The library's copies are not changed when another project is relinked, so multiple projects can run at the same time. Restart the development server after relinking.
+Relink connects the app's `react` and `react-dom` to the copies installed in redequate and checks that both projects resolve each package to the same path. The app start scripts restore these links after an app-side `npm install`. Set `REDEQUATE_PROJECT` to use a different consumer directory. Restart an already running development server after relinking.
 
 All projects using this local setup must use compatible versions of React and React DOM. The current projects use version `17.0.1`.
 

@@ -8,8 +8,9 @@ export {default as Pagination} from "./FirebasePagination";
 export {default as PagesPagination} from "./PagesPagination";
 export * from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
-export {colors, createTheme, styles} from "./Theme";
-export {default as CssThemeProvider, useCssTheme} from "../themes/ThemeProvider";
+export {default as ThemeSeason} from "../themes/ThemeSeason";
+export {default as ThemeDayNight} from "../themes/ThemeDayNight";
+export {default as Theme} from "../themes/Theme";
 export {
     sendInvitationEmail,
     sendVerificationEmail,

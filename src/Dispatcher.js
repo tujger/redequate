@@ -1,3 +1,4 @@
+import "./themes/Base.module.css";
 import ThemeProvider from "@material-ui/styles/ThemeProvider";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
@@ -33,7 +34,6 @@ import useBreakpoint from "./helpers/useBreakpoint";
 import localeEn from "./locales/en-EN.json";
 import localeRu from "./locales/ru-RU.json";
 import {restoreLanguage} from "./reducers/languageReducer";
-import CssThemeProvider from "./themes/ThemeProvider";
 
 const DeviceUUID = require("device-uuid");
 
@@ -374,15 +374,14 @@ const DispatcherInitialized = (props) => {
 
     if (fatal) {
         return <ThemeProvider theme={noopMuiTheme}>
-            <CssThemeProvider mode={theme && theme.cssMode}>
+                {theme}
                 <SystemAlert message={fatal.message}/>
-            </CssThemeProvider>
-        </ThemeProvider>
+        </ThemeProvider>;
     }
 
     return <Provider store={store}>
         <ThemeProvider theme={noopMuiTheme}>
-            <CssThemeProvider mode={theme && theme.cssMode}>
+                {theme}
                 <BrowserRouter>
                     <SnackbarProvider maxSnack={4} preventDuplicate>
                         <DispatcherRoutedBody
@@ -394,7 +393,6 @@ const DispatcherInitialized = (props) => {
                     </SnackbarProvider>
                 </BrowserRouter>
                 <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-            </CssThemeProvider>
         </ThemeProvider>
     </Provider>;
 }

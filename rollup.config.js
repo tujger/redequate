@@ -29,12 +29,24 @@ module.exports = [
         }*/
         ],
         plugins: [
-            del({targets: ['core/*']}),
+            ...(!process.env.ROLLUP_WATCH ? [del({targets: ['core/*']})] : []),
             external(),
             postcss({
+                include: '**/*.module.css',
                 modules: true,
                 sourceMap: true,
                 plugins: [postcssNested()],
+            }),
+            postcss({
+                include: '**/*.css',
+                exclude: '**/*.module.css',
+
+                modules: false,
+                inject: false,
+
+                plugins: [
+                    postcssNested()
+                ]
             }),
             url(),
             babel({
@@ -71,7 +83,6 @@ module.exports = [
             PostData: 'src/components/PostComponent/PostData.js',
             UserData: 'src/controllers/UserData.js',
             WrapperControl: 'src/controllers/WrapperControl.js',
-            Theme: 'src/controllers/Theme.js',
             uploadComponentControls: 'src/components/UploadComponent/uploadComponentControls',
 
             // controls
@@ -134,6 +145,11 @@ module.exports = [
             Tags: 'src/tags/Tags.js',
             Users: 'src/pages/admin/users/Users.js',
 
+            // themes
+            Theme: 'src/themes/Theme/index.js',
+            ThemeSeason: 'src/themes/ThemeSeason/index.js',
+            ThemeDayNight: 'src/themes/ThemeDayNight/index.js',
+
             // internal
             __alertsVisitReducer: 'src/alerts/alertsVisitReducer.js',
             __alertsCounterReducer: 'src/alerts/alertsCounterReducer.js',
@@ -165,9 +181,21 @@ module.exports = [
         plugins: [
             external(),
             postcss({
+                include: '**/*.module.css',
                 modules: true,
                 sourceMap: true,
                 plugins: [postcssNested()],
+            }),
+            postcss({
+                include: '**/*.css',
+                exclude: '**/*.module.css',
+
+                modules: false,
+                inject: false,
+
+                plugins: [
+                    postcssNested()
+                ]
             }),
             url(),
             babel({

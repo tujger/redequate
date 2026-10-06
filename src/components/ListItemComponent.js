@@ -5,7 +5,7 @@ import SelectItem from "../controls/Select/SelectItem";
 import useRippleEffect from "../helpers/useRippleEffect";
 import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
 import ListSwipeableItemComponent from "./ListSwipeableItemComponent";
-import styles from "./styles/ListItemComponent.css";
+import styles from "./styles/ListItemComponent.module.css";
 
 export default (
     {
