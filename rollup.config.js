@@ -9,13 +9,40 @@ const svgr = require('@svgr/rollup').default
 const del = require('rollup-plugin-delete')
 const json = require('@rollup/plugin-json')
 
-const pkg = require('./package.json')
+const pkg = require('./package.json');
+
+const externalExports = ['react', 'react-dom', 'react-datepicker-t', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker-t/dist/react-datepicker.css', '@material-ui/core/TextField', '@material-ui/core/MenuItem', '@material-ui/core/ListItem', '@material-ui/core/InputLabel', '@material-ui/core/FormControl', '@material-ui/core/Popper', '@material-ui/core/Paper', '@material-ui/core/MenuList', '@material-ui/styles/withStyles'];
+
+const postCssModules = {
+    include: '**/*.module.css',
+    modules: true,
+    sourceMap: true,
+    plugins: [postcssNested()],
+};
+
+const postCssRaw = {
+    include: '**/*.css',
+    exclude: '**/*.module.css',
+    modules: false,
+    inject: false,
+    plugins: [postcssNested()]
+};
+
+const babelIosPwaPrompt = {
+    include: '**/node_modules/react-ios-pwa-prompt/**',
+    babelrc: false,
+    presets: ['@babel/preset-env'],
+    plugins: [
+        '@babel/plugin-proposal-nullish-coalescing-operator',
+        '@babel/plugin-proposal-optional-chaining',
+    ],
+}
 
 module.exports = [
     {
         inlineDynamicImports: true,
         input: 'src/index.js',
-        external: ['react', 'react-dom', 'react-datepicker-t', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker-t/dist/react-datepicker.css'],
+        external: externalExports,
         output: [
             {
                 file: pkg.main,
@@ -31,38 +58,15 @@ module.exports = [
         plugins: [
             ...(!process.env.ROLLUP_WATCH ? [del({targets: ['core/*']})] : []),
             external(),
-            postcss({
-                include: '**/*.module.css',
-                modules: true,
-                sourceMap: true,
-                plugins: [postcssNested()],
-            }),
-            postcss({
-                include: '**/*.css',
-                exclude: '**/*.module.css',
-
-                modules: false,
-                inject: false,
-
-                plugins: [
-                    postcssNested()
-                ]
-            }),
+            postcss(postCssModules),
+            postcss(postCssRaw),
             url(),
             babel({
                 include: '**/src/**',
             }),
             svgr(),
             resolve(),
-            babel({
-                include: '**/node_modules/react-ios-pwa-prompt/**',
-                babelrc: false,
-                presets: ['@babel/preset-env'],
-                plugins: [
-                    '@babel/plugin-proposal-nullish-coalescing-operator',
-                    '@babel/plugin-proposal-optional-chaining',
-                ],
-            }),
+            babel(babelIosPwaPrompt),
             commonjs(),
             json(),
         ]
@@ -169,7 +173,7 @@ module.exports = [
             __snackbar: 'src/components/Snackbar.js',
             __store: 'src/controllers/Store.js'
         },
-        external: ['react', 'react-dom', 'react-datepicker-t', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker-t/dist/react-datepicker.css'],
+        external: externalExports,
         output: [
             {
                 dir: 'core',
@@ -180,37 +184,14 @@ module.exports = [
         ],
         plugins: [
             external(),
-            postcss({
-                include: '**/*.module.css',
-                modules: true,
-                sourceMap: true,
-                plugins: [postcssNested()],
-            }),
-            postcss({
-                include: '**/*.css',
-                exclude: '**/*.module.css',
-
-                modules: false,
-                inject: false,
-
-                plugins: [
-                    postcssNested()
-                ]
-            }),
+            postcss(postCssModules),
+            postcss(postCssRaw),
             url(),
             babel({
                 include: '**/src/**',
             }),
             resolve(),
-            babel({
-                include: '**/node_modules/react-ios-pwa-prompt/**',
-                babelrc: false,
-                presets: ['@babel/preset-env'],
-                plugins: [
-                    '@babel/plugin-proposal-nullish-coalescing-operator',
-                    '@babel/plugin-proposal-optional-chaining',
-                ],
-            }),
+            babel(babelIosPwaPrompt),
             commonjs(),
             json(),
         ]
