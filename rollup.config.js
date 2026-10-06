@@ -11,7 +11,7 @@ const json = require('@rollup/plugin-json')
 
 const pkg = require('./package.json');
 
-const externalExports = ['react', 'react-dom', 'react-datepicker-t', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker-t/dist/react-datepicker.css', '@material-ui/core/TextField', '@material-ui/core/MenuItem', '@material-ui/core/ListItem', '@material-ui/core/InputLabel', '@material-ui/core/FormControl', '@material-ui/core/Popper', '@material-ui/core/Paper', '@material-ui/core/MenuList', '@material-ui/styles/withStyles'];
+const externalExports = ['react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css'];
 
 const postCssModules = {
     include: '**/*.module.css',
