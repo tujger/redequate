@@ -1,16 +1,16 @@
 import React from "react";
-import {useDispatch} from "react-redux";
-import Grid from "@material-ui/core/Grid";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import Pagination from "../../controllers/FirebasePagination";
+import {cacheDatas} from "../../controllers/General";
+import {UserData} from "../../controllers/UserData";
+import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import {MutualListMode} from "./MutualConstants";
 import MutualRequestItem from "./MutualRequestItem";
 import MutualSubscribeItem from "./MutualSubscribeItem";
-import {MutualListMode} from "./MutualConstants";
-import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {cacheDatas} from "../../controllers/General";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
-import Pagination from "../../controllers/FirebasePagination";
-import {UserData} from "../../controllers/UserData";
-import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import styles from "./styles/MutualList.module.css";
 
 export default props => {
     const {t} = useTranslation();
@@ -107,12 +107,12 @@ export default props => {
         } else if (mode === MutualListMode.STAMPS) {
             throw Error("'itemComponent' is not defined")
         }
-        return item => <Grid
+        return item => <div
             {...ItemProps}
-            children={JSON.stringify(item, null, " ")}
-            container
+            className={[styles.fallbackItem, ItemProps?.className].filter(Boolean).join(" ")}
             key={item.key + "_" + mixedId}
-            style={{whiteSpace: "pre-wrap", marginBottom: "16px", borderBottom: "solid lightgray 1px"}}/>
+            style={undefined}
+        >{JSON.stringify(item, null, " ")}</div>
     }
 
     const fetchItemTransform = () => {

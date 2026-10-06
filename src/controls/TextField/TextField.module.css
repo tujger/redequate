@@ -1,0 +1,124 @@
+.field {
+    color: var(--theme-color-text);
+    display: inline-flex;
+    flex-direction: column;
+    font-size: var(--theme-font-size-regular);
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+
+    &:hover {
+        & .endAdornment {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+}
+
+.hasLabel {
+    padding-top: calc(var(--theme-spacing) * 2.25);
+}
+
+.label {
+    color: var(--theme-color-secondary);
+    cursor: text;
+    font-size: var(--theme-font-size-regular);
+    left: 0;
+    line-height: 1.5;
+    pointer-events: none;
+    position: absolute;
+    top: calc(var(--theme-spacing) * 3);
+    transform-origin: left top;
+    transition: color 150ms ease-in-out, font-size 150ms ease-in-out, top 150ms ease-in-out;
+}
+
+.active .label {
+    font-size: var(--theme-font-size-small);
+    line-height: 1.66;
+    top: 0;
+}
+
+.input {
+    background-color: transparent;
+    border: 0;
+    box-shadow: inset 0 -1px 0 var(--theme-color-muted);
+    color: var(--theme-color-text);
+    font: inherit;
+    min-height: calc(var(--theme-spacing) * 4);
+    min-width: 0;
+    outline: 0;
+    padding: 0;
+    width: 100%;
+
+    &:focus {
+        box-shadow: inset 0 -2px 0 currentcolor;
+    }
+
+    &::placeholder {
+        color: var(--theme-color-muted);
+        opacity: .7;
+    }
+}
+
+.inputWithAdornment {
+    contain: none;
+}
+
+.multiline {
+    line-height: 1.5;
+    padding: calc(var(--theme-spacing) / 2) 0;
+    resize: none;
+}
+
+.endAdornment {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    height: calc(var(--theme-spacing) * 4);
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    transition: opacity 150ms ease-in-out;
+}
+
+.adornment {
+    filter: drop-shadow(1px 0 0 var(--theme-color-background)) drop-shadow(-1px 0 0 var(--theme-color-background)) drop-shadow(0 1px 0 var(--theme-color-background)) drop-shadow(0 -1px 0 var(--theme-color-background)) drop-shadow(1px 1px 0 var(--theme-color-background)) drop-shadow(-1px -1px 0 var(--theme-color-background)) drop-shadow(1px -1px 0 var(--theme-color-background)) drop-shadow(-1px 1px 0 var(--theme-color-background));
+    padding: 0;
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: var(--theme-font-size-large);
+    }
+}
+
+.primary {
+    color: var(--theme-color-primary);
+}
+
+.secondary {
+    color: var(--theme-color-secondary);
+}
+
+.helper {
+    color: var(--theme-color-text);
+    font-size: var(--theme-font-size-small);
+    line-height: 1.66;
+    margin-top: calc(var(--theme-spacing) / 2);
+}
+
+.error {
+    color: #f00;
+}
+
+.disabled {
+    cursor: default;
+    opacity: .5;
+
+    & .input {
+        cursor: default;
+    }
+}
+
+.fullWidth {
+    width: 100%;
+}

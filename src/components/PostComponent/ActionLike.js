@@ -1,31 +1,28 @@
-import React from "react";
-import {useHistory} from "react-router-dom";
-import IconButton from "@material-ui/core/IconButton";
-import LikeEmptyIcon from "@material-ui/icons/FavoriteBorder";
-import LikeFilledIcon from "@material-ui/icons/Favorite";
 import PlusIcon from "@material-ui/icons/Add";
+import LikeFilledIcon from "@material-ui/icons/Favorite";
+import LikeEmptyIcon from "@material-ui/icons/FavoriteBorder";
 import MinusIcon from "@material-ui/icons/Remove";
 import RestoreIcon from "@material-ui/icons/Replay";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
-import useTheme from "@material-ui/styles/useTheme";
-import {useDispatch} from "react-redux";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
+import counter from "../../controllers/counterControl";
+import Pagination from "../../controllers/FirebasePagination";
 import {delay, usePages} from "../../controllers/General";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
-import Pagination from "../../controllers/FirebasePagination";
-import counter from "../../controllers/counterControl";
+import actionStyles from "./styles/PostActions.module.css";
 
-export default ({postData, classes}) => {
+export default ({postData}) => {
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
-    const theme = useTheme();
     const currentUserData = useCurrentUserData();
     const {t} = useTranslation();
 
@@ -156,63 +153,59 @@ export default ({postData, classes}) => {
 
     const isPostingAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
     const isAdmin = matchRole([Role.ADMIN], currentUserData);
-    const ancillaryStyle = {margin: 0, width: 20};
 
-    return <Grid item>
-        <IconButton
+    return <div className={actionStyles.action}>
+        <Button
             aria-label={t("Common.Like")}
-            className={classes.counter}
+            className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+            color={postData.extra("like") ? "primary" : "secondary"}
             // disabled={disabled}
-            component={"div"}
+            icon={postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
             onClick={disabled ? undefined : handleClickExtra("like")}
-            size={"small"}
-            style={postData.extra("like") ? {color: theme.palette.secondary.main} : undefined}
+            // style={postData.extra("like") ? {color: "var(--theme-color-secondary)"} : undefined}
             title={t("Common.Like")}
+            variant={"text"}
         >
-            <CounterComponent
-                counter={postData.counter("like")}
-                prefix={<>
-                    {postData.extra("like") ? <LikeFilledIcon/> : <LikeEmptyIcon/>}
-                    <Box m={0.5}/>
-                </>}
-                showZero
-                zeroPrefix={<><LikeEmptyIcon/><Box m={0.5}/></>}
-            />
-        </IconButton>
+            <div className={actionStyles.box}/>
+        </Button>
+        <CounterComponent
+            counter={postData.counter("like")}
+            showZero
+        />
         {isAdmin && <>
-            <IconButton
+            <Button
                 aria-label={"Decrease"}
-                children={<MinusIcon/>}
-                className={classes.counter}
-                component={"div"}
+                className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+                color={"secondary"}
                 disabled={disabled}
+                icon={<MinusIcon/>}
                 onClick={handleMinus}
-                size={"small"}
-                style={ancillaryStyle}
+                // style={ancillaryStyle}
                 title={"Decrease"}
+                variant={"text"}
             />
-            <IconButton
+            <Button
                 aria-label={"Restore"}
-                children={<RestoreIcon/>}
-                className={classes.counter}
-                component={"div"}
+                className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+                color={"secondary"}
                 disabled={disabled}
+                icon={<RestoreIcon/>}
                 onClick={handleRestore}
-                size={"small"}
-                style={ancillaryStyle}
+                // style={ancillaryStyle}
                 title={"Restore"}
+                variant={"text"}
             />
-            <IconButton
+            <Button
                 aria-label={"Increase"}
-                children={<PlusIcon/>}
-                className={classes.counter}
-                component={"div"}
+                className={[actionStyles.iconButton, actionStyles.counter].join(" ")}
+                color={"secondary"}
                 disabled={disabled}
+                icon={<PlusIcon/>}
                 onClick={handlePlus}
-                size={"small"}
-                style={ancillaryStyle}
+                // style={ancillaryStyle}
                 title={"Increase"}
+                variant={"text"}
             />
         </>}
-    </Grid>
+    </div>
 }

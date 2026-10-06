@@ -1,23 +1,18 @@
-import React from "react";
 import moment from "moment";
-import Divider from "@material-ui/core/Divider";
-import IconButton from "@material-ui/core/IconButton";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import MenuIcon from "@material-ui/icons/MoreVert";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import Select from "../../controls/Select/Select";
 
 // eslint-disable-next-line react/prop-types
 export default ({show, range, onSelect}) => {
     const {t} = useTranslation();
-    const [state, setState] = React.useState({anchor: null});
-    const {anchor} = state;
-    if (!show) return null;
+    const [open, setOpen] = React.useState(false);
 
-    const onItemClick = ({currentTarget}) => {
-        setState({...state, anchor: null});
-        items[currentTarget.id].onSelect && items[currentTarget.id].onSelect();
-    };
+    React.useEffect(() => {
+        if (!show) setOpen(false);
+    }, [show]);
+
+    if (!show) return null;
 
     const items = {
         today: {
@@ -106,25 +101,24 @@ export default ({show, range, onSelect}) => {
     const menu = range
         ? [["today", "tomorrow", "yesterday"], ["week", "nextweek", "lastweek"], ["month", "nextmonth", "lastmonth"]]
         : [["today", "yesterday", "tomorrow"]];
+    const options = menu.reduce((result, group, index) => {
+        if (index) result.push("-");
+        group.forEach(item => result.push({
+            id: item,
+            label: items[item].label,
+            value: item,
+        }));
+        return result;
+    }, []);
 
-    return <div>
-        <IconButton onClick={ev => setState({...state, anchor: ev.currentTarget})}>
-            <MenuIcon/>
-        </IconButton>
-        <Menu
-            anchorEl={anchor}
-            keepMounted
-            onClose={() => setState({...state, anchor: null})}
-            open={Boolean(anchor)}
-        >
-            {menu.map((group, index) => <div key={index}>
-                {group.map((item) => <MenuItem
-                    id={item}
-                    key={item}
-                    onClick={onItemClick}
-                >{items[item].label}</MenuItem>)}
-                {(index < menu.length - 1) && <Divider/>}
-            </div>)}
-        </Menu>
-    </div>
+    return <Select
+        color={"secondary"}
+        displayEmpty
+        iconMenu
+        onChange={event => items[event.target.value]?.onSelect?.()}
+        onClose={() => setOpen(false)}
+        onOpen={() => setOpen(true)}
+        open={open}
+        options={options}
+    />
 };

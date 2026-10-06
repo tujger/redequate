@@ -1,0 +1,36 @@
+.read {
+    font-weight: normal;
+}
+
+.unread {
+    font-weight: bolder;
+}
+
+.presence {
+    align-self: center;
+    border-radius: var(--theme-spacing);
+    margin-left: var(--theme-spacing);
+}
+
+.offline {
+    background-color: var(--theme-color-muted);
+}
+
+.online {
+    background-color: var(--theme-color-primary);
+}
+
+@media (min-width: 600px) {
+    .presence {
+        height: calc(var(--theme-spacing) * .5);
+        margin-bottom: calc(var(--theme-spacing) * .5);
+        width: calc(var(--theme-spacing) * .5);
+    }
+}
+
+@media (max-width: 599px) {
+    .presence {
+        height: var(--theme-spacing);
+        width: var(--theme-spacing);
+    }
+}

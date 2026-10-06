@@ -1,60 +1,55 @@
-import React from 'react';
-import {render} from 'react-dom';
-import ProgressView from '../../components/ProgressView';
-import {container, store} from "../common";
+import React from "react";
+import {render, unmountComponentAtNode} from "react-dom";
 import {act} from "react-dom/test-utils";
-import ThemeProvider from "@material-ui/styles/ThemeProvider";
-import {BrowserRouter} from "react-router-dom";
-import {Provider} from "react-redux";
-import {default as defaultTheme} from "../../controllers/Theme";
-import {progressViewReducer} from '../../components/ProgressView';
-
-// jest.mock("@material-ui/styles/withStyles");
-
-// jest.mock("@material-ui/core/LinearProgress", () => ({
-//     LinearProgress: props => console.log(props)
-// }));
+import ProgressView, {progressViewReducer} from "../../components/ProgressView";
+import styles from "../../components/styles/ProgressView.module.css";
 
 describe("ProgressView", () => {
-    it("indeterminate", () => {
-        act(() => {
-            render(<Provider store={store}>
-                <ThemeProvider theme={defaultTheme}>
-                    <BrowserRouter>
-                        <ProgressView/>
-                    </BrowserRouter>
-                </ThemeProvider>
-            </Provider>, container);
-            store.dispatch(progressViewReducer.SHOW);
-        });
-        console.log(container)
-        expect(container.firstChild.getAttribute("role")).toEqual("progressbar");
+    let container;
+
+    beforeEach(() => {
+        container = document.createElement("div");
+        document.body.appendChild(container);
     });
-    it("20%", () => {
-        act(() => {
-            render(<Provider store={store}>
-                <ThemeProvider theme={defaultTheme}>
-                    <BrowserRouter>
-                        <ProgressView/>
-                    </BrowserRouter>
-                </ThemeProvider>
-            </Provider>, container);
-            store.dispatch({...progressViewReducer.SHOW, value: 20});
-        });
-        expect(container.firstChild.getAttribute("aria-valuenow")).toEqual("20");
+
+    afterEach(() => {
+        unmountComponentAtNode(container);
+        container.remove();
     });
-    it("hide", () => {
+
+    const renderProgress = (state, props = {}) => {
         act(() => {
-            render(<Provider store={store}>
-                <ThemeProvider theme={defaultTheme}>
-                    <BrowserRouter>
-                        <ProgressView/>
-                    </BrowserRouter>
-                </ThemeProvider>
-            </Provider>, container);
-            store.dispatch(progressViewReducer.HIDE);
+            render(<ProgressView {...state} {...props}/>, container);
         });
-        console.log(container.firstChild.className)
-        expect(container.firstChild.className).toMatch(/ProgressView-invisibleProgress-1/);
+        return container.firstChild;
+    };
+
+    it("shows an indeterminate bar without a numeric value", () => {
+        const state = progressViewReducer(undefined, ProgressView.SHOW);
+        const progress = renderProgress(state);
+
+        expect(progress.getAttribute("role")).toBe("progressbar");
+        expect(progress.hasAttribute("aria-valuenow")).toBe(false);
+        expect(progress.children).toHaveLength(2);
+        expect(progress.classList.contains(styles.hidden)).toBe(false);
     });
-})
+
+    it("shows a determinate percentage", () => {
+        const state = progressViewReducer(undefined, {...ProgressView.SHOW, value: 20});
+        const progress = renderProgress(state);
+
+        expect(state.value).toBe(20);
+        expect(progress.getAttribute("aria-valuenow")).toBe("20");
+        expect(progress.children).toHaveLength(1);
+    });
+
+    it("hides the bar while keeping a custom class", () => {
+        const shown = progressViewReducer(undefined, ProgressView.SHOW);
+        renderProgress(shown, {className: "custom-progress"});
+        const hidden = progressViewReducer(shown, ProgressView.HIDE);
+        const progress = renderProgress(hidden, {className: "custom-progress"});
+
+        expect(progress.classList.contains(styles.hidden)).toBe(true);
+        expect(progress.classList.contains("custom-progress")).toBe(true);
+    });
+});

@@ -2,6 +2,7 @@ const babel = require('rollup-plugin-babel')
 const commonjs = require('rollup-plugin-commonjs')
 const external = require('rollup-plugin-peer-deps-external')
 const postcss = require('rollup-plugin-postcss')
+const postcssNested = require('postcss-nested')
 const resolve = require('rollup-plugin-node-resolve')
 const url = require('rollup-plugin-url')
 const svgr = require('@svgr/rollup').default
@@ -28,10 +29,24 @@ module.exports = [
         }*/
         ],
         plugins: [
-            del({targets: ['core/*']}),
+            ...(!process.env.ROLLUP_WATCH ? [del({targets: ['core/*']})] : []),
             external(),
             postcss({
+                include: '**/*.module.css',
                 modules: true,
+                sourceMap: true,
+                plugins: [postcssNested()],
+            }),
+            postcss({
+                include: '**/*.css',
+                exclude: '**/*.module.css',
+
+                modules: false,
+                inject: false,
+
+                plugins: [
+                    postcssNested()
+                ]
             }),
             url(),
             babel({
@@ -68,8 +83,17 @@ module.exports = [
             PostData: 'src/components/PostComponent/PostData.js',
             UserData: 'src/controllers/UserData.js',
             WrapperControl: 'src/controllers/WrapperControl.js',
-            Theme: 'src/controllers/Theme.js',
             uploadComponentControls: 'src/components/UploadComponent/uploadComponentControls',
+
+            // controls
+            Button: 'src/controls/Button/Button.js',
+            Chip: 'src/controls/Chip/Chip.js',
+            Menu: 'src/controls/Menu/Menu.js',
+            Select: 'src/controls/Select/Select.js',
+            Switch: 'src/controls/Switch/Switch.js',
+            Tabs: 'src/controls/Tabs/Tabs.js',
+            TextField: 'src/controls/TextField/TextField.js',
+            UserName: 'src/controls/UserName/UserName.js',
 
             // components
             AvatarView: 'src/components/AvatarView.js',
@@ -92,7 +116,7 @@ module.exports = [
             ProgressView: 'src/components/ProgressView.js',
             ProfileComponent: 'src/components/ProfileComponent.js',
             ShareComponent: 'src/components/ShareComponent.js',
-            MetaInfoView: 'src/components/MetaInfoView.js',
+            SystemAlert: 'src/components/SystemAlert.js',
             UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
 
             // layouts
@@ -121,6 +145,11 @@ module.exports = [
             Tags: 'src/tags/Tags.js',
             Users: 'src/pages/admin/users/Users.js',
 
+            // themes
+            Theme: 'src/themes/Theme/index.js',
+            ThemeSeason: 'src/themes/ThemeSeason/index.js',
+            ThemeDayNight: 'src/themes/ThemeDayNight/index.js',
+
             // internal
             __alertsVisitReducer: 'src/alerts/alertsVisitReducer.js',
             __alertsCounterReducer: 'src/alerts/alertsCounterReducer.js',
@@ -130,7 +159,6 @@ module.exports = [
             __dateTimePicker: 'src/components/DateTimePicker/DateTimePicker.js',
             __firebase: 'src/controllers/Firebase.js',
             __lazyMentionsInputComponent: 'src/components/MentionsInputComponent/LazyMentionsComponent.js',
-            __mainContent: 'src/components/MainContent.js',
             __mutualComponentControls: 'src/components/MutualComponent/mutualComponentControls.js',
             __mutualConstants: 'src/components/MutualComponent/MutualConstants.js',
             __newPostComponentReducer: 'src/components/NewPostComponent/newPostComponentReducer.js',
@@ -153,7 +181,21 @@ module.exports = [
         plugins: [
             external(),
             postcss({
+                include: '**/*.module.css',
                 modules: true,
+                sourceMap: true,
+                plugins: [postcssNested()],
+            }),
+            postcss({
+                include: '**/*.css',
+                exclude: '**/*.module.css',
+
+                modules: false,
+                inject: false,
+
+                plugins: [
+                    postcssNested()
+                ]
             }),
             url(),
             babel({

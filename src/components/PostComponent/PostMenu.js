@@ -1,52 +1,95 @@
 import React from "react";
-import Menu from "@material-ui/core/Menu";
-import IconButton from "@material-ui/core/IconButton";
-import MenuIcon from "@material-ui/icons/MoreVert";
-import Fade from "@material-ui/core/Fade";
-import ActionShare from "./ActionShare";
+import {useTranslation} from "react-i18next";
+import {useMetaInfo} from "../../controllers/General";
 import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import Select from "../../controls/Select/Select";
+import SelectItem from "../../controls/Select/SelectItem";
 import ActionDelete from "./ActionDelete";
 import ActionEdit from "./ActionEdit";
+import ActionShare from "./ActionShare";
+import cardStyles from "./styles/PostComponent.module.css";
 
 export default (props) => {
-    const {classes, onChange, onDelete, postData} = props;
+    const {onChange, onDelete, postData} = props;
     const currentUserData = useCurrentUserData();
-    const [state, setState] = React.useState({});
-    const {anchor} = state;
+    const metaInfo = useMetaInfo();
+    const {t} = useTranslation();
+    const [open, setOpen] = React.useState(false);
+    const [editRequest, setEditRequest] = React.useState(0);
+    const [deleteOpen, setDeleteOpen] = React.useState(false);
 
     const isDeleteAllowed = currentUserData && !currentUserData.disabled
         && (postData.uid === currentUserData.id || matchRole([Role.ADMIN], currentUserData));
+    const canEdit = isDeleteAllowed && metaInfo?.settings?.postsAllowEdit;
 
-    const handleMenuClick = event => {
+    const handleMenuTrigger = event => {
         event.stopPropagation();
-        setState(state => ({...state, anchor: event.currentTarget}));
     };
 
-    const handleMenuClose = (event) => {
-        event.stopPropagation();
-        setState(state => ({...state, anchor: null}));
+    const handleMenuOpen = event => {
+        event && event.stopPropagation();
+        setOpen(true);
+    };
+
+    const handleMenuClose = event => {
+        event && event.stopPropagation();
+        setOpen(false);
+    };
+
+    const handleMenuSelect = event => {
+        handleMenuClose(event);
+        if (event.target.value === "edit") setEditRequest(request => request + 1);
+        if (event.target.value === "delete") setDeleteOpen(true);
     };
 
     const items = [];
-    items.push(<ActionShare {...props} id={"share"} key={"share"} onMenuItemClick={handleMenuClose}/>);
+    items.push(<ActionShare
+        {...props}
+        id={"share"}
+        key={"share"}
+        onMenuItemClick={handleMenuClose}
+    />);
     if (isDeleteAllowed) {
-        items.push(<ActionEdit {...props} id={"edit"} key={"edit"} onMenuItemClick={handleMenuClose} onComplete={onChange}/>);
-        items.push(<ActionDelete {...props} id={"delete"} key={"delete"} onMenuItemClick={handleMenuClose} onComplete={onDelete}/>);
+        if (canEdit) {
+            items.push(<SelectItem
+                key={"edit"}
+                value={"edit"}
+            >{t("Common.Edit")}</SelectItem>);
+        }
+        items.push(<SelectItem
+            key={"delete"}
+            value={"delete"}
+        >{t("Common.Delete")}</SelectItem>);
     }
 
     if (!items.length) return null;
     return <>
-        <IconButton className={classes.cardMenuButton} onClick={handleMenuClick}>
-            <MenuIcon/>
-        </IconButton>
-        <Menu
-            anchorEl={anchor}
-            keepMounted
+        <Select
+            className={cardStyles.cardMenuButton}
+            color={"secondary"}
+            iconMenu
+            onChange={handleMenuSelect}
+            onClick={handleMenuTrigger}
+            onMouseDown={handleMenuTrigger}
+            onOpen={handleMenuOpen}
             onClose={handleMenuClose}
-            open={Boolean(anchor)}
-            TransitionComponent={Fade}
+            open={open}
+            value={""}
         >
             {items}
-        </Menu>
-    </>
+        </Select>
+        {canEdit && <ActionEdit
+            {...props}
+            modalOnly
+            onComplete={onChange}
+            openRequest={editRequest}
+        />}
+        {isDeleteAllowed && <ActionDelete
+            {...props}
+            modalOnly
+            onComplete={onDelete}
+            onRequestClose={() => setDeleteOpen(false)}
+            open={deleteOpen}
+        />}
+    </>;
 }

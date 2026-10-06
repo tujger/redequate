@@ -1,0 +1,15 @@
+.field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.label {
+    color: var(--theme-color-secondary);
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+.placeholder {
+    color: var(--theme-color-muted);
+}

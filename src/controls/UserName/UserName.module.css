@@ -1,0 +1,13 @@
+.userName {
+    color: var(--theme-color-primary);
+    font-weight: bolder;
+    letter-spacing: var(--theme-letter-spacing);
+    margin-right: calc(var(--theme-spacing) * .5);
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--theme-color-highlight);
+    }
+}

@@ -1,0 +1,24 @@
+.root {
+    align-items: center;
+    background-color: #880000;
+    box-sizing: border-box;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0;
+    text-align: center;
+    text-wrap: balance;
+    white-space: pre-wrap;
+}
+
+.caption {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.03333em;
+    line-height: 1.66;
+}
+
+.spacer {
+    margin: var(--theme-spacing);
+}

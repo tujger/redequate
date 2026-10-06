@@ -1,93 +1,59 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import withStyles from "@material-ui/styles/withStyles";
-import makeStyles from "@material-ui/core/styles/makeStyles";
-import {usePages} from "../../../controllers/General";
 import AvatarView from "../../../components/AvatarView";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
-import {stylesList} from "../../../controllers/Theme";
-import {toDateString} from "../../../controllers/DateFormat";
-
-const stylesCurrent = makeStyles(theme => ({
-    admin: {
-        borderColor: "#00ff00",
-        borderStyle: "solid",
-        borderWidth: 2,
-    },
-    disabled: {
-        borderColor: "#ff0000",
-        borderStyle: "solid",
-        borderWidth: 2,
-    },
-    notVerified: {
-        borderColor: "#ffff00",
-        borderStyle: "solid",
-        borderWidth: 2,
-    },
-    userName: {
-        [theme.breakpoints.down("sm")]: {
-            flex: 1,
-        }
-    }
-}));
+import ListItemComponent from "../../../components/ListItemComponent";
+import {usePages} from "../../../controllers/General";
+import UserName from "../../../controls/UserName/UserName";
+import userStyles from "./styles/UserItem.module.css";
 
 // eslint-disable-next-line react/prop-types
-function UserItem({data, classes, skeleton, label}) {
+export default ({data, classes: givenClasses, skeleton, label}) => {
     const history = useHistory();
     const pages = usePages();
-    const classesCurrent = stylesCurrent();
+    const classes = {...userStyles, ...(givenClasses || {})};
     const {value: userData, _date} = data || {};
 
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>
+    if (label) {
+        return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>;
+    }
 
-    return <Card className={[classes.card, classes.cardFlat].join(" ")}>
-        <CardActionArea
-            className={classes.root}
-            onClick={() => {
-            history.push(pages.user.route + userData.id);
-        }}>
-            <CardHeader
-                classes={{content: classes.cardContent}}
-                className={[classes.cardHeader, classes.post].join(" ")}
-                action={userData.public && <Grid item className={classes.date}>
-                        {userData.public.provider}
-                    </Grid>}
-                avatar={<AvatarView
-                    className={[
-                        classes.avatar,
-                        // userData.role,
-                        userData.role === "userNotVerified" ? classesCurrent.notVerified : "",
-                        userData.role === "admin" ? classesCurrent.admin : "",
-                        userData.role === "disabled" ? classesCurrent.disabled : "",
-                    ].join(" ")}
-                    image={userData.image}
-                    initials={userData.initials}
-                    verified={true}
-                />}
-                title={<Grid container>
-                    <Grid item className={[classes.userName, classesCurrent.userName].join(" ")}>
-                        {userData.email}
-                    </Grid>
-                    <Grid item className={classes.date}>
-                        {toDateString(_date || userData.public.created)}
-                    </Grid>
-                </Grid>}
-                subheader={<>
-                    <Grid container>
-                        {userData.name}
-                    </Grid>
-                    <Grid container>
-                        {userData.public.address}
-                    </Grid>
-                </>}
-            />
-        </CardActionArea>
-    </Card>
+    if (skeleton) {
+        return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
+    }
+
+    const handleClick = () => {
+        history.push(pages.user.route + userData.id);
+    };
+
+    const handleKeyDown = event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        handleClick();
+    };
+
+    return <ListItemComponent
+        avatar={<AvatarView
+            className={[
+                userData.role === "userNotVerified" ? classes.notVerified : "",
+                userData.role === "admin" ? classes.admin : "",
+                userData.role === "disabled" ? classes.disabled : "",
+            ].join(" ")}
+            image={userData.image}
+            initials={userData.initials}
+            verified={true}
+        />}
+        timestamp={_date || userData.public.created}
+        title={<UserName id={userData.id}>
+            {userData.email}
+        </UserName>}
+        menu={userData.public && <div className={classes.cardAction}>
+            {userData.public.provider}
+        </div>}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+    >
+        {userData.name}<br/>
+        {userData.public.address}
+    </ListItemComponent>
 }
-
-export default withStyles(stylesList)(UserItem);

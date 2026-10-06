@@ -1,0 +1,5 @@
+.post {
+    --post-card-image-margin-bottom: var(--theme-spacing);
+    --post-card-image-margin-top: var(--theme-spacing);
+    --post-text-empty-margin-bottom: var(--theme-spacing);
+}

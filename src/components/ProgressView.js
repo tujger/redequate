@@ -1,30 +1,26 @@
 import React from "react";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {connect} from "react-redux"
-import withStyles from "@material-ui/styles/withStyles";
+import {connect} from "react-redux";
+import styles from "./styles/ProgressView.module.css";
 
-const styles = theme => ({
-    invisibleProgress: {
-        opacity: 0,
-    },
-    progress: {
-        // bottom: theme.spacing(-0.5),
-        bottom: 0,
-        left: 0,
-        position: "absolute",
-        right: 0,
-        zIndex: 2,
-        // [theme.breakpoints.down("sm")]: {
-        // }
-    }
-});
+const ProgressView = ({show, value = null, className}) => {
+    const indeterminate = value === null;
 
-const ProgressView = ({show, value = null, classes, className}) => {
-    return <LinearProgress
-        color={"secondary"}
-        variant={value === null ? "indeterminate" : "determinate"}
-        value={value}
-        className={[classes.progress, show ? "" : classes.invisibleProgress, className].join(" ")}/>
+    return <div
+        aria-valuemax={indeterminate ? undefined : 100}
+        aria-valuemin={indeterminate ? undefined : 0}
+        aria-valuenow={indeterminate ? undefined : value}
+        className={[
+            styles.progress,
+            indeterminate ? styles.indeterminate : styles.determinate,
+            !show && styles.hidden,
+            className,
+        ].filter(Boolean).join(" ")}
+        role={"progressbar"}
+        style={indeterminate ? undefined : {"--progress-value": `${value}%`}}
+    >
+        <span className={styles.bar}/>
+        {indeterminate && <span className={styles.barSecond}/>}
+    </div>;
 };
 
 ProgressView.SHOW = {type: "progressView_Show"};
@@ -50,4 +46,4 @@ const mapStateToProps = ({progressView}) => ({
     value: progressView.value
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(ProgressView));
+export default connect(mapStateToProps)(ProgressView);

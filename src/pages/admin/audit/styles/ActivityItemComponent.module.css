@@ -1,0 +1,158 @@
+.card {
+    background-color: var(--theme-color-paper);
+    border-width: 0;
+    box-shadow: var(--theme-card-shadow);
+    color: var(--theme-color-secondary);
+    font-size: var(--theme-font-size-regular);
+    letter-spacing: var(--theme-letter-spacing);
+    margin-bottom: calc(var(--theme-spacing) * 1.5);
+    overflow: initial;
+    position: relative;
+    transition: 1s ease background-color;
+}
+
+.card:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.cardFlat {
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 2px;
+}
+
+.cardActionArea {
+    box-sizing: border-box;
+    cursor: pointer;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+    text-align: left;
+    width: 100%;
+}
+
+.cardActionArea:focus-visible {
+    outline: 2px solid var(--theme-color-highlight);
+    outline-offset: -2px;
+}
+
+.cardHeader {
+    align-items: flex-start;
+    box-sizing: border-box;
+    display: flex;
+    min-width: 0;
+    padding: calc(var(--theme-spacing) * 2);
+}
+
+.avatarWrapper {
+    flex: 0 0 auto;
+    margin-right: calc(var(--theme-spacing) * 1.5);
+}
+
+.avatarSmall {
+    box-sizing: border-box;
+    color: lightgray;
+    height: calc(var(--theme-spacing) * 5);
+    text-decoration: none;
+    width: calc(var(--theme-spacing) * 5);
+}
+
+.cardContent {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: auto;
+}
+
+.titleRow {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.userName {
+    color: var(--theme-color-primary);
+    cursor: pointer;
+    font-weight: bolder;
+    letter-spacing: var(--theme-letter-spacing);
+    margin-right: calc(var(--theme-spacing) * 0.5);
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+}
+
+.userName:hover {
+    text-decoration: underline;
+}
+
+.date {
+    align-items: center;
+    color: var(--theme-color-secondary);
+    display: flex;
+    font-size: var(--theme-font-size-small);
+    margin-right: calc(var(--theme-spacing) * 3.5);
+    white-space: nowrap;
+}
+
+.details {
+    min-width: 0;
+}
+
+.typeRow {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: var(--theme-spacing);
+    min-width: 0;
+}
+
+.typeRow:hover {
+    color: var(--theme-color-primary);
+}
+
+.typeIcon {
+    flex: 0 0 auto;
+}
+
+.subheader {
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+}
+
+.contextTitle {
+    color: var(--theme-color-secondary);
+    font-size: var(--theme-font-size-large);
+    font-weight: 500;
+    line-height: 1.6;
+    margin: calc(var(--theme-spacing) * 2) 0 var(--theme-spacing);
+}
+
+.contextRow {
+    align-items: baseline;
+    display: flex;
+    gap: var(--theme-spacing);
+    margin-bottom: var(--theme-spacing);
+}
+
+
+/* Compatibility keys used by ItemPlaceholderComponent. */
+.cardHeaderWithLabel {
+    align-items: center;
+    white-space: pre-wrap;
+}
+
+.cardActions {
+    display: flex;
+}
+
+.root {
+    flex: 0 0 auto;
+}
+
+.avatar {
+    box-sizing: border-box;
+    color: lightgray;
+    height: calc(var(--theme-spacing) * 7);
+    text-decoration: none;
+    width: calc(var(--theme-spacing) * 7);
+}

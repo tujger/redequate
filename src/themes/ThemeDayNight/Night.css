@@ -1,0 +1,16 @@
+:root {
+    --theme-color-primary: #4d62b8;
+    --theme-color-primary-alt: #ffffff;
+    --theme-color-secondary: #39485a;
+    --theme-color-secondary-alt: #ffffff;
+    --theme-color-paper: #1e1e1e;
+    --theme-color-paper-alt: #f5f5f5;
+    --theme-color-surface-alt: #203039;
+    --theme-color-background: #121212;
+    --theme-color-background-alt: #f5f5f5;
+    --theme-color-focus: rgba(255, 255, 255, 0.12);
+    --theme-color-text: #f5f5f5;
+    --theme-color-muted: rgba(255, 255, 255, 0.45);
+    --theme-color-highlight: #9eadef;
+    --theme-color-highlight-alt: #121212;
+}

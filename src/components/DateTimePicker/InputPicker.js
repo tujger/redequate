@@ -1,19 +1,16 @@
 import React from "react";
-import IconButton from "@material-ui/core/IconButton";
-import InputAdornment from "@material-ui/core/InputAdornment";
-import Popover from "@material-ui/core/Popover";
-import TextField from "@material-ui/core/TextField";
-import Cancel from "@material-ui/icons/Cancel";
-import {useTranslation} from "react-i18next";
+import TextField from "../../controls/TextField/TextField";
+import ModalComponent from "../ModalComponent";
 import normalizeDateInput from "./normalizedDateInput";
 import Picker from "./Picker";
 
 export default props => {
-    // eslint-disable-next-line react/prop-types
-    const {classes, disabled, label, format = "L LT", onChange, range, date: givenDate, start: givenStart, end: givenEnd, InputProps, PopoverProps, color = "primary"} = props;
-    const [state, setState] = React.useState({anchor: null});
-    const {anchor} = state;
-    const {t} = useTranslation();
+    const {disabled, label, format = "L LT", onChange, range, date: givenDate, start: givenStart, end: givenEnd, color = "primary"} = props;
+    const [anchor, setAnchor] = React.useState(null);
+
+    React.useEffect(() => {
+        if (disabled) setAnchor(null);
+    }, [disabled]);
 
     const date = normalizeDateInput(givenDate);
     const start = normalizeDateInput(givenStart);
@@ -30,63 +27,46 @@ export default props => {
         }
     };
 
-    const Popup = () => <Popover
-        classes={{paper: classes.popper}}
-        anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "center",
-        }}
-        transformOrigin={{
-            vertical: "top",
-            horizontal: "center",
-        }}
-        {...PopoverProps}
-        anchorEl={anchor}
-        children={<Picker
-            {...props}
-            onChange={(...args) => {
-                setState({...state, anchor: null});
-                onChange(...args);
-            }}
-        />}
-        onClose={() => setState({...state, anchor: null})}
-        open={true}
-    />;
+    const openPicker = event => {
+        if (!disabled) setAnchor(event.currentTarget.closest("label"));
+    };
+    const closePicker = event => {
+        setAnchor(null);
+        if (event?.key === "Escape") {
+            anchor?.querySelector("input")?.focus();
+        }
+    };
+    const selectDate = (...args) => {
+        setAnchor(null);
+        anchor?.querySelector("input")?.focus();
+        onChange(...args);
+    };
+    const handleFieldChange = event => {
+        if (event.target.value === "") {
+            onChange(null, null);
+        }
+    };
 
-    return <React.Fragment>
+    return <>
         <TextField
+            clearable
             color={color}
             disabled={disabled}
-            label={label}
             fullWidth
-            title={valueRange()}
-            value={valueRange()}
-            InputProps={{
-                endAdornment: (((InputProps && InputProps.value) || valueRange()) && !disabled)
-                    ? <InputAdornment position='end'>
-                        <IconButton
-                            aria-label={"clear"}
-                            children={<Cancel/>}
-                            edge={"end"}
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                onChange(null, null);
-                            }}
-                            title={t("Common.Clear")}
-                        />
-                    </InputAdornment> : null,
-                value: valueRange(),
-                ...InputProps
-            }}
-            onClick={(event) => {
-                if (disabled) return;
-                setState({
-                    ...state,
-                    anchor: event.currentTarget,
-                });
+            label={label}
+            onChange={handleFieldChange}
+            onClick={openPicker}
+            onKeyDown={event => {
+                if (disabled || !["Enter", " ", "ArrowDown"].includes(event.key)) return;
+                event.preventDefault();
+                openPicker(event);
             }}
             readOnly
+            title={valueRange()}
+            value={valueRange()}
         />
-        {Boolean(anchor) && <Popup/>}
-    </React.Fragment>
+        {anchor && <ModalComponent anchorEl={anchor} onClose={closePicker}>
+            <Picker {...props} onChange={selectDate}/>
+        </ModalComponent>}
+    </>;
 }

@@ -1,26 +1,27 @@
-import React from "react";
-import {useHistory} from "react-router-dom";
-import IconButton from "@material-ui/core/IconButton";
-import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
 import ChatFilledIcon from "@material-ui/icons/Chat";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
-import {useDispatch} from "react-redux";
+import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {useHistory} from "react-router-dom";
 import {usePages} from "../../controllers/General";
+import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import actionStyles from "./styles/PostActions.module.css";
 
-export default ({postData, classes, disableClick}) => {
+export default ({postData, disableClick}) => {
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
     const {t} = useTranslation();
 
-    return <Grid item>
-        <IconButton
-            className={classes.counter}
-            component={"div"}
+    return <div className={actionStyles.action}>
+        <Button
+            aria-label={t("Post.Replies")}
+            className={actionStyles.iconButton}
+            color={"secondary"}
+            icon={postData.counter("replied") ? <ChatFilledIcon/> : <ChatEmptyIcon/>}
             onClick={event => {
                 event.stopPropagation();
                 dispatch({type: lazyListComponentReducer.REFRESH});
@@ -28,16 +29,15 @@ export default ({postData, classes, disableClick}) => {
                     onlyReplies: !!postData.counter("replied"),
                 })
             }}
-            size={"small"}
             title={t("Post.Replies")}
+            variant={"text"}
         >
-            <CounterComponent
-                counter={postData.counter("replied")}
-                path={disableClick ? `${postData.id}/replied` : undefined}
-                prefix={<><ChatFilledIcon/><Box m={0.5}/></>}
-                showZero
-                zeroPrefix={<><ChatEmptyIcon/><Box m={0.5}/></>}
-            />
-        </IconButton>
-    </Grid>
+            <div className={actionStyles.box}/>
+        </Button>
+        <CounterComponent
+            counter={postData.counter("replied")}
+            path={disableClick ? `${postData.id}/replied` : undefined}
+            showZero
+        />
+    </div>
 }

@@ -1,140 +1,103 @@
-import React from "react";
-import PropTypes from "prop-types";
-import Card from "@material-ui/core/Card";
-import IconButton from "@material-ui/core/IconButton";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import CardContent from "@material-ui/core/CardContent";
-import CardActions from "@material-ui/core/CardActions";
-import CardMedia from "@material-ui/core/CardMedia";
-import SnackbarContent from "@material-ui/core/SnackbarContent";
-import Collapse from "@material-ui/core/Collapse";
-import Button from "@material-ui/core/Button";
 import CloseIcon from "@material-ui/icons/Close";
-import ExpandIcon from "@material-ui/icons/ExpandMore";
 import CollapseIcon from "@material-ui/icons/ExpandLess";
-import withStyles from "@material-ui/styles/withStyles";
+import ExpandIcon from "@material-ui/icons/ExpandMore";
+import React from "react";
+import Button from "../controls/Button/Button";
+import useRippleEffect from "../helpers/useRippleEffect";
+import styles from "./styles/RichSnackbarContent.module.css";
 
-const styles = theme => ({
-    error: {
-        backgroundColor: theme.palette.error.main,
-        color: theme.palette.error.contrastText,
-    },
-    info: {
-        backgroundColor: theme.palette.info.main,
-        color: theme.palette.info.contrastText,
-    },
-    success: {
-        backgroundColor: theme.palette.success.main,
-        color: theme.palette.success.contrastText,
-    },
-    warning: {
-        backgroundColor: theme.palette.warning.dark,
-        color: theme.palette.warning.contrastText,
-    },
+export default React.forwardRef((props, ref) => {
+    const {
+        body,
+        buttonLabel,
+        closeAfterClick = true,
+        closeHandler,
+        image,
+        message,
+        onButtonClick,
+        onClick,
+        variant = "default",
+    } = props;
+    const [expanded, setExpanded] = React.useState(false);
+    const onMessagePointerDown = useRippleEffect();
+    const onCardPointerDown = useRippleEffect();
+    const hasCard = Boolean(body || image);
+    const cardShown = hasCard && expanded;
 
-    snackbarContent: {}
-});
+    const handleAction = event => {
+        event.stopPropagation();
+        onButtonClick?.(event);
+        closeHandler();
+    };
+    const handleCardClick = event => {
+        onClick?.(event);
+        if (closeAfterClick) closeHandler();
+    };
+    const handleKeyboardClick = callback => event => {
+        if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        callback(event);
+    };
 
-const RichSnackbarContent = withStyles(styles)(React.forwardRef((props, ref) => {
-    const {body, buttonLabel, classes, closeAfterClick = true, closeHandler, image, message, onButtonClick, onClick, variant = "default"} = props;
-    const [state, setState] = React.useState({expanded: false});
-    const {expanded} = state;
-
-    try {
-        const customAction = (color) => <Button
-            aria-label={buttonLabel}
-            children={buttonLabel}
-            size={"small"}
-            color={color}
-            onClickCapture={((evt) => {
-                evt.stopPropagation();
-                if (onButtonClick) {
-                    if (onButtonClick(evt) === true) closeHandler();
-                    else closeHandler();
-                }
-            })}
-        />;
-        const expandAction = () => <IconButton
-            size={"small"} aria-label={"close"} color={"inherit"}
-            onClickCapture={(evt) => {
-                evt.stopPropagation();
-                setState({...state, expanded: true});
-            }}>
-            <ExpandIcon fontSize={"small"}/>
-        </IconButton>;
-        const collapseAction = () => <IconButton
-            size={"small"} aria-label={"close"} color={"inherit"}
-            onClickCapture={(evt) => {
-                evt.stopPropagation();
-                setState({...state, expanded: false});
-            }}>
-            <CollapseIcon fontSize={"small"}/>
-        </IconButton>;
-        const closeAction = () => <IconButton
-            size={"small"} aria-label={"close"} color={"inherit"}
-            onClickCapture={(evt) => {
-                evt.stopPropagation();
-                closeHandler();
-            }}>
-            <CloseIcon fontSize={"small"}/>
-        </IconButton>;
-        const clickHandler = evt => {
-            onClick && onClick(evt);
-            if (closeAfterClick) closeHandler();
-        };
-
-        const cardExists = body || image;
-        const cardShown = cardExists && expanded;
-
-        return <div className={classes.snackbarContent} ref={ref}>
-            <SnackbarContent
-                message={message}
-                className={["", classes[variant]].join(" ")}
-                action={<>
-                    {buttonLabel && !cardShown ? customAction("inherit") : null}
-                    {cardExists ? (cardShown ? collapseAction() : expandAction()) : null}
-                    {buttonLabel ? (onButtonClick ? closeAction() : null) : closeAction()}
-                </>}
+    return <div className={styles.root} ref={ref}>
+        <div className={[styles.header, styles[variant]].filter(Boolean).join(" ")}>
+            <div
+                className={[styles.message, onClick && styles.clickable].filter(Boolean).join(" ")}
                 onClick={onClick}
-            />
-            {cardExists && <Collapse in={cardShown} timeout={"auto"} unmountOnExit>
-                <Card raised>
-                    <CardActionArea style={{display: "flex", alignItems: "stretch"}} onClick={clickHandler}>
-                        {image && <CardMedia
-                            image={image}
-                            title={message}
-                            style={{
-                                backgroundSize: "contain",
-                                height: body ? "auto" : 150,
-                                margin: 4,
-                                width: body ? 100 : "100%",
-                            }}
-                        />}
-                        {body && <CardContent>
-                            {body}
-                        </CardContent>}
-                    </CardActionArea>
-                    <CardActions>
-                        {customAction("primary")}
-                    </CardActions>
-                </Card>
-            </Collapse>}
+                onKeyDown={onClick ? handleKeyboardClick(onClick) : undefined}
+                onPointerDown={onClick ? onMessagePointerDown : undefined}
+                role={onClick ? "button" : undefined}
+                tabIndex={onClick ? 0 : undefined}
+            >{message}</div>
+            <div className={styles.headerActions}>
+                {buttonLabel && !cardShown && <Button
+                    color={"inherit"}
+                    onClick={handleAction}
+                    size={"small"}
+                    variant={"text"}
+                >{buttonLabel}</Button>}
+                {hasCard && <Button
+                    color={"inherit"}
+                    icon={cardShown ? <CollapseIcon fontSize={"small"}/> : <ExpandIcon fontSize={"small"}/>}
+                    onClick={() => setExpanded(value => !value)}
+                    size={"small"}
+                    title={cardShown ? "Collapse" : "Expand"}
+                />}
+                {(!buttonLabel || onButtonClick) && <Button
+                    color={"inherit"}
+                    icon={<CloseIcon fontSize={"small"}/>}
+                    onClick={() => closeHandler()}
+                    size={"small"}
+                    title={"Close"}
+                />}
+            </div>
         </div>
-    } catch (e) {
-        console.error(e);
-    }
-}));
-
-RichSnackbarContent.propTypes = {
-    body: PropTypes.any,
-    buttonLabel: PropTypes.string,
-    closeAfterClick: PropTypes.bool,
-    closeHandler: PropTypes.func.isRequired,
-    image: PropTypes.string,
-    message: PropTypes.any.isRequired,
-    onButtonClick: PropTypes.func,
-    onClick: PropTypes.func,
-    variant: PropTypes.oneOf(["default", "error", "warning", "info", "success"])
-};
-
-export default RichSnackbarContent;
+        {cardShown && <div className={styles.card}>
+            <div
+                className={styles.cardAction}
+                onClick={handleCardClick}
+                onKeyDown={handleKeyboardClick(handleCardClick)}
+                onPointerDown={onCardPointerDown}
+                role={"button"}
+                tabIndex={0}
+            >
+                {image && <div
+                    aria-label={typeof message === "string" ? message : undefined}
+                    className={[styles.image, !body && styles.imageOnly].filter(Boolean).join(" ")}
+                    role={"img"}
+                    style={{backgroundImage: `url(${image})`}}
+                />}
+                {body && <div className={styles.body}>{body}</div>}
+            </div>
+            {buttonLabel && <div className={styles.cardActions}>
+                <Button
+                    color={"primary"}
+                    onClick={handleAction}
+                    variant={"text"}
+                >
+                    {buttonLabel}
+                </Button>
+            </div>}
+        </div>}
+    </div>;
+});

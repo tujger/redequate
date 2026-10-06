@@ -1,0 +1,61 @@
+.appbar {
+    background-color: var(--theme-color-primary);
+    box-shadow: var(--theme-card-shadow);
+    color: var(--theme-color-primary-alt);
+    display: flex;
+    flex-direction: column;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 100%;
+    z-index: 1100;
+}
+
+.toolbar {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    height: calc(var(--theme-spacing) * 5);
+    min-height: calc(var(--theme-spacing) * 5);
+    padding-left: var(--theme-spacing);
+    padding-right: var(--theme-spacing);
+    position: relative;
+}
+
+.back {
+    height: 100%;
+    min-height: 0;
+    padding-left: 0;
+    padding-right: 0;
+    z-index: 1;
+}
+
+.title {
+    flex: 1 1 auto;
+    font-size: 1.25rem;
+    font-weight: bold;
+    left: 0;
+    line-height: 1.6;
+    margin: 0;
+    overflow: hidden;
+    position: absolute;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.profileLink {
+    color: inherit;
+    cursor: default;
+    position: absolute;
+    right: var(--theme-spacing);
+    text-decoration: none;
+    z-index: 1;
+}
+
+.avatar {
+    height: calc(var(--theme-spacing) * 4);
+    width: calc(var(--theme-spacing) * 4);
+}

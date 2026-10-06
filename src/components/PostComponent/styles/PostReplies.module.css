@@ -1,0 +1,38 @@
+.reply {
+}
+
+.replyRow {
+    align-items: flex-start;
+    display: flex;
+    width: 100%;
+}
+
+.replyIndent {
+    flex: 0 0 auto;
+}
+
+.sectionComment {
+    width: 100%;
+}
+
+.sectionComment .replyIndent {
+    width: calc(var(--theme-spacing) * 8.5);
+}
+
+.sectionReply {
+    width: 100%;
+}
+
+.sectionReply .replyIndent {
+    width: calc(var(--theme-spacing) * 4);
+}
+
+@media (max-width: 599px) {
+    .sectionComment .replyIndent {
+        width: calc(var(--theme-spacing) * 6.5);
+    }
+
+    .sectionReply .replyIndent {
+        width: 0;
+    }
+}

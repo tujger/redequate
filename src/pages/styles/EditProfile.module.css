@@ -1,0 +1,117 @@
+.profile {
+    display: flex;
+    gap: var(--theme-spacing);
+}
+
+.profileFieldImage {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+}
+
+.profileImage {
+    color: darkgray;
+    height: calc(var(--theme-spacing) * 18);
+    object-fit: cover;
+    width: calc(var(--theme-spacing) * 18);
+}
+
+.clearImage {
+    background-color: transparent;
+    color: white;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.photoActions {
+    display: flex;
+    margin-top: var(--theme-spacing);
+    width: 100%;
+}
+
+.profileFields {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.fieldRow {
+    align-items: flex-end;
+    display: flex;
+    gap: var(--theme-spacing);
+    min-width: 0;
+}
+
+.fieldIcon {
+    flex: 0 0 auto;
+}
+
+.fieldControl {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.fieldSpacer {
+    height: var(--theme-spacing);
+}
+
+.largeSpacer {
+    height: calc(var(--theme-spacing) * 2);
+}
+
+.helperError {
+    color: #f00;
+    display: block;
+    font-size: .75rem;
+    line-height: 1.66;
+    margin-top: calc(var(--theme-spacing) / 2);
+}
+
+.notifications {
+    align-items: center;
+    display: inline-flex;
+    gap: var(--theme-spacing);
+}
+
+.actionGroup {
+    display: flex;
+    gap: var(--theme-spacing);
+    width: 100%;
+}
+
+.deleteAction {
+    display: flex;
+    justify-self: center;
+    margin-top: calc(var(--theme-spacing) * 8);
+
+}
+
+.mobileOnly {
+    display: none;
+}
+
+@media (max-width: 599px) {
+    .profile {
+        flex-direction: column;
+    }
+
+    .profileFieldImage {
+        width: 100%;
+    }
+
+    .profileImage {
+        height: calc(var(--theme-spacing) * 25);
+        width: calc(var(--theme-spacing) * 25);
+    }
+
+    .desktopOnly {
+        display: none;
+    }
+
+    .mobileOnly {
+        display: inline-flex;
+    }
+}

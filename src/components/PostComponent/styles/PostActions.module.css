@@ -1,0 +1,22 @@
+.action {
+    align-items: center;
+    display: flex;
+}
+
+.replyButton {
+    margin-left: calc(var(--theme-spacing) * 1.5);
+    padding: 0;
+    text-transform: none;
+}
+
+.button, .iconButton {
+    border-radius: 50%;
+    min-height: calc(var(--theme-spacing) * 3);
+    padding: calc(var(--theme-spacing) * .1);
+}
+
+.box {
+    display: inline-block;
+    height: calc(var(--theme-spacing) * .5);
+    width: calc(var(--theme-spacing) * .5);
+}

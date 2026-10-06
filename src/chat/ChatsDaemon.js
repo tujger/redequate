@@ -1,16 +1,16 @@
 import React from "react";
-import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
-import Pagination from "../controllers/FirebasePagination";
-import {ChatMeta} from "./ChatMeta";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import {fetchCallable} from "../controllers/Firebase";
-import notifySnackbar from "../controllers/notifySnackbar";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {fetchCallable} from "../controllers/Firebase";
+import Pagination from "../controllers/FirebasePagination";
+import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {useCurrentUserData, UserData} from "../controllers/UserData";
+import {ChatMeta} from "./ChatMeta";
 import {chatsCounterReducer} from "./chatsCounterReducer";
 
-export const ChatsDaemon = ({clearText = text => text}) => {
+export default ({clearText = text => text}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -86,11 +86,6 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                     .catch(console.error);
             });
 
-        // pagination.next()
-        //     .then(chats => {
-        //         chats.forEach(chat => installListenerIfNeeded(chat.key))
-        //     })
-        //     .catch(console.error);
         daemonNew.on("child_added", snapshot => {
             return installListenerIfNeeded(snapshot.key);
         });
@@ -105,7 +100,6 @@ export const ChatsDaemon = ({clearText = text => text}) => {
                 id && metas[id] && metas[id].unwatch();
             }
         }
-        // eslint-disable-next-line
     }, []);
     console.log("[ChatsDaemon] installed")
     return null;

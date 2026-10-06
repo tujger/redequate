@@ -1,58 +1,36 @@
-import React from "react";
-import {useHistory, useParams} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
-import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
-import Typography from "@material-ui/core/Typography";
-import FixIcon from "@material-ui/icons/BugReport";
-import {useDispatch} from "react-redux";
 import AddIcon from "@material-ui/icons/Add";
+import FixIcon from "@material-ui/icons/BugReport";
 import EditIcon from "@material-ui/icons/Edit";
 import ShareIcon from "@material-ui/icons/Share";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
-import {fetchCallable} from "../controllers/Firebase";
-import notifySnackbar from "../controllers/notifySnackbar";
+import {useDispatch} from "react-redux";
+import {useHistory, useParams} from "react-router-dom";
+import FlexFabComponent from "../components/FlexFabComponent";
+import InfoComponent from "../components/InfoComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import ProgressView from "../components/ProgressView";
-import Pagination from "../controllers/FirebasePagination";
 import LoadingComponent from "../components/LoadingComponent";
-import NavigationToolbar from "../components/NavigationToolbar";
 import MentionedTextComponent from "../components/MentionedTextComponent";
+import ActionComponent from "../components/MutualComponent/ActionComponent";
+import MutualComponent from "../components/MutualComponent/MutualComponent";
+import NavigationToolbar from "../components/NavigationToolbar";
+import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import PostComponent from "../components/PostComponent/PostComponent";
 import postItemTransform from "../components/PostComponent/postItemTransform";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {matchRole, Role, useCurrentUserData} from "../controllers/UserData";
-import {useFirebase, usePages, useWindowData} from "../controllers/General";
-import MutualComponent from "../components/MutualComponent/MutualComponent";
-import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
-import {styles} from "../controllers/Theme";
-import InfoComponent from "../components/InfoComponent";
+import ProgressView from "../components/ProgressView";
 import ShareComponent from "../components/ShareComponent";
-import ActionComponent from "../components/MutualComponent/ActionComponent";
-import FlexFabComponent from "../components/FlexFabComponent";
+import {fetchCallable} from "../controllers/Firebase";
+import Pagination from "../controllers/FirebasePagination";
+import {useFirebase, usePages, useWindowData} from "../controllers/General";
+import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {matchRole, Role, useCurrentUserData} from "../controllers/UserData";
+import Button from "../controls/Button/Button";
+import baseStyles from "../themes/Base.module.css";
+import styles from "./styles/Tag.module.css";
 
-const stylesCurrent = theme => ({
-    follow: {
-        borderColor: theme.palette.secondary.main,
-        fontSize: theme.typography.caption.fontSize,
-        fontWeight: "initial",
-        textTransform: "initial",
-    },
-    profileFields: {
-        marginBottom: 0,
-    },
-    profileFieldImage: {
-        [theme.breakpoints.up("sm")]: {
-            width: theme.spacing(40),
-        },
-    },
-    profileImage: {
-        borderRadius: theme.spacing(2),
-    },
-});
-
-const Tag = ({classes, allowOwner = true}) => {
+export default ({allowOwner = true}) => {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages()
@@ -118,61 +96,60 @@ const Tag = ({classes, allowOwner = true}) => {
         <NavigationToolbar
             alignItems={"flex-end"}
             justify={"center"}
-            className={classes.top}
             mediumButton={<>
-                {isCurrentUserAdmin && <IconButton
+                {isCurrentUserAdmin && <Button
                     aria-label={t("Common.Fix possible errors")}
-                    children={<FixIcon/>}
+                    color={"secondary"}
+                    icon={<FixIcon/>}
                     onClick={fixErrors}
                     title={t("Common.Fix possible errors")}
+                    variant={"text"}
                 />}
-                {(isCurrentUserAdmin || isOwner) && <IconButton
+                {(isCurrentUserAdmin || isOwner) && <Button
                     aria-label={t("Common.Edit")}
-                    children={<EditIcon/>}
+                    color={"secondary"}
+                    icon={<EditIcon/>}
                     onClick={() => history.push(pages.edittag.route + tag.key)}
                     title={t("Common.Edit")}
+                    variant={"text"}
                 />}
             </>}
             rightButton={<ShareComponent
-                component={<IconButton
+                component={<Button
                     aria-label={t("Common.Share")}
-                    children={<ShareIcon/>}
+                    color={"secondary"}
+                    icon={<ShareIcon/>}
+                    variant={"text"}
                 />}
                 text={t("Common.Share")}
                 title={t("Common.Share")}
                 url={window.location.origin + pages.tag.route + tag.value.id}
             />}
         />
-        <Grid container className={classes.center}>
-            <Grid container className={classes.profile}>
-                {tag.value.image && <Grid item className={classes.profileFieldImage}>
+        <div className={baseStyles.content}>
+            <div className={styles.profile}>
+                {tag.value.image && <div className={styles.profileFieldImage}>
                     <img
                         alt={""}
-                        className={classes.profileImage}
+                        className={styles.profileImage}
                         src={tag.value.image}
                     />
-                </Grid>}
-                <Grid item className={classes.profileFields}>
-                    <Grid container className={classes.profileField}>
-                        <Typography variant={"h6"} style={{whiteSpace: "pre-wrap"}}>
+                </div>}
+                <div className={styles.profileFields}>
+                    <div className={styles.profileField}>
+                        <h6 className={styles.title}>
                             {tag.value.label} {tag.value.hidden && <>(hidden)</>}
-                        </Typography>
-                    </Grid>
-                    <Grid container className={classes.profileField}>
-                        <Typography variant={"body2"} style={{whiteSpace: "pre-wrap"}}>
+                        </h6>
+                    </div>
+                    <div className={styles.profileField}>
+                        <p className={styles.bodyText}>
                             <MentionedTextComponent
                                 mentions={[mentionTags, mentionUsers]}
                                 text={tag.value.description}
                             />
-                        </Typography>
-                    </Grid>
-                    <Grid container spacing={1} className={classes.profileField}>
-                        {/*<ShareComponent
-                            component={<ActionComponent label={"Invite"}/>}
-                            text={"Share"}
-                            title={"Share"}
-                            url={window.location.origin + pages.tag.route + tag.value.id}
-                        />*/}
+                        </p>
+                    </div>
+                    <div className={[styles.profileField, styles.profileActions].join(" ")}>
                         <MutualComponent
                             counterComponent={<InfoComponent suffix={"follower(s)"}/>}
                             mutualId={tag.key}
@@ -183,11 +160,11 @@ const Tag = ({classes, allowOwner = true}) => {
                             counter={false}
                             // unsubscribeComponent={<ActionComponent label={"Unfollow"}/>}
                         />
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Grid>
-        <Grid container className={classes.center}>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div className={baseStyles.content}>
             <LazyListComponent
                 itemComponent={item => <PostComponent
                     key={item.id}
@@ -216,7 +193,7 @@ const Tag = ({classes, allowOwner = true}) => {
                 })}
                 placeholder={<PostComponent skeleton={true}/>}
             />
-        </Grid>
+        </div>
         {!tag.value.hidden && <NewPostComponent
             buttonComponent={<FlexFabComponent
                 icon={<AddIcon/>}
@@ -239,5 +216,3 @@ const Tag = ({classes, allowOwner = true}) => {
         />}
     </>
 };
-
-export default withStyles(stylesCurrent)(withStyles(styles)(Tag));

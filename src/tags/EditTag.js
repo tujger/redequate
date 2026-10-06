@@ -1,80 +1,31 @@
-import React from "react";
-import {useHistory, useParams} from "react-router-dom";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import Button from "@material-ui/core/Button";
-import Typography from "@material-ui/core/Typography";
-import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
-import Hidden from "@material-ui/core/Hidden";
-import Box from "@material-ui/core/Box";
-import {useDispatch} from "react-redux";
-import Switch from "@material-ui/core/Switch";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import IconButton from "@material-ui/core/IconButton";
 import ClearIcon from "@material-ui/icons/Clear";
-import withStyles from "@material-ui/styles/withStyles";
 import TagIcon from "@material-ui/icons/Label";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
-import ProgressView from "../components/ProgressView";
-import notifySnackbar from "../controllers/notifySnackbar";
-import {
-    uploadComponentClean,
-    uploadComponentPublish
-} from "../components/UploadComponent/uploadComponentControls";
-import LoadingComponent from "../components/LoadingComponent";
-import UploadComponent from "../components/UploadComponent/UploadComponent";
-import MentionsInputComponent from "../components/MentionsInputComponent/MentionsInputComponent";
-import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import {useDispatch} from "react-redux";
+import {useHistory, useParams} from "react-router-dom";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {styles} from "../controllers/Theme";
-import Pagination from "../controllers/FirebasePagination";
-import {
-    matchRole,
-    normalizeSortName,
-    Role,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
-import MentionedTextComponent, {tokenizeText} from "../components/MentionedTextComponent";
-import {mutualRequest} from "../components/MutualComponent";
-import {updateActivity} from "../pages/admin/audit/auditReducer";
+import LoadingComponent from "../components/LoadingComponent";
 import MentionedSelectComponent from "../components/MentionedSelectComponent";
+import MentionedTextComponent, {tokenizeText} from "../components/MentionedTextComponent";
+import MentionsInputComponent from "../components/MentionsInputComponent/MentionsInputComponent";
+import {mutualRequest} from "../components/MutualComponent";
+import ProgressView from "../components/ProgressView";
+import UploadComponent from "../components/UploadComponent/UploadComponent";
+import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
+import Pagination from "../controllers/FirebasePagination";
+import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
+import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import Button from "../controls/Button/Button";
+import Switch from "../controls/Switch/Switch";
+import TextField from "../controls/TextField/TextField";
+import {updateActivity} from "../pages/admin/audit/auditReducer";
+import baseStyles from "../themes/Base.module.css";
+import styles from "./styles/EditTag.module.css";
 
-const stylesCurrent = theme => ({
-    profileImage: {
-        [theme.breakpoints.down("sm")]: {
-            borderRadius: theme.spacing(2),
-            width: "100%"
-        },
-    },
-    profileField: {
-        [theme.breakpoints.down("sm")]: {
-            textAlign: "initial",
-        },
-    },
-    label: {
-        color: "inherit",
-        cursor: "default",
-        textDecoration: "none",
-    },
-    clearImage: {
-        backgroundColor: "transparent",
-        position: "absolute",
-        right: 0,
-        top: 0,
-        [theme.breakpoints.up("sm")]: {
-            color: "white",
-        },
-    },
-    _description: {
-        height: 120
-    },
-    content: {},
-});
-
-const EditTag = ({classes, allowOwner = true, ...rest}) => {
+export default ({allowOwner = true}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -430,33 +381,28 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
     }, [tag])
 
     if (!tag) return <LoadingComponent/>;
-    return <Grid container className={classes.center}>
-        <Grid container className={classes.profile} spacing={1}>
-            <Grid item className={classes.profileFieldImage}>
+    return <div className={baseStyles.content}>
+        <div className={styles.profile}>
+            <div className={styles.profileFieldImage}>
                 {image
-                    ? <img src={image} alt={""} className={classes.profileImage}/>
-                    : <TagIcon className={classes.profileImage}/>}
-                {image && <Hidden smDown>
-                    <IconButton
-                        aria-label={t("Common.Clear")}
-                        children={<ClearIcon/>}
-                        className={classes.clearImage}
-                        onClick={() => {
-                            setState({...state, image: "", uppy: null});
-                        }}
-                        title={t("Common.Clear")}
-                    />
-                </Hidden>}
-                <Grid container justify={"center"}>
+                    ? <img src={image} alt={""} className={styles.profileImage}/>
+                    : <TagIcon className={styles.profileImage}/>}
+                {image && <Button
+                    className={styles.clearImageDesktop}
+                    color={"inherit"}
+                    icon={<ClearIcon/>}
+                    onClick={() => {
+                        setState({...state, image: "", uppy: null});
+                    }}
+                    title={t("Common.Clear")}
+                />}
+                <div className={styles.imageActions}>
                     <React.Suspense fallback={<LoadingComponent/>}>
                         <UploadComponent
                             button={<Button
-                                aria-label={t("Tag.Set image")}
                                 children={windowData.isNarrow() ? t("Tag.Set image") : t("Common.Change")}
-                                color={"secondary"}
                                 fullWidth={!windowData.isNarrow()}
                                 title={t("Tag.Set image")}
-                                variant={"contained"}
                             />}
                             camera={false}
                             color={"primary"}
@@ -467,24 +413,20 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                             variant={"contained"}
                         />
                     </React.Suspense>
-                    {image && <Hidden mdUp>
+                    {image && <div className={styles.clearImageMobile}>
                         <Button
-                            aria-label={t("Common.Clear")}
                             children={t("Common.Clear")}
-                            color={"secondary"}
                             onClick={() => {
                                 setState({...state, image: "", uppy: null});
                             }}
                             title={t("Common.Clear")}
-                            variant={"contained"}
                         />
-                    </Hidden>}
-                </Grid>
-            </Grid>
-            <Grid item className={classes.profileFields} xs>
-                <Grid container className={classes.profileField}>
+                    </div>}
+                </div>
+            </div>
+            <div className={styles.profileFields}>
+                <div className={styles.profileField}>
                     <TextField
-                        color={"secondary"}
                         disabled={disabled}
                         required
                         fullWidth
@@ -495,11 +437,11 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                         }}
                         value={tag.label || ""}
                     />
-                </Grid>
-                <Box m={1}/>
-                <Grid container className={classes.profileField}>
+                </div>
+                <div className={styles.spacer}/>
+                <div className={styles.profileField}>
                     <MentionsInputComponent
-                        className={classes._description}
+                        className={styles.description}
                         color={"secondary"}
                         disabled={disabled}
                         fullWidth
@@ -516,12 +458,11 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                         label={t("Tag.Description")}
                         value={tag.description}
                         focused={true}/>
-                </Grid>
-                <Box m={1}/>
+                </div>
+                <div className={styles.spacer}/>
                 {!uppy && isCurrentUserAdmin && <>
-                    <Grid container className={classes.profileField}>
+                    <div className={styles.profileField}>
                         <TextField
-                            color={"secondary"}
                             disabled={disabled}
                             fullWidth
                             label={t("Tag.Image URL")}
@@ -531,77 +472,73 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                             }}
                             value={image || ""}
                         />
-                    </Grid>
-                    <Grid container className={classes.profileField}>
-                        {!disabled && <Typography variant={"subtitle2"}>
+                    </div>
+                    <div className={styles.profileField}>
+                        {!disabled && <div className={styles.imageSearch}>
                             <a
                                 href={`https://www.google.com/search?q=${tag.label} &source=lnms&tbm=isch&sa=X`}
                                 rel={"noopener noreferrer"}
                                 target={"_blank"}>{t("Tag.Search for the image on Google")}</a>
-                        </Typography>}
-                    </Grid>
-                    <Box m={1}/>
+                        </div>}
+                    </div>
+                    <div className={styles.spacer}/>
                 </>}
                 {!isNew && <>
-                    <Grid container className={classes.profileField}>
-                        <FormControl fullWidth>
-                            <MentionedSelectComponent
-                                color={"secondary"}
-                                combobox
-                                disabled={disabled}
-                                label={t("Tag.Change owner")}
-                                mention={{
-                                    ...mentionUsers,
-                                    trigger: "",
-                                    displayTransform: (id, display) => display
-                                }}
-                                onChange={(ev, owner) => setState(state => ({...state, owner}))}
-                                value={owner}
-                            />
-                        </FormControl>
-                    </Grid>
-                    <Box m={1}/>
+                    <div className={styles.profileField}>
+                        <MentionedSelectComponent
+                            className={styles.ownerField}
+                            combobox
+                            disabled={disabled}
+                            label={t("Tag.Change owner")}
+                            mention={{
+                                ...mentionUsers,
+                                trigger: "",
+                                displayTransform: (id, display) => display
+                            }}
+                            onChange={(ev, owner) => setState(state => ({...state, owner}))}
+                            value={owner}
+                        />
+                    </div>
+                    <div className={styles.spacer}/>
                 </>}
                 {!isNew && <>
-                    <Grid container className={classes.profileField}>
-                        <FormControlLabel
-                            control={<Switch
+                    <div className={styles.profileField}>
+                        <label className={styles.deactivate}>
+                            <Switch
                                 checked={tag.hidden || false}
                                 disabled={disabled}
                                 onChange={toggleTag}
-                            />}
-                            label={t("Tag.Deactivate")}
-                            style={{color: "#ff0000"}}
-                        />
-                    </Grid>
-                    <Box m={1}/>
+                            />
+                            <span>{t("Tag.Deactivate")}</span>
+                        </label>
+                    </div>
+                    <div className={styles.spacer}/>
                 </>}
-                <ButtonGroup
-                    color={"secondary"}
-                    disabled={disabled}
-                    fullWidth
-                    size={"large"}
-                    variant={"contained"}
-                >
+                <div className={styles.actions}>
                     <Button
                         children={t("Common.Save")}
+                        disabled={disabled}
+                        fullWidth
                         onClick={handleBeforeSaveTag}
                     />
                     <Button
                         children={t("Common.Cancel")}
+                        disabled={disabled}
+                        fullWidth
                         onClick={() => history.goBack()}
                     />
-                </ButtonGroup>
+                </div>
                 {!isNew && <>
-                    <Box m={4}/>
-                    <Grid container justify={"center"}>
+                    <div className={styles.deleteAction}>
                         <Button
                             children={t("Tag.Permanently remove")}
-                            onClick={handleClickDelete} style={{color: "#ff0000"}}
+                            color={"alert"}
+                            onClick={handleClickDelete}
+                            variant={"text"}
                         />
-                    </Grid>
+                    </div>
                 </>}
-            </Grid>
+            </div>
             {hideTagOpen && <ConfirmComponent
                 confirmLabel={t("Tag.Hide")}
                 critical
@@ -645,14 +582,12 @@ const EditTag = ({classes, allowOwner = true, ...rest}) => {
                 <MentionedTextComponent
                     mentions={[{...mentionUsers, displayTransform: (id, display) => display}]}
                     text={(owner
-                        ? t("Tag.You are going to change owner to {{person}}.", {owner: owner})
-                        : t("Tag.You are going to remove owner."))
-                    + (isCurrentUserAdmin ? "" : "\n" + t("Tag.WARNING! You will not be able to manage {{label}} anymore!", {label: tag.label}))
+                            ? t("Tag.You are going to change owner to {{person}}.", {owner: owner})
+                            : t("Tag.You are going to remove owner."))
+                        + (isCurrentUserAdmin ? "" : "\n" + t("Tag.WARNING! You will not be able to manage {{label}} anymore!", {label: tag.label}))
                     }
                 />
             </ConfirmComponent>}
-        </Grid>
-    </Grid>
+        </div>
+    </div>
 };
-
-export default withStyles(stylesCurrent)(withStyles(styles)(EditTag));

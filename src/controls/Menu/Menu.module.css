@@ -1,0 +1,119 @@
+.backdrop {
+    background-color: transparent;
+    inset: 0;
+    position: fixed;
+    z-index: 1300;
+}
+
+.menu {
+    --menu-color: var(--theme-color-text);
+
+    background-color: var(--theme-color-paper);
+    box-shadow: var(--theme-dialog-shadow);
+    box-sizing: border-box;
+    color: var(--menu-color);
+    max-height: calc(100vh - var(--theme-spacing) * 2);
+    max-width: calc(100vw - var(--theme-spacing) * 2);
+    min-width: calc(var(--theme-spacing) * 18);
+    overflow: auto;
+    padding: var(--theme-spacing) 0;
+    position: fixed;
+    z-index: 1301;
+
+    &.actionMenu {
+        overflow: visible;
+    }
+
+    &.inline {
+        background-color: transparent;
+        box-shadow: none;
+        max-height: none;
+        max-width: none;
+        min-width: 0;
+        overflow: visible;
+        padding: 0;
+        position: static;
+        width: 100%;
+        z-index: auto;
+    }
+}
+
+.inherit {
+    --menu-color: inherit;
+}
+
+.primary {
+    --menu-color: var(--theme-color-primary);
+}
+
+.secondary {
+    --menu-color: var(--theme-color-secondary);
+}
+
+
+.menuItem {
+    box-sizing: border-box;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--theme-font-size-base);
+    line-height: 1.5;
+    min-height: calc(var(--theme-spacing) * 4);
+    outline: 0;
+    padding: calc(var(--theme-spacing) * 0.75) calc(var(--theme-spacing) * 1.5);
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--theme-color-focus);
+    }
+
+    &[data-selected="true"] {
+        background-color: var(--theme-color-focus);
+    }
+}
+
+.branch {
+    position: relative;
+
+    & > .submenu {
+        background-color: var(--theme-color-paper);
+        box-shadow: var(--theme-dialog-shadow);
+        left: 100%;
+        min-width: calc(var(--theme-spacing) * 18);
+        padding: var(--theme-spacing) 0;
+        position: absolute;
+        top: 0;
+        z-index: 1;
+    }
+
+    &.openLeft > .submenu {
+        left: auto;
+        right: 100%;
+    }
+}
+
+@media (max-width: 599px) {
+    .menu {
+        &.actionMenu {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+    }
+
+    .branch {
+        & > .submenu {
+            border-bottom: 1px solid var(--theme-color-muted);
+            box-shadow: none;
+            left: auto;
+            min-width: 0;
+            padding: 0 0 var(--theme-spacing) var(--theme-spacing);
+            position: static;
+            right: auto;
+        }
+
+        &.openLeft > .submenu {
+            left: auto;
+            right: auto;
+        }
+    }
+}

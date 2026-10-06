@@ -1,11 +1,11 @@
 import React from "react";
-import Collapse from "@material-ui/core/Collapse";
-import Grid from "@material-ui/core/Grid";
 import {useWindowData} from "../../controllers/General";
 import MentionedTextComponent from "../MentionedTextComponent";
 import AncillaryBody from "./AncillaryBody";
+import cardStyles from "./styles/PostComponent.module.css";
+import textStyles from "./styles/PostText.module.css";
 
-export default React.forwardRef(({classes, collapsible: givenCollapsible, disableClick, mentions, postData}, ref) => {
+export default React.forwardRef(({collapsible: givenCollapsible, disableClick, mentions, postData}, ref) => {
     const [state, setState] = React.useState({});
     const {
         collapsible = givenCollapsible,
@@ -21,45 +21,31 @@ export default React.forwardRef(({classes, collapsible: givenCollapsible, disabl
     const collapseLength = windowData.isNarrow() ? 260 : 2000;
     const shortened = postData.length > collapseLength;
 
-    return <div className={classes.cardBody}>
-        <Collapse
-            addEndListener={() => {
-            }}
-            in={shortened && collapsed && collapsible}
-            timeout={"auto"}
-            unmountOnExit
-        >
+    return <div className={cardStyles.cardBody}>
+        {shortened && collapsed && collapsible && <div className={cardStyles.collapse}>
             <MentionedTextComponent
                 disableClick={disableClick}
                 mentions={mentions}
                 tokens={postData.tokensByLength(collapseLength)}
             />
-            <Grid
-                container
-                className={classes.showMore}
+            <div
+                className={[cardStyles.layout, textStyles.showMore].join(" ")}
                 onClick={handleClickCard}
             >
                 Show more
-            </Grid>
-        </Collapse>
-        <Collapse
-            addEndListener={() => {
-            }}
-            in={!shortened || !collapsed || !collapsible}
+            </div>
+        </div>}
+        {(!shortened || !collapsed || !collapsible) && <div
+            className={cardStyles.collapse}
             onClick={(shortened && !collapsed) ? handleClickCard : null}
-            timeout={"auto"}
-            unmountOnExit
         >
             <MentionedTextComponent
                 disableClick={disableClick}
-                className={classes.text}
+                className={textStyles.text}
                 mentions={mentions}
                 tokens={postData.tokens}
             />
-            {/*{postData.image && <Grid container alignItems={"flex-start"}>*/}
-            {/*  <img src={postData.image} alt={"Attachment"} className={classes.cardImage}/>*/}
-            {/*</Grid>}*/}
-        </Collapse>
+        </div>}
         <AncillaryBody ref={ref}/>
     </div>
 })

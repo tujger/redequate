@@ -1,58 +1,71 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import CardHeader from "@material-ui/core/CardHeader";
-import Typography from "@material-ui/core/Typography";
-import Card from "@material-ui/core/Card";
-import Grid from "@material-ui/core/Grid";
+import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import MenuItem from "@material-ui/core/MenuItem";
-import Menu from "@material-ui/core/Menu";
-import IconButton from "@material-ui/core/IconButton";
-import Fade from "@material-ui/core/Fade";
-import MenuIcon from "@material-ui/icons/MoreVert";
-import {useTranslation} from "react-i18next";
-import {cacheDatas, useFirebase, usePages, useWindowData} from "../../controllers/General";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
-import ProgressView from "../ProgressView";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import AvatarView from "../AvatarView";
-import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import {toDateString} from "../../controllers/DateFormat";
-import {stylesList} from "../../controllers/Theme";
+import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import Select from "../../controls/Select/Select";
+import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
+import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import ListItemComponent from "../ListItemComponent";
+import ListSwipeableItemComponent from "../ListSwipeableItemComponent";
+import ProgressView from "../ProgressView";
+import styles from "./styles/MutualItem.module.css";
 
-const MutualSubscribeItem = props => {
-    const {t} = useTranslation();
-    const {
-        classes,
+const MutualSubscribeItem = (
+    {
         counter = false,
         data,
-        skeleton,
         label,
-        typeId,
         onDelete = () => {
         },
         pattern,
+        skeleton,
         type = "users_public",
-        unsubscribeLabel = t("Mutual.Unsubscribe")
-    } = props;
+        typeId,
+        unsubscribeLabel,
+    }) => {
+    const {t} = useTranslation();
     const pages = usePages();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
-    const windowData = useWindowData();
-    const [state, setState] = React.useState({});
-    const {disabled, anchor} = state;
+    const [disabled, setDisabled] = React.useState(false);
+    const [menuOpen, setMenuOpen] = React.useState(false);
     const {key, userData = {}, value} = data;
+    const patternClass = pattern
+        ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
+        : styles.cardFlat;
+    const isSameUser = value && value.uid === currentUserData.id;
+    const isAdminUser = matchRole([Role.ADMIN], currentUserData);
+    const menuLabel = unsubscribeLabel === undefined ? t("Mutual.Unsubscribe") : unsubscribeLabel;
+    const hasMenu = menuLabel && (isSameUser || isAdminUser);
 
-    const handleUnsubscribe = evt => {
+    const handleOpen = () => {
+        if (disabled) return;
+        if (!type || type === "users_public") {
+            history.push(pages.user.route + userData.id);
+        } else {
+            history.push(pages[type].route + value.id);
+        }
+    };
+
+    const handleKeyDown = event => {
+        if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        handleOpen();
+    };
+
+    const handleUnsubscribe = event => {
+        event.stopPropagation?.();
+        setMenuOpen(false);
         console.log("handleUnsubscribe", key, typeId, currentUserData.id, value);
-        evt.stopPropagation();
         dispatch(ProgressView.SHOW);
-        setState({...state, disabled: true});
+        setDisabled(true);
         cacheDatas.remove(key);
         cacheDatas.remove(value.id);
         firebase.database().ref("mutual").child(typeId).child(key).set(null)
@@ -63,135 +76,109 @@ const MutualSubscribeItem = props => {
                 } else {
                     notifySnackbar(error);
                 }
-                setState({...state, disabled: false});
+                setDisabled(false);
             })
             .finally(() => dispatch(ProgressView.HIDE));
-    }
-
-    const handleMenuClick = event => {
-        event.stopPropagation();
-        setState(state => ({...state, anchor: event.currentTarget}));
+        return true;
     };
 
-    const handleMenuClose = (event) => {
-        event.stopPropagation();
-        setState(state => ({...state, anchor: null}));
+    const handleMenuOpen = event => {
+        event?.stopPropagation();
+        setMenuOpen(true);
     };
 
-    const isSameUser = value && value.uid === currentUserData.id;
-    const isAdminUser = matchRole([Role.ADMIN], currentUserData);
-    const buttonLabel = unsubscribeLabel + ((isAdminUser && !isSameUser) ? " - force as Administrator" : "");
+    const handleMenuClose = event => {
+        event?.stopPropagation();
+        setMenuOpen(false);
+    };
 
-    const buttonProps = {
-        "aria-label": buttonLabel,
-        children: unsubscribeLabel,
-        color: "secondary",
-        component: "div",
-        disabled: disabled,
-        onClick: handleUnsubscribe,
-        size: "small",
-        style: isSameUser ? undefined : {backgroundColor: "red"},
-        title: buttonLabel,
-        // variant: isSameUser ? "contained" : "outlined",
-        variant: "contained",
-    }
+    if (label) return <ItemPlaceholderComponent label={label} classes={styles} pattern={"flat"}/>;
+    if (skeleton) return <ItemPlaceholderComponent classes={styles} pattern={"flat"}/>;
 
-    if (label) return <ItemPlaceholderComponent label={label} classes={classes} pattern={"flat"}/>
-    if (skeleton) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
+    return <ListItemComponent
+        avatar={<AvatarView
+            image={userData.image}
+            initials={userData.initials}
+            verified={true}
+        />}
+        timestamp={value.timestamp}
+        title={<b className={styles.itemName}>{userData.name}</b>}
+        subtitle={<span className={styles.counter}>
+                    <CounterComponent
+                        live
+                        path={`${key}/mutual/${typeId}_s`}
+                        prefix={"- "}
+                        suffix={" follower(s)"}
+                    />
+                </span>}
+        disabled={disabled}
+        leftAction={{
+            action: handleUnsubscribe,
+            itemButton: (props) => <div {...props}>Unsubscribe</div>
+        }}
+        menu={hasMenu ? [{
+            label: menuLabel + (isSameUser ? "" : " - force as Admin"),
+            value: "unsubscribe",
+        }] : undefined}
+        onClick={handleOpen}
+        onKeyDown={handleKeyDown}
+    >
+        {value.message}
+    </ListItemComponent>
+    // classes, children, leftAction, rightAction, onClickCapture, onContextMenu
 
-    return <>
-        <Card
-            className={[
-                classes.card,
-                pattern ? classes[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`] : classes.cardFlat
-            ].join(" ")}
-            style={value.hidden ? {opacity: 0.5} : undefined}
-        >
-            <CardActionArea
-                className={classes.root}
-                disabled={disabled}
-                onClick={evt => {
-                    if (!type || type === "users_public") {
-                        history.push(pages.user.route + userData.id);
-                    } else {
-                        history.push(pages[type].route + value.id);
-                    }
-                }}
-            >
-                <CardHeader
-                    classes={{content: classes.cardContent}}
-                    className={[classes.cardHeader, classes.post].join(" ")}
-                    avatar={<AvatarView
-                        className={[
-                            classes.avatar,
-                        ].join(" ")}
-                        image={userData.image}
-                        initials={userData.initials}
-                        verified={true}
-                    />}
-                    title={<Grid container alignItems={"center"}>
-                        <Grid item className={classes.userName}>
-                            <b>{userData.name}</b>
-                        </Grid>
-                        {counter && windowData.isNarrow() && <Grid item>
-                            <CounterComponent
-                                live
-                                path={`${key}/mutual/${typeId}_s`}
-                                prefix={"- "}
-                                suffix={" follower(s)"}/>
-                        </Grid>}
-                        {windowData.isNarrow() && <Grid item xs/>}
-                        {value.timestamp &&
-                        <Grid item className={classes.date} title={new Date(value.timestamp).toLocaleString()}>
-                            {toDateString(value.timestamp)}
-                        </Grid>}
-                        {counter && !windowData.isNarrow() && <Grid item>
-                            <CounterComponent
-                                live
-                                path={`${key}/mutual/${typeId}_s`}
-                                prefix={"- "}
-                                suffix={" follower(s)"}/>
-                        </Grid>}
-                        {unsubscribeLabel && (isSameUser || isAdminUser) && <>
-                            <IconButton
-                                children={<MenuIcon/>}
-                                className={classes.cardMenuButton}
-                                component={"div"}
-                                onClick={handleMenuClick}
-                            />
-                            <Menu
-                                anchorEl={anchor}
-                                keepMounted
-                                onClose={handleMenuClose}
-                                open={Boolean(anchor)}
-                                TransitionComponent={Fade}
-                            >
-                                <MenuItem
-                                    children={unsubscribeLabel + (isSameUser ? "" : " - force as Admin")}
-                                    onClick={handleUnsubscribe}
-                                    id={"unsubscribe"}
-                                />
-                            </Menu>
-                        </>}
-                    </Grid>}
-                    subheader={<>
-                        <Typography variant={"body2"}>
-                            {value.message}
-                        </Typography>
-                        {/*{(isSameUser || isAdminUser) && unsubscribeLabel && <Hidden smUp>
-                            <Grid container justify={"flex-end"}>
-                                <Button {...buttonProps}/>
-                            </Grid>
-                        </Hidden>}*/}
-                    </>}
-                    /*action={(isSameUser || isAdminUser) && unsubscribeLabel && <Grid>
-                        <Hidden smDown>
-                            <Button {...buttonProps}/>
-                        </Hidden>
-                    </Grid>}*/
-                />
-            </CardActionArea>
-        </Card>
-    </>
-}
-export default withStyles(stylesList)(MutualSubscribeItem);
+    return <div
+        aria-disabled={disabled || undefined}
+        className={[styles.card, styles.item, patternClass, value.hidden && styles.hidden].filter(Boolean).join(" ")}
+        onClick={handleOpen}
+        onKeyDown={handleKeyDown}
+        role={"button"}
+        tabIndex={disabled ? -1 : 0}
+    >
+        <AvatarView
+            className={styles.avatar}
+            image={userData.image}
+            initials={userData.initials}
+            verified={true}
+        />
+        <div className={styles.cardContent}>
+            <div className={[styles.title, hasMenu && styles.hasMenu].filter(Boolean).join(" ")}>
+                <b className={styles.itemName}>{userData.name}</b>
+                {counter && <span className={styles.counter}>
+                    <CounterComponent
+                        live
+                        path={`${key}/mutual/${typeId}_s`}
+                        prefix={"- "}
+                        suffix={" follower(s)"}
+                    />
+                </span>}
+                {value.timestamp && <span
+                    className={styles.date}
+                    title={new Date(value.timestamp).toLocaleString()}
+                >{toDateString(value.timestamp)}</span>}
+                {hasMenu && <Select
+                    className={styles.menuButton}
+                    disabled={disabled}
+                    displayEmpty
+                    iconMenu
+                    inputProps={{"aria-label": menuLabel}}
+                    onChange={handleUnsubscribe}
+                    onClick={event => event.stopPropagation()}
+                    onMouseDown={event => event.stopPropagation()}
+                    onPointerDown={event => event.stopPropagation()}
+                    onOpen={handleMenuOpen}
+                    onClose={handleMenuClose}
+                    open={menuOpen}
+                    options={[{
+                        label: menuLabel + (isSameUser ? "" : " - force as Admin"),
+                        value: "unsubscribe",
+                    }]}
+                    value={""}
+                />}
+            </div>
+            <div className={styles.message}>{value.message}</div>
+        </div>
+    </div>;
+};
+
+export default MutualSubscribeItem;

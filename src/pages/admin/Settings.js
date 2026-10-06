@@ -1,60 +1,43 @@
-import React from "react";
-import TextField from "@material-ui/core/TextField";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import InputLabel from "@material-ui/core/InputLabel";
-import Typography from "@material-ui/core/Typography";
-import FormControl from "@material-ui/core/FormControl";
-import Switch from "@material-ui/core/Switch";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import DynamicLinksIcon from "@material-ui/icons/Link";
+import PostIcon from "@material-ui/icons/ChatBubbleOutline";
 import UploadsIcon from "@material-ui/icons/CloudUpload";
+import AllIcon from "@material-ui/icons/ExpandMore";
+import DynamicLinksIcon from "@material-ui/icons/Link";
+import JoinUsIcon from "@material-ui/icons/PanTool";
 import SupportIcon from "@material-ui/icons/Person";
 import BlockedNamesIcon from "@material-ui/icons/PersonAddDisabled";
 import MaintenanceIcon from "@material-ui/icons/Settings";
-import JoinUsIcon from "@material-ui/icons/PanTool";
-import PostIcon from "@material-ui/icons/ChatBubbleOutline";
-import AllIcon from "@material-ui/icons/ExpandMore";
+import PropTypes from "prop-types";
+import React from "react";
+import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
 import {useHistory} from "react-router-dom";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
-import ProgressView from "../../components/ProgressView";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
-import LoadingComponent from "../../components/LoadingComponent";
 import ConfirmComponent from "../../components/ConfirmComponent";
-import {styles} from "../../controllers/Theme";
-import {mentionUsers} from "../../controllers/mentionTypes";
-import Pagination from "../../controllers/FirebasePagination";
+import LoadingComponent from "../../components/LoadingComponent";
 import MentionedSelectComponent from "../../components/MentionedSelectComponent";
-import {updateActivity} from "./audit/auditReducer";
 import {tokenizeText} from "../../components/MentionedTextComponent";
+import ProgressView from "../../components/ProgressView";
+import Pagination from "../../controllers/FirebasePagination";
+import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
+import {mentionUsers} from "../../controllers/mentionTypes";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
+import Select from "../../controls/Select/Select";
+import Switch from "../../controls/Switch/Switch";
+import Tabs from "../../controls/Tabs/Tabs";
+import TextField from "../../controls/TextField/TextField";
+import baseStyles from "../../themes/Base.module.css";
+import {updateActivity} from "./audit/auditReducer";
+import styles from "./styles/Settings.module.css";
 
-const stylesCurrent = theme => ({
-    _content: {
-        flexDirection: "column",
-        padding: theme.spacing(1),
-    },
-    _root: {
-        // display: "flex",
-    },
-    _tabs: {}
-});
-
-const Settings = ({classes, uploadable}) => {
+export default ({uploadable}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const windowData = useWindowData();
+    const isNarrow = windowData.isNarrow();
+    const {t} = useTranslation();
     const {maintenance: maintenanceGiven} = useMetaInfo();
     const [state, setState] = React.useState({
         error: null,
@@ -67,6 +50,7 @@ const Settings = ({classes, uploadable}) => {
         disabled,
         blockedNames,
         dynamicLinksUrlPrefix,
+        geoapifyApiKey,
         joinUsCancel,
         joinUsConfirm,
         joinUsScroll,
@@ -169,7 +153,7 @@ const Settings = ({classes, uploadable}) => {
         }))
     }
 
-    const handleChangeTab = (event, tab) => {
+    const handleChangeTab = tab => {
         setState(state => ({...state, tab}));
     };
 
@@ -203,6 +187,9 @@ const Settings = ({classes, uploadable}) => {
         const addPreferenceTranslateLimit = async () => {
             settings.translateLimit = +translateLimit || null;
         }
+        const addPreferenceGeoapifyApiKey = async () => {
+            settings.geoapifyApiKey = geoapifyApiKey || null;
+        }
         const addPreferenceJoinUs = async () => {
             settings.joinUsCancel = joinUsCancel || null;
             settings.joinUsConfirm = joinUsConfirm || null;
@@ -219,9 +206,9 @@ const Settings = ({classes, uploadable}) => {
         const addPreferenceUploads = async () => {
             settings.uploadsAllow = uploadsAllow || null;
             settings.uploadsTypes = [];
-            if (uploadsAudio) settings.uploadsTypes.push("audio/*");
-            if (uploadsImages) settings.uploadsTypes.push("images/*");
-            if (uploadsVideo) settings.uploadsTypes.push("video/*");
+            if (settings.uploadsAudio) settings.uploadsTypes.push("audio/*");
+            if (settings.uploadsImages) settings.uploadsTypes.push("images/*");
+            if (settings.uploadsVideo) settings.uploadsTypes.push("video/*");
             if (!settings.uploadsTypes.length) settings.uploadsTypes = null;
             settings.uploadsMaxHeight = uploadsAllow ? +uploadsMaxHeight || 1000 : null;
             settings.uploadsMaxSize = uploadsAllow ? +uploadsMaxSize || 100 : null;
@@ -256,6 +243,7 @@ const Settings = ({classes, uploadable}) => {
             .then(addSupport)
             .then(addPreferenceDynamicLinksUrlPrefix)
             .then(addPreferenceTranslateLimit)
+            .then(addPreferenceGeoapifyApiKey)
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
             .then(addPreferenceUploads)
@@ -266,14 +254,16 @@ const Settings = ({classes, uploadable}) => {
             .finally(finalizeSaving);
     }
 
-    const tabProps = (icon, label, value) => {
-        return {
-            icon: windowData.isNarrow() ? icon : undefined,
-            label: windowData.isNarrow() ? undefined : label,
-            value: value,
-        }
-    }
-
+    const tabItems = [
+        {icon: <MaintenanceIcon/>, label: "Maintenance", value: 0},
+        {icon: <SupportIcon/>, label: "Personality", value: 1},
+        {icon: <BlockedNamesIcon/>, label: "User profiles", value: 2},
+        {icon: <DynamicLinksIcon/>, label: "Convenience", value: 3},
+        {icon: <JoinUsIcon/>, label: "Welcome popup", value: 4},
+        {icon: <PostIcon/>, label: "Posts", value: 5},
+        ...(uploadable ? [{icon: <UploadsIcon/>, label: "Uploads", value: 6}] : []),
+        {icon: <AllIcon/>, label: "All options", value: -1},
+    ];
     React.useEffect(() => {
         const prepareFetching = async () => {
             dispatch(ProgressView.SHOW);
@@ -336,259 +326,231 @@ const Settings = ({classes, uploadable}) => {
     }, [])
 
     if (loaded === undefined) return <LoadingComponent/>;
-    return <Grid container className={[classes.center].join(" ")}>
-        <div className={classes._root}>
-            <Tabs
-                aria-label={"Settings"}
-                className={classes._tabs}
-                onChange={handleChangeTab}
-                scrollButtons={"auto"}
-                value={tab}
-                variant={"scrollable"}
-            >
-                <Tab {...tabProps(<MaintenanceIcon/>, "Maintenance", 0)}/>
-                <Tab {...tabProps(<SupportIcon/>, "Personality", 1)}/>
-                <Tab {...tabProps(<BlockedNamesIcon/>, "User profiles", 2)}/>
-                <Tab {...tabProps(<DynamicLinksIcon/>, "Convenience", 3)}/>
-                <Tab {...tabProps(<JoinUsIcon/>, "Welcome popup", 4)}/>
-                <Tab {...tabProps(<PostIcon/>, "Posts", 5)}/>
-                {uploadable && <Tab {...tabProps(<UploadsIcon/>, "Uploads", 6)}/>}
-                <Tab {...tabProps(<AllIcon/>, "All options", -1)}/>
-            </Tabs>
-            <Grid container className={classes._content}>
-                {(tab === 0 || tab === -1) && <>
-                    {windowData.isNarrow() && <Grid container>
-                        <Typography variant={"button"}>Maintenance</Typography>
-                    </Grid>}
-                    <Box m={1}/>
-                    {givenTimestamp && <>
-                        <Grid container>
-                            Maintenance set up
-                            by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
-                        </Grid>
-                        <Box m={1}/>
-                    </>}
-                    <Option
-                        checked={maintenance}
-                        disabled={disabled}
-                        onChange={handleSwitchMaintenance}
-                        label={maintenance ? "Maintenance in on" : "Maintenance is off"}
-                    />
-                    <Box m={1}/>
-                </>}
-                {(tab === 1 || tab === -1) && <>
-                    {windowData.isNarrow() && <Grid container>
-                        <Typography variant={"button"}>Personality</Typography>
-                    </Grid>}
-                    <Box m={1}/>
-                    <Grid container>
-                        <MentionedSelectComponent
-                            id={"select"}
-                            label={"Support person"}
-                            mention={{
-                                ...mentionUsers,
-                                trigger: "",
-                                displayTransform: (id, display) => display,
-                                pagination: () => new Pagination({
-                                    ref: firebase.database().ref("roles"),
-                                    value: true,
-                                    equals: "admin",
-                                    size: 1000,
-                                    transform: item => UserData(firebase)
-                                        .fetch(item.key)
-                                        .then(value => ({key: item.key, value}))
-                                        .catch(notifySnackbar)
-                                })
-                            }}
-                            onChange={(evt, value) => {
-                                handleChange("support")({target: {value}})
-                            }}
-                            value={support || ""}
-                        />
-                    </Grid>
-                    <Box m={1}/>
-                </>}
-                {(tab === 2 || tab === -1) && <>
-                    {windowData.isNarrow() && <Grid container>
-                        <Typography variant={"button"}>User profiles</Typography>
-                    </Grid>}
-                    <Box m={1}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Blocked names"}
-                        multiline
-                        onChange={handleChange("blockedNames")}
-                        rows={5}
-                        value={blockedNames || ""}/>
-                    <Box m={1}/>
-                </>}
-                {(tab === 3 || tab === -1) && <>
-                    {windowData.isNarrow() && <Grid container>
-                        <Typography variant={"button"}>Convenience</Typography>
-                    </Grid>}
-                    <Box m={1}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Dynamic links URL prefix"}
-                        onChange={handleChange("dynamicLinksUrlPrefix")}
-                        value={dynamicLinksUrlPrefix || ""}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Allow translate up to, chars/month"}
-                        onChange={handleChange("translateLimit")}
-                        type={"number"}
-                        value={translateLimit || ""}/>
-                    <Box m={1}/>
-                </>}
-                {(tab === 4 || tab === -1) && <>
-                    {windowData.isNarrow() && <Grid container>
-                        <Typography variant={"button"}>Welcome popup</Typography>
-                    </Grid>}
-                    <Box m={1}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Title"}
-                        onChange={handleChange("joinUsTitle")}
-                        value={joinUsTitle || ""}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Message"}
-                        multiline
-                        onChange={handleChange("joinUsText")}
-                        value={joinUsText || ""}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Cancel button label"}
-                        multiline
-                        onChange={handleChange("joinUsCancel")}
-                        value={joinUsCancel || ""}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Confirm button label"}
-                        onChange={handleChange("joinUsConfirm")}
-                        placeholder={"Join us"}
-                        value={joinUsConfirm || ""}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Popup on timeout, s"}
-                        onChange={handleChange("joinUsTimeout")}
-                        type={"number"}
-                        value={joinUsTimeout | ""}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Popup on scroll, px"}
-                        onChange={handleChange("joinUsScroll")}
-                        type={"number"}
-                        value={joinUsScroll || ""}/>
-                    <Box m={1}/>
-                    <Option
-                        disabled={disabled}
-                        label={"One Tap client id"}
-                        onChange={handleChange("oneTapCliendId")}
-                        placeholder={"One Tap client id"}
-                        value={oneTapCliendId || ""}/>
-                    <FormHelperText>
-                        <a href={"https://developers.google.com/identity/one-tap"}
-                           target={"_blank"}>Learn more</a>
-                    </FormHelperText>
-                    <Box m={1}/>
-                </>}
-                {(tab === 5 || tab === -1) && <>
-                    {windowData.isNarrow() && <Grid container>
-                        <Typography variant={"button"}>Posts</Typography>
-                    </Grid>}
-                    <Box m={1}/>
-                    <Option
-                        checked={postsAllowEdit || false}
-                        disabled={disabled}
-                        label={"Allow edit"}
-                        onChange={handleSwitch("postsAllowEdit")}/>
-                    <Grid container>
-                        <FormControl fullWidth>
-                            <InputLabel>Rotate replies</InputLabel>
-                            <Select
-                                color={"secondary"}
-                                onChange={handleChange("postsRotateReplies")}
-                                value={postsRotateReplies || ""}
-                                displayEmpty={true}
-                            >
-                                <MenuItem value={""}>None</MenuItem>
-                                <MenuItem value={"inside"}>Inside post</MenuItem>
-                                <MenuItem value={"outside"}>Outside of post</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                    <Box m={1}/>
-                </>}
-                {uploadable && (tab === 6 || tab === -1) && <>
-                    {windowData.isNarrow() && <Grid container>
-                        <Typography variant={"button"}>Uploads</Typography>
-                    </Grid>}
-                    <Box m={1}/>
-                    <Option
-                        checked={uploadsAllow || false}
-                        disabled={disabled}
-                        label={"Allow uploads"}
-                        onChange={handleSwitch("uploadsAllow")}/>
-                    {uploadsAllow && <Grid container>
-                        <Grid item><Box m={1}/></Grid>
-                        <Grid item>
-                            {uploadableTypes.includes("audio/*") && <Option
-                                checked={uploadsTypes.includes("audio/*")}
-                                disabled={disabled}
-                                label={"Allow audio/*"}
-                                onChange={handleSwitch("uploadsAudio")}/>}
-                            {uploadableTypes.includes("images/*") && <Option
-                                checked={uploadsTypes.includes("images/*")}
-                                disabled={disabled}
-                                onChange={handleSwitch("uploadsImages")}
-                                label={"Allow images/*"}/>}
-                            {uploadableTypes.includes("video/*") && <Option
-                                checked={uploadsTypes.includes("video/*")}
-                                disabled={disabled}
-                                label={"Allow video/*"}
-                                onChange={handleSwitch("uploadsVideo")}/>}
-                        </Grid>
-                    </Grid>}
-                    <Option
-                        disabled={disabled}
-                        label={"Max width, px"}
-                        onChange={handleChange("uploadsMaxWidth")}
-                        type={"number"}
-                        value={uploadsMaxWidth | 1000}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Max height, px"}
-                        onChange={handleChange("uploadsMaxHeight")}
-                        type={"number"}
-                        value={uploadsMaxHeight || 1000}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Quality for JPEG and PNG, %"}
-                        onChange={handleChange("uploadsQuality")}
-                        type={"number"}
-                        value={uploadsQuality || 75}/>
-                    <Option
-                        disabled={disabled}
-                        label={"Limit size, kb"}
-                        onChange={handleChange("uploadsMaxSize")}
-                        type={"number"}
-                        value={uploadsMaxSize || 100}/>
-                    <Box m={1}/>
-                </>}
-            </Grid>
-        </div>
-        <Box m={1}/>
-        <ButtonGroup
-            color={"secondary"}
-            disabled={disabled}
-            fullWidth
-            size={"large"}
-            variant={"contained"}
+    const selectedTab = tabItems.find(item => item.value === tab);
+    return <div className={baseStyles.content}>
+        <Tabs
+            className={styles.root}
+            items={tabItems}
+            onChange={handleChangeTab}
+            value={tab}
+        />
+        <div
+            aria-label={selectedTab ? selectedTab.label : "Settings"}
+            className={styles.options}
+            id={"settings-panel"}
+            role={"tabpanel"}
         >
-            <Button children={"Save"} onClick={handleSave}/>
-            <Button children={"Cancel"} onClick={() => history.goBack()}/>
-        </ButtonGroup>
+            {(tab === 0 || tab === -1) && <>
+                {isNarrow && <h2 className={styles.sectionHeading}>Maintenance</h2>}
+                {givenTimestamp && <div className={styles.maintenanceInfo}>
+                    Maintenance set up by {givenPerson.name} at {new Date(givenTimestamp).toLocaleString()}.
+                </div>}
+                <Option
+                    checked={maintenance}
+                    disabled={disabled}
+                    onChange={handleSwitchMaintenance}
+                    label={maintenance ? "Maintenance in on" : "Maintenance is off"}
+                />
+            </>}
+            {(tab === 1 || tab === -1) && <>
+                {isNarrow && <h2 className={styles.sectionHeading}>Personality</h2>}
+                <div className={styles.option}>
+                    <MentionedSelectComponent
+                        id={"select"}
+                        label={"Support person"}
+                        mention={{
+                            ...mentionUsers,
+                            trigger: "",
+                            displayTransform: (id, display) => display,
+                            pagination: () => new Pagination({
+                                ref: firebase.database().ref("roles"),
+                                value: true,
+                                equals: "admin",
+                                size: 1000,
+                                transform: item => UserData(firebase)
+                                    .fetch(item.key)
+                                    .then(value => ({key: item.key, value}))
+                                    .catch(notifySnackbar)
+                            })
+                        }}
+                        onChange={(evt, value) => {
+                            handleChange("support")({target: {value}})
+                        }}
+                        value={support || ""}
+                    />
+                </div>
+            </>}
+            {(tab === 2 || tab === -1) && <>
+                {isNarrow && <h2 className={styles.sectionHeading}>User profiles</h2>}
+                <Option
+                    disabled={disabled}
+                    label={"Blocked names"}
+                    multiline
+                    onChange={handleChange("blockedNames")}
+                    rows={5}
+                    value={blockedNames || ""}/>
+            </>}
+            {(tab === 3 || tab === -1) && <>
+                {isNarrow && <h2 className={styles.sectionHeading}>Convenience</h2>}
+                <Option
+                    disabled={disabled}
+                    label={t("Settings.Dynamic links URL prefix")}
+                    onChange={handleChange("dynamicLinksUrlPrefix")}
+                    value={dynamicLinksUrlPrefix || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={t("Settings.Allow translate up to, chars/month")}
+                    onChange={handleChange("translateLimit")}
+                    type={"number"}
+                    value={translateLimit || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={t("Settings.Geoapify API key")}
+                    onChange={handleChange("geoapifyApiKey")}
+                    value={geoapifyApiKey || ""}/>
+            </>}
+            {(tab === 4 || tab === -1) && <>
+                {isNarrow && <h2 className={styles.sectionHeading}>Welcome popup</h2>}
+                <Option
+                    disabled={disabled}
+                    label={"Title"}
+                    onChange={handleChange("joinUsTitle")}
+                    value={joinUsTitle || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={"Message"}
+                    multiline
+                    onChange={handleChange("joinUsText")}
+                    value={joinUsText || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={"Cancel button label"}
+                    onChange={handleChange("joinUsCancel")}
+                    value={joinUsCancel || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={"Confirm button label"}
+                    onChange={handleChange("joinUsConfirm")}
+                    placeholder={"Join us"}
+                    value={joinUsConfirm || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={"Popup on timeout, s"}
+                    onChange={handleChange("joinUsTimeout")}
+                    type={"number"}
+                    value={joinUsTimeout | ""}/>
+                <Option
+                    disabled={disabled}
+                    label={"Popup on scroll, px"}
+                    onChange={handleChange("joinUsScroll")}
+                    type={"number"}
+                    value={joinUsScroll || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={"One Tap client id"}
+                    onChange={handleChange("oneTapCliendId")}
+                    placeholder={"One Tap client id"}
+                    value={oneTapCliendId || ""}/>
+                <div className={styles.helperText}>
+                    <a
+                        href={"https://developers.google.com/identity/one-tap"}
+                        rel={"noopener noreferrer"}
+                        target={"_blank"}
+                    >Learn more</a>
+                </div>
+            </>}
+            {(tab === 5 || tab === -1) && <>
+                {isNarrow && <h2 className={styles.sectionHeading}>Posts</h2>}
+                <Option
+                    checked={postsAllowEdit || false}
+                    disabled={disabled}
+                    label={"Allow edit"}
+                    onChange={handleSwitch("postsAllowEdit")}/>
+                <div className={styles.selectField}>
+                    <span className={styles.selectLabel}>Rotate replies</span>
+                    <Select
+                        className={styles.select}
+                        color={"secondary"}
+                        disabled={disabled}
+                        displayEmpty={true}
+                        inputProps={{"aria-label": "Rotate replies"}}
+                        onChange={handleChange("postsRotateReplies")}
+                        options={[
+                            {label: "None", value: ""},
+                            {label: "Inside post", value: "inside"},
+                            {label: "Outside of post", value: "outside"},
+                        ]}
+                        value={postsRotateReplies || ""}
+                    />
+                </div>
+            </>}
+            {uploadable && (tab === 6 || tab === -1) && <>
+                {isNarrow && <h2 className={styles.sectionHeading}>Uploads</h2>}
+                <Option
+                    checked={uploadsAllow || false}
+                    disabled={disabled}
+                    label={"Allow uploads"}
+                    onChange={handleSwitch("uploadsAllow")}/>
+                {uploadsAllow && <div className={styles.uploadTypes}>
+                    <div className={styles.spacer}/>
+                    <div className={styles.uploadTypeOptions}>
+                        {uploadableTypes.includes("audio/*") && <Option
+                            checked={uploadsTypes.includes("audio/*")}
+                            disabled={disabled}
+                            label={"Allow audio/*"}
+                            onChange={handleSwitch("uploadsAudio")}/>}
+                        {uploadableTypes.includes("images/*") && <Option
+                            checked={uploadsTypes.includes("images/*")}
+                            disabled={disabled}
+                            onChange={handleSwitch("uploadsImages")}
+                            label={"Allow images/*"}/>}
+                        {uploadableTypes.includes("video/*") && <Option
+                            checked={uploadsTypes.includes("video/*")}
+                            disabled={disabled}
+                            label={"Allow video/*"}
+                            onChange={handleSwitch("uploadsVideo")}/>}
+                    </div>
+                </div>}
+                <Option
+                    disabled={disabled}
+                    label={"Max width, px"}
+                    onChange={handleChange("uploadsMaxWidth")}
+                    type={"number"}
+                    value={uploadsMaxWidth | 1000}/>
+                <Option
+                    disabled={disabled}
+                    label={"Max height, px"}
+                    onChange={handleChange("uploadsMaxHeight")}
+                    type={"number"}
+                    value={uploadsMaxHeight || 1000}/>
+                <Option
+                    disabled={disabled}
+                    label={"Quality for JPEG and PNG, %"}
+                    onChange={handleChange("uploadsQuality")}
+                    type={"number"}
+                    value={uploadsQuality || 75}/>
+                <Option
+                    disabled={disabled}
+                    label={"Limit size, kb"}
+                    onChange={handleChange("uploadsMaxSize")}
+                    type={"number"}
+                    value={uploadsMaxSize || 100}/>
+            </>}
+        </div>
+        <div className={styles.actions}>
+            <Button
+                children={"Save"}
+                disabled={disabled}
+                fullWidth
+                onClick={handleSave}
+            />
+            <Button
+                children={"Cancel"}
+                disabled={disabled}
+                fullWidth
+                onClick={() => history.goBack()}
+            />
+        </div>
         {maintenanceOpen && <ConfirmComponent
             confirmLabel={"Confirm"}
             critical
@@ -599,26 +561,37 @@ const Settings = ({classes, uploadable}) => {
             The service will be temporarily disabled for all users except administrators.
             <br/>
             WARNING! This action will be proceeded immediately!
-            <Box m={5}/>
-            <TextField
-                color={"secondary"}
-                fullWidth
-                label={"Message for visitors"}
-                multiline
-                rows={3}
-                onChange={handleChangeMessage}
-                value={message}
-            />
+            <div className={styles.modalSpacer}/>
+            <label className={styles.textareaField}>
+                <span>Message for visitors</span>
+                <textarea
+                    className={styles.textarea}
+                    onChange={handleChangeMessage}
+                    rows={3}
+                    value={message}
+                />
+            </label>
         </ConfirmComponent>}
-    </Grid>
+    </div>
 };
 
-export default withStyles(stylesCurrent)(withStyles(styles)(Settings));
-
-const Option = ({checked, disabled, label, onChange, value, ...rest}) => {
+const Option = ({checked, disabled, label, multiline, onChange, rows, value, ...rest}) => {
+    if (value !== undefined && multiline) {
+        return <label className={styles.textareaField}>
+            <span>{label}</span>
+            <textarea
+                {...rest}
+                className={styles.textarea}
+                disabled={disabled}
+                onChange={onChange}
+                rows={rows || 4}
+                value={value}
+            />
+        </label>;
+    }
 
     if (value !== undefined) {
-        return <Grid container>
+        return <div className={styles.option}>
             <TextField
                 {...rest}
                 color={"secondary"}
@@ -628,18 +601,25 @@ const Option = ({checked, disabled, label, onChange, value, ...rest}) => {
                 onChange={onChange}
                 value={value}
             />
-        </Grid>
+        </div>;
     }
 
-    return <Grid container>
-        <FormControlLabel
-            color={"secondary"}
-            control={<Switch
-                onChange={onChange}
-                checked={checked}
-            />}
+    return <label className={[styles.switchOption, disabled && styles.disabled].filter(Boolean).join(" ")}>
+        <Switch
+            checked={checked}
             disabled={disabled}
-            label={label}
+            onChange={onChange}
         />
-    </Grid>
-}
+        <span>{label}</span>
+    </label>;
+};
+
+Option.propTypes = {
+    checked: PropTypes.bool,
+    disabled: PropTypes.bool,
+    label: PropTypes.string,
+    multiline: PropTypes.bool,
+    onChange: PropTypes.func,
+    rows: PropTypes.number,
+    value: PropTypes.any,
+};

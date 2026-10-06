@@ -1,0 +1,146 @@
+.root {
+    width: auto;
+
+    & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn),
+    & :global(.uppy-Dashboard--modal .uppy-Dashboard-close),
+    & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back) {
+        background-color: var(--theme-color-secondary);
+        border-radius: calc(var(--theme-spacing) / 2);
+        box-sizing: border-box;
+        color: var(--theme-color-secondary-alt);
+        font-family: Roboto, Helvetica, Arial, sans-serif;
+        font-size: .875rem;
+        font-weight: 500;
+        letter-spacing: .02857em;
+        line-height: 1.75;
+        min-width: 64px;
+        padding: 6px 16px;
+        text-transform: uppercase;
+        transition: background-color 250ms cubic-bezier(.4, 0, .2, 1), box-shadow 250ms cubic-bezier(.4, 0, .2, 1), border 250ms cubic-bezier(.4, 0, .2, 1);
+        width: auto;
+    }
+
+    & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn):hover,
+    & :global(.uppy-Dashboard--modal .uppy-Dashboard-close):hover,
+    & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back):hover {
+        background-color: var(--theme-color-highlight);
+        color: var(--theme-color-secondary-alt);
+        text-decoration: none;
+    }
+
+    & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn):disabled,
+    & :global(.uppy-Dashboard--modal .uppy-Dashboard-close):disabled,
+    & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back):disabled,
+    & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn.uppy-is-disabled),
+    & :global(.uppy-Dashboard--modal .uppy-Dashboard-close.uppy-is-disabled),
+    & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back.uppy-is-disabled) {
+        color: var(--theme-color-muted);
+    }
+
+    & :global(.uppy-Dashboard--modal .uppy-Webcam-button--switch) {
+        background-color: var(--theme-color-focus);
+        color: var(--theme-color-secondary-alt);
+        margin-right: calc(var(--theme-spacing) * 1.5);
+    }
+}
+
+@media (min-width: 600px) {
+    .root {
+        & :global(.uppy-Dashboard--modal .uppy-Dashboard-close) {
+            display: none;
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back) {
+            position: absolute;
+            right: var(--theme-spacing);
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardContent-bar) {
+            min-height: calc(var(--theme-spacing) * 8);
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardContent-title) {
+            font-size: 1.25rem;
+            font-weight: 500;
+            letter-spacing: .0075em;
+            line-height: 1.6;
+            top: auto;
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn) {
+            background-color: transparent;
+            color: var(--theme-color-secondary);
+
+            &:hover {
+                background-color: var(--theme-color-secondary);
+                color: var(--theme-color-secondary-alt);
+            }
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardTab-name) {
+            font-size: inherit;
+            line-height: inherit;
+            white-space: nowrap;
+        }
+    }
+}
+
+@media (max-width: 599.95px) {
+    .root {
+        & :global(.uppy-Dashboard--modal .uppy-Dashboard-close) {
+            font-size: 0;
+            margin-bottom: var(--theme-spacing);
+            margin-left: auto;
+            margin-top: var(--theme-spacing);
+            position: relative;
+            right: var(--theme-spacing);
+            top: auto;
+
+            &::before {
+                content: "Cancel";
+                font-size: 1rem;
+                font-weight: 400;
+                letter-spacing: .00938em;
+                line-height: 1.5;
+            }
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-Dashboard-inner) {
+            border-radius: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            left: 0;
+            right: 0;
+            top: calc(var(--theme-spacing) * 7);
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back) {
+            display: none;
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn) {
+            box-sizing: border-box;
+            font-size: 1rem;
+            font-weight: 400;
+            letter-spacing: .00938em;
+            line-height: 1.5;
+            min-height: 48px;
+            overflow: hidden;
+            padding-bottom: 6px;
+            padding-top: 6px;
+            white-space: nowrap;
+            width: 100%;
+
+            &:hover {
+                background-color: var(--theme-color-secondary);
+                color: var(--theme-color-secondary-alt);
+            }
+        }
+
+        & :global(.uppy-Dashboard--modal .uppy-DashboardContent-panelBody) {
+            margin-top: -40px;
+            z-index: 1010;
+        }
+    }
+}

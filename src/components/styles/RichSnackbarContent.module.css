@@ -1,0 +1,102 @@
+.root {
+    max-width: min(568px, calc(100vw - var(--theme-spacing) * 4));
+    min-width: min(288px, calc(100vw - var(--theme-spacing) * 4));
+}
+
+.header {
+    --snackbar-background: #323232;
+    --snackbar-color: #fff;
+
+    align-items: center;
+    background-color: var(--snackbar-background);
+    border-radius: calc(var(--theme-spacing) / 2);
+    box-shadow: var(--theme-card-shadow);
+    box-sizing: border-box;
+    color: var(--snackbar-color);
+    display: flex;
+    min-height: calc(var(--theme-spacing) * 6);
+    padding: calc(var(--theme-spacing) / 2) 0 calc(var(--theme-spacing) / 2) calc(var(--theme-spacing) * 2);
+}
+
+.error {
+    --snackbar-background: var(--theme-color-snackbar-error, #f44336);
+    --snackbar-color: var(--theme-color-snackbar-error-text, #fff);
+}
+
+.info {
+    --snackbar-background: var(--theme-color-snackbar-info, #2196f3);
+    --snackbar-color: var(--theme-color-snackbar-info-text, #fff);
+}
+
+.success {
+    --snackbar-background: var(--theme-color-snackbar-success, #4caf50);
+    --snackbar-color: var(--theme-color-snackbar-success-text, #fff);
+}
+
+.warning {
+    --snackbar-background: var(--theme-color-snackbar-warning, #f57c00);
+    --snackbar-color: var(--theme-color-snackbar-warning-text, #fff);
+}
+
+.message {
+    flex: 1 1 auto;
+}
+
+.clickable {
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: 2px solid currentcolor;
+    }
+}
+
+.headerActions {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.card {
+    background-color: var(--theme-color-paper);
+    border-radius: calc(var(--theme-spacing) / 2);
+    box-shadow: var(--theme-card-shadow);
+    color: var(--theme-color-text);
+    margin-top: calc(var(--theme-spacing) / 2);
+}
+
+.cardAction {
+    align-items: stretch;
+    cursor: pointer;
+    display: flex;
+    outline: 0;
+
+    &:focus-visible {
+        outline: 2px solid var(--theme-color-highlight);
+    }
+}
+
+.image {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    flex: 0 0 100px;
+    margin: calc(var(--theme-spacing) / 2);
+    min-height: 100px;
+}
+
+.imageOnly {
+    flex: 1 1 auto;
+    height: 150px;
+}
+
+.body {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: calc(var(--theme-spacing) * 2);
+}
+
+.cardActions {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--theme-spacing);
+}

@@ -1,15 +1,14 @@
-import React from "react";
-import ThemeProvider from "@material-ui/styles/ThemeProvider";
-import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
-import PWAPrompt from "react-ios-pwa-prompt";
-import {connect, Provider, useDispatch} from "react-redux";
-import withWidth from "@material-ui/core/withWidth";
-import PropTypes from "prop-types";
-import {SnackbarProvider} from "notistack";
-import {initReactI18next, useTranslation} from "react-i18next";
+import "./themes/Base.module.css";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
-import Store, {refreshAll} from "./controllers/Store";
+import {SnackbarProvider} from "notistack";
+import React from "react";
+import {initReactI18next, useTranslation} from "react-i18next";
+import PWAPrompt from "react-ios-pwa-prompt";
+import {connect, Provider, useDispatch} from "react-redux";
+import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
+import LoadingComponent from "./components/LoadingComponent";
+import SystemAlert from "./components/SystemAlert";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
@@ -21,25 +20,18 @@ import {
     useStore,
     useWindowData
 } from "./controllers/General";
-import LoadingComponent from "./components/LoadingComponent";
-import {
-    matchRole,
-    needAuth,
-    useCurrentUserData,
-    UserData,
-    watchUserChanged
-} from "./controllers/UserData";
-import {colors, createTheme} from "./controllers/Theme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
-import {installWrapperControl} from "./controllers/WrapperControl";
-import MetaInfoView from "./components/MetaInfoView";
-import {restoreLanguage} from "./reducers/languageReducer";
 import notifySnackbar from "./controllers/notifySnackbar";
-import {getScrollPosition} from "./controllers/useScrollPosition";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
-import localeRu from "./locales/ru-RU.json";
-import localeEn from "./locales/en-EN.json";
+import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
+import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
+import {installWrapperControl} from "./controllers/WrapperControl";
+import useBreakpoint from "./helpers/useBreakpoint";
+import {getScrollPosition} from "./helpers/useScrollPosition";
+import localeEn from "./locales/en-EN.json";
+import localeRu from "./locales/ru-RU.json";
+import {restoreLanguage} from "./reducers/languageReducer";
 
 const DeviceUUID = require("device-uuid");
 
@@ -51,20 +43,10 @@ const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.u
 
 const origin = console.error;
 console.error = function (...args) {
-    if (args[0].toString().indexOf("Material-UI: The key") >= 0
-        && args[0].toString().indexOf("provided to the classes") >= 0) {
-        return;
-    }
     origin.call(this, ...args);
     // return;
     try {
         if (!args.length || args.length > 1) return;
-        if (args[0].toString().indexOf("provided to the classes prop") > 1) {
-            return;
-        }
-        if (args[0].toString().indexOf("`styles` argument provided") > 1) {
-            return;
-        }
         if (args[0].toString().indexOf("no such file or directory") > 1) {
             return;
         }
@@ -87,20 +69,28 @@ console.error = function (...args) {
     }
 }
 
-let oldWidth;
-
-function Dispatcher(props) {
+export default (props) => {
     const {
         firebaseConfig,
         locales,
         pages: givenPages,
         title,
         reducers,
-        theme = createTheme({colors: colors()}),
-        width
+        width: givenWidth
     } = props;
     const [state, setState] = React.useState({store: null});
     const {firebase} = state;
+    const width = useBreakpoint(givenWidth);
+    const widthRef = React.useRef(width);
+    widthRef.current = width;
+    const previousWidth = React.useRef(width);
+
+    React.useEffect(() => {
+        if (previousWidth.current !== width) {
+            previousWidth.current = width;
+            if (state.store) refreshAll(state.store);
+        }
+    }, [width, state.store]);
 
     React.useEffect(() => {
         let maintenanceRef, metaRef, unlisten;
@@ -144,9 +134,11 @@ function Dispatcher(props) {
         }
         const initWindowData = async props => {
             const windowData = {
-                breakpoint: width,
-                isNarrow: () => width === "xs" || width === "sm",
-                isWide: () => width === "md" || width === "lg" || width === "xl",
+                get breakpoint() {
+                    return widthRef.current;
+                },
+                isNarrow: () => widthRef.current === "xs" || widthRef.current === "sm",
+                isWide: () => widthRef.current === "md" || widthRef.current === "lg" || widthRef.current === "xl",
             }
             return {...props, windowData};
         }
@@ -293,30 +285,6 @@ function Dispatcher(props) {
             })().catch(console.error);
             return props;
         }
-        const installWindowWidthWatcher = async props => {
-            (async () => {
-                const {store} = props;
-                let widthPoint;
-                const onWidthChange = (event) => {
-                    clearTimeout(widthPoint);
-                    widthPoint = setTimeout(() => {
-                        const widths = {1920: "xl", 1280: "lg", 960: "md", 600: "sm", 0: "xs"};
-                        let newWidth = "xl";
-                        for (const x in widths) {
-                            if (window.innerWidth > x) {
-                                newWidth = widths[x];
-                            }
-                        }
-                        if (oldWidth && oldWidth !== newWidth) {
-                            refreshAll(store);
-                        }
-                        oldWidth = newWidth;
-                    }, 50)
-                }
-                window.addEventListener("resize", onWidthChange);
-            })().catch(console.error);
-            return props;
-        }
         const installApplicationVisibilityChecker = async props => {
             const {store} = props;
             const refreshNeeded = () => {
@@ -372,7 +340,6 @@ function Dispatcher(props) {
             .then(installUserChangeWatcher)
             .then(installMetaWatcher)
             .then(installLastVisitSaver)
-            .then(installWindowWidthWatcher)
             .then(installApplicationVisibilityChecker)
             .catch(onError);
 
@@ -389,12 +356,24 @@ function Dispatcher(props) {
     return <DispatcherInitialized
         {...props}
         {...state}
-        theme={theme}
+        width={width}
     />
 }
 
 const DispatcherInitialized = (props) => {
-    const {fatal, buildPages, copyright, firebase, store, menu: givenMenu, theme, title, textTranslation, windowData, metaInfo} = props;
+    const {
+        fatal,
+        buildPages,
+        copyright,
+        firebase,
+        store,
+        menu: givenMenu,
+        theme,
+        title,
+        textTranslation,
+        windowData,
+        metaInfo
+    } = props;
     const {t} = useTranslation();
 
     useFirebase(firebase);
@@ -406,13 +385,15 @@ const DispatcherInitialized = (props) => {
     const menu = givenMenu(pages);
 
     if (fatal) {
-        return <ThemeProvider theme={theme}><MetaInfoView
-            message={fatal.message}
-        /></ThemeProvider>
+        return <>
+            {theme}
+            <SystemAlert message={fatal.message}/>
+        </>;
     }
 
     return <Provider store={store}>
-        <ThemeProvider theme={theme}>
+        <>
+            {theme}
             <BrowserRouter>
                 <SnackbarProvider maxSnack={4} preventDuplicate>
                     <DispatcherRoutedBody
@@ -424,7 +405,7 @@ const DispatcherInitialized = (props) => {
                 </SnackbarProvider>
             </BrowserRouter>
             <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-        </ThemeProvider>
+        </>
     </Provider>;
 }
 
@@ -550,7 +531,6 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
             return <item.component.type
                 key={item.route}
                 {...props}
-                classes={{}}
                 {...item.component.props}
                 daemon
             />
@@ -559,18 +539,4 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
     </React.Fragment>
 });
 
-
-Dispatcher.propTypes = {
-    copyright: PropTypes.any,
-    firebaseConfig: PropTypes.any.isRequired,
-    layout: PropTypes.any,
-    menu: PropTypes.any,//PropTypes.arrayOf(PropTypes.arrayOf(Page)).isRequired,
-    logo: PropTypes.any,
-    title: PropTypes.string.isRequired,
-    pages: PropTypes.func,//PropTypes.objectOf(Pages).isRequired,
-    reducers: PropTypes.object,
-    theme: PropTypes.any,
-    width: PropTypes.string,
-};
-
-export default withWidth()(Dispatcher);
+export {useTranslation};

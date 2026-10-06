@@ -1,0 +1,12 @@
+.indent {
+    margin-top: calc(var(--theme-spacing) * 10);
+}
+
+.bottomSticky {
+    bottom: 0;
+    box-sizing: border-box;
+    position: sticky;
+    padding-left: var(--theme-content-padding-left);
+    padding-right: var(--theme-content-padding-right);
+    width: var(--theme-content-width);
+}

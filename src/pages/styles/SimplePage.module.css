@@ -1,0 +1,17 @@
+.content {
+    contain: none;
+}
+
+@media (max-width: 599px) {
+    .content {
+        padding: calc(var(--theme-spacing) * 1);
+    }
+}
+
+
+:global(.ResponsiveDrawerLayout),
+:global(.BottomToolbarLayout) {
+    .content {
+        padding: calc(var(--theme-spacing) * 1);
+    }
+}

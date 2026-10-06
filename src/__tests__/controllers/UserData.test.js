@@ -1,18 +1,16 @@
-// jest.mock("@material-ui/styles/withStyles");
-import React from "react";
 import {
-    matchRole,
-    Role,
     currentRole,
+    currentUserData,
     logoutUser,
+    matchRole,
     needAuth,
-    watchUserChanged,
+    normalizeSortName,
+    Role,
+    sendInvitationEmail,
+    sendVerificationEmail,
     useCurrentUserData,
     UserData,
-    normalizeSortName,
-    currentUserData,
-    sendVerificationEmail,
-    sendInvitationEmail
+    watchUserChanged
 } from "../../controllers/UserData";
 import {firebase, store} from "../common";
 

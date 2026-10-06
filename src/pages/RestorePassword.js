@@ -1,21 +1,18 @@
 import React from "react";
 import {Redirect, useHistory} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import TextField from "@material-ui/core/TextField";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
 import UserIcon from "@material-ui/icons/Mail";
 import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
 import {useTranslation} from "react-i18next";
 import {sendPasswordResetEmail, useCurrentUserData} from "../controllers/UserData";
 import ProgressView from "../components/ProgressView";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {usePages} from "../controllers/General";
-import {styles} from "../controllers/Theme";
+import Button from "../controls/Button/Button";
+import TextField from "../controls/TextField/TextField";
+import baseStyles from "../themes/Base.module.css";
+import styles from "./styles/RestorePassword.module.css";
 
-const RestorePassword = ({classes}) => {
+const RestorePassword = () => {
     const [state, setState] = React.useState({
         email: "",
         requesting: false
@@ -46,13 +43,12 @@ const RestorePassword = ({classes}) => {
         return <Redirect to={pages.profile.route}/>
     }
 
-    return <Grid container className={classes.center}>
-        <Box m={0.5}/>
-        <Grid container spacing={1} alignItems={"flex-end"}>
-            <Grid item>
+    return <div className={baseStyles.content}>
+        <div className={styles.fieldRow}>
+            <div className={styles.fieldIcon}>
                 <UserIcon/>
-            </Grid>
-            <Grid item xs>
+            </div>
+            <div className={styles.fieldControl}>
                 <TextField
                     color={"secondary"}
                     disabled={requesting}
@@ -61,22 +57,25 @@ const RestorePassword = ({classes}) => {
                     onChange={ev => setState({...state, email: ev.target.value})}
                     value={email}
                 />
-            </Grid>
-        </Grid>
-        <Box m={2}/>
-        <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth>
+            </div>
+        </div>
+        <div className={styles.buttonGroup}>
             <Button
-                aria-label={t("User.Restore password")}
-                children={t("User.Restore")}
+                fullWidth
                 onClick={requestRestorePassword}
-            />
+                title={t("User.Restore password")}
+            >
+                {t("User.Restore")}
+            </Button>
             <Button
-                aria-label={t("Common.Cancel")}
-                children={t("Common.Cancel")}
+                fullWidth
                 onClick={() => history.push(pages.login.route)}
-            />
-        </ButtonGroup>
-    </Grid>
+                title={t("Common.Cancel")}
+            >
+                {t("Common.Cancel")}
+            </Button>
+        </div>
+    </div>
 };
 
-export default withStyles(styles)(RestorePassword);
+export default RestorePassword;

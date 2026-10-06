@@ -1,0 +1,24 @@
+.chatItem {
+    color: var(--theme-color-secondary);
+    margin-bottom: calc(var(--theme-spacing) * .5);
+    position: relative;
+}
+
+.chatItemIn {
+    margin-right: 10%;
+}
+
+.chatItemOut {
+    --theme-color-paper: var(--theme-color-surface-alt);
+
+    margin-left: 10%;
+}
+
+.timestamp {
+    bottom: calc(var(--theme-spacing) * .5);
+    color: var(--theme-color-secondary);
+    font-size: 70%;
+    opacity: 0.7;
+    position: absolute;
+    right: var(--theme-spacing);
+}

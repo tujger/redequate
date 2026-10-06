@@ -1,27 +1,14 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import {Route, Switch, useHistory} from "react-router-dom";
 import {InView} from "react-intersection-observer";
-import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
+import {Route, Switch, useHistory} from "react-router-dom";
 import LoadingComponent from "../components/LoadingComponent";
 import {useMetaInfo, usePages} from "../controllers/General";
-import MetaInfoView from "./MetaInfoView";
-import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import notifySnackbar from "../controllers/notifySnackbar";
+import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
+import SystemAlert from "./SystemAlert";
 
-const styles = theme => ({
-    bottom: {},
-    bottomSticky: {},
-    center: {},
-    left: {},
-    right: {},
-    top: {},
-    topSticky: {},
-});
-
-const MainContent = props => {
-    // eslint-disable-next-line react/prop-types
-    const {classes} = props;
+export default props => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -31,7 +18,7 @@ const MainContent = props => {
     const isDisabled = metaInfo && metaInfo.maintenance && !matchRole([UserData.ADMIN], currentUserData);
 
     return <>
-        <MetaInfoView/>
+        <SystemAlert/>
         {!isDisabled && <React.Suspense fallback={<LoadingComponent/>}>
             <Switch>{itemsFlat.map((item, index) => {
                 return <Route
@@ -67,7 +54,6 @@ const MainContent = props => {
                                 />}
                                 <item.component.type
                                     {...props}
-                                    classes={classes}
                                     {...item.component.props}
                                 />
                             </>
@@ -91,7 +77,6 @@ const MainContent = props => {
                         if (item !== pages.login && item !== pages.logout) return null;
                         return <item.component.type
                             {...props}
-                            classes={classes}
                             {...item.component.props} />
                     }}
                 />
@@ -99,5 +84,3 @@ const MainContent = props => {
         </React.Suspense>}
     </>
 };
-
-export default withStyles(styles)(MainContent);

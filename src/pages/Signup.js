@@ -1,34 +1,30 @@
-import React from "react";
-import {Redirect, useHistory, useParams} from "react-router-dom";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
-import TextField from "@material-ui/core/TextField";
-import Box from "@material-ui/core/Box";
-import Grid from "@material-ui/core/Grid";
 import Lock from "@material-ui/icons/Lock";
 import UserIcon from "@material-ui/icons/Mail";
-import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
+import {useDispatch} from "react-redux";
+import {Redirect, useHistory, useParams} from "react-router-dom";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
 import {useFirebase, usePages, useStore} from "../controllers/General";
-import {refreshAll} from "../controllers/Store";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {styles} from "../controllers/Theme";
-import GoogleLogo from "../images/google-logo.svg";
+import {refreshAll} from "../controllers/Store";
+import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
+import Button from "../controls/Button/Button";
+import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
+import GoogleLogo from "../images/google-logo.svg";
+import baseStyles from "../themes/Base.module.css";
+import styles from "./styles/Signup.module.css";
 
-const Signup = ({classes, signup = true, additional}) => {
+const Signup = ({signup = true, additional}) => {
     const [state, setState] = React.useState({
         email: "",
         password: "",
-        confirm: "",
         requesting: false,
     });
-    const {email, password, confirm, requesting, requestPasswordFor} = state;
+    const {email, password, requesting, requestPasswordFor} = state;
     const pages = usePages();
     const dispatch = useDispatch();
     const store = useStore();
@@ -54,11 +50,6 @@ const Signup = ({classes, signup = true, additional}) => {
             setState({...state, requesting: false});
             return;
         }
-        // if (password !== confirm) {
-        //     notifySnackbar(new Error("Passwords not equal"));
-        //     setState({...state, requesting: false});
-        //     return;
-        // }
 
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
@@ -130,13 +121,15 @@ const Signup = ({classes, signup = true, additional}) => {
         return <Redirect to={pages.profile.route}/>
     }
 
-    return <Grid container className={classes.center}>
-        <Box m={0.5}/>
-        {!requestPasswordFor && <Grid container spacing={1} alignItems={"flex-end"}>
-            <Grid item>
+    return <div className={baseStyles.content}>
+        {requestPasswordFor && <div className={styles.passwordPrompt}>
+            <h4>{t("User.Please create password for your account.")}</h4>
+        </div>}
+        {!requestPasswordFor && <div className={styles.fieldRow}>
+            <div className={styles.fieldIcon}>
                 <UserIcon/>
-            </Grid>
-            <Grid item xs>
+            </div>
+            <div className={styles.fieldControl}>
                 <TextField
                     color={"secondary"}
                     disabled={requesting}
@@ -150,18 +143,13 @@ const Signup = ({classes, signup = true, additional}) => {
                     //     inputComponent: TextMaskEmail
                     // }}
                 />
-            </Grid>
-        </Grid>}
-        {!requestPasswordFor && <Box m={1}/>}
-        {requestPasswordFor && <Grid container spacing={1} alignItems={"flex-end"}>
-            <h4>{t("User.Please create password for your account.")}</h4>
-        </Grid>}
-        {!requestPasswordFor && <Box m={1}/>}
-        <Grid container spacing={1} alignItems={"flex-end"}>
-            <Grid item>
+            </div>
+        </div>}
+        <div className={styles.fieldRow}>
+            <div className={styles.fieldIcon}>
                 <Lock/>
-            </Grid>
-            <Grid item xs>
+            </div>
+            <div className={styles.fieldControl}>
                 <PasswordField
                     color={"secondary"}
                     disabled={requesting}
@@ -171,51 +159,42 @@ const Signup = ({classes, signup = true, additional}) => {
                     }}
                     value={password}
                 />
-            </Grid>
-        </Grid>
-        {/*<Box m={1}/>
-        <Grid container spacing={1} alignItems={"flex-end"}>
-            <Grid item>
-                <Lock/>
-            </Grid>
-            <Grid item xs>
-                <PasswordField
-                    color={"secondary"}
-                    disabled={requesting}
-                    label={"Confirm password"}
-                    onChange={ev => {
-                        setState({...state, confirm: ev.target.value});
-                    }}
-                    value={confirm}
-                />
-            </Grid>
-        </Grid>*/}
+            </div>
+        </div>
         {additional}
-        <Box m={2}/>
-        <ButtonGroup variant={"contained"} color={"secondary"} size={"large"} fullWidth disabled={requesting}>
+        <div className={styles.buttonGroup}>
             <Button
-                children={t("Definitions.Sign up")}
+                disabled={requesting}
                 onClick={requestSignupPassword}
-            />
+            >
+                {t("Definitions.Sign up")}
+            </Button>
             <Button
-                children={t("Common.Cancel")}
+                disabled={requesting}
                 onClick={() => history.goBack()}
-            />
-        </ButtonGroup>
-        <Box m={2}/>
-        <Grid container alignItems={"center"} justify={"center"} spacing={1}>
-            <Button variant={"text"} color={"secondary"} onClick={onRequestGoogle} size={"large"}>
+            >
+                {t("Common.Cancel")}
+            </Button>
+        </div>
+        <div className={styles.socialActions}>
+            <Button
+                onClick={onRequestGoogle}
+                variant={"text"}
+            >
                 <img src={GoogleLogo} width={20} height={20} alt={""}/>
-                <Box m={0.5}/>
+                <span className={styles.logoSpacer}/>
                 {t("Login.Sign up with")} Google
             </Button>
-            <Button variant={"text"} color={"secondary"} onClick={onRequestFacebook} size={"large"}>
+            <Button
+                onClick={onRequestFacebook}
+                variant={"text"}
+            >
                 <img src={FacebookLogo} width={20} height={20} alt={""}/>
-                <Box m={0.5}/>
+                <span className={styles.logoSpacer}/>
                 {t("Login.Sign up with")} Facebook
             </Button>
-        </Grid>
-    </Grid>
+        </div>
+    </div>
 };
 
-export default withStyles(styles)(Signup);
+export default Signup;

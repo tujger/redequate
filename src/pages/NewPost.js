@@ -1,46 +1,23 @@
 import React from "react";
-import {useHistory, useLocation, useParams} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
-import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
-import makeStyles from "@material-ui/core/styles/makeStyles";
-import {cacheDatas, useMetaInfo, usePages, useWindowData} from "../controllers/General";
+import {useHistory, useLocation, useParams} from "react-router-dom";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import notifySnackbar from "../controllers/notifySnackbar";
+import LoadingComponent from "../components/LoadingComponent";
+import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import ProgressView from "../components/ProgressView";
 import {uploadComponentResize} from "../components/UploadComponent/uploadComponentControls";
-import LoadingComponent from "../components/LoadingComponent";
+import {cacheDatas, useMetaInfo, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
-import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
-import {styles} from "../controllers/Theme";
+import notifySnackbar from "../controllers/notifySnackbar";
+import baseStyles from "../themes/Base.module.css";
 
-const useStyles = makeStyles(theme => ({
-    card: {},
-    cardImage: {
-        marginBottom: theme.spacing(1),
-        marginTop: theme.spacing(1),
-        // maxHeight: "100%",
-        maxWidth: "100%",
-    },
-    text: {
-        "&:empty": {
-            marginBottom: theme.spacing(1),
-        },
-    },
-    replyButton: {
-        textTransform: "none",
-    }
-}));
-
-const NewPost = (props) => {
-    const classesPost = useStyles();
+export default () => {
     const dispatch = useDispatch();
     const history = useHistory();
     const location = useLocation();
     const metaInfo = useMetaInfo();
     const pages = usePages();
     const windowData = useWindowData();
-    const {classes} = props;
     const {id, reply} = useParams();
     const [state, setState] = React.useState({highlight: reply, text: ""});
     const {imageDescriptors, text, tag, ready} = state;
@@ -149,25 +126,19 @@ const NewPost = (props) => {
     }, [location]);
 
     if (!ready) return <LoadingComponent/>
-    return <>
-        <Grid container className={[classes.center, classesPost.center].join(" ")}>
-            <NewPostComponent
-                buttonComponent={null}
-                context={"newpost" + JSON.stringify({text, tag})}
-                imageDescriptors={imageDescriptors}
-                inline
-                mentions={[mentionTags, mentionUsers]}
-                onClose={handleCancelClick}
-                onComplete={handleReplyChange}
-                onError={handleError}
-                tag={tag}
-                text={text}
-                UploadProps={{camera: !windowData.isNarrow(), multi: true}}
-            />
-        </Grid>
-    </>
+    return <div className={baseStyles.content}>
+        <NewPostComponent
+            buttonComponent={null}
+            context={"newpost" + JSON.stringify({text, tag})}
+            imageDescriptors={imageDescriptors}
+            inline
+            mentions={[mentionTags, mentionUsers]}
+            onClose={handleCancelClick}
+            onComplete={handleReplyChange}
+            onError={handleError}
+            tag={tag}
+            text={text}
+            UploadProps={{camera: !windowData.isNarrow(), multi: true}}
+        />
+    </div>
 };
-
-export default withStyles(theme => ({
-    ...styles(theme),
-}))(NewPost);

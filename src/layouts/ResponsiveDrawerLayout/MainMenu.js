@@ -1,113 +1,88 @@
 import React from "react";
-import PropTypes from "prop-types";
-import Divider from "@material-ui/core/Divider";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import withStyles from "@material-ui/styles/withStyles";
 import {Link} from "react-router-dom";
-import {matchRole, useCurrentUserData} from "../../controllers/UserData";
 import LanguageComponent from "../../components/LanguageComponent";
+import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
+import Menu from "../../controls/Menu/Menu";
+import menuStyles from "../../controls/Menu/Menu.module.css";
+import useRippleEffect from "../../helpers/useRippleEffect";
+import styles from "./styles/MainMenu.module.css";
 
-const styles = theme => ({
-    header: {
-        ...theme.mixins.toolbar,
-        [theme.breakpoints.up("md")]: {
-            display: "flex",
-            height: 120
-        },
-        [theme.breakpoints.down("md")]: {
-            alignItems: "center",
-            justifyContent: "flex-end",
-            display: "flex",
-        },
-    },
-    indent: {
-        ...theme.mixins.toolbar,
-    },
-    label: {
-        color: "inherit",
-        cursor: "default",
-        textDecoration: "none",
-    },
-    active: {
-        backgroundColor: "rgba(0,0,0,.1)",
-    },
-    languageChange: {
-        color: "inherit",
-        fontSize: "inherit",
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        // paddingLeft: theme.spacing(1),
-        "& .MuiSelect-root": {
-            padding: theme.spacing(0.5),
-        },
-        "&:before": {
-            borderColor: "rgba(0, 0, 0, 0.12)",
-        }
-    },
-});
+const allowed = (item, userData) => item && !item.disabled && matchRole(item.roles, userData);
+const sectionDivider = {};
 
-function MainMenu(props) {
-    const {items, classes, onClick} = props;
-    const currentUserData = useCurrentUserData();
+const filterItems = (items, userData) => items.reduce((result, entry) => {
+    if (Array.isArray(entry)) {
+        if (!entry.length || !allowed(entry[0], userData)) return result;
+        const nested = filterItems(entry, userData);
+        if (nested.length) result.push(nested);
+    } else if (allowed(entry, userData)) result.push(entry);
+    return result;
+}, []);
 
-    return <div className={"MuiMainMenu-root"}>
-        {items.map((list, index) => {
-            let hasItems = false;
-            let firstDone = false;
-            const section = <div className={"MuiMainMenu-section"} key={index}>
-                <List>
-                    {list.map((item) => {
-                        if (item.disabled) return null;
-                        if (!matchRole(item.roles, currentUserData)) return null;
-                        if (!firstDone) {
-                            firstDone = true;
-                            return null;
-                        }
-                        hasItems = true;
-                        const activeItem = item.route === window.location.pathname;
+const ItemContent = ({item, userData}) => <>
+    <span className={styles.icon}>{item.icon}</span>
+    <span className={styles.label}>
+        {item.label}
+        {item.adornment && userData ? item.adornment(userData) : null}
+    </span>
+</>;
 
-                        const child = <ListItem
-                            button
-                            className={activeItem ? classes.active : ""}
-                            key={item.route + Math.random()}
-                            onClickCapture={item.onClick}
-                            onClick={onClick}
-                        >
-                            <ListItemIcon>{item.icon}</ListItemIcon>
-                            <ListItemText>
-                                {item.label}
-                                {item.adornment && currentUserData ? item.adornment(currentUserData) : null}
-                            </ListItemText>
-                        </ListItem>;
+const MenuLink = ({item, onClick, selected, userData}) => {
+    const onPointerDown = useRippleEffect();
 
-                        if (item.component) {
-                            return <Link
-                                children={child}
-                                className={classes.label}
-                                key={item.route + Math.random()}
-                                to={item.route}
-                            />
-                        } else {
-                            return child
-                        }
-                    })}
-                </List>
-                <Divider/>
-            </div>;
-            return hasItems ? section : null;
-        })}
-        <ListItem disableGutters>
-            <LanguageComponent fullWidth className={classes.languageChange}/>
-        </ListItem>
-    </div>
-}
-
-MainMenu.propTypes = {
-    items: PropTypes.array,
-    onClick: PropTypes.func
+    return <Link
+        aria-current={selected ? "page" : undefined}
+        className={[menuStyles.menuItem, styles.item, selected && styles.active].filter(Boolean).join(" ")}
+        onClick={onClick}
+        onClickCapture={item.onClick}
+        onPointerDown={onPointerDown}
+        role="menuitem"
+        tabIndex={0}
+        to={item.route}
+    >
+        <ItemContent item={item} userData={userData}/>
+    </Link>;
 };
 
-export default withStyles(styles)(MainMenu);
+export default ({items, onClick}) => {
+    const currentUserData = useCurrentUserData();
+    const menuItems = items.reduce((result, list) => {
+        const visible = filterItems(list, currentUserData);
+        if (visible.length > 1 && !Array.isArray(visible[0]) && !Array.isArray(visible[1])
+            && visible[0].route && visible[0].route === visible[1].route) visible.shift();
+        if (visible.length) result.push(...visible, sectionDivider);
+        return result;
+    }, []);
+
+    const renderItem = item => {
+        if (item === sectionDivider) return <div className={styles.section} role="separator"/>;
+        const selected = Boolean(item.route) && item.route === window.location.pathname;
+        if (item.component) return <MenuLink
+            item={item}
+            onClick={onClick}
+            selected={selected}
+            userData={currentUserData}
+        />;
+
+        return <Button
+            aria-current={selected ? "page" : undefined}
+            className={[menuStyles.menuItem, styles.item, selected && styles.active].filter(Boolean).join(" ")}
+            color="inherit"
+            onClick={onClick}
+            onClickCapture={item.onClick}
+            role="menuitem"
+            tabIndex={0}
+            variant="text"
+        >
+            <ItemContent item={item} userData={currentUserData}/>
+        </Button>;
+    };
+
+    return <div className={["MuiMainMenu-root", styles.root].join(" ")}>
+        <Menu color={"secondary"} inline items={menuItems} renderItem={renderItem}/>
+        <div className={styles.languageRow}>
+            <LanguageComponent fullWidth/>
+        </div>
+    </div>;
+}

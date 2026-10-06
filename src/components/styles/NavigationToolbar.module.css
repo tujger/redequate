@@ -1,0 +1,52 @@
+.toolbar {
+    align-items: var(--navigation-align-items, center);
+    background-color: inherit;
+    box-sizing: border-box;
+    display: flex;
+    min-height: calc(var(--theme-spacing) * 5);
+    padding-left: var(--theme-content-padding-left);
+    padding-right: var(--theme-content-padding-right);
+    position: sticky;
+    top: var(--theme-header-collapsed);
+    width: var(--theme-content-width);
+    z-index: 2;
+}
+
+.side {
+    align-items: inherit;
+    align-self: flex-start;
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.content {
+    align-items: var(--navigation-align-items, center);
+    column-gap: calc(var(--theme-spacing) * 0.5);
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: var(--navigation-justify, flex-start);
+    margin-left: var(--theme-spacing);
+    min-width: 0;
+}
+
+.backButton {
+    color: inherit;
+    min-height: calc(var(--theme-spacing) * 4);
+    min-width: calc(var(--theme-spacing) * 4);
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+
+:global(.ResponsiveDrawerLayout),
+:global(.BottomToolbarLayout) {
+    .toolbar {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}

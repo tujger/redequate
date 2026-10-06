@@ -1,13 +1,12 @@
-import React from "react";
-import IconButton from "@material-ui/core/IconButton";
 import EditIcon from "@material-ui/icons/Edit";
-import Grid from "@material-ui/core/Grid";
-import MenuItem from "@material-ui/core/MenuItem";
+import React from "react";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo, useWindowData} from "../../controllers/General";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";
+import SelectItem from "../../controls/Select/SelectItem";
+import actionStyles from "./styles/PostActions.module.css";
 
-export default ({postData, mentions, onMenuItemClick, onComplete}) => {
+export default ({postData, mentions, modalOnly = false, onMenuItemClick, onComplete, openRequest, ...selectProps}) => {
     const metaInfo = useMetaInfo();
     const windowData = useWindowData();
     const {t} = useTranslation();
@@ -18,36 +17,44 @@ export default ({postData, mentions, onMenuItemClick, onComplete}) => {
         onMenuItemClick(evt);
     }
 
-    if (!postsAllowEdit) return null;
-
-    let element;
-    if (onMenuItemClick) {
-        element = <MenuItem
-            children={t("Common.Edit")}
-            id={"edit"}
-            onClick={handleMenuItemClick}
-        />
-    } else {
-        element = <Grid item>
-            <IconButton
-                aria-label={t("Common.Edit")}
-                children={<EditIcon/>}
-                component={"div"}
-                size={"small"}
-                title={t("Common.Edit")}
-            />
-        </Grid>
+    const handleSelectItemClick = evt => {
+        handleMenuItemClick(evt);
+        selectProps.onClick && selectProps.onClick(evt);
     }
 
-    return <>
-        <NewPostComponent
-            buttonComponent={element}
-            context={postData.id}
-            mentions={mentions}
-            onComplete={onComplete}
-            editPostData={postData}
-            title={t("Post.Edit post")}
-            UploadProps={{camera: !windowData.isNarrow(), multi: true}}
-        />
-    </>
+    if (!postsAllowEdit) return null;
+
+    const newPostProps = {
+        context: postData.id,
+        mentions,
+        onComplete,
+        editPostData: postData,
+        openRequest,
+        title: t("Post.Edit post"),
+        UploadProps: {camera: !windowData.isNarrow(), multi: true},
+    };
+
+    if (modalOnly) return <NewPostComponent {...newPostProps}/>;
+
+    if (onMenuItemClick) return <SelectItem
+        children={<NewPostComponent
+            {...newPostProps}
+            buttonComponent={<div onClick={handleMenuItemClick}>{t("Common.Edit")}</div>}
+        />}
+        {...selectProps}
+        id={"edit"}
+        onClick={handleSelectItemClick}
+        value={"edit"}
+    />;
+
+    return <NewPostComponent
+        {...newPostProps}
+        buttonComponent={<div className={actionStyles.action}>
+            <div className={actionStyles.iconButton}
+                 aria-label={t("Common.Edit")}
+                 children={<EditIcon/>}
+                 title={t("Common.Edit")}
+            />
+        </div>}
+    />;
 }

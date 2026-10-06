@@ -1,16 +1,15 @@
-import React from "react";
-import IconButton from "@material-ui/core/IconButton";
 import ShareIcon from "@material-ui/icons/Share";
-import Grid from "@material-ui/core/Grid";
-import MenuItem from "@material-ui/core/MenuItem";
-import {useDispatch} from "react-redux";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
 import {usePages} from "../../controllers/General";
-import {share} from "../ShareComponent";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
+import {share} from "../ShareComponent";
+import SelectItem from "../../controls/Select/SelectItem";
+import actionStyles from "./styles/PostActions.module.css";
 
-export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
+export default React.forwardRef(({isReply, onMenuItemClick, postData, ...selectProps}, ref) => {
     const pages = usePages();
     const dispatch = useDispatch();
     const {t} = useTranslation();
@@ -18,6 +17,11 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
     const handleMenuItemClick = evt => {
         sharePath();
         onMenuItemClick(evt);
+    }
+
+    const handleSelectItemClick = evt => {
+        handleMenuItemClick(evt);
+        selectProps.onClick && selectProps.onClick(evt);
     }
 
     const handleButtonClick = evt => {
@@ -29,28 +33,29 @@ export default React.forwardRef(({isReply, onMenuItemClick, postData}, ref) => {
         dispatch(ProgressView.SHOW);
         postData.fetchPath()
             .then(path => share({
-                shortify: isReply,
-                url: window.location.origin + pages.post.route + path
+                shortify: isReply, url: window.location.origin + pages.post.route + path
             }))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }
 
-    if (onMenuItemClick) return <MenuItem
-        children={t("Common.Share")}
-        ref={ref}
-        onClick={handleMenuItemClick}
-        id={"share"}
-    />
-
-    return <Grid item>
-        <IconButton
-            aria-label={t("Common.Share")}
-            children={<ShareIcon/>}
-            component={"div"}
-            onClick={handleButtonClick}
-            size={"small"}
-            title={t("Common.Share")}
+    if (onMenuItemClick) {
+        return <SelectItem
+            children={t("Common.Share")}
+            {...selectProps}
+            ref={ref}
+            onClick={handleSelectItemClick}
+            id={"share"}
+            value={"share"}
         />
-    </Grid>
+    }
+
+    return <div className={actionStyles.action}>
+        <div className={actionStyles.iconButton}
+             aria-label={t("Common.Share")}
+             children={<ShareIcon/>}
+             onClick={handleButtonClick}
+             title={t("Common.Share")}
+        />
+    </div>
 })

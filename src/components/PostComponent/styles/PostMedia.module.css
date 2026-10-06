@@ -1,0 +1,5 @@
+.postMediaLightboxPortal {
+    background-color: transparent;
+    position: fixed;
+    z-index: 1100;
+}

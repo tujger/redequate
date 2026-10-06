@@ -1,50 +1,21 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
 import {useHistory} from "react-router-dom";
-import withStyles from "@material-ui/styles/withStyles";
-import PostComponent from "./PostComponent";
-import postItemTransform from "./postItemTransform";
-import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
-import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import Pagination from "../../controllers/FirebasePagination";
+import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import notifySnackbar from "../../controllers/notifySnackbar";
+import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import PostComponent from "./PostComponent";
+import postItemTransform from "./postItemTransform";
 import RotatingReplies from "./RotatingReplies";
+import cardStyles from "./styles/PostComponent.module.css";
+import replyStyles from "./styles/PostReplies.module.css";
 
-const stylesCurrent = theme => ({
-    indent: {},
-    sectionComment: {
-        "& $indent": {
-            [theme.breakpoints.up("md")]: {
-                width: theme.spacing(8.5)
-            },
-            [theme.breakpoints.down("sm")]: {
-                width: theme.spacing(6.5)
-            },
-        }
-    },
-    sectionReply: {
-        "& $indent": {
-            [theme.breakpoints.up("md")]: {
-                width: theme.spacing(4)
-            },
-            [theme.breakpoints.down("sm")]: {},
-        }
-    },
-    textSmall: {
-        display: "inline-block",
-        fontSize: "90%",
-    },
-    suggestionName: {
-        color: theme.palette.secondary.main,
-        fontWeight: "bold",
-    }
-});
-
-export default withStyles(stylesCurrent)((props) => {
-    const {allowedExtras, level, postId, classes = {}, type, expand, onChange, expanded: givenExpanded} = props;
+export default (props) => {
+    const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = props;
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -144,30 +115,29 @@ export default withStyles(stylesCurrent)((props) => {
 
     if (!paginationOptions) return null;
     if (postsRotateReplies === "outside" && rotating && replies && replies.length) {
-        return <Grid container>
-            <Grid className={classes.indent}/>
-            <Grid item xs>
+        return <div className={replyStyles.replyRow}>
+            <div className={replyStyles.replyIndent}/>
+            <div className={cardStyles.replyContent}>
                 <RotatingReplies {...props} items={replies}/>
-            </Grid>
-        </Grid>
+            </div>
+        </div>
     }
 
     if (!expanded && !userReplied) return null;
     if (!expanded) {
-        return <Grid container>
-            <Grid className={classes.indent}/>
-            <Grid item xs>
+        return <div className={replyStyles.replyRow}>
+            <div className={replyStyles.replyIndent}/>
+            <div className={cardStyles.replyContent}>
                 <ItemPlaceholderComponent
                     avatar={<AvatarView
-                        className={classes.avatarSmallest}
+                        // className={cardStyles.avatarSmallest}
                         image={userReplied.image}
                         initials={userReplied.initials}
+                        size={"small"}
                         verified
                     />}
-                    label={<span className={classes.textSmall}>
-                        <span className={classes.suggestionName}>
-                            {userReplied.name}
-                        </span>
+                    label={<span className={cardStyles.textSmall}>
+                        <UserName id={userReplied.id}>{userReplied.name}</UserName>
                         {replies && replies.length > 1 ? " and others replied" : " replied"}
                     </span>}
                     pattern={"transparent"}
@@ -175,26 +145,26 @@ export default withStyles(stylesCurrent)((props) => {
                         setState(state => ({...state, expanded: true}));
                     }}
                 />
-            </Grid>
-        </Grid>
+            </div>
+        </div>
     }
 
     return <>
-        {expand && level === 0 && <Grid container>
-            <Grid item xs>
+        {expand && level === 0 && <div className={replyStyles.replyRow}>
+            <div className={cardStyles.replyContent}>
                 <ItemPlaceholderComponent
                     avatar={null}
-                    label={<span className={classes.textSmall}>
+                    label={<span className={cardStyles.textSmall}>
                         Click here to see the entire thread.
                     </span>}
                     pattern={"flat"}
                     onClick={() => history.push(pages.post.route + postId)}
                 />
-            </Grid>
-        </Grid>}
-        <Grid container className={level > 1 ? classes.sectionReply : classes.sectionComment}>
-            {level > 0 && level < MAX_INDENTING_LEVELS && <Grid className={classes.indent}/>}
-            <Grid item xs>
+            </div>
+        </div>}
+        <div className={[replyStyles.replyRow, level > 1 ? replyStyles.sectionReply : replyStyles.sectionComment].join(" ")}>
+            {level > 0 && level < MAX_INDENTING_LEVELS && <div className={replyStyles.replyIndent}/>}
+            <div className={cardStyles.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
                     pagination={() => new Pagination(paginationOptions)}
@@ -205,10 +175,6 @@ export default withStyles(stylesCurrent)((props) => {
                     })}
                     itemComponent={item => <PostComponent
                         {...props}
-                        classes={{
-                            ...classes,
-                            cardActions: [classes.cardActions, classes.cardActionsSmall].join(" "),
-                        }}
                         collapsible={false}
                         disableClick
                         isReply={true}
@@ -222,8 +188,8 @@ export default withStyles(stylesCurrent)((props) => {
                     />}
                     placeholder={<PostComponent avatar={null} skeleton={true} pattern={"cloud"}/>}
                 />
-            </Grid>
-        </Grid>
+            </div>
+        </div>
     </>
     // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
-})
+}

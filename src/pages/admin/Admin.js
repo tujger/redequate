@@ -1,13 +1,11 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import Card from "@material-ui/core/Card";
-import withStyles from "@material-ui/styles/withStyles";
-import CardHeader from "@material-ui/core/CardHeader";
 import {usePages} from "../../controllers/General";
-import {styles, stylesList} from "../../controllers/Theme";
+import Button from "../../controls/Button/Button";
+import baseStyles from "../../themes/Base.module.css";
+import adminStyles from "./styles/Admin.module.css";
 
-const Admin = ({fetchMenu, classes = {}}) => {
+export default ({fetchMenu, classes = {}}) => {
     const history = useHistory();
     const pages = usePages();
     const itemsFlat = Object.keys(pages)
@@ -20,22 +18,32 @@ const Admin = ({fetchMenu, classes = {}}) => {
 
     const menu = fetchMenu(pages);
 
-    return <div className={classes.center}>
+    return <div className={baseStyles.content}>
         {itemsFlat.map((item, index) => {
             if (item.disabled) return null;
             if (item === pages.admin || !menu.filter(list => list[0] === pages.admin).filter(list => list.indexOf(item) >= 0).length) return null;
-            return <Card key={index} className={[classes.root, classes.card].join(" ")}>
-                <CardActionArea onClick={() => {
-                    history.push(item.route);
-                }}>
-                    <CardHeader subheader={item.label}/>
-                </CardActionArea>
-            </Card>
+            const handleClick = () => {
+                history.push(item.route);
+            };
+
+            const handleKeyDown = event => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                handleClick();
+            };
+
+            return <Button
+                className={[adminStyles.button].join(" ")}
+                color={"secondary"}
+                key={index}
+                fullWidth
+                onClick={handleClick}
+                onKeyDown={handleKeyDown}
+                tabIndex={0}
+                title={item.label}
+            >
+                {item.label}
+            </Button>
         })}
     </div>
 };
-
-export default withStyles(theme => ({
-    ...styles(theme),
-    ...stylesList(theme)
-}))(Admin);

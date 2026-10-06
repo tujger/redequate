@@ -1,0 +1,89 @@
+.container {
+    align-items: stretch;
+    display: flex;
+    min-width: 0;
+    width: 100%;
+}
+
+.tabs {
+    display: flex;
+    flex: 1 1 0;
+    gap: 0;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 0;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.tabsCentered {
+    justify-content: center;
+    overflow-x: hidden;
+}
+
+.tab {
+    flex: 0 0 auto;
+
+    && {
+        border-radius: 0;
+        height: auto;
+        padding: 0 calc(var(--theme-spacing) * 2);
+    }
+}
+
+.tabSelected {
+    color: var(--theme-color-primary);
+
+    &:before {
+        background-color: var(--theme-color-primary);
+        bottom: 0;
+        content: "";
+        height: 2px;
+        left: 0;
+        pointer-events: none;
+        position: absolute;
+        right: 0;
+    }
+}
+
+.arrowButton {
+    border-radius: 0;
+    flex: 0 0 calc(var(--theme-spacing) * 5);
+    min-height: 0;
+    padding: 0;
+}
+
+.label {
+    display: inline;
+}
+
+.icon {
+    display: none;
+}
+
+@media (max-width: 959px) {
+    .tab {
+        flex: 1 0 auto;
+    }
+
+    .label {
+        display: none;
+    }
+
+    .icon {
+        display: inline-flex;
+    }
+}
+
+
+:global(.ResponsiveDrawerLayout),
+:global(.BottomToolbarLayout) {
+    .toolbar {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}

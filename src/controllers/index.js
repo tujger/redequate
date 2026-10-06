@@ -8,7 +8,9 @@ export {default as Pagination} from "./FirebasePagination";
 export {default as PagesPagination} from "./PagesPagination";
 export * from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
-export {colors, createTheme, styles, stylesList} from "./Theme";
+export {default as ThemeSeason} from "../themes/ThemeSeason";
+export {default as ThemeDayNight} from "../themes/ThemeDayNight";
+export {default as Theme} from "../themes/Theme";
 export {
     sendInvitationEmail,
     sendVerificationEmail,
@@ -24,5 +26,5 @@ export {
 export * from "./notifySnackbar";
 export * from "./notifyConfirm";
 export {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
-export {default as useScrollPosition, getScrollPosition} from "./useScrollPosition";
+export {default as useScrollPosition, getScrollPosition} from "../helpers/useScrollPosition";
 export {useTextTranslation} from "./textTranslation";

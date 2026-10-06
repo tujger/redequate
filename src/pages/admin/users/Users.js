@@ -1,25 +1,23 @@
-import React from "react";
 import AddIcon from "@material-ui/icons/Add";
-import {Link} from "react-router-dom";
+import React from "react";
 import {connect, useDispatch} from "react-redux";
-import Grid from "@material-ui/core/Grid";
-import withStyles from "@material-ui/styles/withStyles";
-import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
-import UserItem from "./UserItem";
-import Pagination from "../../../controllers/FirebasePagination";
-import {UserData} from "../../../controllers/UserData";
-import {usePages} from "../../../controllers/General";
-import ProgressView from "../../../components/ProgressView";
-import {styles} from "../../../controllers/Theme";
-import {usersReducer} from "./usersReducer";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
-import AllUsersPagination from "./AllUsersPagination";
-import UsersHeader from "./UsersHeader";
+import {Link} from "react-router-dom";
 import FlexFabComponent from "../../../components/FlexFabComponent";
+import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
+import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import ProgressView from "../../../components/ProgressView";
+import Pagination from "../../../controllers/FirebasePagination";
+import {usePages} from "../../../controllers/General";
+import {UserData} from "../../../controllers/UserData";
+import baseStyles from "../../../themes/Base.module.css";
+import AllUsersPagination from "./AllUsersPagination";
+import UserItem from "./UserItem";
+import UsersHeader from "./UsersHeader";
+import {usersReducer} from "./usersReducer";
 
 function Users(props) {
     // eslint-disable-next-line react/prop-types
-    const {classes, mode = "all", filter = "", invitation = true} = props;
+    const {mode = "all", filter = "", invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();
 
@@ -107,65 +105,17 @@ function Users(props) {
     }
 
     return <>
-        <UsersHeader classes={classes} filter={filter} handleChange={handleHeaderChange} mode={mode}/>
-        <Grid container className={classes.center}>
+        <UsersHeader filter={filter} handleChange={handleHeaderChange} mode={mode}/>
+        <div className={[baseStyles.content].join(" ")}>
             <LazyListComponent
-                className={classes.center}
                 pagination={pagination}
                 itemTransform={itemTransform}
                 itemComponent={item => <UserItem key={item.key} data={item}/>}
                 placeholder={<UserItem skeleton={true}/>}
                 noItemsComponent={<UserItem label={"No users found"}/>}
             />
-        </Grid>
-        {/* <ListComponent
-            items={items}
-            leftAction={listAction({
-                action: (selectedItems) => {
-                    throw Error("'left' is not implemented");
-                },
-                itemButton: {
-                    label: "Check",
-                    icon: <CheckIcon/>,
-                    color: "#008800",
-                },
-                toolbarButton: {
-                    label: "Check all",
-                    icon: <CheckIcon/>,
-                },
-                variant: "warning"
-            })}
-            rightAction={listAction({
-                action: (selectedItems) => {
-                    dispatch(ProgressView.SHOW);
-                    for(let item of selectedItems) {
-                        let index = items.indexOf(item);
-                        console.log("left", items.length, index, item);
-                        items.splice(items.indexOf(item), 1);
-                        notifySnackbar({title: "Removed: " + item.public.name});
-                    }
-                    setState({...state, items});
-                    dispatch(ProgressView.HIDE);
-                },
-                itemButton: {
-                    label: "Delete this",
-                    icon: <DeleteIcon/>,
-                    color: "#ff0000",
-                },
-                toolbarButton: {
-                    label: "Delete all",
-                    icon: <DeleteIcon/>,
-                    ask: "You are going to delete all selected items. Continue?"
-                },
-                variant: "warning"
-            })}
-            emptyComponent={<ServiceComponent text={loading ? "Loading..." : "No users"}/>}
-            itemComponent={<UserComponent pages={pages} store={store} firebase={firebase}/>}
-        /> */}
-        {invitation && <Link
-            key={pages.adduser.route}
-            to={pages.adduser.route}
-        >
+        </div>
+        {invitation && <Link to={pages.adduser.route}>
             <FlexFabComponent
                 icon={<AddIcon/>}
                 label={"Add user"}
@@ -179,4 +129,4 @@ const mapStateToProps = ({users}) => ({
     mode: users.mode,
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(Users));
+export default connect(mapStateToProps)(Users);

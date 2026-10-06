@@ -1,0 +1,50 @@
+.fieldRow {
+    align-items: flex-end;
+    display: flex;
+    gap: var(--theme-spacing);
+    min-width: 0;
+}
+
+.fieldIcon {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.fieldControl {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: var(--theme-spacing);
+
+    & > * {
+        flex: 1 1 0;
+    }
+}
+
+.socialActions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--theme-spacing) / 2);
+    justify-content: center;
+}
+
+.iconSpacer {
+    display: inline-block;
+    width: calc(var(--theme-spacing) / 2);
+}
+
+.spacer {
+    height: var(--theme-spacing);
+}
+
+.largeSpacer {
+    height: calc(var(--theme-spacing) * 2);
+}
+
+.fullWidth {
+    width: 100%;
+}

@@ -1,0 +1,35 @@
+.root {
+    border-top: 1px solid var(--theme-color-secondary);
+    column-gap: calc(var(--theme-spacing) * 2);
+    color: var(--theme-color-text);
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.section {
+    contain: none;
+}
+
+.heading {
+    font-size: var(--theme-font-size-large);
+}
+
+.list {
+    padding: var(--theme-spacing) 0;
+}
+
+.item {
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    font-size: var(--theme-font-size-small);
+    padding: calc(var(--theme-spacing) / 2);
+    text-decoration: none;
+    text-transform: none;
+    width: 100%;
+
+    &:hover {
+        background-color: var(--theme-color-focus);
+    }
+}

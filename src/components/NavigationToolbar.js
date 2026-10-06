@@ -1,30 +1,17 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
-import withStyles from "@material-ui/styles/withStyles";
-import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
 import {useHistory} from "react-router-dom";
 import {useTranslation} from "react-i18next";
+import Button from "../controls/Button/Button";
+import useRippleEffect from "../helpers/useRippleEffect";
+import styles from "./styles/NavigationToolbar.module.css";
 
-const styles = theme => ({
-    toolbar: {
-        minHeight: theme.spacing(5)
-    }
-})
-
-const NavigationToolbar = props => {
+export default props => {
     const {t} = useTranslation();
     const {
         alignItems = "center",
-        backButton = <IconButton
-            aria-label={t("Common.Back")}
-            children={<BackIcon/>}
-            /* eslint-disable-next-line no-undef */
-            title={t("Common.Back")}
-        />,
+        backButton,
         children,
-        classes,
         className,
         justify,
         mediumButton,
@@ -32,37 +19,52 @@ const NavigationToolbar = props => {
         style,
     } = props;
     const history = useHistory();
-
-    const button = backButton && <backButton.type
-        className={classes.buttonBack}
-        onClick={() => history.goBack()}
-        style={{color: "inherit"}}
-        {...backButton.props}
+    const defaultBackButton = <Button
+        color={"secondary"}
+        icon={<BackIcon/>}
+        onKeyDown={event => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            history.goBack();
+        }}
+        tabIndex={0}
+        title={t("Common.Back")}
     />;
 
-    const isChildrenLabel = children && children.constructor.name === "String";
+    const givenBackButton = backButton === undefined ? defaultBackButton : backButton;
+    const onBackPointerDown = useRippleEffect(givenBackButton?.props.onPointerDown);
+    const isDefaultBackButton = givenBackButton === defaultBackButton;
 
-    return <Grid
-        alignItems={alignItems}
-        className={[classes.toolbar, className].join(" ")}
-        container
-        style={style}
+    const button = givenBackButton && React.cloneElement(givenBackButton, {
+        className: [styles.backButton, givenBackButton.props.className].filter(Boolean).join(" "),
+        onClick: givenBackButton.props.onClick || (() => history.goBack()),
+        onPointerDown: onBackPointerDown,
+        style: isDefaultBackButton
+            ? {...(givenBackButton.props.style || {})}
+            : givenBackButton.props.style,
+    });
+
+    const isChildrenLabel = typeof children === "string";
+
+    return <div
+        className={[styles.toolbar, className].filter(Boolean).join(" ")}
+        style={{
+            "--navigation-align-items": alignItems,
+            "--navigation-justify": justify || "flex-start",
+            ...(style || {}),
+        }}
     >
-        <Grid item>
+        <div className={styles.side}>
             {button}
-        </Grid>
-        <Grid item xs>
-            <Grid container alignItems={alignItems} justify={justify}>
-                {isChildrenLabel ? <Typography variant={"h6"}>{children}</Typography> : children}
-            </Grid>
-        </Grid>
-        {mediumButton && <Grid item>
+        </div>
+        <div className={styles.content}>
+            {isChildrenLabel ? <h6 className={styles.title}>{children}</h6> : children}
+        </div>
+        {mediumButton && <div className={styles.side}>
             {mediumButton}
-        </Grid>}
-        <Grid item>
+        </div>}
+        <div className={styles.side}>
             {rightButton}
-        </Grid>
-    </Grid>
+        </div>
+    </div>
 };
-
-export default withStyles(styles)(NavigationToolbar);

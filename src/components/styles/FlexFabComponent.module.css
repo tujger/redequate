@@ -1,0 +1,101 @@
+.fab {
+    --fab-background: var(--theme-color-primary);
+    --fab-color: var(--theme-color-paper);
+
+    align-items: center;
+    background-color: var(--fab-background);
+    border: 0;
+    bottom: calc(var(--theme-spacing) * 2);
+    box-shadow: var(--theme-card-shadow);
+    color: var(--fab-color);
+    cursor: pointer;
+    display: flex;
+    font-size: var(--theme-font-size-regular);
+    justify-content: center;
+    min-height: calc(var(--theme-spacing) * 6);
+    outline: 0;
+    padding: 0 var(--theme-spacing);
+    position: fixed;
+    right: calc(var(--theme-spacing) * 2);
+    transition: opacity 225ms ease-in-out, transform 225ms ease-in-out, visibility 225ms ease-in-out;
+    z-index: 1;
+
+    &:hover {
+        background-color: color-mix(in srgb, var(--theme-color-primary) 85%, black);
+    }
+
+    &[data-tooltip] {
+        &::after {
+            background-color: var(--theme-color-text);
+            border-radius: calc(var(--theme-spacing) / 2);
+            bottom: calc(100% + var(--theme-spacing));
+            color: var(--theme-color-paper);
+            content: attr(data-tooltip);
+            font-size: var(--theme-font-size-regular);
+            max-width: calc(var(--theme-spacing) * 30);
+            opacity: 0;
+            padding: var(--theme-spacing);
+            pointer-events: none;
+            position: absolute;
+            right: 0;
+            transform: translateY(var(--theme-spacing));
+            transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
+            white-space: nowrap;
+        }
+
+        &:hover::after,
+        &:focus-visible::after {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    :global([data-bottom-toolbar]) & {
+        bottom: calc(var(--theme-spacing) * 6);
+    }
+}
+
+.primary {
+    --fab-background: var(--theme-color-primary);
+}
+
+.secondary {
+    --fab-background: var(--theme-color-secondary);
+}
+
+.expanded {
+    border-radius: calc(var(--theme-spacing) * 3);
+    min-width: calc(var(--theme-spacing) * 12);
+}
+
+.collapsed {
+    border-radius: 50%;
+    height: calc(var(--theme-spacing) * 7);
+    min-height: 0;
+    padding: 0;
+    width: calc(var(--theme-spacing) * 7);
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: 1.5rem;
+    }
+}
+
+.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+    visibility: visible;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.75);
+    visibility: hidden;
+}
+
+@media (max-width: 600px) {
+    .fab[data-tooltip]::after {
+        white-space: normal;
+    }
+}

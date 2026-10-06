@@ -1,0 +1,13 @@
+.immediate {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--theme-spacing);
+    margin-top: var(--theme-spacing);
+}
+
+.content {
+    align-items: flex-end;
+    display: flex;
+    margin-bottom: var(--theme-spacing);
+    margin-top: var(--theme-spacing);
+}

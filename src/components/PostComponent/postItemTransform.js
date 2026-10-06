@@ -1,9 +1,8 @@
-import React from "react";
-import {PostData} from "./PostData";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
-import {cacheDatas, useFirebase} from "../../controllers/General";
-import {MutualError} from "../MutualComponent";
 import {fetchCallable} from "../../controllers/Firebase";
+import {cacheDatas} from "../../controllers/General";
+import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import {MutualError} from "../MutualComponent";
+import {PostData} from "./PostData";
 
 export default (
     {

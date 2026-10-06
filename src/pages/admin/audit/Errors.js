@@ -1,28 +1,28 @@
-import React from "react";
-import {connect, useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
 import RefreshIcon from "@material-ui/icons/Refresh";
-import IconButton from "@material-ui/core/IconButton";
-import Select from "@material-ui/core/Select";
-import Chip from "@material-ui/core/Chip";
-import Grid from "@material-ui/core/Grid";
-import MenuItem from "@material-ui/core/MenuItem";
-import withStyles from "@material-ui/styles/withStyles";
+import React from "react";
+import {connect, useDispatch} from "react-redux";
+import AvatarView from "../../../components/AvatarView";
+import ConfirmComponent from "../../../components/ConfirmComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
+import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import NavigationToolbar from "../../../components/NavigationToolbar";
+import ProgressView from "../../../components/ProgressView";
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
-import ProgressView from "../../../components/ProgressView";
-import ErrorItemComponent from "./ErrorItemComponent";
-import ConfirmComponent from "../../../components/ConfirmComponent";
-import AvatarView from "../../../components/AvatarView";
 import notifySnackbar from "../../../controllers/notifySnackbar";
-import NavigationToolbar from "../../../components/NavigationToolbar";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
-import {styles} from "../../../controllers/Theme";
+import Button from "../../../controls/Button/Button";
+import Chip from "../../../controls/Chip/Chip";
+import Select from "../../../controls/Select/Select";
 import {auditReducer} from "./auditReducer";
+import ErrorItemComponent from "./ErrorItemComponent";
+import baseStyles from "../../../themes/Base.module.css";
+import errorStyles from "./styles/Errors.module.css";
 
-const Errors = (props) => {
-    const {classes, errorsMode = "all", errorsFilter} = props;
+// eslint-disable-next-line react/prop-types
+const Errors = props => {
+    const {classes: givenClasses, errorsMode = "all", errorsFilter} = props;
+    const classes = {...errorStyles, ...(givenClasses || {})};
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
@@ -67,26 +67,30 @@ const Errors = (props) => {
 
     const filteredUserData = errorsFilter ? cacheDatas.get(errorsFilter) : null;
 
+    const clearFilteredUser = () => {
+        dispatch({type: auditReducer.ERRORS, errorsMode, errorsFilter: ""});
+        dispatch({type: lazyListComponentReducer.RESET});
+    };
+
     return <>
         <NavigationToolbar
             backButton={null}
-            className={classes.topSticky}
-            mediumButton={<IconButton
-                children={<ClearIcon/>}
+            mediumButton={<Button
+                icon={<ClearIcon/>}
                 onClick={() => setState({...state, deleteOpen: true})}
+                title={"Clear errors"}
             />}
-            rightButton={<IconButton
-                children={<RefreshIcon/>}
+            rightButton={<Button
+                icon={<RefreshIcon/>}
                 onClick={() => setState({...state, random: Math.random()})}
+                title={"Refresh errors"}
             />}
         >
             <Select
-                color={"secondary"}
                 onChange={handleMode}
+                options={[{label: "All", value: "all"}]}
                 value={errorsMode}
-            >
-                <MenuItem value={"all"}>All</MenuItem>
-            </Select>
+            />
             {errorsMode === "all" && filteredUserData && <Chip
                 avatar={<AvatarView
                     alt={"Avatar"}
@@ -95,13 +99,10 @@ const Errors = (props) => {
                     verified={true}
                 />}
                 label={filteredUserData.name}
-                onDelete={() => {
-                    dispatch({type: auditReducer.ERRORS, errorsMode, errorsFilter: ""});
-                    dispatch({type: lazyListComponentReducer.RESET});
-                }}
+                onDelete={clearFilteredUser}
             />}
         </NavigationToolbar>
-        <Grid container className={classes.center}>
+        <div className={[baseStyles.content, classes.list].filter(Boolean).join(" ")}>
             <LazyListComponent
                 key={random}
                 itemComponent={item => <ErrorItemComponent
@@ -117,7 +118,7 @@ const Errors = (props) => {
                 pagination={pagination}
                 placeholder={<ErrorItemComponent skeleton={true}/>}
             />
-        </Grid>
+        </div>
         {deleteOpen && <ConfirmComponent
             children={"Errors log will be cleared."}
             confirmLabel={"Clear"}
@@ -134,4 +135,4 @@ const mapStateToProps = ({audit}) => ({
     errorsMode: audit.errorsMode,
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(Errors));
+export default connect(mapStateToProps)(Errors);

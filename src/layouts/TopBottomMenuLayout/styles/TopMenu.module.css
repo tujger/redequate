@@ -1,0 +1,23 @@
+.root {
+    align-items: center;
+    background-color: var(--theme-header-menu-background-color);
+    color: var(--theme-header-menu-color);
+    display: flex;
+}
+
+.sectionButton {
+    color: inherit;
+    text-decoration: none;
+}
+
+.languageChange {
+    box-shadow: none;
+    padding: 0 calc(var(--theme-spacing));
+    text-transform: uppercase;
+}
+
+.profileLink {
+    color: inherit;
+    margin: calc(var(--theme-spacing) / 2);
+    text-decoration: none;
+}

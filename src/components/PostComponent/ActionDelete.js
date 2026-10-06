@@ -1,19 +1,16 @@
 import React from "react";
-import IconButton from "@material-ui/core/IconButton";
+import actionStyles from "./styles/PostActions.module.css";
 import ClearIcon from "@material-ui/icons/Clear";
-import Grid from "@material-ui/core/Grid";
 import {useDispatch} from "react-redux";
-import MenuItem from "@material-ui/core/MenuItem";
 import {useTranslation} from "react-i18next";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import ConfirmComponent from "../ConfirmComponent";
+import SelectItem from "../../controls/Select/SelectItem";
 
-export default ({postData, onMenuItemClick, onComplete, type}) => {
+export default ({postData, modalOnly = false, onMenuItemClick, onComplete, onRequestClose, open, type, ...selectProps}) => {
     const [state, setState] = React.useState({});
-    const {
-        deletePost,
-    } = state;
+    const deletePost = modalOnly ? open : state.deletePost;
     const dispatch = useDispatch();
     const {t} = useTranslation();
 
@@ -27,8 +24,14 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
         onMenuItemClick(evt);
     }
 
+    const handleSelectItemClick = evt => {
+        handleMenuItemClick(evt);
+        selectProps.onClick && selectProps.onClick(evt);
+    }
+
     const handleConfirmDeletion = () => {
         setState(state => ({...state, deletePost: false}));
+        onRequestClose && onRequestClose();
         if (!postData.id) return;
         dispatch(ProgressView.SHOW);
         postData.delete()
@@ -44,38 +47,41 @@ export default ({postData, onMenuItemClick, onComplete, type}) => {
 
     const handleCancelDeletion = () => {
         setState(state => ({...state, deletePost: false}));
+        onRequestClose && onRequestClose();
     }
 
-    let element;
-    if (onMenuItemClick) {
-        element = <MenuItem
-            children={t("Common.Delete")}
-            id={"delete"}
-            onClick={handleMenuItemClick}
-        />
-    } else {
-        element = <Grid item>
-            <IconButton
-                aria-label={t("Common.Delete")}
-                children={<ClearIcon/>}
-                component={"div"}
-                onClick={handleClickDelete}
-                size={"small"}
-                title={t("Common.Delete")}
-            />
-        </Grid>
-    }
+    const confirm = deletePost && <ConfirmComponent
+        children={t("Post.Your post and all replies will be deleted.")}
+        confirmLabel={t("Common.Delete")}
+        critical
+        open={true}
+        onCancel={handleCancelDeletion}
+        onConfirm={handleConfirmDeletion}
+        title={t("Post.Delete post?")}
+    />;
+
+    if (modalOnly) return confirm;
+
+    if (onMenuItemClick) return <SelectItem
+        children={<>
+            {t("Common.Delete")}
+            {confirm}
+        </>}
+        {...selectProps}
+        id={"delete"}
+        onClick={handleSelectItemClick}
+        value={"delete"}
+    />;
 
     return <>
-        {element}
-        {deletePost && <ConfirmComponent
-            children={t("Post.Your post and all replies will be deleted.")}
-            confirmLabel={t("Common.Delete")}
-            critical
-            open={true}
-            onCancel={handleCancelDeletion}
-            onConfirm={handleConfirmDeletion}
-            title={t("Post.Delete post?")}
-        />}
+        <div className={actionStyles.action}>
+            <div className={actionStyles.iconButton}
+                 aria-label={t("Common.Delete")}
+                 children={<ClearIcon/>}
+                 onClick={handleClickDelete}
+                 title={t("Common.Delete")}
+            />
+        </div>
+        {confirm}
     </>
 }

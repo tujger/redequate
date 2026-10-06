@@ -1,0 +1,68 @@
+import React from "react";
+import useRippleEffect from "../../helpers/useRippleEffect";
+import styles from "./Button.module.css";
+
+const variants = ["contained", "outlined", "text"];
+
+export default React.forwardRef((props, ref) => {
+    const {
+        children,
+        className,
+        color = undefined,
+        disabled = false,
+        fullWidth = false,
+        icon,
+        onClick,
+        onKeyDown: givenOnKeyDown,
+        onPointerDown: givenOnPointerDown,
+        role = "button",
+        size = "medium",
+        tabIndex: givenTabIndex = 0,
+        title = undefined,
+        variant = undefined,
+        ...otherProps
+    } = props;
+    const isIconOnly = icon && children == null;
+    const givenVariant = variant || (icon ? "text" : "contained");
+    const currentVariant = variants.includes(givenVariant) ? givenVariant : "contained";
+    const colorClass = styles[color] || (currentVariant === "text" ? styles.secondary : styles.primary);
+    const sizeClass = styles[size] || "";
+    const onPointerDown = useRippleEffect(givenOnPointerDown);
+    const onKeyDown = event => {
+        givenOnKeyDown && givenOnKeyDown(event);
+        if (event.defaultPrevented || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        onClick && onClick(event);
+    };
+
+    if (givenVariant && !variants.includes(givenVariant) && typeof console !== "undefined") {
+        console.warn(`[Button] Unsupported variant: ${givenVariant}`);
+    }
+
+    return <div
+        {...otherProps}
+        aria-disabled={disabled || undefined}
+        aria-label={title}
+        className={[
+            styles.button,
+            styles[currentVariant],
+            icon && !isIconOnly && styles.withIcon,
+            isIconOnly && styles.iconButton,
+            disabled && styles.disabled,
+            colorClass,
+            sizeClass,
+            fullWidth && styles.fullWidth,
+            className,
+        ].filter(Boolean).join(" ")}
+        onClick={disabled ? undefined : onClick}
+        onKeyDown={disabled ? undefined : onKeyDown}
+        onPointerDown={disabled ? undefined : onPointerDown}
+        ref={ref}
+        role={role}
+        tabIndex={disabled ? -1 : givenTabIndex}
+        title={title}
+    >
+        {icon}
+        {children}
+    </div>;
+});

@@ -1,0 +1,21 @@
+.admin {
+    border-color: #00ff00;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.disabled {
+    border-color: #ff0000;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.notVerified {
+    border-color: #ffff00;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.cardAction {
+    font-size: var(--theme-font-size-small);
+}

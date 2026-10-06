@@ -1,55 +1,27 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import Grid from "@material-ui/core/Grid";
-import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
+import {Link} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import {stylesList} from "../controllers/Theme";
+import ListItemComponent from "../components/ListItemComponent";
+import MentionedTextComponent from "../components/MentionedTextComponent";
+import PostBody from "../components/PostComponent/PostBody";
+import PostButtons from "../components/PostComponent/PostButtons";
+import PostMedia from "../components/PostComponent/PostMedia";
+import PostMenu from "../components/PostComponent/PostMenu";
+import RotatingReplies from "../components/PostComponent/RotatingReplies";
+import cardStyles from "../components/PostComponent/styles/PostComponent.module.css";
+import textStyles from "../components/PostComponent/styles/PostText.module.css";
+import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
+import {mentionTags} from "../controllers/mentionTypes";
+import mentionStyles from "../controllers/styles/MentionTypes.module.css";
+import UserName from "../controls/UserName/UserName";
+import chatStyles from "./styles/ChatItem.module.css";
 
-const stylesChat = theme => ({
-    chatItem: {
-        marginBottom: theme.spacing(0.5),
-        width: "90%",
-        "& $cardHeader": {
-            padding: 0,
-        }
-    },
-    chatItemOut: {
-        marginLeft: "10%",
-        "& $cardContent": {
-            backgroundColor: "#def6fc",
-        }
-    },
-    cardContent: {},
-    cardHeader: {},
-    chatItemIn: {
-        marginRight: "10%",
-    },
-    _text: {
-        marginBottom: theme.spacing(1),
-    },
-    timestamp: {
-        bottom: theme.spacing(0.5),
-        fontSize: theme.spacing(1.25),
-        position: "absolute",
-        right: theme.spacing(1),
-    },
-});
-
-const ChatItem = (props) => {
-    // eslint-disable-next-line react/prop-types
-    const {data, classes, skeleton, textComponent} = props;
+export default (props) => {
+    const {data, skeleton, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const [state, setState] = React.useState({});
     const {authorData} = state;
-
-    /*const fetchIsNew = () => {
-        const latestVisit = chatMeta[currentUserData.id + "_visit"] || 0;
-        // const latestIncoming = meta[currentUserData.id] || 0;
-        return data.created > latestVisit;
-    }*/
 
     React.useEffect(() => {
         if (skeleton) return;
@@ -58,63 +30,46 @@ const ChatItem = (props) => {
         authorData.fetch(data.uid, [UserData.IMAGE, UserData.NAME])
             .then(() => isMounted && setState({...state, authorData}))
 
-        // setTimeout(() => {
-        //     setState(state => ({...state, shown: true}));
-        // }, 2000)
         return () => {
             isMounted = false;
         }
-        // eslint-disable-next-line
     }, []);
 
-    if (skeleton) return <ItemPlaceholderComponent classes={{avatar: classes.avatarChat}}/>;
+    if (skeleton) return <ItemPlaceholderComponent/>;
 
-    // const isNew = fetchIsNew() && !shown;
     const isItemOut = currentUserData.id === data.uid;
 
     if (!authorData) return null;
-    return <Card className={[
-        classes.root,
-        classes.card,
-        classes.cardCloud,
-        classes.chatItem,
-        isItemOut ? classes.chatItemOut : classes.chatItemIn
-    ].join(" ")}>
-        <CardHeader
-            classes={{content: classes.cardContent}}
-            className={[classes.cardHeader, classes.post].join(" ")}
-            avatar={<AvatarView
-                className={[classes.avatar, classes.avatarSmallest].join(" ")}
+
+    return <ListItemComponent
+        avatar={<AvatarView
+            image={authorData.image}
+            initials={authorData.initials}
+            size={"smaller"}
+            verified={true}
+        />}
+        className={[
+            chatStyles.chatItem, isItemOut ? chatStyles.chatItemOut : chatStyles.chatItemIn,
+        ].filter(Boolean).join(" ")}
+        disableClick
+        subtitle={textComponent(data.text)}
+        variant={"cloud"}
+    >
+        <div className={chatStyles.timestamp}>{toDateString(data.created)}</div>
+    </ListItemComponent>
+
+    return <div className={[chatStyles.chatItem, isItemOut ? chatStyles.chatItemOut : chatStyles.chatItemIn].join(" ")}>
+        <div className={chatStyles.messageContent}>
+            <AvatarView
+                className={chatStyles.avatarSmallest}
                 image={authorData.image}
                 initials={authorData.initials}
                 verified={true}
-            />}
-            title={<Grid container>
-            </Grid>}
-            subheader={<Grid container className={classes._text}>
-                <Grid item xs>{textComponent(data.text)}</Grid>
-                <Grid className={[classes.date, classes.timestamp].join(" ")}>{toDateString(data.created)}</Grid>
-            </Grid>}
-        />
-    </Card>
-
-    /*return <li>
-        {isNew && <InView
-            onChange={(inView) => {
-                if (inView) setState({...state, shown: true});
-            }}
-            ref={ref => {
-                if (!ref) return;
-                setTimeout(() => {
-                    if (ref && ref.node) ref.node.style.display = "";
-                }, 1000)
-            }}
-            style={{display: "none"}}
-        ><b>NEW</b></InView>}
-    </li>*/
+            />
+            <div className={chatStyles.textWrapper}>
+                <div className={chatStyles.text}>{textComponent(data.text)}</div>
+                <div className={chatStyles.timestamp}>{toDateString(data.created)}</div>
+            </div>
+        </div>
+    </div>
 }
-
-export default withStyles((theme) => ({
-    ...stylesList(theme),
-    ...stylesChat(theme),
-}))(ChatItem);

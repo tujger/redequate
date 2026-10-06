@@ -1,166 +1,118 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import PropTypes from "prop-types";
-import {useDrag} from "react-use-gesture";
-import notifySnackbar from "../controllers/notifySnackbar";
+import {toDateString} from "../controllers/DateFormat";
+import Select from "../controls/Select/Select";
+import SelectItem from "../controls/Select/SelectItem";
+import useRippleEffect from "../helpers/useRippleEffect";
+import ItemPlaceholderComponent from "./ItemPlaceholderComponent";
+import ListSwipeableItemComponent from "./ListSwipeableItemComponent";
+import styles from "./styles/ListItemComponent.module.css";
 
-const styles = theme => ({
-    root: {
-        alignItems: "center",
-        display: "flex",
-        position: "relative",
-        transition: "height .2s",
-    },
-    leftAction: {
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-        left: theme.spacing(1),
-        position: "absolute"
-    },
-    leftActionButton: {
-        color: "#ff0000",
-    },
-    leftActionButtonSelected: {
-        backgroundColor: "#ff0000",
-        color: theme.palette.getContrastText("#ff0000"),
-    },
-    leftActionLabel: {
-        color: "#ff0000",
-    },
-    rightAction: {
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-        right: theme.spacing(1),
-        position: "absolute"
-    },
-    rightActionButton: {
-        color: "#00aa00",
-    },
-    rightActionButtonSelected: {
-        backgroundColor: "#00aa00",
-        color: theme.palette.getContrastText("#00aa00"),
-    },
-    rightActionLabel: {
-        color: "#00aa00",
-    },
-    content: {
-        position: "relative",
-        width: "100%"
-    }
-});
+export default (
+    {
+        avatar = undefined,
+        avatarInTitle = false,
+        className = undefined,
+        disableClick = false,
+        header = undefined,
+        footer = undefined,
+        menu = undefined,
+        title = undefined,
+        subtitle = undefined,
+        timestamp = undefined,
+        children = undefined,
+        onClick = undefined,
+        pattern,
+        skeleton,
+        variant = "flat",
+        ...props
+    }) => {
+    const onPointerDown = useRippleEffect();
+    const [disabled, setDisabled] = React.useState(false);
+    const [menuOpen, setMenuOpen] = React.useState(false);
 
-const calculateOpacityIndent = () => {
-    let indent;
-    // if (isMobile) {
-    //     indent = window.innerWidth / 3;
-    // } else {
-        indent = window.innerWidth / 5;
-        if (indent > 100) indent = 100;
-    // }
-    return indent;
-};
-const calculateActionIndent = calculateOpacityIndent;
-
-function ListItemComponent(props) {
-    const {classes, children, leftAction, rightAction, onClickCapture, onContextMenu} = props;
-
-    const [state, setState] = React.useState({});
-    const {x, dragging, removing, ref, removed, random} = state;
-
-    const opacityIndent = calculateOpacityIndent();
-    const actionIndent = calculateActionIndent();
-
-    const bind = useDrag(evt => {
-        const {down, movement: [mx]} = evt;
-        if (down && Math.abs(mx) < 10) return;
-        let x = mx;
-        let removing = false;
-        try {
-            if (!down) {
-                if (leftAction && mx > actionIndent) {
-                    removing = leftAction.action([children.props.data]);
-                } else if (rightAction && mx < -actionIndent) {
-                    removing = rightAction.action([children.props.data]);
-                }
-                x = 0;
-            } else {
-                if (mx > 0 && !leftAction) x = 0;
-                else if (mx < 0 && !rightAction) x = 0;
-            }
-        } catch (e) {
-            console.error(e);
-            notifySnackbar({title: e.message, variant: "error"});
-            x = 0;
-        }
-        if (ref && ref.current) {
-            setState({...state, dragging: down, x: x, removing})
-        }
-    });
-    const bind_ = (process.env.NODE_ENV === "development") ? bind : () => {
+    const handleOpen = (event) => {
+        if (disabled) return;
+        if (disableClick) return;
+        onClick?.(event);
     };
 
-    React.useEffect(() => {
-        const ref = React.createRef();
-        setState({...state, ref});
-    }, []);
+    const handleKeyDown = event => {
+        if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        handleOpen(event);
+    };
 
-    if (removing) {
-        const sizes = ref.current.getBoundingClientRect();
-        ref.current.style.height = sizes.height + "px";
-        ref.current.style.overflowY = "hidden";
-        setTimeout(() => {
-            try {
-                ref.current.style.height = "0";
-                setTimeout(() => {
-                    setState({...state, removing: false, removed: true});
-                }, 200);
-            } catch (e) {
-                console.error(e);
-            }
-        }, 50);
-    }
+    const handleMenuOpen = event => {
+        event?.stopPropagation();
+        setMenuOpen(true);
+    };
 
-    if (removed) return null;
-    return <div className={classes.root} ref={ref} key={random}>
-        {leftAction && leftAction.itemButton({
-            selected: x > actionIndent,
-            style: {right: "auto", opacity: (x || 0) / opacityIndent}
-        })}
-        {rightAction && rightAction.itemButton({
-            selected: x < -actionIndent,
-            style: {left: "auto", opacity: -(x || 0) / opacityIndent}
-        })}
-        <div
-            {...bind_()}
-            onContextMenu={onContextMenu ? evt => {
-                onContextMenu(evt);
-                setState({...state, random: Math.random()})
-            } : null}
-            onClickCapture={onClickCapture || (event => {
-                if (dragging) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    if (x === 0) {
-                        setState({...state, dragging: false, x: 0});
-                    }
-                }
-            })}
-            className={classes.content}
-            style={{left: x, touchAction: "pan-y"}}
-        >
-            {children}
+    const handleMenuClose = event => {
+        event?.stopPropagation();
+        setMenuOpen(false);
+    };
+
+    if (skeleton) return <ItemPlaceholderComponent classes={styles} pattern={"flat"}/>;
+
+    return <ListSwipeableItemComponent
+        {...props}
+        className={[
+            styles.item,
+            disableClick ? undefined : styles.clickable,
+            styles[variant],
+            className
+        ].filter(Boolean).join(" ")}
+        disabled={disabled}
+        onClick={handleOpen}
+        onKeyDown={handleKeyDown}
+        onPointerDown={(onClick && !disabled && !disableClick) ? onPointerDown : undefined}
+    >
+        {header && <div className={styles.header}>
+            {header}
+        </div>}
+        <div className={styles.content}>
+            {variant !== "vertical" && avatar}
+            <div className={styles.body}>
+                {variant === "vertical" && <div className={styles.avatar}>
+                    {avatar}
+                </div>}
+                <div className={[styles.titles].filter(Boolean).join(" ")}>
+                    {title && <div className={styles.title}>{title}</div>}
+                    {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+                    {timestamp && <span
+                        className={styles.timestamp}
+                        title={new Date(timestamp).toLocaleString()}
+                    >{toDateString(timestamp)}</span>}
+                </div>
+                {children && <div className={styles.children}>{children}</div>}
+            </div>
         </div>
-    </div>
-}
+        {footer && <div className={styles.footer}>
+            {footer}
+        </div>}
+        {menu?.map && <Select
+            className={styles.menuPosition}
+            displayEmpty
+            iconMenu
+            // onChange={onContextMenu}
+            onClickCapture={event => {
+                event.stopPropagation();
+            }}
+            value={""}
+        >
+            {menu.map((item, index) => <SelectItem
+                children={item.label}
+                key={index}
+                onClickCapture={event => {
+                    event.stopPropagation();
+                    onMenuSelect?.(event, item);
+                }}
+                // onClick={handleSelectItemClick}
+                value={item.value}
+            />)}
+        </Select>}
+        {menu && !menu.map && <div className={styles.menuPosition}>{menu}</div>}
+    </ListSwipeableItemComponent>
+    // classes, children, leftAction, rightAction, onClickCapture, onContextMenu
 
-ListItemComponent.propTypes = {
-    children: PropTypes.any,
-    leftAction: PropTypes.func,
-    onClickCapture: PropTypes.func,
-    onContextMenu: PropTypes.func,
-    rightAction: PropTypes.element,
 };
-
-export default withStyles(styles)(ListItemComponent);

@@ -1,31 +1,35 @@
-import React from "react";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import Card from "@material-ui/core/Card";
-import CardHeader from "@material-ui/core/CardHeader";
-import IconButton from "@material-ui/core/IconButton";
-import withStyles from "@material-ui/styles/withStyles";
-import {useDispatch} from "react-redux";
 import ClearIcon from "@material-ui/icons/Clear";
-import {UserData} from "../../../controllers/UserData";
-import {cacheDatas, useFirebase} from "../../../controllers/General";
+import React from "react";
+import {useDispatch} from "react-redux";
 import AvatarView from "../../../components/AvatarView";
-import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import ConfirmComponent from "../../../components/ConfirmComponent";
-import {toDateString} from "../../../controllers/DateFormat";
-import {fetchCallable} from "../../../controllers/Firebase";
+import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
+import ListItemComponent from "../../../components/ListItemComponent";
 import ProgressView from "../../../components/ProgressView";
-import {stylesList} from "../../../controllers/Theme";
+import {fetchCallable} from "../../../controllers/Firebase";
+import {cacheDatas, useFirebase} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
+import {UserData} from "../../../controllers/UserData";
+import Button from "../../../controls/Button/Button";
+import errorStyles from "./styles/ErrorItemComponent.module.css";
 
-function ErrorItemComponent(props) {
-    const {data, classes, skeleton, label, onUserClick} = props;
+export default ({data, skeleton, label, onUserClick}) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
     const {alert, userData, removed} = state;
 
-    const handleClick = (event) => onUserClick(event, userData.id);
+    const handleClick = event => onUserClick(event, userData.id);
+
+    const handleCardClick = () => {
+        setState({...state, alert: true});
+    };
+
+    const handleKeyDown = event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        handleCardClick();
+    };
 
     const handleConfirm = () => {
         dispatch(ProgressView.SHOW);
@@ -68,43 +72,41 @@ function ErrorItemComponent(props) {
     }, [])
 
     if (removed) return null;
-    if (label) return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>
-    if (skeleton || !userData) return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>
+    if (label) return <ItemPlaceholderComponent classes={errorStyles} label={label} pattern={"flat"}/>;
+    if (skeleton || !userData) return <ItemPlaceholderComponent classes={errorStyles} pattern={"flat"}/>;
 
-    return <Card className={[classes.card, classes.cardFlat].join(" ")}>
-        <CardActionArea
-            className={classes.root}
-            onClick={() => {
-                setState({...state, alert: true});
-            }}>
-            <CardHeader
-                action={<IconButton component={"div"} onClick={handleRemove}>
-                    <ClearIcon/>
-                </IconButton>}
-                avatar={<div onClick={handleClick}>
-                    <AvatarView
-                        image={userData.image}
-                        initials={userData.name}
-                        onclick={(event) => onUserClick(event, userData.id)}
-                        verified={true}
-                    />
-                </div>}
-                classes={{content: classes.cardContent}}
-                className={[classes.cardHeader, classes.post].join(" ")}
-                subheader={<Grid container>
-                    {(JSON.stringify(data.value.error) || "").substr(0, 100)}
-                </Grid>}
-                title={<Grid container>
-                    <Grid item className={classes.userName}>
-                        <div onClickCapture={handleClick}>
-                            {userData.name}
-                        </div>
-                    </Grid>
-                    <Grid item className={classes.date}>
-                        {toDateString(data.value.timestamp)}
-                    </Grid></Grid>}
-            />
-        </CardActionArea>
+    return <>
+        <ListItemComponent
+            avatar={<AvatarView
+                image={userData.image}
+                initials={userData.name}
+                onclick={event => onUserClick(event, userData.id)}
+                size={"small"}
+                verified={true}
+            />}
+            leftAction={{
+                action: handleRemove,
+                label: "Remove"
+            }}
+            tabIndex={0}
+            timestamp={data.value.timestamp}
+            title={<div className={errorStyles.userName} onClickCapture={handleClick}>
+                {userData.name}
+            </div>}
+            menu={<Button
+                className={errorStyles.removeButton}
+                icon={<ClearIcon/>}
+                onClick={event => {
+                    event.stopPropagation();
+                    handleRemove();
+                }}
+                title={"Remove error"}
+            />}
+            onClick={handleCardClick}
+            onKeyDown={handleKeyDown}
+        >
+            {(JSON.stringify(data.value.error) || "").substr(0, 100)}
+        </ListItemComponent>
         {alert && <ConfirmComponent
             confirmLabel={"Try to fix"}
             onCancel={() => setState({...state, alert: false})}
@@ -117,7 +119,5 @@ function ErrorItemComponent(props) {
                     : data.value.error
             }</pre>
         </ConfirmComponent>}
-    </Card>
+    </>
 }
-
-export default withStyles(stylesList)(ErrorItemComponent);

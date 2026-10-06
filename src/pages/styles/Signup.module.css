@@ -1,0 +1,53 @@
+.fieldRow {
+    align-items: flex-end;
+    display: flex;
+    gap: var(--theme-spacing);
+    margin-bottom: var(--theme-spacing);
+    margin-top: var(--theme-spacing);
+    min-width: 0;
+}
+
+.fieldIcon {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.fieldControl {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.passwordPrompt {
+    margin-bottom: var(--theme-spacing);
+    margin-top: var(--theme-spacing);
+
+    & h4 {
+        margin: 0;
+    }
+}
+
+.buttonGroup {
+    display: flex;
+    gap: var(--theme-spacing);
+    margin-bottom: calc(var(--theme-spacing) * 2);
+    margin-top: calc(var(--theme-spacing) * 2);
+    width: 100%;
+
+    & > * {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
+
+.socialActions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--theme-spacing) / 2);
+    justify-content: center;
+}
+
+.logoSpacer {
+    display: inline-block;
+    width: calc(var(--theme-spacing) / 2);
+}

@@ -1,0 +1,11 @@
+.container {
+    background-color: var(--theme-color-background);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.stickyBottom {
+    bottom: 0;
+    position: sticky;
+}

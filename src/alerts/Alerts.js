@@ -1,26 +1,24 @@
-import React from "react";
-import {useDispatch} from "react-redux";
-import Grid from "@material-ui/core/Grid";
-import IconButton from "@material-ui/core/IconButton";
-import AllReadIcon from "@material-ui/icons/ClearAll";
-import AlertsList from "./AlertsList";
 import Clear from "@material-ui/icons/Clear";
-import {alertsCounterReducer} from "./alertsCounterReducer";
-import {alertsVisitReducer} from "./alertsVisitReducer";
-import AlertsDaemon from "./AlertsDaemon";
-import {useCurrentUserData} from "../controllers/UserData";
-import {MenuBadge, useFirebase, usePages} from "../controllers/General";
+import AllReadIcon from "@material-ui/icons/ClearAll";
+import React from "react";
+import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import ConfirmComponent from "../components/ConfirmComponent";
+import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
 import Pagination from "../controllers/FirebasePagination";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import ConfirmComponent from "../components/ConfirmComponent";
-import {styles} from "../controllers/Theme";
-import withStyles from "@material-ui/styles/withStyles";
-import NavigationToolbar from "../components/NavigationToolbar";
-import {useTranslation} from "react-i18next";
+import {useCurrentUserData} from "../controllers/UserData";
+import Button from "../controls/Button/Button";
+import {alertsCounterReducer} from "./alertsCounterReducer";
+import AlertsDaemon from "./AlertsDaemon";
+import AlertsList from "./AlertsList";
+import {alertsVisitReducer} from "./alertsVisitReducer";
+import baseStyles from "../themes/Base.module.css";
 
-const Alerts = ({daemon, fetchAlertContent, classes}) => {
+const Alerts = ({daemon, fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -88,24 +86,26 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
 
     return <>
         <NavigationToolbar
-            className={classes.topSticky}
             backButton={null}
-            mediumButton={<IconButton
-                aria-label={t("Common.Clear")}
-                children={<Clear/>}
+            mediumButton={<Button
+                aria-label={"Clear"}
+                color={"secondary"}
+                icon={<Clear/>}
                 onClick={handleClear}
                 title={t("Common.Clear")}
+                variant={"text"}
             />}
-            rightButton={<IconButton
-                aria-label={t("Alerts.All read")}
-                children={<AllReadIcon/>}
+            rightButton={<Button
+                color={"secondary"}
+                icon={<AllReadIcon/>}
                 onClick={handleAllRead}
                 title={t("Alerts.All read")}
+                variant={"text"}
             />}
         />
-        <Grid container className={classes.center}>
+        <div className={baseStyles.content}>
             <AlertsList fetchAlertContent={fetchAlertContent}/>
-        </Grid>
+        </div>
         {allRead && <ConfirmComponent
             children={t("Alerts.All alerts will be marked as read.")}
             onCancel={() => setState({...state, allRead: false})}
@@ -123,4 +123,4 @@ const Alerts = ({daemon, fetchAlertContent, classes}) => {
     </>
 };
 
-export default withStyles(styles)(Alerts);
+export default Alerts;

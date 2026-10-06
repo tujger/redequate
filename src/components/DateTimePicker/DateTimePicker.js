@@ -1,11 +1,8 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import PropTypes from "prop-types";
-import Picker from "./Picker";
 import InputPicker from "./InputPicker";
-import {styles} from "./currentStyles";
+import Picker from "./Picker";
 
-const DateTimePicker = props => {
+export default props => {
     const {inline, ...otherprops} = props;
     if (inline) {
         return <Picker {...otherprops}/>
@@ -13,17 +10,3 @@ const DateTimePicker = props => {
         return <InputPicker {...otherprops}/>
     }
 };
-
-DateTimePicker.propTypes = {
-    inline: PropTypes.bool,
-    onChange: PropTypes.func.isRequired,
-    // date: PropTypes.objectOf(moment) || undefined || null,
-    // start: PropTypes.objectOf(moment) || undefined || null,
-    // end: PropTypes.objectOf(moment) || undefined || null,
-    extras: PropTypes.bool,
-    range: PropTypes.bool,
-    InputProps: PropTypes.any,
-    PopoverProps: PropTypes.any,
-};
-
-export default withStyles(styles)(DateTimePicker);

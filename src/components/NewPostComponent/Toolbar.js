@@ -1,17 +1,15 @@
-import React from "react";
-import Grid from "@material-ui/core/Grid";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
 import BackIcon from "@material-ui/icons/ArrowBack";
-import DialogActions from "@material-ui/core/DialogActions";
 import SendIcon from "@material-ui/icons/Send";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import Button from "../../controls/Button/Button";
+import useRippleEffect from "../../helpers/useRippleEffect";
 import NavigationToolbar from "../NavigationToolbar";
+import toolbarStyles from "./styles/Toolbar.module.css";
 
 export default (
     {
         bottom,
-        classes,
         disabled,
         onCancel,
         onSend,
@@ -20,37 +18,42 @@ export default (
         uploadComponent,
     }) => {
     const {t} = useTranslation();
+    const onPointerDown = useRippleEffect();
+
+    const handleKeyDown = handler => event => {
+        if (disabled || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        handler();
+    };
 
     return <>
         {top && <NavigationToolbar
-            backButton={<IconButton
-                children={<BackIcon/>}
-                disabled={disabled}
-                onClick={onCancel}
-            />}
+            backButton={<div
+                aria-disabled={disabled}
+                className={toolbarStyles.iconButton}
+                onClick={disabled ? undefined : onCancel}
+                onKeyDown={handleKeyDown(onCancel)}
+                onPointerDown={onPointerDown}
+                role='button'
+                tabIndex={disabled ? -1 : 0}
+            >
+                <BackIcon/>
+            </div>}
             children={title}
-            className={classes.toolbar}
+            className={toolbarStyles.toolbar}
             mediumButton={uploadComponent}
-            rightButton={<IconButton
-                aria-label={t("Common.Send")}
-                children={<SendIcon/>}
+            rightButton={<Button
+                color={"secondary"}
+                disabled={disabled}
+                icon={<SendIcon/>}
                 onClick={onSend}
-                style={{color: "inherit"}}
                 title={t("Common.Send")}
             />}
         />}
-        {bottom && <DialogActions>
-            <Grid item xs>
-                <Grid container>
-                    <Grid item>{uploadComponent}</Grid>
-                </Grid>
-            </Grid>
-            <Button onClick={onCancel} color={"secondary"} disabled={disabled}>
-                {t("Common.Cancel")}
-            </Button>
-            <Button onClick={onSend} color={"secondary"} disabled={disabled}>
-                {t("Common.Send")}
-            </Button>
-        </DialogActions>}
+        {bottom && <div className={toolbarStyles.actions}>
+            <div className={toolbarStyles.upload}>{uploadComponent}</div>
+            <Button onClick={onCancel} variant={"text"}>{t("Common.Cancel")}</Button>
+            <Button color={"primary"} disabled={disabled} onClick={onSend} variant={"text"}>{t("Common.Send")}</Button>
+        </div>}
     </>
 };

@@ -1,0 +1,12 @@
+.action {
+    font-weight: initial;
+    text-transform: initial;
+}
+
+@media (max-width: 599px) {
+    .action {
+        margin-left: calc(var(--theme-spacing) / 2);
+        margin-right: calc(var(--theme-spacing) / 2);
+        margin-top: var(--theme-spacing);
+    }
+}

@@ -1,27 +1,22 @@
 import React from "react";
-import withStyles from "@material-ui/styles/withStyles";
-import CardHeader from "@material-ui/core/CardHeader";
-import Card from "@material-ui/core/Card";
-import Grid from "@material-ui/core/Grid";
-import CardActionArea from "@material-ui/core/CardActionArea";
-import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {useCurrentUserData} from "../controllers/UserData";
-import {useFirebase, usePages, useWindowData} from "../controllers/General";
-import ProgressView from "../components/ProgressView";
-import notifySnackbar from "../controllers/notifySnackbar";
-import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import {useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
-import {toDateString} from "../controllers/DateFormat";
-import {stylesList} from "../controllers/Theme";
+import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
+import ListItemComponent from "../components/ListItemComponent";
+import ProgressView from "../components/ProgressView";
+import {useFirebase, usePages} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {useCurrentUserData} from "../controllers/UserData";
+import UserName from "../controls/UserName/UserName";
+import alertStyles from "./styles/AlertItem.module.css";
 
-const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
+export default ({data, skeleton, label, fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {new: isNew, type, id, timestamp, avatar, title, text, removed, route} = state
 
@@ -59,33 +54,27 @@ const AlertItem = ({classes, data, skeleton, label, fetchAlertContent}) => {
     if (label) return <ItemPlaceholderComponent label={label} classes={null} pattern={"flat"}/>
     if (skeleton || !type) return <ItemPlaceholderComponent classes={null} pattern={"flat"}/>;
 
-    return <>
-        <Card className={[classes.card, classes.cardFlat].join(" ")}>
-            <CardActionArea className={classes.root} onClick={handleClick}>
-                <CardHeader
-                    classes={{content: classes.cardContent}}
-                    className={[classes.cardHeader, classes.post].join(" ")}
-                    avatar={<AvatarView className={classes.avatarSmall} icon={avatar} initials={type} verified={true}/>}
-                    title={<Grid container>
-                        <Grid item className={[classes.userName, isNew ? classes.unread : classes.read].join(" ")}>
-                            {title}
-                        </Grid>
-                        {windowData.isNarrow() && <Grid item xs/>}
-                        {timestamp && <Grid item className={classes.date} title={new Date(timestamp).toLocaleString()}>
-                            {toDateString(timestamp)}
-                        </Grid>}
-                    </Grid>}
-                    subheader={<>
-                        <Grid container>
-                            <Grid item className={[isNew ? classes.unread : classes.read].join(" ")}>
-                                {text || id}
-                            </Grid>
-                        </Grid>
-                    </>}
-                />
-            </CardActionArea>
-        </Card>
-    </>
+    return <ListItemComponent
+        avatar={<AvatarView
+            icon={avatar}
+            initials={type}
+            size={"small"}
+            verified={true}
+        />}
+        timestamp={timestamp}
+        title={<UserName
+            className={[isNew ? alertStyles.unread : alertStyles.read].join(" ")}
+            id={currentUserData.id}
+        >{title}</UserName>}
+        onClick={handleClick}
+        onKeyDown={event => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            handleClick();
+        }}
+    >
+        <div className={[isNew ? alertStyles.unread : alertStyles.read].join(" ")}>
+            {text || id}
+        </div>
+    </ListItemComponent>
 }
-
-export default withStyles(stylesList)(AlertItem);

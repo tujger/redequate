@@ -1,0 +1,18 @@
+.text {
+    overflow-wrap: break-word;
+    text-decoration: none;
+    word-wrap: break-word;
+
+    &:empty {
+        height: calc(var(--theme-spacing) * 0.5);
+    }
+}
+
+.link {
+    color: var(--theme-color-primary);
+    text-decoration: none;
+
+    &:hover {
+        color: var(--theme-color-highlight);
+    }
+}

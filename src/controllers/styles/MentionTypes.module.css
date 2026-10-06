@@ -1,0 +1,8 @@
+.user,
+.tag {
+    contain: none;
+}
+
+.target {
+    font-weight: bold;
+}

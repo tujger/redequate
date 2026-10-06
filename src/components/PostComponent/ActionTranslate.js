@@ -1,19 +1,19 @@
+import TranslateIcon from "@material-ui/icons/Translate";
 import React from "react";
 import ReactDOM from "react-dom";
-import IconButton from "@material-ui/core/IconButton";
-import TranslateIcon from "@material-ui/icons/Translate";
-import Grid from "@material-ui/core/Grid";
 import {useTranslation} from "react-i18next";
-import {useTextTranslation} from "../../controllers/textTranslation";
 import {fetchDeviceId, useMetaInfo} from "../../controllers/General";
-import {useCurrentUserData} from "../../controllers/UserData";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import {useTextTranslation} from "../../controllers/textTranslation";
+import {useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
 import MentionedTextComponent from "../MentionedTextComponent";
+import actionStyles from "./styles/PostActions.module.css";
+import textStyles from "./styles/PostText.module.css";
 
 export default (
     {
         ancillaryRef,
-        classes,
         icon = true,
         postData,
         userData,
@@ -68,7 +68,7 @@ export default (
         }
         const translateText = async props => {
             const {target, source, text} = props;
-            const {text:textTranslated, source:updatedSource = source} = await textTranslation.translateTo({
+            const {text: textTranslated, source: updatedSource = source} = await textTranslation.translateTo({
                 source,
                 target,
                 text
@@ -110,8 +110,6 @@ export default (
     }
 
     React.useEffect(() => {
-        // return;
-        // console.log(textTranslation);
         if (!translateLimit) return;
         if (!textTranslation.isAvailable()) return;
         setState(state => ({...state, show: true}));
@@ -121,18 +119,19 @@ export default (
     return <>
         {translated && <Portal targetNode={ancillaryRef.current}>
             <h5>{title}</h5>
-            <MentionedTextComponent classes={classes} text={translated}/>
+            <MentionedTextComponent className={textStyles.text} text={translated}/>
         </Portal>}
-        <Grid item>
-            <IconButton
+        <div className={actionStyles.action}>
+            <Button
                 aria-label={"Translate"}
-                children={<TranslateIcon/>}
-                component={"div"}
+                className={actionStyles.iconButton}
+                color={"secondary"}
+                icon={<TranslateIcon/>}
                 onClick={handleClick}
-                size={"small"}
                 title={"Translate"}
+                variant={"text"}
             />
-        </Grid>
+        </div>
     </>
 }
 

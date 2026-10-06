@@ -1,14 +1,12 @@
 import React from "react";
-import {withStyles} from "@material-ui/core/styles";
-import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import {stylesList} from "../../controllers/Theme";
+import {useHistory} from "react-router-dom";
+import {cacheDatas, usePages} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
+import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import PostCard from "./PostCard";
 import RepliesTree from "./RepliesTree";
-import {cacheDatas, usePages} from "../../controllers/General";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
-import notifySnackbar from "../../controllers/notifySnackbar";
 
 const PostComponent = (props) => {
     const {
@@ -25,7 +23,6 @@ const PostComponent = (props) => {
         pattern,
         type = "posts",
     } = props;
-
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -96,4 +93,4 @@ const PostComponent = (props) => {
     </>
 }
 
-export default withStyles(stylesList)(PostComponent);
+export default PostComponent;

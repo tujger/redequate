@@ -1,15 +1,14 @@
 import React from "react";
 import {connect} from "react-redux";
-import {styles} from "../controllers/Theme";
-import withStyles from "@material-ui/styles/withStyles";
+import chatCounterStyles from "./styles/ChatsCounter.module.css";
 
-const ChatsCounter = ({counter, classes}) => {
+const ChatsCounter = ({counter}) => {
     if (!counter) return null;
-    return <span className={classes.badge}>{counter}</span>
+    return <span className={chatCounterStyles.badge}>{counter}</span>
 }
 
 const mapStateToProps = ({chatsCounter}) => ({
     counter: chatsCounter.counter,
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(ChatsCounter));
+export default connect(mapStateToProps)(ChatsCounter);

@@ -1,0 +1,103 @@
+.select {
+    --select-color: var(--theme-color-text);
+    --select-size: var(--theme-font-size-regular);
+
+    align-items: center;
+    border-width: 0;
+    box-sizing: border-box;
+    box-shadow: inset 0 -1px 0 var(--theme-color-muted);
+    color: var(--select-color);
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: var(--select-size);
+    min-height: calc(var(--theme-spacing) * 4);
+    min-width: calc(var(--theme-spacing) * 4);
+    outline: 0;
+    /*padding: calc(var(--theme-spacing) * 0.75) 0;*/
+    position: relative;
+
+    &:hover {
+        border-bottom-color: var(--theme-color-highlight);
+    }
+
+    &:focus-visible {
+        border-bottom: 2px solid var(--select-color);
+    }
+
+    &[aria-disabled="true"] {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+.inherit {
+    --select-color: inherit;
+}
+
+.primary {
+    --select-color: var(--theme-color-primary);
+}
+
+.secondary {
+    --select-color: var(--theme-color-secondary);
+}
+
+.small {
+    --select-size: var(--theme-font-size-small);
+}
+
+.large {
+    --select-size: var(--theme-font-size-large);
+}
+
+.value {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.arrow {
+    && {
+        display: block;
+        flex: 0 0 auto;
+        font-size: var(--theme-font-size-large);
+    }
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.iconMenu {
+    border: 0;
+    box-shadow: none;
+    flex: 0 0 calc(var(--theme-spacing) * 4.5);
+    font-size: calc(var(--theme-spacing) * 3);
+    height: calc(var(--theme-spacing) * 4.5);
+    justify-content: center;
+    padding: 0;
+    width: calc(var(--theme-spacing) * 4.5);
+
+    & .value {
+        flex: 0 0 auto;
+    }
+
+    &:hover {
+        background-color: var(--theme-color-focus);
+        color: inherit;
+    }
+
+    & :global(.MuiSvgIcon-root) {
+        font-size: calc(var(--theme-spacing) * 2.5);
+    }
+}
+
+@media (max-width: 599px) {
+    .iconMenu {
+        height: calc(var(--theme-spacing) * 6);
+        width: calc(var(--theme-spacing) * 6);
+    }
+}

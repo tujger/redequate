@@ -1,11 +1,10 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
-import notifySnackbar from "../controllers/notifySnackbar";
 import {firebaseMessaging} from "../controllers/Firebase";
 import {useMetaInfo} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 
-const ShareComponent = ({title, text, url, component = <Button/>}) => {
+const ShareComponent = ({title, text, url, component = <div/>}) => {
     const handleShare = (evt) => {
         evt && evt.stopPropagation();
         share({title, text, url});

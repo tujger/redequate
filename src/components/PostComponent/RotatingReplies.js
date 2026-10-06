@@ -1,55 +1,21 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import {useHistory} from "react-router-dom";
 import {useDispatch} from "react-redux";
-import withStyles from "@material-ui/styles/withStyles";
+import {useHistory} from "react-router-dom";
+import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas, usePages} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import {UserData} from "../../controllers/UserData";
+import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import Pagination from "../../controllers/FirebasePagination";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import MentionedTextComponent from "../MentionedTextComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
+import MentionedTextComponent from "../MentionedTextComponent";
+import cardStyles from "./styles/PostComponent.module.css";
+import motionStyles from "./styles/PostMotion.module.css";
+import textStyles from "./styles/PostText.module.css";
 
-const stylesCurrent = theme => ({
-    entering: {},
-    leaving: {},
-    root: {
-        height: theme.spacing(4),
-        marginBottom: theme.spacing(1.5),
-        marginTop: theme.spacing(-1.5),
-        paddingTop: theme.spacing(1),
-        overflow: "hidden",
-    },
-    moveable: {
-        height: theme.spacing(4),
-        maxHeight: theme.spacing(4),
-        overflow: "hidden",
-        paddingLeft: theme.spacing(2),
-        transition: "1s ease margin-top",
-        "&$leaving": {
-            marginTop: theme.spacing(-4),
-        }
-    },
-    singleline: {
-        "& br": {
-            display: "none",
-        },
-        "& .MuiCardHeader-content": {
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-        },
-        "& $textSmall": {
-            display: "inline",
-            whiteSpace: "nowrap",
-        }
-    },
-    textSmall: {},
-});
-
-export default withStyles(stylesCurrent)((props) => {
-    const {classes = {}, items: givenItems, mentions, postId, type} = props;
+export default (props) => {
+    const {items: givenItems, mentions, postId, type} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -126,18 +92,18 @@ export default withStyles(stylesCurrent)((props) => {
             const {postData, userData} = props;
             const item = <ItemPlaceholderComponent
                 avatar={<AvatarView
-                    className={classes.avatarSmallest}
+                    className={cardStyles.avatarSmallest}
                     image={userData.image}
                     initials={userData.initials}
                     verified
                 />}
-                className={classes.singleline}
-                label={<span className={classes.textSmall}>
-                    <span className={classes.suggestionName}>
-                        {userData.name}
-                    </span> <MentionedTextComponent
-                    disableClick mentions={mentions}
-                    text={postData.text.substr(0, 200)}/>
+                className={motionStyles.singleline}
+                label={<span className={cardStyles.textSmall}>
+                    <UserName id={userData.id}>{userData.name}</UserName>
+                    <MentionedTextComponent
+                        disableClick mentions={mentions}
+                        text={postData.text.substr(0, 200)}
+                    />
                 </span>}
                 pattern={"transparent"}
             />;
@@ -151,7 +117,12 @@ export default withStyles(stylesCurrent)((props) => {
         }
         const installAnimation = async () => {
             setTimeout(() => {
-                leavingRef.current && leavingRef.current.classList.add(classes.leaving);
+                if (leavingRef.current) {
+                    leavingRef.current.className = [
+                        leavingRef.current.className,
+                        motionStyles.leaving,
+                    ].filter(Boolean).join(" ");
+                }
             }, 10);
         }
         const thrownEvent = async event => {
@@ -213,14 +184,17 @@ export default withStyles(stylesCurrent)((props) => {
     }, []);
 
     if (!item) return null;
-    return <Grid item xs ref={rootRef} className={classes.root} onClick={handleClick}>
-        {itemPrev && <Grid
+    return <div
+        className={[cardStyles.layout, motionStyles.rotatingRoot].join(" ")}
+        onClick={handleClick}
+        ref={rootRef}
+    >
+        {itemPrev && <div
             children={itemPrev}
-            container
             key={Math.random()}
             ref={leavingRef}
-            className={classes.moveable}
+            className={[cardStyles.layout, motionStyles.moveable].join(" ")}
         />}
-        <Grid container className={classes.moveable}>{item}</Grid>
-    </Grid>
-})
+        <div className={[cardStyles.layout, motionStyles.moveable].join(" ")}>{item}</div>
+    </div>
+}

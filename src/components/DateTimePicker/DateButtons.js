@@ -1,33 +1,40 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import ButtonGroup from "@material-ui/core/ButtonGroup";
 import {useTranslation} from "react-i18next";
+import Button from "../../controls/Button/Button";
+import styles from "./styles/DateButtons.module.css";
 
 // eslint-disable-next-line react/prop-types
-export default ({classes, date, start, end, onClick}) => {
+export default ({date, start, end, onClick}) => {
     const {t} = useTranslation();
 
     if (!date && !start && !end) return null;
-    if (date) {
-        return <ButtonGroup variant={"text"} fullWidth>
-            <Button
-                children={date.local().format("L LT")}
-                className={classes.sublabel}
-            />
-        </ButtonGroup>;
-    }
-    return <ButtonGroup variant={"text"} fullWidth>
-        <Button
-            children={start ? start.format("L LT") : "-"}
-            className={classes.sublabel}
-            onClick={() => onClick("start")}
-            title={t("DateTimePicker.Select start date")}
-        />
-        <Button
-            children={end ? end.format("L LT") : "-"}
-            className={classes.sublabel}
-            onClick={() => onClick("end")}
-            title={t("DateTimePicker.Select end date")}
-        />
-    </ButtonGroup>
+
+    return <div className={styles.group} role={"group"}>
+        {date
+            ? <Button
+                className={[styles.button, styles.sublabel].join(" ")}
+                title={t("DateTimePicker.Select start date")}
+                variant={"text"}
+            >
+                {date.local().format("L LT")}
+            </Button>
+            : <>
+                <Button
+                    className={styles.button}
+                    onClick={() => onClick("start")}
+                    title={t("DateTimePicker.Select start date")}
+                    variant={"text"}
+                >
+                    {start ? start.format("L LT") : "-"}
+                </Button>
+                <Button
+                    className={styles.button}
+                    onClick={() => onClick("end")}
+                    title={t("DateTimePicker.Select end date")}
+                    variant={"text"}
+                >
+                    {end ? end.format("L LT") : "-"}
+                </Button>
+            </>}
+    </div>
 };

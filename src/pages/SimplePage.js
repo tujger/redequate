@@ -1,21 +1,17 @@
 import React from "react";
-import PropTypes from "prop-types";
-import withStyles from "@material-ui/styles/withStyles";
-import {styles} from "../controllers/Theme";
+import baseStyles from "../themes/Base.module.css";
+import styles from "./styles/SimplePage.module.css";
 
-const SimplePage = ({classes, body = "Content of simple page", title = "Simple page"}) => {
+export default ({body = undefined, children = undefined, title = undefined}) => {
+    if (!body && !children) {
+        throw new Error("Either body or children must be provided");
+    }
     if (body instanceof Array) {
         body = `<p>${body.join("</p>\n<p>")}</p>`;
     }
-    return <div className={classes.center}>
+    return <div className={[baseStyles.content, styles.content].join(" ")}>
         {title && <h1>{title}</h1>}
-        <div dangerouslySetInnerHTML={{__html: body}}/>
+        {body && <div dangerouslySetInnerHTML={{__html: body}}/>}
+        {children}
     </div>;
 };
-
-SimplePage.propTypes = {
-    title: PropTypes.string,
-    body: PropTypes.any,
-};
-
-export default withStyles(styles)(SimplePage);

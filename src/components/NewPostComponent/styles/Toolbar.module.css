@@ -1,0 +1,57 @@
+.toolbar {
+    min-height: calc(var(--theme-spacing) * 7);
+}
+
+.actions {
+    align-items: center;
+    color: var(--theme-color-primary);
+    display: flex;
+    font-size: var(--theme-font-size-regular);
+    gap: var(--theme-spacing);
+    justify-content: flex-end;
+    padding: var(--theme-spacing);
+}
+
+.upload {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.iconButton {
+    align-items: center;
+    border: 0;
+    border-radius: calc(var(--theme-spacing) * .5);
+    cursor: pointer;
+    display: inline-flex;
+    min-height: calc(var(--theme-spacing) * 4);
+    min-width: calc(var(--theme-spacing) * 4);
+    padding: calc(var(--theme-spacing) * .5) var(--theme-spacing);
+
+    &:hover {
+        background-color: var(--theme-color-background);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--theme-color-highlight);
+        outline-offset: -2px;
+    }
+
+    &[aria-disabled="true"] {
+        cursor: default;
+        opacity: .5;
+    }
+}
+
+.iconButton {
+    color: inherit;
+}
+
+.iconButton :global(.MuiSvgIcon-root) {
+    font-size: calc(var(--theme-spacing) * 3);
+}
+
+@media (max-width: 599px) {
+    .toolbar {
+        min-height: calc(var(--theme-spacing) * 6);
+    }
+}

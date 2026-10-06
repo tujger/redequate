@@ -1,0 +1,20 @@
+.entering, .leaving {
+}
+
+.rotatingRoot {
+    display: flex;
+    flex-direction: column;
+    height: calc(var(--theme-spacing) * 4);
+    overflow: hidden;
+}
+
+.moveable {
+    height: calc(var(--theme-spacing) * 4);
+    max-height: calc(var(--theme-spacing) * 4);
+    overflow: hidden;
+    transition: 1s ease margin-top;
+}
+
+.moveable.leaving {
+    margin-top: calc(var(--theme-spacing) * -4);
+}

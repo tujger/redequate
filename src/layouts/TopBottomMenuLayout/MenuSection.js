@@ -1,140 +1,165 @@
-import React from "react";
-import MenuItem from "@material-ui/core/MenuItem";
 import ArrowRightIcon from "@material-ui/icons/ArrowRight";
-import withStyles from "@material-ui/styles/withStyles";
+import React from "react";
 import {Link, useHistory} from "react-router-dom";
-import Paper from "@material-ui/core/Paper";
-import Button from "@material-ui/core/Button";
-import Popper from "@material-ui/core/Popper";
-import MenuList from "@material-ui/core/MenuList";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import Button from "../../controls/Button/Button";
+import Menu from "../../controls/Menu/Menu";
+import menuStyles from "../../controls/Menu/Menu.module.css";
+import useRippleEffect from "../../helpers/useRippleEffect";
+import styles from "./styles/MenuSection.module.css";
 
-const styles = theme => ({
-    badge: {
-        backgroundColor: "#ff0000",
-        borderRadius: theme.spacing(1),
-        height: theme.spacing(1),
-        right: theme.spacing(0.5),
-        position: "absolute",
-        top: theme.spacing(0.5),
-        width: theme.spacing(1)
-    },
-    label: {
-        color: "inherit",
-        cursor: "default",
-        textDecoration: "none",
-    },
-    menusection: {
-        backgroundColor: theme.palette.background.default,
-        color: theme.palette.getContrastText(theme.palette.background.default),
-        boxShadow: theme.shadows[2],
-        zIndex: 2,
-    },
-    menuitem: {
-        fontSize: "inherit",
-        justifyContent: "space-between",
-        width: "100%",
-    },
-});
+const allowed = (item, userData) => !item.disabled && matchRole(item.roles, userData);
 
-const MenuSection = withStyles(styles)(props => {
-    const {badge, items, classes, className, endIcon} = props;
-    const [first, ...menu] = items;
-    const [state, setState] = React.useState({anchor: null});
-    const {anchor} = state;
-    const currentUserData = useCurrentUserData();
-    const history = useHistory();
-    // const buttonRef = React.useRef();
+const filterItems = (items, userData) => items.reduce((result, entry) => {
+    if (Array.isArray(entry)) {
+        if (!entry.length || !allowed(entry[0], userData)) return result;
+        const nested = filterItems(entry, userData);
+        if (nested.length) result.push(nested);
+    } else if (entry && allowed(entry, userData)) result.push(entry);
+    return result;
+}, []);
 
-    if (!matchRole(first.roles, currentUserData)) return null;
+const MenuLink = ({item, onClose, userData}) => {
+    const onPointerDown = useRippleEffect();
 
-    const checkForBadge = () => {
-        return menu.filter(item => !!badge[item.route]).length > 0;
-    }
-    const hasBadge = checkForBadge();
-    const itemsAllowed = items.filter(item => !item.disabled && item.route !== first.route && matchRole(item.roles, currentUserData));
-
-    const handleMouseLeave = event => {
-        // console.log(event.target, buttonRef.current, anchor)
-        if (event.relatedTarget === anchor) return;
-        setState({...state, anchor: null})
-    }
-
-    return <Button
-        className={className}
-        endIcon={endIcon}
-        onClickCapture={ev => {
-            if (itemsAllowed.length) {
-                setState({...state, anchor: ev.currentTarget})
-            }
-        }}
+    return <Link
+        className={[menuStyles.menuItem, styles.item].join(" ")}
         onClick={event => {
             event.stopPropagation();
-            history.push(first.route);
+            onClose(event);
         }}
-        onMouseEnter={ev => {
-            if (itemsAllowed.length) {
-                setState({...state, anchor: ev.currentTarget})
-            }
-        }}
-        onMouseLeave={handleMouseLeave}
-        variant={"text"}
+        onClickCapture={item.onClick}
+        onPointerDown={onPointerDown}
+        role="menuitem"
+        tabIndex={-1}
+        to={item.route}
     >
-        {first.label}
-        {hasBadge && <span className={classes.badge}/>}
-        <Popper
-            anchorEl={anchor}
-            className={classes.menusection}
-            // disablePortal
-            onClose={() => setState({...state, anchor: null})}
-            open={Boolean(anchor)}
-            onMouseLeave={handleMouseLeave}
-            placement={"bottom-end"}
-            role={undefined}>
-            <Paper>
-                <MenuList>
-                    {menu.map((item, index) => {
-                        if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
-                        if (item instanceof Array) {
-                            return <MenuSection
-                                key={index}
-                                badge={{}}
-                                className={["MuiButtonBase-root MuiListItem-root MuiMenuItem-root MuiButtonBase-root MuiButton-root MuiButton-text MuiMenuItem-gutters MuiListItem-gutters MuiListItem-button", classes.label, classes.menuitem].join(" ")}
-                                items={item}
-                                endIcon={<ArrowRightIcon/>}
-                            />
-                        }
-                        const child = <MenuItem
-                            button
-                            children={<>
-                                {item.label}
-                                {item.adornment && currentUserData && item.adornment(currentUserData)}
-                            </>}
-                            className={["MuiButtonBase-root MuiButton-root MuiButton-text", classes.label, classes.menuitem].join(" ")}
-                            key={index}
-                            /* eslint-disable-next-line react/jsx-handler-names */
-                            onClickCapture={item.onClick}
-                        />;
-                        if (item.component) {
-                            return <Link
-                                children={child}
-                                key={index}
-                                className={classes.label}
-                                onClick={(event) => {
-                                    setState({...state, anchor: null});
-                                    event && event.stopPropagation();
-                                    // event && event.preventDefault();
-                                }}
-                                to={item.route}
-                            />
-                        } else {
-                            return child
-                        }
-                    })}
-                </MenuList>
-            </Paper>
-        </Popper>
-    </Button>
-});
+        {item.label}
+        {item.adornment && userData && item.adornment(userData)}
+    </Link>;
+};
 
-export default MenuSection;
+const MenuSelector = ({item, onActivate, onHover, open, userData}) => {
+    const onPointerDown = useRippleEffect();
+
+    return <div
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={[menuStyles.menuItem, styles.item, styles.selector].join(" ")}
+        onClick={onActivate}
+        onMouseEnter={onHover}
+        onPointerDown={onPointerDown}
+        role="menuitem"
+        tabIndex={-1}
+    >
+        {item.label}
+        {item.adornment && userData && item.adornment(userData)}
+        <ArrowRightIcon aria-hidden="true" className={styles.submenuIcon}/>
+    </div>;
+};
+
+export default ({badge = {}, items, className, endIcon}) => {
+    const [first, ...menu] = items;
+    const [open, setOpen] = React.useState(false);
+    const sectionRef = React.useRef(null);
+    const triggerRef = React.useRef(null);
+    const menuRef = React.useRef(null);
+    const currentUserData = useCurrentUserData();
+    const history = useHistory();
+    const visible = filterItems(menu, currentUserData);
+    const hasMenu = visible.length > 1 || (visible.length === 1 && Array.isArray(visible[0]) && visible[0].length > 1);
+    const hasBadge = menu.some(item => !Array.isArray(item) && badge[item.route]);
+
+    React.useEffect(() => {
+        if (!hasMenu) setOpen(false);
+    }, [hasMenu]);
+
+    if (!first || !allowed(first, currentUserData)) return null;
+
+    const closeMenu = () => setOpen(false);
+    const renderItem = (item, {selector, open: branchOpen, onActivate, onHover, closeTree}) => {
+        if (selector) return <MenuSelector
+            item={item}
+            onActivate={onActivate}
+            onHover={onHover}
+            open={branchOpen}
+            userData={currentUserData}
+        />;
+        if (item.component) return <MenuLink
+            item={item}
+            onClose={closeTree}
+            userData={currentUserData}
+        />;
+        return <Button
+            className={[menuStyles.menuItem, styles.item].join(" ")}
+            color="inherit"
+            onClick={event => {
+                item.onClick?.(event);
+                if (item.route) history.push(item.route);
+                closeTree(event);
+            }}
+            role="menuitem"
+            tabIndex={-1}
+            variant="text"
+        >
+            {item.label}
+            {item.adornment && currentUserData && item.adornment(currentUserData)}
+        </Button>;
+    };
+
+    return <div
+        className={[className, styles.section].filter(Boolean).join(" ")}
+        onBlur={event => {
+            if (!sectionRef.current?.contains(event.relatedTarget)
+                && !menuRef.current?.contains(event.relatedTarget)) closeMenu();
+        }}
+        onMouseEnter={() => hasMenu && window.innerWidth > 599 && setOpen(true)}
+        onMouseLeave={event => {
+            if (!sectionRef.current?.contains(event.relatedTarget)
+                && !menuRef.current?.contains(event.relatedTarget)) closeMenu();
+        }}
+        ref={sectionRef}
+    >
+        <Button
+            aria-expanded={hasMenu ? open : undefined}
+            aria-haspopup={hasMenu ? "menu" : undefined}
+            className={styles.trigger}
+            color="inherit"
+            onClick={event => {
+                event.stopPropagation();
+                if (hasMenu) {
+                    setOpen(current => window.innerWidth <= 599 ? !current : true);
+                    // return;
+                }
+                first.onClick?.(event);
+                if (first.route) history.push(first.route);
+            }}
+            onKeyDown={event => {
+                if (hasMenu && ["ArrowDown", "ArrowRight"].includes(event.key)) {
+                    event.preventDefault();
+                    setOpen(true);
+                }
+            }}
+            onMouseEnter={() => hasMenu && window.innerWidth > 599 && setOpen(true)}
+            ref={triggerRef}
+            variant="text"
+        >
+            {first.label}
+            {hasBadge && <span className={styles.badge}/>}
+            {endIcon && <span className={styles.endIcon}>{endIcon}</span>}
+        </Button>
+        <Menu
+            anchorEl={triggerRef}
+            anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+            closeOnBlur
+            closeOnMouseLeave
+            containerRef={menuRef}
+            items={visible}
+            offset={0}
+            onClose={closeMenu}
+            open={open && hasMenu}
+            renderItem={renderItem}
+            transformOrigin={{vertical: "top", horizontal: "center"}}
+        />
+    </div>;
+};

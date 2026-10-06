@@ -1,0 +1,45 @@
+.chip {
+    align-items: center;
+    background-color: var(--theme-color-focus);
+    border-radius: calc(var(--theme-spacing) * 2);
+    box-sizing: border-box;
+    color: var(--theme-color-text);
+    display: inline-flex;
+    font: inherit;
+    font-size: var(--theme-font-size-small);
+    margin: 0;
+    max-width: 100%;
+    min-height: calc(var(--theme-spacing) * 4);
+    overflow: hidden;
+
+    & .avatar {
+        flex: 0 0 auto;
+        font-size: var(--theme-font-size-small);
+        height: calc(var(--theme-spacing) * 3);
+        margin-left: calc(var(--theme-spacing) * 0.5);
+        width: calc(var(--theme-spacing) * 3);
+    }
+
+    & .deleteButton {
+        margin-right: calc(var(--theme-spacing) * 0.5);
+        padding: 0;
+
+        & :global(.MuiSvgIcon-root) {
+            font-size: calc(var(--theme-spacing) * 2.25);
+        }
+    }
+}
+
+.label {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    padding: 0 var(--theme-spacing);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.secondary {
+    background-color: var(--theme-color-secondary);
+    color: var(--theme-color-secondary-alt);
+}

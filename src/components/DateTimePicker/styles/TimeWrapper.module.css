@@ -1,0 +1,46 @@
+.clock {
+    & :global(.react-timekeeper) {
+        background-color: transparent;
+        box-shadow: none;
+        width: 100%;
+    }
+
+    & :global(.react-timekeeper__clock-wrapper) {
+        background-color: transparent;
+    }
+
+    & :global(.react-timekeeper__clock) {
+        background-color: var(--theme-color-secondary-alt);
+    }
+
+    & :global(.react-timekeeper__top-bar) {
+        align-items: center;
+        background-color: transparent;
+        border-bottom: 1px solid var(--theme-color-muted);
+        display: flex;
+        height: calc(var(--theme-spacing) * 9);
+        justify-content: center;
+        padding: 0;
+        text-align: center;
+    }
+
+    & :global(.react-timekeeper__clock-hours) > span,
+    & :global(.react-timekeeper__clock-minutes) > span {
+        color: var(--theme-color-secondary);
+    }
+
+    & :global(.react-timekeeper__tb-hour--active),
+    & :global(.react-timekeeper__tb-minute--active) {
+        color: var(--theme-color-primary);
+    }
+
+    & :global(.react-timekeeper__hand-circle-outer),
+    & :global(.react-timekeeper__meridiem--active) {
+        background-color: var(--theme-color-primary);
+        color: var(--theme-color-primary-alt);
+    }
+
+    & :global(.react-timekeeper__clock-hand) {
+        stroke: var(--theme-color-primary);
+    }
+}
