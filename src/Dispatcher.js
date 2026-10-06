@@ -1,5 +1,4 @@
 import "./themes/Base.module.css";
-import ThemeProvider from "@material-ui/styles/ThemeProvider";
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import {SnackbarProvider} from "notistack";
@@ -21,16 +20,15 @@ import {
     useStore,
     useWindowData
 } from "./controllers/General";
-import noopMuiTheme from "./controllers/NoopMuiTheme";
 import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
 import notifySnackbar from "./controllers/notifySnackbar";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
-import {getScrollPosition} from "./helpers/useScrollPosition";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import useBreakpoint from "./helpers/useBreakpoint";
+import {getScrollPosition} from "./helpers/useScrollPosition";
 import localeEn from "./locales/en-EN.json";
 import localeRu from "./locales/ru-RU.json";
 import {restoreLanguage} from "./reducers/languageReducer";
@@ -136,7 +134,9 @@ export default (props) => {
         }
         const initWindowData = async props => {
             const windowData = {
-                get breakpoint() { return widthRef.current; },
+                get breakpoint() {
+                    return widthRef.current;
+                },
                 isNarrow: () => widthRef.current === "xs" || widthRef.current === "sm",
                 isWide: () => widthRef.current === "md" || widthRef.current === "lg" || widthRef.current === "xl",
             }
@@ -361,7 +361,19 @@ export default (props) => {
 }
 
 const DispatcherInitialized = (props) => {
-    const {fatal, buildPages, copyright, firebase, store, menu: givenMenu, theme, title, textTranslation, windowData, metaInfo} = props;
+    const {
+        fatal,
+        buildPages,
+        copyright,
+        firebase,
+        store,
+        menu: givenMenu,
+        theme,
+        title,
+        textTranslation,
+        windowData,
+        metaInfo
+    } = props;
     const {t} = useTranslation();
 
     useFirebase(firebase);
@@ -373,27 +385,27 @@ const DispatcherInitialized = (props) => {
     const menu = givenMenu(pages);
 
     if (fatal) {
-        return <ThemeProvider theme={noopMuiTheme}>
-                {theme}
-                <SystemAlert message={fatal.message}/>
-        </ThemeProvider>;
+        return <>
+            {theme}
+            <SystemAlert message={fatal.message}/>
+        </>;
     }
 
     return <Provider store={store}>
-        <ThemeProvider theme={noopMuiTheme}>
-                {theme}
-                <BrowserRouter>
-                    <SnackbarProvider maxSnack={4} preventDuplicate>
-                        <DispatcherRoutedBody
-                            {...props}
-                            copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
-                            menu={menu}
-                            title={t(title)}
-                        />
-                    </SnackbarProvider>
-                </BrowserRouter>
-                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-        </ThemeProvider>
+        <>
+            {theme}
+            <BrowserRouter>
+                <SnackbarProvider maxSnack={4} preventDuplicate>
+                    <DispatcherRoutedBody
+                        {...props}
+                        copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                        menu={menu}
+                        title={t(title)}
+                    />
+                </SnackbarProvider>
+            </BrowserRouter>
+            <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+        </>
     </Provider>;
 }
 
