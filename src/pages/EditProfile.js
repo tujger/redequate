@@ -28,7 +28,6 @@ import styles from "./styles/EditProfile.module.css";
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 function EditProfile(props) {
-    // eslint-disable-next-line react/prop-types
     let {
         adminFields: adminFieldsGiven = adminFields,
         allowDelete = true,

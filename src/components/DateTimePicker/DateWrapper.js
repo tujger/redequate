@@ -12,7 +12,6 @@ import styles from "./styles/DateWrapper.module.css";
 import TodayButton from "./TodayButton";
 
 export default props => {
-    // eslint-disable-next-line react/prop-types
     const {style, range, date, start, end, onSelect, extras = true, onClockClick, onDateClick, onExtraSelect} = props;
     const [state, setState] = React.useState({monthPicker: false, toDate: null});
     const {monthPicker, toDate} = state;
@@ -61,15 +60,15 @@ export default props => {
         setState({...state, monthPicker: false, toDate: moment(value)});
     };
 
-    // eslint-disable-next-line react/prop-types
-    const CustomDateHeader = ({
-                                  date,
-                                  changeYear,
-                                  decreaseMonth,
-                                  increaseMonth,
-                                  prevMonthButtonDisabled,
-                                  nextMonthButtonDisabled
-                              }) => {
+    const CustomDateHeader = (
+        {
+            date,
+            changeYear,
+            decreaseMonth,
+            increaseMonth,
+            prevMonthButtonDisabled,
+            nextMonthButtonDisabled
+        }) => {
         return <div className={styles.headerControls}>
             <Button
                 disabled={prevMonthButtonDisabled}

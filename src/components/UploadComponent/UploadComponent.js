@@ -4,18 +4,17 @@ import VideoIcon from "@mui/icons-material/Movie";
 import Uppy from "@uppy/core";
 import Dashboard from "@uppy/dashboard";
 import Webcam from "@uppy/webcam";
-import PropTypes from "prop-types";
 import React from "react";
 import {createPortal} from "react-dom";
 import "@uppy/core/css/style.css";
 import "@uppy/dashboard/css/style.css";
 import "@uppy/webcam/css/style.css";
-import useRippleEffect from "../../helpers/useRippleEffect";
-import Button from "../../controls/Button/Button";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useMetaInfo} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import Button from "../../controls/Button/Button";
+import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/UploadComponent.module.css";
 import {uploadComponentClean, uploadComponentResize} from "./uploadComponentControls";
 
@@ -37,8 +36,10 @@ const UploadComponent = (
     const {t} = useTranslation();
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
-    const {uploadsAllow, uploadsTypes,
-        uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality} = settings;
+    const {
+        uploadsAllow, uploadsTypes,
+        uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality
+    } = settings;
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
@@ -69,7 +70,9 @@ const UploadComponent = (
         uppy._uris = {};
         uppy.on("file-added", file => {
             let cancel;
-            const cancelled = new Promise(resolve => { cancel = () => resolve(null); });
+            const cancelled = new Promise(resolve => {
+                cancel = () => resolve(null);
+            });
             fileTokens.set(file.id, {cancelled, cancel});
             if (!multi) {
                 Object.keys(uppy._uris).forEach(key => {
@@ -258,10 +261,6 @@ const UploadComponent = (
     </>
 }
 
-UploadComponent.propTypes = {
-    button: PropTypes.any,
-};
-
 export default connect()(UploadComponent);
 
 function CameraSwitch({uppy, onFacingModeChange}) {
@@ -271,7 +270,9 @@ function CameraSwitch({uppy, onFacingModeChange}) {
     const {t} = useTranslation();
     React.useEffect(() => {
         active.current = true;
-        return () => { active.current = false; };
+        return () => {
+            active.current = false;
+        };
     }, []);
     return <button
         children={<FlipIcon/>}

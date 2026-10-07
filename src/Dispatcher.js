@@ -381,7 +381,6 @@ const DispatcherInitialized = (props) => {
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
 
 const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
-    // eslint-disable-next-line react/prop-types
     const {
         menu,
         width,

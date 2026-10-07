@@ -6,7 +6,6 @@ import JoinUsIcon from "@mui/icons-material/PanTool";
 import SupportIcon from "@mui/icons-material/Person";
 import BlockedNamesIcon from "@mui/icons-material/PersonAddDisabled";
 import MaintenanceIcon from "@mui/icons-material/Settings";
-import PropTypes from "prop-types";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
@@ -612,14 +611,4 @@ const Option = ({checked, disabled, label, multiline, onChange, rows, value, ...
         />
         <span>{label}</span>
     </label>;
-};
-
-Option.propTypes = {
-    checked: PropTypes.bool,
-    disabled: PropTypes.bool,
-    label: PropTypes.string,
-    multiline: PropTypes.bool,
-    onChange: PropTypes.func,
-    rows: PropTypes.number,
-    value: PropTypes.any,
 };

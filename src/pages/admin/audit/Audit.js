@@ -9,7 +9,6 @@ import Activity from "./Activity";
 import {auditReducer} from "./auditReducer";
 import Errors from "./Errors";
 
-// eslint-disable-next-line react/prop-types
 const Audit = props => {
     const dispatch = useDispatch();
     const pages = usePages();

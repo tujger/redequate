@@ -16,7 +16,6 @@ import UsersHeader from "./UsersHeader";
 import {usersReducer} from "./usersReducer";
 
 function Users(props) {
-    // eslint-disable-next-line react/prop-types
     const {mode = "all", filter = "", invitation = true} = props;
     const pages = usePages();
     const dispatch = useDispatch();

@@ -12,7 +12,6 @@ import {UserData} from "../../../controllers/UserData";
 import UserName from "../../../controls/UserName/UserName";
 import activityStyles from "./styles/ActivityItemComponent.module.css";
 
-// eslint-disable-next-line react/prop-types
 export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => {
     const history = useHistory();
     const pages = usePages();

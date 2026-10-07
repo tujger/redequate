@@ -1,4 +1,3 @@
-import PropTypes from "prop-types";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
@@ -50,10 +49,6 @@ const Logout = (props) => {
             {t("Login.Logout")}
         </Button>
     </div>
-};
-
-Logout.propTypes = {
-    immediate: PropTypes.bool,
 };
 
 export default connect()(withRouter(Logout));

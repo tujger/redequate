@@ -7,7 +7,6 @@ import {usePages} from "../../../controllers/General";
 import UserName from "../../../controls/UserName/UserName";
 import userStyles from "./styles/UserItem.module.css";
 
-// eslint-disable-next-line react/prop-types
 export default ({data, classes: givenClasses, skeleton, label}) => {
     const history = useHistory();
     const pages = usePages();

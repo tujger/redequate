@@ -1,8 +1,7 @@
 import React from "react";
-import PropTypes from "prop-types";
 import styles from "./styles/ServiceComponent.module.css";
 
-const ServiceComponent = props => {
+export default props => {
     const {text} = props;
     return <div className={styles.item}>
         <div className={styles.card}>
@@ -12,9 +11,3 @@ const ServiceComponent = props => {
         </div>
     </div>
 };
-
-ServiceComponent.propTypes = {
-    text: PropTypes.string,
-};
-
-export default ServiceComponent;

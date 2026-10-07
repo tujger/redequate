@@ -5,7 +5,6 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "prop-types": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-scripts": "latest",

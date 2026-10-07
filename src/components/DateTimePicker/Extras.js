@@ -3,7 +3,6 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import Select from "../../controls/Select/Select";
 
-// eslint-disable-next-line react/prop-types
 export default ({show, range, onSelect}) => {
     const {t} = useTranslation();
     const [open, setOpen] = React.useState(false);

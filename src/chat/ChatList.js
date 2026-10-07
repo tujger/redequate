@@ -3,7 +3,6 @@ import LazyListComponent from "../components/LazyListComponent/LazyListComponent
 import ChatItem from "./ChatItem";
 import Pagination from "../controllers/FirebasePagination";
 
-// eslint-disable-next-line react/prop-types
 const ChatList = ({chatKey, chatMeta, containerRef, textComponent, scrollerClassName}) => {
     return <LazyListComponent
         containerRef={containerRef}

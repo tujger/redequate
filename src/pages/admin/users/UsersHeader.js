@@ -3,7 +3,6 @@ import NavigationToolbar from "../../../components/NavigationToolbar";
 import Select from "../../../controls/Select/Select";
 import TextField from "../../../controls/TextField/TextField";
 
-// eslint-disable-next-line react/prop-types
 export default ({filter, handleChange, mode}) => {
     const options = [
         {label: "All users", value: "all"},

@@ -9,12 +9,10 @@ import ListItemComponent from "../components/ListItemComponent";
 import {cacheDatas, usePages} from "../controllers/General";
 import {useCurrentUserData, UserData} from "../controllers/UserData";
 import UserName from "../controls/UserName/UserName";
-import useRippleEffect from "../helpers/useRippleEffect";
 import {ChatMeta} from "./ChatMeta";
 import chatStyles from "./styles/ChatsItem.module.css";
 
 export default props => {
-    // eslint-disable-next-line react/prop-types
     const {id, skeleton, label, onClick, userComponent, textComponent} = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
@@ -23,7 +21,6 @@ export default props => {
     const [state, setState] = React.useState({});
     const {shown, userData, chatMeta, online, removed} = state;
     const {t} = useTranslation();
-    const onPointerDown = useRippleEffect();
 
     const fetchIsNew = () => {
         const latestVisit = chatMeta.lastVisit(currentUserData.id);
