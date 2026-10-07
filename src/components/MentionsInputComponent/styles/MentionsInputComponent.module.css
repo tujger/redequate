@@ -54,9 +54,12 @@
 }
 
 .multiline {
+    display: flex;
+    flex-direction: column;
     min-height: calc(var(--theme-spacing) * 20);
 
     & > div {
+        flex: 1;
         height: 100%;
     }
 }
