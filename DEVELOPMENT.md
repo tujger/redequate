@@ -371,6 +371,23 @@ validated. Rules, rule order and CSS Module mappings are preserved; one comment
 moves without changing behavior. Both web consumer production builds validated
 on Node.js 22.23.3.
 
+### Babel 8 migration deferred
+
+Decision: keep Babel and its direct plugins on the latest compatible 7.x
+versions; defer Babel 8 until the Rollup and ESLint integrations support it.
+
+Reason: @rollup/plugin-babel 7.1.0 requires Babel 7, while Babel ESLint Parser 8
+requires ESLint 9+, incompatible with the current Standard configurations.
+
+Consequences: preserve the existing Babel, Rollup and ESLint configuration.
+Rejected alternative: a local Rollup adapter and an ESLint migration as part of
+this dependency update. Consumer CRA 5 toolchains retain their own Babel 7.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Public APIs and Android
+contracts are unchanged.
+
+Status: accepted; Babel 8 migration deferred.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to
