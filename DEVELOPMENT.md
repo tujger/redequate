@@ -376,10 +376,12 @@ on Node.js 22.23.3.
 Decision: keep Babel and its direct plugins on the latest compatible 7.x
 versions; defer Babel 8 until the Rollup and ESLint integrations support it.
 
-Reason: @rollup/plugin-babel 7.1.0 requires Babel 7, while Babel ESLint Parser 8
-requires ESLint 9+, incompatible with the current Standard configurations.
+Reason: @rollup/plugin-babel 7.1.0 requires Babel 7. Babel ESLint Parser 8
+also required an ESLint migration, which was deferred during that update.
 
-Consequences: preserve the existing Babel, Rollup and ESLint configuration.
+Consequences: preserve the existing Babel and Rollup configuration. The later
+ESLint 9 migration uses FlatCompat for the legacy Standard configuration but
+does not resolve the Rollup plugin's Babel 7 requirement.
 Rejected alternative: a local Rollup adapter and an ESLint migration as part of
 this dependency update. Consumer CRA 5 toolchains retain their own Babel 7.
 
@@ -387,6 +389,30 @@ Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Public APIs and Androi
 contracts are unchanged.
 
 Status: accepted; Babel 8 migration deferred.
+
+### ESLint 9 with Standard presets through FlatCompat
+
+Decision: use ESLint 9 with Standard 17.1.0 and Standard React 13.0.0 through
+@eslint/eslintrc 3.3.7 FlatCompat. Keep only the original project overrides in
+the flat configuration; retain React Hooks plugin 5.2.0 and globals 13.24.
+
+Reason: preserve existing checks while keeping the configuration concise and
+avoiding ownership of a copied Standard rule list.
+
+Consequences: the legacy presets declare ESLint 8 peers; accept this conflict
+and install with --legacy-peer-deps, as in the existing development workflow.
+FlatCompat translates configuration format, not plugin APIs; validate diagnostics
+when updating tooling. Babel 7 remains; CRA 5 consumers retain their own ESLint
+tooling. Public APIs and Android contracts are unchanged.
+
+Rejected alternatives: locally copied Standard rules, recommended presets that
+change checks, and reverting to ESLint 8.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks.
+
+Status: accepted; effective checks and diagnostics preserved across 300 framework
+files (2830 existing errors and 874 warnings), with no fatal errors. Existing
+Babel configuration errors in the legacy example directory are unchanged.
 
 ## Active issues and constraints
 
