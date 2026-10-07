@@ -1,4 +1,5 @@
 import "./themes/Base.module.css";
+import {DeviceUUID} from "device-uuid";
 import {SnackbarProvider} from "notistack";
 import React from "react";
 import {useTranslation} from "react-i18next";
@@ -25,12 +26,10 @@ import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
+import initInternationalization from "./helpers/initInternationalization";
 import useBreakpoint from "./helpers/useBreakpoint";
 import {getScrollPosition} from "./helpers/useScrollPosition";
-import initInternationalization from "./helpers/initInternationalization";
 import {restoreLanguage} from "./reducers/languageReducer";
-
-const DeviceUUID = require("device-uuid");
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -122,7 +121,7 @@ export default (props) => {
         const checkIfCompatible = async props => {
             const {t} = props;
             try {
-                const deviceUUID = new DeviceUUID.DeviceUUID();
+                const deviceUUID = new DeviceUUID();
                 const deviceMeta = deviceUUID.parse();
                 const browser = deviceMeta.browser.toLowerCase();
                 const version = parseInt(deviceMeta.version);

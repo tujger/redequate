@@ -316,6 +316,37 @@ initial descriptors, multiple files, restrictions and simulated camera lifecycle
 Production builds validated; real camera, visual mobile review and authenticated
 Firebase publishing remain manual validation tasks.
 
+### UUID and gesture dependency modernization
+
+Decision: use Axios 1.20, device-uuid 3.0.6 and Moment 2.31, replacing
+react-uuid with uuid 14.0.2 and react-use-gesture with @use-gesture/react 10.3.1
+across the framework and both web consumers.
+
+Reason: update the legacy dependencies during React 19 stabilization; the old
+UUID and gesture packages are deprecated. Axios remains a framework dependency
+although framework source currently does not import it.
+
+Consequences: consumers replace the gesture peer with @use-gesture/react.
+Device UUID, Moment and gestures remain peers, with matching framework dev
+dependencies. Bundle uuid's browser implementation into both library formats
+because uuid 14 is ESM-only; UUID generation requires browser Web Crypto.
+Keep existing localStorage device_id values, synchronous device parsing and
+UUID string contracts for Firebase paths and Android bridge messages. Newly
+generated device fingerprints may differ after the parser upgrade; existing
+stored identifiers are not migrated. Advanced asynchronous fingerprinting is
+not enabled. Preserve the development-only swipe restriction.
+
+Rejected alternative: updating the deprecated packages in place. Vite, SSR and
+server-side dependencies remain separate work.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Android bridge messages
+and stored data formats are unchanged.
+
+Status: accepted; framework and both web production builds validated. Built
+CommonJS DOM checks cover gestures, date/range selection and bridge correlation;
+upload path/descriptor checks use a simulated storage service. Real touch
+scrolling, Android WebView and authenticated uploads remain manual checks.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to
