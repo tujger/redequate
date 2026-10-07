@@ -6,6 +6,9 @@
 
 ## Install
 
+Requires Node.js 24 or newer. Node.js 24 LTS is recommended; use `nvm use`
+in this repository to select the version from `.nvmrc`.
+
 ```bash
 npm install --save redequate
 ```

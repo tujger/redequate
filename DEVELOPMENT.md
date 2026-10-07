@@ -384,6 +384,8 @@ ESLint 9 migration uses FlatCompat for the legacy Standard configuration but
 does not resolve the Rollup plugin's Babel 7 requirement.
 Rejected alternative: a local Rollup adapter and an ESLint migration as part of
 this dependency update. Consumer CRA 5 toolchains retain their own Babel 7.
+The latest @rollup/plugin-babel 7.1.0 still requires Babel 7; Babel 7.29.7
+and Babel ESLint Parser 7.29.9 remain the latest compatible releases.
 
 Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Public APIs and Android
 contracts are unchanged.
@@ -394,7 +396,8 @@ Status: accepted; Babel 8 migration deferred.
 
 Decision: use ESLint 9 with Standard 17.1.0 and Standard React 13.0.0 through
 @eslint/eslintrc 3.3.7 FlatCompat. Keep only the original project overrides in
-the flat configuration; retain React Hooks plugin 5.2.0 and globals 13.24.
+the flat configuration; update plugins to compatible current releases without
+enabling additional recommended rules.
 
 Reason: preserve existing checks while keeping the configuration concise and
 avoiding ownership of a copied Standard rule list.
@@ -405,14 +408,47 @@ FlatCompat translates configuration format, not plugin APIs; validate diagnostic
 when updating tooling. Babel 7 remains; CRA 5 consumers retain their own ESLint
 tooling. Public APIs and Android contracts are unchanged.
 
+ESLint 10 remains deferred: current import 2.32.0 and React 7.37.5 plugins
+declare support through ESLint 9. Node plugin 18.4.1 is ESM-only; FlatCompat
+loads it through Node.js 22.23.3's require(ESM) support. Active Node.js 20.13
+is too old for this plugin; use the established Node.js 22 build toolchain.
+
 Rejected alternatives: locally copied Standard rules, recommended presets that
 change checks, and reverting to ESLint 8.
 
 Affected consumers: edeqa-pwa-react-demo, thewhiskytalks.
 
-Status: accepted; effective checks and diagnostics preserved across 300 framework
-files (2830 existing errors and 874 warnings), with no fatal errors. Existing
-Babel configuration errors in the legacy example directory are unchanged.
+Status: accepted; updated plugins load without configuration changes on Node.js
+22.23.3. Comparison across 301 framework/configuration files has no fatal errors
+and preserves existing diagnostics except two new no-callback-literal reports:
+Node plugin 18 treats react-mentions' callback([]) as an error-first callback.
+The callback contract and enabled rules remain unchanged. Existing Babel
+configuration errors in the legacy example directory are unchanged.
+Framework and both web consumer production builds passed on Node.js 22.23.3.
+
+### Node.js 24 LTS baseline
+
+Decision: require Node.js >=24 in package metadata, select Node.js 24 through
+`.nvmrc`, and use Node.js 24 in the Travis build matrix.
+
+Reason: the historical Node.js >=8 declaration no longer matches the current
+ESM-based tooling. Node.js 24 LTS is the selected development baseline.
+
+Consequences: consumers installing Redequate should use Node.js 24 or newer.
+Keep the existing npm requirement and dependency versions; this does not start
+the Vite or SSR migrations. Existing Node.js 22 validation remains historical,
+not the recommended development baseline.
+
+Rejected alternative: retaining Node.js 22.23.3 as the baseline solely because
+previous framework and consumer builds were validated on it.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Browser behavior,
+public APIs and Android contracts are unchanged.
+
+Status: accepted; framework build, ESLint configuration loading and both web
+consumer production builds passed on Node.js 24.21.0. Consumer builds retain
+a dynamic dependency warning and emit a non-blocking fs.F_OK deprecation warning.
+The local Node.js installation and consumer package metadata were not changed.
 
 ## Active issues and constraints
 
