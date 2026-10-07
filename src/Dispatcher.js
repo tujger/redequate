@@ -1,9 +1,7 @@
 import "./themes/Base.module.css";
-import i18n from "i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import {SnackbarProvider} from "notistack";
 import React from "react";
-import {initReactI18next, useTranslation} from "react-i18next";
+import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
@@ -29,8 +27,7 @@ import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} fro
 import {installWrapperControl} from "./controllers/WrapperControl";
 import useBreakpoint from "./helpers/useBreakpoint";
 import {getScrollPosition} from "./helpers/useScrollPosition";
-import localeEn from "./locales/en-EN.json";
-import localeRu from "./locales/ru-RU.json";
+import initInternationalization from "./helpers/initInternationalization";
 import {restoreLanguage} from "./reducers/languageReducer";
 
 const DeviceUUID = require("device-uuid");
@@ -94,33 +91,6 @@ export default (props) => {
 
     React.useEffect(() => {
         let maintenanceRef, metaRef, unlisten;
-        const initInternationalization = async () => {
-            const defaultResources = {
-                en: localeEn,
-                ru: localeRu,
-            };
-            let fallbackLng;
-            const resources = {};
-            const overrideWithResources = locales || defaultResources;
-            for (const r in overrideWithResources) {
-                fallbackLng = fallbackLng || r;
-                resources[r] = {translation: {...(defaultResources[r] || {}), ...overrideWithResources[r]}};
-            }
-            return i18n.use(LanguageDetector).use(initReactI18next)
-                .init({
-                    debug: false,
-                    detection: {
-                        lookupLocalStorage: title + "_i18n"
-                    },
-                    fallbackLng,
-                    keySeparator: false,
-                    parseMissingKeyHandler: (value) => {
-                        return value.replace(/^\w+\./, "");
-                    },
-                    resources,
-                    saveMissing: false,
-                }).then(() => ({i18n, t: i18n.getFixedT()}));
-        }
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
@@ -320,7 +290,7 @@ export default (props) => {
             return props
         }
 
-        initInternationalization()
+        initInternationalization(title, locales)
             .then(clearOneTapCookie)
             .then(initFirebase)
             .then(initStore)

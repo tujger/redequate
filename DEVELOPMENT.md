@@ -248,6 +248,38 @@ are unchanged.
 
 Status: accepted; built CommonJS button and calendar DOM checks passed.
 
+### React 19 internationalization migration
+
+Decision: use i18next 26.4.2, react-i18next 17.0.16 and browser language detector
+8.2.1 in Redequate and both web consumers. Keep the first two as framework peers
+and development dependencies. Local consumer linking shares these instances
+alongside React so application hooks observe framework initialization.
+
+Reason: update the localization stack during React 19 stabilization while keeping
+the build-system and SSR migrations separate.
+
+Consequences: preserve flat translation keys, resource overrides, the existing
+detection order and application-specific localStorage key. English resources can
+be empty because English text comes from missing keys; `resolvedLanguage` alone
+cannot select that language, so the switcher also checks available resources in
+the language fallback chain. Profile locale strings retain their existing format.
+Components using only `Trans` need a `useTranslation` subscription to refresh
+on language changes; Contacts now passes its subscribed `t` to both translations.
+Modern Intl APIs are required, and i18next no longer supports Node.js below 14
+or legacy JSON plural formats. Existing dictionaries have no legacy plural keys.
+The package's historical Node 8 engine declaration is not evidence of support
+for the current dependency stack.
+
+Rejected alternatives: keeping the legacy localization versions, enabling the
+removed JSON v3 compatibility option, or bundling a separate i18next instance.
+
+Affected consumers: `edeqa-pwa-react-demo`, `thewhiskytalks`. Android API and
+profile data contracts are unchanged; browser-based views require modern Intl.
+
+Status: accepted; framework integration tests, consumer DOM checks and both web
+production builds validated. Interactive browser validation remains pending
+because no browser is connected to this session.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to

@@ -37,7 +37,7 @@ export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
             label: t("Language." + item),
             value: item,
         }))}
-        value={i18n.language || i18n.options.fallbackLng[0]}
+        value={i18n.resolvedLanguage || i18n.languages.find(language => i18n.options.resources[language]) || i18n.language || i18n.options.fallbackLng[0]}
         {...props}
     />
 });

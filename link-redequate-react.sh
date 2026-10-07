@@ -8,7 +8,7 @@ library_root=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 
 node - "$library_root" "$project_root" <<'NODE'
 const [libraryRoot, projectRoot] = process.argv.slice(2);
-for (const dependency of ['react', 'react-dom']) {
+for (const dependency of ['react', 'react-dom', 'i18next', 'react-i18next']) {
     let libraryVersion;
     let projectVersion;
     try {
@@ -26,7 +26,7 @@ for (const dependency of ['react', 'react-dom']) {
 }
 NODE
 
-for dependency in react react-dom; do
+for dependency in react react-dom i18next react-i18next; do
     project_dependency="$project_root/node_modules/$dependency"
     library_dependency="$library_root/node_modules/$dependency"
 
@@ -54,7 +54,7 @@ done
 node - "$library_root" "$project_root" <<'NODE'
 const fs = require('fs');
 const [libraryRoot, projectRoot] = process.argv.slice(2);
-for (const dependency of ['react', 'react-dom']) {
+for (const dependency of ['react', 'react-dom', 'i18next', 'react-i18next']) {
     const libraryPath = fs.realpathSync(require.resolve(dependency, {paths: [libraryRoot]}));
     const projectPath = fs.realpathSync(require.resolve(dependency, {paths: [projectRoot]}));
     if (libraryPath !== projectPath) {
