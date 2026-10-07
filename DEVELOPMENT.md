@@ -231,6 +231,23 @@ contracts are unchanged; browser-based views inherit the web browser minimums.
 Status: accepted; framework and both web consumer production builds validated.
 Interactive consumer validation remains pending.
 
+### CommonJS default import interoperability
+
+Decision: use Rollup's `interop: 'auto'` for both CommonJS outputs.
+
+Reason: external dependencies such as MUI icons and React Datepicker expose
+their components through CommonJS `default` exports. Treating the entire module
+as the default import produces invalid React element types.
+
+Consequences: preserve automatic default import handling when changing Rollup
+plugins or output configuration. Validate built CommonJS components as well as
+the ES module entry used by web consumers.
+
+Affected consumers: `edeqa-pwa-react-demo`, `thewhiskytalks`; Android contracts
+are unchanged.
+
+Status: accepted; built CommonJS button and calendar DOM checks passed.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to
