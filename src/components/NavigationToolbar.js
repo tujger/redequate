@@ -1,5 +1,5 @@
 import React from "react";
-import BackIcon from "@material-ui/icons/ArrowBack";
+import BackIcon from "@mui/icons-material/ArrowBack";
 import {useHistory} from "react-router-dom";
 import {useTranslation} from "react-i18next";
 import Button from "../controls/Button/Button";

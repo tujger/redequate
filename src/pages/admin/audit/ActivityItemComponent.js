@@ -1,4 +1,4 @@
-import TypeIcon from "@material-ui/icons/ArrowRight";
+import TypeIcon from "@mui/icons-material/ArrowRight";
 import React from "react";
 import Linkify from "react-linkify";
 import {useHistory} from "react-router-dom";

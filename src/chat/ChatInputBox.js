@@ -1,4 +1,4 @@
-import SendIcon from "@material-ui/icons/Send";
+import SendIcon from "@mui/icons-material/Send";
 import React from "react";
 import {useWindowData} from "../controllers";
 import inputStyles from "./styles/ChatInputBox.module.css";

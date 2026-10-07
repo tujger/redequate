@@ -1,5 +1,5 @@
-import Clear from "@material-ui/icons/Clear";
-import AllReadIcon from "@material-ui/icons/ClearAll";
+import Clear from "@mui/icons-material/Clear";
+import AllReadIcon from "@mui/icons-material/ClearAll";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";

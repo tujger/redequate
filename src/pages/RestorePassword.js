@@ -1,6 +1,6 @@
 import React from "react";
 import {Redirect, useHistory} from "react-router-dom";
-import UserIcon from "@material-ui/icons/Mail";
+import UserIcon from "@mui/icons-material/Mail";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
 import {sendPasswordResetEmail, useCurrentUserData} from "../controllers/UserData";

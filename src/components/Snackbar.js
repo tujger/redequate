@@ -1,5 +1,5 @@
 import React from "react";
-import CloseIcon from "@material-ui/icons/Close";
+import CloseIcon from "@mui/icons-material/Close";
 import {connect} from "react-redux";
 import Button from "../controls/Button/Button";
 import styles from "./styles/Snackbar.module.css";

@@ -18,7 +18,7 @@ const mockPages = {
     search: {component: {type: () => <span data-testid="search"/>}},
 };
 
-jest.mock("@material-ui/icons/Menu", () => () => <span data-testid="menu-icon"/>);
+jest.mock("@mui/icons-material/Menu", () => () => <span data-testid="menu-icon"/>);
 jest.mock("react-router-dom", () => {
     const React = require("react");
     return {

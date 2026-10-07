@@ -1,4 +1,4 @@
-import AddIcon from "@material-ui/icons/Add";
+import AddIcon from "@mui/icons-material/Add";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect, useDispatch} from "react-redux";

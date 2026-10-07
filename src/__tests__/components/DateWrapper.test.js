@@ -12,8 +12,8 @@ const mockIncreaseMonth = jest.fn();
 let mockPreviousDisabled = false;
 let mockNextDisabled = false;
 
-jest.mock("@material-ui/icons/ChevronLeft", () => () => <span data-testid="previous-icon"/>, {virtual: true});
-jest.mock("@material-ui/icons/ChevronRight", () => () => <span data-testid="next-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/ChevronLeft", () => () => <span data-testid="previous-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/ChevronRight", () => () => <span data-testid="next-icon"/>, {virtual: true});
 jest.mock("react-datepicker-t/dist/react-datepicker.css", () => ({}), {virtual: true});
 jest.mock("moment", () => {
     const fixedToday = new Date(2026, 9, 2, 12);

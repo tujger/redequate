@@ -1,5 +1,5 @@
-import ClearIcon from "@material-ui/icons/Clear";
-import RefreshIcon from "@material-ui/icons/Refresh";
+import ClearIcon from "@mui/icons-material/Clear";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import AvatarView from "../../../components/AvatarView";

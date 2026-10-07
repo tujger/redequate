@@ -1,5 +1,5 @@
-import ClearIcon from "@material-ui/icons/Clear";
-import TagIcon from "@material-ui/icons/Label";
+import ClearIcon from "@mui/icons-material/Clear";
+import TagIcon from "@mui/icons-material/Label";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";

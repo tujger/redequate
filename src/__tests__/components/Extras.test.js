@@ -4,9 +4,9 @@ import {act, Simulate} from "react-dom/test-utils";
 import Extras from "../../components/DateTimePicker/Extras";
 import baseStyles from "../../themes/Base.module.css";
 
-jest.mock("@material-ui/icons/MoreVert", () => () => <span data-testid="more-icon"/>, {virtual: true});
-jest.mock("@material-ui/icons/ArrowDropDown", () => () => null, {virtual: true});
-jest.mock("@material-ui/icons/ArrowDropUp", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/MoreVert", () => () => <span data-testid="more-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/ArrowDropDown", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ArrowDropUp", () => () => null, {virtual: true});
 jest.mock("react-i18next", () => ({useTranslation: () => ({t: key => key})}), {virtual: true});
 jest.mock("moment", () => jest.fn((seed, format) => ({
     seed,

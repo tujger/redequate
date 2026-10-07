@@ -82,6 +82,7 @@
     align-items: baseline;
     display: flex;
     font-size: var(--theme-font-size-regular);
+    gap: calc(var(--theme-spacing) * 0.5);
     grid-area: titles;
     min-height: calc(var(--theme-spacing) * 3);
     min-width: 0;

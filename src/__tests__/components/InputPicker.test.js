@@ -5,8 +5,8 @@ import InputPicker from "../../components/DateTimePicker/InputPicker";
 import Picker from "../../components/DateTimePicker/Picker";
 import modalStyles from "../../components/styles/ModalComponent.module.css";
 
-jest.mock("@material-ui/icons/Cancel", () => () => <span data-testid="cancel-icon"/>, {virtual: true});
-jest.mock("@material-ui/icons/Clear", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/Cancel", () => () => <span data-testid="cancel-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/Clear", () => () => null, {virtual: true});
 jest.mock("moment", () => jest.fn(value => value), {virtual: true});
 jest.mock("react-i18next", () => ({useTranslation: () => ({t: key => key})}), {virtual: true});
 jest.mock("react-router-dom", () => ({useHistory: () => ({block: () => () => {}})}), {virtual: true});

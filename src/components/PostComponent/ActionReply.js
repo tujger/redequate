@@ -2,7 +2,7 @@ import React from "react";
 import actionStyles from "./styles/PostActions.module.css";
 import Button from "../../controls/Button/Button";
 import {useTranslation} from "react-i18next";
-import ReplyIcon from "@material-ui/icons/ReplyOutlined";
+import ReplyIcon from "@mui/icons-material/ReplyOutlined";
 import {cacheDatas} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import NewPostComponent from "../NewPostComponent/NewPostComponent";

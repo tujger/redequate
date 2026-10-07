@@ -1,5 +1,5 @@
-import BackIcon from "@material-ui/icons/ArrowBack";
-import SendIcon from "@material-ui/icons/Send";
+import BackIcon from "@mui/icons-material/ArrowBack";
+import SendIcon from "@mui/icons-material/Send";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import Button from "../../controls/Button/Button";

@@ -5,8 +5,8 @@ import SearchToolbar from "../../pages/search/SearchToolbar";
 
 let mockHistory;
 
-jest.mock("@material-ui/icons/ArrowBack", () => () => null, {virtual: true});
-jest.mock("@material-ui/icons/Clear", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ArrowBack", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/Clear", () => () => null, {virtual: true});
 jest.mock("react-i18next", () => ({
     useTranslation: () => ({t: value => value}),
 }), {virtual: true});

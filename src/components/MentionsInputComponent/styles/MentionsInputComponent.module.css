@@ -26,13 +26,19 @@
         }
     }
 
-    & [class*="__suggestions__list"] {
-        background: var(--theme-color-paper);
-        box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
-        max-height: 240px;
-        overflow-y: auto;
-        position: relative;
-        z-index: 1;
+    & [class*="__suggestions__list"],
+    & ul[role="listbox"] {
+        background-color: var(--theme-color-paper);
+        box-shadow: var(--theme-dialog-shadow);
+        box-sizing: border-box;
+        color: var(--menu-color);
+        max-height: calc(100vh - var(--theme-spacing) * 2);
+        max-width: calc(100vw - var(--theme-spacing) * 2);
+        min-width: calc(var(--theme-spacing) * 18);
+        overflow: auto;
+        padding: var(--theme-spacing) 0;
+        position: fixed;
+        z-index: 1301;
     }
 }
 
@@ -49,4 +55,8 @@
 
 .multiline {
     min-height: calc(var(--theme-spacing) * 20);
+
+    & > div {
+        height: 100%;
+    }
 }

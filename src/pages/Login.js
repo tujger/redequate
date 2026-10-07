@@ -7,8 +7,8 @@ import {
     UserData
 } from "../controllers/UserData";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
-import Lock from "@material-ui/icons/Lock";
-import UserIcon from "@material-ui/icons/Mail";
+import Lock from "@mui/icons-material/Lock";
+import UserIcon from "@mui/icons-material/Mail";
 import PropTypes from "prop-types";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";

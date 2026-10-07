@@ -5,7 +5,7 @@ import SearchModal from "../../pages/search/SearchModal";
 
 let mockHistory;
 
-jest.mock("@material-ui/icons/ArrowBack", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ArrowBack", () => () => null, {virtual: true});
 jest.mock("react-i18next", () => ({
     useTranslation: () => ({t: (value, args) => args?.value ? value.replace("{{value}}", args.value) : value}),
 }), {virtual: true});

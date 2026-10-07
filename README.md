@@ -33,7 +33,7 @@ For a custom palette, `Theme` mounts the CSS when rendered and removes it on unm
 import {Theme} from "redequate";
 import styles from "./styles.css";
 
-<Theme theme={styles}/>;
+<Theme css={styles}/>;
 ```
 
 For a Create React App consumer, place `theme.css` in `public/` and pass its URL instead. CRA's normal CSS import applies styles globally and cannot be removed with the theme:
@@ -41,10 +41,21 @@ For a Create React App consumer, place `theme.css` in `public/` and pass its URL
 ```jsx
 import {Dispatcher, Theme} from "redequate";
 
-<Dispatcher theme={<Theme theme={{href: `${process.env.PUBLIC_URL}/theme.css`}}/>} {...props}/>;
+<Dispatcher theme={<Theme href={`${process.env.PUBLIC_URL}/theme.css`}/>} {...props}/>;
 ```
 
 Both forms replace the mounted stylesheet when `theme` changes. The CSS can set palette variables with `:root { --theme-color-primary: #6750a4; }`.
+
+## Migration from 1.2.17 to 2.0.20
+
+These notes cover the current source tree, including MUI 9 changes. React 19 stabilization is still in progress.
+
+- **Dependencies:** React and React DOM now require `^18.3.1 || ^19.0.0`; keep their versions aligned and use `createRoot` instead of `ReactDOM.render`. Update peers from [package.json](package.json), including MUI 9 and Emotion. Replace `react-datepicker-t` and `react-mentions-t` imports with upstream packages, and icon imports with `@mui/icons-material`.
+- **Themes and styling:** `Dispatcher.theme` accepts `<ThemeSeason/>`, `<ThemeDayNight/>`, or `<Theme css={...}/>` / `<Theme href={...}/>` instead of a MUI theme object. Replace removed `createTheme`, JSS, and `classes` overrides with CSS variables and supported `className`/`style` props. Applications using MUI components need their own `ThemeProvider`. See [Usage](#usage).
+- **Controls:** Review props and callbacks when replacing MUI controls. `Select` uses `options` and `onChange(event)`; `Tabs` uses `items` and `onChange(value)`; `TextField` uses `helper` and direct input props. Redequate `Button` requires explicit form submission. `DateTimePicker` still returns Moment values; clearing calls `onChange(null, null)`.
+- **Mentions:** `MentionsInputComponent.onChange` receives `(event, nextValue, plainValue, mentions)`. Use `multiline`, `mentionsParams`, and `inputRef` instead of fork-specific props. Existing saved user/tag markup remains compatible.
+- **Addresses:** Geoapify replaces the old geocoder. Set `meta/settings/geoapifyApiKey` in Firebase or through admin Settings. Without a key, autocomplete is unavailable. `PlacesTextField.onChange(event, value)` returns a string when typing and `{title, data}` when selecting a suggestion.
+- **Imports and validation:** Import from `redequate` rather than internal paths. Check themes, navigation, forms, dates, mentions, and addresses in the [demo application](https://github.com/tujger/edeqa-pwa-react-demo), then TheWhiskyTalks. See [Troubleshooting](#troubleshooting) for local linking and [DEVELOPMENT.md](DEVELOPMENT.md) for migration status.
 
 ## Troubleshooting
 
@@ -59,7 +70,7 @@ When developing the adjacent TheWhiskyTalks app against this local package, Reac
 
 Relink connects the app's `react` and `react-dom` to the copies installed in redequate and checks that both projects resolve each package to the same path. The app start scripts restore these links after an app-side `npm install`. Set `REDEQUATE_PROJECT` to use a different consumer directory. Restart an already running development server after relinking.
 
-All projects using this local setup must use compatible versions of React and React DOM. The current projects use version `17.0.1`.
+All projects using this local setup must use matching React and React DOM versions in Redequate and the consumer. The current development projects use `19.3.0`; Redequate's peer range also permits React `18.3.1`.
 
 
 
@@ -261,7 +272,6 @@ Props:
 Props:
 
     allowedExtras?: ["like"]
-    classes?: {}
     className?
     collapsible?: true
     disableClick?: false

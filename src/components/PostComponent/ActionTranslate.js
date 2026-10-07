@@ -1,4 +1,4 @@
-import TranslateIcon from "@material-ui/icons/Translate";
+import TranslateIcon from "@mui/icons-material/Translate";
 import React from "react";
 import ReactDOM from "react-dom";
 import {useTranslation} from "react-i18next";

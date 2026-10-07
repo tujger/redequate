@@ -1,5 +1,5 @@
-import ChatFilledIcon from "@material-ui/icons/Chat";
-import ChatEmptyIcon from "@material-ui/icons/ChatBubbleOutline";
+import ChatFilledIcon from "@mui/icons-material/Chat";
+import ChatEmptyIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";

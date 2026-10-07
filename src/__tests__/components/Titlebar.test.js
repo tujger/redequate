@@ -18,7 +18,7 @@ const mockPages = {
     restricted: {roles: ["blocked"], route: "/restricted", title: "Restricted"},
 };
 
-jest.mock("@material-ui/icons/ChevronLeft", () => () => <span data-testid="back-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/ChevronLeft", () => () => <span data-testid="back-icon"/>, {virtual: true});
 jest.mock("react-router-dom", () => {
     const React = require("react");
     return {

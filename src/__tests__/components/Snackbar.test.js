@@ -3,7 +3,7 @@ import {render, unmountComponentAtNode} from "react-dom";
 import {act, Simulate} from "react-dom/test-utils";
 import Snackbar, {snackbarReducer} from "../../components/Snackbar";
 
-jest.mock("@material-ui/icons/Close", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/Close", () => () => null, {virtual: true});
 
 describe("Snackbar", () => {
     let container;

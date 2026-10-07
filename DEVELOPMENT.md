@@ -207,6 +207,30 @@ Affected consumers: `edeqa-pwa-react-demo`, `thewhiskytalks`.
 
 Status: accepted.
 
+### Material icon package migration
+
+Decision: use `@mui/icons-material` and `@mui/material` 9.4 with Emotion in
+Redequate and both web consumers; remove the legacy `@material-ui/icons` name
+and consumer npm aliases. Keep icon imports external in both library formats.
+
+Reason: the latest legacy package belongs to Material UI 4, while MUI 9 supports
+React 19. Removed `Outline` icon exports have identical `Outlined` replacements.
+
+Consequences: consumers must install the new icon peer dependency and compatible
+MUI/Emotion packages. MUI 9 requires modern browsers, including Safari/iOS 17+,
+Chrome 117+, Edge 121+, and Firefox 121+. The Whisky Talks needs Grid, Hidden,
+Skeleton, and removed component API adaptations. Its existing `@mui/styles`
+6.4.12 supports React 19 and remains for this migration.
+
+Rejected alternatives: staying on legacy icons 4.11.3, or keeping separate MUI 5
+and MUI 9 installations. Vite and SSR remain separate milestones.
+
+Affected consumers: `edeqa-pwa-react-demo`, `thewhiskytalks`. Android API/data
+contracts are unchanged; browser-based views inherit the web browser minimums.
+
+Status: accepted; framework and both web consumer production builds validated.
+Interactive consumer validation remains pending.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to
