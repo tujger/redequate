@@ -183,6 +183,30 @@ testing Redequate in isolation.
 
 Status: accepted.
 
+### Dual module output for React 19 web consumers
+
+Decision:
+
+Publish an ES module entry alongside the existing CommonJS entry. Web bundlers
+should resolve the ES module entry; CommonJS consumers keep the existing `main`.
+
+Reason:
+
+The Create React App builds used by the demo and The Whisky Talks treat the
+`.cjs` entry of `date-fns` 4 as a static asset when Redequate's CommonJS output
+loads `react-datepicker` 9. The calendar then receives a URL instead of the
+`date-fns` API and crashes at `isValid`. The ES module path resolves the
+JavaScript exports correctly without starting the Vite migration.
+
+Consequence:
+
+Validate both package entries and both web consumers when changing packaging
+or date-picker dependencies.
+
+Affected consumers: `edeqa-pwa-react-demo`, `thewhiskytalks`.
+
+Status: accepted.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to

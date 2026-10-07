@@ -48,12 +48,12 @@ module.exports = [
                 file: pkg.main,
                 format: 'cjs',
                 sourcemap: true,
-            }/*,
-        {
-            file: pkg.module,
-            format: 'es',
-            sourcemap: true
-        }*/
+            },
+            {
+                file: pkg.module,
+                format: 'es',
+                sourcemap: true
+            }
         ],
         plugins: [
             ...(!process.env.ROLLUP_WATCH ? [del({targets: ['core/*']})] : []),

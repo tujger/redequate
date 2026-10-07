@@ -6,6 +6,7 @@
     "license": "MIT",
     "repository": "tujger/redequate",
     "main": "core/index.js",
+    "module": "core/index.es.js",
     "publishConfig": {
         "registry": "https://registry.npmjs.org/",
         "access": "public"
