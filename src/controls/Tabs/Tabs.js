@@ -96,6 +96,7 @@ export default ({className, children = undefined, items = [], onChange, value}) 
                 aria-selected={index === selectedIndex}
                 className={[styles.tab, index === selectedIndex && styles.tabSelected].filter(Boolean).join(" ")}
                 color={index === selectedIndex ? "primary" : "secondary"}
+                key={index}
                 onClick={() => {
                     if (item.onClick) {
                         return item.onClick();

@@ -7,7 +7,7 @@ import ProgressBar from "@uppy/progress-bar";
 import Webcam from "@uppy/webcam";
 import PropTypes from "prop-types";
 import React from "react";
-import ReactDOM from "react-dom";
+import {createRoot} from "react-dom/client";
 import "@uppy/core/dist/style.css";
 import "@uppy/progress-bar/dist/style.css";
 import "@uppy/dashboard/dist/style.css";
@@ -43,6 +43,7 @@ const UploadComponent = (
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
+    const cameraButtonRoots = React.useRef(new Set());
 
     const {
         width = uploadsMaxWidth,
@@ -176,7 +177,9 @@ const UploadComponent = (
                     if (pictureButton && !switchButton) {
                         const node = document.createElement("div");
                         pictureButton.parentElement.insertBefore(node, pictureButton);
-                        ReactDOM.render(<button
+                        const root = createRoot(node);
+                        cameraButtonRoots.current.add(root);
+                        root.render(<button
                             children={<FlipIcon/>}
                             className={"uppy-u-reset uppy-c-btn uppy-Webcam-button uppy-Webcam-button--switch"}
                             onClick={() => {
@@ -200,7 +203,7 @@ const UploadComponent = (
                                 }
                             }}
                             type={"button"}
-                        />, node);
+                        />);
                     }
                 }
             }, 0)
@@ -280,6 +283,11 @@ const UploadComponent = (
             }
         }
         setState(state => ({...state, uppy: uppy}));
+        return () => {
+            cameraButtonRoots.current.forEach(root => root.unmount());
+            cameraButtonRoots.current.clear();
+            uppy.close();
+        };
     }, [])
 
     // let maxWidth, maxHeight;

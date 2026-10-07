@@ -1,7 +1,7 @@
 import React from "react";
 import {render, unmountComponentAtNode} from "react-dom";
 import {act, Simulate} from "react-dom/test-utils";
-import DatePicker from "react-datepicker-t";
+import DatePicker from "react-datepicker";
 import DateWrapper from "../../components/DateTimePicker/DateWrapper";
 import styles from "../../components/DateTimePicker/styles/DateWrapper.module.css";
 import baseStyles from "../../themes/Base.module.css";

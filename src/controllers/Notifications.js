@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import {renderToStaticMarkup} from "react-dom/server";
 import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
 import RichSnackbarContent from "../components/RichSnackbarContent";
@@ -159,35 +159,34 @@ export const NotificationsSnackbar = () => {
                 window.Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
                         const node = document.createElement("div");
-                        ReactDOM.render(<>{payload.title}</>, node, () => {
-                            try {
-                                const title = metaInfo.title;
-                                const onclick = () => {
-                                    history.push(payload.id || "/")
-                                    // window.open(payload.id || "/");
-                                    window.focus();
-                                };
-                                const options = {
-                                    body: node.innerText,
-                                    // image: "/favicon.ico",
-                                    icon: "/favicon.ico",
-                                    tag: payload.id || title,
-                                    renotify: true,
-                                    // requireInteraction: true,
-                                };
-                                /* navigator.serviceWorker.ready.then(reg => {
-                                    reg.showNotification(title, {...options,
-                                    actions: [
-                                        {title: "Open", action: onclick}
-                                    ]})
-                                }) */
-                                console.log(`[Notification] ${title}: ${JSON.stringify(options)}`);
-                                const notification = new window.Notification(title, options);
-                                notification.onclick = onclick;
-                            } catch (error) {
-                                console.error(error)
-                            }
-                        });
+                        node.innerHTML = renderToStaticMarkup(<>{payload.title}</>);
+                        try {
+                            const title = metaInfo.title;
+                            const onclick = () => {
+                                history.push(payload.id || "/")
+                                // window.open(payload.id || "/");
+                                window.focus();
+                            };
+                            const options = {
+                                body: node.textContent,
+                                // image: "/favicon.ico",
+                                icon: "/favicon.ico",
+                                tag: payload.id || title,
+                                renotify: true,
+                                // requireInteraction: true,
+                            };
+                            /* navigator.serviceWorker.ready.then(reg => {
+                                reg.showNotification(title, {...options,
+                                actions: [
+                                    {title: "Open", action: onclick}
+                                ]})
+                            }) */
+                            console.log(`[Notification] ${title}: ${JSON.stringify(options)}`);
+                            const notification = new window.Notification(title, options);
+                            notification.onclick = onclick;
+                        } catch (error) {
+                            console.error(error)
+                        }
                     } else {
                         throw new Error("Notifications denied");
                     }

@@ -1,22 +1,50 @@
+.field {
+    display: inline-block;
+    min-width: 0;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.label {
+    color: var(--theme-color-muted);
+    display: block;
+    font-size: var(--theme-font-size-small);
+    margin-bottom: calc(var(--theme-spacing) * 0.5);
+}
+
 .root {
     & input,
     & textarea {
+        border: 0;
+        border-bottom: 1px solid var(--theme-color-muted);
         outline: none;
 
-        &::selection,
         &::selection {
             background-color: var(--theme-color-focus);
         }
     }
 
-    &&:before {
-        border-color: var(--theme-color-muted);
+    & [class*="__suggestions__list"] {
+        background: var(--theme-color-paper);
+        box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
+        max-height: 240px;
+        overflow-y: auto;
+        position: relative;
+        z-index: 1;
     }
+}
 
-    & :global(.MuiInput-root) {
-        font-size: var(--theme-font-size-regular);
-        min-height: calc(var(--theme-spacing) * 4);
-    }
+.suggestion {
+    display: block;
+    overflow: hidden;
+    padding: var(--theme-spacing);
+    position: relative;
+}
+
+.suggestionFocused {
+    background: var(--theme-color-focus);
 }
 
 .multiline {
