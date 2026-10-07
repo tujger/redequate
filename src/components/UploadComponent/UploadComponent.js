@@ -3,15 +3,14 @@ import FlipIcon from "@mui/icons-material/FlipCameraAndroid";
 import VideoIcon from "@mui/icons-material/Movie";
 import Uppy from "@uppy/core";
 import Dashboard from "@uppy/dashboard";
-import ProgressBar from "@uppy/progress-bar";
 import Webcam from "@uppy/webcam";
 import PropTypes from "prop-types";
 import React from "react";
-import {createRoot} from "react-dom/client";
-import "@uppy/core/dist/style.css";
-import "@uppy/progress-bar/dist/style.css";
-import "@uppy/dashboard/dist/style.css";
-import "@uppy/webcam/dist/style.css";
+import {createPortal} from "react-dom";
+import "@uppy/core/css/style.css";
+import "@uppy/dashboard/css/style.css";
+import "@uppy/webcam/css/style.css";
+import useRippleEffect from "../../helpers/useRippleEffect";
 import Button from "../../controls/Button/Button";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
@@ -34,7 +33,7 @@ const UploadComponent = (
         multi = true
     }) => {
     const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
-    const {uppy, facingMode} = state;
+    const {uppy, facingMode, cameraTarget} = state;
     const {t} = useTranslation();
     const metaInfo = useMetaInfo();
     const {settings = {}} = metaInfo || {};
@@ -43,7 +42,6 @@ const UploadComponent = (
 
     const refDashboard = React.useRef(null);
     const refButton = React.useRef(null);
-    const cameraButtonRoots = React.useRef(new Set());
 
     const {
         width = uploadsMaxWidth,
@@ -56,159 +54,110 @@ const UploadComponent = (
 
     React.useEffect(() => {
         if (!uploadsAllow) return;
-        const uppy = Uppy({
-            allowMultipleUploads: multi,
+        let active = true;
+        let browseTimer;
+        const fileTokens = new Map();
+        const uppy = new Uppy({
+            allowMultipleUploadBatches: multi,
             autoProceed: true,
-            locale: {
-                strings: {
-                    dropPasteImport: "" // "Drop files here",
-                }
-            },
             restrictions: {
                 maxNumberOfFiles: multi ? 10 : 1,
                 maxFileSize: MAX_FILE_SIZE * 1024,
                 allowedFileTypes
             },
-        })
-        uppy.on("file-added", (result) => {
-            // if (!maxWidth) return;
-            // if (maxSize && maxSize > result.size) return;
-            const type = result.type.split("/")[0];
-
-            uppy._uris = uppy._uris || {};
+        });
+        uppy._uris = {};
+        uppy.on("file-added", file => {
+            let cancel;
+            const cancelled = new Promise(resolve => { cancel = () => resolve(null); });
+            fileTokens.set(file.id, {cancelled, cancel});
             if (!multi) {
-                Object.keys(uppy._uris).map(item => {
-                    uploadComponentClean(uppy, item.id);
-                })
-            }
-
-            if (type === "image") {
-                console.log(`[UploadComponent] resize ${result.name} to ${width}x${height} with quality ${quality}`);
-
-                uploadComponentResize({
-                    descriptor: result,
-                    limits: {
-                        maxWidth: width,
-                        maxHeight: height,
-                        quality,
-                    }
-                })
-                    .then(result => {
-                        uppy._uris[result.id] = result;
-                        uppy.emit("upload-success", result, {
-                            status: "complete",
-                            body: null,
-                            uploadURL: result.uploadURL
-                        });
-                        setState(state => ({...state, uppy}));
-                    })
-                    .catch(console.error);
-            } else if (type === "video") {
-                console.log(type, result);
-                uppy._uris[result.id] = result;
-                let uploadURL = <VideoIcon/>;
-                getVideoCover(result.data)
-                    .then(blob => new Promise((resolve) => {
-                        var a = new window.FileReader();
-                        a.onload = function(e) {
-                            uploadURL = e.target.result;
-                            resolve();
-                        }
-                        a.readAsDataURL(blob);
-                    }))
-                    .finally(() => {
-                        result.uploadURL = uploadURL;
-                        uppy.emit("upload-success", result, {
-                            status: "complete",
-                            body: null,
-                            uploadURL
-                        });
-                        setState(state => ({...state, uppy}));
-                    })
-            } else if (type === "audio") {
-                console.log(type, result);
-                uppy._uris[result.id] = result;
-                const uploadURL = <AudioIcon/>;
-                result.uploadURL = uploadURL;
-                uppy.emit("upload-success", result, {
-                    status: "complete",
-                    body: null,
-                    uploadURL
+                Object.keys(uppy._uris).forEach(key => {
+                    if (key === file.id) delete uppy._uris[key];
+                    else uploadComponentClean(uppy, key);
                 });
-                setState(state => ({...state, uppy}));
-            } else {
-                console.log(type, result);
-                setState(state => ({...state, uppy}));
             }
         });
-        uppy.on("complete", (result) => {
+        uppy.on("file-removed", file => {
+            fileTokens.get(file.id)?.cancel();
+            fileTokens.delete(file.id);
         });
-        uppy.on("error", (error) => {
-            console.error(error);
-        });
-        uppy.on("dashboard:modal-open", () => {
-            console.log("[UploadComponent] popup is open", uppy);
-            if (camera === true) return;
-            setTimeout(() => {
+        // Prepare local previews inside Uppy's upload lifecycle. Publishing to
+        // Firebase remains the responsibility of uploadComponentPublish.
+        uppy.addUploader(async fileIDs => {
+            const files = fileIDs.map(id => uppy.getFile(id)).filter(Boolean);
+            uppy.emit("upload-start", files);
+            await Promise.all(files.map(async file => {
+                const token = fileTokens.get(file.id);
+                const isCurrent = () => active && fileTokens.get(file.id) === token && uppy.getFile(file.id);
                 try {
-                    const dashboard = uppy.getPlugin("Dashboard");
-                    const browseButton = dashboard.el.getElementsByClassName("uppy-Dashboard-browse")[0];
-                    browseButton.click();
-
-                    // const nodes = dashboard.el.getElementsByClassName("uppy-Dashboard-input");
-                    // for (let node of nodes) {
-                    //     if(!node.addEventListener) continue;
-                    //     node.addEventListener("click", evt => {
-                    //         debugger;
-                    //         console.log(this, evt)
-                    //     })
-                    // }
-                } catch (e) {
-                    console.error(e);
+                    const prepared = (async () => {
+                        let result = file;
+                        const type = file.type.split("/")[0];
+                        if (type === "image") {
+                            result = await uploadComponentResize({
+                                descriptor: file,
+                                limits: {maxWidth: width, maxHeight: height, quality}
+                            });
+                        } else if (type === "video") {
+                            result = {...file, uploadURL: <VideoIcon/>};
+                            try {
+                                const blob = await getVideoCover(file.data);
+                                result.uploadURL = await new Promise((resolve, reject) => {
+                                    const reader = new window.FileReader();
+                                    reader.onload = () => resolve(reader.result);
+                                    reader.onerror = () => reject(reader.error);
+                                    reader.readAsDataURL(blob);
+                                });
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        } else if (type === "audio") {
+                            result = {...file, uploadURL: <AudioIcon/>};
+                        }
+                        return result;
+                    })();
+                    const result = await Promise.race([prepared, token.cancelled]);
+                    if (!isCurrent() || !result) return;
+                    uppy._uris[result.id] = result;
+                    uppy.emit("upload-success", result, {
+                        status: "complete",
+                        body: null,
+                        uploadURL: result.uploadURL
+                    });
+                    if (active) setState(state => ({...state, uppy}));
+                } catch (error) {
+                    if (isCurrent()) uppy.emit("upload-error", file, error);
                 }
+            }));
+        });
+        uppy.on("error", error => console.error(error));
+        uppy.on("dashboard:modal-open", () => {
+            if (camera === true) return;
+            clearTimeout(browseTimer);
+            browseTimer = setTimeout(() => {
+                if (!active) return;
+                const dashboard = uppy.getPlugin("Dashboard");
+                dashboard.el.querySelector(".uppy-Dashboard-browse")?.click();
             }, 0);
         });
-        uppy.on("state-update", (options) => {
-            setTimeout(() => {
-                const webcam = uppy.getPlugin("Webcam");
-                if (webcam && webcam.el) {
-                    const pictureButton = webcam.el.getElementsByClassName("uppy-Webcam-button--picture")[0];
-                    const switchButton = webcam.el.getElementsByClassName("uppy-Webcam-button--switch")[0];
-                    if (pictureButton && !switchButton) {
-                        const node = document.createElement("div");
-                        pictureButton.parentElement.insertBefore(node, pictureButton);
-                        const root = createRoot(node);
-                        cameraButtonRoots.current.add(root);
-                        root.render(<button
-                            children={<FlipIcon/>}
-                            className={"uppy-u-reset uppy-c-btn uppy-Webcam-button uppy-Webcam-button--switch"}
-                            onClick={() => {
-                                try {
-                                    console.log(webcam);
-                                    const currentFacingMode = webcam.opts.facingMode;
-                                    const newMode = {};
-                                    if (currentFacingMode === "user") {
-                                        newMode.facingMode = "environment";
-                                        newMode.mirror = false;
-                                    } else {
-                                        newMode.facingMode = "user";
-                                        newMode.mirror = true;
-                                    }
-                                    webcam.setOptions(newMode);
-                                    if (webcam.stream) webcam._stop();
-                                    webcam.setPluginState();
-                                    webcam._start();
-                                } catch (error) {
-                                    notifySnackbar(error);
-                                }
-                            }}
-                            type={"button"}
-                        />);
-                    }
-                }
-            }, 0)
-            // console.log("Modal is open", uppy)
-        });
+        // Preact owns Webcam's DOM. Mount a React portal beside its snapshot
+        // button and let React own the switch control and its cleanup.
+        let cameraNode;
+        const syncCameraButton = () => {
+            if (!active || !refDashboard.current) return;
+            const pictureButton = refDashboard.current.querySelector(".uppy-Webcam-button--picture");
+            if ((!cameraNode && !pictureButton) || (cameraNode && cameraNode.parentElement === pictureButton?.parentElement)) return;
+            cameraNode?.remove();
+            cameraNode = undefined;
+            if (pictureButton) {
+                cameraNode = document.createElement("div");
+                pictureButton.parentElement.insertBefore(cameraNode, pictureButton);
+            }
+            setState(state => ({...state, cameraTarget: cameraNode}));
+        };
+        const observer = new MutationObserver(syncCameraButton);
+        observer.observe(refDashboard.current, {childList: true, subtree: true});
         uppy.on("upload-success", (file, snapshot) => {
             if (onsuccess) {
                 onsuccess({uppy, file, snapshot});
@@ -219,15 +168,15 @@ const UploadComponent = (
         uppy.use(Dashboard, {
             target: refDashboard.current,
             trigger: refButton.current,
-            replaceTargetContent: true,
             closeModalOnClickOutside: true,
             proudlyDisplayPoweredByUppy: false,
             browserBackButtonClose: true,
-            showProgressDetails: true,
+            hideProgressDetails: false,
             hideProgressAfterFinish: true,
             closeAfterFinish: true,
             locale: {
                 strings: {
+                    dropPasteImport: "",
                     done: t("Common.Cancel"),
                 }
             },
@@ -236,30 +185,13 @@ const UploadComponent = (
                 maxWidth: width,
                 maxHeight: height
             }),
-            // note: `Images up to ${MAX_FILE_SIZE} kb${maxWidth ? ` (will be resized to ${maxWidth}x${maxHeight} max)` : ""}`,
             theme: "auto",
         });
-        uppy.use(ProgressBar, {
-            target: Dashboard,
-            fixed: false,
-            hideAfterFinish: true
-        })
-        // uppy.use(Tus, {
-        //     endpoint: "https://master.tus.io/files/",
-        //     removeFingerprintOnSuccess: true
-        // }).use(ProgressBar, {
-        //     target: Dashboard
-        // });
-        // uppy.use(FileInput, {
-        //     target: Dashboard,
-        //     pretty: true,
-        //     inputName: "files[]",
-        //     locale: {
-        //     }
-        // })
         if (camera === true) {
             uppy.use(Webcam, {
-                facingMode: facingMode,
+                videoConstraints: {facingMode},
+                mirror: facingMode === "user",
+                mobileNativeCamera: false,
                 locale: {
                     strings: {
                         allowAccessDescription: "" // "Drop files here",
@@ -282,20 +214,16 @@ const UploadComponent = (
                 });
             }
         }
-        setState(state => ({...state, uppy: uppy}));
+        setState(state => ({...state, uppy, cameraTarget: undefined}));
         return () => {
-            cameraButtonRoots.current.forEach(root => root.unmount());
-            cameraButtonRoots.current.clear();
-            uppy.close();
+            active = false;
+            clearTimeout(browseTimer);
+            observer.disconnect();
+            fileTokens.forEach(token => token.cancel());
+            fileTokens.clear();
+            uppy.destroy();
         };
-    }, [])
-
-    // let maxWidth, maxHeight;
-    // if (limits) {
-    //     maxHeight = height;
-    //     maxWidth = width || maxHeight;
-    //     maxHeight = maxHeight || maxWidth;
-    // }
+    }, [uploadsAllow]);
 
     if (!uploadsAllow) return null;
     return <>
@@ -304,7 +232,7 @@ const UploadComponent = (
                 {...button.props}
                 onClick={evt => {
                     evt && evt.stopPropagation();
-                    uppy && !multi && uppy.reset();
+                    uppy && !multi && uppy.cancelAll();
                     button.props.onClick && button.props.onClick(evt);
                 }}
                 ref={refButton}
@@ -313,12 +241,20 @@ const UploadComponent = (
                 children={t("Upload.Upload")}
                 onClick={evt => {
                     evt && evt.stopPropagation();
-                    uppy && !multi && uppy.reset();
+                    uppy && !multi && uppy.cancelAll();
                 }}
                 ref={refButton}
             />
         }
-        <div className={styles.root} ref={refDashboard}/>
+        <div
+            className={styles.root}
+            ref={refDashboard}
+            style={{"--upload-camera-mirror": facingMode === "user" ? -1 : 1}}
+        />
+        {cameraTarget && uppy && createPortal(<CameraSwitch
+            uppy={uppy}
+            onFacingModeChange={facingMode => setState(state => ({...state, facingMode}))}
+        />, cameraTarget)}
     </>
 }
 
@@ -327,6 +263,43 @@ UploadComponent.propTypes = {
 };
 
 export default connect()(UploadComponent);
+
+function CameraSwitch({uppy, onFacingModeChange}) {
+    const onPointerDown = useRippleEffect();
+    const [switching, setSwitching] = React.useState(false);
+    const active = React.useRef(true);
+    const {t} = useTranslation();
+    React.useEffect(() => {
+        active.current = true;
+        return () => { active.current = false; };
+    }, []);
+    return <button
+        children={<FlipIcon/>}
+        className={`uppy-u-reset uppy-c-btn uppy-Webcam-button uppy-Webcam-button--switch ${styles.cameraSwitch}`}
+        aria-label={t("Upload.Switch camera")}
+        disabled={switching}
+        onPointerDown={onPointerDown}
+        onClick={async () => {
+            const webcam = uppy.getPlugin("Webcam");
+            if (!webcam || switching) return;
+            setSwitching(true);
+            try {
+                const facingMode = webcam.opts.videoConstraints?.facingMode === "user" ? "environment" : "user";
+                webcam.setOptions({videoConstraints: {facingMode}, mirror: facingMode === "user"});
+                onFacingModeChange(facingMode);
+                // Start immediately after stop so Webcam render cannot reopen
+                // the old stream between the two operations.
+                await Promise.all([webcam.stop(), webcam.start()]);
+                if (!active.current) await webcam.stop();
+            } catch (error) {
+                if (active.current) notifySnackbar(error);
+            } finally {
+                if (active.current) setSwitching(false);
+            }
+        }}
+        type="button"
+    />;
+}
 
 function getVideoCover(file, seekTo = 0.0) {
     return new Promise((resolve, reject) => {

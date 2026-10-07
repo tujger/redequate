@@ -1,18 +1,18 @@
-import {readFileSync} from 'node:fs'
 import {babel} from '@rollup/plugin-babel'
 import commonjs from '@rollup/plugin-commonjs'
-import external from 'rollup-plugin-peer-deps-external'
-import postcss from 'rollup-plugin-postcss'
-import postcssNested from 'postcss-nested'
+import json from '@rollup/plugin-json'
 import {nodeResolve as resolve} from '@rollup/plugin-node-resolve'
 import url from '@rollup/plugin-url'
 import svgr from '@svgr/rollup'
-import json from '@rollup/plugin-json'
+import {readFileSync} from 'node:fs'
+import postcssNested from 'postcss-nested'
 import del from 'rollup-plugin-delete'
+import external from 'rollup-plugin-peer-deps-external'
+import postcss from 'rollup-plugin-postcss'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
-const externalExports = ['react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/];
+const externalExports = ['react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/, /^@uppy(?:\/|$)/];
 
 const postCssModules = {
     include: '**/*.module.css',

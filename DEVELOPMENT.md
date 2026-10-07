@@ -270,6 +270,12 @@ or legacy JSON plural formats. Existing dictionaries have no legacy plural keys.
 The package's historical Node 8 engine declaration is not evidence of support
 for the current dependency stack.
 
+Missing-key parsing runs after interpolation in i18next 26. Preserve processed
+default values; otherwise translate the prefix-stripped English key as a default
+value through the same i18next instance and call options. This keeps parameters
+working with empty English resources in both web consumers. Returning the raw
+key from the handler leaves interpolation placeholders visible.
+
 Rejected alternatives: keeping the legacy localization versions, enabling the
 removed JSON v3 compatibility option, or bundling a separate i18next instance.
 
@@ -279,6 +285,36 @@ profile data contracts are unchanged; browser-based views require modern Intl.
 Status: accepted; framework integration tests, consumer DOM checks and both web
 production builds validated. Interactive browser validation remains pending
 because no browser is connected to this session.
+
+### Uppy 6 local file preparation
+
+Decision: use `@uppy/core` 6.2.0 with Dashboard and Webcam 6.0.1 in the
+framework and both web consumers. Remove deprecated ProgressBar and unused
+Transloadit, Tus and XHR Upload requirements; use Dashboard's built-in progress.
+
+Reason: modernize the file picker while preserving the existing Firebase
+publishing flow. Local resizing runs as an Uppy uploader so completion and modal
+closing wait for prepared previews. Cancellation and unmount discard late results.
+
+Consequences: preserve `onsuccess({uppy, file, snapshot})`, `_uris` and stored
+image descriptors. Webcam uses public start/stop APIs and video constraints;
+a React portal owns the camera switch. Keep embedded Webcam on mobile to retain
+that switch instead of accepting Uppy 6's native-camera default.
+
+Uppy is ESM-only. Bundle its JavaScript into CommonJS outputs while keeping Uppy
+and its CSS imports external in the web ESM entry. Dependencies declare Node.js
+22+; the historical Node 8 package engine is not a supported toolchain guarantee.
+
+Rejected alternatives: version-only updates, deprecated ProgressBar, private
+Webcam methods, and external ESM requires in CommonJS output.
+
+Affected consumers: `edeqa-pwa-react-demo`, `thewhiskytalks`. Android API, Firebase
+paths and uploaded data formats are unchanged. Vite and SSR remain separate.
+
+Status: accepted; DOM checks cover StrictMode, local completion, cancellation,
+initial descriptors, multiple files, restrictions and simulated camera lifecycle.
+Production builds validated; real camera, visual mobile review and authenticated
+Firebase publishing remain manual validation tasks.
 
 ## Active issues and constraints
 

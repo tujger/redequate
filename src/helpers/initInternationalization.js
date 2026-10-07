@@ -25,8 +25,11 @@ export default async function initInternationalization(title, locales) {
             },
             fallbackLng,
             keySeparator: false,
-            parseMissingKeyHandler: (value) => {
-                return value.replace(/^\w+\./, "");
+            parseMissingKeyHandler: (key, defaultValue, options) => {
+                if (defaultValue !== undefined) return defaultValue;
+                // Missing-key parsing runs after interpolation; translate the
+                // English fallback as a default value to interpolate it too.
+                return i18n.t(key, {...options, defaultValue: key.replace(/^\w+\./, "")});
             },
             resources,
             saveMissing: false,

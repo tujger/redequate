@@ -3,7 +3,7 @@ import Resizer from "react-image-file-resizer";
 import {firebaseMessaging as firebase} from "../../controllers/Firebase";
 
 export async function uploadComponentClean(uppy, key) {
-    if (uppy) {
+    if (uppy?._uris) {
         Object.keys(uppy._uris).map(itemKey => {
             if (key && key !== itemKey) return;
             const file = uppy._uris[itemKey];
