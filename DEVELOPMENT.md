@@ -347,6 +347,30 @@ CommonJS DOM checks cover gestures, date/range selection and bridge correlation;
 upload path/descriptor checks use a simulated storage service. Real touch
 scrolling, Android WebView and authenticated uploads remain manual checks.
 
+### PostCSS plugin build toolchain
+
+Decision: use postcss-nested 8.0.1 with PostCSS 8 and Node.js 22.x for
+framework development/builds, selected by `.nvmrc`. Keep rollup-plugin-postcss
+4.0.2 and the existing CSS Modules/raw CSS configuration.
+
+Reason: remove the nesting plugin's legacy PostCSS 7 dependency while using
+the current release. postcss-nested 8 is ESM-only and supports Node.js 22,
+24 and 26+; the existing Rollup `.mjs` configuration imports it directly.
+
+Consequences: Node.js 20 is no longer supported for framework builds. The
+historical package `engines` declaration remains unchanged and is not a
+build-toolchain guarantee. Component APIs, CSS ownership and Android contracts
+are unchanged; Vite and SSR remain separate milestones.
+
+Rejected alternative: postcss-nested 7.0.2 to retain Node.js 20 builds.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks.
+
+Status: accepted; framework builds and comparison of all 102 source CSS files
+validated. Rules, rule order and CSS Module mappings are preserved; one comment
+moves without changing behavior. Both web consumer production builds validated
+on Node.js 22.23.3.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to
