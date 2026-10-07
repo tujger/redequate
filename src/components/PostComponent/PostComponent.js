@@ -87,6 +87,7 @@ const PostComponent = (props) => {
         {!onlyReplies && <PostCard key={random} {...inheritProps}/>}
         <RepliesTree
             {...inheritProps}
+            PostComponent={PostComponent}
             key={highlight}
             postId={postData.id}
         />

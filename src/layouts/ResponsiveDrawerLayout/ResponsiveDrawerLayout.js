@@ -1,4 +1,4 @@
-import ChevronLeft from "@material-ui/icons/ChevronLeft";
+import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import React from "react";
 import ReactDOM from "react-dom";
 import {useTranslation} from "react-i18next";

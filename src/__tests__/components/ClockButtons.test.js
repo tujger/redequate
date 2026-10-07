@@ -4,9 +4,9 @@ import {act, Simulate} from "react-dom/test-utils";
 import ClockButtons from "../../components/DateTimePicker/ClockButtons";
 import styles from "../../components/DateTimePicker/styles/ClockButtons.module.css";
 
-jest.mock("@material-ui/icons/Restore", () => () => <span data-testid="start-icon"/>, {virtual: true});
-jest.mock("@material-ui/icons/Schedule", () => () => <span data-testid="time-icon"/>, {virtual: true});
-jest.mock("@material-ui/icons/Update", () => () => <span data-testid="end-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/Restore", () => () => <span data-testid="start-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/Schedule", () => () => <span data-testid="time-icon"/>, {virtual: true});
+jest.mock("@mui/icons-material/Update", () => () => <span data-testid="end-icon"/>, {virtual: true});
 jest.mock("react-i18next", () => ({useTranslation: () => ({t: key => key})}), {virtual: true});
 
 const time = value => ({

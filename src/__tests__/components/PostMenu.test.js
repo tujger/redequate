@@ -3,9 +3,9 @@ import {render, unmountComponentAtNode} from "react-dom";
 import {act} from "react-dom/test-utils";
 import PostMenu from "../../components/PostComponent/PostMenu";
 
-jest.mock("@material-ui/icons/MoreVert", () => () => null, {virtual: true});
-jest.mock("@material-ui/icons/ArrowDropDown", () => () => null, {virtual: true});
-jest.mock("@material-ui/icons/ArrowDropUp", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/MoreVert", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ArrowDropDown", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ArrowDropUp", () => () => null, {virtual: true});
 jest.mock("../../controllers/UserData", () => ({
     Role: {ADMIN: "admin"},
     matchRole: () => false,

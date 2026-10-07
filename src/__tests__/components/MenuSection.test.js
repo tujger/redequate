@@ -6,7 +6,7 @@ import menuStyles from "../../controls/Menu/Menu.module.css";
 
 const mockPush = jest.fn();
 
-jest.mock("@material-ui/icons/ArrowRight", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ArrowRight", () => () => null, {virtual: true});
 jest.mock("react-router-dom", () => {
     const React = require("react");
     return {

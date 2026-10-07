@@ -1,4 +1,4 @@
-import BackIcon from "@material-ui/icons/ChevronLeft";
+import BackIcon from "@mui/icons-material/ChevronLeft";
 import React from "react";
 import {Link, useHistory, useLocation} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";

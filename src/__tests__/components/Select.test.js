@@ -3,11 +3,11 @@ import {render, unmountComponentAtNode} from "react-dom";
 import {act, Simulate} from "react-dom/test-utils";
 import Select from "../../controls/Select/Select";
 
-jest.mock("@material-ui/icons/ArrowDropDown", () => {
+jest.mock("@mui/icons-material/ArrowDropDown", () => {
     const React = require("react");
     return props => React.createElement("svg", props);
 }, {virtual: true});
-jest.mock("@material-ui/icons/ArrowDropUp", () => {
+jest.mock("@mui/icons-material/ArrowDropUp", () => {
     const React = require("react");
     return props => React.createElement("svg", props);
 }, {virtual: true});

@@ -11,7 +11,7 @@ const json = require('@rollup/plugin-json')
 
 const pkg = require('./package.json');
 
-const externalExports = ['react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css'];
+const externalExports = ['react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/];
 
 const postCssModules = {
     include: '**/*.module.css',
@@ -40,18 +40,19 @@ const babelIosPwaPrompt = {
 
 module.exports = [
     {
-        inlineDynamicImports: true,
         input: 'src/index.js',
         external: externalExports,
         output: [
             {
                 file: pkg.main,
                 format: 'cjs',
+                inlineDynamicImports: true,
                 sourcemap: true,
             },
             {
                 file: pkg.module,
                 format: 'es',
+                inlineDynamicImports: true,
                 sourcemap: true
             }
         ],
@@ -64,7 +65,7 @@ module.exports = [
             babel({
                 include: '**/src/**',
             }),
-            svgr(),
+            svgr({prettierConfig: {parser: 'babel'}}),
             resolve(),
             babel(babelIosPwaPrompt),
             commonjs(),

@@ -1,7 +1,7 @@
-import EndDateIcon from "@material-ui/icons/Event";
-import RefreshIcon from "@material-ui/icons/Refresh";
-import SortIcon from "@material-ui/icons/Sort";
-import StartDateIcon from "@material-ui/icons/Today";
+import EndDateIcon from "@mui/icons-material/Event";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import SortIcon from "@mui/icons-material/Sort";
+import StartDateIcon from "@mui/icons-material/Today";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import AvatarView from "../../../components/AvatarView";
@@ -23,7 +23,7 @@ import baseStyles from "../../../themes/Base.module.css";
 import ActivityItemComponent from "./ActivityItemComponent";
 import {auditReducer} from "./auditReducer";
 import activityStyles from "./styles/Activity.module.css";
-import ClearIcon from "@material-ui/icons/Clear";
+import ClearIcon from "@mui/icons-material/Clear";
 
 const Activity = props => {
     const {

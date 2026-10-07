@@ -1,5 +1,5 @@
-import DislikeFilledIcon from "@material-ui/icons/ThumbDown";
-import DislikeEmptyIcon from "@material-ui/icons/ThumbDownOutlined";
+import DislikeFilledIcon from "@mui/icons-material/ThumbDown";
+import DislikeEmptyIcon from "@mui/icons-material/ThumbDownOutlined";
 import React from "react";
 import {useHistory} from "react-router-dom";
 import {delay, usePages} from "../../controllers/General";

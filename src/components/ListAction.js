@@ -1,5 +1,5 @@
 import React from "react";
-import DeleteIcon from "@material-ui/icons/Delete";
+import DeleteIcon from "@mui/icons-material/Delete";
 import Button from "../controls/Button/Button";
 import styles from "./styles/ListAction.module.css";
 

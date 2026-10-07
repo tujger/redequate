@@ -1,4 +1,4 @@
-import ArrowRightIcon from "@material-ui/icons/ArrowRight";
+import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import React from "react";
 import {Link, useHistory} from "react-router-dom";
 import {matchRole, useCurrentUserData} from "../../controllers/UserData";

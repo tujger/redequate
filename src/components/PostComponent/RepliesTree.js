@@ -8,14 +8,14 @@ import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
-import PostComponent from "./PostComponent";
 import postItemTransform from "./postItemTransform";
 import RotatingReplies from "./RotatingReplies";
 import cardStyles from "./styles/PostComponent.module.css";
 import replyStyles from "./styles/PostReplies.module.css";
 
 export default (props) => {
-    const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = props;
+    const {PostComponent, ...replyProps} = props;
+    const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = replyProps;
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
@@ -118,7 +118,7 @@ export default (props) => {
         return <div className={replyStyles.replyRow}>
             <div className={replyStyles.replyIndent}/>
             <div className={cardStyles.replyContent}>
-                <RotatingReplies {...props} items={replies}/>
+                <RotatingReplies {...replyProps} items={replies}/>
             </div>
         </div>
     }
@@ -174,7 +174,7 @@ export default (props) => {
                         type,
                     })}
                     itemComponent={item => <PostComponent
-                        {...props}
+                        {...replyProps}
                         collapsible={false}
                         disableClick
                         isReply={true}

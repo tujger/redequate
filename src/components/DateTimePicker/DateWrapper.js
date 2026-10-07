@@ -1,5 +1,5 @@
-import LeftIcon from "@material-ui/icons/ChevronLeft";
-import RightIcon from "@material-ui/icons/ChevronRight";
+import LeftIcon from "@mui/icons-material/ChevronLeft";
+import RightIcon from "@mui/icons-material/ChevronRight";
 import moment from "moment";
 import React from "react";
 import DatePicker from "react-datepicker";

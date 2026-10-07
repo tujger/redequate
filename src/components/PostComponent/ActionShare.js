@@ -1,4 +1,4 @@
-import ShareIcon from "@material-ui/icons/Share";
+import ShareIcon from "@mui/icons-material/Share";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";

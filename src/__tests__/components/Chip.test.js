@@ -3,7 +3,7 @@ import {render, unmountComponentAtNode} from "react-dom";
 import {act} from "react-dom/test-utils";
 import Chip from "../../controls/Chip/Chip";
 
-jest.mock("@material-ui/icons/Cancel", () => {
+jest.mock("@mui/icons-material/Cancel", () => {
     const React = require("react");
     return props => React.createElement("svg", props);
 }, {virtual: true});

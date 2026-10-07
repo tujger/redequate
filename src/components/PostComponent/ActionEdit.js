@@ -1,4 +1,4 @@
-import EditIcon from "@material-ui/icons/Edit";
+import EditIcon from "@mui/icons-material/Edit";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo, useWindowData} from "../../controllers/General";

@@ -1,5 +1,5 @@
-import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
-import ArrowDropUpIcon from "@material-ui/icons/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import React from "react";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import buttonStyles from "../Button/Button.module.css";
@@ -7,7 +7,7 @@ import Menu from "../Menu/Menu";
 import styles from "./Select.module.css";
 import SelectDivider from "./SelectDivider";
 import SelectItem from "./SelectItem";
-import MenuIcon from "@material-ui/icons/MoreVert";
+import MenuIcon from "@mui/icons-material/MoreVert";
 
 let nextMenuId = 0;
 

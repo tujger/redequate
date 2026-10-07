@@ -1,6 +1,6 @@
 import React from "react";
 import actionStyles from "./styles/PostActions.module.css";
-import ClearIcon from "@material-ui/icons/Clear";
+import ClearIcon from "@mui/icons-material/Clear";
 import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
 import notifySnackbar from "../../controllers/notifySnackbar";

@@ -7,7 +7,7 @@ import menuStyles from "../../controls/Menu/Menu.module.css";
 import styles from "../../components/styles/PlacesTextField.module.css";
 
 jest.mock("../../controllers/General", () => ({useMetaInfo: jest.fn()}));
-jest.mock("@material-ui/icons/Clear", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/Clear", () => () => null, {virtual: true});
 jest.mock("react-i18next", () => ({
     useTranslation: () => ({t: value => value}),
 }), {virtual: true});

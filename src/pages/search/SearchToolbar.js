@@ -1,4 +1,4 @@
-import BackIcon from "@material-ui/icons/ArrowBack";
+import BackIcon from "@mui/icons-material/ArrowBack";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useHistory} from "react-router-dom";

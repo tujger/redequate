@@ -1,4 +1,4 @@
-import BackIcon from "@material-ui/icons/ArrowBack";
+import BackIcon from "@mui/icons-material/ArrowBack";
 import React from "react";
 import ModalComponent from "../../components/ModalComponent";
 import Button from "../../controls/Button/Button";

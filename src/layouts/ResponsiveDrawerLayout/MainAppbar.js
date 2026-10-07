@@ -1,4 +1,4 @@
-import Menu from "@material-ui/icons/Menu";
+import Menu from "@mui/icons-material/Menu";
 import React from "react";
 import {connect} from "react-redux";
 import {Link, Route, Switch} from "react-router-dom";

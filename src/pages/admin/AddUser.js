@@ -1,4 +1,4 @@
-import MailIcon from "@material-ui/icons/Mail";
+import MailIcon from "@mui/icons-material/Mail";
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";

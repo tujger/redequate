@@ -1,4 +1,4 @@
-import UserIcon from "@material-ui/icons/Mail";
+import UserIcon from "@mui/icons-material/Mail";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import FacebookLogo from "../images/facebook-logo.svg";

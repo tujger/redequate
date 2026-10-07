@@ -1,4 +1,4 @@
-import CancelIcon from "@material-ui/icons/Cancel";
+import CancelIcon from "@mui/icons-material/Cancel";
 import React from "react";
 import Button from "../Button/Button";
 import styles from "./Chip.module.css";

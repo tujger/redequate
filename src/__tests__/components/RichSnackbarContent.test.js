@@ -4,9 +4,9 @@ import {act, Simulate} from "react-dom/test-utils";
 import RichSnackbarContent from "../../components/RichSnackbarContent";
 import styles from "../../components/styles/RichSnackbarContent.module.css";
 
-jest.mock("@material-ui/icons/Close", () => () => null, {virtual: true});
-jest.mock("@material-ui/icons/ExpandMore", () => () => null, {virtual: true});
-jest.mock("@material-ui/icons/ExpandLess", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/Close", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ExpandMore", () => () => null, {virtual: true});
+jest.mock("@mui/icons-material/ExpandLess", () => () => null, {virtual: true});
 
 describe("RichSnackbarContent", () => {
     let container;

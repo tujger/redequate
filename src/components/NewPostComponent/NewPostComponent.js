@@ -1,5 +1,5 @@
-import ImageAddIcon from "@material-ui/icons/AddPhotoAlternate";
-import ImageIcon from "@material-ui/icons/InsertPhoto";
+import ImageAddIcon from "@mui/icons-material/AddPhotoAlternate";
+import ImageIcon from "@mui/icons-material/InsertPhoto";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
