@@ -19,14 +19,14 @@
     "scripts": {
         "test core": "cross-env CI=1 NODE_OPTIONS=--openssl-legacy-provider react-scripts test --env=jsdom",
         "test:watch core": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts test --env=jsdom",
-        "build core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c",
-        "core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c -w",
-        "start core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c -w",
+        "build core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs",
+        "core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs -w",
+        "start core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs -w",
         "prepare core": "npm run build core",
         "predeploy core": "cd example && npm install && npm run build",
         "deploy core": "gh-pages -d example/build",
         "relink": "npm install --install-links=false --legacy-peer-deps && sh ./link-redequate-react.sh \"${REDEQUATE_PROJECT:-../thewhiskytalks}\"",
-        "build and publish": "npm version patch --no-git-tag-version&&rollup -c && npm publish --registry=https://registry.npmjs.org/ --access public"
+        "build and publish": "npm version patch --no-git-tag-version&&rollup -c rollup.config.mjs && npm publish --registry=https://registry.npmjs.org/ --access public"
     },
     "dependencies": {
         "@mui/icons-material": "^9.4.0",
@@ -96,7 +96,7 @@
         "@rollup/plugin-url": "^8.0.2",
         "@svgr/rollup": "^8.1.0",
         "babel-eslint": "^10.1.0",
-        "babel-preset-react-app": "^9.1.2",
+        "babel-preset-react-app": "^10.1.0",
         "babel-runtime": "^6.26.0",
         "cross-env": "^7.0.2",
         "eslint": "^6.8.0",

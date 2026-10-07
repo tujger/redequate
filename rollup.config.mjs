@@ -1,14 +1,16 @@
-const {babel} = require('@rollup/plugin-babel')
-const commonjs = require('@rollup/plugin-commonjs')
-const external = require('rollup-plugin-peer-deps-external')
-const postcss = require('rollup-plugin-postcss')
-const postcssNested = require('postcss-nested')
-const {nodeResolve: resolve} = require('@rollup/plugin-node-resolve')
-const url = require('@rollup/plugin-url')
-const svgr = require('@svgr/rollup')
-const json = require('@rollup/plugin-json')
+import {readFileSync} from 'node:fs'
+import {babel} from '@rollup/plugin-babel'
+import commonjs from '@rollup/plugin-commonjs'
+import external from 'rollup-plugin-peer-deps-external'
+import postcss from 'rollup-plugin-postcss'
+import postcssNested from 'postcss-nested'
+import {nodeResolve as resolve} from '@rollup/plugin-node-resolve'
+import url from '@rollup/plugin-url'
+import svgr from '@svgr/rollup'
+import json from '@rollup/plugin-json'
+import del from 'rollup-plugin-delete'
 
-const pkg = require('./package.json');
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
 const externalExports = ['react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/];
 
@@ -38,9 +40,7 @@ const babelIosPwaPrompt = {
     ],
 }
 
-module.exports = async () => {
-    const {default: del} = await import('rollup-plugin-delete')
-
+export default () => {
     return [
         {
             input: 'src/index.js',
