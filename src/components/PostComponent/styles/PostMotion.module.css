@@ -4,6 +4,7 @@
 .rotatingRoot {
     display: flex;
     flex-direction: column;
+    flex-wrap: nowrap;
     height: calc(var(--theme-spacing) * 4);
     overflow: hidden;
 }
