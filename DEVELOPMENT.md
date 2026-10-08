@@ -458,3 +458,36 @@ survive the current development session.
 Remove or convert them into architectural decisions when they are resolved.
 
 Currently no persistent blocker is recorded.
+
+### Firebase 13 compatibility migration
+
+Decision: use Firebase 13.0.0 through `firebase/compat/*` in Redequate and both
+web consumers. Keep firebase-key 2.0.2, the current stable version, and require
+Node.js 24.12+ for the updated dependency stack.
+
+Reason: update the SDK while preserving the namespaced Firebase API exposed
+through Firebase, firebaseMessaging and useFirebase. A full modular API migration
+would also change application call sites and is deferred.
+
+Consequences: consumer Firebase messaging workers load version-matched compat
+scripts from the Google CDN and retain Firebase Hosting's `/__/firebase/init.js`.
+Check `messaging.isSupported()` before creating Messaging for notification
+subscription and deletion so unsupported Android WebViews retain the native
+bridge fallback. Find the messaging worker through public service worker
+registrations by script URL: its default scope differs from its script path,
+and the SDK's former `swRegistration` property is not a public compat API.
+Keep existing FCM token registration/deletion despite SDK deprecation; adopting
+installation ID-based messaging would require a separate backend/data migration.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Firebase database paths,
+stored notification tokens, callable Functions and Android bridge contracts are
+unchanged. Backend packages, Firebase CLI, Vite and SSR remain separate work.
+
+Status: accepted; framework CommonJS/ESM and both web production builds passed
+on Node.js 24.19.0. Local checks validated the built Firebase API, pagination keys,
+notification permission handling, Android subscription fallback, worker update
+branches, and real CDN/Hosting worker initialization. Authenticated sign-in,
+database operations, uploads, callable execution, real FCM delivery/token deletion
+and Android WebView checks remain manual validation tasks. The production custom
+domain was unavailable through session DNS; Hosting initialization was validated
+through the application's firebaseapp.com domain.

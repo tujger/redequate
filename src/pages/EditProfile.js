@@ -311,7 +311,14 @@ function EditProfile(props) {
         } else {
             userData.private[fetchDeviceId()].notification = null;
             userData.savePrivate()
-                .then(() => firebase.messaging().deleteToken())
+                .then(() => {
+                    if (!firebase.messaging.isSupported()) {
+                        throw Object.assign(new Error("This browser doesn't support Firebase Messaging"), {
+                            code: "messaging/unsupported-browser"
+                        });
+                    }
+                    return firebase.messaging().deleteToken();
+                })
                 .catch(error => {
                     if (error.code === "messaging/unsupported-browser" && hasWrapperControlInterface()) {
                         return wrapperControlCall({
