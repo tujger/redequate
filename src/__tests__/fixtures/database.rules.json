@@ -1,0 +1,19 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "roles": {
+      ".read": true
+    },
+    "users_public": {
+      ".read": "auth != null",
+      ".write": true
+    },
+    "users_private": {
+      "$user_id": {
+        ".read": "auth != null && auth.uid === $user_id",
+        ".write": "auth != null && auth.uid === $user_id"
+      }
+    }
+  }
+}
