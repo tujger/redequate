@@ -450,6 +450,61 @@ consumer production builds passed on Node.js 24.21.0. Consumer builds retain
 a dynamic dependency warning and emit a non-blocking fs.F_OK deprecation warning.
 The local Node.js installation and consumer package metadata were not changed.
 
+### The Whisky Talks Vite migration
+
+Decision: migrate only The Whisky Talks from CRA 5 to Vite 8 with the React
+plugin, keeping Redequate's Rollup packaging and the demo's CRA build unchanged.
+The user explicitly authorized this separate build-system milestone while the
+earlier React 19 browser/device validation remains pending. SSR is deferred.
+
+Reason: isolate the production consumer's build migration and preserve its PWA
+and Firebase behavior. Use Node.js 24.12+, the framework ESM entry and Vite
+deduplication of framework peers from the application root. Local library peers
+need not all be installed in the framework's node_modules; resolving from there
+alone fails for react-router-dom. Vitest uses the same ESM entry for the existing
+smoke test instead of Node's CommonJS entry.
+
+Consequences: preserve the build directory and hosting/deploy commands, root
+URLs, manifest and Firebase messaging worker. Build the existing classic PWA
+worker through injectManifest without plugin registration; Redequate owns the
+update prompt and SKIP_WAITING. Define only PUBLIC_URL and REACT_APP_VERSION for
+legacy framework code; the application package version is the source of truth.
+Keep the accepted MUI browser minimums through explicit Vite build targets.
+
+Rejected alternatives: generated replacement workers, automatic activation of
+updates and a simultaneous framework/demo/SSR migration.
+
+Affected consumers: thewhiskytalks. Framework public APIs, Firebase data and
+Android bridge contracts are unchanged. edeqa-pwa-react-demo remains on CRA.
+
+Status: implemented on story/migrate-to-vite; library/app builds, existing
+Vitest smoke test, dev module graph, JSX/library HMR, HTTPS and preview validated
+on Node.js 24.21.0. A simulated worker scope validates all 64 precache resources,
+offline navigation, Firebase route exclusion, SKIP_WAITING and share target.
+Real installed CRA-to-Vite updates, PWA installation, authenticated Firebase,
+FCM, visual/mobile behavior and Android WebView still require manual checks;
+no browser is connected to this session. No deployment performed.
+
+### JSX source files retain the .js extension
+
+Decision: keep React source files, including files containing JSX, as `.js` in
+The Whisky Talks and the demo. The Whisky Talks' Vite configuration transforms
+application `src/**/*.js` through Oxc with JSX enabled before normal React
+processing, and enables JSX parsing for `.js` during dependency optimization.
+
+Reason: retain the preferred source naming convention without reverting Vite.
+
+Consequences: preserve React Fast Refresh and sourcemaps. The demo already uses
+`.js` with CRA and requires no changes. Framework APIs, application behavior and
+Android contracts are unchanged.
+
+Affected consumers: thewhiskytalks, edeqa-pwa-react-demo.
+
+Status: implemented; both production builds and the existing app smoke test
+passed. Vite loaded 37 application modules and emitted an App.js HMR update
+through WebSocket; Fast Refresh instrumentation was verified. Browser rendering
+and component state preservation were not checked.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to
@@ -491,3 +546,25 @@ database operations, uploads, callable execution, real FCM delivery/token deleti
 and Android WebView checks remain manual validation tasks. The production custom
 domain was unavailable through session DNS; Hosting initialization was validated
 through the application's firebaseapp.com domain.
+
+### Browser-safe ESM entry and Vite LAN HMR
+
+Decision: import package metadata through ESM in the framework entry; explicitly
+allow `tujgermac.lan` in The Whisky Talks' Vite development server configuration.
+
+Reason: Rollup leaves the entry's mixed ESM/CommonJS package JSON `require` in
+the ESM output, causing a browser runtime error. Vite's WebSocket handler checks
+allowed hosts even under HTTPS, rejecting the LAN hostname while localhost works.
+
+Consequences: keep both library formats browser-compatible through the existing
+JSON plugin and retain the public version export. Allow only the required LAN
+hostname; no forced WebSocket host or protocol is needed.
+
+Affected consumers: thewhiskytalks, edeqa-pwa-react-demo. Public APIs, Firebase
+data and Android bridge contracts are unchanged.
+
+Status: implemented; framework and both consumer production builds passed on
+Node.js 24.21.0. LAN/localhost authenticated WebSocket handshakes and LAN HTTPS
+application HMR passed; Widgets and framework dev modules load successfully.
+Browser rendering and certificate trust remain unverified because no browser
+is connected; local HTTPS checks bypassed certificate verification.

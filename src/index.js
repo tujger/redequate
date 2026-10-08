@@ -14,6 +14,6 @@ export * from "./components/MutualComponent";
 export {default as Dispatcher} from "./Dispatcher";
 export {WebWorker} from "./workers/WebWorker";
 
-const packagejson = require("../package.json");
+import packagejson from "../package.json";
 
 export const version = packagejson.version;
