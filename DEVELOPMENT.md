@@ -505,6 +505,29 @@ passed. Vite loaded 37 application modules and emitted an App.js HMR update
 through WebSocket; Fast Refresh instrumentation was verified. Browser rendering
 and component state preservation were not checked.
 
+### Restore web profiles from Firebase Auth
+
+Decision: wait for Firebase Auth's initial state before restoring the current
+profile. Firebase's UID determines the user; the Redux profile cache is reusable
+only for the same UID. Load public data, role and device-private data before
+publishing the profile, including when the Redux cache is missing.
+
+Reason: startup previously relied solely on the Redux cache and discarded it on
+profile-read errors without waiting for Auth restoration. The later Auth watcher
+does not recover a missing current profile.
+
+Consequences: an absent Firebase session clears the profile. Auth/profile-read
+errors show a startup error with a reload action while retaining the session and
+stored cache; cached roles alone cannot open protected pages. Existing first-login
+actions, storage formats, Firebase persistence and Android bridge APIs stay intact.
+
+Affected consumers: thewhiskytalks, edeqa-pwa-react-demo. Android WebView shares
+the web initialization change; native authentication contracts are unchanged.
+
+Status: implemented; framework CommonJS/ESM and both web consumer production
+builds passed on Node.js 24.21.0. Real authenticated reload, missing-cache
+recovery and Android WebView checks remain manual because no browser is connected.
+
 ## Active issues and constraints
 
 Add entries here only for architectural blockers or constraints that need to

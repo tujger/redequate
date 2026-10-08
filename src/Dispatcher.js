@@ -8,6 +8,7 @@ import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
+import Button from "./controls/Button/Button";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
@@ -101,6 +102,19 @@ export default (props) => {
         const initStore = async props => {
             return {...props, store: Store(title, reducers)};
         }
+        const restoreFirebaseAuth = async props => {
+            try {
+                const authUser = await new Promise((resolve, reject) => {
+                    unlisten = props.firebase.auth().onAuthStateChanged(resolve, reject);
+                });
+                return {...props, authUser};
+            } catch (error) {
+                throw {...props, fatal: error};
+            } finally {
+                unlisten && unlisten();
+                unlisten = null;
+            }
+        }
         const initWindowData = async props => {
             const windowData = {
                 get breakpoint() {
@@ -143,20 +157,22 @@ export default (props) => {
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
-            const {deviceId, store, firebase} = props;
-            const savedUserData = store.getState().currentUserData;
-            if (savedUserData && savedUserData.userData) {
-                const userData = new UserData(firebase).fromJSON(savedUserData.userData);
-                return userData.fetch([UserData.ROLE])
-                    .then(() => userData.fetchPrivate(deviceId, true))
-                    .then(() => ({...props, userData}))
-                    .catch(error => {
-                        console.error(error);
-                        store.dispatch({type: "currentUserData", userData: null});
-                        return props;
-                    })
+            const {authUser, deviceId, store} = props;
+            if (!authUser) {
+                store.dispatch({type: "currentUserData", userData: null});
+                return props;
             }
-            return props;
+            try {
+                const savedUserData = store.getState().currentUserData?.userData;
+                const userData = savedUserData?.id === authUser.uid
+                    ? new UserData().fromJSON(savedUserData)
+                    : new UserData().fromFirebaseAuth(authUser.toJSON());
+                await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
+                await userData.fetchPrivate(deviceId, true);
+                return {...props, userData};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
         }
         const fetchCurrentUserLastVisit = async props => {
             const {store, userData} = props;
@@ -293,6 +309,7 @@ export default (props) => {
             .then(clearOneTapCookie)
             .then(initFirebase)
             .then(initStore)
+            .then(restoreFirebaseAuth)
             .then(initWindowData)
             .then(initTextTranslation)
             .then(fetchDeviceId_)
@@ -320,6 +337,8 @@ export default (props) => {
         // eslint-disable-next-line
     }, []);
 
+    if (state.fatal) return <DispatcherInitializationError error={state.fatal} theme={props.theme}/>;
+
     if (!firebase) return <LoadingComponent/>;
 
     return <DispatcherInitialized
@@ -329,9 +348,17 @@ export default (props) => {
     />
 }
 
+const DispatcherInitializationError = ({error, theme}) => {
+    const {t} = useTranslation();
+    return <>
+        {theme}
+        <SystemAlert message={error.message}/>
+        <Button onClick={() => window.location.reload()}>{t("Refresh")}</Button>
+    </>;
+}
+
 const DispatcherInitialized = (props) => {
     const {
-        fatal,
         buildPages,
         copyright,
         firebase,
@@ -352,13 +379,6 @@ const DispatcherInitialized = (props) => {
     useWindowData(windowData);
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
-
-    if (fatal) {
-        return <>
-            {theme}
-            <SystemAlert message={fatal.message}/>
-        </>;
-    }
 
     return <Provider store={store}>
         <>
