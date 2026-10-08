@@ -535,7 +535,38 @@ survive the current development session.
 
 Remove or convert them into architectural decisions when they are resolved.
 
-Currently no persistent blocker is recorded.
+### Callable named snackbar export
+
+Browser validation in The Whisky Talks confirmed that the Widgets snackbar
+buttons throw `TypeError: notifySnackbar is not a function`. The public controller
+entry used `export * as notifySnackbar`, exposing a module namespace while the
+consumer expects a callable named export. Export the controller's default function
+as the named `notifySnackbar`; keep direct default imports unchanged.
+
+Affected consumers: `thewhiskytalks`, `edeqa-pwa-react-demo` and framework
+named-import call sites. Android and stored-data contracts are unchanged.
+This finding does not establish that React 19 caused the issue.
+
+Status: fixed; framework and both web production builds passed. The Whisky Talks
+browser checks confirmed normal, warning and error snackbars. Full React 19
+validation remains separate from these targeted fixes.
+
+### Google One Tap uses FedCM-compatible lifecycle
+
+Decision: remove reliance on display-moment callbacks, initialize One Tap on each
+active mount, share script loading, and cancel prompts and timers on unmount.
+Skipped moments can continue to the join invitation; dismissed moments stop it.
+Disabled or unconfigured One Tap no longer leaves the invitation chain pending.
+
+Reason: Google no longer supports `isNotDisplayed()` with FedCM. React lifecycle
+cleanup must prevent late script callbacks from prompting after unmount.
+
+Affected consumers: both web applications; token login and Android contracts
+are unchanged. Browser-owned prompt cancellation can still log an AbortError;
+do not suppress SDK errors to claim a successful authentication check.
+
+Status: implemented and builds validated; real One Tap credential exchange
+remains unverified in this session.
 
 ### Firebase 13 compatibility migration
 

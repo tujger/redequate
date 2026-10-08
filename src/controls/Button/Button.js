@@ -7,6 +7,7 @@ const variants = ["contained", "outlined", "text"];
 export default React.forwardRef((props, ref) => {
     const {
         children,
+        "aria-label": ariaLabel,
         className,
         color = undefined,
         disabled = false,
@@ -42,7 +43,7 @@ export default React.forwardRef((props, ref) => {
     return <div
         {...otherProps}
         aria-disabled={disabled || undefined}
-        aria-label={title}
+        aria-label={ariaLabel ?? title}
         className={[
             styles.button,
             styles[currentVariant],

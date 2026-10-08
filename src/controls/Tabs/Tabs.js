@@ -108,7 +108,7 @@ export default ({className, children = undefined, items = [], onChange, value}) 
                 role={"tab"}
                 size={"small"}
                 tabIndex={index === selectedIndex ? 0 : -1}
-                title={item.label}
+                title={typeof item.label === "string" ? item.label : undefined}
                 variant={"text"}
             >
                 {item.icon

@@ -22,17 +22,16 @@ const MenuSection = ({items}) => {
     const [first, ...menu] = items;
     const currentUserData = useCurrentUserData();
 
-    if (!first || !matchRole(first.roles, currentUserData)) return null;
+    if (!first || first.disabled || !matchRole(first.roles, currentUserData)) return null;
 
     return <div className={styles.section}>
         <div className={styles.heading}>{first.label}</div>
         <div className={styles.list}>
             {menu.map((item, index) => {
                 if (Array.isArray(item)) {
-                    console.error("BottomMenu doesn't support hierarchy yet");
-                    return null;
+                    return <MenuSection items={item} key={index}/>;
                 }
-                if (!matchRole(item.roles, currentUserData) || item.disabled) return null;
+                if (!item || !matchRole(item.roles, currentUserData) || item.disabled) return null;
 
                 if (item.component) return <MenuLink item={item} key={index}/>;
 
