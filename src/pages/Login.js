@@ -1,29 +1,22 @@
-import React from "react";
-import {
-    logoutUser,
-    Role,
-    sendVerificationEmail,
-    useCurrentUserData,
-    UserData
-} from "../controllers/UserData";
-import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import Lock from "@mui/icons-material/Lock";
 import UserIcon from "@mui/icons-material/Mail";
-import PropTypes from "prop-types";
-import {useDispatch} from "react-redux";
+import React from "react";
 import {useTranslation} from "react-i18next";
+import {useDispatch} from "react-redux";
+import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
+import ConfirmComponent from "../components/ConfirmComponent";
+import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import GoogleLogo from "../images/google-logo.svg";
-import FacebookLogo from "../images/facebook-logo.svg";
-import {setupReceivingNotifications} from "../controllers/Notifications";
 import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
-import {refreshAll} from "../controllers/Store";
-import ConfirmComponent from "../components/ConfirmComponent";
+import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
-import LoadingComponent from "../components/LoadingComponent";
+import {refreshAll} from "../controllers/Store";
+import {logoutUser, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
+import FacebookLogo from "../images/facebook-logo.svg";
+import GoogleLogo from "../images/google-logo.svg";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Login.module.css";
 
@@ -261,8 +254,15 @@ function Login(props) {
         const updatePrivateData = async props => {
             const {userData, deviceId} = props;
             const deviceData = await import("react-device-detect")
-                .then(({browserName, deviceType, osName, osVersion}) => ({browserName, deviceType, osName, osVersion, agreement: true}))
-                .catch(() => {});
+                .then(({browserName, deviceType, osName, osVersion}) => ({
+                    browserName,
+                    deviceType,
+                    osName,
+                    osVersion,
+                    agreement: true
+                }))
+                .catch(() => {
+                });
             await userData.setPrivate(deviceId, deviceData);
             return props;
         }
@@ -549,30 +549,5 @@ const LoginLayout = (
         </ConfirmComponent>}
     </div>
 }
-
-Login.propTypes = {
-    agreementComponent: PropTypes.element,
-    layout: PropTypes.objectOf(LoginLayout),
-    logo: PropTypes.any,
-    onLogin: PropTypes.func,
-    popup: PropTypes.bool,
-    signup: PropTypes.bool,
-    transformUserDataOnFirstLogin: PropTypes.func,
-};
-
-LoginLayout.propTypes = {
-    agreementComponent: PropTypes.element,
-    disabled: PropTypes.bool,
-    email: PropTypes.string,
-    logo: PropTypes.any,
-    onAgree: PropTypes.func,
-    onChangeEmail: PropTypes.func,
-    onChangePassword: PropTypes.func,
-    onDecline: PropTypes.func,
-    onRequestGoogle: PropTypes.func,
-    onRequestLogin: PropTypes.func,
-    password: PropTypes.any,
-    signup: PropTypes.bool
-};
 
 export default withRouter(Login);

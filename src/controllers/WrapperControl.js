@@ -1,4 +1,4 @@
-import Uuid from "react-uuid";
+import {v4 as Uuid} from "uuid";
 import {forceFirebaseReinit} from "./Firebase";
 
 const callQueue = {};

@@ -1,16 +1,19 @@
 import * as serviceWorker from "../serviceWorker";
-import {firebaseMessaging} from "./Firebase";
 import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 import notifySnackbar from "./notifySnackbar";
 import notifyConfirm from "./notifyConfirm";
 import {cacheDatas} from "./General";
 
-const activateUpdate = registration => {
+const activateUpdate = async registration => {
     try {
         registration.waiting.postMessage({type: "SKIP_WAITING"});
-        if (firebaseMessaging.messaging && firebaseMessaging.messaging().swRegistration) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        const messagingScriptURL = new URL("/firebase-messaging-sw.js", window.location.href).href;
+        const messagingRegistration = registrations.find(item =>
+            [item.active, item.waiting, item.installing].some(worker => worker && worker.scriptURL === messagingScriptURL));
+        if (messagingRegistration) {
             console.log("[SWC] activate update");
-            firebaseMessaging.messaging().swRegistration.update().then(() => {
+            messagingRegistration.update().then(() => {
                 console.log("[SWC] update finished, reloading");
                 window.location.reload();
             }).catch(error => {

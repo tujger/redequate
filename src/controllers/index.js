@@ -6,7 +6,7 @@ export * from "./General";
 export * from "./DateFormat";
 export {default as Pagination} from "./FirebasePagination";
 export {default as PagesPagination} from "./PagesPagination";
-export * from "./Store";
+export * as Store from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
 export {default as ThemeSeason} from "../themes/ThemeSeason";
 export {default as ThemeDayNight} from "../themes/ThemeDayNight";
@@ -23,8 +23,8 @@ export {
     useCurrentUserData,
     normalizeSortName,
 } from "./UserData";
-export * from "./notifySnackbar";
-export * from "./notifyConfirm";
+export * as notifySnackbar from "./notifySnackbar";
+export * as notifyConfirm from "./notifyConfirm";
 export {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
 export {default as useScrollPosition, getScrollPosition} from "../helpers/useScrollPosition";
 export {useTextTranslation} from "./textTranslation";

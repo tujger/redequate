@@ -1,9 +1,8 @@
 import "./themes/Base.module.css";
-import i18n from "i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
+import {DeviceUUID} from "device-uuid";
 import {SnackbarProvider} from "notistack";
 import React from "react";
-import {initReactI18next, useTranslation} from "react-i18next";
+import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
@@ -27,13 +26,10 @@ import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
+import initInternationalization from "./helpers/initInternationalization";
 import useBreakpoint from "./helpers/useBreakpoint";
 import {getScrollPosition} from "./helpers/useScrollPosition";
-import localeEn from "./locales/en-EN.json";
-import localeRu from "./locales/ru-RU.json";
 import {restoreLanguage} from "./reducers/languageReducer";
-
-const DeviceUUID = require("device-uuid");
 
 const BottomToolbarLayout = React.lazy(() => import("./layouts/BottomToolbarLayout/BottomToolbarLayout"));
 const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDrawerLayout/ResponsiveDrawerLayout"));
@@ -94,33 +90,6 @@ export default (props) => {
 
     React.useEffect(() => {
         let maintenanceRef, metaRef, unlisten;
-        const initInternationalization = async () => {
-            const defaultResources = {
-                en: localeEn,
-                ru: localeRu,
-            };
-            let fallbackLng;
-            const resources = {};
-            const overrideWithResources = locales || defaultResources;
-            for (const r in overrideWithResources) {
-                fallbackLng = fallbackLng || r;
-                resources[r] = {translation: {...(defaultResources[r] || {}), ...overrideWithResources[r]}};
-            }
-            return i18n.use(LanguageDetector).use(initReactI18next)
-                .init({
-                    debug: false,
-                    detection: {
-                        lookupLocalStorage: title + "_i18n"
-                    },
-                    fallbackLng,
-                    keySeparator: false,
-                    parseMissingKeyHandler: (value) => {
-                        return value.replace(/^\w+\./, "");
-                    },
-                    resources,
-                    saveMissing: false,
-                }).then(() => ({i18n, t: i18n.getFixedT()}));
-        }
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
@@ -152,7 +121,7 @@ export default (props) => {
         const checkIfCompatible = async props => {
             const {t} = props;
             try {
-                const deviceUUID = new DeviceUUID.DeviceUUID();
+                const deviceUUID = new DeviceUUID();
                 const deviceMeta = deviceUUID.parse();
                 const browser = deviceMeta.browser.toLowerCase();
                 const version = parseInt(deviceMeta.version);
@@ -320,7 +289,7 @@ export default (props) => {
             return props
         }
 
-        initInternationalization()
+        initInternationalization(title, locales)
             .then(clearOneTapCookie)
             .then(initFirebase)
             .then(initStore)
@@ -412,7 +381,6 @@ const DispatcherInitialized = (props) => {
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
 
 const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
-    // eslint-disable-next-line react/prop-types
     const {
         menu,
         width,

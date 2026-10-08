@@ -1,5 +1,5 @@
+import {useDrag} from "@use-gesture/react";
 import React from "react";
-import {useDrag} from "react-use-gesture";
 import {useWindowData} from "../controllers";
 import notifySnackbar from "../controllers/notifySnackbar";
 import styles from "./styles/ListSwipeableItemComponent.module.css";

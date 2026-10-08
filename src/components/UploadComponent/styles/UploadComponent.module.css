@@ -1,6 +1,10 @@
 .root {
     width: auto;
 
+    & :global(.uppy-Webcam-video) {
+        transform: scaleX(var(--upload-camera-mirror));
+    }
+
     & :global(.uppy-Dashboard--modal .uppy-DashboardTab-btn),
     & :global(.uppy-Dashboard--modal .uppy-Dashboard-close),
     & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back) {
@@ -47,7 +51,24 @@
 @media (min-width: 600px) {
     .root {
         & :global(.uppy-Dashboard--modal .uppy-Dashboard-close) {
-            display: none;
+            background-color: transparent;
+            border-radius: 50%;
+            box-sizing: content-box;
+            color: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            font: inherit;
+            font-size: calc(var(--theme-spacing) * 3);
+            height: calc(var(--theme-spacing) * 3);
+            justify-content: center;
+            min-height: calc(var(--theme-spacing) * 3);
+            min-width: calc(var(--theme-spacing) * 3);
+            outline: 0;
+            padding: var(--theme-spacing);
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: calc(var(--theme-spacing) * 3);
         }
 
         & :global(.uppy-Dashboard--modal .uppy-DashboardContent-back) {
@@ -143,4 +164,9 @@
             z-index: 1010;
         }
     }
+}
+
+.cameraSwitch {
+    overflow: hidden;
+    position: relative;
 }

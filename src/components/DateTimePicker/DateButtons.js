@@ -3,7 +3,6 @@ import {useTranslation} from "react-i18next";
 import Button from "../../controls/Button/Button";
 import styles from "./styles/DateButtons.module.css";
 
-// eslint-disable-next-line react/prop-types
 export default ({date, start, end, onClick}) => {
     const {t} = useTranslation();
 

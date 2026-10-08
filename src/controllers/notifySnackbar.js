@@ -1,6 +1,4 @@
-import PropTypes from "prop-types";
-
-export const notifySnackbar = props => {
+export default props => {
     const snackbar = document.getElementById("__edeqa_pwa_service_worker_snackbar");
     const error = props.error || props;
     if (!snackbar) {
@@ -29,16 +27,3 @@ export const notifySnackbar = props => {
     }
     snackbar.click();
 };
-
-notifySnackbar.propTypes = {
-    buttonLabel: PropTypes.string,
-    error: PropTypes.any,
-    onButtonClick: PropTypes.any,
-    onClick: PropTypes.any,
-    priority: PropTypes.string,
-    system: PropTypes.bool,
-    title: PropTypes.any,
-    variant: PropTypes.string,
-};
-
-export default notifySnackbar;

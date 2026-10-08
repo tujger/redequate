@@ -1,12 +1,11 @@
-import React from "react";
 import StartIcon from "@mui/icons-material/Restore";
 import TimeIcon from "@mui/icons-material/Schedule";
 import EndIcon from "@mui/icons-material/Update";
+import React from "react";
 import {useTranslation} from "react-i18next";
 import Button from "../../controls/Button/Button";
 import styles from "./styles/ClockButtons.module.css";
 
-// eslint-disable-next-line react/prop-types
 export default ({show, range, date, start, end, onClick}) => {
     const {t} = useTranslation();
 

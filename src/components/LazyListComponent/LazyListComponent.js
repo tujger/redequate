@@ -1,12 +1,11 @@
 import React from "react";
 import {connect, useDispatch} from "react-redux";
-import PropTypes from "prop-types";
 import {useHistory} from "react-router-dom";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
+import {lazyListComponentReducer} from "./lazyListComponentReducer";
 import Observer from "./Observer";
 import Scroller from "./Scroller";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import {lazyListComponentReducer} from "./lazyListComponentReducer";
 
 function LazyListComponent(
     {
@@ -272,22 +271,6 @@ function LazyListComponent(
         <Scroller live={live && !ascending && reverse} className={scrollerClassName}/>
         {finished && !items.length && noItemsComponent}
     </>
-}
-
-LazyListComponent.propTypes = {
-    cache: PropTypes.string,
-    disableProgress: PropTypes.bool,
-    itemComponent: PropTypes.func,
-    itemTransform: PropTypes.func,
-    live: PropTypes.bool,
-    noItemsComponent: PropTypes.object,
-    pageTransform: PropTypes.func,
-    pagination: PropTypes.oneOfType([
-        PropTypes.object,
-        PropTypes.func]).isRequired,
-    placeholder: PropTypes.element.isRequired,
-    placeholders: PropTypes.number,
-    reverse: PropTypes.bool,
 }
 
 const mapStateToProps = ({lazyListComponentReducer, refreshOnVisibilityReducer}) => {

@@ -1,16 +1,14 @@
-import React from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import CheckAllIcon from "@mui/icons-material/DoneAll";
 import SortIcon from "@mui/icons-material/Sort";
-import PropTypes from "prop-types";
+import React from "react";
+import notifySnackbar from "../controllers/notifySnackbar";
 import Button from "../controls/Button/Button";
 import ListSwipeableItemComponent from "./ListSwipeableItemComponent";
-import ListAction from "./ListAction";
 import ModalComponent from "./ModalComponent";
-import notifySnackbar from "../controllers/notifySnackbar";
 import styles from "./styles/ListComponent.module.css";
 
-const ListComponent = props => {
+export default props => {
     let {
         items,
         emptyComponent,
@@ -171,13 +169,3 @@ const ListComponent = props => {
         </ModalComponent>}
     </React.Fragment>
 };
-
-ListComponent.propTypes = {
-    items: PropTypes.array,
-    itemComponent: PropTypes.any,
-    emptyComponent: PropTypes.any,
-    leftAction: PropTypes.objectOf(ListAction),
-    rightAction: PropTypes.objectOf(ListAction),
-};
-
-export default ListComponent;

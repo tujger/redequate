@@ -5,7 +5,6 @@ import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MainHeader.module.css";
 
 export default props => {
-    // eslint-disable-next-line react/prop-types
     const {title, image} = props;
     const pages = usePages();
     const onPointerDown = useRippleEffect();

@@ -14,12 +14,11 @@ import notifySnackbar from "../../../controllers/notifySnackbar";
 import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
 import Select from "../../../controls/Select/Select";
+import baseStyles from "../../../themes/Base.module.css";
 import {auditReducer} from "./auditReducer";
 import ErrorItemComponent from "./ErrorItemComponent";
-import baseStyles from "../../../themes/Base.module.css";
 import errorStyles from "./styles/Errors.module.css";
 
-// eslint-disable-next-line react/prop-types
 const Errors = props => {
     const {classes: givenClasses, errorsMode = "all", errorsFilter} = props;
     const classes = {...errorStyles, ...(givenClasses || {})};

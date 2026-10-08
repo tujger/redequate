@@ -55,6 +55,8 @@ build-system, and rendering changes can be isolated and validated independently.
 
 ## Development workflow
 
+Do not add or update tests unless the user explicitly requests it.
+
 Development normally happens in `story/*` or `bugfix/*` branches.
 
 Do not assume `master` represents the current development state.
