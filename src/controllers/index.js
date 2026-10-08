@@ -23,7 +23,7 @@ export {
     useCurrentUserData,
     normalizeSortName,
 } from "./UserData";
-export * as notifySnackbar from "./notifySnackbar";
+export {default as notifySnackbar} from "./notifySnackbar";
 export * as notifyConfirm from "./notifyConfirm";
 export {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
 export {default as useScrollPosition, getScrollPosition} from "../helpers/useScrollPosition";

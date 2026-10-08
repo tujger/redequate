@@ -36,6 +36,7 @@ export default ({allowOwner = true}) => {
     const pages = usePages()
     const [state, setState] = React.useState({disabled: false});
     const {tag} = state;
+    const [failedImage, setFailedImage] = React.useState(null);
     const dispatch = useDispatch();
     const db = firebase.database();
     const currentUserData = useCurrentUserData();
@@ -128,10 +129,11 @@ export default ({allowOwner = true}) => {
         />
         <div className={baseStyles.content}>
             <div className={styles.profile}>
-                {tag.value.image && <div className={styles.profileFieldImage}>
+                {tag.value.image && failedImage !== tag.value.image && <div className={styles.profileFieldImage}>
                     <img
                         alt={""}
                         className={styles.profileImage}
+                        onError={() => setFailedImage(tag.value.image)}
                         src={tag.value.image}
                     />
                 </div>}

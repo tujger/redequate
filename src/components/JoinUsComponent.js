@@ -1,17 +1,33 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useHistory} from "react-router-dom";
-import {useFirebase, useMetaInfo, usePages, useStore} from "../controllers/General";
+import {useMetaInfo, usePages, useStore} from "../controllers/General";
 import {useCurrentUserData} from "../controllers/UserData";
 import {getScrollPosition} from "../helpers/useScrollPosition";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
 import ConfirmComponent from "./ConfirmComponent";
 
+let identityScriptPromise;
+const loadGoogleIdentity = () => {
+    if (window.google?.accounts?.id) return Promise.resolve(window.google.accounts.id);
+    if (!identityScriptPromise) identityScriptPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client";
+        script.onload = () => resolve(window.google.accounts.id);
+        script.onerror = () => {
+            script.remove();
+            identityScriptPromise = undefined;
+            reject(new Error("Cannot load Google Identity Services"));
+        };
+        document.head.appendChild(script);
+    });
+    return identityScriptPromise;
+};
+
 const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
     const [state, setState] = React.useState({});
     const {allowed, show} = state;
     const currentUserData = useCurrentUserData();
-    const firebase = useFirebase();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
@@ -54,53 +70,39 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
     }
 
     React.useLayoutEffect(() => {
+        let active = true;
+        let promptStarted = false;
+        let timeout;
         const checkIfUserRegistered = async () => {
             if (currentUserData.id) throw "skip";
         }
         const tryWithOneTap = async () => new Promise((resolve, reject) => {
-            if (!oneTapCliendId || !oneTap) return;
-            try {
-                const promptCallback = (notification) => {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        resolve();
-                    } else {
+            if (!active) return reject("skip");
+            if (!oneTapCliendId || !oneTap) return resolve();
+            loadGoogleIdentity().then(identity => {
+                if (!active) return reject("skip");
+                identity.initialize({
+                    client_id: oneTapCliendId,
+                    use_fedcm_for_prompt: true,
+                    callback: props => {
+                        if (!active) return;
                         reject("skip");
+                        history.push(pages.login.route, {
+                            loginWith: "token",
+                            credential: props.credential
+                        });
                     }
-                }
-                if (window.google && window.google.accounts && window.google.accounts.id) {
-                    window.google.accounts.id.prompt(promptCallback);
-                } else {
-                    const scriptNode = document.createElement("script");
-                    scriptNode.onload = () => {
-                        try {
-                            window.google.accounts.id.initialize({
-                                client_id: oneTapCliendId,
-                                provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-                                callback: props => {
-                                    try {
-                                        history.push(pages.login.route, {
-                                            loginWith: "token",
-                                            credential: props.credential
-                                        });
-                                    } catch (error) {
-                                        console.error(error);
-                                        resolve();
-                                    }
-                                }
-                            });
-                            window.google.accounts.id.prompt(promptCallback);
-                        } catch (error) {
-                            console.error(error);
-                            resolve();
-                        }
-                    }
-                    scriptNode.src = "https://accounts.google.com/gsi/client";
-                    document.head.appendChild(scriptNode);
-                }
-            } catch (error) {
-                console.error(error);
+                });
+                promptStarted = true;
+                identity.prompt(notification => {
+                    if (!active) return reject("skip");
+                    if (notification.isSkippedMoment()) resolve();
+                    else if (notification.isDismissedMoment()) reject("skip");
+                });
+            }).catch(error => {
+                if (active) console.error(error);
                 resolve();
-            }
+            });
         })
         const checkIfSettingsAre = async () => {
             if (!joinUs) throw "skip";
@@ -113,11 +115,12 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
             if (now - timestamp < 1000 * 60 * 60 * 24) throw "skip";
         }
         const allowRequest = async () => {
+            if (!active) throw "skip";
             setState(state => ({...state, allowed: true}));
         }
         const installAlertOnTimeout = async () => {
             if (joinUsTimeout) {
-                setTimeout(() => {
+                timeout = setTimeout(() => {
                     setState(state => ({...state, show: true}));
                 }, +(joinUsTimeout * 1000));
             }
@@ -149,6 +152,9 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
             .catch(onThrowEvent)
 
         return () => {
+            active = false;
+            clearTimeout(timeout);
+            if (promptStarted) window.google?.accounts?.id.cancel();
             window.removeEventListener("scroll", handleScroll);
         }
     }, [])
