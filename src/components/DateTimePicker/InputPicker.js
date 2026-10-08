@@ -49,6 +49,8 @@ export default props => {
 
     return <>
         <TextField
+            aria-expanded={Boolean(anchor)}
+            aria-haspopup="dialog"
             clearable
             color={color}
             disabled={disabled}

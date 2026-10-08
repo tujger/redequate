@@ -622,3 +622,99 @@ Node.js 24.21.0. LAN/localhost authenticated WebSocket handshakes and LAN HTTPS
 application HMR passed; Widgets and framework dev modules load successfully.
 Browser rendering and certificate trust remain unverified because no browser
 is connected; local HTTPS checks bypassed certificate verification.
+
+### React 19/Vite verification gates (October 2026)
+
+Constraint: successful Rollup/Vite builds do not yet complete either milestone.
+Framework `test core` still invokes removed react-scripts; existing test harness
+also uses ReactDOM.render/unmountComponentAtNode removed in React 19 and imports
+external gamepal-dev configuration. Consumers have no executable test script.
+React-redux 8.1.3 and several legacy widgets exclude React 19 from peer ranges;
+anonymous browser smoke passed but is not comprehensive compatibility evidence.
+
+Decision: keep milestones open until the test harness and supported dependency
+strategy are resolved and Auth/Storage/FCM/PWA upgrade checks are completed.
+Do not restore the whole CRA build or merely broaden third-party peer ranges to
+hide these gates. Test changes require the explicit authorization in AGENTS.md.
+
+Affected consumers: edeqa-pwa-react-demo and thewhiskytalks. Demo Hosting now has
+SPA fallback configured, without deployment. Current TWT checkout uses its dev
+Firebase variant; building with production mode alone does not select prod
+Firebase or disable source maps. Release validation must select the prod variant.
+
+Status: framework and both consumers build; browser dev/preview rendering,
+Redux progress subscription, calendar portal and Uppy Dashboard smoke passed.
+Full evidence and remaining gates: MIGRATION_VERIFICATION.md. No public data/API
+contracts changed; Android runtime remains unverified.
+
+### Vitest and The Whisky Talks Emulator test gate
+
+Decision: use Vitest/jsdom for the existing React tests while retaining Rollup
+for framework publishing. Run framework component tests separately from Auth/RTDB
+integration tests, with the full gate exposed through npm test and test core.
+The user explicitly authorized updating existing tests. Keep gamepal-dev untouched.
+
+Reason: CRA's runner was removed, ReactDOM render/unmount and Simulate are no
+longer available, and old controller assertions depended on an unrelated backend.
+Use The Whisky Talks Database rules with demo-thewhiskytalks-tests and its
+default-rtdb namespace; testing a different namespace would bypass those rules.
+Resolve browser Firebase Auth internals consistently in jsdom to avoid mixed
+Node/browser compat exports. These aliases belong only to the integration runner.
+
+Consequences: fixtures reset only emulator accounts/data, no production credentials
+are needed, and emulator logs are temporary. TWT's existing App smoke test checks
+composition without initializing remote Firebase. The old example now uses Vite,
+React 19 and the framework's current named controls with its GitHub Pages base.
+No public framework API or Android data/URL contract changed.
+
+Status: 114 component tests, 38 emulator tests and the TWT App test passed after
+clean installation; framework, demo, TWT and example builds passed. Dev/preview
+browser smoke and production precache assets passed. The earlier missing test
+runner/harness gate is resolved. Build-system migration is complete; legacy React
+peer compatibility and real Auth/Storage/FCM/PWA upgrade release checks remain
+separate open validation items. Commands: README.md#tests; evidence: MIGRATION_VERIFICATION.md.
+
+### Standalone framework validation
+
+Decision: framework tests and builds must not depend on consumer repositories.
+This supersedes the application-rules choice in the preceding emulator entry.
+Redequate owns its emulator configuration, demo-redequate-tests project/namespace
+and minimal Database fixture rules; consumers own their security-rule validation.
+
+Reason: a framework checkout must be independently installable and testable.
+Importing a consumer's Firebase configuration reverses the dependency direction.
+Copying its complete business rules would preserve that coupling and is rejected.
+
+Consequences: fixture policies cover only the UserData paths under test and are
+not production security policies. No framework API, Firebase data format or
+Android contract changes. Consumer linking uses a generic helper with the target
+supplied by the caller; the removed framework relink command is not restored.
+Consumer scripts own installation/link orchestration.
+
+Status: clean installation, 114 component and 38 emulator tests, Rollup CJS/ESM
+and the Vite example build passed in an isolated copy without sibling applications.
+Generic linking with an explicit consumer directory passed. Evidence:
+MIGRATION_VERIFICATION.md. Application security rules remain consumer-owned.
+
+### Encapsulated test infrastructure
+
+Decision: keep framework test configuration and emulator lifecycle inside
+src/__tests__. Use one Vitest config with unit/integration modes; the runner owns
+emulator settings and generates the CLI JSON in its temporary log directory.
+Fixtures derive their demo project/namespace from CLI-provided GCLOUD_PROJECT
+and reject missing demo identity or non-loopback emulator endpoints.
+
+Reason: separate root configs and a two-line constants module fragmented test
+infrastructure. This preserves a single project-ID source without leaking test
+setup into the framework build or consumers. The Vite example build remains
+separate; no public API, data contract or dependency version changes.
+
+Constraint: Firebase CLI 13.4 resolves rules within its configuration directory
+and rejects external paths. Copy fixture rules into the temporary directory at
+session start; restart integration watch after changing rules. Explicit --watch
+is required for non-TTY use. On POSIX, signals must reach the CLI's full process
+group so shutdown does not leave an orphaned Vitest watcher.
+
+Status: 114 unit and 38 integration tests passed with the unified config, including
+in the independent copy. Unit/integration watch and SIGINT cleanup passed;
+missing emulator environment is rejected. Rollup and Vite example builds passed.

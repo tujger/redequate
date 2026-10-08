@@ -58,20 +58,81 @@ These notes cover the current source tree, including MUI 9 changes. React 19 sta
 - **Controls:** Review props and callbacks when replacing MUI controls. `Select` uses `options` and `onChange(event)`; `Tabs` uses `items` and `onChange(value)`; `TextField` uses `helper` and direct input props. Redequate `Button` requires explicit form submission. `DateTimePicker` still returns Moment values; clearing calls `onChange(null, null)`.
 - **Mentions:** `MentionsInputComponent.onChange` receives `(event, nextValue, plainValue, mentions)`. Use `multiline`, `mentionsParams`, and `inputRef` instead of fork-specific props. Existing saved user/tag markup remains compatible.
 - **Addresses:** Geoapify replaces the old geocoder. Set `meta/settings/geoapifyApiKey` in Firebase or through admin Settings. Without a key, autocomplete is unavailable. `PlacesTextField.onChange(event, value)` returns a string when typing and `{title, data}` when selecting a suggestion.
-- **Imports and validation:** Import from `redequate` rather than internal paths. Check themes, navigation, forms, dates, mentions, and addresses in the [demo application](https://github.com/tujger/edeqa-pwa-react-demo), then TheWhiskyTalks. See [Troubleshooting](#troubleshooting) for local linking and [DEVELOPMENT.md](DEVELOPMENT.md) for migration status.
+- **Imports and validation:** Import from `redequate` rather than internal paths. Run the standalone framework checks in [Tests](#tests); consumers separately validate themes, navigation, forms, dates, mentions, and addresses. See [Troubleshooting](#troubleshooting) for local linking and [DEVELOPMENT.md](DEVELOPMENT.md) for migration status.
+
+## Tests
+
+Use Node.js 24.12+ and Java 17+. Install framework dependencies with
+`npm ci --legacy-peer-deps`. The first emulator run downloads the Database
+Emulator JAR. Firebase login and production credentials are not required.
+
+```sh
+npm test                       # component tests, then Auth/RTDB integration tests
+npm run "test core"             # compatible name for the complete test gate
+npm run test:unit               # component tests only
+npm run "test:watch core"       # component tests in watch mode
+npm run test:integration        # starts and stops the local emulators
+npm run test:integration:watch  # keeps emulators running while Vitest watches
+```
+
+No sibling repositories are required. Test infrastructure lives in
+`src/__tests__`: one Vitest config selects component tests by default and
+controller tests with `--mode integration`. The emulator runner owns the local
+service settings and `demo-redequate-tests` project ID; it generates Firebase
+configuration in its temporary log directory and copies `fixtures/database.rules.json`
+there because Firebase CLI disallows rules outside that directory. Fixtures use
+the CLI-provided `GCLOUD_PROJECT` to derive
+`demo-redequate-tests-default-rtdb` and require a demo project plus local endpoints.
+Restart the integration runner after changing fixture rules to refresh that copy.
+Auth listens on 127.0.0.1:9099 and Database on 127.0.0.1:9000. If these ports
+are occupied, stop that local emulator session first; tests do not silently
+fall back to a cloud Firebase project.
+
+Fixtures reset emulated Auth accounts and Database data between integration
+tests. Auth action codes stay in the emulator; no invitation or verification
+email is sent. These checks do not validate Google/Facebook login, delivery of
+real emails, Storage, Functions or FCM. Database rules are framework test fixtures:
+public user records require authentication to read and allow fixture writes;
+private records require their owner; roles are readable; other paths are closed.
+They are not production policies or verification of any application's security rules.
+
+The runner removes inherited credential environment variables and stores
+debug logs in the temporary directory printed at startup. It does not modify
+cloud Firebase projects or production data.
+
+Vitest uses jsdom, JSX in `.js`, CSS Modules and React `act`/`createRoot`.
+Firebase integration config explicitly resolves browser Auth internals because
+mixing browser compat with Node Auth exports breaks popup resolver initialization
+in jsdom. This resolution is test-only; application Vite configs are unchanged.
+
+Consumer applications own their tests, Firebase rules and local linking commands.
+The generic `link-redequate-react.sh` helper accepts a consumer directory; it has
+no knowledge of specific applications. Consumer validation is separate from the
+framework's standalone test gate.
+
+Build verification order:
+
+```sh
+npm run "build core"
+npm --prefix example ci --legacy-peer-deps
+npm --prefix example run build
+```
+
+See `example/README.md` for the Vite example and its GitHub Pages base path.
 
 ## Troubleshooting
 
 https://stackoverflow.com/questions/56021112/react-hooks-in-react-library-giving-invalid-hook-call-error
 
 
-When developing the adjacent TheWhiskyTalks app against this local package, React and React DOM must resolve to the same physical packages. After installing dependencies, run `npm run relink` from either the `redequate` or `thewhiskytalks` directory, then start the redequate watcher and the app:
+When developing a consumer against this local package, shared dependencies must resolve to the same physical packages. After installing dependencies in both repositories, call the generic helper with the consumer directory from the framework root:
 
-        npm run relink
-        npm run "start core"  # in redequate
-        npm run "start secured"  # in thewhiskytalks
+```sh
+sh ./link-redequate-react.sh /absolute/path/to/consumer
+npm run "start core"
+```
 
-Relink connects the app's `react` and `react-dom` to the copies installed in redequate and checks that both projects resolve each package to the same path. The app start scripts restore these links after an app-side `npm install`. Set `REDEQUATE_PROJECT` to use a different consumer directory. Restart an already running development server after relinking.
+The helper connects the consumer's `react`, `react-dom`, `i18next` and `react-i18next` to the copies installed in Redequate, requiring matching versions and checking resolution paths. The consumer owns its installation, linking and dev-server commands. Repeat linking after a consumer-side `npm install` and restart any running development server. Redequate has no consumer-specific `relink` script or default target.
 
 All projects using this local setup must use matching React and React DOM versions in Redequate and the consumer. The current development projects use `19.3.0`; Redequate's peer range also permits React `18.3.1`.
 
