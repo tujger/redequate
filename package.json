@@ -150,6 +150,18 @@
             "import": "./core/auth/local-test.mjs",
             "require": "./core/auth/local-test.cjs"
         },
+        "./messaging": {
+            "import": "./core/messaging/index.mjs",
+            "require": "./core/messaging/index.cjs"
+        },
+        "./messaging/firebase": {
+            "import": "./core/messaging/firebase.mjs",
+            "require": "./core/messaging/firebase.cjs"
+        },
+        "./messaging/local-test": {
+            "import": "./core/messaging/local-test.mjs",
+            "require": "./core/messaging/local-test.cjs"
+        },
         "./storage": {
             "import": "./core/storage/index.mjs",
             "require": "./core/storage/index.cjs"

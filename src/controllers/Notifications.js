@@ -1,29 +1,15 @@
+import {useSnackbar} from "notistack";
 import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
-import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
 import RichSnackbarContent from "../components/RichSnackbarContent";
 import {useMetaInfo} from "./General";
-import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 import notifySnackbar from "./notifySnackbar";
+import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 
-export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {
+export const setupReceivingNotifications = (messaging, onMessage) => new Promise((resolve, reject) => {
     try {
-        if (!firebase.messaging.isSupported()) {
-            throw Object.assign(new Error("This browser doesn't support Firebase Messaging"), {
-                code: "messaging/unsupported-browser"
-            });
-        }
-        // Safari case
-        // https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html#//apple_ref/doc/uid/TP40013225-CH3-SW1
-        const messaging = firebase.messaging();
-        window.Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                return messaging.getToken();
-            } else {
-                throw new Error("Notifications denied");
-            }
-        }).then(token => {
+        messaging.subscribe().then(token => {
             messaging.onMessage(payload => {
                 console.log("[Notifications] incoming " + JSON.stringify(payload));
                 const data = payload.notification || payload.data;

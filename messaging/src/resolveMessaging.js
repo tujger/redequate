@@ -1,4 +1,4 @@
-export const resolveAuth = async auth => {
+export const resolveMessaging = async auth => {
     if (auth === undefined) {
         const {default: LocalTestAuth} = await import("./local-test/index.js");
         return new LocalTestAuth();

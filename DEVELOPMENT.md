@@ -1003,6 +1003,27 @@ fetch no longer matches the rejection expectation. Those tests do not import
 LocalTestAuth; reconciling them with the ongoing Auth migration remains separate.
 No permanent tests were added or changed.
 
+### Minimal Messaging contract
+
+Decision: MessagingBase exposes three async operations: subscribe() requests
+permission and returns a notification token; unsubscribe() removes the device's
+token registration; onMessage(callback) returns a function that detaches the
+foreground message handler. Subscription does not attach a message handler.
+
+Reason: these operations cover existing notification enable/disable and
+foreground receiving scenarios without exposing provider SDK details.
+Separate support, permission, token and initialization methods are unnecessary
+for the current scenarios; message sending is outside this contract.
+
+Consequences: token persistence in profiles, notification UI and background
+workers remain caller/application responsibilities. Future provider adoption
+must preserve existing FCM tokens and Android subscribeNotifications /
+unsubscribeNotifications bridge calls. The incoming message format will be
+defined when the existing handler is migrated.
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks, thewhiskytalks-android.
+Status: base stubs only; provider implementations and consumer migration remain
+separate work.
+
 
 ### LocalTestAuth default and module-owned Auth tests
 
@@ -1171,3 +1192,27 @@ Status: framework build, public ESM/CommonJS imports and real Chrome IndexedDB
 scenarios passed: uploads, metadata/progress, namespaces, identical files,
 reload persistence, path/URL deletion, detached metadata and failure propagation.
 No permanent tests were added or changed.
+
+### Firebase Messaging provider
+
+Decision: implement the three Messaging operations through the supplied Firebase
+compat SDK. Check support before creating Messaging; subscribe requests browser
+permission and returns getToken(), unsubscribe awaits deleteToken() without a
+return value, and onMessage returns the SDK listener disposer. Foreground
+callbacks preserve notification-or-data fields plus from, image from icon and
+priority; missing notification/data yields an empty object before those fields.
+
+Reason: preserve current receiving behavior within the minimal provider contract
+while keeping subscription and listener lifecycles independent.
+
+Consequences: unsupported browsers reject with messaging/unsupported-browser;
+invalid callbacks reject with messaging/invalid-argument. Permission denial
+rejects and SDK errors pass through. No import of the shared Firebase controller
+or WrapperControl: Android fallback stays in existing controllers, and migrating
+those callers must retain it. Token persistence, notification UI and background
+workers remain outside the provider.
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks, thewhiskytalks-android.
+Status: provider implemented; simulated operation/payload/disposal/error checks,
+ESLint and framework ESM/CommonJS builds passed on Node.js 24.21.0. No permanent
+tests were added or changed. Consumer migration and real push delivery validation
+remain separate work.

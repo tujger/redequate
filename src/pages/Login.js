@@ -5,11 +5,12 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import {useAuth} from "../../auth";
+import {useMessaging} from "../../messaging";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/General";
+import {fetchDeviceId, usePages, useStore} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
@@ -33,10 +34,10 @@ function Login(props) {
     } = props;
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const location = useLocation();
     const pages = usePages();
+    const messaging = useMessaging();
     const store = useStore();
     const {i18n, t} = useTranslation();
     const [state, setState] = React.useState({});
@@ -227,7 +228,7 @@ function Login(props) {
             const {userData, isFirstOnDevice, deviceId} = props;
             if (iOS) return props;
             if (isFirstOnDevice || userData.private[deviceId].notification) {
-                await setupReceivingNotifications(firebase)
+                await setupReceivingNotifications(messaging)
                     .then(notification => userData.setPrivate(deviceId, {notification}))
                     .then(() => userData.savePrivate())
                     .then(() => notifySnackbar({title: t("Login.Subscribed to notifications")}))

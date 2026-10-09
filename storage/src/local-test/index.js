@@ -1,6 +1,7 @@
 import StorageBase from "../StorageBase";
 import {delay, fail, fileOperation, toDataURL} from "./common";
 
+// Local simulation only: IndexedDB is used for store blobs
 export default class LocalTestStorage extends StorageBase {
     constructor({storageKey = "redequate:storage:local-test"} = {}) {
         super();
