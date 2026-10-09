@@ -132,5 +132,30 @@
     },
     "files": [
         "core"
-    ]
+    ],
+    "exports": {
+        ".": {
+            "import": "./core/index.es.js",
+            "require": "./core/index.js"
+        },
+        "./auth": {
+            "import": "./core/auth/index.mjs",
+            "require": "./core/auth/index.cjs"
+        },
+        "./auth/firebase": {
+            "import": "./core/auth/firebase.mjs",
+            "require": "./core/auth/firebase.cjs"
+        },
+        "./auth/local-test": {
+            "import": "./core/auth/local-test.mjs",
+            "require": "./core/auth/local-test.cjs"
+        },
+        "./_common": null,
+        "./_common/*": null,
+        "./core/_common/*": null,
+        "./core/chunks/*": null,
+        "./core/*.js": "./core/*.js",
+        "./core/*": "./core/*.js",
+        "./package.json": "./package.json"
+    }
 }

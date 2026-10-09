@@ -1,0 +1,11 @@
+// Selection only: construct the default object without calling Auth operations.
+export const resolveAuth = async auth => {
+    if (auth === undefined) {
+        const {default: FirebaseAuth} = await import("./firebase/index.js");
+        return new FirebaseAuth();
+    }
+    if (auth === null || typeof auth !== "object" || Array.isArray(auth)) {
+        throw new Error("Dispatcher auth must be an Auth instance created with new Auth(...)");
+    }
+    return auth;
+};

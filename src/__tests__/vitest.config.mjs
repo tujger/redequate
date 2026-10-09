@@ -16,7 +16,7 @@ export default defineConfig(({mode}) => {
             enforce: "pre",
             transform(code, id) {
                 const filename = id.split("?")[0];
-                if (filename.includes("/src/") && filename.endsWith(".js")) {
+                if (["src/", "auth/src/", "_common/src/"].some(directory => filename.startsWith(`${root}${directory}`)) && filename.endsWith(".js")) {
                     return transformWithOxc(code, filename, {lang: "jsx", jsx: {runtime: "automatic"}});
                 }
                 if (filename.includes("/src/themes/") && filename.endsWith(".css") && !filename.endsWith(".module.css")) {

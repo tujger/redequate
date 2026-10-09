@@ -9,6 +9,7 @@ import postcssNested from 'postcss-nested'
 import del from 'rollup-plugin-delete'
 import external from 'rollup-plugin-peer-deps-external'
 import postcss from 'rollup-plugin-postcss'
+import {authSourcePattern, withAuth} from './auth/build.mjs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
@@ -43,23 +44,15 @@ const babelIosPwaPrompt = {
 export default () => {
     return [
         {
-            input: 'src/index.js',
+            input: {index: 'src/index.js'},
             external: externalExports,
-            output: [
-                {
-                    file: pkg.main,
-                    format: 'cjs',
-                    interop: 'auto',
-                    inlineDynamicImports: true,
-                    sourcemap: true,
-                },
-                {
-                    file: pkg.module,
-                    format: 'es',
-                    inlineDynamicImports: true,
-                    sourcemap: true
-                }
-            ],
+            output: [{
+                dir: 'core',
+                format: 'es',
+                entryFileNames: chunk => chunk.name === 'index' ? pkg.module.split('/').pop() : '[name].es.js',
+                chunkFileNames: 'chunks/[name]-[hash].es.js',
+                sourcemap: true,
+            }],
             plugins: [
                 ...(!process.env.ROLLUP_WATCH ? [del({targets: ['core/*']})] : []),
                 external(),
@@ -69,7 +62,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: '**/src/**',
+                    include: ['src/**', '_common/src/**', authSourcePattern],
                 }),
                 svgr(),
                 resolve(),
@@ -186,6 +179,8 @@ export default () => {
                     dir: 'core',
                     exports: 'named',
                     format: 'cjs',
+                    entryFileNames: '[name].js',
+                    chunkFileNames: 'chunks/[name]-[hash].js',
                     interop: 'auto',
                     sourcemap: true
                 }
@@ -198,7 +193,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: '**/src/**',
+                    include: ['src/**', '_common/src/**', authSourcePattern],
                 }),
                 resolve(),
                 commonjs(),
@@ -206,5 +201,5 @@ export default () => {
                 json(),
             ]
         }
-    ]
+    ].map(withAuth)
 }

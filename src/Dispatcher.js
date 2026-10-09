@@ -6,9 +6,10 @@ import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
+import {AuthContext} from "../auth/src/context";
+import {resolveAuth} from "../auth/src/resolveAuth";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
-import Button from "./controls/Button/Button";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
@@ -27,6 +28,7 @@ import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
+import Button from "./controls/Button/Button";
 import initInternationalization from "./helpers/initInternationalization";
 import useBreakpoint from "./helpers/useBreakpoint";
 import {getScrollPosition} from "./helpers/useScrollPosition";
@@ -68,6 +70,7 @@ console.error = function (...args) {
 
 export default (props) => {
     const {
+        auth: givenAuth,
         firebaseConfig,
         locales,
         pages: givenPages,
@@ -94,6 +97,13 @@ export default (props) => {
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
+        }
+        const initAuth = async props => {
+            try {
+                return {...props, auth: await resolveAuth(givenAuth)};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
         }
         const initFirebase = async props => {
             const firebase = Firebase(firebaseConfig);
@@ -307,6 +317,7 @@ export default (props) => {
 
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
+            .then(initAuth)
             .then(initFirebase)
             .then(initStore)
             .then(restoreFirebaseAuth)
@@ -359,6 +370,7 @@ const DispatcherInitializationError = ({error, theme}) => {
 
 const DispatcherInitialized = (props) => {
     const {
+        auth,
         buildPages,
         copyright,
         firebase,
@@ -380,22 +392,24 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    return <Provider store={store}>
-        <>
-            {theme}
-            <BrowserRouter>
-                <SnackbarProvider maxSnack={4} preventDuplicate>
-                    <DispatcherRoutedBody
-                        {...props}
-                        copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
-                        menu={menu}
-                        title={t(title)}
-                    />
-                </SnackbarProvider>
-            </BrowserRouter>
-            <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-        </>
-    </Provider>;
+    return <AuthContext value={auth}>
+        <Provider store={store}>
+            <>
+                {theme}
+                <BrowserRouter>
+                    <SnackbarProvider maxSnack={4} preventDuplicate>
+                        <DispatcherRoutedBody
+                            {...props}
+                            copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                            menu={menu}
+                            title={t(title)}
+                        />
+                    </SnackbarProvider>
+                </BrowserRouter>
+                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+            </>
+        </Provider>
+    </AuthContext>;
 }
 
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});

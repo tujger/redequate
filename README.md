@@ -497,3 +497,132 @@ Props:
 
 
 MIT © [tujger](https://github.com/tujger)
+
+## Auth module scaffold
+
+```jsx
+import Dispatcher, {UserData} from "redequate";
+import LocalTestAuth from "redequate/auth/local-test";
+import {useAuth} from "redequate/auth";
+
+const auth = new LocalTestAuth();
+
+<Dispatcher auth={auth} {...props} />
+```
+
+LocalTestAuth is intended exclusively for testing, not production. Its future
+implementation will use localStorage or IndexedDB for local persistent storage.
+At this stage it remains a stub: no storage, accounts or authentication are
+implemented. The previous `redequate/auth/memory` subpath has been removed.
+
+Firebase is also available explicitly as the default export of
+`redequate/auth/firebase`. Each implementation exports a class constructed with
+`new Auth(...args)`. Arguments are implementation-specific, for example
+`new FirebaseAuth({firebaseConfig})`. An external package can expose the same
+class: `<Dispatcher auth={new MyAuth(options)} {...props} />`. Dispatcher receives
+the resulting object directly; it does not construct an explicitly supplied class.
+Create the object outside render or with `useMemo` to keep its identity stable.
+Built-in implementations extend `AuthBase`; inheritance is optional for external
+modules, and Dispatcher does not require `instanceof`. There is no registry.
+CommonJS uses `const LocalTestAuth = require("redequate/auth/local-test").default`
+and `const auth = new LocalTestAuth(options)`.
+
+Dispatcher selects the supplied object once per mount, or dynamically imports
+FirebaseAuth and constructs `new FirebaseAuth()` when `auth` is omitted. Null, arrays,
+classes without an instance and other non-object values are configuration errors. Selection errors use the existing initialization error UI.
+To change implementations, remount Dispatcher. `useAuth()` returns the selected
+object from the nearest Dispatcher; outside its provider it throws. Separate
+Dispatcher providers hold separate values, and separate constructor calls create
+separate objects. Reusing an existing object across applications deliberately
+shares it.
+
+This release only provides infrastructure. Dispatcher does not invoke the new
+methods, and the existing Firebase initialization, session restoration, Login,
+Signup and Logout continue to use their existing Firebase calls even when a
+custom Auth object is supplied. Every method of the created FirebaseAuth and
+LocalTestAuth objects throws or rejects with `Not implemented: <method>`; no session or token is simulated.
+
+### Auth contract
+
+`AuthBase` is a named export of `redequate/auth`. It provides the 15 methods below
+with default `Not implemented` errors. Implementations override supported
+operations; asynchronous inherited methods return rejected Promises. The class
+is abstract by convention and can be instantiated without a constructor guard.
+
+```javascript
+import {AuthBase} from "redequate/auth";
+
+export default class MyAuth extends AuthBase {
+    constructor(...args) {
+        super();
+        // Implementation-specific configuration
+    }
+    // Override supported operations here.
+}
+
+```
+
+The method signatures are defined in `auth/src/AuthBase.js`; this section documents
+their results and options without depending on Firebase SDK types. Authentication results use the existing `UserData`, including
+its `id`, `email` and `verified` fields. No separate AuthUser type is introduced.
+
+| Method | Result |
+| --- | --- |
+| `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives `UserData \| null` |
+| `signInWithEmailAndPassword(email, password)` | `Promise<UserData>` |
+| `createUserWithEmailAndPassword(email, password)` | `Promise<UserData>` |
+| `signInWithPopup(provider, options?)` | `Promise<UserData>` |
+| `signInWithRedirect(provider, options?)` | `Promise<void>` |
+| `resolveRedirectResult()` | `Promise<UserData \| null>` |
+| `signInWithCredential(credential)` | `Promise<UserData>` |
+| `sendSignInLinkToEmail(email, options)` | `Promise<void>` |
+| `checkSignInWithEmailLink(url)` | `Promise<boolean>` |
+| `signInWithEmailLink(email, url)` | `Promise<UserData>` |
+| `sendEmailVerification(options?)` | `Promise<void>` |
+| `sendPasswordResetEmail(email, options?)` | `Promise<void>` |
+| `updatePassword(password)` | `Promise<void>` |
+| `resolveToken(forceRefresh?)` | `Promise<string \| null>` |
+| `signOut()` | `Promise<void>` |
+
+The contract contains only the 15 operations used by current authentication
+flows; all are asynchronous. Session restoration uses the initial
+`onAuthStateChanged` result. The `get` and `is` prefixes remain reserved for
+synchronous getters; processing methods use `check` or `resolve` where applicable.
+`onAuthStateChanged` resolves to a synchronous unsubscribe function, obtained
+with `const unsubscribe = await auth.onAuthStateChanged(callback)`.
+Constructors and the React `useAuth()` hook remain synchronous.
+
+Provider is a string such as `google` or `facebook`; provider options contain
+optional `scopes` and `parameters`. Credential is
+`{provider, idToken?, accessToken?}`. Email options contain
+`{url, handleCodeInApp?}`; verification/reset options are optional. Constructor
+arguments are implementation-specific. Existing Firebase initialization remains
+outside this contract. CRUD, profile management, roles, permissions, Storage
+and Messaging are outside this contract.
+
+### Internal common layer
+
+Shared code resides in `_common/src`; it has no public package subpath or
+separate npm package. Public classes are re-exported through `redequate`.
+`src/controllers/UserData.js` remains a compatibility re-export of the moved
+implementation, so existing components and tests retain their imports.
+
+UserData was moved without changing its behavior and still depends on Firebase,
+including its existing persistence and current-user helpers. Auth stubs reference
+UserData only in the documented contract: importing LocalTestAuth or the neutral
+Auth entry does not load UserData or Firebase. A future implementation importing UserData at runtime
+must address that legacy dependency in a separate migration. Core application
+imports still include Firebase SDK services.
+
+Auth runtime source lives in `auth/src`; its build configuration remains in
+`auth/build.mjs`.
+`auth/build.mjs` supplies entry points, source matching and output naming to
+Rollup; it has no runtime import or public export. Shared source lives in
+`_common/src`. Both remain part of the same npm package, whose
+published files are built into `core`. The example resolves the package through
+its normal dependency and conditional exports, without an ESM-file alias.
+
+The web ESM entry is `core/index.es.js`, with `.es.js` core chunks, preserving
+Vite's existing CommonJS default-import behavior. Auth ESM entries and their
+shared Context/AuthBase/Babel-helper chunks use `.mjs` for native Node imports.
+Both formats share one Context within their build; default Auth remains lazy.
