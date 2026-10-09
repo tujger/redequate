@@ -1,4 +1,4 @@
-export * from "./Firebase";
+export {default as Firebase, firebaseMessaging, fetchCallable, fetchFunction} from "./Firebase";
 export * from "./Notifications";
 export * from "./ServiceWorkerControl";
 export * from "./WrapperControl";
@@ -12,8 +12,6 @@ export {default as ThemeSeason} from "../themes/ThemeSeason";
 export {default as ThemeDayNight} from "../themes/ThemeDayNight";
 export {default as Theme} from "../themes/Theme";
 export {
-    sendInvitationEmail,
-    sendVerificationEmail,
     currentRole,
     logoutUser,
     matchRole,

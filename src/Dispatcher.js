@@ -6,9 +6,9 @@ import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
+import {AuthContext, resolveAuth} from "../auth/src";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
-import Button from "./controls/Button/Button";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
@@ -27,6 +27,7 @@ import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
+import Button from "./controls/Button/Button";
 import initInternationalization from "./helpers/initInternationalization";
 import useBreakpoint from "./helpers/useBreakpoint";
 import {getScrollPosition} from "./helpers/useScrollPosition";
@@ -68,7 +69,9 @@ console.error = function (...args) {
 
 export default (props) => {
     const {
-        firebaseConfig,
+        auth: givenAuth,
+        firebase: firebaseGiven = undefined,
+        firebaseConfig = undefined,
         locales,
         pages: givenPages,
         title,
@@ -95,8 +98,18 @@ export default (props) => {
             document.cookie = "g_state=''";
             return props;
         }
+        const initAuth = async props => {
+            try {
+                const auth = await resolveAuth(givenAuth);
+                console.log("[Dispatcher]", "auth resolved", {auth});
+                return {...props, auth};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
         const initFirebase = async props => {
-            const firebase = Firebase(firebaseConfig);
+            const firebase = firebaseGiven || Firebase(firebaseConfig);
+            console.log("[Dispatcher]", "firebase resolved", {firebase});
             return {...props, firebase};
         }
         const initStore = async props => {
@@ -104,8 +117,8 @@ export default (props) => {
         }
         const restoreFirebaseAuth = async props => {
             try {
-                const authUser = await new Promise((resolve, reject) => {
-                    unlisten = props.firebase.auth().onAuthStateChanged(resolve, reject);
+                const authUser = await new Promise(async (resolve, reject) => {
+                    unlisten = await props.auth.onAuthStateChanged(resolve, reject);
                 });
                 return {...props, authUser};
             } catch (error) {
@@ -164,9 +177,9 @@ export default (props) => {
             }
             try {
                 const savedUserData = store.getState().currentUserData?.userData;
-                const userData = savedUserData?.id === authUser.uid
+                const userData = savedUserData?.id === authUser.id
                     ? new UserData().fromJSON(savedUserData)
-                    : new UserData().fromFirebaseAuth(authUser.toJSON());
+                    : authUser;
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};
@@ -212,25 +225,25 @@ export default (props) => {
         }
         const installWrapperControl_ = async props => {
             (async () => {
-                installWrapperControl(props.firebase);
+                installWrapperControl(props._firebase);
             })().catch(notifySnackbar);
             return props;
         }
         const installNotificationsWatcher = async props => {
             (async () => {
                 if (!iOS && hasNotifications()) {
-                    setupReceivingNotifications(props.firebase).catch(console.error);
+                    setupReceivingNotifications(props._firebase).catch(console.error);
                 }
             })().catch(console.error);
             return props;
         }
         const installUserChangeWatcher = async props => {
             (async () => {
-                const {firebase, store} = props;
+                const {auth, firebase, store} = props;
                 setInterval(() => {
-                    watchUserChanged(firebase, store).then(() => refreshAll(store));
+                    watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
                 }, 30000)
-                watchUserChanged(firebase, store).then(() => refreshAll(store));
+                watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
             })().catch(console.error);
             return props;
         }
@@ -307,6 +320,7 @@ export default (props) => {
 
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
+            .then(initAuth)
             .then(initFirebase)
             .then(initStore)
             .then(restoreFirebaseAuth)
@@ -359,6 +373,7 @@ const DispatcherInitializationError = ({error, theme}) => {
 
 const DispatcherInitialized = (props) => {
     const {
+        auth,
         buildPages,
         copyright,
         firebase,
@@ -380,22 +395,24 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    return <Provider store={store}>
-        <>
-            {theme}
-            <BrowserRouter>
-                <SnackbarProvider maxSnack={4} preventDuplicate>
-                    <DispatcherRoutedBody
-                        {...props}
-                        copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
-                        menu={menu}
-                        title={t(title)}
-                    />
-                </SnackbarProvider>
-            </BrowserRouter>
-            <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-        </>
-    </Provider>;
+    return <AuthContext value={auth}>
+        <Provider store={store}>
+            <>
+                {theme}
+                <BrowserRouter>
+                    <SnackbarProvider maxSnack={4} preventDuplicate>
+                        <DispatcherRoutedBody
+                            {...props}
+                            copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                            menu={menu}
+                            title={t(title)}
+                        />
+                    </SnackbarProvider>
+                </BrowserRouter>
+                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+            </>
+        </Provider>
+    </AuthContext>;
 }
 
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});

@@ -718,3 +718,402 @@ group so shutdown does not leave an orphaned Vitest watcher.
 Status: 114 unit and 38 integration tests passed with the unified config, including
 in the independent copy. Unit/integration watch and SIGINT cleanup passed;
 missing emulator environment is rejected. Rollup and Vite example builds passed.
+
+### Independent Auth entry points and internal common layer
+
+Decision: publish neutral auth, auth/firebase and auth/memory subpaths with
+ESM/CommonJS entries. Implementations export ready objects. Dispatcher selects
+an explicitly supplied object or lazily loads the Firebase scaffold, exposes it
+through a per-Dispatcher React Context and calls none of its operations yet.
+Existing Firebase authentication remains active, including with a custom object.
+
+Reason: prepare an incremental replacement boundary without migrating Login,
+Signup, Logout or session restoration in the same step. Rejected alternatives:
+a global registry, class/factory requirements and statically importing defaults.
+Root ESM output uses .mjs and shared chunks so Auth Context has one identity per
+module format and the default implementation remains lazy; CJS keeps named
+exports and interop auto. Existing named root exports remain alongside default
+Dispatcher.
+
+Decision: move UserData unchanged to src/_common, keep its old controller path
+as a re-export and expose shared public classes through the root. _common is an
+internal source layer with no public package subpath. Auth results use UserData;
+check/resolve name operations that inspect URLs or resolve redirects/tokens,
+while getCurrentUser only reads cached state.
+
+Constraint: UserData still owns legacy Firebase persistence, roles and user
+state. Merely moving it does not make it backend-independent. Scaffolds reference
+it only through JSDoc and do not load its runtime dependencies. Future Auth
+implementations using it at runtime must resolve this coupling separately.
+Core Firebase imports remain; shared ready objects may themselves share mutable
+state across applications, although the new Context introduces no global session.
+
+Affected consumers: edeqa-pwa-react-demo and thewhiskytalks. Android API, data
+formats and URLs remain unchanged.
+
+Status: Rollup, 114 unit and 38 emulator tests, demo and The Whisky Talks
+production builds passed on Node.js 24.21.0. Packed ESM/CJS Auth imports,
+isolated import graphs, 18 explicit stub failures, legacy UserData export
+identity and hidden common paths passed. A temporary Vite consumer of the packed
+entries confirmed shared Context identity; a temporary Dispatcher smoke confirmed
+object identity, separate providers, mount-fixed selection and lazy default with
+no scaffold method calls. Pack dry-run passed. No permanent tests were changed.
+Real authenticated browser scenarios remain a separate manual validation gate.
+
+### Root Auth/common source layout and Auth-owned build configuration
+
+Decision: keep Auth source in auth/ and shared internal source in _common/ at
+the repository root. auth/build.mjs owns its entry points, source matching and
+ESM/CJS entry naming; the core Rollup config imports and applies its withAuth
+helper to both builds. Output paths and public package exports stay unchanged.
+
+Reason: Auth owns its build metadata while continuing to share the core module
+graph. Building Context separately is rejected because Dispatcher and useAuth
+must observe one Context per module format. Source relocation does not change
+UserData behavior or remove its legacy dependencies on src controllers/Firebase.
+_common remains internal, with no public subpath. The old controller re-export
+preserves existing imports. Runtime modules never import the build script.
+
+Consequences: Babel, Vitest source transformation and ESLint include the root
+source directories. The example uses its file dependency and package exports
+instead of an obsolete direct alias to core/index.es.js.
+
+Affected consumers: example, edeqa-pwa-react-demo and thewhiskytalks; Android
+API/data/URL contracts remain unchanged.
+
+Status: Rollup, 114 unit and 38 emulator tests, example/demo/The Whisky Talks
+production builds passed on Node.js 24.21.0. Packed ESM/CJS Auth imports and
+isolated graphs, shared Context and UserData identity, Dispatcher object/default
+selection, hidden common/build paths and pack dry-run passed. A temporary Vite
+consumer confirmed the packed entries share Context. The build script and root
+sources are excluded from published files. No test cases were added or changed;
+the existing runner configuration includes the relocated source directories.
+
+### CommonJS defaults in linked ESM consumers
+
+Constraint: react-linkify 1.0.0-alpha exports its component as exports.default.
+Linked ESM chunks can receive the entire CommonJS object from Vite's dependency
+optimizer instead of the component, causing an invalid React element type.
+Successful builds and imports alone do not detect this render failure.
+
+Decision: normalize this dependency's default once in a shared adapter used by
+text and audit views. Preserve either the component or its wrapped default;
+retain current link decorators, mentions, truncation and disabled-click behavior.
+Affected consumers: demo and The Whisky Talks; no Auth or Android API change.
+
+Status: real-package ESM/CJS rendering passed for plain text, URL/email, mentions,
+line breaks, disableClick and maxLength; both import shapes passed. All 114 unit
+tests and framework/example/demo/The Whisky Talks builds passed. No test cases
+were added or changed. Chrome Discover smoke passed against the current linked
+build on a dedicated loopback server: ten posts loaded, text/mentions rendered,
+and no console errors were captured. The audit view uses the same adapter;
+interactive Activity validation requires an authenticated administrator.
+
+### Restore web ESM import semantics after Auth extraction
+
+Decision: restore core/index.es.js and .es.js web-core chunks without changing
+the package's default CommonJS type. Retain .mjs for Auth entries and their pure
+shared Context/contract/Babel-helper chunks, classified by Rollup module IDs in
+auth/build.mjs. Keep the joint builds and lazy default Auth.
+
+Reason: changing the web importer extension to .mjs changes Vite 8's CommonJS
+interop to Node semantics. react-linkify then yields module.exports (an object
+containing default) instead of its component. Source relocation was not the
+cause. Build success alone did not detect this runtime regression.
+
+This supersedes the web-core .mjs choice and the preceding Linkify adapter
+decision. Remove the adapter and restore direct dependency imports. Rejected:
+per-component wrappers and changing consumer-wide Vite interop settings, which
+would compensate for the framework packaging change in application code.
+
+Affected consumers: example, demo and The Whisky Talks. Native ESM Auth imports
+and CommonJS entries remain supported; native Node rendering of the full web
+core is not a new requirement. Android API/data/URL contracts are unchanged.
+Status: validated. Packed ESM/CJS Auth imports and isolated graphs, Vite and
+CommonJS MentionedText renders, 114 existing unit tests, and all four builds
+passed. Discover loaded ten posts with mentions/tags after reload without a
+React error. No component adapter or consumer interop override remains.
+
+
+### Auth factories with implementation-specific configuration
+
+Decision: each Auth implementation exports a synchronous Auth(...args) factory
+returning a fresh AuthInstance. The caller owns configuration arguments and
+passes the resulting object to Dispatcher. This supersedes the original ready
+object export requirement.
+
+Reason: implementations may require their own configuration and independent
+state for separate application instances. Dispatcher still uses explicit
+instances by reference; it never invokes an explicitly supplied factory.
+The default is created once per Dispatcher mount through a lazy FirebaseAuth()
+import. Construction does not authenticate or initialize Firebase; initialize
+remains a separate future operation. Existing Firebase behavior is preserved.
+
+Consumers must call the imported factory and keep the resulting object stable
+(outside render or via useMemo). Method names, UserData results, subpath exports
+and ESM/CommonJS packaging remain unchanged.
+Status: validated. Packed ESM/CommonJS factory imports, fresh instances, stub
+errors and isolated graphs passed. Dispatcher preserves explicit identity and
+constructs the lazy default once. All four builds, 114 unit tests and 38 existing
+Firebase integration tests passed. The Whisky Talks explicit Auth now uses a
+stable Auth({firebaseConfig}) instance.
+
+
+### Optional Auth base class
+
+Decision: AuthBase, exported from redequate/auth, centralizes the existing
+18 method stubs and their signatures. Built-in implementations inherit it
+and retain synchronous Auth(...args) factories creating fresh instances.
+
+Reason: implementations can override individual methods while inherited
+unsupported operations explicitly fail with Not implemented. Async methods
+reject Promises. Abstractness is conventional, without a constructor guard.
+External modules may remain structurally compatible objects; Dispatcher uses
+no instanceof check and still owns only selection and Context provisioning.
+This supersedes duplicated per-implementation stubs, without adding Firebase
+initialization or changing consumers' factory calls, UserData or module formats.
+Status: validated. Packed ESM/CommonJS exports, inherited errors for all 18
+methods, partial overrides, independent instances and isolated import graphs
+passed. Dispatcher identity/lazy-default smoke, Vite shared Context, all four
+builds, 114 unit tests and 38 Firebase integration tests passed. No permanent
+test cases were added or changed.
+
+
+### Async Auth operations with synchronous getters
+
+Decision: all 17 non-getter AuthBase methods are async. getCurrentUser remains
+a synchronous cached-state getter; get/is names are reserved for getters and
+check/resolve for processing where applicable. onAuthStateChanged returns a
+Promise of a synchronous unsubscribe function; checkSignInWithEmailLink returns
+Promise<boolean>. All unsupported operations retain Not implemented errors.
+
+Reason: keep operation results consistently awaitable while getters remain
+immediate. Removed Auth JSDoc/typedef blocks; README documents return values,
+UserData and configuration shapes. Factories, constructors and useAuth remain
+synchronous. Existing components still use legacy Firebase calls, so this
+contract change does not migrate current authentication behavior.
+Status: validated. Packed ESM/CommonJS entries return Promises for all 17
+operations and throw synchronously for the getter. Factory isolation and import
+graph checks passed, as did four builds, 114 unit tests and 38 Firebase
+integration tests. No permanent tests were added or changed.
+
+
+### Direct default exports of Auth classes
+
+Decision: Firebase and Memory export their AuthBase subclasses directly through
+default. Applications construct stable instances with new Auth(...args) and
+pass them to Dispatcher. This supersedes the earlier callable factory API.
+
+Reason: class implementations can be exported directly without factory wrappers.
+Dispatcher constructs only its lazily imported default FirebaseAuth once per
+mount, preserves explicit instances by reference and does not require instanceof
+for external implementations. Constructors remain synchronous and perform no
+authentication or Firebase initialization. The Whisky Talks explicit Auth is
+adapted to new Auth({firebaseConfig}); method behavior and module formats remain
+unchanged.
+Status: validated. Packed ESM/CommonJS class exports, independent instances,
+AuthBase inheritance and isolated import graphs passed. Dispatcher preserves
+explicit identity and creates its lazy default once. All four builds, 114 unit
+tests and 38 Firebase integration tests passed; no permanent tests were changed.
+
+
+### LocalTestAuth naming and intended use
+
+Decision: rename the MemoryAuth scaffold to LocalTestAuth and publish it at
+redequate/auth/local-test. Remove the old memory subpath without an alias.
+
+Reason: the intended implementation is exclusively for testing, with future
+localStorage or IndexedDB persistence. Memory-only naming misrepresented both
+persistence and intended use. This module is not intended for production; it
+remains an unimplemented AuthBase subclass and does not yet store data or
+authenticate. Firebase remains the lazy default.
+Status: validated. Build and packed ESM/CommonJS imports of local-test passed;
+import graphs remain isolated from Firebase and other implementations. The old
+memory subpath is not exported and no memory artifacts remain in npm pack.
+
+
+### Auth contract limited to existing authentication scenarios
+
+Decision: retain only 15 AuthBase operations backed by current runtime calls.
+Remove initialize, restoreSession and getCurrentUser. Existing Firebase
+initialization remains separate; session restoration uses the first auth-state
+callback. Current Firebase currentUser reads are receivers for password, email
+verification or profile operations and do not require a separate Auth getter.
+
+Reason: define the contract from actual framework behavior, excluding commented
+code and test-fixture setup, rather than mirroring the Firebase API. Login,
+Signup, UserData helpers, Dispatcher and token retrieval for existing Functions
+calls justify the retained operations. The Functions operation itself, profiles
+and CRUD stay outside Auth. All retained methods are async stubs; no existing
+Firebase logic or component imports are migrated.
+Status: validated. Build and packed ESM/CommonJS imports passed, with exactly
+15 async methods and no removed methods on AuthBase or built-in instances.
+Stub errors, overrides and isolated graphs passed, along with 114 unit tests
+and 38 existing Firebase integration tests. No permanent tests were changed.
+
+
+### Runtime source directories inside auth and _common
+
+Decision: keep each area's runtime source in auth/src and _common/src, leaving
+root auth/build.mjs for build configuration and the top-level module directories
+available for other supporting files. This supersedes runtime files placed
+directly in auth and _common; the main framework still uses its existing src.
+
+Reason: separate source from supporting files within each independent area.
+Entry paths, Auth chunk classification, Babel, ESLint and Vitest source matching
+follow the new directories. UserData compatibility re-exports and public Auth
+exports remain unchanged. Joint builds preserve one Context per format, native
+Auth .mjs imports, web-core .es.js interop and lazy Firebase selection. No
+authentication implementation or UserData behavior is changed.
+Status: validated. Packed ESM/CommonJS imports, isolated Auth graphs, UserData
+identity and legacy re-exports, shared Context in Vite and Dispatcher identity
+checks passed. Four builds, npm pack --dry-run, 114 unit tests and 38 Firebase
+integration tests passed. Rollup watcher restarted with the new entry points;
+no permanent test cases were added or changed.
+
+
+### LocalTestAuth localStorage simulation
+
+Decision: implement all current Auth operations in LocalTestAuth using a
+versioned localStorage document per configurable storageKey. Preserve current
+runtime auth-user snapshots, {user} sign-in results and synchronous from(json),
+rather than the outdated README promise of direct UserData results. Import no
+UserData or Firebase into the local implementation.
+
+Reason: current Dispatcher/Login/Signup consume uid, toJSON(), {user} and
+user.updatePassword(); UserData still imports Firebase services. Keeping the
+simulation isolated avoids a broader UserData migration. This is test-only: fake
+provider accounts and tokens, immediate verification, locally recorded password
+reset requests and consumable pending email sign-in requests. Passwords are
+stored in plain text. Async Auth operations simulate 0–2000 ms latency, logging
+method and duration only when greater than 100 ms.
+
+Consequences: reloads restore sessions, matching keys share state across
+instances/tabs, and different keys isolate simulations. Auth replacement alone
+does not remove the web applications' Firebase profile/CRUD/service dependency.
+Rejected: importing UserData into LocalTestAuth or migrating those services as
+part of this change. FirebaseAuth remains the default.
+Affected consumers: demo and The Whisky Talks may opt in to this Auth module;
+Android contracts and backend tokens remain unchanged.
+Status: source and packed ESM/CommonJS scenario checks, isolated import graphs,
+ESLint, framework build, 114 unit tests and both web consumer builds passed.
+Existing Firebase/UserData integration tests have four failures out of 36:
+watch/logout fixtures omit the Auth argument, fromFirebaseAuth was removed, and
+fetch no longer matches the rejection expectation. Those tests do not import
+LocalTestAuth; reconciling them with the ongoing Auth migration remains separate.
+No permanent tests were added or changed.
+
+
+### LocalTestAuth default and module-owned Auth tests
+
+Decision: resolve omitted Dispatcher auth through a lazy LocalTestAuth import.
+FirebaseAuth requires explicit new FirebaseAuth({firebase}); its constructor is
+not relaxed. Significant LocalTestAuth overrides use individual default-export
+files, with shared helpers in auth/src/local-test/common.js. Storage format and
+authentication results remain unchanged.
+
+Reason: make the local simulation the default while preserving explicit provider
+configuration. Keep implementation helpers together without creating a file for
+every short operation.
+
+Consequences: applications omitting auth share the standard local-test storage
+namespace for their origin. This choice replaces the earlier lazy Firebase
+default; Firebase profile/CRUD/service dependencies remain separate. Demo and
+The Whisky Talks already supply configured FirebaseAuth instances. Android
+contracts and backend authentication remain unchanged.
+
+Tests belong to each module's src/__tests__: Auth tests in auth/src/__tests__ and
+UserData tests in _common/src/__tests__. The existing shared runner separates
+ordinary unit tests from .integration.test.js emulator tests. UserData fixtures
+now pass Auth explicitly and await subscription cleanup; a fresh UID isolates
+the fetch permission check from Firebase's cached reads. The four integration
+failures recorded above are resolved without changing UserData runtime behavior.
+
+Status: 164 unit tests, 39 emulator tests, ESLint, framework build and both web
+consumer builds passed on Node.js 24.21.0. Packed ESM/CommonJS operation scenarios,
+AuthBase inheritance and isolated LocalTestAuth import graphs passed.
+
+
+### Normalized Auth results and pure UserData model
+
+Decision: both built-in Auth implementations return detached UserData directly
+from registration/sign-in, restoration, redirect resolution and synchronous from.
+Subscriptions emit UserData or null. Failures use Error with provider codes;
+password changes and tokens stay on Auth. SDK credentials and user methods do
+not cross the boundary. UserData.fromAuth remains a compatibility copier.
+
+Reason: consumers need one result contract independent of Firebase. Returning
+SDK users or provider-shaped wrappers would retain that coupling.
+
+Consequences: external Auth implementations and callers must adopt direct
+UserData results (id/verified/name/image instead of SDK fields). The pure model
+loads database dependencies lazily; UI/current-user controls retain barrel and
+legacy controller exports. Native Auth ESM uses a shared .mjs model chunk while
+web core preserves its existing bundler interop. Local storage schema, default
+LocalTest selection and explicit Firebase configuration remain unchanged.
+Business roles and profile persistence still require the existing services.
+Affected consumers: framework login/registration/Dispatcher updated; demo and
+The Whisky Talks use explicit FirebaseAuth. Android backend/token formats are
+unchanged; JS clients using the previous Auth result shape need migration.
+Status: 179 unit tests and 39 emulator tests passed. Framework, demo and The
+Whisky Talks builds passed on Node.js 24.21.0. Packed native ESM/CommonJS Auth
+operations and static import graphs passed; model creation loads no Firebase/UI.
+ESLint reports no errors in the changed Auth/common modules.
+
+
+### Auth JSON conversion without a public parser
+
+Decision: remove Auth.from and UserData.fromAuth. Provider-specific internal
+functions with default exports produce the existing UserData JSON shape; Auth
+operations and subscriptions construct UserData through fromJSON and continue
+returning it directly. JSON request time uses requested, matching toJSON.
+
+Reason: conversion belongs inside each provider adapter, without requiring a
+parser method from every Auth implementation or coupling UserData back to Auth.
+
+Consequences: external Auth implementations return UserData directly. Callers
+of the removed parsers migrate to Auth results or normalized JSON/fromJSON.
+UserData detaches restored public/private/loaded data from input snapshots.
+Existing UserData service imports remain in the current source; JSON converter
+modules have no UserData/service imports. No storage-schema or Android backend
+contract changes. Demo and The Whisky Talks retain explicit FirebaseAuth.
+Provider errors pass through unchanged by explicit user decision; no operation
+wrapper or error conversion helper is used. This supersedes the earlier policy
+of converting arbitrary rejected values into Error.
+Status: 181 unit tests and 39 emulator tests passed. Framework and both web
+consumer builds passed. Packed ESM/CommonJS operation checks and removal of the
+parser API passed; native ESM reports the existing typeless web-chunk warning.
+ESLint passed for the changed Auth/common source and tests.
+
+
+### Direct UserData JSON construction inside Auth
+
+Decision: existing internal createUser functions form the JSON object directly
+in UserData.fromJSON. Remove the shared JSON factory and intermediate converter
+modules. Provider field/timestamp mapping and direct SDK errors are preserved.
+
+Reason: the extra conversion layers add indirection without a separate consumer.
+Consequences: Auth still returns UserData/null with no public parser; localStorage
+and web/Android contracts are unchanged. Current UserData edits are preserved,
+including its existing handling of serialized object references. This supersedes
+the earlier use of separate default-export JSON conversion functions.
+Status: 179 unit tests, 38 emulator tests, ESLint and framework build passed.
+Packed ESM/CommonJS Auth operation checks passed; the existing typeless web-chunk
+warning remains. No consumer-facing Auth result changes in this simplification.
+
+
+### Remove unused Auth token retrieval
+
+Decision: remove resolveToken from AuthBase, FirebaseAuth and LocalTestAuth.
+LocalTest's shared conversion helper is named toUserData and still constructs
+UserData directly from account JSON. Firebase test fixtures implement SDK toJSON.
+
+Reason: resolveToken has no production callers in the framework or inspected
+web consumers. Backend requests already obtain tokens through Firebase getIdToken.
+Consequences: remove the unused public method and token-refresh tests; retain the
+localStorage session token field to keep existing stored sessions compatible.
+Firebase SDK token access and Android/backend authentication are unchanged.
+Provider errors continue passing through without wrappers or conversion.
+Status: 178 unit tests, 38 emulator tests, ESLint, framework build and packed
+ESM/CommonJS Auth scenarios passed, including absence of resolveToken.
+The existing native ESM typeless web-chunk warning remains.

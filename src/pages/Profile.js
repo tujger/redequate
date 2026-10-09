@@ -10,6 +10,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useAuth} from "../../auth";
 import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -21,7 +22,7 @@ import {fetchCallable} from "../controllers/Firebase";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {TextMaskPhone} from "../controllers/TextMasks";
-import {matchRole, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
+import {matchRole, Role, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
@@ -106,6 +107,7 @@ const Profile = (
     const pages = usePages();
     const {id} = useParams();
     const {t} = useTranslation();
+    const auth = useAuth();
 
     const handleChatClick = () => {
         history.push(pages.chat.route + userData.id);
@@ -185,7 +187,7 @@ const Profile = (
                         onClick={() => {
                             dispatch(ProgressView.SHOW);
                             console.log(currentUserData)
-                            sendVerificationEmail()
+                            auth.sendEmailVerification()
                                 .then(() => notifySnackbar("Verification email has been sent"))
                                 .catch(notifySnackbar)
                                 .finally(() => dispatch(ProgressView.HIDE));

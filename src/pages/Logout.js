@@ -2,6 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory, withRouter} from "react-router-dom";
+import {useAuth} from "../../auth";
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
@@ -16,10 +17,11 @@ const Logout = (props) => {
     const pages = usePages();
     const store = useStore();
     const {t} = useTranslation();
+    const auth = useAuth();
 
     const doLogout = () => {
         window.localStorage.removeItem(pages.login.route);
-        logoutUser(store)
+        logoutUser({auth, store})
             .then(() => {
                 refreshAll(store);
                 history.push(pages.home.route);

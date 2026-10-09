@@ -17,3 +17,6 @@ export {WebWorker} from "./workers/WebWorker";
 import packagejson from "../package.json";
 
 export const version = packagejson.version;
+
+export {default} from "./Dispatcher";
+export {UserData} from "../_common/src";

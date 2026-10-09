@@ -4,6 +4,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
+import {useAuth} from "../../auth";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
@@ -12,7 +13,7 @@ import {fetchDeviceId, useFirebase, usePages, useStore} from "../controllers/Gen
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, Role, sendVerificationEmail, useCurrentUserData, UserData} from "../controllers/UserData";
+import {logoutUser, Role, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -39,6 +40,7 @@ function Login(props) {
     const store = useStore();
     const {i18n, t} = useTranslation();
     const [state, setState] = React.useState({});
+    const auth = useAuth();
     const {
         showAgreement = false,
         email = "",
@@ -54,7 +56,7 @@ function Login(props) {
         setState(state => ({...state, requesting: false}));
         // refreshAll(store);
         window.localStorage.removeItem(pages.login.route);
-        return logoutUser(store);
+        return logoutUser({auth, store});
     };
 
     const finallyCallback = () => {
@@ -64,20 +66,18 @@ function Login(props) {
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser(store)
+        logoutUser({auth, store})
             .then(() => {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.setCustomParameters({prompt: "select_account"});
-                provider.addScope("https://www.googleapis.com/auth/userinfo.email");
+                const provider = "google.com";
                 dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState(state => ({...state, requesting: true}));
-                    return firebase.auth().signInWithPopup(provider)
+                    return auth.signInWithPopup(provider)
                         .then(loginSuccess)
                         .then(finallyCallback);
                 } else {
-                    window.localStorage.setItem(pages.login.route, provider.providerId);
-                    return firebase.auth().signInWithRedirect(provider);
+                    window.localStorage.setItem(pages.login.route, provider);
+                    return auth.signInWithRedirect(provider)
                 }
             })
             .catch(errorCallback)
@@ -86,20 +86,18 @@ function Login(props) {
     const requestLoginFacebook = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser(store)
+        logoutUser({auth, store})
             .then(() => {
-                const provider = new firebase.auth.FacebookAuthProvider();
-                provider.addScope("email");
-                provider.setCustomParameters({prompt: "select_account"});
+                const provider = "facebook.com";
                 dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState(state => ({...state, requesting: true}));
-                    return firebase.auth().signInWithPopup(provider)
+                    return auth.signInWithPopup(provider)
                         .then(loginSuccess)
                         .then(finallyCallback);
                 } else {
-                    window.localStorage.setItem(pages.login.route, provider.providerId);
-                    return firebase.auth().signInWithRedirect(provider);
+                    window.localStorage.setItem(pages.login.route, provider);
+                    return auth.signInWithRedirect(provider);
                 }
             })
             .catch(errorCallback)
@@ -107,11 +105,10 @@ function Login(props) {
 
     const requestLoginToken = (token) => {
         dispatch(ProgressView.SHOW);
-        logoutUser(store)
+        logoutUser({auth, store})
             .then(() => {
                 setState(state => ({...state, requesting: true}));
-                const credential = firebase.auth.GoogleAuthProvider.credential(token);
-                return firebase.auth().signInWithCredential(credential)
+                return auth.signInWithCredential(token)
                     .then(loginSuccess)
                     .then(finallyCallback);
             })
@@ -121,96 +118,24 @@ function Login(props) {
     const requestLoginPassword = () => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, requesting: true}));
-        firebase.auth().signInWithEmailAndPassword(email, password)
+        auth.signInWithEmailAndPassword(email, password)
             .then(loginSuccess)
             .catch(errorCallback)
             .finally(finallyCallback);
     };
 
-    const loginSuccess = response => {
-        // if (!response) return;
-        // if (!response.user) {
-        //     throw new Error(t("Login.Login failed. Please try again"));
-        // }
-        // let isFirstLogin = false;
-        // let isFirstOnDevice = false;
-        // const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
-        // if (!ud.verified) {
-        //     notifySnackbar({
-        //         buttonLabel: t("Login.Resend verification"),
-        //         onButtonClick: () => sendVerificationEmail(firebase),
-        //         priority: "high",
-        //         title: t("Login.Your account is not yet verified."),
-        //         variant: "warning",
-        //     })
-        //     setState(state => ({...state, requesting: false}));
-        //     return;
-        // }
-        // return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
-        //     .then(() => ud.fetchPrivate(fetchDeviceId(), true))
-        //     .then(() => i18n.changeLanguage(ud.private[fetchDeviceId()].locale))
-        //     .then(() => {
-        //         if (!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true
-        //     })
-        //     .then(() => ud.setPrivate(fetchDeviceId(), {
-        //         osName,
-        //         osVersion,
-        //         deviceType,
-        //         browserName,
-        //         agreement: true
-        //     }))
-        //     .then(() => ud.savePrivate())
-        //     .then(() => {
-        //         if (!ud.persisted) {
-        //             isFirstLogin = true;
-        //             if (transformUserDataOnFirstLogin) return transformUserDataOnFirstLogin(ud);
-        //         }
-        //         return ud;
-        //     })
-        //     .then(ud => isFirstLogin ? ud.savePublic() : ud.updateVisitTimestamp())
-        //     .then(ud => {
-        //         useCurrentUserData(ud);
-        //         dispatch({type: "currentUserData", userData: ud});
-        //     })
-        //     .then(() => {
-        //         if (iOS) return;
-        //         if (isFirstOnDevice || ud.private[fetchDeviceId()].notification) {
-        //             return setupReceivingNotifications(firebase)
-        //                 .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
-        //                     .then(() => ud.savePrivate()))
-        //                 .then(() => notifySnackbar({title: t("Login.Subscribed to notifications")}))
-        //                 .then(() => setTimeout(() => {
-        //                     setState(state => ({...state, disabled: false}))
-        //                 }, 10))
-        //                 .catch(error => {
-        //                     if (error && error.code === "messaging/failed-service-worker-registration") return;
-        //                     throw error;
-        //                 })
-        //                 .catch(notifySnackbar)
-        //         }
-        //     })
-        //     .then(() => {
-        //         refreshAll(store);
-        //         if (onLogin && onLogin(isFirstLogin)) return;
-        //         if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin: true});
-        //         else history.replace(pages.home.route);
-        //     });
-
+    const loginSuccess = userData => {
+        console.log(userData)
         const importValues = async () => {
-            return {deviceId: fetchDeviceId(), response}
+            return {deviceId: fetchDeviceId(), userData}
         }
         const checkIfResponseValid = async props => {
-            const {response} = props;
-            if (!response) throw "empty-response";
-            if (!response.user) {
+            const {userData} = props;
+            if (!userData) throw new Error(t("Login.Login failed. Please try again"));
+            if (!userData.id) {
                 throw new Error(t("Login.Login failed. Please try again"));
             }
             return props;
-        }
-        const createUserDataFromResponse = async props => {
-            const {response} = props;
-            const userData = new UserData().fromFirebaseAuth(response.user.toJSON());
-            return {...props, userData}
         }
         const checkIfUserVerified = async props => {
             const {userData} = props;
@@ -218,7 +143,7 @@ function Login(props) {
                 notifySnackbar({
                     buttonLabel: t("Login.Resend verification"),
                     onButtonClick: () => {
-                        sendVerificationEmail()
+                        auth.sendEmailVerification()
                             .then(() => notifySnackbar("Verification email has been sent"))
                             .catch(notifySnackbar)
                     },
@@ -334,7 +259,6 @@ function Login(props) {
 
         importValues()
             .then(checkIfResponseValid)
-            .then(createUserDataFromResponse)
             .then(checkIfUserVerified)
             .then(fetchPublicAndPrivateData)
             .then(changeLocaleByUser)
@@ -351,16 +275,16 @@ function Login(props) {
             .finally(finalize)
     };
 
-    const checkFirstLogin = async response => {
-        console.log(response)
-        if (!response || !response.user) throw Error(t("Login.Login cancelled"));
-        if (!agreementComponent) return response;
+    const checkFirstLogin = async userData => {
+        console.log(userData)
+        if (!userData?.id) throw Error(t("Login.Login cancelled"));
+        if (!agreementComponent) return userData;
         const deviceId = fetchDeviceId();
-        const userData = new UserData().fromFirebaseAuth(response.user.toJSON());
         await userData.fetchPrivate(deviceId, true);
         const agreement = (userData.private[deviceId] || {}).agreement;
-        if (agreement) return response;
-        setState(state => ({...state, showAgreement: true, response}));
+        if (agreement) return userData;
+        setState(state => ({...state, showAgreement: true, response: userData}));
+        return userData;
     }
 
     const handleAgree = () => {
@@ -395,7 +319,7 @@ function Login(props) {
         }
         if (!popup && window.localStorage.getItem(pages.login.route)) {
             window.localStorage.removeItem(pages.login.route);
-            firebase.auth().getRedirectResult()
+            auth.resolveRedirectResult()
                 .then(checkFirstLogin)
                 .then(loginSuccess)
                 .catch(errorCallback)

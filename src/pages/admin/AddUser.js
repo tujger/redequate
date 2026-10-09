@@ -2,11 +2,11 @@ import MailIcon from "@mui/icons-material/Mail";
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useAuth} from "../../../auth";
 import ProgressView from "../../components/ProgressView";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {TextMaskEmail} from "../../controllers/TextMasks";
-import {sendInvitationEmail} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import TextField from "../../controls/TextField/TextField";
 import baseStyles from "../../themes/Base.module.css";
@@ -18,6 +18,7 @@ export default () => {
     const pages = usePages();
     const dispatch = useDispatch();
     const history = useHistory();
+    const auth = useAuth();
 
     const addUser = () => {
         if (!email) {
@@ -27,7 +28,7 @@ export default () => {
         setState({...state, requesting: true});
         dispatch(ProgressView.SHOW);
 
-        sendInvitationEmail(email)
+        auth.sendSignInLinkToEmail(email)
             .then(() => {
                 notifySnackbar("Invitation email has been sent.");
                 history.push(pages.users.route);

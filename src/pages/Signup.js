@@ -4,13 +4,14 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
+import {useAuth} from "../../auth";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
-import {useFirebase, usePages, useStore} from "../controllers/General";
+import {usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {sendVerificationEmail, useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -28,11 +29,12 @@ const Signup = ({signup = true, additional}) => {
     const pages = usePages();
     const dispatch = useDispatch();
     const store = useStore();
-    const firebase = useFirebase();
     const history = useHistory();
     const currentUserData = useCurrentUserData();
     const params = useParams();
     const {t} = useTranslation();
+    const auth = useAuth();
+    const [component, setComponent] = React.useState(() => <LoadingComponent/>);
 
     const requestSignupPassword = () => {
         if (!email && !requestPasswordFor) {
@@ -54,8 +56,7 @@ const Signup = ({signup = true, additional}) => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         if (requestPasswordFor) {
-            const user = firebase.auth().currentUser;
-            user.updatePassword(password)
+            auth.updatePassword(password)
                 .then(() => {
                     notifySnackbar({
                         title: t("User.Now you may login with your e-mail and password.")
@@ -68,7 +69,7 @@ const Signup = ({signup = true, additional}) => {
                     dispatch(ProgressView.HIDE);
                 });
         } else {
-            firebase.auth().createUserWithEmailAndPassword(email, password)
+            auth.createUserWithEmailAndPassword(email, password)
                 .then(signupVerification)
                 .catch(signupError)
                 .finally(() => dispatch(ProgressView.HIDE));
@@ -76,7 +77,7 @@ const Signup = ({signup = true, additional}) => {
     };
 
     const signupVerification = response => {
-        return sendVerificationEmail()
+        return auth.sendEmailVerification()
             .then(() => {
                 notifySnackbar("Verification email has been sent");
                 setState({...state, requesting: false});
@@ -100,25 +101,39 @@ const Signup = ({signup = true, additional}) => {
         history.push(pages.login.route, {loginWith: "facebook"})
     }
 
-    if (!signup) return <Redirect to={pages.home.route}/>;
+    React.useEffect(() => {
+        if (!signup) {
+            setComponent(() => <Redirect to={pages.home.route}/>);
+        } else {
+            auth.checkSignInWithEmailLink().then(checked => {
+                if (checked && !requestPasswordFor) {
+                    let email = params.email;
+                    dispatch(ProgressView.SHOW);
+                    console.log("[Signup] with link for", email)
+                    if (!email) {
+                        email = window.prompt(t("User.Please provide your e-mail for confirmation"));
+                        if (!email) {
+                            setComponent(() => <Redirect to={pages.home.route}/>);
+                            return;
+                        }
+                    }
+                    auth.signInWithEmailLink(email)
+                        .then(() => setState({...state, requestPasswordFor: email}))
+                        .catch(signupError)
+                        .finally(() => dispatch(ProgressView.HIDE));
 
-    if (!requestPasswordFor && firebase.auth().isSignInWithEmailLink(window.location.href)) {
-        let email = params.email;
-        dispatch(ProgressView.SHOW);
-
-        console.log("[Signup] with link for", email)
-        if (!email) {
-            email = window.prompt(t("User.Please provide your e-mail for confirmation"));
-            if (!email) return <Redirect to={pages.home.route}/>
+                    setComponent(() => <LoadingComponent/>)
+                } else if (currentUserData.id) {
+                    setComponent(() => <Redirect to={pages.profile.route}/>)
+                } else {
+                    setComponent(undefined);
+                }
+            })
         }
-        firebase.auth().signInWithEmailLink(email, window.location.href)
-            .then(() => setState({...state, requestPasswordFor: email}))
-            .catch(signupError)
-            .finally(() => dispatch(ProgressView.HIDE));
+    }, [params.email, requestPasswordFor, signup]);
 
-        return <LoadingComponent/>
-    } else if (currentUserData.id) {
-        return <Redirect to={pages.profile.route}/>
+    if (component) {
+        return component;
     }
 
     return <div className={baseStyles.content}>
