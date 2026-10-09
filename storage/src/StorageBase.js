@@ -3,7 +3,7 @@ const notImplemented = method => {
 };
 
 export default class StorageBase {
-    async upload(path, blob, metadata, onProgress) {
+    async upload({auth, blob, metadata, name, onProgress}) {
         return notImplemented("upload");
     }
 

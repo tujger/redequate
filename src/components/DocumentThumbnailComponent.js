@@ -1,10 +1,10 @@
-import React from "react";
-import {useTranslation} from "react-i18next";
-import {firebaseMessaging as firebase} from "../controllers/Firebase";
-import VideoIcon from "@mui/icons-material/Movie";
 import AudioIcon from "@mui/icons-material/Audiotrack";
 import ImageIcon from "@mui/icons-material/Image";
 import AnyIcon from "@mui/icons-material/InsertDriveFile";
+import VideoIcon from "@mui/icons-material/Movie";
+import React from "react";
+import {useTranslation} from "react-i18next";
+import {useStorage} from "../../storage";
 
 const fallbacks = {
     image: <ImageIcon/>,
@@ -17,33 +17,32 @@ export default ({className, title, url}) => {
     const [state, setState] = React.useState({});
     const {src = url, thumbnail = url} = state;
     const {t} = useTranslation();
+    const storage = useStorage();
 
     React.useEffect(() => {
         let isMount = true;
         if (url instanceof Object) return;
 
-        const fetchFirebaseStorage = async props => {
-            const {url} = props;
-            try {
-                const ref = firebase.storage().refFromURL(url);
-                if (ref) {
-                    const metadata = await ref.getMetadata();
+        const parseUrl = async props => {
+            const {metadata, url} = props;
+            if (!metadata) {
+                if (url.indexOf("data:") === 0) {
+                    const contentType = url.replace("data:", "").split(";")[0];
+                    const metadata = {contentType};
                     return {...props, metadata};
                 }
-            } catch (e) {
-                console.error(e);
             }
             return props;
         }
-        const orParseUrl = async props => {
+        const orFetchStorage = async props => {
             const {metadata, url} = props;
             if (!metadata) {
-                let metadata = {};
-                if (url.indexOf("data:") === 0) {
-                    const contentType = url.replace("data:", "").split(";")[0];
-                    metadata = {contentType};
+                try {
+                    const metadata = await storage.resolveMetadata(url);
+                    return {...props, metadata};
+                } catch (e) {
+                    console.error(e);
                 }
-                return {...props, metadata};
             }
             return props;
         }
@@ -79,8 +78,8 @@ export default ({className, title, url}) => {
             isMount && setState(state => ({...state, thumbnail: fallbacks.any}));
         }
 
-        fetchFirebaseStorage({url})
-            .then(orParseUrl)
+        parseUrl({url})
+            .then(orFetchStorage)
             .then(extractContentType)
             .then(selectThumbnailFallback)
             .then(fetchThumbnail)

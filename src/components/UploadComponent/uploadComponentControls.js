@@ -1,6 +1,4 @@
 import Resizer from "react-image-file-resizer";
-import {v4 as Uuid} from "uuid";
-import {firebaseMessaging as firebase} from "../../controllers/Firebase";
 
 export async function uploadComponentClean(uppy, key) {
     if (uppy?._uris) {
@@ -16,18 +14,18 @@ export async function uploadComponentClean(uppy, key) {
     }
 }
 
-export async function uploadComponentDelete(deleteFile) {
+async function uploadComponentDelete(deleteFile, storage) {
     if (deleteFile) {
         try {
             console.log("[Upload] delete old file from firebase", deleteFile);
-            return firebase.storage().refFromURL(deleteFile).delete();
+            return storage.delete(deleteFile);
         } catch (e) {
             console.error("[Upload]", e);
         }
     }
 }
 
-export function uploadComponentPublish({files, name, metadata, onprogress, auth, deleteFile}) {
+export function uploadComponentPublish({files, name, metadata, onprogress, auth, deleteFile, storage}) {
     return new Promise((resolve, reject) => {
         if (!files) {
             resolve();
@@ -36,7 +34,7 @@ export function uploadComponentPublish({files, name, metadata, onprogress, auth,
 
         const promises = Object.keys(files).map(key => {
             const importVariables = async () => {
-                return {deleteFile, files, key, metadata, name, onprogress, uid: auth};
+                return {deleteFile, files, key, metadata, name, onprogress, auth};
             }
             const extractItem = async props => {
                 const {files, key} = props;
@@ -47,20 +45,8 @@ export function uploadComponentPublish({files, name, metadata, onprogress, auth,
                 const type = item.type.split("/")[0];
                 return {...props, type};
             }
-            const createUuid = async props => {
-                const uuid = Uuid();
-                return {...props, uuid};
-            }
-            const createRef = async props => {
-                const {item, name, type, uid, uuid} = props;
-                const ref = firebase.storage().ref().child(uid + "/" + type + "/" + (name ? name + "-" : "") + uuid + "-" + item.name);
-                return {...props, ref};
-            }
             const extractBlobImage = async props => {
                 const {item, type} = props;
-                // if (uppy._uris && uppy._uris[file.id]) {
-                //     return uppy._uris[file.id].uploadURL;
-                // }
                 if (type === "image") {
                     const blob = await window.fetch(item.uploadURL).then(response => {
                         return response.blob();
@@ -72,48 +58,30 @@ export function uploadComponentPublish({files, name, metadata, onprogress, auth,
             const extractBlobAttahed = attachedType => async props => {
                 const {item, type} = props;
                 if (type === attachedType) {
-                    const blob = new window.Blob([await item.data.arrayBuffer()], {type: item.type});
+                    const blob = new window.Blob([await item.data.arrayBuffer()], {
+                        type: item.type,
+                        name: item.name
+                    });
                     return {...props, blob};
                 }
                 return props;
             }
-            const createPublishTask = async props => {
-                const {blob, item, metadata, ref, uid} = props;
-                const publishTask = ref.put(blob, {
-                    contentType: item.type,
-                    customMetadata: {
-                        ...metadata,
-                        uid,
-                        // message: Uuid(),
-                        filename: item.name
-                    }
-                });
-                return {...props, publishTask};
+            const publishBlob = async props => {
+                const {blob, onprogress, name} = props;
+                const result = await storage.upload({
+                    auth,
+                    name,
+                    blob,
+                    metadata,
+                    onProgress: onprogress
+                })
+                return {...props, ...result}
             }
-            const publishBlob = props => new Promise((resolve, reject) => {
-                const {onprogress, publishTask} = props;
-                publishTask.on(firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
-                    const progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
-                    onprogress && onprogress(progressValue);
-                }, error => {
-                    reject(error);
-                }, () => {
-                    resolve({...props, result: publishTask.snapshot.ref});
-                });
-            })
             const deleteObsoleteFile = async props => {
                 if (props.deleteFile) {
-                    uploadComponentDelete(props.deleteFile).catch(console.error);
+                    uploadComponentDelete(props.deleteFile, storage).catch(console.error);
                 }
                 return props;
-            }
-            const extractDownloadUrl = async props => {
-                const {result} = props;
-                return result.getDownloadURL().then(url => {
-                    return result.getMetadata().then(metadata => {
-                        return {...props, url, metadata};
-                    })
-                })
             }
             const exportResult = async props => {
                 console.log("props", props);
@@ -124,15 +92,11 @@ export function uploadComponentPublish({files, name, metadata, onprogress, auth,
             return importVariables()
                 .then(extractItem)
                 .then(detectType)
-                .then(createUuid)
-                .then(createRef)
                 .then(extractBlobImage)
                 .then(extractBlobAttahed("video"))
                 .then(extractBlobAttahed("audio"))
-                .then(createPublishTask)
                 .then(publishBlob)
                 .then(deleteObsoleteFile)
-                .then(extractDownloadUrl)
                 .then(exportResult)
         })
 

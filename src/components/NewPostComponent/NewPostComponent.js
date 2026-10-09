@@ -4,13 +4,14 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useAuth} from "../../../auth";
+import {useStorage} from "../../../storage";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
-import useRippleEffect from "../../helpers/useRippleEffect";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import LoadingComponent from "../LoadingComponent";
 import {tokenizeText} from "../MentionedTextComponent";
@@ -56,7 +57,8 @@ const NewPostComponent = props => {
     const history = useHistory();
     const pages = usePages();
     const windowData = useWindowData();
-    const onUploadPointerDown = useRippleEffect();
+    const auth = useAuth();
+    const storage = useStorage();
     const [state, setState] = React.useState({});
     const isSendingRef = React.useRef(false);
     const previousOpenRequest = React.useRef(openRequest);
@@ -143,10 +145,7 @@ const NewPostComponent = props => {
                         removeImages.push(image);
                     }
                 }
-                removeImages = removeImages.map(async url => firebase.storage()
-                    .refFromURL(url)
-                    .delete()
-                );
+                removeImages = removeImages.map(url => storage.delete(url));
                 Promise.all(removeImages).catch(console.error);
             }
             return {text, images};
@@ -155,11 +154,12 @@ const NewPostComponent = props => {
             let newImages = [];
             if (uppy) {
                 const publish = await uploadComponentPublish({
-                    auth: currentUserData.id,
+                    auth,
                     files: uppy._uris,
                     onprogress: progress => {
                         dispatch({...ProgressView.SHOW, value: progress});
                     },
+                    storage
                 });
                 uploadComponentClean(uppy);
                 newImages = publish.map(item => item.url) || [];
