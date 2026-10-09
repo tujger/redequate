@@ -1,16 +1,14 @@
+import {createAuthUser} from "../common";
+
 export default function from(json) {
-    return {
-        id: json.uid,
-        role: null,
-        public: {
-            name: json.displayName,
-            email: json.email,
-            emailVerified: json.emailVerified,
-            image: json.photoURL,
-            lastLogin: +json.lastLoginAt,
-            provider: json.providerData?.[0]?.providerId || "password",
-        },
-        requestedTimestamp: new Date(),
-        loaded: {public: true, name: true, email: true, image: true},
-    };
+    return createAuthUser({
+        id: json?.uid,
+        name: json?.displayName,
+        email: json?.email,
+        verified: json?.emailVerified,
+        image: json?.photoURL,
+        provider: json?.provider || json?.providerData?.[0]?.providerId || "password",
+        created: json?.createdAt,
+        lastLogin: json?.lastLoginAt,
+    });
 }

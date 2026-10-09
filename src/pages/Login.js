@@ -124,91 +124,18 @@ function Login(props) {
             .finally(finallyCallback);
     };
 
-    const loginSuccess = response => {
-        console.log(response)
-        // if (!response) return;
-        // if (!response.user) {
-        //     throw new Error(t("Login.Login failed. Please try again"));
-        // }
-        // let isFirstLogin = false;
-        // let isFirstOnDevice = false;
-        // const ud = new UserData(firebase).fromFirebaseAuth(response.user.toJSON());
-        // if (!ud.verified) {
-        //     notifySnackbar({
-        //         buttonLabel: t("Login.Resend verification"),
-        //         onButtonClick: () => sendVerificationEmail(firebase),
-        //         priority: "high",
-        //         title: t("Login.Your account is not yet verified."),
-        //         variant: "warning",
-        //     })
-        //     setState(state => ({...state, requesting: false}));
-        //     return;
-        // }
-        // return ud.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
-        //     .then(() => ud.fetchPrivate(fetchDeviceId(), true))
-        //     .then(() => i18n.changeLanguage(ud.private[fetchDeviceId()].locale))
-        //     .then(() => {
-        //         if (!ud.private[fetchDeviceId()].osName) isFirstOnDevice = true
-        //     })
-        //     .then(() => ud.setPrivate(fetchDeviceId(), {
-        //         osName,
-        //         osVersion,
-        //         deviceType,
-        //         browserName,
-        //         agreement: true
-        //     }))
-        //     .then(() => ud.savePrivate())
-        //     .then(() => {
-        //         if (!ud.persisted) {
-        //             isFirstLogin = true;
-        //             if (transformUserDataOnFirstLogin) return transformUserDataOnFirstLogin(ud);
-        //         }
-        //         return ud;
-        //     })
-        //     .then(ud => isFirstLogin ? ud.savePublic() : ud.updateVisitTimestamp())
-        //     .then(ud => {
-        //         useCurrentUserData(ud);
-        //         dispatch({type: "currentUserData", userData: ud});
-        //     })
-        //     .then(() => {
-        //         if (iOS) return;
-        //         if (isFirstOnDevice || ud.private[fetchDeviceId()].notification) {
-        //             return setupReceivingNotifications(firebase)
-        //                 .then(token => ud.setPrivate(fetchDeviceId(), {notification: token})
-        //                     .then(() => ud.savePrivate()))
-        //                 .then(() => notifySnackbar({title: t("Login.Subscribed to notifications")}))
-        //                 .then(() => setTimeout(() => {
-        //                     setState(state => ({...state, disabled: false}))
-        //                 }, 10))
-        //                 .catch(error => {
-        //                     if (error && error.code === "messaging/failed-service-worker-registration") return;
-        //                     throw error;
-        //                 })
-        //                 .catch(notifySnackbar)
-        //         }
-        //     })
-        //     .then(() => {
-        //         refreshAll(store);
-        //         if (onLogin && onLogin(isFirstLogin)) return;
-        //         if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin: true});
-        //         else history.replace(pages.home.route);
-        //     });
-
+    const loginSuccess = userData => {
+        console.log(userData)
         const importValues = async () => {
-            return {deviceId: fetchDeviceId(), response}
+            return {deviceId: fetchDeviceId(), userData}
         }
         const checkIfResponseValid = async props => {
-            const {response} = props;
-            if (!response) throw "empty-response";
-            if (!response.user) {
+            const {userData} = props;
+            if (!userData) throw new Error(t("Login.Login failed. Please try again"));
+            if (!userData.id) {
                 throw new Error(t("Login.Login failed. Please try again"));
             }
             return props;
-        }
-        const createUserDataFromResponse = async props => {
-            const {response} = props;
-            const userData = new UserData().fromAuth(auth, response.user.toJSON());
-            return {...props, userData}
         }
         const checkIfUserVerified = async props => {
             const {userData} = props;
@@ -332,7 +259,6 @@ function Login(props) {
 
         importValues()
             .then(checkIfResponseValid)
-            .then(createUserDataFromResponse)
             .then(checkIfUserVerified)
             .then(fetchPublicAndPrivateData)
             .then(changeLocaleByUser)
@@ -349,16 +275,16 @@ function Login(props) {
             .finally(finalize)
     };
 
-    const checkFirstLogin = async response => {
-        console.log(response)
-        if (!response || !response.user) throw Error(t("Login.Login cancelled"));
-        if (!agreementComponent) return response;
+    const checkFirstLogin = async userData => {
+        console.log(userData)
+        if (!userData?.id) throw Error(t("Login.Login cancelled"));
+        if (!agreementComponent) return userData;
         const deviceId = fetchDeviceId();
-        const userData = new UserData().fromAuth(auth, response.user.toJSON());
         await userData.fetchPrivate(deviceId, true);
         const agreement = (userData.private[deviceId] || {}).agreement;
-        if (agreement) return response;
-        setState(state => ({...state, showAgreement: true, response}));
+        if (agreement) return userData;
+        setState(state => ({...state, showAgreement: true, response: userData}));
+        return userData;
     }
 
     const handleAgree = () => {

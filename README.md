@@ -553,8 +553,8 @@ without navigation; `resolveRedirectResult()` consumes that result once.
 requests. `signOut()` clears the session and pending redirect, preserving accounts.
 
 `updateProfile({displayName, photoURL})` persists supported fields (strings or null).
-Password changes require an active session. A resolved user's `updatePassword()`
-also checks that the same account is still signed in. Auth-state subscriptions
+Password changes require an active session and use `auth.updatePassword()`.
+Auth-state subscriptions
 emit their initial state and changed current-user snapshots; token refreshes and
 mail records alone do not emit. Await the subscription to obtain its synchronous
 unsubscribe function. Storage failures during observation go to `onError`, when
@@ -598,31 +598,33 @@ return Promises except synchronous `from(json)`.
 
 | Method | Result |
 | --- | --- |
-| `from(json)` | Parsed `{id, role, public, requestedTimestamp, loaded}` for `UserData.fromAuth()` |
-| `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives an auth user or null |
-| `createUserWithEmailAndPassword(email, password)` | `Promise<{user}>` |
-| `signInWithEmailAndPassword(email, password)` | `Promise<{user}>` |
-| `signInWithPopup(provider, options?)` | `Promise<{user}>` |
+| `from(json)` | `UserData` |
+| `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives `UserData` or null |
+| `createUserWithEmailAndPassword(email, password)` | `Promise<UserData>` |
+| `signInWithEmailAndPassword(email, password)` | `Promise<UserData>` |
+| `signInWithPopup(provider, options?)` | `Promise<UserData>` |
 | `signInWithRedirect(provider, options?)` | `Promise<void>` |
-| `resolveRedirectResult()` | `Promise<{user} \| null>` |
-| `signInWithCredential(credential)` | `Promise<{user}>` |
+| `resolveRedirectResult()` | `Promise<UserData \| null>` |
+| `signInWithCredential(credential)` | `Promise<UserData>` |
 | `sendSignInLinkToEmail(email, options?)` | `Promise<void>` |
 | `checkSignInWithEmailLink()` | `Promise<boolean>` |
-| `signInWithEmailLink(email)` | `Promise<{user}>` |
+| `signInWithEmailLink(email)` | `Promise<UserData>` |
 | `sendEmailVerification(options?)` | `Promise<void>` |
 | `sendPasswordResetEmail(email, options?)` | `Promise<void>` |
-| `resolveCurrentUser()` | `Promise<auth user \| null>` |
+| `resolveCurrentUser()` | `Promise<UserData \| null>` |
 | `updatePassword(password)` | `Promise<void>` |
 | `updateProfile(fields)` | `Promise<void>` |
 | `resolveToken(forceRefresh?)` | `Promise<string \| null>` |
 | `signOut()` | `Promise<void>` |
 
-An auth user is the authentication snapshot consumed by current components:
-`uid`, `email`, `emailVerified`, `displayName`, `photoURL`, `providerData`,
-`createdAt`, `lastLoginAt`, `toJSON()` and `updatePassword(password)`.
-LocalTestAuth returns detached snapshots with no password or session token.
-`from()` converts the JSON snapshot for the existing UserData; it does not create
-or import UserData. Profile database persistence and roles remain outside Auth.
+Authentication results are detached `UserData` objects with `id`, `email`, `name`,
+`image`, `verified`, `role`, `public`, `private` and `toJSON()`. SDK credentials,
+provider user methods, passwords and tokens are not included. `from()` normalizes
+provider JSON synchronously; `UserData.fromAuth()` remains a compatibility copier.
+Failures reject with `Error` (or throw from synchronous `from()`), preserving
+provider error codes. Missing current users and redirect results return null.
+Password changes and token retrieval use Auth methods. Profile database
+persistence and stored business roles remain outside Auth.
 
 Session restoration uses the initial auth-state callback. Obtain the synchronous
 unsubscribe function with
@@ -639,12 +641,11 @@ separate npm package. Public classes are re-exported through `redequate`.
 `src/controllers/UserData.js` remains a compatibility re-export of the moved
 implementation, so existing components and tests retain their imports.
 
-UserData was moved without changing its behavior and still depends on Firebase,
-including its existing persistence and current-user helpers. LocalTestAuth converts auth snapshots without importing
-UserData: importing LocalTestAuth or the neutral Auth entry does not load UserData
-or Firebase. An implementation importing UserData at runtime would need to
-address that legacy dependency in a separate migration. Core application
-imports still include Firebase SDK services.
+The pure UserData model has no eager Firebase or UI imports. Database operations
+load `userDataPersistence.js` lazily; subscription, logout and reducer helpers
+live in `userDataControls.js` and retain their barrel exports. Creating,
+normalizing and serializing Auth users does not load persistence or UI services.
+Core application imports still include Firebase SDK services.
 
 Auth runtime source lives in `auth/src`; its build configuration remains in
 `auth/build.mjs`.
@@ -656,5 +657,5 @@ its normal dependency and conditional exports, without an ESM-file alias.
 
 The web ESM entry is `core/index.es.js`, with `.es.js` core chunks, preserving
 Vite's existing CommonJS default-import behavior. Auth ESM entries and their
-shared Context/AuthBase/Babel-helper chunks use `.mjs` for native Node imports.
+shared Context/AuthBase/UserData/Babel-helper chunks use `.mjs` for native Node imports.
 Both formats share one Context within their build; default Auth remains lazy.

@@ -56,8 +56,7 @@ const Signup = ({signup = true, additional}) => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
         if (requestPasswordFor) {
-            auth.resolveCurrentUser()
-                .then(user => user.updatePassword(password))
+            auth.updatePassword(password)
                 .then(() => {
                     notifySnackbar({
                         title: t("User.Now you may login with your e-mail and password.")

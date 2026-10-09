@@ -84,7 +84,7 @@ export default class LocalTestAuth extends AuthBase {
         const account = state.accounts.find(item => item.uid === state.redirect);
         state.redirect = null;
         write(this, state);
-        return {user: createUser(this, account)};
+        return createUser(this, account);
     }
 
     async sendEmailVerification(options) {

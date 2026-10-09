@@ -1032,3 +1032,30 @@ failures recorded above are resolved without changing UserData runtime behavior.
 Status: 164 unit tests, 39 emulator tests, ESLint, framework build and both web
 consumer builds passed on Node.js 24.21.0. Packed ESM/CommonJS operation scenarios,
 AuthBase inheritance and isolated LocalTestAuth import graphs passed.
+
+
+### Normalized Auth results and pure UserData model
+
+Decision: both built-in Auth implementations return detached UserData directly
+from registration/sign-in, restoration, redirect resolution and synchronous from.
+Subscriptions emit UserData or null. Failures use Error with provider codes;
+password changes and tokens stay on Auth. SDK credentials and user methods do
+not cross the boundary. UserData.fromAuth remains a compatibility copier.
+
+Reason: consumers need one result contract independent of Firebase. Returning
+SDK users or provider-shaped wrappers would retain that coupling.
+
+Consequences: external Auth implementations and callers must adopt direct
+UserData results (id/verified/name/image instead of SDK fields). The pure model
+loads database dependencies lazily; UI/current-user controls retain barrel and
+legacy controller exports. Native Auth ESM uses a shared .mjs model chunk while
+web core preserves its existing bundler interop. Local storage schema, default
+LocalTest selection and explicit Firebase configuration remain unchanged.
+Business roles and profile persistence still require the existing services.
+Affected consumers: framework login/registration/Dispatcher updated; demo and
+The Whisky Talks use explicit FirebaseAuth. Android backend/token formats are
+unchanged; JS clients using the previous Auth result shape need migration.
+Status: 179 unit tests and 39 emulator tests passed. Framework, demo and The
+Whisky Talks builds passed on Node.js 24.21.0. Packed native ESM/CommonJS Auth
+operations and static import graphs passed; model creation loads no Firebase/UI.
+ESLint reports no errors in the changed Auth/common modules.

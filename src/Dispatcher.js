@@ -171,16 +171,16 @@ export default (props) => {
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
-            const {auth, authUser, deviceId, store} = props;
+            const {authUser, deviceId, store} = props;
             if (!authUser) {
                 store.dispatch({type: "currentUserData", userData: null});
                 return props;
             }
             try {
                 const savedUserData = store.getState().currentUserData?.userData;
-                const userData = savedUserData?.id === authUser.uid
+                const userData = savedUserData?.id === authUser.id
                     ? new UserData().fromJSON(savedUserData)
-                    : new UserData().fromAuth(auth, authUser.toJSON());
+                    : authUser;
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};

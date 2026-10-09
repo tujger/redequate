@@ -25,7 +25,7 @@ export default async function onAuthStateChanged(auth, callback, onError) {
             reportError(error);
             return;
         }
-        const signature = JSON.stringify(user?.toJSON() || null);
+        const signature = JSON.stringify(user ? {id: user.id, public: user.public} : null);
         if (signature === previous) return;
         previous = signature;
         try {

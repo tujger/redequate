@@ -73,27 +73,7 @@ export function current(state) {
 
 export function createUser(auth, account) {
     if (!account) return null;
-    const json = {
-        uid: account.uid,
-        email: account.email,
-        emailVerified: account.emailVerified,
-        displayName: account.displayName,
-        photoURL: account.photoURL,
-        providerData: [{
-            providerId: account.provider,
-            uid: account.uid,
-            email: account.email,
-            displayName: account.displayName,
-            photoURL: account.photoURL
-        }],
-        createdAt: String(account.createdAt),
-        lastLoginAt: String(account.lastLoginAt),
-    };
-    return {
-        ...json,
-        toJSON: () => ({...json, providerData: json.providerData.map(item => ({...item}))}),
-        updatePassword: password => changePassword(auth, password, account.uid),
-    };
+    return auth.from(account);
 }
 
 export function createAccount(email, provider = "password", password = null) {
@@ -114,7 +94,7 @@ export function login(auth, state, account) {
     account.lastLoginAt = Date.now();
     state.session = {uid: account.uid, token: `local-test:${identifier()}`};
     write(auth, state);
-    return {user: createUser(auth, account)};
+    return createUser(auth, account);
 }
 
 export function providerAccount(state, provider) {
@@ -145,12 +125,11 @@ export function recordMail(state, type, email, options) {
     });
 }
 
-export async function changePassword(auth, password, uid) {
+export async function changePassword(auth, password) {
     await delay("updatePassword");
     checkPassword(password);
     const state = read(auth);
     const account = current(state);
-    if (uid !== undefined && account.uid !== uid) fail("user-mismatch", "This user is no longer signed in.");
     account.password = password;
     write(auth, state);
 }

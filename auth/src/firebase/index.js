@@ -1,5 +1,5 @@
-import {UserData} from "../../../_common/src";
 import AuthBase from "../AuthBase";
+import {createAuthUser} from "../common";
 
 export default class FirebaseAuth extends AuthBase {
     firebase = undefined;
@@ -9,31 +9,30 @@ export default class FirebaseAuth extends AuthBase {
         this.firebase = firebase;
     }
 
-    from(json) {
-        const providerItem = json.providerData[0];
-        const provider = providerItem ? providerItem.providerId : "anonymous";
-        const emailVerified = json.emailVerified || provider === "google.com" || provider === "facebook.com";
-        const parsed = {
-            id: json.uid,
-            role: null,
-            public: {
-                name: json.displayName,
-                email: json.email || providerItem.email,
-                emailVerified,
-                image: json.photoURL,
-                lastLogin: +json.lastLoginAt,
-                provider,
-                // created: +json.createdAt,
-            },
-            requestedTimestamp: new Date(),
-            loaded: {
-                [UserData.PUBLIC]: true,
-                [UserData.NAME]: true,
-                [UserData.EMAIL]: true,
-                [UserData.IMAGE]: true
-            }
-        };
-        return parsed;
+    from(user) {
+        if(!user) return null;
+
+        const json = typeof user?.toJSON === "function" ? user.toJSON() : user;
+        const providerItem = json?.providerData?.[0];
+        const provider = providerItem?.providerId || "anonymous";
+        return createAuthUser({
+            id: json?.uid,
+            name: json?.displayName,
+            email: json?.email || providerItem?.email,
+            verified: json?.emailVerified || provider === "google.com" || provider === "facebook.com",
+            image: json?.photoURL,
+            provider,
+            created: json?.createdAt,
+            lastLogin: json?.lastLoginAt,
+        });
+    }
+
+    currentUser() {
+        const user = this.firebase.auth().currentUser;
+        if (!user) {
+            throw Object.assign(new Error("An authenticated user is required."), {code: "auth/no-current-user"});
+        }
+        return user;
     }
 
     async checkSignInWithEmailLink() {
@@ -41,27 +40,37 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        return this.firebase.auth().createUserWithEmailAndPassword(email, password)
+        const result = await this.firebase.auth().createUserWithEmailAndPassword(email, password);
+        return this.from(result.user);
     }
 
     async onAuthStateChanged(callback, onError) {
-        return this.firebase.auth().onAuthStateChanged(callback, onError)
+        return this.firebase.auth().onAuthStateChanged(user => {
+            return callback(this.from(user));
+        }, onError)
     }
 
     async resolveCurrentUser() {
-        return this.firebase.auth().currentUser;
+            const user = this.firebase.auth().currentUser;
+            return  this.from(user);
     }
 
     async resolveRedirectResult() {
-        return this.firebase.auth().getRedirectResult()
+            const result = await this.firebase.auth().getRedirectResult();
+            return this.from(result.user);
+    }
+
+    async resolveToken(forceRefresh = false) {
+            const user = this.firebase.auth().currentUser;
+            return  user?.getIdToken(forceRefresh);
     }
 
     async sendEmailVerification(options) {
-        return this.firebase.auth().currentUser.sendEmailVerification();
+        await this.operation(() => this.currentUser().sendEmailVerification());
     }
 
     async sendPasswordResetEmail(email, options) {
-        return this.firebase.auth().sendPasswordResetEmail(email)
+        await this.operation(() => this.firebase.auth().sendPasswordResetEmail(email));
     }
 
     async sendSignInLinkToEmail(email, options) {
@@ -69,32 +78,40 @@ export default class FirebaseAuth extends AuthBase {
             url: window.location.origin + "/signup/" + email,
             handleCodeInApp: true,
         };
-        return this.firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings);
+        await this.firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings)
     }
 
     async signInWithCredential(token) {
-        const credential = this.firebase.auth.GoogleAuthProvider.credential(token);
-        return this.firebase.auth().signInWithCredential(credential)
+            const credential = this.firebase.auth.GoogleAuthProvider.credential(token);
+            const result = await this.firebase.auth().signInWithCredential(credential);
+            return this.from(result.user);
     }
 
     async signInWithEmailAndPassword(email, password) {
-        return this.firebase.auth().signInWithEmailAndPassword(email, password)
+            const result = await this.firebase.auth().signInWithEmailAndPassword(email, password);
+            return this.from(result.user);
     }
 
     async signInWithEmailLink(email) {
-        return this.firebase.auth().signInWithEmailLink(email, window.location.href);
+            const result = await this.firebase.auth().signInWithEmailLink(email, window.location.href);
+            return this.from(result.user);
     }
 
     async signInWithPopup(provider, options) {
-        return this.firebase.auth().signInWithPopup(this.provider(provider))
+            const result = await this.firebase.auth().signInWithPopup(this.provider(provider));
+            return this.from(result.user);
     }
 
     async signInWithRedirect(provider, options) {
-        return this.firebase.auth().signInWithRedirect(this.provider(provider));
+        return this.firebase.auth().signInWithRedirect(this.provider(provider))
     }
 
     async signOut() {
         return this.firebase.auth().signOut()
+    }
+
+    async updatePassword(password) {
+        return this.currentUser().updatePassword(password)
     }
 
     async updateProfile({...fields}) {
@@ -104,9 +121,9 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     provider(provider) {
-        if(provider === "google.com") {
+        if (provider === "google.com") {
             provider = this.providerGoogle();
-        } else if(provider === "facebook.com") {
+        } else if (provider === "facebook.com") {
             provider = this.providerFacebook();
         }
         return provider;
