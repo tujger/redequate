@@ -1117,3 +1117,30 @@ Provider errors continue passing through without wrappers or conversion.
 Status: 178 unit tests, 38 emulator tests, ESLint, framework build and packed
 ESM/CommonJS Auth scenarios passed, including absence of resolveToken.
 The existing native ESM typeless web-chunk warning remains.
+
+
+### Provider-independent Storage scaffold
+
+Decision: StorageBase exposes four async operations: upload(path, blob, metadata,
+onProgress), resolveDownloadURL(pathOrURL), resolveMetadata(pathOrURL) and
+delete(pathOrURL). Upload accepts Blob/File and returns {url, metadata}; metadata
+uses {contentType, attributes}, with string-valued custom attributes. Optional
+progress callbacks receive {bytesTransferred, totalBytes}. Read/delete operations
+accept a storage path or a URL issued by the provider; deletion returns no value.
+
+Reason: these operations cover current file upload, thumbnail metadata and
+obsolete-file removal scenarios without exposing Firebase references, tasks or
+snapshots. Provider implementations own SDK conversion. Reject mirroring the
+Firebase Reference/UploadTask API and adding unused listing, subscriptions,
+task controls or metadata updates.
+
+Consequences: FirebaseStorage and LocalTestStorage currently inherit rejecting
+Not implemented stubs. File naming, image processing and replacement cleanup
+remain caller responsibilities. Public storage, storage/firebase and
+storage/local-test subpaths use the existing joint Rollup ESM/CommonJS build.
+Affected consumers: demo and The Whisky Talks can adopt the new contract later;
+current file URLs, persistence and Android/backend contracts are unchanged.
+Status: framework build, public ESM/CommonJS imports, inherited async stub and
+selection checks, Vite browser import resolution from The Whisky Talks and npm
+pack dry-run passed. Provider implementations and consumer migration remain
+separate work. No permanent tests were added or changed.

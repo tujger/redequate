@@ -150,6 +150,18 @@
             "import": "./core/auth/local-test.mjs",
             "require": "./core/auth/local-test.cjs"
         },
+        "./storage": {
+            "import": "./core/storage/index.mjs",
+            "require": "./core/storage/index.cjs"
+        },
+        "./storage/firebase": {
+            "import": "./core/storage/firebase.mjs",
+            "require": "./core/storage/firebase.cjs"
+        },
+        "./storage/local-test": {
+            "import": "./core/storage/local-test.mjs",
+            "require": "./core/storage/local-test.cjs"
+        },
         "./_common": null,
         "./_common/*": null,
         "./core/_common/*": null,
