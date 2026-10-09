@@ -26,18 +26,17 @@ export function watchUserChanged({auth, store, firebase}) {
                     .catch(notifySnackbar)
             }
 
-            auth.onAuthStateChanged(async result => {
-                // const ud = new UserData(firebase).fromFirebaseAuth(result.toJSON())
-                if (!currentUserDataInstance.id || !result) return;
+            auth.onAuthStateChanged(async userData => {
+                if (!currentUserDataInstance.id || !userData) return;
                 let changed = false;
-                if (currentUserDataInstance.role === Role.USER_NOT_VERIFIED && result.emailVerified) {
-                    console.warn("[UserData] verified", currentUserDataInstance.id, result && result.toJSON());
+                if (currentUserDataInstance.role === Role.USER_NOT_VERIFIED && userData.verified) {
+                    console.warn("[UserData] verified", currentUserDataInstance.id, userData?.toJSON());
                     changed = true;
-                } else if (result.emailVerified && currentUserDataInstance.verified !== result.emailVerified) {
-                    console.warn("[UserData] changed", currentUserDataInstance.id, result && result.toJSON());
+                } else if (userData.verified && currentUserDataInstance.verified !== userData.verified) {
+                    console.warn("[UserData] changed", currentUserDataInstance.id, userData?.toJSON());
                     changed = true;
-                } else if (result && result.uid === currentUserDataInstance.id) {
-                    const data = await firebase.database().ref("users_public").child(result.uid).child("updated").once("value");
+                } else if (userData && userData.id === currentUserDataInstance.id) {
+                    const data = await firebase.database().ref("users_public").child(userData.id).child("updated").once("value");
                     if (data.val() > currentUserDataInstance.public.updated) {
                         console.warn(`[UserData] last timestamp ${data.val()} > than saved ${currentUserDataInstance.public.updated}`);
                         changed = true;
@@ -401,25 +400,12 @@ export function UserData() {
             }
             return _body;
         },
-        fromAuth: (auth, json) => {
-            const parsed = auth.from(json);
-            _id = parsed.id;
-            _role = parsed.role;
-            _public = parsed.public;
-            _requestedTimestamp = parsed.requestedTimestamp;
-            _loaded = parsed.loaded;
-            _body.create(_id, _role, {
-                public: _public,
-                private: _private,
-            });
-            return _body;
-        },
         fromJSON: json => {
             _id = json.id;
             _role = json.role;
             _public = json.public;
             _private = json.private;
-            _requestedTimestamp = json.require;
+            _requestedTimestamp = json.requested;
             _loaded = json.loaded;
             _body.create(_id, _role, {
                 public: _public,

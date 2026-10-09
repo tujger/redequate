@@ -1,5 +1,5 @@
 import AuthBase from "../AuthBase";
-import {createAuthUser} from "../common";
+import {UserData} from "../../../_common/src";
 
 export default class FirebaseAuth extends AuthBase {
     firebase = undefined;
@@ -7,24 +7,6 @@ export default class FirebaseAuth extends AuthBase {
     constructor({firebase}) {
         super();
         this.firebase = firebase;
-    }
-
-    from(user) {
-        if(!user) return null;
-
-        const json = typeof user?.toJSON === "function" ? user.toJSON() : user;
-        const providerItem = json?.providerData?.[0];
-        const provider = providerItem?.providerId || "anonymous";
-        return createAuthUser({
-            id: json?.uid,
-            name: json?.displayName,
-            email: json?.email || providerItem?.email,
-            verified: json?.emailVerified || provider === "google.com" || provider === "facebook.com",
-            image: json?.photoURL,
-            provider,
-            created: json?.createdAt,
-            lastLogin: json?.lastLoginAt,
-        });
     }
 
     currentUser() {
@@ -40,37 +22,55 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        const result = await this.firebase.auth().createUserWithEmailAndPassword(email, password);
-        return this.from(result.user);
+        return this.firebase.auth()
+            .createUserWithEmailAndPassword(email, password)
+            .then(result => toUserData(result?.user));
     }
 
     async onAuthStateChanged(callback, onError) {
+        if (typeof callback !== "function" || (onError !== undefined && typeof onError !== "function")) {
+            throw Object.assign(new Error("Auth state listeners must be functions."), {code: "auth/invalid-argument"});
+        }
+        const reportError = error => {
+            try {
+                if (onError) onError(error);
+                else console.error("[FirebaseAuth] Auth state observer failed", error);
+            } catch (callbackError) {
+                console.error("[FirebaseAuth] Auth error callback failed", callbackError);
+            }
+        };
         return this.firebase.auth().onAuthStateChanged(user => {
-            return callback(this.from(user));
-        }, onError)
+            try {
+                const pending = callback(user ? toUserData(user) : null);
+                if (pending && typeof pending.then === "function") pending.catch(reportError);
+            } catch (error) {
+                reportError(error);
+            }
+        }, reportError);
     }
 
     async resolveCurrentUser() {
-            const user = this.firebase.auth().currentUser;
-            return  this.from(user);
+        const user = this.firebase.auth().currentUser;
+        return toUserData(user);
     }
 
     async resolveRedirectResult() {
-            const result = await this.firebase.auth().getRedirectResult();
-            return this.from(result.user);
+        return this.firebase.auth()
+            .getRedirectResult()
+            .then(result => toUserData(result?.user));
     }
 
     async resolveToken(forceRefresh = false) {
-            const user = this.firebase.auth().currentUser;
-            return  user?.getIdToken(forceRefresh);
+        const user = this.firebase.auth().currentUser;
+        return user?.getIdToken(forceRefresh);
     }
 
     async sendEmailVerification(options) {
-        await this.operation(() => this.currentUser().sendEmailVerification());
+        return this.currentUser().sendEmailVerification();
     }
 
     async sendPasswordResetEmail(email, options) {
-        await this.operation(() => this.firebase.auth().sendPasswordResetEmail(email));
+        return this.firebase.auth().sendPasswordResetEmail(email);
     }
 
     async sendSignInLinkToEmail(email, options) {
@@ -78,28 +78,32 @@ export default class FirebaseAuth extends AuthBase {
             url: window.location.origin + "/signup/" + email,
             handleCodeInApp: true,
         };
-        await this.firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings)
+        return this.firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings)
     }
 
     async signInWithCredential(token) {
-            const credential = this.firebase.auth.GoogleAuthProvider.credential(token);
-            const result = await this.firebase.auth().signInWithCredential(credential);
-            return this.from(result.user);
+        const credential = this.firebase.auth.GoogleAuthProvider.credential(token);
+        return this.firebase.auth()
+            .signInWithCredential(credential)
+            .then(result => toUserData(result?.user));
     }
 
     async signInWithEmailAndPassword(email, password) {
-            const result = await this.firebase.auth().signInWithEmailAndPassword(email, password);
-            return this.from(result.user);
+        return this.firebase.auth()
+            .signInWithEmailAndPassword(email, password)
+            .then(result => toUserData(result?.user));
     }
 
     async signInWithEmailLink(email) {
-            const result = await this.firebase.auth().signInWithEmailLink(email, window.location.href);
-            return this.from(result.user);
+        return this.firebase.auth()
+            .signInWithEmailLink(email, window.location.href)
+            .then(result => toUserData(result?.user));
     }
 
     async signInWithPopup(provider, options) {
-            const result = await this.firebase.auth().signInWithPopup(this.provider(provider));
-            return this.from(result.user);
+        return this.firebase.auth()
+            .signInWithPopup(this.provider(provider))
+            .then(result => toUserData(result?.user));
     }
 
     async signInWithRedirect(provider, options) {
@@ -107,7 +111,7 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async signOut() {
-        return this.firebase.auth().signOut()
+        return this.firebase.auth().signOut();
     }
 
     async updatePassword(password) {
@@ -115,9 +119,7 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async updateProfile({...fields}) {
-        return this.firebase.auth().currentUser.updateProfile({
-            ...fields
-        })
+        return this.currentUser().updateProfile({...fields});
     }
 
     provider(provider) {
@@ -143,3 +145,33 @@ export default class FirebaseAuth extends AuthBase {
         return provider;
     }
 }
+
+const toUserData = user => {
+    if(!user) return null;
+    const json = user.toJSON();
+    if (!json.uid) {
+        throw Object.assign(new Error("Auth user has no identifier."), {code: "auth/invalid-user-data"});
+    }
+    const providerItem = json.providerData?.[0];
+    const provider = providerItem?.providerId || "anonymous";
+    const timestamp = value => {
+        const number = Number(value);
+        return value !== null && value !== undefined && value !== "" && Number.isFinite(number) ? number : null;
+    };
+    return new UserData().fromJSON({
+        id: json.uid,
+        role: null,
+        public: {
+            name: json.displayName ?? null,
+            email: json.email || providerItem?.email || null,
+            emailVerified: Boolean(json.emailVerified || provider === "google.com" || provider === "facebook.com"),
+            image: json.photoURL ?? null,
+            provider,
+            created: timestamp(json.createdAt) ?? Date.now(),
+            lastLogin: timestamp(json.lastLoginAt),
+        },
+        private: {},
+        requested: Date.now(),
+        loaded: {public: true, name: true, email: true, image: true},
+    });
+};

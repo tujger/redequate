@@ -13,10 +13,6 @@ export default class AuthBase {
         return notImplemented("createUserWithEmailAndPassword");
     }
 
-    from(json) {
-        return notImplemented("from");
-    }
-
     async onAuthStateChanged(callback, onError) {
         return notImplemented("onAuthStateChanged");
     }

@@ -1,11 +1,11 @@
 import {createContext, useContext} from "react";
 
-export const Context = createContext(null);
+const AuthContext = createContext(null);
 
-export const AuthContext = Context.Provider;
+export default AuthContext.Provider;
 
 export const useAuth = () => {
-    const auth = useContext(Context);
+    const auth = useContext(AuthContext);
     if (!auth) throw new Error("useAuth requires a Dispatcher Auth provider");
     return auth;
 };
