@@ -89,6 +89,8 @@ export default () => {
                 WrapperControl: 'src/controllers/WrapperControl.js',
                 uploadComponentControls: 'src/components/UploadComponent/uploadComponentControls',
 
+                Firebase: 'src/controllers/Firebase.js',
+                
                 // controls
                 Button: 'src/controls/Button/Button.js',
                 Chip: 'src/controls/Chip/Chip.js',
@@ -161,7 +163,6 @@ export default () => {
                 __chatsCounterReducer: 'src/chat/chatsCounterReducer.js',
                 __chatMeta: 'src/chat/ChatMeta.js',
                 __dateTimePicker: 'src/components/DateTimePicker/DateTimePicker.js',
-                __firebase: 'src/controllers/Firebase.js',
                 __lazyMentionsInputComponent: 'src/components/MentionsInputComponent/LazyMentionsComponent.js',
                 __mutualComponentControls: 'src/components/MutualComponent/mutualComponentControls.js',
                 __mutualConstants: 'src/components/MutualComponent/MutualConstants.js',

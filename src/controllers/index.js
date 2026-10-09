@@ -1,4 +1,4 @@
-export * from "./Firebase";
+export {default as Firebase, firebaseMessaging, fetchCallable} from "./Firebase";
 export * from "./Notifications";
 export * from "./ServiceWorkerControl";
 export * from "./WrapperControl";
