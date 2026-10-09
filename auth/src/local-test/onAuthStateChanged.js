@@ -1,4 +1,4 @@
-import {changeEvent, fail, delay, read, createUser} from "./common";
+import {changeEvent, fail, delay, read, toUserData} from "./common";
 
 export default async function onAuthStateChanged(auth, callback, onError) {
     await delay("onAuthStateChanged");
@@ -7,34 +7,25 @@ export default async function onAuthStateChanged(auth, callback, onError) {
     }
     let previous;
     let active = true;
-    const reportError = error => {
-        try {
-            if (onError) onError(error);
-            else console.error("[LocalTestAuth] Auth state observer failed", error);
-        } catch (callbackError) {
-            console.error("[LocalTestAuth] Auth error callback failed", callbackError);
-        }
-    };
     const notify = () => {
         if (!active) return;
         let user;
         try {
             const state = read(auth);
-            user = createUser(auth, state.accounts.find(account => account.uid === state.session?.uid));
+            user = toUserData(state.accounts.find(account => account.uid === state.session?.uid));
         } catch (error) {
-            reportError(error);
+            onError(error);
             return;
         }
         const signature = JSON.stringify(user ? {id: user.id, public: user.public} : null);
         if (signature === previous) return;
         previous = signature;
         try {
-            callback(user);
+            return callback(user);
         } catch (error) {
-            reportError(error);
+            onError(error);
         }
     };
-    // Fail subscription setup explicitly if persistence cannot be read.
     read(auth);
     const localChange = event => {
         if (event.detail === auth.storageKey) notify();

@@ -225,14 +225,14 @@ export default (props) => {
         }
         const installWrapperControl_ = async props => {
             (async () => {
-                installWrapperControl(props.firebase);
+                installWrapperControl(props._firebase);
             })().catch(notifySnackbar);
             return props;
         }
         const installNotificationsWatcher = async props => {
             (async () => {
                 if (!iOS && hasNotifications()) {
-                    setupReceivingNotifications(props.firebase).catch(console.error);
+                    setupReceivingNotifications(props._firebase).catch(console.error);
                 }
             })().catch(console.error);
             return props;

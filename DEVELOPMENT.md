@@ -1059,3 +1059,61 @@ Status: 179 unit tests and 39 emulator tests passed. Framework, demo and The
 Whisky Talks builds passed on Node.js 24.21.0. Packed native ESM/CommonJS Auth
 operations and static import graphs passed; model creation loads no Firebase/UI.
 ESLint reports no errors in the changed Auth/common modules.
+
+
+### Auth JSON conversion without a public parser
+
+Decision: remove Auth.from and UserData.fromAuth. Provider-specific internal
+functions with default exports produce the existing UserData JSON shape; Auth
+operations and subscriptions construct UserData through fromJSON and continue
+returning it directly. JSON request time uses requested, matching toJSON.
+
+Reason: conversion belongs inside each provider adapter, without requiring a
+parser method from every Auth implementation or coupling UserData back to Auth.
+
+Consequences: external Auth implementations return UserData directly. Callers
+of the removed parsers migrate to Auth results or normalized JSON/fromJSON.
+UserData detaches restored public/private/loaded data from input snapshots.
+Existing UserData service imports remain in the current source; JSON converter
+modules have no UserData/service imports. No storage-schema or Android backend
+contract changes. Demo and The Whisky Talks retain explicit FirebaseAuth.
+Provider errors pass through unchanged by explicit user decision; no operation
+wrapper or error conversion helper is used. This supersedes the earlier policy
+of converting arbitrary rejected values into Error.
+Status: 181 unit tests and 39 emulator tests passed. Framework and both web
+consumer builds passed. Packed ESM/CommonJS operation checks and removal of the
+parser API passed; native ESM reports the existing typeless web-chunk warning.
+ESLint passed for the changed Auth/common source and tests.
+
+
+### Direct UserData JSON construction inside Auth
+
+Decision: existing internal createUser functions form the JSON object directly
+in UserData.fromJSON. Remove the shared JSON factory and intermediate converter
+modules. Provider field/timestamp mapping and direct SDK errors are preserved.
+
+Reason: the extra conversion layers add indirection without a separate consumer.
+Consequences: Auth still returns UserData/null with no public parser; localStorage
+and web/Android contracts are unchanged. Current UserData edits are preserved,
+including its existing handling of serialized object references. This supersedes
+the earlier use of separate default-export JSON conversion functions.
+Status: 179 unit tests, 38 emulator tests, ESLint and framework build passed.
+Packed ESM/CommonJS Auth operation checks passed; the existing typeless web-chunk
+warning remains. No consumer-facing Auth result changes in this simplification.
+
+
+### Remove unused Auth token retrieval
+
+Decision: remove resolveToken from AuthBase, FirebaseAuth and LocalTestAuth.
+LocalTest's shared conversion helper is named toUserData and still constructs
+UserData directly from account JSON. Firebase test fixtures implement SDK toJSON.
+
+Reason: resolveToken has no production callers in the framework or inspected
+web consumers. Backend requests already obtain tokens through Firebase getIdToken.
+Consequences: remove the unused public method and token-refresh tests; retain the
+localStorage session token field to keep existing stored sessions compatible.
+Firebase SDK token access and Android/backend authentication are unchanged.
+Provider errors continue passing through without wrappers or conversion.
+Status: 178 unit tests, 38 emulator tests, ESLint, framework build and packed
+ESM/CommonJS Auth scenarios passed, including absence of resolveToken.
+The existing native ESM typeless web-chunk warning remains.

@@ -2,8 +2,6 @@ const notImplemented = method => {
     throw new Error(`Not implemented: ${method}`);
 };
 
-// Override supported operations; inherited stubs fail explicitly.
-// Only operations used by current authentication flows; all return Promises.
 export default class AuthBase {
     async checkSignInWithEmailLink() {
         return notImplemented("checkSignInWithEmailLink");
@@ -19,10 +17,6 @@ export default class AuthBase {
 
     async resolveRedirectResult() {
         return notImplemented("resolveRedirectResult");
-    }
-
-    async resolveToken(forceRefresh) {
-        return notImplemented("resolveToken");
     }
 
     async resolveCurrentUser() {

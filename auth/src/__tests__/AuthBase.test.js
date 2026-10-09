@@ -1,9 +1,10 @@
 import AuthBase from "../AuthBase";
 
-it("throws synchronously for the unsupported parser", () => {
-    expect(() => new AuthBase().from({})).toThrow("Not implemented: from");
+it("does not expose removed Auth methods", () => {
+    expect(new AuthBase()).not.toHaveProperty("from");
+    expect(new AuthBase()).not.toHaveProperty("resolveToken");
 });
-it.each(Object.getOwnPropertyNames(AuthBase.prototype).filter(name => name !== "constructor" && name !== "from"))(
+it.each(Object.getOwnPropertyNames(AuthBase.prototype).filter(name => name !== "constructor"))(
     "rejects unsupported async operation %s", async name => {
         const result = new AuthBase()[name]({});
         expect(result).toBeInstanceOf(Promise);

@@ -224,27 +224,6 @@ describe("UserData", () => {
         await expect(ownData.fetchPrivate("device_id", true)).resolves.toBe(ownData);
         expect(ownData.private.device_id).toEqual({os: "Test"});
     });
-    it("fromAuth", () => {
-        expect(userDataUser.fromAuth(auth, {
-            providerData: [{providerId: "password", email: "auth@example.test"}],
-            uid: "test_auth_user_id",
-            email: "auth@example.test",
-            displayName: "Auth User",
-            photoURL: "https://example.test/photo",
-            emailVerified: true,
-            lastLoginAt: "1234"
-        })).toMatchObject({
-            id: "test_auth_user_id",
-            public: {
-                name: "Auth User",
-                email: "auth@example.test",
-                emailVerified: true,
-                image: "https://example.test/photo",
-                lastLogin: 1234,
-                provider: "password"
-            }
-        });
-    });
     it("fromJSON", () => {
         const userData = UserData();
         expect(userData.fromJSON(userDataUser.toJSON())).toMatchObject({

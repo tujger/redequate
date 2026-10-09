@@ -1,3 +1,5 @@
+import {UserData} from "../../../_common/src/UserData";
+
 export const changeEvent = "redequate:local-test-auth-changed";
 export const fail = (code, message) => {
     throw Object.assign(new Error(message), {code: `auth/${code}`});
@@ -71,9 +73,27 @@ export function current(state) {
     return account;
 }
 
-export function createUser(auth, account) {
+export function toUserData(account) {
     if (!account) return null;
-    return auth.from(account);
+    if (typeof account.uid !== "string" || !account.uid) {
+        fail("invalid-user-data", "Auth user has no identifier.");
+    }
+    return new UserData().fromJSON({
+        id: account.uid,
+        role: null,
+        public: {
+            name: account.displayName ?? null,
+            email: account.email ?? null,
+            emailVerified: Boolean(account.emailVerified),
+            image: account.photoURL ?? null,
+            provider: account.provider || "password",
+            created: account.createdAt,
+            lastLogin: account.lastLoginAt,
+        },
+        private: {},
+        requested: Date.now(),
+        loaded: {public: true, name: true, email: true, image: true},
+    });
 }
 
 export function createAccount(email, provider = "password", password = null) {
@@ -94,7 +114,7 @@ export function login(auth, state, account) {
     account.lastLoginAt = Date.now();
     state.session = {uid: account.uid, token: `local-test:${identifier()}`};
     write(auth, state);
-    return createUser(auth, account);
+    return toUserData(account);
 }
 
 export function providerAccount(state, provider) {

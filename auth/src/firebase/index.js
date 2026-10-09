@@ -1,16 +1,16 @@
 import AuthBase from "../AuthBase";
-import {UserData} from "../../../_common/src";
+import {toUserData} from "./toUserData";
 
 export default class FirebaseAuth extends AuthBase {
-    firebase = undefined;
+    _firebase = undefined;
 
     constructor({firebase}) {
         super();
-        this.firebase = firebase;
+        this._firebase = firebase;
     }
 
     currentUser() {
-        const user = this.firebase.auth().currentUser;
+        const user = this._firebase.auth().currentUser;
         if (!user) {
             throw Object.assign(new Error("An authenticated user is required."), {code: "auth/no-current-user"});
         }
@@ -18,11 +18,11 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async checkSignInWithEmailLink() {
-        return this.firebase.auth().isSignInWithEmailLink(window.location.href)
+        return this._firebase.auth().isSignInWithEmailLink(window.location.href)
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        return this.firebase.auth()
+        return this._firebase.auth()
             .createUserWithEmailAndPassword(email, password)
             .then(result => toUserData(result?.user));
     }
@@ -39,7 +39,7 @@ export default class FirebaseAuth extends AuthBase {
                 console.error("[FirebaseAuth] Auth error callback failed", callbackError);
             }
         };
-        return this.firebase.auth().onAuthStateChanged(user => {
+        return this._firebase.auth().onAuthStateChanged(user => {
             try {
                 const pending = callback(user ? toUserData(user) : null);
                 if (pending && typeof pending.then === "function") pending.catch(reportError);
@@ -50,19 +50,14 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async resolveCurrentUser() {
-        const user = this.firebase.auth().currentUser;
+        const user = this._firebase.auth().currentUser;
         return toUserData(user);
     }
 
     async resolveRedirectResult() {
-        return this.firebase.auth()
+        return this._firebase.auth()
             .getRedirectResult()
             .then(result => toUserData(result?.user));
-    }
-
-    async resolveToken(forceRefresh = false) {
-        const user = this.firebase.auth().currentUser;
-        return user?.getIdToken(forceRefresh);
     }
 
     async sendEmailVerification(options) {
@@ -70,7 +65,7 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async sendPasswordResetEmail(email, options) {
-        return this.firebase.auth().sendPasswordResetEmail(email);
+        return this._firebase.auth().sendPasswordResetEmail(email);
     }
 
     async sendSignInLinkToEmail(email, options) {
@@ -78,40 +73,40 @@ export default class FirebaseAuth extends AuthBase {
             url: window.location.origin + "/signup/" + email,
             handleCodeInApp: true,
         };
-        return this.firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings)
+        return this._firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings)
     }
 
     async signInWithCredential(token) {
-        const credential = this.firebase.auth.GoogleAuthProvider.credential(token);
-        return this.firebase.auth()
+        const credential = this._firebase.auth.GoogleAuthProvider.credential(token);
+        return this._firebase.auth()
             .signInWithCredential(credential)
             .then(result => toUserData(result?.user));
     }
 
     async signInWithEmailAndPassword(email, password) {
-        return this.firebase.auth()
+        return this._firebase.auth()
             .signInWithEmailAndPassword(email, password)
             .then(result => toUserData(result?.user));
     }
 
     async signInWithEmailLink(email) {
-        return this.firebase.auth()
+        return this._firebase.auth()
             .signInWithEmailLink(email, window.location.href)
             .then(result => toUserData(result?.user));
     }
 
     async signInWithPopup(provider, options) {
-        return this.firebase.auth()
+        return this._firebase.auth()
             .signInWithPopup(this.provider(provider))
             .then(result => toUserData(result?.user));
     }
 
     async signInWithRedirect(provider, options) {
-        return this.firebase.auth().signInWithRedirect(this.provider(provider))
+        return this._firebase.auth().signInWithRedirect(this.provider(provider))
     }
 
     async signOut() {
-        return this.firebase.auth().signOut();
+        return this._firebase.auth().signOut();
     }
 
     async updatePassword(password) {
@@ -132,46 +127,16 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     providerGoogle() {
-        const provider = new this.firebase.auth.GoogleAuthProvider();
+        const provider = new this._firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({prompt: "select_account"});
         provider.addScope("https://www.googleapis.com/auth/userinfo.email");
         return provider;
     }
 
     providerFacebook() {
-        const provider = new this.firebase.auth.FacebookAuthProvider();
+        const provider = new this._firebase.auth.FacebookAuthProvider();
         provider.addScope("email");
         provider.setCustomParameters({prompt: "select_account"});
         return provider;
     }
 }
-
-const toUserData = user => {
-    if(!user) return null;
-    const json = user.toJSON();
-    if (!json.uid) {
-        throw Object.assign(new Error("Auth user has no identifier."), {code: "auth/invalid-user-data"});
-    }
-    const providerItem = json.providerData?.[0];
-    const provider = providerItem?.providerId || "anonymous";
-    const timestamp = value => {
-        const number = Number(value);
-        return value !== null && value !== undefined && value !== "" && Number.isFinite(number) ? number : null;
-    };
-    return new UserData().fromJSON({
-        id: json.uid,
-        role: null,
-        public: {
-            name: json.displayName ?? null,
-            email: json.email || providerItem?.email || null,
-            emailVerified: Boolean(json.emailVerified || provider === "google.com" || provider === "facebook.com"),
-            image: json.photoURL ?? null,
-            provider,
-            created: timestamp(json.createdAt) ?? Date.now(),
-            lastLogin: timestamp(json.lastLoginAt),
-        },
-        private: {},
-        requested: Date.now(),
-        loaded: {public: true, name: true, email: true, image: true},
-    });
-};

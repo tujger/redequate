@@ -1,6 +1,6 @@
 import React from "react";
 import {vi} from "vitest";
-import {AuthContext, useAuth} from "../context";
+import AuthProvider, {useAuth} from "../AuthContext";
 import {render, unmount} from "../../../src/__tests__/render";
 
 it("uses the nearest provider and preserves independent instances", () => {
@@ -13,9 +13,9 @@ it("uses the nearest provider and preserves independent instances", () => {
     };
     const container = document.createElement("div");
     try {
-        render(React.createElement(AuthContext, {value: outer},
+        render(React.createElement(AuthProvider, {value: outer},
             React.createElement(Probe),
-            React.createElement(AuthContext, {value: inner}, React.createElement(Probe)),
+            React.createElement(AuthProvider, {value: inner}, React.createElement(Probe)),
             React.createElement(Probe)), container);
         expect(observed).toEqual([outer, inner, outer]);
     } finally {

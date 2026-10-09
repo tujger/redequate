@@ -1,25 +1,20 @@
 import AuthBase from "../AuthBase";
-import parseUser from "./from";
 import createUserWithEmailAndPassword from "./createUserWithEmailAndPassword";
 import signInWithEmailAndPassword from "./signInWithEmailAndPassword";
 import onAuthStateChanged from "./onAuthStateChanged";
 import signInWithCredential from "./signInWithCredential";
 import signInWithEmailLink from "./signInWithEmailLink";
 import updateProfile from "./updateProfile";
-import {fail, normalizeEmail, identifier, delay, read, write, current, createUser, login, providerAccount, recordMail, changePassword} from "./common";
+import {fail, normalizeEmail, delay, read, write, current, toUserData, login, providerAccount, recordMail, changePassword} from "./common";
 
 // Local simulation only: passwords and fake tokens are stored in plain text.
 export default class LocalTestAuth extends AuthBase {
     constructor({storageKey = "redequate:auth:local-test"} = {}) {
         super();
-        if (typeof storageKey !== "string" || !storageKey.trim()) {
+        if (!storageKey.trim()) {
             fail("invalid-argument", "storageKey must be a non-empty string.");
         }
         this.storageKey = storageKey;
-    }
-
-    from(json) {
-        return parseUser(json);
     }
 
     async createUserWithEmailAndPassword(email, password) {
@@ -37,18 +32,7 @@ export default class LocalTestAuth extends AuthBase {
     async resolveCurrentUser() {
         await delay("resolveCurrentUser");
         const state = read(this);
-        return createUser(this, state.accounts.find(account => account.uid === state.session?.uid));
-    }
-
-    async resolveToken(forceRefresh = false) {
-        await delay("resolveToken");
-        const state = read(this);
-        if (!state.session) return null;
-        if (forceRefresh) {
-            state.session.token = `local-test:${identifier()}`;
-            write(this, state);
-        }
-        return state.session.token;
+        return toUserData(state.accounts.find(account => account.uid === state.session?.uid));
     }
 
     async signOut() {
@@ -84,7 +68,7 @@ export default class LocalTestAuth extends AuthBase {
         const account = state.accounts.find(item => item.uid === state.redirect);
         state.redirect = null;
         write(this, state);
-        return createUser(this, account);
+        return toUserData(account);
     }
 
     async sendEmailVerification(options) {

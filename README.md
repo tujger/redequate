@@ -528,7 +528,7 @@ is never silently replaced. Removing the storage key resets the simulation.
 Every async Auth operation waits a random integer delay of 0–2000 ms, including
 failed operations. Delays greater than 100 ms are logged through `console.debug`
 with the method name and duration. Internal calls do not add another delay;
-`from()` remains synchronous. No password or token is logged.
+Internal JSON conversion is synchronous. No password or token is logged.
 
 Email addresses are trimmed and lowercased; passwords require six characters.
 Registration signs in an initially unverified account. Passwords and fake session
@@ -548,15 +548,12 @@ Provider options are accepted but have no effect. Credential sign-in accepts a
 non-empty string as a simulated Google token, or an object with `provider` or
 `providerId`; tokens are not validated. Redirect signs in and stores a result
 without navigation; `resolveRedirectResult()` consumes that result once.
-`resolveToken()` returns an opaque `local-test:` token, or null when signed out;
-`forceRefresh` generates a replacement. These tokens cannot authenticate backend
-requests. `signOut()` clears the session and pending redirect, preserving accounts.
+`signOut()` clears the session and pending redirect, preserving accounts.
 
 `updateProfile({displayName, photoURL})` persists supported fields (strings or null).
 Password changes require an active session and use `auth.updatePassword()`.
 Auth-state subscriptions
-emit their initial state and changed current-user snapshots; token refreshes and
-mail records alone do not emit. Await the subscription to obtain its synchronous
+emit their initial state and changed current-user snapshots; mail records alone do not emit. Await the subscription to obtain its synchronous
 unsubscribe function. Storage failures during observation go to `onError`, when
 provided; setup failures reject the subscription Promise.
 
@@ -594,11 +591,10 @@ LocalTestAuth does not make the entire application work offline without Firebase
 `AuthBase`, exported from `redequate/auth`, supplies explicit `Not implemented`
 defaults. Built-in implementations override supported operations. The current
 runtime signatures are defined in `auth/src/AuthBase.js`. All operations below
-return Promises except synchronous `from(json)`.
+return Promises.
 
 | Method | Result |
 | --- | --- |
-| `from(json)` | `UserData` |
 | `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives `UserData` or null |
 | `createUserWithEmailAndPassword(email, password)` | `Promise<UserData>` |
 | `signInWithEmailAndPassword(email, password)` | `Promise<UserData>` |
@@ -614,16 +610,17 @@ return Promises except synchronous `from(json)`.
 | `resolveCurrentUser()` | `Promise<UserData \| null>` |
 | `updatePassword(password)` | `Promise<void>` |
 | `updateProfile(fields)` | `Promise<void>` |
-| `resolveToken(forceRefresh?)` | `Promise<string \| null>` |
 | `signOut()` | `Promise<void>` |
 
 Authentication results are detached `UserData` objects with `id`, `email`, `name`,
 `image`, `verified`, `role`, `public`, `private` and `toJSON()`. SDK credentials,
-provider user methods, passwords and tokens are not included. `from()` normalizes
-provider JSON synchronously; `UserData.fromAuth()` remains a compatibility copier.
-Failures reject with `Error` (or throw from synchronous `from()`), preserving
-provider error codes. Missing current users and redirect results return null.
-Password changes and token retrieval use Auth methods. Profile database
+provider user methods, passwords and tokens are not included. Each adapter
+forms the UserData JSON object (`id`, `role`, `public`, `private`, `requested`,
+`loaded`) and passes it directly to `new UserData().fromJSON({...})`. Auth has no public parser, and UserData has no
+`fromAuth()` method. Provider failures pass through unchanged, including their error codes.
+Built-in validation failures use `Error`. Missing current users and redirect results return null.
+Password changes use Auth methods. Token retrieval remains in the Firebase
+backend integration. Profile database
 persistence and stored business roles remain outside Auth.
 
 Session restoration uses the initial auth-state callback. Obtain the synchronous
@@ -641,11 +638,9 @@ separate npm package. Public classes are re-exported through `redequate`.
 `src/controllers/UserData.js` remains a compatibility re-export of the moved
 implementation, so existing components and tests retain their imports.
 
-The pure UserData model has no eager Firebase or UI imports. Database operations
-load `userDataPersistence.js` lazily; subscription, logout and reducer helpers
-live in `userDataControls.js` and retain their barrel exports. Creating,
-normalizing and serializing Auth users does not load persistence or UI services.
-Core application imports still include Firebase SDK services.
+UserData retains its existing Firebase persistence and current-user helpers.
+Auth adapters construct it directly from normalized JSON. Auth replacement alone does
+not remove the application's Firebase profile and service dependencies.
 
 Auth runtime source lives in `auth/src`; its build configuration remains in
 `auth/build.mjs`.
@@ -657,5 +652,5 @@ its normal dependency and conditional exports, without an ESM-file alias.
 
 The web ESM entry is `core/index.es.js`, with `.es.js` core chunks, preserving
 Vite's existing CommonJS default-import behavior. Auth ESM entries and their
-shared Context/AuthBase/UserData/Babel-helper chunks use `.mjs` for native Node imports.
+shared Context/AuthBase/Babel-helper chunks use `.mjs` for native Node imports.
 Both formats share one Context within their build; default Auth remains lazy.

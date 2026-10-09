@@ -3,9 +3,6 @@ import LocalTestAuth from "../local-test";
 import FirebaseAuth from "../firebase";
 import {resolveAuth} from "../resolveAuth";
 
-// The Firebase adapter parser needs only these field identifiers from core.
-vi.mock("../../../_common/src", () => ({UserData: {PUBLIC: "public", NAME: "name", EMAIL: "email", IMAGE: "image"}}));
-
 it("creates LocalTestAuth by default without reading or writing storage", async () => {
     const getItem = vi.spyOn(Storage.prototype, "getItem");
     const setItem = vi.spyOn(Storage.prototype, "setItem");
