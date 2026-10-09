@@ -5,44 +5,32 @@ const notImplemented = method => {
 // Override supported operations; inherited stubs fail explicitly.
 // Only operations used by current authentication flows; all return Promises.
 export default class AuthBase {
-    async onAuthStateChanged(callback, onError) {
-        return notImplemented("onAuthStateChanged");
-    }
-
-    async signInWithEmailAndPassword(email, password) {
-        return notImplemented("signInWithEmailAndPassword");
+    async checkSignInWithEmailLink() {
+        return notImplemented("checkSignInWithEmailLink");
     }
 
     async createUserWithEmailAndPassword(email, password) {
         return notImplemented("createUserWithEmailAndPassword");
     }
 
-    async signInWithPopup(provider, options) {
-        return notImplemented("signInWithPopup");
+    from(json) {
+        return notImplemented("from");
     }
 
-    async signInWithRedirect(provider, options) {
-        return notImplemented("signInWithRedirect");
+    async onAuthStateChanged(callback, onError) {
+        return notImplemented("onAuthStateChanged");
     }
 
     async resolveRedirectResult() {
         return notImplemented("resolveRedirectResult");
     }
 
-    async signInWithCredential(credential) {
-        return notImplemented("signInWithCredential");
+    async resolveToken(forceRefresh) {
+        return notImplemented("resolveToken");
     }
 
-    async sendSignInLinkToEmail(email, options) {
-        return notImplemented("sendSignInLinkToEmail");
-    }
-
-    async checkSignInWithEmailLink(url) {
-        return notImplemented("checkSignInWithEmailLink");
-    }
-
-    async signInWithEmailLink(email, url) {
-        return notImplemented("signInWithEmailLink");
+    async resolveCurrentUser() {
+        return notImplemented("resolveCurrentUser");
     }
 
     async sendEmailVerification(options) {
@@ -53,15 +41,39 @@ export default class AuthBase {
         return notImplemented("sendPasswordResetEmail");
     }
 
-    async updatePassword(password) {
-        return notImplemented("updatePassword");
+    async sendSignInLinkToEmail(email, options) {
+        return notImplemented("sendSignInLinkToEmail");
     }
 
-    async resolveToken(forceRefresh) {
-        return notImplemented("resolveToken");
+    async signInWithEmailAndPassword(email, password) {
+        return notImplemented("signInWithEmailAndPassword");
+    }
+
+    async signInWithPopup(provider, options) {
+        return notImplemented("signInWithPopup");
+    }
+
+    async signInWithRedirect(provider, options) {
+        return notImplemented("signInWithRedirect");
+    }
+
+    async signInWithCredential(token) {
+        return notImplemented("signInWithCredential");
+    }
+
+    async signInWithEmailLink(email) {
+        return notImplemented("signInWithEmailLink");
     }
 
     async signOut() {
         return notImplemented("signOut");
+    }
+
+    async updatePassword(password) {
+        return notImplemented("updatePassword");
+    }
+
+    async updateProfile({...fields}) {
+        return notImplemented("updateProfile");
     }
 }

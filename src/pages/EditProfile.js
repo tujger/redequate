@@ -5,6 +5,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
+import {useAuth} from "../../auth";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
@@ -47,6 +48,7 @@ function EditProfile(props) {
         error: null,
         disabled: false,
     });
+    const auth = useAuth();
     const {state: givenState = {}} = history.location;
     const {tosuccessroute, isFirstLogin} = givenState;
     const {t} = useTranslation();
@@ -114,7 +116,7 @@ function EditProfile(props) {
         const checkIfProfileExists = async () => {
             const exists = await firebase.database().ref("users_public").child(userData.id).child("email").once("value").then(snapshot => snapshot.exists());
             if (!exists) {
-                await logoutUser(store);
+                await logoutUser({auth, store});
                 refreshAll(store);
                 history.replace(pages.home.route);
                 throw Error(t("User.Profile is not found, forcing log out"));
@@ -163,9 +165,9 @@ function EditProfile(props) {
                 ...additionalPublic,
             });
         }
-        const updateFieldsInFirebase = async () => {
+        const updateFieldsInAuth = async () => {
             if (isSameUser(userData, currentUserData)) {
-                firebase.auth().currentUser.updateProfile({
+                auth.updateProfile({
                     displayName: userData.name,
                     photoURL: userData.image
                 }).catch(console.error)
@@ -230,7 +232,7 @@ function EditProfile(props) {
             .then(publishImage)
             .then(processPublicFields)
             .then(userData.savePublic)
-            .then(updateFieldsInFirebase)
+            .then(updateFieldsInAuth)
             .then(saveByAdmin)
             .then(refreshUserData)
             .then(updateCurrentUserData)
@@ -266,7 +268,7 @@ function EditProfile(props) {
         const onDeleteComplete = async () => {
             notifySnackbar(t("User.User deleted"));
             if (isSameUser(userData, currentUserData)) {
-                logoutUser(store);
+                logoutUser({auth, store});
                 history.replace(pages.home.route);
             } else {
                 history.goBack();

@@ -1,12 +1,13 @@
-import React from "react";
-import {Redirect, useHistory} from "react-router-dom";
 import UserIcon from "@mui/icons-material/Mail";
-import {useDispatch} from "react-redux";
+import React from "react";
 import {useTranslation} from "react-i18next";
-import {sendPasswordResetEmail, useCurrentUserData} from "../controllers/UserData";
+import {useDispatch} from "react-redux";
+import {Redirect, useHistory} from "react-router-dom";
+import {useAuth} from "../../auth";
 import ProgressView from "../components/ProgressView";
-import notifySnackbar from "../controllers/notifySnackbar";
 import {usePages} from "../controllers/General";
+import notifySnackbar from "../controllers/notifySnackbar";
+import {useCurrentUserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
@@ -23,11 +24,12 @@ const RestorePassword = () => {
     const history = useHistory();
     const currentUserData = useCurrentUserData();
     const {t} = useTranslation();
+    const auth = useAuth();
 
     const requestRestorePassword = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, requesting: true});
-        sendPasswordResetEmail(email)
+        auth.sendPasswordResetEmail(email)
             .then(() => {
                 notifySnackbar(t("User.Instructions have been sent to e-mail."));
                 history.push(pages.login.route);

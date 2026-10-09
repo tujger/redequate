@@ -71,7 +71,8 @@ console.error = function (...args) {
 export default (props) => {
     const {
         auth: givenAuth,
-        firebaseConfig,
+        firebase: firebaseGiven = undefined,
+        firebaseConfig = undefined,
         locales,
         pages: givenPages,
         title,
@@ -106,7 +107,7 @@ export default (props) => {
             }
         }
         const initFirebase = async props => {
-            const firebase = Firebase(firebaseConfig);
+            const firebase = firebaseGiven || Firebase(firebaseConfig);
             return {...props, firebase};
         }
         const initStore = async props => {
@@ -114,8 +115,8 @@ export default (props) => {
         }
         const restoreFirebaseAuth = async props => {
             try {
-                const authUser = await new Promise((resolve, reject) => {
-                    unlisten = props.firebase.auth().onAuthStateChanged(resolve, reject);
+                const authUser = await new Promise(async (resolve, reject) => {
+                    unlisten = await props.auth.onAuthStateChanged(resolve, reject);
                 });
                 return {...props, authUser};
             } catch (error) {
@@ -167,7 +168,7 @@ export default (props) => {
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
-            const {authUser, deviceId, store} = props;
+            const {auth, authUser, deviceId, store} = props;
             if (!authUser) {
                 store.dispatch({type: "currentUserData", userData: null});
                 return props;
@@ -176,7 +177,7 @@ export default (props) => {
                 const savedUserData = store.getState().currentUserData?.userData;
                 const userData = savedUserData?.id === authUser.uid
                     ? new UserData().fromJSON(savedUserData)
-                    : new UserData().fromFirebaseAuth(authUser.toJSON());
+                    : new UserData().fromAuth(auth, authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};
@@ -236,11 +237,11 @@ export default (props) => {
         }
         const installUserChangeWatcher = async props => {
             (async () => {
-                const {firebase, store} = props;
+                const {auth, firebase, store} = props;
                 setInterval(() => {
-                    watchUserChanged(firebase, store).then(() => refreshAll(store));
+                    watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
                 }, 30000)
-                watchUserChanged(firebase, store).then(() => refreshAll(store));
+                watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
             })().catch(console.error);
             return props;
         }

@@ -13,7 +13,7 @@ export const Role = {
     USER_NOT_VERIFIED: "userNotVerified",
 };
 
-export function watchUserChanged(firebase, store) {
+export function watchUserChanged({auth, store, firebase}) {
     return new Promise((resolve, reject) => {
         try {
             const refreshAction = () => {
@@ -26,7 +26,7 @@ export function watchUserChanged(firebase, store) {
                     .catch(notifySnackbar)
             }
 
-            firebase.auth().onAuthStateChanged(async result => {
+            auth.onAuthStateChanged(async result => {
                 // const ud = new UserData(firebase).fromFirebaseAuth(result.toJSON())
                 if (!currentUserDataInstance.id || !result) return;
                 let changed = false;
@@ -59,9 +59,9 @@ export function watchUserChanged(firebase, store) {
     })
 }
 
-export const logoutUser = async (store) => {
+export const logoutUser = async ({auth, store}) => {
     // window.localStorage.removeItem("notification-token");
-    await firebaseMessaging.auth().signOut();
+    await auth.signOut();
     console.log("[UserData] logout", currentUserDataInstance);
     currentUserDataInstance = new UserData();
     restoreLanguage(store);
@@ -88,34 +88,6 @@ export function needAuth(roles, user) {
     if (!roles) return false;
     if (roles.indexOf(currentRole(user)) >= 0) return false;
     return currentRole(user) === Role.LOGIN;
-}
-
-export function sendInvitationEmail(email) {
-    return new Promise((resolve, reject) => {
-        const actionCodeSettings = {
-            url: window.location.origin + "/signup/" + email,
-            handleCodeInApp: true,
-        };
-        return firebaseMessaging.auth().sendSignInLinkToEmail(email, actionCodeSettings)
-            .then(resolve)
-            .catch(reject);
-    })
-}
-
-export function sendVerificationEmail() {
-    return new Promise((resolve, reject) => {
-        firebaseMessaging.auth().currentUser.sendEmailVerification()
-            .then(resolve)
-            .catch(reject);
-    })
-}
-
-export function sendPasswordResetEmail(email) {
-    return new Promise((resolve, reject) => {
-        firebaseMessaging.auth().sendPasswordResetEmail(email)
-            .then(resolve)
-            .catch(reject);
-    })
 }
 
 export function currentUserData(state = {
@@ -429,28 +401,13 @@ export function UserData() {
             }
             return _body;
         },
-        fromFirebaseAuth: json => {
-            _id = json.uid;
-            _role = null;
-            const providerItem = json.providerData[0];
-            const provider = providerItem ? providerItem.providerId : "anonymous";
-            const emailVerified = json.emailVerified || provider === "google.com" || provider === "facebook.com";
-            _public = {
-                name: json.displayName,
-                email: json.email || providerItem.email,
-                emailVerified,
-                image: json.photoURL,
-                lastLogin: +json.lastLoginAt,
-                provider,
-                // created: +json.createdAt,
-            };
-            _requestedTimestamp = new Date();
-            _loaded = {
-                [UserData.PUBLIC]: true,
-                [UserData.NAME]: true,
-                [UserData.EMAIL]: true,
-                [UserData.IMAGE]: true
-            };
+        fromAuth: (auth, json) => {
+            const parsed = auth.from(json);
+            _id = parsed.id;
+            _role = parsed.role;
+            _public = parsed.public;
+            _requestedTimestamp = parsed.requestedTimestamp;
+            _loaded = parsed.loaded;
             _body.create(_id, _role, {
                 public: _public,
                 private: _private,

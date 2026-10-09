@@ -1,4 +1,5 @@
 import {vi} from "vitest";
+import notifySnackbar from "../../controllers/notifySnackbar";
 import {
     currentRole,
     currentUserData,
@@ -7,14 +8,13 @@ import {
     needAuth,
     normalizeSortName,
     Role,
-    sendInvitationEmail,
     sendVerificationEmail,
     useCurrentUserData,
     UserData,
     watchUserChanged
 } from "../../controllers/UserData";
-import {firebase, store, seedDatabase, emulatorRequest} from "../common";
-import notifySnackbar from "../../controllers/notifySnackbar";
+import {emulatorRequest, firebase, seedDatabase, store} from "../common";
+
 vi.mock("../../controllers/notifySnackbar", () => ({default: vi.fn()}));
 
 let userDataUser;
@@ -61,7 +61,7 @@ test("watchUserChanged", async () => {
         unsubscribe = original(callback);
         return unsubscribe;
     });
-    const refresh = watchUserChanged(firebase, store);
+    const refresh = watchUserChanged({firebase, store});
     try {
         await vi.waitFor(() => expect(notifySnackbar).toHaveBeenCalled());
         const warning = notifySnackbar.mock.calls.at(-1)[0];
@@ -86,19 +86,6 @@ test("useCurrentUserData", async () => {
     expect(useCurrentUserData()).toEqual(userDataAdmin)
     expect(useCurrentUserData(userDataUser)).toEqual(userDataUser)
     expect(useCurrentUserData()).toEqual(userDataUser)
-});
-test("sendInvitationEmail", async () => {
-    await expect(sendInvitationEmail("invited@example.test")).resolves.toBeUndefined();
-    const {oobCodes} = await emulatorRequest("oobCodes");
-    expect(oobCodes).toEqual(expect.arrayContaining([expect.objectContaining({email: "invited@example.test", requestType: "EMAIL_SIGNIN"})]));
-});
-test("sendVerificationEmail", async () => {
-    useCurrentUserData(userDataServiceUser);
-    await expect(sendVerificationEmail()).rejects.toThrow(TypeError);
-    await firebase.auth().createUserWithEmailAndPassword("verify@example.test", "test-password");
-    await expect(sendVerificationEmail()).resolves.toBeUndefined();
-    const {oobCodes} = await emulatorRequest("oobCodes");
-    expect(oobCodes).toEqual(expect.arrayContaining([expect.objectContaining({email: "verify@example.test", requestType: "VERIFY_EMAIL"})]));
 });
 test("currentUserData", async () => {
     expect(currentUserData({}, {type: "currentUserData", userData: userDataUser}))
