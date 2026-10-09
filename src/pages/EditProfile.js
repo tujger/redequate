@@ -6,6 +6,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
 import {useAuth} from "../../auth";
+import {useStorage} from "../../storage";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
@@ -49,6 +50,7 @@ function EditProfile(props) {
         disabled: false,
     });
     const auth = useAuth();
+    const storage = useStorage();
     const {state: givenState = {}} = history.location;
     const {tosuccessroute, isFirstLogin} = givenState;
     const {t} = useTranslation();
@@ -126,7 +128,7 @@ function EditProfile(props) {
             if (userData.image && image !== userData.image) {
                 console.log("[EditProfile] delete", userData.image)
                 try {
-                    await firebase.storage().refFromURL(userData.image).delete();
+                    await storage.delete(userData.image);
                 } catch (e) {
                     console.error(e);
                 }
@@ -135,13 +137,14 @@ function EditProfile(props) {
         const publishImage = async () => {
             if (uppy) {
                 const publishing = await uploadComponentPublish({
-                    auth: userData.id,
+                    auth,
                     files: uppy._uris,
                     name: "profile",
                     onprogress: progress => {
                         dispatch({...ProgressView.SHOW, value: progress});
                     },
-                    deleteFile: userData.public.image
+                    deleteFile: userData.public.image,
+                    storage
                 });
                 uploadComponentClean(uppy);
                 const {url} = (publishing[0] || {});

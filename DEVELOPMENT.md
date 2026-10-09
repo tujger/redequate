@@ -1117,3 +1117,57 @@ Provider errors continue passing through without wrappers or conversion.
 Status: 178 unit tests, 38 emulator tests, ESLint, framework build and packed
 ESM/CommonJS Auth scenarios passed, including absence of resolveToken.
 The existing native ESM typeless web-chunk warning remains.
+
+
+### Provider-independent Storage scaffold
+
+Decision: StorageBase exposes four async operations:
+upload({auth, blob, metadata, name, onProgress}), resolveDownloadURL(pathOrURL),
+resolveMetadata(pathOrURL) and delete(pathOrURL). Upload accepts Auth and Blob/File
+and returns {url, metadata}. Current adapter-compatible metadata uses contentType,
+fullPath, name, size and customMetadata; progress callbacks receive percentage
+strings. This supersedes the initial positional upload signature and proposed
+attributes/byte-progress shape. Read/delete operations accept a storage path or
+a URL issued by the provider; deletion returns no value.
+
+Reason: these operations cover current file upload, thumbnail metadata and
+obsolete-file removal scenarios without exposing Firebase references, tasks or
+snapshots. Provider implementations own SDK conversion. Reject mirroring the
+Firebase Reference/UploadTask API and adding unused listing, subscriptions,
+task controls or metadata updates.
+
+Consequences: providers own file naming and SDK conversion. Image processing and
+replacement cleanup remain caller responsibilities. Public storage,
+storage/firebase and storage/local-test subpaths use the existing joint Rollup
+ESM/CommonJS build. Existing Firebase URLs and Android/backend contracts are
+unchanged. Storage adoption in the web consumers is ongoing.
+
+
+### LocalTestStorage IndexedDB simulation
+
+Decision: implement all four operations using an IndexedDB database per
+storageKey (default redequate:storage:local-test). Version 1 files store is keyed
+by fullPath with a unique URL index; records contain Blob, data URL and metadata.
+Upload obtains user.id through auth.resolveCurrentUser(), generates a UUID path
+and adds a UUID fragment to the data URL so identical bytes remain independent.
+Operations resolve only after transaction commit. Each operation simulates
+0–2000 ms latency and logs method/duration when greater than 100 ms.
+
+Reason: persist browser files across reloads and return URLs directly usable in
+existing media elements. The user chose data URLs over stable local identifiers
+requiring blob URL resolution on every render. Data URLs duplicate file contents
+in application references and grow with file size; this is a test-only provider.
+
+Consequences: equal keys share files within an origin; different keys isolate
+them. Upload reports "0" before reading and "100" after commit. Metadata is
+detached, with customMetadata containing caller fields, uid and filename. Missing
+files, invalid arguments and absent users reject with storage error codes;
+Auth, FileReader and IndexedDB errors pass through. No in-memory fallback or
+access-control simulation. Persisted data URLs remain usable even after deletion;
+deletion removes the IndexedDB record. No Firebase adapter or component changes.
+Affected consumers: demo and The Whisky Talks can opt into local storage; remote
+backend and Android file contracts are unchanged.
+Status: framework build, public ESM/CommonJS imports and real Chrome IndexedDB
+scenarios passed: uploads, metadata/progress, namespaces, identical files,
+reload persistence, path/URL deletion, detached metadata and failure propagation.
+No permanent tests were added or changed.

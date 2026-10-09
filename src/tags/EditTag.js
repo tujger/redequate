@@ -4,6 +4,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useStorage} from "../../storage";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import MentionedSelectComponent from "../components/MentionedSelectComponent";
@@ -47,6 +48,7 @@ export default ({allowOwner = true}) => {
     } = state;
     const {id} = useParams();
     const {t} = useTranslation();
+    const storage = useStorage();
 
     const isNew = id === undefined;
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
@@ -121,7 +123,8 @@ export default ({allowOwner = true}) => {
                     onprogress: progress => {
                         dispatch({...ProgressView.SHOW, value: progress});
                     },
-                    deleteFile: tag.image
+                    deleteFile: tag.image,
+                    storage
                 });
                 uploadComponentClean(uppy);
             }

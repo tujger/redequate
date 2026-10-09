@@ -10,6 +10,7 @@ import del from 'rollup-plugin-delete'
 import external from 'rollup-plugin-peer-deps-external'
 import postcss from 'rollup-plugin-postcss'
 import {authSourcePattern, withAuth} from './auth/build.mjs'
+import {storageSourcePattern, withStorage} from './storage/build.mjs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
@@ -62,7 +63,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', '_common/src/**', authSourcePattern],
+                    include: ['src/**', '_common/src/**', authSourcePattern, storageSourcePattern],
                 }),
                 svgr(),
                 resolve(),
@@ -90,7 +91,7 @@ export default () => {
                 uploadComponentControls: 'src/components/UploadComponent/uploadComponentControls',
 
                 Firebase: 'src/controllers/Firebase.js',
-                
+
                 // controls
                 Button: 'src/controls/Button/Button.js',
                 Chip: 'src/controls/Chip/Chip.js',
@@ -194,7 +195,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', '_common/src/**', authSourcePattern],
+                    include: ['src/**', '_common/src/**', authSourcePattern, storageSourcePattern],
                 }),
                 resolve(),
                 commonjs(),
@@ -202,5 +203,5 @@ export default () => {
                 json(),
             ]
         }
-    ].map(withAuth)
+    ].map(withAuth).map(withStorage)
 }

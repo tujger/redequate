@@ -7,6 +7,7 @@ import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import {AuthContext, resolveAuth} from "../auth/src";
+import {StorageContext, resolveStorage} from "../storage/src";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
 import Firebase from "./controllers/Firebase";
@@ -76,6 +77,7 @@ export default (props) => {
         pages: givenPages,
         title,
         reducers,
+        storage: storageGiven,
         width: givenWidth
     } = props;
     const [state, setState] = React.useState({store: null});
@@ -111,6 +113,15 @@ export default (props) => {
             const firebase = firebaseGiven || Firebase(firebaseConfig);
             console.log("[Dispatcher]", "firebase resolved", {firebase});
             return {...props, firebase};
+        }
+        const initStorage = async props => {
+            try {
+                const storage = await resolveStorage(storageGiven);
+                console.log("[Dispatcher]", "storage resolved", {storage});
+                return {...props, storage};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
         }
         const initStore = async props => {
             return {...props, store: Store(title, reducers)};
@@ -322,6 +333,7 @@ export default (props) => {
             .then(clearOneTapCookie)
             .then(initAuth)
             .then(initFirebase)
+            .then(initStorage)
             .then(initStore)
             .then(restoreFirebaseAuth)
             .then(initWindowData)
@@ -379,6 +391,7 @@ const DispatcherInitialized = (props) => {
         firebase,
         store,
         menu: givenMenu,
+        storage,
         theme,
         title,
         textTranslation,
@@ -396,22 +409,24 @@ const DispatcherInitialized = (props) => {
     const menu = givenMenu(pages);
 
     return <AuthContext value={auth}>
-        <Provider store={store}>
-            <>
-                {theme}
-                <BrowserRouter>
-                    <SnackbarProvider maxSnack={4} preventDuplicate>
-                        <DispatcherRoutedBody
-                            {...props}
-                            copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
-                            menu={menu}
-                            title={t(title)}
-                        />
-                    </SnackbarProvider>
-                </BrowserRouter>
-                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-            </>
-        </Provider>
+        <StorageContext value={storage}>
+            <Provider store={store}>
+                <>
+                    {theme}
+                    <BrowserRouter>
+                        <SnackbarProvider maxSnack={4} preventDuplicate>
+                            <DispatcherRoutedBody
+                                {...props}
+                                copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                                menu={menu}
+                                title={t(title)}
+                            />
+                        </SnackbarProvider>
+                    </BrowserRouter>
+                    <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+                </>
+            </Provider>
+        </StorageContext>
     </AuthContext>;
 }
 

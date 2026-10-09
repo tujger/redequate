@@ -32,7 +32,7 @@ export {default as ShareComponent, share, copyToClipboard} from "./ShareComponen
 export {default as Snackbar} from "./Snackbar";
 export {default as UploadComponent} from "./UploadComponent/UploadComponent";
 export {
-    uploadComponentClean, uploadComponentPublish, uploadComponentDelete, uploadComponentResize
+    uploadComponentClean, uploadComponentPublish, uploadComponentResize
 } from "./UploadComponent/uploadComponentControls";
 export {default as MentionsInputComponent} from "./MentionsInputComponent/MentionsInputComponent";
 export {mentionUsers, mentionTags} from "../controllers/mentionTypes";
