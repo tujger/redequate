@@ -1007,7 +1007,7 @@ No permanent tests were added or changed.
 
 Decision: MessagingBase exposes three async operations: subscribe() requests
 permission and returns a notification token; unsubscribe() removes the device's
-token registration; onMessage(callback) returns a function that detaches the
+token registration; addMessageListener(callback) returns a function that detaches the
 foreground message handler. Subscription does not attach a message handler.
 
 Reason: these operations cover existing notification enable/disable and
@@ -1198,7 +1198,7 @@ No permanent tests were added or changed.
 Decision: implement the three Messaging operations through the supplied Firebase
 compat SDK. Check support before creating Messaging; subscribe requests browser
 permission and returns getToken(), unsubscribe awaits deleteToken() without a
-return value, and onMessage returns the SDK listener disposer. Foreground
+return value, and addMessageListener returns the SDK listener disposer. Foreground
 callbacks preserve notification-or-data fields plus from, image from icon and
 priority; missing notification/data yields an empty object before those fields.
 
@@ -1216,3 +1216,72 @@ Status: provider implemented; simulated operation/payload/disposal/error checks,
 ESLint and framework ESM/CommonJS builds passed on Node.js 24.21.0. No permanent
 tests were added or changed. Consumer migration and real push delivery validation
 remain separate work.
+
+### LocalTestMessaging and console delivery
+
+Decision: simulate Messaging with a UUID token stored directly in localStorage
+under storageKey (default redequate:messaging:local-test). subscribe reuses it
+until unsubscribe removes it; browser notification permission is not requested.
+Methods simulate 0–2000 ms latency and log durations greater than 100 ms.
+addMessageListener attaches a window event listener and returns its disposer. Delivery
+requires a persisted token and matching storageKey; unsubscribe stops delivery
+without removing listeners, so resubscription resumes it.
+
+Reason: exercise notification receiving in a browser without Firebase or real
+push services, including reload persistence and isolated local configurations.
+
+Console API: construction installs window.redequateMessaging.send(message,
+storageKey), with the default key when omitted. For example:
+window.redequateMessaging.send({title: "Test", body: "Console message"}).
+The function dispatches redequate:messaging:local-test:message with
+{storageKey, message}. Messages are already in the public foreground callback
+format; each handler receives a structured clone. Delivery is limited to the
+current tab with no queue/history. Handler throws and async rejections are
+logged independently. Invalid arguments use messaging/invalid-argument;
+localStorage operation errors pass through without an in-memory fallback.
+
+Consequences: console sending is specific to the local provider and is not part
+of MessagingBase. Firebase and Android contracts are unchanged. Web consumers
+can opt into the provider; migration of existing notification callers remains
+separate work.
+Status: real Chrome checks passed for console delivery, independent message
+copies, key isolation, listener disposal, handler errors, storage failures and
+token persistence after reload. ESLint and framework ESM/CommonJS builds passed
+on Node.js 24.21.0. No permanent tests were added or changed.
+
+### Messaging subscription check and explicit listener registration
+
+Decision: extend MessagingBase to four async operations: checkIfSubscribed,
+subscribe, unsubscribe and addMessageListener. The listener registration name
+replaces onMessage without an alias; Firebase's internal SDK onMessage remains.
+checkIfSubscribed returns a boolean from localStorage without SDK calls, prompts,
+writes or simulated latency. LocalTest checks its existing storageKey token.
+Firebase accepts a configurable storageKey, defaulting to the historical
+notification-token key, saves the token only after getToken succeeds and removes
+it only after deleteToken completes successfully. SDK/storage errors pass through.
+
+Reason: restore the existing conditional startup flow with a fast persisted
+subscription check rather than attaching an unconditional startup listener.
+The saved token represents application subscription choice, not proof that the
+FCM registration remains valid on the server. Existing remote subscriptions
+without a saved key become known locally after successful subscribe.
+
+Consequences: Dispatcher resolves Messaging after Storage and, retaining its iOS
+guard, calls setupReceivingNotifications only when checkIfSubscribed is true.
+Setup subscribes and awaits addMessageListener; callbacks receive normalized
+messages directly and snackbar mapping uses image/from/priority/tag and body
+with a title fallback. Android fallback remains in subscription setup; native
+subscriptions do not create the browser Firebase cache. The resolver's copied
+Auth names are corrected. No separate subscription flag or LocalTest data
+migration is needed. This supersedes the earlier three-operation contract.
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks; Android bridge names
+and token formats are unchanged. Custom Messaging providers must implement the
+new check and renamed listener registration method.
+
+Status: contract and simulated Firebase cache/listener/error checks passed.
+Real Chrome checks passed for LocalTest state across reload, conditional startup
+registration, iOS guard, normalized messages, storage failures, resolver and
+Android fallback. Browser checks use extracted Dispatcher watcher code rather
+than a full application mount. Provider ESLint and framework ESM/CommonJS builds
+passed on Node.js 24.21.0; existing Dispatcher/Notifications lint diagnostics
+remain, with none added. No permanent tests were added or changed.

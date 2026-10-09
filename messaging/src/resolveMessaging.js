@@ -1,10 +1,10 @@
-export const resolveMessaging = async auth => {
-    if (auth === undefined) {
-        const {default: LocalTestAuth} = await import("./local-test/index.js");
-        return new LocalTestAuth();
+export const resolveMessaging = async messaging => {
+    if (messaging === undefined) {
+        const {default: LocalTestMessaging} = await import("./local-test/index.js");
+        return new LocalTestMessaging();
     }
-    if (auth === null || typeof auth !== "object" || Array.isArray(auth)) {
-        throw new Error("Dispatcher auth must be an Auth instance created with new Auth(...)");
+    if (messaging === null || typeof messaging !== "object" || Array.isArray(messaging)) {
+        throw new Error("Dispatcher messaging must be a Messaging instance created with new Messaging(...)");
     }
-    return auth;
+    return messaging;
 };

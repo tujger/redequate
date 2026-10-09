@@ -22,7 +22,7 @@ import {
     useStore,
     useWindowData
 } from "./controllers/General";
-import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
+import {setupReceivingNotifications} from "./controllers/Notifications";
 import notifySnackbar from "./controllers/notifySnackbar";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
@@ -251,13 +251,13 @@ export default (props) => {
             })().catch(notifySnackbar);
             return props;
         }
-        const installNotificationsWatcher = async props => {
+        const installNotificationsWatcher = async initialization => {
             (async () => {
-                if (!iOS && hasNotifications()) {
-                    setupReceivingNotifications(props.messaging).catch(console.error);
+                if (!iOS && await initialization.messaging.checkIfSubscribed()) {
+                    setupReceivingNotifications(initialization.messaging).catch(console.error);
                 }
             })().catch(console.error);
-            return props;
+            return initialization;
         }
         const installUserChangeWatcher = async props => {
             (async () => {
@@ -345,6 +345,7 @@ export default (props) => {
             .then(initAuth)
             .then(initFirebase)
             .then(initStorage)
+            .then(initMessaging)
             .then(initStore)
             .then(restoreFirebaseAuth)
             .then(initWindowData)

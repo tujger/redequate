@@ -9,24 +9,18 @@ import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 
 export const setupReceivingNotifications = (messaging, onMessage) => new Promise((resolve, reject) => {
     try {
-        messaging.subscribe().then(token => {
-            messaging.onMessage(payload => {
+        messaging.subscribe().then(async token => {
+            await messaging.addMessageListener(payload => {
                 console.log("[Notifications] incoming " + JSON.stringify(payload));
-                const data = payload.notification || payload.data;
                 if (onMessage) {
-                    onMessage({
-                        ...data,
-                        from: payload.from,
-                        image: data.icon,
-                        priority: payload.priority,
-                    })
+                    onMessage(payload)
                 } else {
                     notifySnackbar({
                         from: payload.from,
-                        image: data.image,
+                        image: payload.image,
                         priority: payload.priority,
-                        id: data.tag,
-                        title: data.body,
+                        id: payload.tag,
+                        title: payload.body ?? payload.title,
                     })
                 }
                 // https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
@@ -83,7 +77,7 @@ export const setupReceivingNotifications = (messaging, onMessage) => new Promise
                           token = await messaging.getToken();
                           localStorage.setItem("notification-token", token);
                         }
-                        messaging.onMessage(payload => {
+                        messaging.addMessageListener(payload => {
                           console.log("message", payload);
                           (onMessage || notifySnackbar)({
                             body: payload.notification.body,
