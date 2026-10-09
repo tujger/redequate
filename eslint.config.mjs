@@ -36,7 +36,13 @@ export default [
         }
     },
     {
-        files: ['src/**/*.{js,mjs,cjs}', 'auth/src/**/*.{js,mjs,cjs}', 'auth/build.mjs', 'storage/src/**/*.{js,mjs,cjs}', 'storage/build.mjs', '_common/src/**/*.{js,mjs,cjs}'],
+        files: [
+            'src/**/*.{js,mjs,cjs}',
+            'auth/src/**/*.{js,mjs,cjs}', 'auth/build.mjs',
+            'messaging/src/**/*.{js,mjs,cjs}', 'messaging/build.mjs',
+            'storage/src/**/*.{js,mjs,cjs}', 'storage/build.mjs',
+            '_common/src/**/*.{js,mjs,cjs}'
+        ],
         languageOptions: {globals: globals.jest},
         rules: {
             "comma-dangle": [0],

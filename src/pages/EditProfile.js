@@ -6,6 +6,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
 import {useAuth} from "../../auth";
+import {useMessaging} from "../../messaging";
 import {useStorage} from "../../storage";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
@@ -50,6 +51,7 @@ function EditProfile(props) {
         disabled: false,
     });
     const auth = useAuth();
+    const messaging = useMessaging();
     const storage = useStorage();
     const {state: givenState = {}} = history.location;
     const {tosuccessroute, isFirstLogin} = givenState;
@@ -302,7 +304,7 @@ function EditProfile(props) {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true}));
         if (enable) {
-            setupReceivingNotifications(firebase)
+            setupReceivingNotifications(messaging)
                 .then(token => {
                     userData.private[fetchDeviceId()].notification = token;
                     return userData.savePrivate();
@@ -316,14 +318,7 @@ function EditProfile(props) {
         } else {
             userData.private[fetchDeviceId()].notification = null;
             userData.savePrivate()
-                .then(() => {
-                    if (!firebase.messaging.isSupported()) {
-                        throw Object.assign(new Error("This browser doesn't support Firebase Messaging"), {
-                            code: "messaging/unsupported-browser"
-                        });
-                    }
-                    return firebase.messaging().deleteToken();
-                })
+                .then(() => messaging.unsubscribe())
                 .catch(error => {
                     if (error.code === "messaging/unsupported-browser" && hasWrapperControlInterface()) {
                         return wrapperControlCall({
@@ -349,7 +344,7 @@ function EditProfile(props) {
     // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
     const isDeleteAllowed = isAdmin || (allowDelete && isSameUser(userData, currentUserData));
-    const isNotificationsAvailable = !iOS && firebase.messaging && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
+    const isNotificationsAvailable = !iOS && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
     const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
 
     React.useEffect(() => {

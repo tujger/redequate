@@ -7,7 +7,8 @@ import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import {AuthContext, resolveAuth} from "../auth/src";
-import {StorageContext, resolveStorage} from "../storage/src";
+import {MessagingContext, resolveMessaging} from "../messaging/src";
+import {resolveStorage, StorageContext} from "../storage/src";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
 import Firebase from "./controllers/Firebase";
@@ -21,7 +22,7 @@ import {
     useStore,
     useWindowData
 } from "./controllers/General";
-import {hasNotifications, setupReceivingNotifications} from "./controllers/Notifications";
+import {setupReceivingNotifications} from "./controllers/Notifications";
 import notifySnackbar from "./controllers/notifySnackbar";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
@@ -70,19 +71,20 @@ console.error = function (...args) {
 
 export default (props) => {
     const {
-        auth: givenAuth,
+        auth: authGiven,
         firebase: firebaseGiven = undefined,
         firebaseConfig = undefined,
         locales,
-        pages: givenPages,
+        messaging: messagingGiven,
+        pages: pagesGiven,
         title,
         reducers,
         storage: storageGiven,
-        width: givenWidth
+        width: widthGiven
     } = props;
     const [state, setState] = React.useState({store: null});
     const {firebase} = state;
-    const width = useBreakpoint(givenWidth);
+    const width = useBreakpoint(widthGiven);
     const widthRef = React.useRef(width);
     widthRef.current = width;
     const previousWidth = React.useRef(width);
@@ -102,7 +104,7 @@ export default (props) => {
         }
         const initAuth = async props => {
             try {
-                const auth = await resolveAuth(givenAuth);
+                const auth = await resolveAuth(authGiven);
                 console.log("[Dispatcher]", "auth resolved", {auth});
                 return {...props, auth};
             } catch (error) {
@@ -119,6 +121,15 @@ export default (props) => {
                 const storage = await resolveStorage(storageGiven);
                 console.log("[Dispatcher]", "storage resolved", {storage});
                 return {...props, storage};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
+        const initMessaging = async props => {
+            try {
+                const messaging = await resolveMessaging(messagingGiven);
+                console.log("[Dispatcher]", "messaging resolved", {messaging});
+                return {...props, messaging};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -221,7 +232,7 @@ export default (props) => {
         const initPagesBuilder = async props => {
             const buildPages = () => {
                 const {t} = props;
-                const pages = givenPages(t);
+                const pages = pagesGiven(t);
                 for (const x in pages) {
                     pages[x]._route = pages[x].route;
                     pages[x].route = pages[x].route.split(/[*:]/)[0];
@@ -240,13 +251,13 @@ export default (props) => {
             })().catch(notifySnackbar);
             return props;
         }
-        const installNotificationsWatcher = async props => {
+        const installNotificationsWatcher = async initialization => {
             (async () => {
-                if (!iOS && hasNotifications()) {
-                    setupReceivingNotifications(props._firebase).catch(console.error);
+                if (!iOS && await initialization.messaging.checkIfSubscribed()) {
+                    setupReceivingNotifications(initialization.messaging).catch(console.error);
                 }
             })().catch(console.error);
-            return props;
+            return initialization;
         }
         const installUserChangeWatcher = async props => {
             (async () => {
@@ -334,6 +345,7 @@ export default (props) => {
             .then(initAuth)
             .then(initFirebase)
             .then(initStorage)
+            .then(initMessaging)
             .then(initStore)
             .then(restoreFirebaseAuth)
             .then(initWindowData)
@@ -391,6 +403,7 @@ const DispatcherInitialized = (props) => {
         firebase,
         store,
         menu: givenMenu,
+        messaging,
         storage,
         theme,
         title,
@@ -409,6 +422,7 @@ const DispatcherInitialized = (props) => {
     const menu = givenMenu(pages);
 
     return <AuthContext value={auth}>
+        <MessagingContext value={messaging}>
         <StorageContext value={storage}>
             <Provider store={store}>
                 <>
@@ -427,6 +441,7 @@ const DispatcherInitialized = (props) => {
                 </>
             </Provider>
         </StorageContext>
+        </MessagingContext>
     </AuthContext>;
 }
 

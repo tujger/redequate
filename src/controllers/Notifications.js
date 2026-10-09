@@ -1,46 +1,26 @@
+import {useSnackbar} from "notistack";
 import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
-import {useSnackbar} from "notistack";
 import {useHistory} from "react-router-dom";
 import RichSnackbarContent from "../components/RichSnackbarContent";
 import {useMetaInfo} from "./General";
-import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 import notifySnackbar from "./notifySnackbar";
+import {hasWrapperControlInterface, wrapperControlCall} from "./WrapperControl";
 
-export const setupReceivingNotifications = (firebase, onMessage) => new Promise((resolve, reject) => {
+export const setupReceivingNotifications = (messaging, onMessage) => new Promise((resolve, reject) => {
     try {
-        if (!firebase.messaging.isSupported()) {
-            throw Object.assign(new Error("This browser doesn't support Firebase Messaging"), {
-                code: "messaging/unsupported-browser"
-            });
-        }
-        // Safari case
-        // https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/NotificationProgrammingGuideForWebsites/PushNotifications/PushNotifications.html#//apple_ref/doc/uid/TP40013225-CH3-SW1
-        const messaging = firebase.messaging();
-        window.Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                return messaging.getToken();
-            } else {
-                throw new Error("Notifications denied");
-            }
-        }).then(token => {
-            messaging.onMessage(payload => {
+        messaging.subscribe().then(async token => {
+            await messaging.addMessageListener(payload => {
                 console.log("[Notifications] incoming " + JSON.stringify(payload));
-                const data = payload.notification || payload.data;
                 if (onMessage) {
-                    onMessage({
-                        ...data,
-                        from: payload.from,
-                        image: data.icon,
-                        priority: payload.priority,
-                    })
+                    onMessage(payload)
                 } else {
                     notifySnackbar({
                         from: payload.from,
-                        image: data.image,
+                        image: payload.image,
                         priority: payload.priority,
-                        id: data.tag,
-                        title: data.body,
+                        id: payload.tag,
+                        title: payload.body ?? payload.title,
                     })
                 }
                 // https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
@@ -97,7 +77,7 @@ export const setupReceivingNotifications = (firebase, onMessage) => new Promise(
                           token = await messaging.getToken();
                           localStorage.setItem("notification-token", token);
                         }
-                        messaging.onMessage(payload => {
+                        messaging.addMessageListener(payload => {
                           console.log("message", payload);
                           (onMessage || notifySnackbar)({
                             body: payload.notification.body,

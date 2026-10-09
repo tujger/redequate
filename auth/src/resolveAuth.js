@@ -1,4 +1,3 @@
-// Selection only: construct the default object without calling Auth operations.
 export const resolveAuth = async auth => {
     if (auth === undefined) {
         const {default: LocalTestAuth} = await import("./local-test/index.js");
