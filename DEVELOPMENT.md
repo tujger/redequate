@@ -970,3 +970,65 @@ identity and legacy re-exports, shared Context in Vite and Dispatcher identity
 checks passed. Four builds, npm pack --dry-run, 114 unit tests and 38 Firebase
 integration tests passed. Rollup watcher restarted with the new entry points;
 no permanent test cases were added or changed.
+
+
+### LocalTestAuth localStorage simulation
+
+Decision: implement all current Auth operations in LocalTestAuth using a
+versioned localStorage document per configurable storageKey. Preserve current
+runtime auth-user snapshots, {user} sign-in results and synchronous from(json),
+rather than the outdated README promise of direct UserData results. Import no
+UserData or Firebase into the local implementation.
+
+Reason: current Dispatcher/Login/Signup consume uid, toJSON(), {user} and
+user.updatePassword(); UserData still imports Firebase services. Keeping the
+simulation isolated avoids a broader UserData migration. This is test-only: fake
+provider accounts and tokens, immediate verification, locally recorded password
+reset requests and consumable pending email sign-in requests. Passwords are
+stored in plain text. Async Auth operations simulate 0–2000 ms latency, logging
+method and duration only when greater than 100 ms.
+
+Consequences: reloads restore sessions, matching keys share state across
+instances/tabs, and different keys isolate simulations. Auth replacement alone
+does not remove the web applications' Firebase profile/CRUD/service dependency.
+Rejected: importing UserData into LocalTestAuth or migrating those services as
+part of this change. FirebaseAuth remains the default.
+Affected consumers: demo and The Whisky Talks may opt in to this Auth module;
+Android contracts and backend tokens remain unchanged.
+Status: source and packed ESM/CommonJS scenario checks, isolated import graphs,
+ESLint, framework build, 114 unit tests and both web consumer builds passed.
+Existing Firebase/UserData integration tests have four failures out of 36:
+watch/logout fixtures omit the Auth argument, fromFirebaseAuth was removed, and
+fetch no longer matches the rejection expectation. Those tests do not import
+LocalTestAuth; reconciling them with the ongoing Auth migration remains separate.
+No permanent tests were added or changed.
+
+
+### LocalTestAuth default and module-owned Auth tests
+
+Decision: resolve omitted Dispatcher auth through a lazy LocalTestAuth import.
+FirebaseAuth requires explicit new FirebaseAuth({firebase}); its constructor is
+not relaxed. Significant LocalTestAuth overrides use individual default-export
+files, with shared helpers in auth/src/local-test/common.js. Storage format and
+authentication results remain unchanged.
+
+Reason: make the local simulation the default while preserving explicit provider
+configuration. Keep implementation helpers together without creating a file for
+every short operation.
+
+Consequences: applications omitting auth share the standard local-test storage
+namespace for their origin. This choice replaces the earlier lazy Firebase
+default; Firebase profile/CRUD/service dependencies remain separate. Demo and
+The Whisky Talks already supply configured FirebaseAuth instances. Android
+contracts and backend authentication remain unchanged.
+
+Tests belong to each module's src/__tests__: Auth tests in auth/src/__tests__ and
+UserData tests in _common/src/__tests__. The existing shared runner separates
+ordinary unit tests from .integration.test.js emulator tests. UserData fixtures
+now pass Auth explicitly and await subscription cleanup; a fresh UID isolates
+the fetch permission check from Firebase's cached reads. The four integration
+failures recorded above are resolved without changing UserData runtime behavior.
+
+Status: 164 unit tests, 39 emulator tests, ESLint, framework build and both web
+consumer builds passed on Node.js 24.21.0. Packed ESM/CommonJS operation scenarios,
+AuthBase inheritance and isolated LocalTestAuth import graphs passed.

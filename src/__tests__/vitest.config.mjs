@@ -27,24 +27,30 @@ export default defineConfig(({mode}) => {
         css: {postcss: {plugins: [postcssNested()]}},
         resolve: {
             dedupe: ["react", "react-dom", "react-redux"],
-            ...(integration ? {
-                conditions: ["browser"],
-                alias: [
-                    {find: "@firebase/auth/internal", replacement: fileURLToPath(new URL("../../node_modules/@firebase/auth/dist/esm/internal.js", import.meta.url))},
-                    {find: /^@firebase\/auth$/, replacement: fileURLToPath(new URL("../../node_modules/@firebase/auth/dist/esm/index.js", import.meta.url))},
-                ],
-            } : {}),
+            ...(integration
+                ? {
+                    conditions: ["browser"],
+                    alias: [
+                        {find: "@firebase/auth/internal", replacement: fileURLToPath(new URL("../../node_modules/@firebase/auth/dist/esm/internal.js", import.meta.url))},
+                        {find: /^@firebase\/auth$/, replacement: fileURLToPath(new URL("../../node_modules/@firebase/auth/dist/esm/index.js", import.meta.url))},
+                    ],
+                }
+                : {}),
         },
         test: {
             environment: "jsdom",
             globals: true,
-            include: [integration ? "src/__tests__/controllers/**/*.test.js" : "src/__tests__/components/**/*.test.js"],
-            ...(integration ? {
-                fileParallelism: false,
-                server: {deps: {inline: [/firebase/, /@firebase/]}},
-                testTimeout: 15000,
-                hookTimeout: 30000,
-            } : {}),
+            include: ["src", "auth/src", "_common/src"].map(directory =>
+                `${directory}/__tests__/**/*.${integration ? "integration.test" : "test"}.js`),
+            ...(!integration ? {exclude: ["**/node_modules/**", "**/*.integration.test.js"]} : {}),
+            ...(integration
+                ? {
+                    fileParallelism: false,
+                    server: {deps: {inline: [/firebase/, /@firebase/]}},
+                    testTimeout: 15000,
+                    hookTimeout: 30000,
+                }
+                : {}),
             css: {modules: {classNameStrategy: "non-scoped"}},
             restoreMocks: true,
         },

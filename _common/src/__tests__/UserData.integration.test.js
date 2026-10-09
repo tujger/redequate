@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import notifySnackbar from "../../controllers/notifySnackbar";
+import notifySnackbar from "../../../src/controllers/notifySnackbar";
 import {
     currentRole,
     currentUserData,
@@ -8,14 +8,13 @@ import {
     needAuth,
     normalizeSortName,
     Role,
-    sendVerificationEmail,
     useCurrentUserData,
     UserData,
     watchUserChanged
-} from "../../controllers/UserData";
-import {emulatorRequest, firebase, seedDatabase, store} from "../common";
+} from "../UserData";
+import {auth, firebase, seedDatabase, store} from "../../../src/__tests__/common";
 
-vi.mock("../../controllers/notifySnackbar", () => ({default: vi.fn()}));
+vi.mock("../../../src/controllers/notifySnackbar", () => ({default: vi.fn()}));
 
 let userDataUser;
 beforeEach(() => {
@@ -40,11 +39,6 @@ const userDataUserNotVerified = UserData().create("test_user_not_verified_id", {
     email: "notverified@mail.com",
     name: "Not verified user name",
 });
-const userDataServiceUser = UserData().create("test_user_service", {
-    email: "service@example.test",
-    name: "Service user",
-});
-
 
 // matchRole(roles, user) {
 const rolesAdminUser = [Role.USER, Role.ADMIN];
@@ -54,14 +48,13 @@ test("watchUserChanged", async () => {
     const user = UserData().create(credential.user.uid, {email: "watch@example.test", name: "Watcher", updated: 0});
     useCurrentUserData(user);
     await seedDatabase({users_public: {[user.id]: {...user.public, updated: Date.now() + 1000}}});
-    const auth = firebase.auth();
     const original = auth.onAuthStateChanged.bind(auth);
-    let unsubscribe;
+    let subscription;
     vi.spyOn(auth, "onAuthStateChanged").mockImplementation(callback => {
-        unsubscribe = original(callback);
-        return unsubscribe;
+        subscription = original(callback);
+        return subscription;
     });
-    const refresh = watchUserChanged({firebase, store});
+    const refresh = watchUserChanged({auth, firebase, store});
     try {
         await vi.waitFor(() => expect(notifySnackbar).toHaveBeenCalled());
         const warning = notifySnackbar.mock.calls.at(-1)[0];
@@ -69,19 +62,20 @@ test("watchUserChanged", async () => {
         await refresh;
         expect(store.getState().userData.id).toBe(user.id);
     } finally {
+        const unsubscribe = await subscription;
         unsubscribe?.();
     }
 });
 test("logoutUser", async () => {
     await firebase.auth().signInAnonymously();
     useCurrentUserData(userDataUser);
-    await expect(logoutUser(store)).resolves.toBeNull();
+    await expect(logoutUser({auth, store})).resolves.toBeNull();
     expect(firebase.auth().currentUser).toBeNull();
     expect(useCurrentUserData().role).toBe(Role.LOGIN);
     expect(store.getState().userData).toBeNull();
 });
 test("useCurrentUserData", async () => {
-    expect(useCurrentUserData()).toMatchObject({"id": undefined, "private": {}, "public": {}, "role": Role.LOGIN})
+    expect(useCurrentUserData()).toMatchObject({id: undefined, private: {}, public: {}, role: Role.LOGIN})
     expect(useCurrentUserData(userDataAdmin)).toEqual(userDataAdmin)
     expect(useCurrentUserData()).toEqual(userDataAdmin)
     expect(useCurrentUserData(userDataUser)).toEqual(userDataUser)
@@ -213,6 +207,9 @@ describe("UserData", () => {
         expect((await firebase.database().ref(`users_public/${userDataUser.id}`).once("value")).exists()).toBe(false);
     });
     it("fetch", async () => {
+        userDataUser = UserData().create(window.crypto.randomUUID(), {
+            email: "fresh@example.test", name: "Fresh User"
+        });
         await expect(userDataUser.fetch(userDataUser.id, [UserData.PUBLIC, UserData.FORCE])).rejects.toThrow();
         await firebase.auth().signInAnonymously();
         await seedDatabase({users_public: {[userDataUser.id]: {...userDataUser.public, name: "Fetched name"}}});
@@ -227,11 +224,26 @@ describe("UserData", () => {
         await expect(ownData.fetchPrivate("device_id", true)).resolves.toBe(ownData);
         expect(ownData.private.device_id).toEqual({os: "Test"});
     });
-    it("fromFirebaseAuth", () => {
-        expect(userDataUser.fromFirebaseAuth({
-            providerData: [{providerId: "test"}],
-            uid: "test_from_firebase_auth_user_id"
-        })).toMatchObject({id: "test_from_firebase_auth_user_id"});
+    it("fromAuth", () => {
+        expect(userDataUser.fromAuth(auth, {
+            providerData: [{providerId: "password", email: "auth@example.test"}],
+            uid: "test_auth_user_id",
+            email: "auth@example.test",
+            displayName: "Auth User",
+            photoURL: "https://example.test/photo",
+            emailVerified: true,
+            lastLoginAt: "1234"
+        })).toMatchObject({
+            id: "test_auth_user_id",
+            public: {
+                name: "Auth User",
+                email: "auth@example.test",
+                emailVerified: true,
+                image: "https://example.test/photo",
+                lastLogin: 1234,
+                provider: "password"
+            }
+        });
     });
     it("fromJSON", () => {
         const userData = UserData();
@@ -265,7 +277,7 @@ describe("UserData", () => {
     });
     it("setPrivate", () => {
         const privatePart = {
-            "device_id": {os: "Test"}
+            device_id: {os: "Test"}
         }
         return expect(userDataUser.setPrivate("device_id", privatePart.device_id)).resolves.toMatchObject(privatePart);
     });
@@ -276,7 +288,6 @@ describe("UserData", () => {
         expect(userDataUser.name).toBe("New user name");
     });
 })
-
 
 it("normalizeSortName", () => {
     expect(normalizeSortName(userDataAdmin.name)).toMatch(/^adminname$/);

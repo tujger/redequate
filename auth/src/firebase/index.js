@@ -1,4 +1,4 @@
-import {UserData} from "../../../src";
+import {UserData} from "../../../_common/src";
 import AuthBase from "../AuthBase";
 
 export default class FirebaseAuth extends AuthBase {

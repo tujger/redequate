@@ -67,17 +67,20 @@ Use Node.js 24.12+ and Java 17+. Install framework dependencies with
 Emulator JAR. Firebase login and production credentials are not required.
 
 ```sh
-npm test                       # component tests, then Auth/RTDB integration tests
+npm test                       # unit tests, then Auth/RTDB integration tests
 npm run "test core"             # compatible name for the complete test gate
-npm run test:unit               # component tests only
-npm run "test:watch core"       # component tests in watch mode
+npm run test:unit               # component and Auth unit tests
+npm run "test:watch core"       # unit tests in watch mode
 npm run test:integration        # starts and stops the local emulators
 npm run test:integration:watch  # keeps emulators running while Vitest watches
 ```
 
 No sibling repositories are required. Test infrastructure lives in
-`src/__tests__`: one Vitest config selects component tests by default and
-controller tests with `--mode integration`. The emulator runner owns the local
+`src/__tests__`: one Vitest config selects ordinary `.test.js` files by default
+and `.integration.test.js` files with `--mode integration`. Tests live in each
+module's source directory: `src/__tests__`, `auth/src/__tests__` and
+`_common/src/__tests__`. Auth unit tests exercise LocalTestAuth, AuthBase, selection
+and Context; Auth and UserData integration tests use the Firebase emulators. The emulator runner owns the local
 service settings and `demo-redequate-tests` project ID; it generates Firebase
 configuration in its temporary log directory and copies `fixtures/database.rules.json`
 there because Firebase CLI disallows rules outside that directory. Fixtures use
@@ -498,7 +501,7 @@ Props:
 
 MIT © [tujger](https://github.com/tujger)
 
-## Auth module scaffold
+## Auth modules
 
 ```jsx
 import Dispatcher, {UserData} from "redequate";
@@ -510,95 +513,124 @@ const auth = new LocalTestAuth();
 <Dispatcher auth={auth} {...props} />
 ```
 
-LocalTestAuth is intended exclusively for testing, not production. Its future
-implementation will use localStorage or IndexedDB for local persistent storage.
-At this stage it remains a stub: no storage, accounts or authentication are
-implemented. The previous `redequate/auth/memory` subpath has been removed.
+LocalTestAuth is intended exclusively for testing, not production. It simulates
+all current Auth operations using browser localStorage, without importing Firebase.
+The previous `redequate/auth/memory` subpath has been removed.
+
+`new LocalTestAuth({storageKey: "my-app:local-auth"})` selects a storage namespace;
+the default is `redequate:auth:local-test`. Accounts and sessions survive reloads.
+Instances using the same key share state, including auth-state notifications in
+the same window and across tabs. Different keys isolate accounts and sessions.
+Construction does not access storage. Unavailable storage, invalid stored data
+and failed writes reject operations with an `auth/*` error code; invalid data
+is never silently replaced. Removing the storage key resets the simulation.
+
+Every async Auth operation waits a random integer delay of 0–2000 ms, including
+failed operations. Delays greater than 100 ms are logged through `console.debug`
+with the method name and duration. Internal calls do not add another delay;
+`from()` remains synchronous. No password or token is logged.
+
+Email addresses are trimmed and lowercased; passwords require six characters.
+Registration signs in an initially unverified account. Passwords and fake session
+tokens are stored in plain text. Use only disposable test credentials.
+`sendEmailVerification()` immediately verifies the current account.
+`sendPasswordResetEmail()` records a request for an existing account and does not
+change its password. `sendSignInLinkToEmail()` records a pending email;
+`checkSignInWithEmailLink()` checks for any pending request, without inspecting a
+URL. `signInWithEmailLink(email)` consumes that request, creates an account if
+needed and signs in with verified email. These operations send no real email.
+The stored `mail` array records operation type, email, timestamp and optional URL.
+
+Google and Facebook sign-in use stable fake accounts at
+`google@local-test.example` and `facebook@local-test.example`. Provider names
+accept `google`/`facebook`, `google.com`/`facebook.com`, or objects with `providerId`.
+Provider options are accepted but have no effect. Credential sign-in accepts a
+non-empty string as a simulated Google token, or an object with `provider` or
+`providerId`; tokens are not validated. Redirect signs in and stores a result
+without navigation; `resolveRedirectResult()` consumes that result once.
+`resolveToken()` returns an opaque `local-test:` token, or null when signed out;
+`forceRefresh` generates a replacement. These tokens cannot authenticate backend
+requests. `signOut()` clears the session and pending redirect, preserving accounts.
+
+`updateProfile({displayName, photoURL})` persists supported fields (strings or null).
+Password changes require an active session. A resolved user's `updatePassword()`
+also checks that the same account is still signed in. Auth-state subscriptions
+emit their initial state and changed current-user snapshots; token refreshes and
+mail records alone do not emit. Await the subscription to obtain its synchronous
+unsubscribe function. Storage failures during observation go to `onError`, when
+provided; setup failures reject the subscription Promise.
 
 Firebase is also available explicitly as the default export of
 `redequate/auth/firebase`. Each implementation exports a class constructed with
 `new Auth(...args)`. Arguments are implementation-specific, for example
-`new FirebaseAuth({firebaseConfig})`. An external package can expose the same
+`new FirebaseAuth({firebase})`. An external package can expose the same
 class: `<Dispatcher auth={new MyAuth(options)} {...props} />`. Dispatcher receives
 the resulting object directly; it does not construct an explicitly supplied class.
 Create the object outside render or with `useMemo` to keep its identity stable.
 Built-in implementations extend `AuthBase`; inheritance is optional for external
 modules, and Dispatcher does not require `instanceof`. There is no registry.
+LocalTestAuth keeps significant operation implementations in individual default-export
+modules and shared helpers in `auth/src/local-test/common.js`.
+
 CommonJS uses `const LocalTestAuth = require("redequate/auth/local-test").default`
 and `const auth = new LocalTestAuth(options)`.
 
 Dispatcher selects the supplied object once per mount, or dynamically imports
-FirebaseAuth and constructs `new FirebaseAuth()` when `auth` is omitted. Null, arrays,
-classes without an instance and other non-object values are configuration errors. Selection errors use the existing initialization error UI.
+LocalTestAuth and constructs `new LocalTestAuth()` when `auth` is omitted.
+FirebaseAuth requires explicit construction with `{firebase}` and selection
+through the `auth` prop. Null, arrays, classes without an instance and other non-object values are configuration errors. Selection errors use the existing initialization error UI.
 To change implementations, remount Dispatcher. `useAuth()` returns the selected
 object from the nearest Dispatcher; outside its provider it throws. Separate
 Dispatcher providers hold separate values, and separate constructor calls create
 separate objects. Reusing an existing object across applications deliberately
 shares it.
 
-This release only provides infrastructure. Dispatcher does not invoke the new
-methods, and the existing Firebase initialization, session restoration, Login,
-Signup and Logout continue to use their existing Firebase calls even when a
-custom Auth object is supplied. Every method of the created FirebaseAuth and
-LocalTestAuth objects throws or rejects with `Not implemented: <method>`; no session or token is simulated.
+The Auth module covers authentication only. Dispatcher, UserData and application
+flows still use Firebase for profiles, roles, CRUD and other services. Supplying
+LocalTestAuth does not make the entire application work offline without Firebase.
 
 ### Auth contract
 
-`AuthBase` is a named export of `redequate/auth`. It provides the 15 methods below
-with default `Not implemented` errors. Implementations override supported
-operations; asynchronous inherited methods return rejected Promises. The class
-is abstract by convention and can be instantiated without a constructor guard.
-
-```javascript
-import {AuthBase} from "redequate/auth";
-
-export default class MyAuth extends AuthBase {
-    constructor(...args) {
-        super();
-        // Implementation-specific configuration
-    }
-    // Override supported operations here.
-}
-
-```
-
-The method signatures are defined in `auth/src/AuthBase.js`; this section documents
-their results and options without depending on Firebase SDK types. Authentication results use the existing `UserData`, including
-its `id`, `email` and `verified` fields. No separate AuthUser type is introduced.
+`AuthBase`, exported from `redequate/auth`, supplies explicit `Not implemented`
+defaults. Built-in implementations override supported operations. The current
+runtime signatures are defined in `auth/src/AuthBase.js`. All operations below
+return Promises except synchronous `from(json)`.
 
 | Method | Result |
 | --- | --- |
-| `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives `UserData \| null` |
-| `signInWithEmailAndPassword(email, password)` | `Promise<UserData>` |
-| `createUserWithEmailAndPassword(email, password)` | `Promise<UserData>` |
-| `signInWithPopup(provider, options?)` | `Promise<UserData>` |
+| `from(json)` | Parsed `{id, role, public, requestedTimestamp, loaded}` for `UserData.fromAuth()` |
+| `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives an auth user or null |
+| `createUserWithEmailAndPassword(email, password)` | `Promise<{user}>` |
+| `signInWithEmailAndPassword(email, password)` | `Promise<{user}>` |
+| `signInWithPopup(provider, options?)` | `Promise<{user}>` |
 | `signInWithRedirect(provider, options?)` | `Promise<void>` |
-| `resolveRedirectResult()` | `Promise<UserData \| null>` |
-| `signInWithCredential(credential)` | `Promise<UserData>` |
-| `sendSignInLinkToEmail(email, options)` | `Promise<void>` |
-| `checkSignInWithEmailLink(url)` | `Promise<boolean>` |
-| `signInWithEmailLink(email, url)` | `Promise<UserData>` |
+| `resolveRedirectResult()` | `Promise<{user} \| null>` |
+| `signInWithCredential(credential)` | `Promise<{user}>` |
+| `sendSignInLinkToEmail(email, options?)` | `Promise<void>` |
+| `checkSignInWithEmailLink()` | `Promise<boolean>` |
+| `signInWithEmailLink(email)` | `Promise<{user}>` |
 | `sendEmailVerification(options?)` | `Promise<void>` |
 | `sendPasswordResetEmail(email, options?)` | `Promise<void>` |
+| `resolveCurrentUser()` | `Promise<auth user \| null>` |
 | `updatePassword(password)` | `Promise<void>` |
+| `updateProfile(fields)` | `Promise<void>` |
 | `resolveToken(forceRefresh?)` | `Promise<string \| null>` |
 | `signOut()` | `Promise<void>` |
 
-The contract contains only the 15 operations used by current authentication
-flows; all are asynchronous. Session restoration uses the initial
-`onAuthStateChanged` result. The `get` and `is` prefixes remain reserved for
-synchronous getters; processing methods use `check` or `resolve` where applicable.
-`onAuthStateChanged` resolves to a synchronous unsubscribe function, obtained
-with `const unsubscribe = await auth.onAuthStateChanged(callback)`.
-Constructors and the React `useAuth()` hook remain synchronous.
+An auth user is the authentication snapshot consumed by current components:
+`uid`, `email`, `emailVerified`, `displayName`, `photoURL`, `providerData`,
+`createdAt`, `lastLoginAt`, `toJSON()` and `updatePassword(password)`.
+LocalTestAuth returns detached snapshots with no password or session token.
+`from()` converts the JSON snapshot for the existing UserData; it does not create
+or import UserData. Profile database persistence and roles remain outside Auth.
 
-Provider is a string such as `google` or `facebook`; provider options contain
-optional `scopes` and `parameters`. Credential is
-`{provider, idToken?, accessToken?}`. Email options contain
-`{url, handleCodeInApp?}`; verification/reset options are optional. Constructor
-arguments are implementation-specific. Existing Firebase initialization remains
-outside this contract. CRUD, profile management, roles, permissions, Storage
-and Messaging are outside this contract.
+Session restoration uses the initial auth-state callback. Obtain the synchronous
+unsubscribe function with
+`const unsubscribe = await auth.onAuthStateChanged(callback, onError)`.
+Constructors and `useAuth()` remain synchronous. Provider options may contain
+`scopes` and `parameters`; credential objects may contain
+`{provider, idToken?, accessToken?}`. Email options may contain
+`{url, handleCodeInApp?}`. Implementations own their constructor configuration.
 
 ### Internal common layer
 
@@ -608,10 +640,10 @@ separate npm package. Public classes are re-exported through `redequate`.
 implementation, so existing components and tests retain their imports.
 
 UserData was moved without changing its behavior and still depends on Firebase,
-including its existing persistence and current-user helpers. Auth stubs reference
-UserData only in the documented contract: importing LocalTestAuth or the neutral
-Auth entry does not load UserData or Firebase. A future implementation importing UserData at runtime
-must address that legacy dependency in a separate migration. Core application
+including its existing persistence and current-user helpers. LocalTestAuth converts auth snapshots without importing
+UserData: importing LocalTestAuth or the neutral Auth entry does not load UserData
+or Firebase. An implementation importing UserData at runtime would need to
+address that legacy dependency in a separate migration. Core application
 imports still include Firebase SDK services.
 
 Auth runtime source lives in `auth/src`; its build configuration remains in

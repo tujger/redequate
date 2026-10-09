@@ -101,13 +101,16 @@ export default (props) => {
         }
         const initAuth = async props => {
             try {
-                return {...props, auth: await resolveAuth(givenAuth)};
+                const auth = await resolveAuth(givenAuth);
+                console.log("[Dispatcher]", "auth resolved", {auth});
+                return {...props, auth};
             } catch (error) {
                 throw {...props, fatal: error};
             }
         }
         const initFirebase = async props => {
             const firebase = firebaseGiven || Firebase(firebaseConfig);
+            console.log("[Dispatcher]", "firebase resolved", {firebase});
             return {...props, firebase};
         }
         const initStore = async props => {

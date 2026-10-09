@@ -1,6 +1,7 @@
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/database";
+import FirebaseAuth from "../../auth/src/firebase";
 import {createStore} from "redux";
 import {currentUserData, useCurrentUserData} from "../controllers/UserData";
 
@@ -20,6 +21,7 @@ firebase.initializeApp({
 firebase.auth().useEmulator(`http://${authHost}`, {disableWarnings: true});
 firebase.database().useEmulator("127.0.0.1", 9000);
 export {firebase};
+export const auth = new FirebaseAuth({firebase});
 export const store = createStore((state, action) => ({
     ...state,
     ...currentUserData(state, action),
