@@ -1,7 +1,7 @@
 import React from "react";
 import {vi} from "vitest";
 import Base from "../MessagingBase";
-import Provider, {useMessaging} from "../MessagingContext";
+import Provider, {useMessaging} from "../useMessaging";
 import LocalTest from "../local-test";
 import {resolveMessaging} from "../resolveMessaging";
 import {render, unmount} from "../../../../src/__tests__/render";

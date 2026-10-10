@@ -6,9 +6,10 @@ import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
-import {AuthContext, resolveAuth} from "../packages/auth/src";
-import {MessagingContext, resolveMessaging} from "../packages/messaging/src";
-import {resolveStorage, StorageContext} from "../packages/storage/src";
+import {_AppContext} from "../packages/_common/AppContext";
+import {resolveAuth} from "../packages/auth/src";
+import {resolveMessaging} from "../packages/messaging/src";
+import {resolveStorage} from "../packages/storage/src";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
 import Firebase from "./controllers/Firebase";
@@ -421,28 +422,24 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    return <AuthContext value={auth}>
-        <MessagingContext value={messaging}>
-        <StorageContext value={storage}>
-            <Provider store={store}>
-                <>
-                    {theme}
-                    <BrowserRouter>
-                        <SnackbarProvider maxSnack={4} preventDuplicate>
-                            <DispatcherRoutedBody
-                                {...props}
-                                copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
-                                menu={menu}
-                                title={t(title)}
-                            />
-                        </SnackbarProvider>
-                    </BrowserRouter>
-                    <PWAPrompt promptOnVisit={3} timesToShow={3}/>
-                </>
-            </Provider>
-        </StorageContext>
-        </MessagingContext>
-    </AuthContext>;
+    return <_AppContext value={{auth, messaging, storage}}>
+        <Provider store={store}>
+            <>
+                {theme}
+                <BrowserRouter>
+                    <SnackbarProvider maxSnack={4} preventDuplicate>
+                        <DispatcherRoutedBody
+                            {...props}
+                            copyright={t(copyright, {version: process.env.REACT_APP_VERSION})}
+                            menu={menu}
+                            title={t(title)}
+                        />
+                    </SnackbarProvider>
+                </BrowserRouter>
+                <PWAPrompt promptOnVisit={3} timesToShow={3}/>
+            </>
+        </Provider>
+    </_AppContext>
 }
 
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});

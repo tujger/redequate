@@ -1,7 +1,7 @@
 import React from "react";
 import {vi} from "vitest";
 import Base from "../StorageBase";
-import Provider, {useStorage} from "../StorageContext";
+import Provider, {useStorage} from "../useStorage";
 import LocalTest from "../local-test";
 import {resolveStorage} from "../resolveStorage";
 import {render, unmount} from "../../../../src/__tests__/render";
