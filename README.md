@@ -69,7 +69,7 @@ Emulator JAR. Firebase login and production credentials are not required.
 ```sh
 npm test                       # unit tests, then Auth/RTDB integration tests
 npm run "test core"             # compatible name for the complete test gate
-npm run test:unit               # component and Auth unit tests
+npm run test:unit               # component and package unit tests
 npm run "test:watch core"       # unit tests in watch mode
 npm run test:integration        # starts and stops the local emulators
 npm run test:integration:watch  # keeps emulators running while Vitest watches
@@ -78,9 +78,12 @@ npm run test:integration:watch  # keeps emulators running while Vitest watches
 No sibling repositories are required. Test infrastructure lives in
 `src/__tests__`: one Vitest config selects ordinary `.test.js` files by default
 and `.integration.test.js` files with `--mode integration`. Tests live in each
-module's source directory: `src/__tests__`, `auth/src/__tests__` and
-`_common/src/__tests__`. Auth unit tests exercise LocalTestAuth, AuthBase, selection
-and Context; Auth and UserData integration tests use the Firebase emulators. The emulator runner owns the local
+module's source directory: `src/__tests__` and `packages/*/src/__tests__`.
+Package build helpers are covered in `packages/__tests__`. Unit tests cover
+Auth, Messaging and Storage contracts, provider selection, Contexts and local
+providers; LocalTestStorage uses `fake-indexeddb`. Firebase Messaging and Storage
+use mocked SDKs, without real message delivery or cloud uploads.
+Auth and UserData integration tests use the Firebase emulators. The emulator runner owns the local
 service settings and `demo-redequate-tests` project ID; it generates Firebase
 configuration in its temporary log directory and copies `fixtures/database.rules.json`
 there because Firebase CLI disallows rules outside that directory. Fixtures use
@@ -567,7 +570,7 @@ Create the object outside render or with `useMemo` to keep its identity stable.
 Built-in implementations extend `AuthBase`; inheritance is optional for external
 modules, and Dispatcher does not require `instanceof`. There is no registry.
 LocalTestAuth keeps significant operation implementations in individual default-export
-modules and shared helpers in `auth/src/local-test/common.js`.
+modules and shared helpers in `packages/auth/src/local-test/common.js`.
 
 CommonJS uses `const LocalTestAuth = require("redequate/auth/local-test").default`
 and `const auth = new LocalTestAuth(options)`.
@@ -590,7 +593,7 @@ LocalTestAuth does not make the entire application work offline without Firebase
 
 `AuthBase`, exported from `redequate/auth`, supplies explicit `Not implemented`
 defaults. Built-in implementations override supported operations. The current
-runtime signatures are defined in `auth/src/AuthBase.js`. All operations below
+runtime signatures are defined in `packages/auth/src/AuthBase.js`. All operations below
 return Promises.
 
 | Method | Result |
@@ -633,7 +636,7 @@ Constructors and `useAuth()` remain synchronous. Provider options may contain
 
 ### Internal common layer
 
-Shared code resides in `_common/src`; it has no public package subpath or
+Shared code resides in `packages/_common/src`; it has no public package subpath or
 separate npm package. Public classes are re-exported through `redequate`.
 `src/controllers/UserData.js` remains a compatibility re-export of the moved
 implementation, so existing components and tests retain their imports.
@@ -642,11 +645,15 @@ UserData retains its existing Firebase persistence and current-user helpers.
 Auth adapters construct it directly from normalized JSON. Auth replacement alone does
 not remove the application's Firebase profile and service dependencies.
 
-Auth runtime source lives in `auth/src`; its build configuration remains in
-`auth/build.mjs`.
-`auth/build.mjs` supplies entry points, source matching and output naming to
+The internal `_common`, `auth`, `messaging` and `storage` modules live under
+`packages/`, including their existing tests and build configuration. They remain
+parts of one npm package, with unchanged public subpaths and `core` outputs.
+
+Auth runtime source lives in `packages/auth/src`; its build configuration remains in
+`packages/auth/build.mjs`.
+`packages/auth/build.mjs` supplies entry points, source matching and output naming to
 Rollup; it has no runtime import or public export. Shared source lives in
-`_common/src`. Both remain part of the same npm package, whose
+`packages/_common/src`. Both remain part of the same npm package, whose
 published files are built into `core`. The example resolves the package through
 its normal dependency and conditional exports, without an ESM-file alias.
 

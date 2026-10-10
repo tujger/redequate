@@ -38,10 +38,11 @@ export default [
     {
         files: [
             'src/**/*.{js,mjs,cjs}',
-            'auth/src/**/*.{js,mjs,cjs}', 'auth/build.mjs',
-            'messaging/src/**/*.{js,mjs,cjs}', 'messaging/build.mjs',
-            'storage/src/**/*.{js,mjs,cjs}', 'storage/build.mjs',
-            '_common/src/**/*.{js,mjs,cjs}'
+            'packages/__tests__/**/*.{js,mjs,cjs}',
+            'packages/auth/src/**/*.{js,mjs,cjs}', 'packages/auth/build.mjs',
+            'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
+            'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',
+            'packages/_common/src/**/*.{js,mjs,cjs}'
         ],
         languageOptions: {globals: globals.jest},
         rules: {

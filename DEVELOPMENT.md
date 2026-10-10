@@ -1285,3 +1285,56 @@ Android fallback. Browser checks use extracted Dispatcher watcher code rather
 than a full application mount. Provider ESLint and framework ESM/CommonJS builds
 passed on Node.js 24.21.0; existing Dispatcher/Notifications lint diagnostics
 remain, with none added. No permanent tests were added or changed.
+
+### Internal modules grouped under packages
+
+Decision: move _common, auth, messaging and storage into packages/, including
+their src, existing src/__tests__, index.js and build.mjs files. Update runtime
+imports, Rollup/Babel source matching, ESLint, Vitest and documentation paths.
+Tests receive only mechanical import/mock path updates; scenarios are unchanged.
+
+Reason: group the framework's internal modules while preserving their existing
+source/support-file separation. This supersedes the top-level locations recorded
+in the earlier runtime source directories decision.
+
+Consequences: this is still one npm package, without workspaces or new package
+manifests. Public redequate/auth, redequate/messaging, redequate/storage and
+provider subpaths, core output paths, shared Context instances and UserData
+references remain unchanged. No compatibility directories remain at the old
+source locations. Consumer imports require no changes; Android APIs and stored
+data formats are unchanged.
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks.
+
+Status: framework and both linked web consumer production builds passed on
+Node.js 24.21.0, as did all 38 Firebase emulator integration tests, public
+ESM/CommonJS module/provider imports, shared Context/UserData checks and
+npm pack --dry-run. Unit tests: 177 passed, one failed on async observer error
+handling in LocalTestAuth; the same test fails in a temporary HEAD checkout at
+the original paths. That unrelated Auth issue is left for separate work.
+All 321 module/configuration ESLint errors match the baseline, with none added.
+
+### Package helpers and contract coverage
+
+Decision: share delay, fail, notImplemented, identifier and resolvePackage in
+the private packages/_common/src/_packages.js module. Providers import helpers
+directly, passing complete error codes and provider names. Keep storage key
+validation and observer handling within their providers.
+
+Reason: remove duplicated package plumbing while preserving lazy provider
+selection and existing error codes. The helpers remain outside public exports.
+Unit coverage now includes Messaging and Storage providers, contracts, Contexts,
+package build helpers and real IndexedDB transactions through fake-indexeddb.
+
+Consequences: LocalTestAuth forwards asynchronous observer failures to onError;
+FirebaseStorage implements resolveDownloadURL and accepts paths as well as URLs
+for reference operations. Public module paths and stored data formats are
+unchanged. Shared ESM support chunks must use .mjs throughout their import graph.
+Resolve their source paths relative to the package source directory: Rollup's
+bundled config can change import.meta.url for an imported build helper.
+Affected consumers: edeqa-pwa-react-demo and thewhiskytalks; Android protocols
+are unchanged.
+
+Status: the previous LocalTestAuth unit failure is resolved. All 225 unit tests
+and 38 Firebase emulator integration tests pass; provider ESLint and framework
+and linked web consumer production builds pass. Firebase Messaging/Storage
+tests mock the SDK and do not verify real delivery or cloud Storage rules.

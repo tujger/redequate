@@ -4,7 +4,7 @@ import AnyIcon from "@mui/icons-material/InsertDriveFile";
 import VideoIcon from "@mui/icons-material/Movie";
 import React from "react";
 import {useTranslation} from "react-i18next";
-import {useStorage} from "../../storage";
+import {useStorage} from "../../packages/storage";
 
 const fallbacks = {
     image: <ImageIcon/>,
