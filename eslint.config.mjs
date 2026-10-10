@@ -40,6 +40,7 @@ export default [
             'src/**/*.{js,mjs,cjs}',
             'packages/__tests__/**/*.{js,mjs,cjs}',
             'packages/auth/src/**/*.{js,mjs,cjs}', 'packages/auth/build.mjs',
+            'packages/backend/src/**/*.{js,mjs,cjs}', 'packages/backend/build.mjs',
             'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
             'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',
             'packages/_common/src/**/*.{js,mjs,cjs}'

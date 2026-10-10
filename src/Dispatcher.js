@@ -8,6 +8,7 @@ import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import {_AppContext} from "../packages/_common/AppContext";
 import {resolveAuth} from "../packages/auth/src";
+import {resolveBackend} from "../packages/backend/src";
 import {resolveMessaging} from "../packages/messaging/src";
 import {resolveStorage} from "../packages/storage/src";
 import LoadingComponent from "./components/LoadingComponent";
@@ -73,6 +74,7 @@ console.error = function (...args) {
 export default (props) => {
     const {
         auth: authGiven,
+        backend: backendGiven,
         firebase: firebaseGiven = undefined,
         firebaseConfig = undefined,
         locales,
@@ -103,6 +105,11 @@ export default (props) => {
             document.cookie = "g_state=''";
             return props;
         }
+        const initFirebase = async props => {
+            const firebase = firebaseGiven || Firebase(firebaseConfig);
+            console.log("[Dispatcher]", "firebase resolved", {firebase});
+            return {...props, firebase};
+        }
         const initAuth = async props => {
             try {
                 const auth = await resolveAuth(authGiven);
@@ -112,16 +119,11 @@ export default (props) => {
                 throw {...props, fatal: error};
             }
         }
-        const initFirebase = async props => {
-            const firebase = firebaseGiven || Firebase(firebaseConfig);
-            console.log("[Dispatcher]", "firebase resolved", {firebase});
-            return {...props, firebase};
-        }
-        const initStorage = async props => {
+        const initBackend = async props => {
             try {
-                const storage = await resolveStorage(storageGiven);
-                console.log("[Dispatcher]", "storage resolved", {storage});
-                return {...props, storage};
+                const backend = await resolveBackend(backendGiven);
+                console.log("[Dispatcher]", "backend resolved", {backend});
+                return {...props, backend};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -131,6 +133,15 @@ export default (props) => {
                 const messaging = await resolveMessaging(messagingGiven);
                 console.log("[Dispatcher]", "messaging resolved", {messaging});
                 return {...props, messaging};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
+        const initStorage = async props => {
+            try {
+                const storage = await resolveStorage(storageGiven);
+                console.log("[Dispatcher]", "storage resolved", {storage});
+                return {...props, storage};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -343,10 +354,11 @@ export default (props) => {
 
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
-            .then(initAuth)
             .then(initFirebase)
-            .then(initStorage)
+            .then(initAuth)
+            .then(initBackend)
             .then(initMessaging)
+            .then(initStorage)
             .then(initStore)
             .then(restoreFirebaseAuth)
             .then(initWindowData)
@@ -399,6 +411,7 @@ const DispatcherInitializationError = ({error, theme}) => {
 const DispatcherInitialized = (props) => {
     const {
         auth,
+        backend,
         buildPages,
         copyright,
         firebase,
@@ -422,7 +435,7 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    return <_AppContext value={{auth, messaging, storage}}>
+    return <_AppContext value={{auth, backend, messaging, storage}}>
         <Provider store={store}>
             <>
                 {theme}

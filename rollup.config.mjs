@@ -10,6 +10,7 @@ import del from 'rollup-plugin-delete'
 import external from 'rollup-plugin-peer-deps-external'
 import postcss from 'rollup-plugin-postcss'
 import {authSourcePattern, withAuth} from './packages/auth/build.mjs'
+import {backendSourcePattern, withBackend} from './packages/backend/build.mjs'
 import {messagingSourcePattern, withMessaging} from "./packages/messaging/build.mjs";
 import {storageSourcePattern, withStorage} from './packages/storage/build.mjs'
 
@@ -64,7 +65,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, messagingSourcePattern, storageSourcePattern],
+                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
                 svgr(),
                 resolve(),
@@ -204,5 +205,5 @@ export default () => {
                 json(),
             ]
         }
-    ].map(withAuth).map(withMessaging).map(withStorage)
+    ].map(withAuth).map(withBackend).map(withMessaging).map(withStorage)
 }

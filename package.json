@@ -151,6 +151,18 @@
             "import": "./core/auth/local-test.mjs",
             "require": "./core/auth/local-test.cjs"
         },
+        "./backend": {
+            "import": "./core/backend/index.mjs",
+            "require": "./core/backend/index.cjs"
+        },
+        "./backend/firebase-client": {
+            "import": "./core/backend/firebase-client.mjs",
+            "require": "./core/backend/firebase-client.cjs"
+        },
+        "./backend/local-test-client": {
+            "import": "./core/backend/local-test-client.mjs",
+            "require": "./core/backend/local-test-client.cjs"
+        },
         "./messaging": {
             "import": "./core/messaging/index.mjs",
             "require": "./core/messaging/index.cjs"
