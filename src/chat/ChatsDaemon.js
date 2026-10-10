@@ -1,8 +1,8 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
+import {useBackend} from "../../packages/backend";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import {fetchCallable} from "../controllers/Firebase";
 import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
@@ -14,6 +14,7 @@ export default ({clearText = text => text}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
+    const backend = useBackend();
     const history = useHistory();
     const pages = usePages();
 
@@ -79,9 +80,8 @@ export default ({clearText = text => text}) => {
                 })
                 metas[meta.id] = meta;
             }).catch(error => {
-                console.error(`[ChatsDaemon] failed for ${currentUserData.id}`)
-                console.error(error);
-                fetchCallable("fixChat", {id, uid: currentUserData.id})
+                console.error(`[ChatsDaemon] failed for ${currentUserData.id}`, error)
+                backend.callFunction("fixChat", {id, uid: currentUserData.id})
                     .then(console.log)
                     .catch(console.error);
             });
