@@ -1,7 +1,7 @@
 import React from "react";
 import {InView} from "react-intersection-observer";
 import {Route, Switch, useHistory} from "react-router-dom";
-import LoadingComponent from "../components/LoadingComponent";
+import LoadingComponent from "./LoadingComponent";
 import {useMetaInfo, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";

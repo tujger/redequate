@@ -2,7 +2,7 @@ import MailIcon from "@mui/icons-material/Mail";
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useAuth} from "../../../auth";
+import {useAuth} from "../../../packages/auth";
 import ProgressView from "../../components/ProgressView";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";

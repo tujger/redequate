@@ -1,7 +1,7 @@
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/database";
-import FirebaseAuth from "../../auth/src/firebase";
+import FirebaseAuth from "../../packages/auth/src/firebase";
 import {createStore} from "redux";
 import {currentUserData, useCurrentUserData} from "../controllers/UserData";
 

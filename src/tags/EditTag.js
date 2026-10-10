@@ -4,7 +4,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {useStorage} from "../../storage";
+import {useStorage} from "../../packages/storage";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import MentionedSelectComponent from "../components/MentionedSelectComponent";

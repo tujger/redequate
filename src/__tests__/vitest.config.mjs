@@ -16,7 +16,7 @@ export default defineConfig(({mode}) => {
             enforce: "pre",
             transform(code, id) {
                 const filename = id.split("?")[0];
-                if (["src/", "auth/src/", "_common/src/"].some(directory => filename.startsWith(`${root}${directory}`)) && filename.endsWith(".js")) {
+                if (["src/", "packages/auth/src/", "packages/_common/src/"].some(directory => filename.startsWith(`${root}${directory}`)) && filename.endsWith(".js")) {
                     return transformWithOxc(code, filename, {lang: "jsx", jsx: {runtime: "automatic"}});
                 }
                 if (filename.includes("/src/themes/") && filename.endsWith(".css") && !filename.endsWith(".module.css")) {
@@ -40,7 +40,7 @@ export default defineConfig(({mode}) => {
         test: {
             environment: "jsdom",
             globals: true,
-            include: ["src", "auth/src", "_common/src"].map(directory =>
+            include: ["src", "packages/auth/src", "packages/_common/src"].map(directory =>
                 `${directory}/__tests__/**/*.${integration ? "integration.test" : "test"}.js`),
             ...(!integration ? {exclude: ["**/node_modules/**", "**/*.integration.test.js"]} : {}),
             ...(integration

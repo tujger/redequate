@@ -2,7 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory, withRouter} from "react-router-dom";
-import {useAuth} from "../../auth";
+import {useAuth} from "../../packages/auth";
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";

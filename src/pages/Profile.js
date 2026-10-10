@@ -10,7 +10,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {useAuth} from "../../auth";
+import {useAuth} from "../../packages/auth";
 import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
