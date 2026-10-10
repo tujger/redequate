@@ -1,3 +1,3 @@
-export {default as useStorage} from "./useBackend";
-export {default as StorageBase} from "./BackendBase";
+export {default as useBackend} from "./useBackend";
+export {default as BackendBase} from "./BackendBase";
 export {resolveBackend} from "./resolveBackend";

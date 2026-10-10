@@ -8,9 +8,8 @@ export default class FirebaseBackendClient extends BackendBase {
         this._firebase = firebase;
     }
 
-    async callAs(name, options) {
-        const func = this._firebase.functions().httpsCallable(name);
-        return func(options).then(result => result.data);
+    async callFunction(name, args) {
+        const func = await this._firebase.functions().httpsCallable(name);
+        return func(args).then(result => result.data);
     }
-
 }
