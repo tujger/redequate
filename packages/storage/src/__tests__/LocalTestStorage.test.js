@@ -92,3 +92,29 @@ it("passes FileReader errors through without persisting a file", async () => {
     await expect(upload()).rejects.toThrow("LocalTestStorage file reading aborted.");
     expect(open).not.toHaveBeenCalled();
 });
+it("stores unnamed untyped Blobs and detaches supplied metadata", async () => {
+    const metadata = {nested: {value: "original"}, uid: "spoofed", filename: "spoofed"};
+    const result = await upload({blob: new Blob(["bytes"]), metadata});
+    expect(result.metadata).toMatchObject({contentType: "application/octet-stream", size: 5, customMetadata: {uid: "user", filename: "file", nested: {value: "original"}}});
+    expect(result.metadata.fullPath).toMatch(/^user\/application\/.+-file$/);
+    expect(result.url).toMatch(/^data:application\/octet-stream;base64,/);
+    metadata.nested.value = "changed input";
+    result.metadata.customMetadata.nested.value = "changed result";
+    expect((await storage.resolveMetadata(result.url)).customMetadata.nested.value).toBe("original");
+    expect(metadata.uid).toBe("spoofed");
+});
+it("rejects blocked IndexedDB upgrades and closes a late connection", async () => {
+    const request = {};
+    const close = vi.fn();
+    vi.spyOn(window.indexedDB, "open").mockReturnValue(request);
+    const onProgress = vi.fn();
+    const pending = upload({onProgress});
+    const rejected = expect(pending).rejects.toThrow("LocalTestStorage database upgrade is blocked.");
+    await vi.waitFor(() => expect(request.onblocked).toBeTypeOf("function"));
+    request.onblocked();
+    await rejected;
+    expect(onProgress.mock.calls).toEqual([["0"]]);
+    request.result = {close};
+    request.onsuccess();
+    expect(close).toHaveBeenCalledOnce();
+});

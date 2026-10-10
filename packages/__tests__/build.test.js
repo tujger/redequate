@@ -28,7 +28,7 @@ it.each([["auth", withAuth], ["messaging", withMessaging], ["storage", withStora
     const shared = {moduleIds: [fileURLToPath(new URL("../_common/src/_packages.js", import.meta.url))]};
     const web = {moduleIds: ["/src/Dispatcher.js"]};
     expect(result.output[0].chunkFileNames(local)).toBe("chunks/[name]-[hash].mjs");
-    expect(result.output[0].chunkFileNames(shared)).toBe("chunks/[name]-[hash].mjs");
+    expect(result.output[0].chunkFileNames(shared)).toBe("core.es.js");
     expect(result.output[0].chunkFileNames(web)).toBe("core.es.js");
     expect(result.output[0].chunkFileNames({moduleIds: []})).toBe("core.es.js");
     expect(result.output[1].chunkFileNames(shared)).toBe("core.js");

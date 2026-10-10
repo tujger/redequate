@@ -8,7 +8,7 @@ beforeEach(() => {
     firebase = {storage: Object.assign(() => sdk, {TaskEvent: {STATE_CHANGED: "state_changed"}})};
     storage = new FirebaseStorage({firebase});
 });
-it.each(["user/file", "gs://bucket/file", "https://files/file"])("reads and deletes %s through the correct reference", async path => {
+it.each(["user/file", "gs://bucket/file", "https://files/file", "http://files/file"])("reads and deletes %s through the correct reference", async path => {
     expect(await storage.resolveDownloadURL(path)).toBe("https://files/file");
     expect(await storage.resolveMetadata(path)).toEqual({fullPath: "user/file"});
     expect(await storage.delete(path)).toBeUndefined();
@@ -41,4 +41,18 @@ it("passes upload and reference failures through unchanged", async () => {
     ref.child = () => ref;
     ref.put = () => ({on: (event, progress, onError) => onError(error)});
     await expect(storage.upload({auth: "user", blob: new File(["x"], "x", {type: "text/plain"})})).rejects.toBe(error);
+});
+it("does not start an upload when Auth rejects", async () => {
+    const error = new Error("Auth failed");
+    const auth = {resolveCurrentUser: vi.fn().mockRejectedValue(error)};
+    await expect(storage.upload({auth, blob: new File(["x"], "x")})).rejects.toBe(error);
+    expect(sdk.ref).not.toHaveBeenCalled();
+});
+it.each(["getDownloadURL", "getMetadata"])("rejects when %s fails after upload completion", async method => {
+    const error = new Error("post-upload failure");
+    ref[method].mockRejectedValue(error);
+    ref.child = vi.fn(() => ref);
+    ref.put = vi.fn(() => ({snapshot: {ref}, on: (event, progress, onError, finish) => finish()}));
+    await expect(storage.upload({auth: "user", blob: new File(["x"], "x")})).rejects.toBe(error);
+    if (method === "getDownloadURL") expect(ref.getMetadata).not.toHaveBeenCalled();
 });

@@ -85,3 +85,95 @@ it("handles provider-free and incomplete auth fields without SDK methods", async
     sdk.currentUser = sdkUser({uid: ""});
     await expect(auth.resolveCurrentUser()).rejects.toThrow(Error);
 });
+it("forwards login arguments, browser links and sign-out to the SDK", async () => {
+    const methods = ["createUserWithEmailAndPassword", "signInWithEmailAndPassword", "signInWithEmailLink", "signInWithCredential", "signInWithPopup", "signInWithRedirect", "signOut", "isSignInWithEmailLink", "sendPasswordResetEmail", "sendSignInLinkToEmail"];
+    const sdk = Object.fromEntries(methods.map(method => [method, vi.fn().mockResolvedValue({user: null})]));
+    const credential = {};
+    const provider = {};
+    const credentialFactory = vi.fn(() => credential);
+    const auth = new FirebaseAuth({firebase: {auth: Object.assign(() => sdk, {GoogleAuthProvider: {credential: credentialFactory}})}});
+    for (const method of ["createUserWithEmailAndPassword", "signInWithEmailAndPassword"]) {
+        await auth[method]("email", "password");
+        expect(sdk[method]).toHaveBeenCalledWith("email", "password");
+    }
+    await auth.signInWithEmailLink("email");
+    expect(sdk.signInWithEmailLink).toHaveBeenCalledWith("email", window.location.href);
+    await auth.checkSignInWithEmailLink();
+    expect(sdk.isSignInWithEmailLink).toHaveBeenCalledWith(window.location.href);
+    await auth.signInWithCredential("token");
+    expect(credentialFactory).toHaveBeenCalledWith("token");
+    expect(sdk.signInWithCredential).toHaveBeenCalledWith(credential);
+    for (const method of ["signInWithPopup", "signInWithRedirect"]) {
+        await auth[method](provider);
+        expect(sdk[method]).toHaveBeenCalledWith(provider);
+    }
+    await auth.signOut();
+    expect(sdk.signOut).toHaveBeenCalledWith();
+    await auth.sendPasswordResetEmail("email");
+    expect(sdk.sendPasswordResetEmail).toHaveBeenCalledWith("email");
+    await auth.sendSignInLinkToEmail("email");
+    expect(sdk.sendSignInLinkToEmail).toHaveBeenCalledWith("email", {url: window.location.origin + "/signup/email", handleCodeInApp: true});
+});
+it("uses current user methods and reports missing authentication with the full error", async () => {
+    const user = {updatePassword: vi.fn().mockResolvedValue("password result"), updateProfile: vi.fn().mockResolvedValue("profile result"), sendEmailVerification: vi.fn().mockResolvedValue("verification result")};
+    const sdk = {currentUser: user};
+    const auth = new FirebaseAuth({firebase: {auth: () => sdk}});
+    expect(auth.currentUser()).toBe(user);
+    expect(await auth.updatePassword("new password")).toBe("password result");
+    expect(user.updatePassword).toHaveBeenCalledWith("new password");
+    expect(await auth.updateProfile({displayName: "name"})).toBe("profile result");
+    expect(user.updateProfile).toHaveBeenCalledWith({displayName: "name"});
+    expect(await auth.sendEmailVerification()).toBe("verification result");
+    expect(user.sendEmailVerification).toHaveBeenCalledWith();
+    sdk.currentUser = null;
+    const expected = {code: "auth/no-current-user", message: "An authenticated user is required."};
+    try { auth.currentUser(); throw new Error("Expected authentication failure"); } catch (error) { expect(error).toMatchObject(expected); }
+    for (const method of ["updatePassword", "updateProfile", "sendEmailVerification"]) {
+        await expect(auth[method]({})).rejects.toMatchObject(expected);
+    }
+    expect(await auth.resolveCurrentUser()).toBeNull();
+});
+it("configures Google and Facebook providers and preserves explicit providers", () => {
+    const google = {setCustomParameters: vi.fn(), addScope: vi.fn()};
+    const facebook = {addScope: vi.fn(), setCustomParameters: vi.fn()};
+    const Google = vi.fn(function () { return google; });
+    const Facebook = vi.fn(function () { return facebook; });
+    const auth = new FirebaseAuth({firebase: {auth: {GoogleAuthProvider: Google, FacebookAuthProvider: Facebook}}});
+    expect(auth.provider("google.com")).toBe(google);
+    expect(google.setCustomParameters).toHaveBeenCalledWith({prompt: "select_account"});
+    expect(google.addScope).toHaveBeenCalledWith("https://www.googleapis.com/auth/userinfo.email");
+    expect(auth.provider("facebook.com")).toBe(facebook);
+    expect(facebook.addScope).toHaveBeenCalledWith("email");
+    expect(facebook.setCustomParameters).toHaveBeenCalledWith({prompt: "select_account"});
+    const explicit = {};
+    expect(auth.provider(explicit)).toBe(explicit);
+});
+it.each([[null, undefined], [() => {}, null], ["callback", () => {}]])("rejects invalid observers before SDK registration", async (callback, onError) => {
+    const sdk = vi.fn();
+    const auth = new FirebaseAuth({firebase: {auth: sdk}});
+    await expect(auth.onAuthStateChanged(callback, onError)).rejects.toMatchObject({code: "auth/invalid-argument", message: "Auth state listeners must be functions."});
+    expect(sdk).not.toHaveBeenCalled();
+});
+it("contains synchronous and asynchronous observers and error callback failures", async () => {
+    let notify;
+    const auth = new FirebaseAuth({firebase: {auth: () => ({onAuthStateChanged: callback => { notify = callback; }})}});
+    const sync = new Error("sync observer");
+    const asyncError = new Error("async observer");
+    const onError = vi.fn();
+    await auth.onAuthStateChanged(() => { throw sync; }, onError);
+    expect(() => notify(null)).not.toThrow();
+    expect(onError).toHaveBeenLastCalledWith(sync);
+    await auth.onAuthStateChanged(async () => { throw asyncError; }, onError);
+    notify(null);
+    await Promise.resolve();
+    expect(onError).toHaveBeenLastCalledWith(asyncError);
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    await auth.onAuthStateChanged(async () => { throw asyncError; });
+    notify(null);
+    await Promise.resolve();
+    expect(log).toHaveBeenCalledWith("[FirebaseAuth] Auth state observer failed", asyncError);
+    const reportingError = new Error("error callback");
+    await auth.onAuthStateChanged(() => { throw sync; }, () => { throw reportingError; });
+    expect(() => notify(null)).not.toThrow();
+    expect(log).toHaveBeenCalledWith("[FirebaseAuth] Auth error callback failed", reportingError);
+});

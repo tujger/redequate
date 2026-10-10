@@ -70,3 +70,19 @@ it("validates callbacks and keys and passes storage errors through", async () =>
     vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw error; });
     await expect(messaging.unsubscribe()).rejects.toBe(error);
 });
+it("reports validation errors with complete codes and messages before using the SDK", async () => {
+    await expect(messaging.addMessageListener("invalid")).rejects.toMatchObject({code: "messaging/invalid-argument", message: "Message listener must be a function."});
+    try {
+        expect(new FirebaseMessaging({firebase, storageKey: ""})).toBeDefined();
+        throw new Error("Expected storage key failure");
+    } catch (error) {
+        expect(error).toMatchObject({code: "messaging/invalid-argument", message: "storageKey must be a non-empty string."});
+    }
+    expect(firebase.messaging).not.toHaveBeenCalled();
+    expect(firebase.messaging.isSupported).not.toHaveBeenCalled();
+    expect(window.Notification.requestPermission).not.toHaveBeenCalled();
+    firebase.messaging.isSupported.mockReturnValue(false);
+    await expect(messaging.subscribe()).rejects.toMatchObject({code: "messaging/unsupported-browser", message: "This browser doesn't support Firebase Messaging"});
+    expect(firebase.messaging).not.toHaveBeenCalled();
+    expect(window.Notification.requestPermission).not.toHaveBeenCalled();
+});

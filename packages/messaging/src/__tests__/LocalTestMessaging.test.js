@@ -72,3 +72,26 @@ it("validates console inputs and callbacks and passes storage errors through", a
     await expect(messaging.checkIfSubscribed()).rejects.toBe(error);
     await expect(run(messaging.subscribe())).rejects.toBe(error);
 });
+it("does not change subscription state when storage writes or deletion fail", async () => {
+    const error = new Error("blocked storage");
+    const write = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw error; });
+    await expect(run(messaging.subscribe())).rejects.toBe(error);
+    expect(await messaging.checkIfSubscribed()).toBe(false);
+    write.mockRestore();
+    const token = await run(messaging.subscribe());
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw error; });
+    await expect(run(messaging.unsubscribe())).rejects.toBe(error);
+    expect(await messaging.checkIfSubscribed()).toBe(true);
+    expect(window.localStorage.getItem(messaging.storageKey)).toBe(token);
+});
+it("reports invalid console and listener arguments with full codes and messages", async () => {
+    await expect(messaging.addMessageListener(null)).rejects.toMatchObject({code: "messaging/invalid-argument", message: "Message listener must be a function."});
+    for (const [message, key, expected] of [[null, undefined, "Message must be an object."], [{}, "", "storageKey must be a non-empty string."]]) {
+        try {
+            window.redequateMessaging.send(message, key);
+            throw new Error("Expected argument failure");
+        } catch (error) {
+            expect(error).toMatchObject({code: "messaging/invalid-argument", message: expected});
+        }
+    }
+});
