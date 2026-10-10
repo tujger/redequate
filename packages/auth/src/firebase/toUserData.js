@@ -1,10 +1,11 @@
-import {UserData} from "../../../_common/src";
+import {UserData} from "../../../_common";
+import {fail} from "../../../_common/src/_packages";
 
 export const toUserData = user => {
     if (!user) return null;
     const json = user.toJSON();
     if (!json.uid) {
-        throw Object.assign(new Error("Auth user has no identifier."), {code: "auth/invalid-user-data"});
+        fail("auth/invalid-user-data", "Auth user has no identifier.")
     }
     const providerItem = json.providerData?.[0];
     const provider = providerItem?.providerId || "anonymous";

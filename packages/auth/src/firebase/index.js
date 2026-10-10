@@ -1,3 +1,4 @@
+import {fail} from "../../../_common/src/_packages";
 import AuthBase from "../AuthBase";
 import {toUserData} from "./toUserData";
 
@@ -12,7 +13,7 @@ export default class FirebaseAuth extends AuthBase {
     currentUser() {
         const user = this._firebase.auth().currentUser;
         if (!user) {
-            throw Object.assign(new Error("An authenticated user is required."), {code: "auth/no-current-user"});
+            fail("auth/no-current-user", "An authenticated user is required.");
         }
         return user;
     }
@@ -29,7 +30,7 @@ export default class FirebaseAuth extends AuthBase {
 
     async onAuthStateChanged(callback, onError) {
         if (typeof callback !== "function" || (onError !== undefined && typeof onError !== "function")) {
-            throw Object.assign(new Error("Auth state listeners must be functions."), {code: "auth/invalid-argument"});
+            fail("auth/invalid-argument", "Auth state listeners must be functions.");
         }
         const reportError = error => {
             try {

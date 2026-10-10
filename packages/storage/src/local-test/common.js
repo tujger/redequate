@@ -1,12 +1,4 @@
-export const fail = (code, message) => {
-    throw Object.assign(new Error(message), {code: `storage/${code}`});
-};
-
-export async function delay(method) {
-    const milliseconds = Math.floor(Math.random() * 2001);
-    if (milliseconds > 100) console.debug(`[LocalTestStorage] ${method}: ${milliseconds} ms`);
-    await new Promise(resolve => setTimeout(resolve, milliseconds));
-}
+import {fail} from "../../../_common/src/_packages";
 
 const openDatabase = storage => new Promise((resolve, reject) => {
     const request = window.indexedDB.open(storage._storageKey, 1);
@@ -32,7 +24,7 @@ const openDatabase = storage => new Promise((resolve, reject) => {
 
 export async function fileOperation(storage, operation, value) {
     if (operation !== "upload" && (typeof value !== "string" || !value.trim())) {
-        fail("invalid-argument", "A non-empty file path or URL is required.");
+        fail("storage/invalid-argument", "A non-empty file path or URL is required.");
     }
     const database = await openDatabase(storage);
     try {
@@ -49,7 +41,7 @@ export async function fileOperation(storage, operation, value) {
             const request = value.startsWith("data:") ? files.index("url").get(value) : files.get(value);
             request.onsuccess = () => {
                 try {
-                    if (!request.result) fail("object-not-found", "File not found.");
+                    if (!request.result) fail("storage/object-not-found", "File not found.");
                     if (operation === "delete") {
                         files.delete(request.result.fullPath);
                     } else {

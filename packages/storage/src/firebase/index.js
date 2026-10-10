@@ -10,13 +10,16 @@ export default class FirebaseStorage extends StorageBase {
     }
 
     async delete(pathOrURL) {
-        return this._firebase.storage()
-            .refFromURL(pathOrURL)
+        return resolveReference(this._firebase, pathOrURL)
             .delete()
     }
 
+    async resolveDownloadURL(pathOrURL) {
+        return resolveReference(this._firebase, pathOrURL).getDownloadURL();
+    }
+
     async resolveMetadata(pathOrURL) {
-        const ref = this._firebase.storage().refFromURL(pathOrURL);
+        const ref = resolveReference(this._firebase, pathOrURL);
         if (ref) {
             return await ref.getMetadata();
         }
@@ -57,3 +60,8 @@ export default class FirebaseStorage extends StorageBase {
         });
     }
 }
+
+const resolveReference = (firebase, pathOrURL) => {
+    const storage = firebase.storage();
+    return /^(gs|https?):\/\//.test(pathOrURL) ? storage.refFromURL(pathOrURL) : storage.ref(pathOrURL);
+};

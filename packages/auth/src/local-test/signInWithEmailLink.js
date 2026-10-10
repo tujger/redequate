@@ -1,10 +1,11 @@
-import {fail, normalizeEmail, delay, read, createAccount, login} from "./common";
+import {delay, fail} from "../../../_common/src/_packages";
+import {normalizeEmail, read, createAccount, login} from "./common";
 
 export default async function signInWithEmailLink(auth, email) {
-    await delay("signInWithEmailLink");
+    await delay("LocalTestAuth", "signInWithEmailLink");
     email = normalizeEmail(email);
     const state = read(auth);
-    if (!state.links.includes(email)) fail("invalid-action-code", "No pending sign-in request for this email.");
+    if (!state.links.includes(email)) fail("auth/invalid-action-code", "No pending sign-in request for this email.");
     let account = state.accounts.find(item => item.email === email);
     if (!account) {
         account = createAccount(email);

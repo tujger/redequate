@@ -1,18 +1,29 @@
+import {delay, fail} from "../../../_common/src/_packages";
 import AuthBase from "../AuthBase";
+import {
+    changePassword,
+    current,
+    login,
+    normalizeEmail,
+    providerAccount,
+    read,
+    recordMail,
+    toUserData,
+    write
+} from "./common";
 import createUserWithEmailAndPassword from "./createUserWithEmailAndPassword";
-import signInWithEmailAndPassword from "./signInWithEmailAndPassword";
 import onAuthStateChanged from "./onAuthStateChanged";
 import signInWithCredential from "./signInWithCredential";
+import signInWithEmailAndPassword from "./signInWithEmailAndPassword";
 import signInWithEmailLink from "./signInWithEmailLink";
 import updateProfile from "./updateProfile";
-import {fail, normalizeEmail, delay, read, write, current, toUserData, login, providerAccount, recordMail, changePassword} from "./common";
 
 // Local simulation only: passwords and fake tokens are stored in plain text.
 export default class LocalTestAuth extends AuthBase {
     constructor({storageKey = "redequate:auth:local-test"} = {}) {
         super();
         if (!storageKey.trim()) {
-            fail("invalid-argument", "storageKey must be a non-empty string.");
+            fail("auth/invalid-argument", "storageKey must be a non-empty string.");
         }
         this.storageKey = storageKey;
     }
@@ -30,13 +41,13 @@ export default class LocalTestAuth extends AuthBase {
     }
 
     async resolveCurrentUser() {
-        await delay("resolveCurrentUser");
+        await delay("LocalTestAuth", "resolveCurrentUser");
         const state = read(this);
         return toUserData(state.accounts.find(account => account.uid === state.session?.uid));
     }
 
     async signOut() {
-        await delay("signOut");
+        await delay("LocalTestAuth", "signOut");
         const state = read(this);
         state.session = null;
         state.redirect = null;
@@ -44,7 +55,7 @@ export default class LocalTestAuth extends AuthBase {
     }
 
     async signInWithPopup(provider, options) {
-        await delay("signInWithPopup");
+        await delay("LocalTestAuth", "signInWithPopup");
         const state = read(this);
         return login(this, state, providerAccount(state, provider));
     }
@@ -54,7 +65,7 @@ export default class LocalTestAuth extends AuthBase {
     }
 
     async signInWithRedirect(provider, options) {
-        await delay("signInWithRedirect");
+        await delay("LocalTestAuth", "signInWithRedirect");
         const state = read(this);
         const account = providerAccount(state, provider);
         state.redirect = account.uid;
@@ -62,7 +73,7 @@ export default class LocalTestAuth extends AuthBase {
     }
 
     async resolveRedirectResult() {
-        await delay("resolveRedirectResult");
+        await delay("LocalTestAuth", "resolveRedirectResult");
         const state = read(this);
         if (!state.redirect) return null;
         const account = state.accounts.find(item => item.uid === state.redirect);
@@ -72,7 +83,7 @@ export default class LocalTestAuth extends AuthBase {
     }
 
     async sendEmailVerification(options) {
-        await delay("sendEmailVerification");
+        await delay("LocalTestAuth", "sendEmailVerification");
         const state = read(this);
         const account = current(state);
         account.emailVerified = true;
@@ -81,16 +92,16 @@ export default class LocalTestAuth extends AuthBase {
     }
 
     async sendPasswordResetEmail(email, options) {
-        await delay("sendPasswordResetEmail");
+        await delay("LocalTestAuth", "sendPasswordResetEmail");
         email = normalizeEmail(email);
         const state = read(this);
-        if (!state.accounts.some(account => account.email === email)) fail("user-not-found", "Account not found.");
+        if (!state.accounts.some(account => account.email === email)) fail("auth/user-not-found", "Account not found.");
         recordMail(state, "password-reset", email, options);
         write(this, state);
     }
 
     async sendSignInLinkToEmail(email, options) {
-        await delay("sendSignInLinkToEmail");
+        await delay("LocalTestAuth", "sendSignInLinkToEmail");
         email = normalizeEmail(email);
         const state = read(this);
         if (!state.links.includes(email)) state.links.push(email);
@@ -99,7 +110,7 @@ export default class LocalTestAuth extends AuthBase {
     }
 
     async checkSignInWithEmailLink() {
-        await delay("checkSignInWithEmailLink");
+        await delay("LocalTestAuth", "checkSignInWithEmailLink");
         return read(this).links.length > 0;
     }
 

@@ -1,3 +1,4 @@
+import {fail} from "../../../_common/src/_packages";
 import MessagingBase from "../MessagingBase";
 
 export default class FirebaseMessaging extends MessagingBase {
@@ -6,9 +7,7 @@ export default class FirebaseMessaging extends MessagingBase {
     constructor({firebase, storageKey = "notification-token"}) {
         super();
         if (typeof storageKey !== "string" || !storageKey.trim()) {
-            throw Object.assign(new Error("storageKey must be a non-empty string."), {
-                code: "messaging/invalid-argument"
-            });
+            fail("messaging/invalid-argument", "storageKey must be a non-empty string.");
         }
         this._firebase = firebase;
         this.storageKey = storageKey;
@@ -16,9 +15,7 @@ export default class FirebaseMessaging extends MessagingBase {
 
     async addMessageListener(onMessage) {
         if (typeof onMessage !== "function") {
-            throw Object.assign(new Error("Message listener must be a function."), {
-                code: "messaging/invalid-argument"
-            });
+            fail("messaging/invalid-argument", "Message listener must be a function.");
         }
         return resolveFirebaseMessaging(this._firebase).onMessage(payload => {
             const data = payload.notification || payload.data || {};
@@ -57,9 +54,7 @@ export default class FirebaseMessaging extends MessagingBase {
 
 const resolveFirebaseMessaging = firebase => {
     if (!firebase.messaging.isSupported()) {
-        throw Object.assign(new Error("This browser doesn't support Firebase Messaging"), {
-            code: "messaging/unsupported-browser"
-        });
+        fail("messaging/unsupported-browser", "This browser doesn't support Firebase Messaging");
     }
     return firebase.messaging();
 };

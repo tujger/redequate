@@ -1,3 +1,4 @@
+import {delay, fail, identifier} from "../../../_common/src/_packages";
 import MessagingBase from "../MessagingBase";
 
 // Local simulation only
@@ -12,9 +13,9 @@ export default class LocalTestMessaging extends MessagingBase {
 
     async addMessageListener(onMessage) {
         if (typeof onMessage !== "function") {
-            fail("Message listener must be a function.");
+            fail("messaging/invalid-argument", "Message listener must be a function.");
         }
-        await delay("addMessageListener");
+        await delay("LocalTestMessaging", "addMessageListener");
         const listener = event => {
             if (event.detail?.storageKey !== this.storageKey) return;
             try {
@@ -36,17 +37,17 @@ export default class LocalTestMessaging extends MessagingBase {
     }
 
     async subscribe() {
-        await delay("subscribe");
+        await delay("LocalTestMessaging", "subscribe");
         let token = window.localStorage.getItem(this.storageKey);
         if (!token) {
-            token = window.crypto.randomUUID();
+            token = identifier();
             window.localStorage.setItem(this.storageKey, token);
         }
         return token;
     }
 
     async unsubscribe() {
-        await delay("unsubscribe");
+        await delay("LocalTestMessaging", "unsubscribe");
         window.localStorage.removeItem(this.storageKey);
     }
 }
@@ -54,20 +55,16 @@ export default class LocalTestMessaging extends MessagingBase {
 const defaultStorageKey = "redequate:messaging:local-test";
 const messageEvent = "redequate:messaging:local-test:message";
 
-const fail = message => {
-    throw Object.assign(new Error(message), {code: "messaging/invalid-argument"});
-};
-
 const validateStorageKey = storageKey => {
     if (typeof storageKey !== "string" || !storageKey.trim()) {
-        fail("storageKey must be a non-empty string.");
+        fail("messaging/invalid-argument", "storageKey must be a non-empty string.");
     }
 };
 
 const sendMessage = (message, storageKey = defaultStorageKey) => {
     validateStorageKey(storageKey);
     if (!message || typeof message !== "object" || Array.isArray(message)) {
-        fail("Message must be an object.");
+        fail("messaging/invalid-argument", "Message must be an object.");
     }
     window.dispatchEvent(new window.CustomEvent(messageEvent, {
         detail: {storageKey, message: window.structuredClone(message)}
@@ -75,9 +72,3 @@ const sendMessage = (message, storageKey = defaultStorageKey) => {
 };
 
 const reportError = error => console.error("[LocalTestMessaging] Message handler failed", error);
-
-const delay = async method => {
-    const milliseconds = Math.floor(Math.random() * 2001);
-    if (milliseconds > 100) console.debug(`[LocalTestMessaging] ${method}: ${milliseconds} ms`);
-    await new Promise(resolve => setTimeout(resolve, milliseconds));
-};

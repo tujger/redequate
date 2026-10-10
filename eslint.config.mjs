@@ -38,6 +38,7 @@ export default [
     {
         files: [
             'src/**/*.{js,mjs,cjs}',
+            'packages/__tests__/**/*.{js,mjs,cjs}',
             'packages/auth/src/**/*.{js,mjs,cjs}', 'packages/auth/build.mjs',
             'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
             'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',

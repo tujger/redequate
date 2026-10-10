@@ -1,5 +1,3 @@
-import {fileURLToPath} from "node:url";
-
 export const packageSourcePattern = sourceDirectory => `${sourceDirectory}**/*.js`;
 
 const isPackageSupportChunk = (chunk, sourceDirectory) => {
@@ -15,7 +13,7 @@ export const withPackage = (entries, sourceDirectory) => config => ({
     input: {...config.input, ...entries},
     output: config.output.map(output => ({
         ...output,
-        // Auth's native ESM imports need .mjs throughout their shared graph.
+        // Packages' native ESM imports need .mjs throughout their shared graph.
         // The web core keeps .es.js and its existing bundler interop behavior.
         chunkFileNames: chunk => {
             if (output.format === "es" && isPackageSupportChunk(chunk, sourceDirectory)) {

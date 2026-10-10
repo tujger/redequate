@@ -1,22 +1,23 @@
-import {UserData} from "../../../_common/src/UserData";
+import {delay, fail, identifier} from "../../../_common/src/_packages";
+import {UserData} from "../../../_common";
 
 export const changeEvent = "redequate:local-test-auth-changed";
-export const fail = (code, message) => {
-    throw Object.assign(new Error(message), {code: `auth/${code}`});
-};
+
 const emptyState = () => ({version: 1, accounts: [], session: null, redirect: null, links: [], mail: []});
+
 export const normalizeEmail = email => {
     if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-        fail("invalid-email", "Invalid email address.");
+        fail("auth/invalid-email", "Invalid email address.");
     }
     return email.trim().toLowerCase();
 };
+
 export const checkPassword = password => {
     if (typeof password !== "string" || password.length < 6) {
-        fail("weak-password", "Password must contain at least six characters.");
+        fail("auth/weak-password", "Password must contain at least six characters.");
     }
 };
-export const identifier = () => window.crypto.randomUUID();
+
 const validAccount = account => account && typeof account.uid === "string" &&
     typeof account.email === "string" && typeof account.emailVerified === "boolean" &&
     (account.password === null || typeof account.password === "string") &&
@@ -24,6 +25,7 @@ const validAccount = account => account && typeof account.uid === "string" &&
     (account.displayName === null || typeof account.displayName === "string") &&
     (account.photoURL === null || typeof account.photoURL === "string") &&
     Number.isFinite(account.createdAt) && Number.isFinite(account.lastLoginAt);
+
 const validState = state => state && state.version === 1 && Array.isArray(state.accounts) &&
     state.accounts.every(validAccount) &&
     new Set(state.accounts.map(account => account.uid)).size === state.accounts.length &&
@@ -35,18 +37,12 @@ const validState = state => state && state.version === 1 && Array.isArray(state.
     Array.isArray(state.mail) && state.mail.every(item => item && typeof item.type === "string" &&
         typeof item.email === "string" && Number.isFinite(item.timestamp));
 
-export async function delay(method) {
-    const milliseconds = Math.floor(Math.random() * 2001);
-    if (milliseconds > 100) console.debug(`[LocalTestAuth] ${method}: ${milliseconds} ms`);
-    await new Promise(resolve => setTimeout(resolve, milliseconds));
-}
-
 export function read(auth) {
     let raw;
     try {
         raw = window.localStorage.getItem(auth.storageKey);
     } catch (error) {
-        fail("storage-unavailable", `Cannot read localStorage: ${error.message}`);
+        fail("auth/storage-unavailable", `Cannot read localStorage: ${error.message}`);
     }
     if (raw === null) return emptyState();
     try {
@@ -54,7 +50,7 @@ export function read(auth) {
         if (!validState(state)) throw new Error("Invalid storage format.");
         return state;
     } catch (error) {
-        fail("invalid-storage", `Cannot restore local authentication: ${error.message}`);
+        fail("auth/invalid-storage", `Cannot restore local authentication: ${error.message}`);
     }
 }
 
@@ -62,21 +58,21 @@ export function write(auth, state) {
     try {
         window.localStorage.setItem(auth.storageKey, JSON.stringify(state));
     } catch (error) {
-        fail("storage-unavailable", `Cannot write localStorage: ${error.message}`);
+        fail("auth/storage-unavailable", `Cannot write localStorage: ${error.message}`);
     }
     window.dispatchEvent(new CustomEvent(changeEvent, {detail: auth.storageKey}));
 }
 
 export function current(state) {
     const account = state.accounts.find(item => item.uid === state.session?.uid);
-    if (!account) fail("no-current-user", "An authenticated user is required.");
+    if (!account) fail("auth/no-current-user", "An authenticated user is required.");
     return account;
 }
 
 export function toUserData(account) {
     if (!account) return null;
     if (typeof account.uid !== "string" || !account.uid) {
-        fail("invalid-user-data", "Auth user has no identifier.");
+        fail("auth/invalid-user-data", "Auth user has no identifier.");
     }
     return new UserData().fromJSON({
         id: account.uid,
@@ -121,12 +117,12 @@ export function providerAccount(state, provider) {
     const providerId = typeof provider === "string" ? provider : provider?.providerId;
     const name = typeof providerId === "string" ? providerId.replace(/\.com$/, "") : null;
     if (name !== "google" && name !== "facebook") {
-        fail("operation-not-supported", "Only simulated Google and Facebook providers are supported.");
+        fail("auth/operation-not-supported", "Only simulated Google and Facebook providers are supported.");
     }
     const email = `${name}@local-test.example`;
     let account = state.accounts.find(item => item.email === email);
     if (account && account.provider !== `${name}.com`) {
-        fail("account-exists-with-different-credential", "The simulated provider email is already registered.");
+        fail("auth/account-exists-with-different-credential", "The simulated provider email is already registered.");
     }
     if (!account) {
         account = createAccount(email, `${name}.com`);
@@ -146,7 +142,7 @@ export function recordMail(state, type, email, options) {
 }
 
 export async function changePassword(auth, password) {
-    await delay("updatePassword");
+    await delay("LocalTestAuth", "updatePassword");
     checkPassword(password);
     const state = read(auth);
     const account = current(state);

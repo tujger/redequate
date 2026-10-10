@@ -1,10 +1,19 @@
-import {changeEvent, fail, delay, read, toUserData} from "./common";
+import {delay, fail} from "../../../_common/src/_packages";
+import {changeEvent, read, toUserData} from "./common";
 
 export default async function onAuthStateChanged(auth, callback, onError) {
-    await delay("onAuthStateChanged");
+    await delay("LocalTestAuth", "onAuthStateChanged");
     if (typeof callback !== "function" || (onError !== undefined && typeof onError !== "function")) {
-        fail("invalid-argument", "Auth state listeners must be functions.");
+        fail("auth/invalid-argument", "Auth state listeners must be functions.");
     }
+    const reportError = error => {
+        try {
+            if (onError) onError(error);
+            else console.error("[LocalTestAuth] Auth state observer failed", error);
+        } catch (callbackError) {
+            console.error("[LocalTestAuth] Auth error callback failed", callbackError);
+        }
+    };
     let previous;
     let active = true;
     const notify = () => {
@@ -14,16 +23,19 @@ export default async function onAuthStateChanged(auth, callback, onError) {
             const state = read(auth);
             user = toUserData(state.accounts.find(account => account.uid === state.session?.uid));
         } catch (error) {
-            onError(error);
+            reportError(error);
             return;
         }
         const signature = JSON.stringify(user ? {id: user.id, public: user.public} : null);
         if (signature === previous) return;
         previous = signature;
         try {
-            return callback(user);
+            const pending = callback(user);
+            if (pending && typeof pending.then === "function") {
+                Promise.resolve(pending).catch(reportError);
+            }
         } catch (error) {
-            onError(error);
+            reportError(error);
         }
     };
     read(auth);

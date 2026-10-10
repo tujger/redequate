@@ -1,6 +1,4 @@
-const notImplemented = method => {
-    throw new Error(`Not implemented: ${method}`);
-};
+import {notImplemented} from "../../_common/src/_packages";
 
 export default class StorageBase {
     async upload({auth, blob, metadata, name, onProgress}) {

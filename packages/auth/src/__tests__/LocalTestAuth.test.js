@@ -229,3 +229,13 @@ it("passes synchronous and asynchronous observer failures through unchanged", as
     unsubscribes.push(await run(auth.onAuthStateChanged(async () => { throw asyncError; }, onError)));
     expect(onError).toHaveBeenLastCalledWith(asyncError);
 });
+
+it("logs observer errors without an error callback and contains error callback failures", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const observerError = new Error("observer");
+    unsubscribes.push(await run(auth.onAuthStateChanged(async () => { throw observerError; })));
+    expect(log).toHaveBeenCalledWith("[LocalTestAuth] Auth state observer failed", observerError);
+    const errorCallbackFailure = new Error("error callback");
+    unsubscribes.push(await run(auth.onAuthStateChanged(() => { throw observerError; }, () => { throw errorCallbackFailure; })));
+    expect(log).toHaveBeenCalledWith("[LocalTestAuth] Auth error callback failed", errorCallbackFailure);
+});

@@ -1,30 +1,31 @@
+import {delay, fail, identifier} from "../../../_common/src/_packages";
 import StorageBase from "../StorageBase";
-import {delay, fail, fileOperation, toDataURL} from "./common";
+import {fileOperation, toDataURL} from "./common";
 
 // Local simulation only: IndexedDB is used for store blobs
 export default class LocalTestStorage extends StorageBase {
     constructor({storageKey = "redequate:storage:local-test"} = {}) {
         super();
         if (typeof storageKey !== "string" || !storageKey.trim()) {
-            fail("invalid-argument", "storageKey must be a non-empty string.");
+            fail("storage/invalid-argument", "storageKey must be a non-empty string.");
         }
         this._storageKey = storageKey;
     }
 
     async upload({auth, blob, metadata = {}, name, onProgress} = {}) {
-        await delay("upload");
+        await delay("LocalTestStorage", "upload");
         if (!auth || typeof auth.resolveCurrentUser !== "function" || !(blob instanceof window.Blob) ||
             !metadata || typeof metadata !== "object" || Array.isArray(metadata) ||
             (name !== undefined && typeof name !== "string") ||
             (onProgress !== undefined && typeof onProgress !== "function")) {
-            fail("invalid-argument", "Upload requires Auth, Blob, metadata and an optional name/progress callback.");
+            fail("storage/invalid-argument", "Upload requires Auth, Blob, metadata and an optional name/progress callback.");
         }
         const user = await auth.resolveCurrentUser();
         if (!user || typeof user.id !== "string" || !user.id) {
-            fail("unauthenticated", "An authenticated user is required.");
+            fail("storage/unauthenticated", "An authenticated user is required.");
         }
         onProgress?.("0");
-        const uuid = window.crypto.randomUUID();
+        const uuid = identifier();
         const contentType = blob.type || "application/octet-stream";
         const type = blob.type.split("/")[0] || "application";
         const filename = blob.name || name || "file";
@@ -43,17 +44,17 @@ export default class LocalTestStorage extends StorageBase {
     }
 
     async resolveDownloadURL(pathOrURL) {
-        await delay("resolveDownloadURL");
+        await delay("LocalTestStorage", "resolveDownloadURL");
         return (await fileOperation(this, "read", pathOrURL)).url;
     }
 
     async resolveMetadata(pathOrURL) {
-        await delay("resolveMetadata");
+        await delay("LocalTestStorage", "resolveMetadata");
         return (await fileOperation(this, "read", pathOrURL)).metadata;
     }
 
     async delete(pathOrURL) {
-        await delay("delete");
+        await delay("LocalTestStorage", "delete");
         await fileOperation(this, "delete", pathOrURL);
     }
 }

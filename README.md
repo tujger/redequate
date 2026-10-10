@@ -69,7 +69,7 @@ Emulator JAR. Firebase login and production credentials are not required.
 ```sh
 npm test                       # unit tests, then Auth/RTDB integration tests
 npm run "test core"             # compatible name for the complete test gate
-npm run test:unit               # component and Auth unit tests
+npm run test:unit               # component and package unit tests
 npm run "test:watch core"       # unit tests in watch mode
 npm run test:integration        # starts and stops the local emulators
 npm run test:integration:watch  # keeps emulators running while Vitest watches
@@ -78,9 +78,12 @@ npm run test:integration:watch  # keeps emulators running while Vitest watches
 No sibling repositories are required. Test infrastructure lives in
 `src/__tests__`: one Vitest config selects ordinary `.test.js` files by default
 and `.integration.test.js` files with `--mode integration`. Tests live in each
-module's source directory: `src/__tests__`, `packages/auth/src/__tests__` and
-`packages/_common/src/__tests__`. Auth unit tests exercise LocalTestAuth, AuthBase, selection
-and Context; Auth and UserData integration tests use the Firebase emulators. The emulator runner owns the local
+module's source directory: `src/__tests__` and `packages/*/src/__tests__`.
+Package build helpers are covered in `packages/__tests__`. Unit tests cover
+Auth, Messaging and Storage contracts, provider selection, Contexts and local
+providers; LocalTestStorage uses `fake-indexeddb`. Firebase Messaging and Storage
+use mocked SDKs, without real message delivery or cloud uploads.
+Auth and UserData integration tests use the Firebase emulators. The emulator runner owns the local
 service settings and `demo-redequate-tests` project ID; it generates Firebase
 configuration in its temporary log directory and copies `fixtures/database.rules.json`
 there because Firebase CLI disallows rules outside that directory. Fixtures use

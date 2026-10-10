@@ -1,6 +1,4 @@
-const notImplemented = method => {
-    throw new Error(`Not implemented: ${method}`);
-};
+import {notImplemented} from "../../_common/src/_packages";
 
 export default class MessagingBase {
     async addMessageListener(onMessage) {
