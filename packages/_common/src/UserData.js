@@ -1,7 +1,7 @@
-import {cacheDatas} from "../../src/controllers/General";
-import notifySnackbar from "../../src/controllers/notifySnackbar";
-import {restoreLanguage} from "../../src/reducers/languageReducer";
-import {firebaseMessaging} from "../../src/controllers/Firebase";
+import {cacheDatas} from "../../../src/controllers/General";
+import notifySnackbar from "../../../src/controllers/notifySnackbar";
+import {restoreLanguage} from "../../../src/reducers/languageReducer";
+import {firebaseMessaging} from "../../../src/controllers/Firebase";
 
 export const Role = {
     AUTH: "auth",

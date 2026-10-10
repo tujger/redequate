@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import notifySnackbar from "../../../src/controllers/notifySnackbar";
+import notifySnackbar from "../../../../src/controllers/notifySnackbar";
 import {
     currentRole,
     currentUserData,
@@ -12,9 +12,9 @@ import {
     UserData,
     watchUserChanged
 } from "../UserData";
-import {auth, firebase, seedDatabase, store} from "../../../src/__tests__/common";
+import {auth, firebase, seedDatabase, store} from "../../../../src/__tests__/common";
 
-vi.mock("../../../src/controllers/notifySnackbar", () => ({default: vi.fn()}));
+vi.mock("../../../../src/controllers/notifySnackbar", () => ({default: vi.fn()}));
 
 let userDataUser;
 beforeEach(() => {
