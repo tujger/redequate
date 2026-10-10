@@ -2,6 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useBackend} from "../../../packages/backend";
 import {toDateString} from "../../controllers/DateFormat";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -26,6 +27,7 @@ export default (
     const pages = usePages();
     const dispatch = useDispatch();
     const history = useHistory();
+    const backend = useBackend();
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const {key, userData, value} = data;
@@ -49,7 +51,7 @@ export default (
         event.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(current => ({...current, disabled: true}));
-        mutualRequestAccept({requestId: key})
+        mutualRequestAccept({backend, requestId: key})
             .then(result => {
                 console.log(result);
                 onDelete(result);

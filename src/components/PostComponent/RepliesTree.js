@@ -1,5 +1,6 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
+import {useBackend} from "../../../packages/backend";
 import Pagination from "../../controllers/FirebasePagination";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -19,6 +20,7 @@ export default (props) => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const pages = usePages();
+    const backend = useBackend();
     const windowData = useWindowData();
     const [state, setState] = React.useState({});
     const {expanded, replies, userReplied, paginationOptions, rotating} = state;
@@ -170,6 +172,7 @@ export default (props) => {
                     pagination={() => new Pagination(paginationOptions)}
                     itemTransform={postItemTransform({
                         allowedExtras,
+                        backend,
                         currentUserData,
                         type,
                     })}

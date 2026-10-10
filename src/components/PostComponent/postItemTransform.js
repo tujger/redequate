@@ -1,4 +1,3 @@
-import {fetchCallable} from "../../controllers/Firebase";
 import {cacheDatas} from "../../controllers/General";
 import {useCurrentUserData, UserData} from "../../controllers/UserData";
 import {MutualError} from "../MutualComponent";
@@ -7,6 +6,7 @@ import {PostData} from "./PostData";
 export default (
     {
         allowedExtras,
+        backend,
         fetchItemId = item => item.key,
         currentUserData,
         onItemError,
@@ -35,7 +35,7 @@ export default (
             return onItemError(error, {code, id: item.key, uid: currentUserData.id});
         } else {
             if (code === MutualError.NOT_FOUND) {
-                fetchCallable("fixPost", currentUserData && currentUserData.id
+                backend.callFunction("fixPost", currentUserData && currentUserData.id
                     ? {
                         code,
                         id: item.key,
@@ -48,7 +48,7 @@ export default (
                     .then(console.log)
                     .catch(console.error);
 
-                fetchCallable("fixMutualStamp", {
+                backend.callFunction("fixMutualStamp", {
                     code,
                     id: item.key,
                     uid: item.value,

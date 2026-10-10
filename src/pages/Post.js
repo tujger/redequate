@@ -3,6 +3,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useBackend} from "../../packages/backend";
 import FlexFabComponent from "../components/FlexFabComponent";
 import JoinUsComponent from "../components/JoinUsComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
@@ -23,6 +24,7 @@ export default (props) => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const dispatch = useDispatch();
+    const backend = useBackend();
     const {id, comment, reply} = useParams();
     const [state, setState] = React.useState({highlight: reply});
     const {postData, userData, highlight} = state;
@@ -49,6 +51,7 @@ export default (props) => {
 
         postItemTransform({
             allowedExtras,
+            backend,
             currentUserData,
             onItemError: error => {
                 throw error;

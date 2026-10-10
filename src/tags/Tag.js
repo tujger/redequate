@@ -6,6 +6,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useBackend} from "../../packages/backend";
 import FlexFabComponent from "../components/FlexFabComponent";
 import InfoComponent from "../components/InfoComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
@@ -20,7 +21,6 @@ import PostComponent from "../components/PostComponent/PostComponent";
 import postItemTransform from "../components/PostComponent/postItemTransform";
 import ProgressView from "../components/ProgressView";
 import ShareComponent from "../components/ShareComponent";
-import {fetchCallable} from "../controllers/Firebase";
 import Pagination from "../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
@@ -39,6 +39,7 @@ export default ({allowOwner = true}) => {
     const [failedImage, setFailedImage] = React.useState(null);
     const dispatch = useDispatch();
     const db = firebase.database();
+    const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const windowData = useWindowData();
     const {id: itemId} = useParams();
@@ -48,7 +49,7 @@ export default ({allowOwner = true}) => {
     const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
 
     const fixErrors = () => {
-        fetchCallable("fixTag", {
+        backend.callFunction("fixTag", {
             key: tag.id
         })
             .then(({result = "Complete"}) => notifySnackbar(result))
@@ -175,10 +176,11 @@ export default ({allowOwner = true}) => {
                     userData={item._userData}
                 />}
                 itemTransform={postItemTransform({
+                    backend,
                     fetchItemId: item => item.key,
                     onItemError: (error, options) => {
                         console.log(error, options);
-                        fetchCallable("fixMutualStamp", {
+                        backend.callFunction("fixMutualStamp", {
                             ...options,
                             id: options.id,
                             tag: tag.key,

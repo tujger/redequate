@@ -1,12 +1,12 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import React from "react";
 import {useDispatch} from "react-redux";
+import {useBackend} from "../../../../packages/backend";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import ListItemComponent from "../../../components/ListItemComponent";
 import ProgressView from "../../../components/ProgressView";
-import {fetchCallable} from "../../../controllers/Firebase";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
@@ -15,7 +15,8 @@ import errorStyles from "./styles/ErrorItemComponent.module.css";
 
 export default ({data, skeleton, label, onUserClick}) => {
     const dispatch = useDispatch();
-    const firebase = useFirebase();
+    const firebase = useFirebase()
+    const backend = useBackend();
     const [state, setState] = React.useState({});
     const {alert, userData, removed} = state;
 
@@ -35,7 +36,7 @@ export default ({data, skeleton, label, onUserClick}) => {
         dispatch(ProgressView.SHOW);
         setState({...state, alert: false});
         console.log("[Error] try to fix", data);
-        fetchCallable("fixError", {
+        backend.callFunction("fixError", {
             key: data.key
         })
             .then(({result}) => notifySnackbar(result))

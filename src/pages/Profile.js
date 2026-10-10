@@ -11,6 +11,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
 import {useAuth} from "../../packages/auth";
+import {useBackend} from "../../packages/backend";
 import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -18,7 +19,6 @@ import PlacesTextField from "../components/PlacesTextField";
 import ProfileComponentOrigin from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
 import SystemAlert from "../components/SystemAlert";
-import {fetchCallable} from "../controllers/Firebase";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {TextMaskPhone} from "../controllers/TextMasks";
@@ -108,13 +108,14 @@ const Profile = (
     const {id} = useParams();
     const {t} = useTranslation();
     const auth = useAuth();
+    const backend = useBackend();
 
     const handleChatClick = () => {
         history.push(pages.chat.route + userData.id);
     }
 
     const fixErrors = () => {
-        fetchCallable("fixUser", {
+        backend.callFunction("fixUser", {
             key: userData.id
         })
             .then(({result = "Complete"}) => notifySnackbar(result))

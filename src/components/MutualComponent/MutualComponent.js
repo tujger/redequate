@@ -1,18 +1,19 @@
 import React from "react";
-import {useDispatch} from "react-redux";
 import {useTranslation} from "react-i18next";
-import TextField from "../../controls/TextField/TextField";
-import ActionComponent from "./ActionComponent";
-import InfoComponent from "../InfoComponent";
-import {MutualMode} from "./MutualConstants";
-import {mutualRequest, mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
-import {useFirebase} from "../../controllers/General";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
-import ProgressView from "../ProgressView";
-import notifySnackbar from "../../controllers/notifySnackbar";
-import Pagination from "../../controllers/FirebasePagination";
-import ConfirmComponent from "../ConfirmComponent";
+import {useDispatch} from "react-redux";
+import {useBackend} from "../../../packages/backend";
 import counterControl from "../../controllers/counterControl";
+import Pagination from "../../controllers/FirebasePagination";
+import {useFirebase} from "../../controllers/General";
+import notifySnackbar from "../../controllers/notifySnackbar";
+import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import TextField from "../../controls/TextField/TextField";
+import ConfirmComponent from "../ConfirmComponent";
+import InfoComponent from "../InfoComponent";
+import ProgressView from "../ProgressView";
+import ActionComponent from "./ActionComponent";
+import {mutualRequest, mutualRequestAccept, mutualRequestReject} from "./mutualComponentControls";
+import {MutualMode} from "./MutualConstants";
 
 export default props => {
     const {t} = useTranslation();
@@ -54,6 +55,7 @@ export default props => {
         hasRequest
     } = state;
     const currentUserData = useCurrentUserData();
+    const backend = useBackend();
 
     const uidId = `${currentUserData.id}_${mutualId}`;
     const idUid = `${mutualId}_${currentUserData.id}`;
@@ -110,7 +112,7 @@ export default props => {
         evt.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, hasPending: hasRequest, hasRequest: null, disabled: true}));
-        (isAccept ? mutualRequestAccept : mutualRequestReject)({requestId: `${typeId}/${hasRequest.key}`})
+        (isAccept ? mutualRequestAccept : mutualRequestReject)({backend, requestId: `${typeId}/${hasRequest.key}`})
             .then(result => {
                 setState(state => ({...state, disabled: false}));
                 dispatch(ProgressView.HIDE);
@@ -279,11 +281,12 @@ export default props => {
                 onClick={handleUnsubscribe}
             />}
         </>}
-        {counter && (mutualMode === MutualMode.SIMPLEX_QUIET) && subscribed && counterComponent && <counterComponent.type
-            suffix={`${typeId}(s)`}
-            {...counterComponent.props}
-            children={subscribers}
-        />}
+        {counter && (mutualMode === MutualMode.SIMPLEX_QUIET) && subscribed && counterComponent &&
+            <counterComponent.type
+                suffix={`${typeId}(s)`}
+                {...counterComponent.props}
+                children={subscribers}
+            />}
         {counter && (mutualMode === MutualMode.DUPLEX_APPROVE) && counterComponent && <counterComponent.type
             suffix={`${typeId}(s)`}
             {...counterComponent.props}
