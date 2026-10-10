@@ -197,7 +197,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, messagingSourcePattern, storageSourcePattern],
+                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
                 resolve(),
                 commonjs(),

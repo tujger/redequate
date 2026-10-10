@@ -1338,3 +1338,25 @@ Status: the previous LocalTestAuth unit failure is resolved. All 225 unit tests
 and 38 Firebase emulator integration tests pass; provider ESLint and framework
 and linked web consumer production builds pass. Firebase Messaging/Storage
 tests mock the SDK and do not verify real delivery or cloud Storage rules.
+
+### Backend hook public exports
+
+Decision: expose the same useBackend hook from both redequate and
+redequate/backend. The built backend entry exports BackendBase and useBackend,
+replacing its copied Storage names. Include Backend sources in Babel processing
+for both Rollup formats.
+
+Reason: The Whisky Talks imports useBackend from the framework root; limiting
+it to the backend subpath would require unnecessary consumer changes. Rollup
+builds packages/backend/src/index.js, so correcting only the package barrel
+does not correct the public backend entry.
+
+Consequences: both import paths share the existing Dispatcher Context within
+each format. Backend provider behavior and Android protocols are unchanged.
+Affected consumers: thewhiskytalks and edeqa-pwa-react-demo.
+
+Status: framework and both linked consumer production builds pass on Node.js
+24.21.0. Generated ESM/CommonJS exports and shared hook references verified;
+backend entry imports pass in both formats. The Whisky Talks friends, following,
+main profile and Groups pages render without missing-export errors. Groups
+reports a separate React list-key warning. No tests were added or updated.

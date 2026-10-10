@@ -59,7 +59,7 @@ it("passes Auth and IndexedDB errors through and reports no success on abort", a
     const onProgress = vi.fn();
     const add = IDBObjectStore.prototype.add;
     vi.spyOn(IDBObjectStore.prototype, "add").mockImplementation(function (value) {
-        const request = add.call(this, value);
+        const request = add.callFunction(this, value);
         this.transaction.abort();
         return request;
     });
