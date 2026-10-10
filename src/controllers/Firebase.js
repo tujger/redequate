@@ -58,17 +58,6 @@ export const fetchFunction = (name, options) => new Promise((resolve, reject) =>
     }
 });
 
-export const fetchCallable = (name, options) => new Promise((resolve, reject) => {
-    try {
-        const namedFunction = firebaseMessaging.functions().httpsCallable(name);//, config);
-        namedFunction(options).then(result => {
-            resolve(result.data);
-        }).catch(reject)
-    } catch (error) {
-        reject(error);
-    }
-});
-
 export const checkIfConnected = () => new Promise((resolve, reject) => {
     return firebaseMessaging.database().ref(".info").once("value").then(snapshot => {
         console.log(snapshot, snapshot.val());
