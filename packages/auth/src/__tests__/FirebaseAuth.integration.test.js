@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {auth, firebase, emulatorRequest} from "../../../src/__tests__/common";
+import {auth, firebase, emulatorRequest} from "../../../../src/__tests__/common";
 
 it("registers and restores users through the Firebase Auth adapter", async () => {
     const user = await auth.createUserWithEmailAndPassword("adapter@example.test", "password");

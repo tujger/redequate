@@ -1,7 +1,7 @@
 import React from "react";
 import {vi} from "vitest";
 import AuthProvider, {useAuth} from "../AuthContext";
-import {render, unmount} from "../../../src/__tests__/render";
+import {render, unmount} from "../../../../src/__tests__/render";
 
 it("uses the nearest provider and preserves independent instances", () => {
     const outer = {};
