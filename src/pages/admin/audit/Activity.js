@@ -23,7 +23,6 @@ import baseStyles from "../../../themes/Base.module.css";
 import ActivityItemComponent from "./ActivityItemComponent";
 import {auditReducer} from "./auditReducer";
 import activityStyles from "./styles/Activity.module.css";
-import ClearIcon from "@mui/icons-material/Clear";
 
 const Activity = props => {
     const {
@@ -33,8 +32,9 @@ const Activity = props => {
         activitySort = "asc"
     } = props;
     const dispatch = useDispatch();
-    const windowData = useWindowData();
     const [state, setState] = React.useState({});
+    const windowData = useWindowData();
+
     const {random, startDate, endDate, startDateAnchor, endDateAnchor} = state;
 
     const handleItemClick = activityMode => (event, activityFilterItem) => {

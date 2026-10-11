@@ -86,7 +86,7 @@ const renderEntries = ({color, items, renderItem, closeTree, inline = false}) =>
     </React.Fragment>;
 });
 
-const Menu = (
+export default (
     {
         anchorEl,
         anchorOrigin = defaultAnchorOrigin,
@@ -347,5 +347,3 @@ const Menu = (
 
     return inline ? menu : ReactDOM.createPortal(menu, document.body);
 };
-
-export default Menu;

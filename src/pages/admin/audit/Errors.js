@@ -17,14 +17,13 @@ import Select from "../../../controls/Select/Select";
 import baseStyles from "../../../themes/Base.module.css";
 import {auditReducer} from "./auditReducer";
 import ErrorItemComponent from "./ErrorItemComponent";
-import errorStyles from "./styles/Errors.module.css";
 
 const Errors = props => {
-    const {classes: givenClasses, errorsMode = "all", errorsFilter} = props;
-    const classes = {...errorStyles, ...(givenClasses || {})};
+    const {errorsMode = "all", errorsFilter} = props;
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
+
     const {deleteOpen, random} = state;
 
     const handleMode = evt => {
@@ -101,7 +100,7 @@ const Errors = props => {
                 onDelete={clearFilteredUser}
             />}
         </NavigationToolbar>
-        <div className={[baseStyles.content, classes.list].filter(Boolean).join(" ")}>
+        <div className={[baseStyles.content].filter(Boolean).join(" ")}>
             <LazyListComponent
                 key={random}
                 itemComponent={item => <ErrorItemComponent

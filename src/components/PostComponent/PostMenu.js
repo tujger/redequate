@@ -1,7 +1,7 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo} from "../../controllers/General";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import Select from "../../controls/Select/Select";
 import SelectItem from "../../controls/Select/SelectItem";
 import ActionDelete from "./ActionDelete";
@@ -19,7 +19,7 @@ export default (props) => {
     const {t} = useTranslation();
 
     const isDeleteAllowed = currentUserData && !currentUserData.disabled
-        && (postData.uid === currentUserData.id || matchRole([Role.ADMIN], currentUserData));
+        && (postData.uid === currentUserData.id || matchRole([UserRole.ADMIN], currentUserData));
     const canEdit = isDeleteAllowed && metaInfo?.settings?.postsAllowEdit;
 
     const handleMenuTrigger = event => {

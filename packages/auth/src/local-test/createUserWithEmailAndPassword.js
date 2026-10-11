@@ -1,4 +1,4 @@
-import {delay, fail} from "../../../_common/src/_packages";
+import {delay, fail} from "../../../common/src/_packages";
 import {normalizeEmail, checkPassword, read, createAccount, login} from "./common";
 
 export default async function createUserWithEmailAndPassword(auth, email, password) {

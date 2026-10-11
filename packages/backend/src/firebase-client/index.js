@@ -1,15 +1,16 @@
+import {getFunctions, httpsCallable} from "firebase/functions";
 import BackendBase from "../BackendBase";
 
 export default class FirebaseBackendClient extends BackendBase {
-    _firebase = undefined;
+    _functions = undefined;
 
     constructor({firebase}) {
         super();
-        this._firebase = firebase;
+        this._functions = getFunctions(firebase.app);
     }
 
     async request(name, args) {
-        const func = await this._firebase.functions().httpsCallable(name);
+        const func = httpsCallable(this._functions, name);
         return func(args).then(result => result.data);
     }
 }

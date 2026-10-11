@@ -25,27 +25,28 @@ import Pagination from "../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tag.module.css";
 
 export default ({allowOwner = true}) => {
+    const backend = useBackend();
+    const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages()
-    const [state, setState] = React.useState({disabled: false});
-    const {tag} = state;
-    const [failedImage, setFailedImage] = React.useState(null);
-    const dispatch = useDispatch();
-    const db = firebase.database();
-    const backend = useBackend();
-    const currentUserData = useCurrentUserData();
-    const windowData = useWindowData();
     const {id: itemId} = useParams();
+    const [state, setState] = React.useState({disabled: false});
+    const [failedImage, setFailedImage] = React.useState(null);
     const {t} = useTranslation();
+    const windowData = useWindowData();
 
-    const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
+    const db = firebase.database();
+    const {tag} = state;
+
+    const isCurrentUserAdmin = matchRole([UserRole.ADMIN], currentUserData);
     const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
 
     const fixErrors = () => {

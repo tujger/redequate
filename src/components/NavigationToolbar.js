@@ -19,6 +19,7 @@ export default props => {
         style,
     } = props;
     const history = useHistory();
+
     const defaultBackButton = <Button
         color={"secondary"}
         icon={<BackIcon/>}

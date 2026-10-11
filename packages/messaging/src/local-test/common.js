@@ -1,4 +1,4 @@
-import {fail} from "../../../_common/src/_packages";
+import {fail} from "../../../common/src/_packages";
 
 export const defaultStorageKey = "redequate:messaging:local-test";
 export const messageType = "redequate:messaging:local-test:message";

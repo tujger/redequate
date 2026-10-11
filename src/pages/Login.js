@@ -14,7 +14,7 @@ import {fetchDeviceId, usePages, useStore} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {logoutUser, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -32,16 +32,17 @@ function Login(props) {
         popup = true,
         transformUserDataOnFirstLogin,
     } = props;
+    const auth = useAuth();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const history = useHistory();
     const location = useLocation();
-    const pages = usePages();
     const messaging = useMessaging();
+    const pages = usePages();
+    const [state, setState] = React.useState({});
     const store = useStore();
     const {i18n, t} = useTranslation();
-    const [state, setState] = React.useState({});
-    const auth = useAuth();
+
     const {
         showAgreement = false,
         email = "",
@@ -157,7 +158,9 @@ function Login(props) {
             return props;
         }
         const fetchPublicAndPrivateData = async props => {
-            const {userData, deviceId} = props;
+            const {deviceId} = props;
+            // eslint-disable-next-line react/prop-types -- userData is an Auth model passed between pipeline steps.
+            const userData = new UserData().fromJSON(props.userData.toJSON());
             await userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
                 .then(() => userData.fetchPrivate(deviceId, true));
             return {...props, userData};
@@ -218,7 +221,7 @@ function Login(props) {
         }
         const checkIfUserDisabled = async props => {
             const {userData} = props;
-            if (userData.role === Role.DISABLED) {
+            if (userData.role === UserRole.DISABLED) {
                 history.push(pages.profile.route);
                 throw "user-disabled";
             }

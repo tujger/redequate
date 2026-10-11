@@ -3,11 +3,11 @@ import ProgressView from "../../components/ProgressView";
 import styles from "./styles/StickyHeaderComponent.module.css";
 
 export const StickyHeaderComponent = ({content, image, menuComponent, title, titleClassName}) => {
-    const [collapsed, setCollapsed] = React.useState(false);
     const refContent = React.useRef(null);
     const refObserver = React.useRef(null);
     const refSticky = React.useRef(null);
     const refTitle = React.useRef(null);
+    const [collapsed, setCollapsed] = React.useState(false);
 
     React.useEffect(() => {
         let frame = null;

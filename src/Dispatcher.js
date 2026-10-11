@@ -6,7 +6,7 @@ import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
-import {_AppContext} from "../packages/_common/AppContext";
+import {_AppContext} from "../packages/common/AppContext";
 import {resolveAuth} from "../packages/auth/src";
 import {resolveBackend} from "../packages/backend/src";
 import {resolveMessaging} from "../packages/messaging/src";
@@ -85,12 +85,12 @@ export default (props) => {
         storage: storageGiven,
         width: widthGiven
     } = props;
-    const [state, setState] = React.useState({store: null});
-    const {firebase} = state;
     const width = useBreakpoint(widthGiven);
+    const [state, setState] = React.useState({store: null});
     const widthRef = React.useRef(width);
-    widthRef.current = width;
     const previousWidth = React.useRef(width);
+    const {firebase} = state;
+    widthRef.current = width;
 
     React.useEffect(() => {
         if (previousWidth.current !== width) {
@@ -213,7 +213,8 @@ export default (props) => {
                 const savedUserData = store.getState().currentUserData?.userData;
                 const userData = savedUserData?.id === authUser.id
                     ? new UserData().fromJSON(savedUserData)
-                    : authUser;
+                    // eslint-disable-next-line react/prop-types -- authUser is an Auth model passed between pipeline steps.
+                    : new UserData().fromJSON(authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};

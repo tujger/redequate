@@ -15,10 +15,9 @@ export default (props) => {
         onPointerDown = undefined,
         tabIndex = undefined
     } = props;
+    const [state, setState] = React.useState({});
     const windowData = useWindowData();
     const isNarrow = windowData.isNarrow();
-
-    const [state, setState] = React.useState({});
     const {x, dragging, removing, ref, removed, random} = state;
 
     const actionIndent = calculateActionIndent();

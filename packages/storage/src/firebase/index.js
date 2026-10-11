@@ -1,28 +1,25 @@
+import {deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytesResumable} from "firebase/storage";
 import {v4 as Uuid} from "uuid";
 import StorageBase from "../StorageBase";
 
 export default class FirebaseStorage extends StorageBase {
-    _firebase = undefined;
+    _storage = undefined;
 
     constructor({firebase}) {
         super();
-        this._firebase = firebase;
+        this._storage = getStorage(firebase.app);
     }
 
     async delete(pathOrURL) {
-        return resolveReference(this._firebase, pathOrURL)
-            .delete()
+        return deleteObject(ref(this._storage, pathOrURL));
     }
 
     async resolveDownloadURL(pathOrURL) {
-        return resolveReference(this._firebase, pathOrURL).getDownloadURL();
+        return getDownloadURL(ref(this._storage, pathOrURL));
     }
 
     async resolveMetadata(pathOrURL) {
-        const ref = resolveReference(this._firebase, pathOrURL);
-        if (ref) {
-            return await ref.getMetadata();
-        }
+        return getMetadata(ref(this._storage, pathOrURL));
     }
 
     async upload({auth, blob, metadata, name, onProgress}) {
@@ -30,9 +27,9 @@ export default class FirebaseStorage extends StorageBase {
         const uid = typeof auth === "string" ? auth : (await auth.resolveCurrentUser()).id;
         const uuid = Uuid();
         const type = blob.type.split("/")[0];
-        const ref = this._firebase.storage().ref().child(uid + "/" + type + "/" + name + "-" + uuid + "-" + blob.name);
+        const reference = ref(this._storage, uid + "/" + type + "/" + name + "-" + uuid + "-" + blob.name);
 
-        const publishTask = ref.put(blob, {
+        const publishTask = uploadBytesResumable(reference, blob, {
             contentType: blob.type,
             customMetadata: {
                 ...metadata,
@@ -43,7 +40,7 @@ export default class FirebaseStorage extends StorageBase {
         });
 
         return new Promise((resolve, reject) => {
-            publishTask.on(this._firebase.storage.TaskEvent.STATE_CHANGED, (snapshot) => {
+            publishTask.on("state_changed", (snapshot) => {
                 const progressValue = (snapshot.bytesTransferred / snapshot.totalBytes * 100).toFixed(0);
                 onProgress?.(progressValue);
             }, error => {
@@ -52,16 +49,11 @@ export default class FirebaseStorage extends StorageBase {
                 resolve(publishTask.snapshot.ref)
             });
         }).then(ref => {
-            return ref.getDownloadURL().then(url => {
-                return ref.getMetadata().then(metadata => {
+            return getDownloadURL(ref).then(url => {
+                return getMetadata(ref).then(metadata => {
                     return {url, metadata};
                 })
             })
         });
     }
 }
-
-const resolveReference = (firebase, pathOrURL) => {
-    const storage = firebase.storage();
-    return /^(gs|https?):\/\//.test(pathOrURL) ? storage.refFromURL(pathOrURL) : storage.ref(pathOrURL);
-};

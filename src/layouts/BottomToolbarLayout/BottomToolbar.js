@@ -25,12 +25,12 @@ const MenuLink = ({item, onClose, selected, userData}) => {
 };
 
 export default ({items, className}) => {
-    const [openIndex, setOpenIndex] = React.useState(null);
-    const triggerRefs = React.useRef([]);
-    const menuRef = React.useRef(null);
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const location = useLocation();
+    const [openIndex, setOpenIndex] = React.useState(null);
+    const triggerRefs = React.useRef([]);
+    const menuRef = React.useRef(null);
 
     const matchesRoute = path => !!path && !!matchPath(location.pathname, {
         exact: true,

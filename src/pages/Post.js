@@ -21,18 +21,19 @@ import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Post.module.css";
 
 export default (props) => {
+    const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const dispatch = useDispatch();
-    const backend = useBackend();
     const {id, comment, reply} = useParams();
     const [state, setState] = React.useState({highlight: reply});
-    const {postData, userData, highlight} = state;
     const {t} = useTranslation();
+    const windowData = useWindowData();
+
+    const {postData, userData, highlight} = state;
     const type = "posts";
     const allowedExtras = ["like"];
     const pages = usePages();
-    const windowData = useWindowData();
 
     const handleReplyChange = ({key, ...rest}) => {
         cacheDatas.remove(id);

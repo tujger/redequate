@@ -13,12 +13,13 @@ import baseStyles from "../../themes/Base.module.css";
 import styles from "./styles/AddUser.module.css";
 
 export default () => {
-    const [state, setState] = React.useState({requesting: false, error: ""});
-    const {email = "", requesting, error = ""} = state;
-    const pages = usePages();
+    const auth = useAuth();
     const dispatch = useDispatch();
     const history = useHistory();
-    const auth = useAuth();
+    const pages = usePages();
+    const [state, setState] = React.useState({requesting: false, error: ""});
+
+    const {email = "", requesting, error = ""} = state;
 
     const addUser = () => {
         if (!email) {

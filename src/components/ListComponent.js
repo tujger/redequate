@@ -17,9 +17,9 @@ export default props => {
         rightAction
     } = props;
 
+    const cancelButtonRef = React.useRef(null);
     const [state, setState] = React.useState({/*sortType: "createDate", sortReverse: false, */countSelected: 0});
     const {countSelected, action = false} = state;
-    const cancelButtonRef = React.useRef(null);
 
     React.useEffect(() => {
         if (action) cancelButtonRef.current?.focus();

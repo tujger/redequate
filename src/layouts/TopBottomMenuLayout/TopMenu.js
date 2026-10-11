@@ -4,15 +4,15 @@ import {Link} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import LanguageComponent from "../../components/LanguageComponent";
 import {usePages} from "../../controllers/General";
-import {currentRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {currentRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import MenuSection from "./MenuSection";
 import styles from "./styles/TopMenu.module.css";
 
 const TopMenu = props => {
     const {badge = {}, items, className} = props;
-    const pages = usePages();
     const currentUserData = useCurrentUserData();
+    const pages = usePages();
     const onProfilePointerDown = useRippleEffect();
 
     return <div className={[styles.root, className].filter(Boolean).join(" ")}>
@@ -25,7 +25,7 @@ const TopMenu = props => {
             to={pages.profile.route}
         >
             <AvatarView
-                admin={currentRole(currentUserData) === Role.ADMIN}
+                admin={currentRole(currentUserData) === UserRole.ADMIN}
                 image={currentUserData.image}
                 initials={currentUserData.initials}
                 size={"small"}

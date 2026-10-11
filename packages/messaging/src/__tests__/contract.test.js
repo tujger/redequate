@@ -1,6 +1,6 @@
 import Firebase from "../firebase";
 import useMessaging from "../useMessaging";
-import AppProvider from "../../../_common/AppContext";
+import AppProvider from "../../../common/AppContext";
 import React from "react";
 import {vi} from "vitest";
 import Base from "../MessagingBase";

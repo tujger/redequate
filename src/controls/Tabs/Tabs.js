@@ -6,7 +6,9 @@ import styles from "./Tabs.module.css";
 
 export default ({className, children = undefined, items = [], onChange, value}) => {
     const tabsRef = React.useRef(null);
+
     const selectedIndex = items.findIndex(item => item.value === value);
+
     const [scrollState, setScrollState] = React.useState({
         canScrollNext: false,
         canScrollPrevious: false,

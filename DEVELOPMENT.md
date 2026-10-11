@@ -1450,3 +1450,271 @@ Real-browser validation remains pending. Demo build still fails on legacy
 fetchCallable/fetchFunction imports. Existing LocalTestMessaging unit tests:
 3 pass and 3 fail because they expect the prior synchronous delivery; adapting
 those tests requires a separately authorized test update. No tests were changed.
+
+### The Whisky Talks Firebase Functions modernization
+
+Decision: retain Realtime Database and the web Firebase 13 compat providers;
+modernize The Whisky Talks Functions to native JavaScript ESM, modular Admin
+14.5.0 and Functions 7.4.0 on the existing Node 22 runtime. Keep all 30 functions
+on explicit firebase-functions/v1 APIs, with their names and response envelopes
+preserved. All functions use the default Gen1 region (us-central1)
+without an explicit region wrapper. Backend.request unwraps the callable
+transport once.
+
+Reason: current SDKs support Gen1 and ESM. Firebase cannot upgrade deployed Gen1
+functions to Gen2 under the same name in place. Running both generations would
+duplicate the existing non-idempotent counters and notifications. Defer Gen2 to
+a separate rollout with duplicate-effect protection rather than expanding this
+SDK update or requiring downtime. This supersedes the initial Gen2 decision.
+
+Consequences: FCM uses sendEachForMulticast with batches of 500. SMTP is an
+admin-only Gen1 callable with GMAIL_EMAIL/GMAIL_PASSWORD bound through runWith;
+values are read inside the handler. mutualAction accepts {typeId, key, action},
+with separate database keys, and verifies the recipient; Redequate callers and
+its local handler follow that contract. Repairs await writes. User stamp repairs
+require the owner or an admin, but any authenticated tag viewer can remove a
+_tag/<tag>/<id> entry after the server verifies the post is absent. That branch
+ignores uid for authorization and cannot modify user stamps. Reply deletion
+without root skips its root counter and continues nested reply/image cleanup;
+post.to is not substituted for root. Diagnostics, mail and manual notifications
+require admin. HTTP fetchUser/fetchUsers/fetchConfig retain their envelopes;
+fetchConfig excludes credentials and secret configuration. Pagination's first
+key query has no control character boundary, which the RTDB emulator rejects.
+
+Published Cloud Functions are named exports in their own modules; index.js only
+re-exports those 30 endpoints. common/firebase.js owns configuration and reuses or
+initializes the default Admin app once, so modules load independently of index.js.
+Repair helpers are separate named exports used directly by fixError. Parameterized
+mutual stamps share a private builder with configuration owned by their module.
+Supporting model factories and unpublished legacy handlers remain unchanged;
+utils.js retains named exports with explicit Firebase service arguments. This
+replaces endpoint factory construction and Firebase initialization in index.js.
+
+RTDB triggers use the standard v1 ref(path), re-exported by common/firebase.js as
+triggerRef to distinguish it from Admin database.ref(path). It selects the
+instance from FIREBASE_CONFIG.databaseURL; Admin reads and writes use dataRef,
+the bound ref method of the shared database. Helpers and factories receiving a
+database argument retain database.ref to respect the caller's database.
+Keep their database URLs aligned instead of assuming instance equals projectId.
+
+Affected consumers: thewhiskytalks and Redequate web callers. Demo Functions and
+Android remain unchanged; no Android calls to these endpoints were found.
+
+Status: Functions lint and all 30 native ESM/Gen1 exports pass locally. Framework
+and The Whisky Talks production builds and its existing app test passed during
+the SDK migration on Node 24.21.0. Temporary Auth/RTDB emulator checks cover
+repairs, ownership, mutual actions and HTTP contracts; FCM, SMTP, Storage and
+rules retrieval use mocks. Real delivery and Node 22 runtime execution were not
+verified. Framework units: 253 pass, three existing LocalTestMessaging failures
+expect synchronous delivery. Demo build remains blocked by legacy
+fetchCallable/fetchFunction imports. The initial SDK migration did not add or
+update repository tests.
+
+Subsequent regression fixes separate post/reply counters in posts, deduplicate
+reply alerts by recipient and retain both friendship target types. Legacy friend
+relations without type resolve to users_public during repair. Functions regression
+tests live in __tests__ and use node:test with experimental ESM module mocks;
+standalone import checks block network access and verify the existing 30 Gen1
+exports. ESLint/@eslint/js stay on 9.39.5 because eslint-plugin-react 7.37.5 does
+not support ESLint 10. The unused firebase-functions-test was removed because
+its Admin peer range excludes 14. Real services remain outside test coverage;
+Node 22 is unavailable locally, so these checks use Node 24.21.0.
+
+The web tag repair action now has an admin-only Gen1 fixTag callable. It rebuilds
+_tag/<key> from root posts using the existing tag tokenizer and normalization,
+and replaces the feed only after all pages succeed. This adds a 31st endpoint
+without changing the original exports or client contract. The scan is not an
+atomic snapshot; concurrent post changes remain a limitation. Regression checks
+cover pagination, failed reads and registration of every client callable. PostData
+instances must be created inside handlers: their database.ref() starts the RTDB
+connection during deployment discovery if constructed at module scope. Import
+checks now wait for deferred work and reject token requests as well as network
+attempts; immediate process exit previously hid this side effect.
+
+No deployment or cloud secret creation was performed. Future deployment must
+provision the declared mail secrets. Current source RTDB rules still allow writes
+at users_public, which can trigger privileged user cleanup, and mutualrequests
+rules reference mutual paths. These rule issues and mutualAction retry/race
+idempotency remain unresolved outside this migration.
+
+### Runtime-independent common for Functions
+
+Decision: packages/common is also a private redequate-common package for Node
+>=22. Its root and ./common exports share index.js. The full framework's
+redequate/common entry exports the neutral UserData model, UserRole, currentRole,
+matchRole, needAuth, normalizeSortName and SERVER_TIMESTAMP. Common imports no
+Firebase, React or browser controllers and creates no UserData instance at module
+scope.
+
+The UserData model, getters/setters, data mutation, serialization and date
+formatting belong to common. src/controllers/UserData.js creates this model and
+adds persistence/cache methods through UserData({extend}), whose callback receives
+the same model and its private mutable state. The state is not a model property
+or part of its JSON. The controller also owns current-user state and UI behavior.
+Both callable and new constructors, static fetch options, chain identity and
+stored record formats are preserved. The web root exports the frontend controller;
+Auth providers return the neutral common model. Login and Dispatcher restore a
+frontend model from Auth JSON before fetching or saving profile data; Dispatcher
+still prefers the saved profile for the same user. Functions can create the pure
+model without a browser or database. SERVER_TIMESTAMP remains the shared {".sv":"timestamp"}
+marker and restored markers are recognized by contents. This supersedes the
+intermediate helpers-only common split and server/index.js entry. No workspace
+or build-system migration is introduced. ESLint permits parsing without a Babel
+config because the package manifest establishes a separate Babel boundary.
+
+Reason: Functions need common imports without browser dependencies or the full
+framework's Node >=24.12 requirement. They install the small package under the
+redequate dependency name using file:vendor/redequate-common.tgz. The Whisky Talks
+Functions predeploy runs prepare-redequate-common: npm pack creates the archive
+from the sibling Redequate common package, then an explicit npm install refreshes
+the installed package and lockfile integrity. The archive is generated, ignored
+by Git and included in the Functions upload. Preparation requires the sibling
+checkout; Cloud Build installs from the self-contained uploaded archive. Registry
+publication was rejected in favor of a file dependency; source constants stay
+in Redequate. Affected consumers: Redequate, The Whisky Talks Functions/web and
+the demo web application. Android role values and data formats are unchanged.
+
+Status: source and built ESM/CJS common imports, targeted model/Auth tests,
+Functions tests/31 Gen1 registrations and framework/TWT web builds pass locally
+on Node 24.21.0; Node 22 is unavailable. Demo build remains blocked by its old
+fetchCallable/fetchFunction imports. The previous external file path was rejected
+for cloud delivery because the Functions upload excludes the sibling repository.
+Delivery now uses the generated local tarball. Firebase CLI 15.33.0 local source
+packaging includes the tarball and lockfile. Offline npm ci and all 82 Functions
+tests, including module imports and 31 Gen1 registrations, pass from the extracted
+source without the sibling checkout on Node 24.21.0. Node 22 and cloud deployment
+remain unverified.
+No registry publication or Functions deployment was performed.
+
+### The Whisky Talks Functions Gen2 transition
+
+Decision: migrate all 31 exported The Whisky Talks functions to the v2 SDK while
+preserving their names, RTDB paths, callable payloads and HTTP envelopes. RTDB
+handlers use event.data/event.params, callables use request.data/request.auth,
+and mail secrets are bound through onCall options. The shared databaseInstance
+constant derives the exact instance from the Admin app's database URL without
+creating a reference at module scope; handlers pass ref/instance directly to the
+SDK. A trigger-options factory was removed in favor of this direct form.
+Unused legacy follow/watch/reply handlers and GameData/deleteExtra/PostData were
+removed after checking references. Active createAlert and tag utilities use named
+exports and the shared database; tokenization is a pure utility, and normalization
+comes from redequate/common. No database reference is created during import.
+
+Runtime uses standard Gen2 CPU, concurrency and Compute Engine service-account
+defaults; the initial v1 compatibility overrides were removed at the owner's
+request. Admin initializes with initializeApp() and standard Firebase environment
+configuration instead of manually duplicating configuration and credentials.
+Region remains the default us-central1. Runtime IAM must be verified for the
+Compute Engine service account before resuming users. Existing side-effect
+handlers are not generally idempotent; retry remains disabled.
+
+The chosen rollout keeps names and requires maintenance: stop client requests
+and database/background writers, drain in-flight and cascaded work, delete the
+deployed v1 functions, create Gen2 functions, verify cloud registration/IAM and
+resume writers. Same-name upgrades cannot use an ordinary deploy over v1.
+Parallel v1/v2 triggers were rejected because they duplicate counters and alerts.
+Events during an uncovered trigger gap are not replayed. Manual steps and rollback
+are documented in the application's functions/GEN2-MIGRATION.md; none were run.
+
+Affected consumers: Redequate's Firebase backend and both web consumers use the
+same callable names/protocol with Firebase 13; no client changes are required.
+The Android shell has no native Functions dependency/calls; shared web contracts
+and stored data formats are unchanged.
+
+Status before removing legacy code: lint and all 89 mocked/regression/import tests
+passed on Node 24.21.0,
+including 31 Gen2 registrations, runtime options, mail secrets and instance
+selection for both RTDB hostname forms. Offline npm ci and all 45 standalone
+import/registration checks also pass from the locally packaged source without
+the sibling repository. Node 22 is unavailable. Deployment and
+cloud IAM, Eventarc delivery and client access remain unverified.
+
+After simplification, lint and all 82 remaining tests pass on Node 24.21.0:
+the eight deleted modules no longer need import checks, and a tokenization
+regression was added. Registration still verifies all 31 Gen2 exports, defaults,
+instance selection and secrets, with network and token requests blocked.
+
+### Modular Firebase web services with compat Realtime Database
+
+Decision: use Firebase 13.0.0 modular Auth, Storage, Functions, Analytics and
+Messaging in Redequate and both web consumers. Retain compat app/database only
+for the existing RTDB API. This supersedes the full compat decision above.
+Firebase(config) returns the stable shared {app, config, database} handle, with a
+modular FirebaseApp and the existing database()/database.ServerValue API. Existing
+firebaseMessaging imports refer to that same handle. Provider constructors still
+accept {firebase}; application method and result contracts are preserved. Repeated
+initialization reuses the default app with identical configuration and rejects
+conflicting configuration rather than hiding the SDK error.
+
+Reason: migrate service adapters independently of database controllers and stored
+data. Keep Firebase imports external in both framework outputs and deduplicate
+the SDK in consumer Vite resolution so modular Auth and compat RTDB share the app
+and authentication state. Messaging awaits isSupported before service creation
+and keeps the unsupported-browser error for the Android native bridge fallback.
+
+Consequences: only compat app/database imports remain in runtime source. App
+reinitialization must use the public compatApp.delete(): modular deleteApp alone
+leaves the compat app registry pointing to a destroyed app. Compat deletion clears
+that registry and delegates modular service cleanup. Using private _delegate or
+INTERNAL APIs was rejected. Auth/Storage/Backend retain modular service instances
+for their supplied app; the existing reinitialization flow reloads the page.
+
+Both consumers import src/firebase-messaging-sw.js through Vite's native
+?worker&url pipeline. worker.format is es; hashed worker entries are emitted at
+the build root, and the development server sends Service-Worker-Allowed: /.
+The custom nested build and worker middleware were removed: relocating them to
+vite.config.mjs reduced files but retained unnecessary build machinery. Both
+applications now use Firebase Messaging, including the demo previously using
+LocalTestMessaging. Provider options serviceWorkerURL/serviceWorkerType select
+the emitted module worker; registration is lazy, cached and awaited until active.
+The scope remains /firebase-cloud-messaging-push-scope, and ServiceWorkerControl
+finds it by scope rather than a script URL. Hashed worker entries remain excluded
+from the PWA precache. Registration failures can be retried. On fresh-instance
+unsubscribe, getToken binds the custom registration before deleteToken; it requires
+already-granted permission and never requests permission during unsubscribe.
+Permission/token/deletion failures retain the local token for retry. Without a
+custom URL, providers retain the default Firebase registration behavior.
+
+Notification behavior belongs to the isolated redequate/messaging/firebase-worker
+ESM/CJS entry. initializeFirebaseMessagingWorker(config) installs the click handler
+before initializing Firebase and background message handling; consumer workers
+only import this initializer, import their selected configuration and call it once.
+The entry imports modular app and messaging/sw, with no React/UI, browser
+controllers or compat. Importing ServiceWorkerControl directly into workers was
+rejected because its UI and browser dependencies would cross the runtime boundary.
+The shared handlers preserve The Whisky Talks payload.data || payload.notification
+selection and notification display, tag-based existing-window focus or new-window
+opening. The demo now uses the same standard notificationclick handler, replacing
+its previously ineffective [fb-sw] notificationclick event. Application workers
+still select their own src/firebase-config.json; The Whisky Talks variant selection
+must precede the build. Firebase CDN scripts and /__/firebase/init.js are not used.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Database data/paths,
+callable payloads/envelopes, notification token storage and Android bridge
+contracts are unchanged. Database migration and server SDK changes remain
+separate work; no deployment was performed.
+
+Status: implemented; changed provider lint, framework ESM/CJS and both web
+production builds pass on Node 24.21.0 using the currently selected development
+Firebase configurations. Temporary checks verify native module-worker output,
+selected project, absence of compat/CDN imports and development serving; Storage upload,
+metadata/path/progress and Messaging permission/support/token/listener contracts
+use SDK substitutes. Local Auth/RTDB emulator checks validate CJS signup, login,
+logout, profile/password updates, protected RTDB access, server timestamps and app
+reinitialization. Browser ESM checks in jsdom with shared fake IndexedDB validate
+persisted Auth restoration and protected compat RTDB reads/writes. A local HTTP
+callable substitute verifies authorization and single transport unwrapping. Shared
+worker ESM/CJS checks using SDK substitutes validate listener registration order,
+payload precedence, notification promise/error propagation, close/focus/open and
+waitUntil. Native worker provider checks cover activation, registration reuse and
+retry, explicit token binding, fresh-instance unsubscribe, permission/error token
+retention and unsupported-browser/default-registration paths. Update checks locate
+the exact Messaging scope despite script hash changes and ignore the root PWA.
+
+Existing targeted repository tests: 13 pass, 19 fail across four files because
+FirebaseAuth/UserDataJSON and Storage contract fixtures still supply the old
+namespace API/mocks. Integration fixtures also retain compat Auth calls. No tests
+were added or updated, per the project instruction. Fixture migration remains a
+separate authorized task. Real provider popup/redirect/email-link flows, cloud
+Storage and Functions, FCM delivery/token deletion, installed worker upgrades,
+production Firebase variant and Android WebView/native fallback remain unverified.

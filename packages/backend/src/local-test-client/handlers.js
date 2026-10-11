@@ -1,4 +1,4 @@
-import {fail, identifier} from "../../../_common/src/_packages";
+import {fail, identifier} from "../../../common/src/_packages";
 import {sendMessage} from "../../../messaging/src/local-test/common";
 
 const isNonEmptyString = value => typeof value === "string" && Boolean(value.trim());
@@ -66,7 +66,7 @@ export default {
     },
     mutualAction: args => {
         console.log("[LocalTestBackendClient] mutualAction", args);
-        validate(args, ["key"]);
+        validate(args, ["key", "typeId"]);
         if (args.action !== "accept" && args.action !== "reject") {
             fail("backend/invalid-argument", "action must be accept or reject.");
         }

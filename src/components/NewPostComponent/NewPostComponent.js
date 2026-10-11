@@ -10,7 +10,7 @@ import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, normalizeSortName, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import LoadingComponent from "../LoadingComponent";
@@ -45,7 +45,7 @@ const NewPostComponent = props => {
         onComplete = ({key}) => console.log("[NewPost] onComplete({key})", {key}),
         openRequest = 0,
         replyTo,
-        roles = [Role.ADMIN, Role.USER],
+        roles = [UserRole.ADMIN, UserRole.USER],
         tag: givenTag,
         text: givenText,
         title = replyTo ? t("Post.New reply") : t("Post.New post"),

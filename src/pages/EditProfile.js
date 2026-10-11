@@ -18,7 +18,7 @@ import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowDat
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {logoutUser, matchRole, normalizeSortName, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
@@ -38,24 +38,25 @@ function EditProfile(props) {
         publicFields = publicFieldsDefault,
         uploadable = true,
     } = props;
+    const auth = useAuth();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
+    const messaging = useMessaging();
     const pages = usePages();
-    const store = useStore();
-    const windowData = useWindowData();
     const {id} = useParams();
     const [state, setState] = React.useState({
         error: null,
         disabled: false,
     });
-    const auth = useAuth();
-    const messaging = useMessaging();
     const storage = useStorage();
+    const store = useStore();
+    const {t} = useTranslation();
+
+    const windowData = useWindowData();
     const {state: givenState = {}} = history.location;
     const {tosuccessroute, isFirstLogin} = givenState;
-    const {t} = useTranslation();
 
     // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
@@ -181,10 +182,10 @@ function EditProfile(props) {
         const saveByAdmin = async () => {
             if (isAdmin) {
                 const updates = {};
-                updates[`roles/${userData.id}`] = (role === Role.USER || role === Role.USER_NOT_VERIFIED) ? null : role;
-                if (role === Role.USER_NOT_VERIFIED) {
+                updates[`roles/${userData.id}`] = (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role;
+                if (role === UserRole.USER_NOT_VERIFIED) {
                     updates[`users_public/${userData.id}/emailVerified`] = false;
-                } else if (role === Role.USER || role === Role.ADMIN) {
+                } else if (role === UserRole.USER || role === UserRole.ADMIN) {
                     updates[`users_public/${userData.id}/emailVerified`] = true;
                 }
                 updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
@@ -340,11 +341,11 @@ function EditProfile(props) {
         }
     };
 
-    const isAdmin = matchRole([Role.ADMIN], currentUserData);
+    const isAdmin = matchRole([UserRole.ADMIN], currentUserData);
     // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
     const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
     const isDeleteAllowed = isAdmin || (allowDelete && isSameUser(userData, currentUserData));
-    const isNotificationsAvailable = !iOS && isSameUser(userData, currentUserData) && notifications && matchRole([Role.ADMIN, Role.USER], currentUserData);
+    const isNotificationsAvailable = !iOS && isSameUser(userData, currentUserData) && notifications && matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
     const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
 
     React.useEffect(() => {
@@ -376,7 +377,7 @@ function EditProfile(props) {
     }, [id])
 
     if (!userData) return <LoadingComponent/>
-    if (userData.id !== currentUserData.id && !matchRole([Role.ADMIN], currentUserData)) {
+    if (userData.id !== currentUserData.id && !matchRole([UserRole.ADMIN], currentUserData)) {
         return <Redirect to={pages.editprofile.route}/>
     }
 

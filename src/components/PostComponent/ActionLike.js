@@ -11,7 +11,7 @@ import counter from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {delay, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
@@ -151,8 +151,8 @@ export default ({postData}) => {
             .finally(finalizeRestoring);
     }
 
-    const isPostingAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
-    const isAdmin = matchRole([Role.ADMIN], currentUserData);
+    const isPostingAllowed = matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
+    const isAdmin = matchRole([UserRole.ADMIN], currentUserData);
 
     return <div className={actionStyles.action}>
         <Button

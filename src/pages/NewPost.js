@@ -16,10 +16,11 @@ export default () => {
     const history = useHistory();
     const location = useLocation();
     const metaInfo = useMetaInfo();
-    const pages = usePages();
-    const windowData = useWindowData();
     const {id, reply} = useParams();
+    const pages = usePages();
     const [state, setState] = React.useState({highlight: reply, text: ""});
+    const windowData = useWindowData();
+
     const {imageDescriptors, text, tag, ready} = state;
     const {settings = {}} = metaInfo || {};
     const {uploadsAllow, uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality} = settings;

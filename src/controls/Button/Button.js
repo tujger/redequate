@@ -23,12 +23,12 @@ export default React.forwardRef((props, ref) => {
         variant = undefined,
         ...otherProps
     } = props;
+    const onPointerDown = useRippleEffect(givenOnPointerDown);
     const isIconOnly = icon && children == null;
     const givenVariant = variant || (icon ? "text" : "contained");
     const currentVariant = variants.includes(givenVariant) ? givenVariant : "contained";
     const colorClass = styles[color] || (currentVariant === "text" ? styles.secondary : styles.primary);
     const sizeClass = styles[size] || "";
-    const onPointerDown = useRippleEffect(givenOnPointerDown);
     const onKeyDown = event => {
         givenOnKeyDown && givenOnKeyDown(event);
         if (event.defaultPrevented || (event.key !== "Enter" && event.key !== " ")) return;

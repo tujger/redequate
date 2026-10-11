@@ -1,4 +1,4 @@
-import {fail} from "../../../_common/src/_packages";
+import {fail} from "../../../common/src/_packages";
 
 const openDatabase = storage => new Promise((resolve, reject) => {
     const request = window.indexedDB.open(storage._storageKey, 1);

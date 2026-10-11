@@ -6,7 +6,7 @@ import counterControl from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import TextField from "../../controls/TextField/TextField";
 import ConfirmComponent from "../ConfirmComponent";
 import InfoComponent from "../InfoComponent";
@@ -59,7 +59,7 @@ export default props => {
 
     const uidId = `${currentUserData.id}_${mutualId}`;
     const idUid = `${mutualId}_${currentUserData.id}`;
-    const isAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
+    const isAllowed = matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
     const isSameUser = currentUserData.id === mutualId;
 
     const pushRequest = () => {
@@ -112,7 +112,7 @@ export default props => {
         evt.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, hasPending: hasRequest, hasRequest: null, disabled: true}));
-        (isAccept ? mutualRequestAccept : mutualRequestReject)({backend, requestId: `${typeId}/${hasRequest.key}`})
+        (isAccept ? mutualRequestAccept : mutualRequestReject)({backend, typeId, requestId: hasRequest.key})
             .then(result => {
                 setState(state => ({...state, disabled: false}));
                 dispatch(ProgressView.HIDE);

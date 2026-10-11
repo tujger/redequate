@@ -18,7 +18,7 @@ import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {matchRole, normalizeSortName, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
@@ -32,8 +32,12 @@ export default ({allowOwner = true}) => {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const windowData = useWindowData();
+    const {id} = useParams();
     const [state, setState] = React.useState({});
+    const storage = useStorage();
+    const {t} = useTranslation();
+    const windowData = useWindowData();
+
     const {
         tag,
         disabled,
@@ -46,12 +50,9 @@ export default ({allowOwner = true}) => {
         newId,
         owner = ""
     } = state;
-    const {id} = useParams();
-    const {t} = useTranslation();
-    const storage = useStorage();
 
     const isNew = id === undefined;
-    const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
+    const isCurrentUserAdmin = matchRole([UserRole.ADMIN], currentUserData);
 
     const handleBeforeSaveTag = () => {
         const ownerToken = tokenizeText(owner)[0];

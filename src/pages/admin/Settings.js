@@ -34,10 +34,8 @@ export default ({uploadable}) => {
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
-    const windowData = useWindowData();
-    const isNarrow = windowData.isNarrow();
-    const {t} = useTranslation();
     const {maintenance: maintenanceGiven} = useMetaInfo();
+    const {t} = useTranslation();
     const [state, setState] = React.useState({
         error: null,
         details: {},
@@ -45,6 +43,9 @@ export default ({uploadable}) => {
         message: "Sorry, site is under technical maintenance now. Please come back later.",
         tab: 0,
     });
+    const windowData = useWindowData();
+    const isNarrow = windowData.isNarrow();
+
     const {
         disabled,
         blockedNames,

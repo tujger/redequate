@@ -14,17 +14,18 @@ import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/RestorePassword.module.css";
 
 const RestorePassword = () => {
+    const auth = useAuth();
+    const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
+    const history = useHistory();
     const [state, setState] = React.useState({
         email: "",
         requesting: false
     });
-    const {email, requesting} = state;
     const pages = usePages();
-    const dispatch = useDispatch();
-    const history = useHistory();
-    const currentUserData = useCurrentUserData();
     const {t} = useTranslation();
-    const auth = useAuth();
+
+    const {email, requesting} = state;
 
     const requestRestorePassword = () => {
         dispatch(ProgressView.SHOW);

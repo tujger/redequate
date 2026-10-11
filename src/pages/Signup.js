@@ -20,21 +20,22 @@ import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Signup.module.css";
 
 const Signup = ({signup = true, additional}) => {
+    const auth = useAuth();
+    const currentUserData = useCurrentUserData();
+    const dispatch = useDispatch();
+    const history = useHistory();
+    const pages = usePages();
+    const params = useParams();
     const [state, setState] = React.useState({
         email: "",
         password: "",
         requesting: false,
     });
-    const {email, password, requesting, requestPasswordFor} = state;
-    const pages = usePages();
-    const dispatch = useDispatch();
-    const store = useStore();
-    const history = useHistory();
-    const currentUserData = useCurrentUserData();
-    const params = useParams();
-    const {t} = useTranslation();
-    const auth = useAuth();
     const [component, setComponent] = React.useState(() => <LoadingComponent/>);
+    const store = useStore();
+    const {t} = useTranslation();
+
+    const {email, password, requesting, requestPasswordFor} = state;
 
     const requestSignupPassword = () => {
         if (!email && !requestPasswordFor) {

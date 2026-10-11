@@ -60,12 +60,13 @@ const MenuSelector = ({item, onActivate, onHover, open, userData}) => {
 
 export default ({badge = {}, items, className, endIcon}) => {
     const [first, ...menu] = items;
+    const currentUserData = useCurrentUserData();
+    const history = useHistory();
     const [open, setOpen] = React.useState(false);
     const sectionRef = React.useRef(null);
     const triggerRef = React.useRef(null);
     const menuRef = React.useRef(null);
-    const currentUserData = useCurrentUserData();
-    const history = useHistory();
+
     const visible = filterItems(menu, currentUserData);
     const hasMenu = visible.length > 1 || (visible.length === 1 && Array.isArray(visible[0]) && visible[0].length > 1);
     const hasBadge = menu.some(item => !Array.isArray(item) && badge[item.route]);

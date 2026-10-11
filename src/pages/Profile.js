@@ -22,7 +22,7 @@ import SystemAlert from "../components/SystemAlert";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {TextMaskPhone} from "../controllers/TextMasks";
-import {matchRole, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
@@ -85,7 +85,7 @@ export const adminFields = [
                 className={styles.roleSelect}
                 disabled={props.disabled}
                 onChange={props.onChange}
-                options={Object.keys(Role).map(key => ({label: key, value: Role[key]}))}
+                options={Object.keys(UserRole).map(key => ({label: key, value: UserRole[key]}))}
                 value={props.value}
             />
         </label>
@@ -99,16 +99,17 @@ const Profile = (
         ProfileComponent = <ProfileComponentOrigin/>,
         provider,
     }) => {
-    const [state, setState] = React.useState({disabled: false});
-    const {userData, disabled} = state;
+    const auth = useAuth();
+    const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
     const {id} = useParams();
+    const [state, setState] = React.useState({disabled: false});
     const {t} = useTranslation();
-    const auth = useAuth();
-    const backend = useBackend();
+
+    const {userData, disabled} = state;
 
     const handleChatClick = () => {
         history.push(pages.chat.route + userData.id);
@@ -123,9 +124,9 @@ const Profile = (
             .finally(() => dispatch(ProgressView.HIDE));
     }
 
-    const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
+    const isCurrentUserAdmin = matchRole([UserRole.ADMIN], currentUserData);
     const isSameUser = userData && currentUserData && userData.id === currentUserData.id;
-    const isEditAllowed = (isSameUser && matchRole([Role.USER], userData)) || isCurrentUserAdmin;
+    const isEditAllowed = (isSameUser && matchRole([UserRole.USER], userData)) || isCurrentUserAdmin;
 
     React.useEffect(() => {
         let isMounted = true;

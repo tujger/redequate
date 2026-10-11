@@ -17,8 +17,8 @@ import {usersReducer} from "./usersReducer";
 
 function Users(props) {
     const {mode = "all", filter = "", invitation = true} = props;
-    const pages = usePages();
     const dispatch = useDispatch();
+    const pages = usePages();
 
     const handleHeaderChange = type => evt => {
         if (type === "clear") {

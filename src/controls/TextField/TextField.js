@@ -29,13 +29,14 @@ export default props => {
         value,
         ...otherProps
     } = props;
-    const colorClass = styles[color] || styles.primary;
-    const [focused, setFocused] = React.useState(false);
     const inputRef = React.useRef(null);
+    const onPointerDown = useRippleEffect(givenOnPointerDown);
+    const [focused, setFocused] = React.useState(false);
+
+    const colorClass = styles[color] || styles.primary;
     const hasValue = value !== undefined && value !== null && value !== "";
     const active = focused || hasValue;
     const canClear = clearable && hasValue && !disabled && (onChange || onClear);
-    const onPointerDown = useRippleEffect(givenOnPointerDown);
 
     const handleClear = event => {
         event.preventDefault();

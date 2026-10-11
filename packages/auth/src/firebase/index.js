@@ -1,17 +1,37 @@
-import {fail} from "../../../_common/src/_packages";
+import {
+    getAuth,
+    isSignInWithEmailLink,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    getRedirectResult,
+    sendEmailVerification,
+    sendPasswordResetEmail,
+    sendSignInLinkToEmail,
+    GoogleAuthProvider,
+    FacebookAuthProvider,
+    signInWithCredential,
+    signInWithEmailAndPassword,
+    signInWithEmailLink,
+    signInWithPopup,
+    signInWithRedirect,
+    signOut,
+    updatePassword,
+    updateProfile
+} from "firebase/auth";
+import {fail} from "../../../common/src/_packages";
 import AuthBase from "../AuthBase";
 import {toUserData} from "./toUserData";
 
 export default class FirebaseAuth extends AuthBase {
-    _firebase = undefined;
+    _auth = undefined;
 
     constructor({firebase}) {
         super();
-        this._firebase = firebase;
+        this._auth = getAuth(firebase.app);
     }
 
     currentUser() {
-        const user = this._firebase.auth().currentUser;
+        const user = this._auth.currentUser;
         if (!user) {
             fail("auth/no-current-user", "An authenticated user is required.");
         }
@@ -19,12 +39,11 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async checkSignInWithEmailLink() {
-        return this._firebase.auth().isSignInWithEmailLink(window.location.href)
+        return isSignInWithEmailLink(this._auth, window.location.href)
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        return this._firebase.auth()
-            .createUserWithEmailAndPassword(email, password)
+        return createUserWithEmailAndPassword(this._auth, email, password)
             .then(result => toUserData(result?.user));
     }
 
@@ -40,7 +59,7 @@ export default class FirebaseAuth extends AuthBase {
                 console.error("[FirebaseAuth] Auth error callback failed", callbackError);
             }
         };
-        return this._firebase.auth().onAuthStateChanged(user => {
+        return onAuthStateChanged(this._auth, user => {
             try {
                 const pending = callback(user ? toUserData(user) : null);
                 if (pending && typeof pending.then === "function") pending.catch(reportError);
@@ -51,22 +70,21 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async resolveCurrentUser() {
-        const user = this._firebase.auth().currentUser;
+        const user = this._auth.currentUser;
         return toUserData(user);
     }
 
     async resolveRedirectResult() {
-        return this._firebase.auth()
-            .getRedirectResult()
+        return getRedirectResult(this._auth)
             .then(result => toUserData(result?.user));
     }
 
     async sendEmailVerification(options) {
-        return this.currentUser().sendEmailVerification();
+        return sendEmailVerification(this.currentUser());
     }
 
     async sendPasswordResetEmail(email, options) {
-        return this._firebase.auth().sendPasswordResetEmail(email);
+        return sendPasswordResetEmail(this._auth, email);
     }
 
     async sendSignInLinkToEmail(email, options) {
@@ -74,48 +92,44 @@ export default class FirebaseAuth extends AuthBase {
             url: window.location.origin + "/signup/" + email,
             handleCodeInApp: true,
         };
-        return this._firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings)
+        return sendSignInLinkToEmail(this._auth, email, actionCodeSettings)
     }
 
     async signInWithCredential(token) {
-        const credential = this._firebase.auth.GoogleAuthProvider.credential(token);
-        return this._firebase.auth()
-            .signInWithCredential(credential)
+        const credential = GoogleAuthProvider.credential(token);
+        return signInWithCredential(this._auth, credential)
             .then(result => toUserData(result?.user));
     }
 
     async signInWithEmailAndPassword(email, password) {
-        return this._firebase.auth()
-            .signInWithEmailAndPassword(email, password)
+        return signInWithEmailAndPassword(this._auth, email, password)
             .then(result => toUserData(result?.user));
     }
 
     async signInWithEmailLink(email) {
-        return this._firebase.auth()
-            .signInWithEmailLink(email, window.location.href)
+        return signInWithEmailLink(this._auth, email, window.location.href)
             .then(result => toUserData(result?.user));
     }
 
     async signInWithPopup(provider, options) {
-        return this._firebase.auth()
-            .signInWithPopup(this.provider(provider))
+        return signInWithPopup(this._auth, this.provider(provider))
             .then(result => toUserData(result?.user));
     }
 
     async signInWithRedirect(provider, options) {
-        return this._firebase.auth().signInWithRedirect(this.provider(provider))
+        return signInWithRedirect(this._auth, this.provider(provider))
     }
 
     async signOut() {
-        return this._firebase.auth().signOut();
+        return signOut(this._auth);
     }
 
     async updatePassword(password) {
-        return this.currentUser().updatePassword(password)
+        return updatePassword(this.currentUser(), password)
     }
 
     async updateProfile({...fields}) {
-        return this.currentUser().updateProfile({...fields});
+        return updateProfile(this.currentUser(), {...fields});
     }
 
     provider(provider) {
@@ -128,14 +142,14 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     providerGoogle() {
-        const provider = new this._firebase.auth.GoogleAuthProvider();
+        const provider = new GoogleAuthProvider();
         provider.setCustomParameters({prompt: "select_account"});
         provider.addScope("https://www.googleapis.com/auth/userinfo.email");
         return provider;
     }
 
     providerFacebook() {
-        const provider = new this._firebase.auth.FacebookAuthProvider();
+        const provider = new FacebookAuthProvider();
         provider.addScope("email");
         provider.setCustomParameters({prompt: "select_account"});
         return provider;

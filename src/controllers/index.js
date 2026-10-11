@@ -16,7 +16,7 @@ export {
     logoutUser,
     matchRole,
     needAuth,
-    Role,
+    UserRole,
     UserData,
     useCurrentUserData,
     normalizeSortName,

@@ -51,7 +51,7 @@ export default (
         event.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(current => ({...current, disabled: true}));
-        mutualRequestAccept({backend, requestId: key})
+        mutualRequestAccept({backend, requestId: key, typeId: value.typeId})
             .then(result => {
                 console.log(result);
                 onDelete(result);
@@ -65,7 +65,7 @@ export default (
 
     const handleReject = event => {
         event.stopPropagation();
-        mutualRequestReject({requestId: key})
+        mutualRequestReject({backend, requestId: key, typeId: value.typeId})
             .then(result => {
                 console.log(result);
                 onDelete(result);

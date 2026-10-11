@@ -7,6 +7,7 @@ export const messagingSourcePattern = packageSourcePattern(sourceDirectory);
 const entries = {
     "messaging/index": fileURLToPath(new URL("./src/index.js", import.meta.url)),
     "messaging/firebase": fileURLToPath(new URL("./src/firebase/index.js", import.meta.url)),
+    "messaging/firebase-worker": fileURLToPath(new URL("./src/firebase/worker.js", import.meta.url)),
     "messaging/local-test": fileURLToPath(new URL("./src/local-test/index.js", import.meta.url)),
 };
 

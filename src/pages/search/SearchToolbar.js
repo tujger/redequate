@@ -8,12 +8,12 @@ import TextField from "../../controls/TextField/TextField";
 import styles from "./styles/SearchToolbar.module.css";
 
 export default ({Input, open = false, onOpen, transformSearch}) => {
-    const pages = usePages();
     const history = useHistory();
-    const {t} = useTranslation();
+    const pages = usePages();
+    const unblockRef = React.useRef(null);
     const [search, setSearch] = React.useState(open);
     const [searchValue, setSearchValue] = React.useState("");
-    const unblockRef = React.useRef(null);
+    const {t} = useTranslation();
 
     const releaseBlock = React.useCallback(() => {
         const unblock = unblockRef.current;
