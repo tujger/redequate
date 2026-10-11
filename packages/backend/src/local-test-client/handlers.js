@@ -66,7 +66,7 @@ export default {
     },
     mutualAction: args => {
         console.log("[LocalTestBackendClient] mutualAction", args);
-        validate(args, ["key"]);
+        validate(args, ["key", "typeId"]);
         if (args.action !== "accept" && args.action !== "reject") {
             fail("backend/invalid-argument", "action must be accept or reject.");
         }
