@@ -31,8 +31,9 @@ const Tags = (props) => {
     } = props;
     const dispatch = useDispatch();
     const pages = usePages();
-    const mode = forceMode || inheritMode;
     const {t} = useTranslation();
+
+    const mode = forceMode || inheritMode;
 
     const itemComponent = item => {
         return <MutualSubscribeItem

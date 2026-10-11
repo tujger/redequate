@@ -32,8 +32,12 @@ export default ({allowOwner = true}) => {
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const windowData = useWindowData();
+    const {id} = useParams();
     const [state, setState] = React.useState({});
+    const storage = useStorage();
+    const {t} = useTranslation();
+    const windowData = useWindowData();
+
     const {
         tag,
         disabled,
@@ -46,9 +50,6 @@ export default ({allowOwner = true}) => {
         newId,
         owner = ""
     } = state;
-    const {id} = useParams();
-    const {t} = useTranslation();
-    const storage = useStorage();
 
     const isNew = id === undefined;
     const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);

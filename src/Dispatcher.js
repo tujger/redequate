@@ -85,12 +85,12 @@ export default (props) => {
         storage: storageGiven,
         width: widthGiven
     } = props;
-    const [state, setState] = React.useState({store: null});
-    const {firebase} = state;
     const width = useBreakpoint(widthGiven);
+    const [state, setState] = React.useState({store: null});
     const widthRef = React.useRef(width);
-    widthRef.current = width;
     const previousWidth = React.useRef(width);
+    const {firebase} = state;
+    widthRef.current = width;
 
     React.useEffect(() => {
         if (previousWidth.current !== width) {
