@@ -1585,3 +1585,51 @@ tests, including module imports and 31 Gen1 registrations, pass from the extract
 source without the sibling checkout on Node 24.21.0. Node 22 and cloud deployment
 remain unverified.
 No registry publication or Functions deployment was performed.
+
+### The Whisky Talks Functions Gen2 transition
+
+Decision: migrate all 31 exported The Whisky Talks functions to the v2 SDK while
+preserving their names, RTDB paths, callable payloads and HTTP envelopes. RTDB
+handlers use event.data/event.params, callables use request.data/request.auth,
+and mail secrets are bound through onCall options. The shared databaseInstance
+constant derives the exact instance from the Admin app's database URL without
+creating a reference at module scope; handlers pass ref/instance directly to the
+SDK. A trigger-options factory was removed in favor of this direct form.
+Unused legacy follow/watch/reply handlers and GameData/deleteExtra/PostData were
+removed after checking references. Active createAlert and tag utilities use named
+exports and the shared database; tokenization is a pure utility, and normalization
+comes from redequate/common. No database reference is created during import.
+
+Runtime uses standard Gen2 CPU, concurrency and Compute Engine service-account
+defaults; the initial v1 compatibility overrides were removed at the owner's
+request. Admin initializes with initializeApp() and standard Firebase environment
+configuration instead of manually duplicating configuration and credentials.
+Region remains the default us-central1. Runtime IAM must be verified for the
+Compute Engine service account before resuming users. Existing side-effect
+handlers are not generally idempotent; retry remains disabled.
+
+The chosen rollout keeps names and requires maintenance: stop client requests
+and database/background writers, drain in-flight and cascaded work, delete the
+deployed v1 functions, create Gen2 functions, verify cloud registration/IAM and
+resume writers. Same-name upgrades cannot use an ordinary deploy over v1.
+Parallel v1/v2 triggers were rejected because they duplicate counters and alerts.
+Events during an uncovered trigger gap are not replayed. Manual steps and rollback
+are documented in the application's functions/GEN2-MIGRATION.md; none were run.
+
+Affected consumers: Redequate's Firebase backend and both web consumers use the
+same callable names/protocol with Firebase 13; no client changes are required.
+The Android shell has no native Functions dependency/calls; shared web contracts
+and stored data formats are unchanged.
+
+Status before removing legacy code: lint and all 89 mocked/regression/import tests
+passed on Node 24.21.0,
+including 31 Gen2 registrations, runtime options, mail secrets and instance
+selection for both RTDB hostname forms. Offline npm ci and all 45 standalone
+import/registration checks also pass from the locally packaged source without
+the sibling repository. Node 22 is unavailable. Deployment and
+cloud IAM, Eventarc delivery and client access remain unverified.
+
+After simplification, lint and all 82 remaining tests pass on Node 24.21.0:
+the eight deleted modules no longer need import checks, and a tokenization
+regression was added. Registration still verifies all 31 Gen2 exports, defaults,
+instance selection and secrets, with network and token requests blocked.
