@@ -1456,8 +1456,8 @@ those tests requires a separately authorized test update. No tests were changed.
 Decision: retain Realtime Database and the web Firebase 13 compat providers;
 modernize The Whisky Talks Functions to native JavaScript ESM, modular Admin
 14.5.0 and Functions 7.4.0 on the existing Node 22 runtime. Keep all 30 functions
-on explicit firebase-functions/v1 APIs, with their names, factories and response
-envelopes preserved. All functions use the default Gen1 region (us-central1)
+on explicit firebase-functions/v1 APIs, with their names and response envelopes
+preserved. All functions use the default Gen1 region (us-central1)
 without an explicit region wrapper. Backend.request unwraps the callable
 transport once.
 
@@ -1480,6 +1480,22 @@ post.to is not substituted for root. Diagnostics, mail and manual notifications
 require admin. HTTP fetchUser/fetchUsers/fetchConfig retain their envelopes;
 fetchConfig excludes credentials and secret configuration. Pagination's first
 key query has no control character boundary, which the RTDB emulator rejects.
+
+Published Cloud Functions are named exports in their own modules; index.js only
+re-exports those 30 endpoints. common/firebase.js owns configuration and reuses or
+initializes the default Admin app once, so modules load independently of index.js.
+Repair helpers are separate named exports used directly by fixError. Parameterized
+mutual stamps share a private builder with configuration owned by their module.
+Supporting model factories and unpublished legacy handlers remain unchanged;
+utils.js retains named exports with explicit Firebase service arguments. This
+replaces endpoint factory construction and Firebase initialization in index.js.
+
+RTDB triggers use the standard v1 ref(path), re-exported by common/firebase.js as
+triggerRef to distinguish it from Admin database.ref(path). It selects the
+instance from FIREBASE_CONFIG.databaseURL; Admin reads and writes use dataRef,
+the bound ref method of the shared database. Helpers and factories receiving a
+database argument retain database.ref to respect the caller's database.
+Keep their database URLs aligned instead of assuming instance equals projectId.
 
 Affected consumers: thewhiskytalks and Redequate web callers. Demo Functions and
 Android remain unchanged; no Android calls to these endpoints were found.
