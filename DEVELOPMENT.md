@@ -1507,7 +1507,25 @@ repairs, ownership, mutual actions and HTTP contracts; FCM, SMTP, Storage and
 rules retrieval use mocks. Real delivery and Node 22 runtime execution were not
 verified. Framework units: 253 pass, three existing LocalTestMessaging failures
 expect synchronous delivery. Demo build remains blocked by legacy
-fetchCallable/fetchFunction imports. No repository tests were added or updated.
+fetchCallable/fetchFunction imports. The initial SDK migration did not add or
+update repository tests.
+
+Subsequent regression fixes separate post/reply counters in posts, deduplicate
+reply alerts by recipient and retain both friendship target types. Legacy friend
+relations without type resolve to users_public during repair. Functions regression
+tests live in __tests__ and use node:test with experimental ESM module mocks;
+standalone import checks block network access and verify the existing 30 Gen1
+exports. ESLint/@eslint/js stay on 9.39.5 because eslint-plugin-react 7.37.5 does
+not support ESLint 10. The unused firebase-functions-test was removed because
+its Admin peer range excludes 14. Real services remain outside test coverage;
+Node 22 is unavailable locally, so these checks use Node 24.21.0.
+
+The web tag repair action now has an admin-only Gen1 fixTag callable. It rebuilds
+_tag/<key> from root posts using the existing tag tokenizer and normalization,
+and replaces the feed only after all pages succeed. This adds a 31st endpoint
+without changing the original exports or client contract. The scan is not an
+atomic snapshot; concurrent post changes remain a limitation. Regression checks
+cover pagination, failed reads and registration of every client callable.
 
 No deployment or cloud secret creation was performed. Future deployment must
 provision the declared mail secrets. Current source RTDB rules still allow writes
