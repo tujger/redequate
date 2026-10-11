@@ -37,30 +37,3 @@ export const forceFirebaseReinit = () => {
         return firebase;
     });
 }
-
-export const fetchFunction = (name, options) => new Promise((resolve, reject) => {
-    try {
-        firebaseMessaging.auth().onAuthStateChanged(data => {
-            data.getIdToken().then(token => {
-                const config = {
-                    headers: {
-                        Authorization: "Bearer " + token
-                    }
-                };
-                const namedFunction = firebaseMessaging.functions().httpsCallable(name, config);
-                return namedFunction(options);
-            }).then(result => {
-                resolve(result.data, result);
-            }).catch(reject)
-        });
-    } catch (error) {
-        reject(error);
-    }
-});
-
-export const checkIfConnected = () => new Promise((resolve, reject) => {
-    return firebaseMessaging.database().ref(".info").once("value").then(snapshot => {
-        console.log(snapshot, snapshot.val());
-        resolve();
-    })
-});
