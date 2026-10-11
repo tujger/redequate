@@ -1525,7 +1525,11 @@ _tag/<key> from root posts using the existing tag tokenizer and normalization,
 and replaces the feed only after all pages succeed. This adds a 31st endpoint
 without changing the original exports or client contract. The scan is not an
 atomic snapshot; concurrent post changes remain a limitation. Regression checks
-cover pagination, failed reads and registration of every client callable.
+cover pagination, failed reads and registration of every client callable. PostData
+instances must be created inside handlers: their database.ref() starts the RTDB
+connection during deployment discovery if constructed at module scope. Import
+checks now wait for deferred work and reject token requests as well as network
+attempts; immediate process exit previously hid this side effect.
 
 No deployment or cloud secret creation was performed. Future deployment must
 provision the declared mail secrets. Current source RTDB rules still allow writes
