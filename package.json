@@ -163,6 +163,10 @@
             "import": "./core/backend/local-test-client.mjs",
             "require": "./core/backend/local-test-client.cjs"
         },
+        "./common": {
+            "import": "./core/common/index.mjs",
+            "require": "./core/common/index.cjs"
+        },
         "./messaging": {
             "import": "./core/messaging/index.mjs",
             "require": "./core/messaging/index.cjs"

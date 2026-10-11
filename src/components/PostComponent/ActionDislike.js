@@ -4,7 +4,7 @@ import React from "react";
 import {useHistory} from "react-router-dom";
 import {delay, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import CounterComponent from "../CounterComponent";
 import actionStyles from "./styles/PostActions.module.css";
 
@@ -35,7 +35,7 @@ export default ({postData}) => {
             .catch(notifySnackbar)
     }
 
-    const isPostingAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
+    const isPostingAllowed = matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
 
     return <div className={actionStyles.action}>
         <div

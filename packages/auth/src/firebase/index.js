@@ -1,4 +1,4 @@
-import {fail} from "../../../_common/src/_packages";
+import {fail} from "../../../common/src/_packages";
 import AuthBase from "../AuthBase";
 import {toUserData} from "./toUserData";
 

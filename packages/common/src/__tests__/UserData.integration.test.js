@@ -1,5 +1,6 @@
 import {vi} from "vitest";
 import notifySnackbar from "../../../../src/controllers/notifySnackbar";
+import {UserRole} from "../UserRole";
 import {
     currentRole,
     currentUserData,
@@ -7,7 +8,6 @@ import {
     matchRole,
     needAuth,
     normalizeSortName,
-    Role,
     useCurrentUserData,
     UserData,
     watchUserChanged
@@ -26,12 +26,12 @@ beforeEach(() => {
     });
 });
 
-const userDataAdmin = UserData().create("test_admin_id", Role.ADMIN, {
+const userDataAdmin = UserData().create("test_admin_id", UserRole.ADMIN, {
     email: "admin@mail.com",
     emailVerified: true,
     name: "Admin name",
 });
-const userDataUserDisabled = UserData().create("test_user_disabled_id", Role.DISABLED, {
+const userDataUserDisabled = UserData().create("test_user_disabled_id", UserRole.DISABLED, {
     email: "disabled@mail.com",
     name: "Disabled user name",
 });
@@ -41,7 +41,7 @@ const userDataUserNotVerified = UserData().create("test_user_not_verified_id", {
 });
 
 // matchRole(roles, user) {
-const rolesAdminUser = [Role.USER, Role.ADMIN];
+const rolesAdminUser = [UserRole.USER, UserRole.ADMIN];
 
 test("watchUserChanged", async () => {
     const credential = await firebase.auth().createUserWithEmailAndPassword("watch@example.test", "test-password");
@@ -71,11 +71,11 @@ test("logoutUser", async () => {
     useCurrentUserData(userDataUser);
     await expect(logoutUser({auth, store})).resolves.toBeNull();
     expect(firebase.auth().currentUser).toBeNull();
-    expect(useCurrentUserData().role).toBe(Role.LOGIN);
+    expect(useCurrentUserData().role).toBe(UserRole.LOGIN);
     expect(store.getState().userData).toBeNull();
 });
 test("useCurrentUserData", async () => {
-    expect(useCurrentUserData()).toMatchObject({id: undefined, private: {}, public: {}, role: Role.LOGIN})
+    expect(useCurrentUserData()).toMatchObject({id: undefined, private: {}, public: {}, role: UserRole.LOGIN})
     expect(useCurrentUserData(userDataAdmin)).toEqual(userDataAdmin)
     expect(useCurrentUserData()).toEqual(userDataAdmin)
     expect(useCurrentUserData(userDataUser)).toEqual(userDataUser)
@@ -87,11 +87,11 @@ test("currentUserData", async () => {
 });
 
 it("currentRole", () => {
-    expect(currentRole(userDataAdmin)).toEqual(Role.ADMIN);
-    expect(currentRole(userDataUser)).toEqual(Role.USER);
-    expect(currentRole(userDataUserDisabled)).toEqual(Role.DISABLED);
-    expect(currentRole(userDataUserNotVerified)).toEqual(Role.USER_NOT_VERIFIED);
-    expect(currentRole(null)).toEqual(Role.LOGIN);
+    expect(currentRole(userDataAdmin)).toEqual(UserRole.ADMIN);
+    expect(currentRole(userDataUser)).toEqual(UserRole.USER);
+    expect(currentRole(userDataUserDisabled)).toEqual(UserRole.DISABLED);
+    expect(currentRole(userDataUserNotVerified)).toEqual(UserRole.USER_NOT_VERIFIED);
+    expect(currentRole(null)).toEqual(UserRole.LOGIN);
 });
 it("matchRole", () => {
     expect(matchRole(rolesAdminUser, userDataAdmin)).toBeTruthy();
@@ -174,10 +174,10 @@ describe("UserData", () => {
         expect(userDataUserNotVerified.public).toMatchObject({email: "notverified@mail.com", name: "Not verified user name"});
     });
     it("role", () => {
-        expect(userDataAdmin.role).toEqual(Role.ADMIN);
-        expect(userDataUser.role).toEqual(Role.USER);
-        expect(userDataUserDisabled.role).toEqual(Role.DISABLED);
-        expect(userDataUserNotVerified.role).toEqual(Role.USER_NOT_VERIFIED);
+        expect(userDataAdmin.role).toEqual(UserRole.ADMIN);
+        expect(userDataUser.role).toEqual(UserRole.USER);
+        expect(userDataUserDisabled.role).toEqual(UserRole.DISABLED);
+        expect(userDataUserNotVerified.role).toEqual(UserRole.USER_NOT_VERIFIED);
     });
     it("updated", () => {
         expect(userDataUser.updated).toBe("");

@@ -1,4 +1,5 @@
-import {Role, UserData} from "../UserData";
+import {UserRole} from "../UserRole";
+import {UserData} from "../UserData";
 
 it("restores request time and loaded state through fromJSON", () => {
     const json = {
@@ -17,7 +18,7 @@ it("restores request time and loaded state through fromJSON", () => {
 it("round-trips JSON without Firebase and retains private and loaded fields", () => {
     const user = new UserData().fromJSON({
         id: "round-trip",
-        role: Role.ADMIN,
+        role: UserRole.ADMIN,
         public: {name: "Alice Smith", email: "alice@example.test", emailVerified: true, image: "image", created: 1234},
         private: {device: {locale: "ru"}},
         requested: 5678,
@@ -26,10 +27,10 @@ it("round-trips JSON without Firebase and retains private and loaded fields", ()
     const json = JSON.parse(JSON.stringify(user));
     const restored = new UserData().fromJSON(json);
     expect(restored.toJSON()).toEqual(json);
-    expect(restored).toMatchObject({id: "round-trip", name: "Alice Smith", initials: "AS", email: "alice@example.test", image: "image", verified: true, role: Role.ADMIN, disabled: false});
+    expect(restored).toMatchObject({id: "round-trip", name: "Alice Smith", initials: "AS", email: "alice@example.test", image: "image", verified: true, role: UserRole.ADMIN, disabled: false});
     expect(restored.private).toEqual({device: {locale: "ru"}});
 });
-it.each([[true, Role.USER], [false, Role.USER_NOT_VERIFIED]])("derives role from verification %s when no role is set", (verified, role) => {
+it.each([[true, UserRole.USER], [false, UserRole.USER_NOT_VERIFIED]])("derives role from verification %s when no role is set", (verified, role) => {
     const user = new UserData().create("user", {email: "alice@example.test", emailVerified: verified});
     expect(user.role).toBe(role);
     expect(user.name).toBe("alice@example.test");
@@ -37,7 +38,7 @@ it.each([[true, Role.USER], [false, Role.USER_NOT_VERIFIED]])("derives role from
     expect(user.disabled).toBe(false);
 });
 it("preserves an explicit disabled role", () => {
-    const user = new UserData().create("user", Role.DISABLED, {name: "Disabled", emailVerified: true});
-    expect(user.role).toBe(Role.DISABLED);
+    const user = new UserData().create("user", UserRole.DISABLED, {name: "Disabled", emailVerified: true});
+    expect(user.role).toBe(UserRole.DISABLED);
     expect(user.disabled).toBe(true);
 });

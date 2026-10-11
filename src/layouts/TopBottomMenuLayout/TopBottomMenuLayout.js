@@ -8,7 +8,7 @@ import {enableDisabledPages, useStore} from "../../controllers/General";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {refreshAll} from "../../controllers/Store";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import BottomMenu from "./BottomMenu";
 import StickyHeader from "./StickyHeader";
 import styles from "./styles/TopBottomMenuLayout.module.css";
@@ -38,7 +38,7 @@ export default (props) => {
             <div
                 className={styles.version}
                 onClick={event => {
-                    if (!matchRole(Role.ADMIN, currentUserData)) return;
+                    if (!matchRole(UserRole.ADMIN, currentUserData)) return;
                     counter++;
                     if (counter === 3) {
                         const count = enableDisabledPages();

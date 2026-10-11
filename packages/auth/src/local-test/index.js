@@ -1,4 +1,4 @@
-import {delay, fail} from "../../../_common/src/_packages";
+import {delay, fail} from "../../../common/src/_packages";
 import AuthBase from "../AuthBase";
 import {
     changePassword,

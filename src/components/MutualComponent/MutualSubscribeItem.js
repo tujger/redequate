@@ -5,7 +5,7 @@ import {useHistory} from "react-router-dom";
 import {toDateString} from "../../controllers/DateFormat";
 import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import Select from "../../controls/Select/Select";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
@@ -41,7 +41,7 @@ const MutualSubscribeItem = (
         ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
         : styles.cardFlat;
     const isSameUser = value && value.uid === currentUserData.id;
-    const isAdminUser = matchRole([Role.ADMIN], currentUserData);
+    const isAdminUser = matchRole([UserRole.ADMIN], currentUserData);
     const menuLabel = unsubscribeLabel === undefined ? t("Mutual.Unsubscribe") : unsubscribeLabel;
     const hasMenu = menuLabel && (isSameUser || isAdminUser);
 

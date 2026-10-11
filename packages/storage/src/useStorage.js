@@ -1,5 +1,5 @@
 import {useContext} from "react";
-import {_AppContext} from "../../_common/AppContext";
+import {_AppContext} from "../../common/AppContext";
 
 export default () => {
     const storage = useContext(_AppContext)?.storage;

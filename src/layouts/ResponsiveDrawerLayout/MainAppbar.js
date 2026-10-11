@@ -5,7 +5,7 @@ import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
 import {usePages} from "../../controllers/General";
-import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
+import {currentRole, matchRole, needAuth, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MainAppbar.module.css";
@@ -63,7 +63,7 @@ function MainAppbar(props) {
             {currentUserData.id &&
                 <Link to={pages.profile.route} className={styles.label} onPointerDown={onPointerDown}>
                     <AvatarView
-                        admin={currentRole(currentUserData) === Role.ADMIN}
+                        admin={currentRole(currentUserData) === UserRole.ADMIN}
                         image={currentUserData.image}
                         initials={currentUserData.initials}
                         size={"small"}

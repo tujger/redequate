@@ -25,7 +25,7 @@ import Pagination from "../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tag.module.css";
@@ -46,7 +46,7 @@ export default ({allowOwner = true}) => {
     const db = firebase.database();
     const {tag} = state;
 
-    const isCurrentUserAdmin = matchRole([Role.ADMIN], currentUserData);
+    const isCurrentUserAdmin = matchRole([UserRole.ADMIN], currentUserData);
     const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
 
     const fixErrors = () => {

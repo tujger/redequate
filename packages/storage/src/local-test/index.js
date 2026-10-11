@@ -1,4 +1,4 @@
-import {delay, fail, identifier} from "../../../_common/src/_packages";
+import {delay, fail, identifier} from "../../../common/src/_packages";
 import StorageBase from "../StorageBase";
 import {fileOperation, toDataURL} from "./common";
 

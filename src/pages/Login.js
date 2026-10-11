@@ -14,7 +14,7 @@ import {fetchDeviceId, usePages, useStore} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, Role, useCurrentUserData, UserData} from "../controllers/UserData";
+import {logoutUser, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -219,7 +219,7 @@ function Login(props) {
         }
         const checkIfUserDisabled = async props => {
             const {userData} = props;
-            if (userData.role === Role.DISABLED) {
+            if (userData.role === UserRole.DISABLED) {
                 history.push(pages.profile.route);
                 throw "user-disabled";
             }

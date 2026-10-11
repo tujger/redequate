@@ -6,7 +6,7 @@ import counterControl from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import TextField from "../../controls/TextField/TextField";
 import ConfirmComponent from "../ConfirmComponent";
 import InfoComponent from "../InfoComponent";
@@ -59,7 +59,7 @@ export default props => {
 
     const uidId = `${currentUserData.id}_${mutualId}`;
     const idUid = `${mutualId}_${currentUserData.id}`;
-    const isAllowed = matchRole([Role.ADMIN, Role.USER], currentUserData);
+    const isAllowed = matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
     const isSameUser = currentUserData.id === mutualId;
 
     const pushRequest = () => {

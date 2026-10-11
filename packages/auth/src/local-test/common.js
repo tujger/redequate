@@ -1,5 +1,5 @@
-import {delay, fail, identifier} from "../../../_common/src/_packages";
-import {UserData} from "../../../_common";
+import {delay, fail, identifier} from "../../../common/src/_packages";
+import {UserData} from "../../../common";
 
 export const changeEvent = "redequate:local-test-auth-changed";
 

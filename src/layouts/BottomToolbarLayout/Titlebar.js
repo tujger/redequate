@@ -4,7 +4,7 @@ import {Link, useHistory, useLocation} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
 import {usePages} from "../../controllers/General";
-import {currentRole, matchRole, needAuth, Role, useCurrentUserData} from "../../controllers/UserData";
+import {currentRole, matchRole, needAuth, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/Titlebar.module.css";
@@ -50,7 +50,7 @@ export default (props) => {
                 to={pages.profile.route}
             >
                 <AvatarView
-                    admin={currentRole(currentUserData) === Role.ADMIN}
+                    admin={currentRole(currentUserData) === UserRole.ADMIN}
                     className={styles.avatar}
                     image={currentUserData.image}
                     initials={currentUserData.initials}

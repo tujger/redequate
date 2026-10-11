@@ -1,4 +1,4 @@
-import {delay, fail, identifier} from "../../../_common/src/_packages";
+import {delay, fail, identifier} from "../../../common/src/_packages";
 import MessagingBase from "../MessagingBase";
 import {defaultStorageKey, isMessage, messageType, sendMessage, validateStorageKey} from "./common";
 

@@ -1,17 +1,8 @@
+import {firebaseMessaging} from "../../../src/controllers/Firebase";
 import {cacheDatas} from "../../../src/controllers/General";
 import notifySnackbar from "../../../src/controllers/notifySnackbar";
 import {restoreLanguage} from "../../../src/reducers/languageReducer";
-import {firebaseMessaging} from "../../../src/controllers/Firebase";
-
-export const Role = {
-    AUTH: "auth",
-    ADMIN: "admin",
-    AUTHOR: "author", // child of USER
-    DISABLED: "disabled",
-    LOGIN: "login",
-    USER: "user",
-    USER_NOT_VERIFIED: "userNotVerified",
-};
+import {UserRole} from "./UserRole";
 
 export function watchUserChanged({auth, store, firebase}) {
     return new Promise((resolve, reject) => {
@@ -29,7 +20,7 @@ export function watchUserChanged({auth, store, firebase}) {
             auth.onAuthStateChanged(async userData => {
                 if (!currentUserDataInstance.id || !userData) return;
                 let changed = false;
-                if (currentUserDataInstance.role === Role.USER_NOT_VERIFIED && userData.verified) {
+                if (currentUserDataInstance.role === UserRole.USER_NOT_VERIFIED && userData.verified) {
                     console.warn("[UserData] verified", currentUserDataInstance.id, userData?.toJSON());
                     changed = true;
                 } else if (userData.verified && currentUserDataInstance.verified !== userData.verified) {
@@ -72,21 +63,21 @@ export const logoutUser = async ({auth, store}) => {
 
 export function currentRole(user) {
     if (user) return user.role;
-    return Role.LOGIN;
+    return UserRole.LOGIN;
 }
 
 export function matchRole(roles, user) {
     if (!roles) return true;
-    if (roles.indexOf(Role.AUTH) >= 0) return true;
+    if (roles.indexOf(UserRole.AUTH) >= 0) return true;
     if (!currentRole(user)) return false;
-    if (roles.indexOf(Role.USER) >= 0 && roles.indexOf(Role.AUTHOR) < 0) roles.push(Role.AUTHOR);
+    if (roles.indexOf(UserRole.USER) >= 0 && roles.indexOf(UserRole.AUTHOR) < 0) roles.push(UserRole.AUTHOR);
     return roles.indexOf(currentRole(user)) >= 0;
 }
 
 export function needAuth(roles, user) {
     if (!roles) return false;
     if (roles.indexOf(currentRole(user)) >= 0) return false;
-    return currentRole(user) === Role.LOGIN;
+    return currentRole(user) === UserRole.LOGIN;
 }
 
 export function currentUserData(state = {
@@ -178,7 +169,7 @@ export function UserData() {
             return _dateFormatted(_public.created);
         },
         get disabled() {
-            return matchRole([Role.DISABLED], _body);
+            return matchRole([UserRole.DISABLED], _body);
         },
         get email() {
             return _public.email;
@@ -208,7 +199,7 @@ export function UserData() {
             return _public
         },
         get role() {
-            return _id ? (_role || (_body.verified ? Role.USER : Role.USER_NOT_VERIFIED)) : Role.LOGIN;
+            return _id ? (_role || (_body.verified ? UserRole.USER : UserRole.USER_NOT_VERIFIED)) : UserRole.LOGIN;
         },
         get updated() {
             return _dateFormatted(_public.updated);

@@ -4,7 +4,7 @@ import {Route, Switch, useHistory} from "react-router-dom";
 import LoadingComponent from "./LoadingComponent";
 import {useMetaInfo, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, needAuth, Role as UserData, useCurrentUserData} from "../controllers/UserData";
+import {matchRole, needAuth, UserRole as UserData, useCurrentUserData} from "../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import SystemAlert from "./SystemAlert";
 

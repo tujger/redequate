@@ -1,4 +1,4 @@
-import {notImplemented} from "../../_common/src/_packages";
+import {notImplemented} from "../../common/src/_packages";
 
 export default class StorageBase {
     async upload({auth, blob, metadata, name, onProgress}) {

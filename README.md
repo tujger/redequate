@@ -636,7 +636,7 @@ Constructors and `useAuth()` remain synchronous. Provider options may contain
 
 ### Internal common layer
 
-Shared code resides in `packages/_common/src`; it has no public package subpath or
+Shared code resides in `packages/common`; it has no public package subpath or
 separate npm package. Public classes are re-exported through `redequate`.
 `src/controllers/UserData.js` remains a compatibility re-export of the moved
 implementation, so existing components and tests retain their imports.
@@ -653,7 +653,7 @@ Auth runtime source lives in `packages/auth/src`; its build configuration remain
 `packages/auth/build.mjs`.
 `packages/auth/build.mjs` supplies entry points, source matching and output naming to
 Rollup; it has no runtime import or public export. Shared source lives in
-`packages/_common/src`. Both remain part of the same npm package, whose
+`packages/common`. Both remain part of the same npm package, whose
 published files are built into `core`. The example resolves the package through
 its normal dependency and conditional exports, without an ESM-file alias.
 

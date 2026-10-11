@@ -1,5 +1,5 @@
-import {UserData} from "../../../_common";
-import {fail} from "../../../_common/src/_packages";
+import {UserData} from "../../../common";
+import {fail} from "../../../common/src/_packages";
 
 export const toUserData = user => {
     if (!user) return null;

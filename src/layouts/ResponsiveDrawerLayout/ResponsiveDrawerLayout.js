@@ -10,7 +10,7 @@ import {enableDisabledPages, useStore} from "../../controllers/General";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {refreshAll} from "../../controllers/Store";
-import {matchRole, Role, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers/WrapperControl";
 import Button from "../../controls/Button/Button";
 import MainAppbar from "./MainAppbar";
@@ -193,7 +193,7 @@ export default (props) => {
     }, [narrow, mobileOpen, closeDrawer, openDrawer]);
 
     const handleCopyrightClick = event => {
-        if (!matchRole(Role.ADMIN, currentUserData)) return;
+        if (!matchRole(UserRole.ADMIN, currentUserData)) return;
         copyrightClicks.current++;
         if (copyrightClicks.current === 3) {
             const count = enableDisabledPages();

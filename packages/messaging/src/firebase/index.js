@@ -1,4 +1,4 @@
-import {fail} from "../../../_common/src/_packages";
+import {fail} from "../../../common/src/_packages";
 import MessagingBase from "../MessagingBase";
 
 export default class FirebaseMessaging extends MessagingBase {
