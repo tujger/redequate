@@ -12,8 +12,8 @@ import styles from "./styles/MainAppbar.module.css";
 
 function MainAppbar(props) {
     const {badge, className, onHamburgerClick, label, logo} = props;
-    const pages = usePages();
     const currentUserData = useCurrentUserData();
+    const pages = usePages();
     const onPointerDown = useRippleEffect();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);

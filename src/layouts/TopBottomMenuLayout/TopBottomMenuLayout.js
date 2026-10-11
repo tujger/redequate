@@ -17,9 +17,10 @@ import baseStyles from "../../themes/Base.module.css";
 
 export default (props) => {
     const {menu, title, footerComponent, headerComponent = <HeaderComponent/>, random, copyright} = props;
-    const {t} = useTranslation();
     const currentUserData = useCurrentUserData();
     const store = useStore();
+    const {t} = useTranslation();
+
     let counter = 0;
 
     return <StickyHeader

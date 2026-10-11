@@ -5,8 +5,8 @@ import styles from "./styles/SystemAlert.module.css";
 
 export default ({message}) => {
     const metaInfo = useMetaInfo();
-    const {maintenance} = metaInfo || {};
     const {t} = useTranslation();
+    const {maintenance} = metaInfo || {};
 
     if (!maintenance && !message) return null;
     const {

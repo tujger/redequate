@@ -18,9 +18,9 @@ export default React.forwardRef((props, ref) => {
         onClick,
         variant = "default",
     } = props;
-    const [expanded, setExpanded] = React.useState(false);
-    const onMessagePointerDown = useRippleEffect();
     const onCardPointerDown = useRippleEffect();
+    const onMessagePointerDown = useRippleEffect();
+    const [expanded, setExpanded] = React.useState(false);
     const hasCard = Boolean(body || image);
     const cardShown = hasCard && expanded;
 

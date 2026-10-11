@@ -32,16 +32,17 @@ function Login(props) {
         popup = true,
         transformUserDataOnFirstLogin,
     } = props;
+    const auth = useAuth();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const history = useHistory();
     const location = useLocation();
-    const pages = usePages();
     const messaging = useMessaging();
+    const pages = usePages();
+    const [state, setState] = React.useState({});
     const store = useStore();
     const {i18n, t} = useTranslation();
-    const [state, setState] = React.useState({});
-    const auth = useAuth();
+
     const {
         showAgreement = false,
         email = "",

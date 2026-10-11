@@ -4,7 +4,7 @@ import {useMetaInfo} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 
-const ShareComponent = ({title, text, url, component = <div/>}) => {
+export default ({title, text, url, component = <div/>}) => {
     const handleShare = (evt) => {
         evt && evt.stopPropagation();
         share({title, text, url});
@@ -16,8 +16,6 @@ const ShareComponent = ({title, text, url, component = <div/>}) => {
         title={title}
     />
 };
-
-export default ShareComponent;
 
 export function share({title = "Share", text = "Share", url = ""}) {
     const metaInfo = useMetaInfo();

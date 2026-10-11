@@ -11,8 +11,8 @@ import styles from "./styles/TopMenu.module.css";
 
 const TopMenu = props => {
     const {badge = {}, items, className} = props;
-    const pages = usePages();
     const currentUserData = useCurrentUserData();
+    const pages = usePages();
     const onProfilePointerDown = useRippleEffect();
 
     return <div className={[styles.root, className].filter(Boolean).join(" ")}>

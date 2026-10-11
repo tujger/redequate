@@ -13,11 +13,11 @@ import styles from "./styles/Logout.module.css";
 
 const Logout = (props) => {
     const {immediate = true} = props;
+    const auth = useAuth();
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
     const {t} = useTranslation();
-    const auth = useAuth();
 
     const doLogout = () => {
         window.localStorage.removeItem(pages.login.route);

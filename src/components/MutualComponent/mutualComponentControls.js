@@ -2,16 +2,18 @@ import {firebaseMessaging as firebase} from "../../controllers/Firebase";
 import Pagination from "../../controllers/FirebasePagination";
 import {MutualMode} from "./MutualConstants";
 
-export const mutualRequestAccept = ({backend, requestId}) => {
+export const mutualRequestAccept = ({backend, requestId, typeId}) => {
     return backend.request("mutualAction", {
         key: requestId,
+        typeId,
         action: "accept",
     });
 }
 
-export const mutualRequestReject = ({backend, requestId}) => {
+export const mutualRequestReject = ({backend, requestId, typeId}) => {
     return backend.request("mutualAction", {
         key: requestId,
+        typeId,
         action: "reject",
     });
 }

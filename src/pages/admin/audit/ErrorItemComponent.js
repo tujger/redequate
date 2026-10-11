@@ -14,10 +14,11 @@ import Button from "../../../controls/Button/Button";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 
 export default ({data, skeleton, label, onUserClick}) => {
+    const backend = useBackend();
     const dispatch = useDispatch();
     const firebase = useFirebase()
-    const backend = useBackend();
     const [state, setState] = React.useState({});
+
     const {alert, userData, removed} = state;
 
     const handleClick = event => onUserClick(event, userData.id);

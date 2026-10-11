@@ -11,8 +11,8 @@ import SystemAlert from "./SystemAlert";
 export default props => {
     const currentUserData = useCurrentUserData();
     const history = useHistory();
-    const pages = usePages();
     const metaInfo = useMetaInfo();
+    const pages = usePages();
     const itemsFlat = Object.keys(pages).map(item => pages[item]);
 
     const isDisabled = metaInfo && metaInfo.maintenance && !matchRole([UserData.ADMIN], currentUserData);

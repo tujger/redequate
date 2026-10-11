@@ -99,16 +99,17 @@ const Profile = (
         ProfileComponent = <ProfileComponentOrigin/>,
         provider,
     }) => {
-    const [state, setState] = React.useState({disabled: false});
-    const {userData, disabled} = state;
+    const auth = useAuth();
+    const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
     const {id} = useParams();
+    const [state, setState] = React.useState({disabled: false});
     const {t} = useTranslation();
-    const auth = useAuth();
-    const backend = useBackend();
+
+    const {userData, disabled} = state;
 
     const handleChatClick = () => {
         history.push(pages.chat.route + userData.id);

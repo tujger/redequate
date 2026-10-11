@@ -112,7 +112,7 @@ export default props => {
         evt.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, hasPending: hasRequest, hasRequest: null, disabled: true}));
-        (isAccept ? mutualRequestAccept : mutualRequestReject)({backend, requestId: `${typeId}/${hasRequest.key}`})
+        (isAccept ? mutualRequestAccept : mutualRequestReject)({backend, typeId, requestId: hasRequest.key})
             .then(result => {
                 setState(state => ({...state, disabled: false}));
                 dispatch(ProgressView.HIDE);

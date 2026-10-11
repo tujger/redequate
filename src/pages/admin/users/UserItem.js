@@ -7,18 +7,18 @@ import {usePages} from "../../../controllers/General";
 import UserName from "../../../controls/UserName/UserName";
 import userStyles from "./styles/UserItem.module.css";
 
-export default ({data, classes: givenClasses, skeleton, label}) => {
+export default ({data, skeleton, label}) => {
     const history = useHistory();
-    const pages = usePages();
-    const classes = {...userStyles, ...(givenClasses || {})};
+    const pages = usePages()
+
     const {value: userData, _date} = data || {};
 
     if (label) {
-        return <ItemPlaceholderComponent classes={classes} label={label} pattern={"flat"}/>;
+        return <ItemPlaceholderComponent classes={userStyles} label={label} pattern={"flat"}/>;
     }
 
     if (skeleton) {
-        return <ItemPlaceholderComponent classes={classes} pattern={"flat"}/>;
+        return <ItemPlaceholderComponent classes={userStyles} pattern={"flat"}/>;
     }
 
     const handleClick = () => {
@@ -34,9 +34,9 @@ export default ({data, classes: givenClasses, skeleton, label}) => {
     return <ListItemComponent
         avatar={<AvatarView
             className={[
-                userData.role === "userNotVerified" ? classes.notVerified : "",
-                userData.role === "admin" ? classes.admin : "",
-                userData.role === "disabled" ? classes.disabled : "",
+                userData.role === "userNotVerified" ? userStyles.notVerified : "",
+                userData.role === "admin" ? userStyles.admin : "",
+                userData.role === "disabled" ? userStyles.disabled : "",
             ].join(" ")}
             image={userData.image}
             initials={userData.initials}
@@ -46,7 +46,7 @@ export default ({data, classes: givenClasses, skeleton, label}) => {
         title={<UserName id={userData.id}>
             {userData.email}
         </UserName>}
-        menu={userData.public && <div className={classes.cardAction}>
+        menu={userData.public && <div className={userStyles.cardAction}>
             {userData.public.provider}
         </div>}
         onClick={handleClick}

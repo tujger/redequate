@@ -8,6 +8,7 @@ import adminStyles from "./styles/Admin.module.css";
 export default ({fetchMenu, classes = {}}) => {
     const history = useHistory();
     const pages = usePages();
+
     const itemsFlat = Object.keys(pages)
         .map(item => pages[item])
         .sort((o1, o2) => {

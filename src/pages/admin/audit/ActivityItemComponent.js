@@ -15,8 +15,9 @@ import activityStyles from "./styles/ActivityItemComponent.module.css";
 export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => {
     const history = useHistory();
     const pages = usePages();
-    const classes = {...activityStyles, ...(givenClasses || {})};
     const [state, setState] = React.useState({});
+
+    const classes = {...activityStyles, ...(givenClasses || {})};
     const {alert, detailTimestamp, userData, removed, details, path, timestamp, type, userDatas = []} = state;
 
     const handleUserClick = uid => event => onItemClick("uid")(event, uid);

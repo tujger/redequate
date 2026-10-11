@@ -39,9 +39,10 @@ export default (
     }) => {
     const triggerRef = React.useRef(null);
     const menuId = React.useRef(null);
+    const [internalOpen, setInternalOpen] = React.useState(false);
+
     if (!menuId.current) menuId.current = `redequate-select-${++nextMenuId}`;
 
-    const [internalOpen, setInternalOpen] = React.useState(false);
     const controlled = givenOpen !== undefined;
     const open = controlled ? givenOpen : internalOpen;
     const onPointerDown = useRippleEffect(givenOnPointerDown);

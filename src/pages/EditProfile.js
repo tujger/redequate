@@ -38,24 +38,25 @@ function EditProfile(props) {
         publicFields = publicFieldsDefault,
         uploadable = true,
     } = props;
+    const auth = useAuth();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
+    const messaging = useMessaging();
     const pages = usePages();
-    const store = useStore();
-    const windowData = useWindowData();
     const {id} = useParams();
     const [state, setState] = React.useState({
         error: null,
         disabled: false,
     });
-    const auth = useAuth();
-    const messaging = useMessaging();
     const storage = useStorage();
+    const store = useStore();
+    const {t} = useTranslation();
+
+    const windowData = useWindowData();
     const {state: givenState = {}} = history.location;
     const {tosuccessroute, isFirstLogin} = givenState;
-    const {t} = useTranslation();
 
     // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 

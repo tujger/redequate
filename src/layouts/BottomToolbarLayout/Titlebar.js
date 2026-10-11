@@ -11,10 +11,10 @@ import styles from "./styles/Titlebar.module.css";
 
 export default (props) => {
     const {className} = props;
-    const pages = usePages();
-    const location = useLocation();
-    const history = useHistory();
     const currentUserData = useCurrentUserData();
+    const history = useHistory();
+    const location = useLocation();
+    const pages = usePages();
     const onProfilePointerDown = useRippleEffect();
 
     const itemsFlat = Object.keys(pages).map(item => pages[item]);

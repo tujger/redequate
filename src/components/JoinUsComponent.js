@@ -1,7 +1,7 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useHistory} from "react-router-dom";
-import {useMetaInfo, usePages, useStore} from "../controllers/General";
+import {useMetaInfo, usePages} from "../controllers/General";
 import {useCurrentUserData} from "../controllers/UserData";
 import {getScrollPosition} from "../helpers/useScrollPosition";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
@@ -25,13 +25,13 @@ const loadGoogleIdentity = () => {
 };
 
 const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
-    const [state, setState] = React.useState({});
-    const {allowed, show} = state;
     const currentUserData = useCurrentUserData();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
-    const store = useStore();
+    const [state, setState] = React.useState({});
+    const {t} = useTranslation();
+    const {allowed, show} = state;
     const {settings} = metaInfo || {};
     const {
         joinUsCancel,
@@ -42,7 +42,6 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
         joinUsTitle,
         oneTapCliendId
     } = settings || {};
-    const {t} = useTranslation();
 
     const handleCancel = () => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
