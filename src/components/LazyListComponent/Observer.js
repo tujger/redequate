@@ -2,9 +2,9 @@ import React from "react";
 import {InView} from "react-intersection-observer";
 
 export default ({active = true, finished, loadNextPage, placeholder, placeholders}) => {
-    if (finished) return null;
     const [state = active, setState] = React.useState();
 
+    if (finished) return null;
     return <>
         {state && <InView
             children={null}

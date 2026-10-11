@@ -17,9 +17,9 @@ const FlexFabComponent = ({
     tooltip,
     ...props
 }) => {
+    const onPointerDown = useRippleEffect(givenOnPointerDown);
     const [state, setState] = React.useState({});
     const {expanded = true} = state;
-    const onPointerDown = useRippleEffect(givenOnPointerDown);
     const colorClass = color === "primary" ? styles.primary : styles.secondary;
 
     useScrollPosition(({currPos}) => {

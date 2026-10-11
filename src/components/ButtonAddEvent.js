@@ -7,34 +7,7 @@ import styles from "./styles/ButtonAddEvent.module.css";
 
 let anchor;
 
-const Dropdown = ({children, isOpen, onRequestClose}) => <Select
-    anchorEl={anchor}
-    className={styles.dropdownSelect}
-    displayEmpty
-    onClose={onRequestClose}
-    open={isOpen}
-    renderValue={() => null}
-    tabIndex={-1}
-    value={""}
->
-    {React.Children.map(children, (item, index) => <SelectItem
-        key={index}
-        value={index}
-    >
-        {item}
-    </SelectItem>)}
-</Select>;
-
-const CButton = props => {
-    const {
-        children,
-        childrenalt,
-        ...otherProps
-    } = props;
-    return <Button {...otherProps} color={"primary"} variant={"contained"}>{childrenalt || children}</Button>;
-};
-
-const ButtonAddEvent = props => {
+export default props => {
     const {
         addEvent,
         children,
@@ -92,4 +65,29 @@ const ButtonAddEvent = props => {
     />;
 };
 
-export default ButtonAddEvent;
+const CButton = props => {
+    const {
+        children,
+        childrenalt,
+        ...otherProps
+    } = props;
+    return <Button {...otherProps} color={"primary"} variant={"contained"}>{childrenalt || children}</Button>;
+};
+
+const Dropdown = ({children, isOpen, onRequestClose}) => <Select
+    anchorEl={anchor}
+    className={styles.dropdownSelect}
+    displayEmpty
+    onClose={onRequestClose}
+    open={isOpen}
+    renderValue={() => null}
+    tabIndex={-1}
+    value={""}
+>
+    {React.Children.map(children, (item, index) => <SelectItem
+        key={index}
+        value={index}
+    >
+        {item}
+    </SelectItem>)}
+</Select>;

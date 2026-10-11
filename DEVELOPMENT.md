@@ -1233,7 +1233,8 @@ push services, including reload persistence and isolated local configurations.
 Console API: construction installs window.redequateMessaging.send(message,
 storageKey), with the default key when omitted. For example:
 window.redequateMessaging.send({title: "Test", body: "Console message"}).
-The function dispatches redequate:messaging:local-test:message with
+The initial transport (superseded by Local notification postMessage delivery
+below) dispatches redequate:messaging:local-test:message with
 {storageKey, message}. Messages are already in the public foreground callback
 format; each handler receives a structured clone. Delivery is limited to the
 current tab with no queue/history. Handler throws and async rejections are
@@ -1338,3 +1339,114 @@ Status: the previous LocalTestAuth unit failure is resolved. All 225 unit tests
 and 38 Firebase emulator integration tests pass; provider ESLint and framework
 and linked web consumer production builds pass. Firebase Messaging/Storage
 tests mock the SDK and do not verify real delivery or cloud Storage rules.
+
+### Backend hook public exports
+
+Decision: expose the same useBackend hook from both redequate and
+redequate/backend. The built backend entry exports BackendBase and useBackend,
+replacing its copied Storage names. Include Backend sources in Babel processing
+for both Rollup formats.
+
+Reason: The Whisky Talks imports useBackend from the framework root; limiting
+it to the backend subpath would require unnecessary consumer changes. Rollup
+builds packages/backend/src/index.js, so correcting only the package barrel
+does not correct the public backend entry.
+
+Consequences: both import paths share the existing Dispatcher Context within
+each format. Backend provider behavior and Android protocols are unchanged.
+Affected consumers: thewhiskytalks and edeqa-pwa-react-demo.
+
+Status: framework and both linked consumer production builds pass on Node.js
+24.21.0. Generated ESM/CommonJS exports and shared hook references verified;
+backend entry imports pass in both formats. The Whisky Talks friends, following,
+main profile and Groups pages render without missing-export errors. Groups
+reports a separate React list-key warning. No tests were added or updated.
+
+### LocalTestBackendClient handlers and IndexedDB history
+
+Decision: accept named synchronous or asynchronous handlers in the local Backend
+constructor and return their results through request(name, args). Simulate the
+shared 0–2000 ms delay. Invalid arguments use backend/invalid-argument; missing
+handlers use backend/not-found. Handler failures retain their original rejection.
+
+Persist all completed requests in IndexedDB version 1, in the requests store with
+an auto-increment id; storageKey names the database. Records contain name, an
+argument snapshot taken before execution, startedAt, durationMs, status and a
+result or error. Error objects store name/message/code; other rejection values
+are cloned directly. Uncloneable values become {uncloneable: true}. History
+failures are logged without replacing the handler's result or error. Connections
+close after each write and on version changes. No automatic history pruning.
+
+Reason: let web consumers supply application-specific local functions while
+retaining a persistent diagnostic history independent of remote services.
+Rejected alternatives: localStorage history, a 100-record limit, and failing an
+otherwise successful request when journal persistence fails.
+
+Consequences: handlers are configured anew after reload; only history persists.
+IndexedDB data remains local to the browser origin and storageKey. Consumers can
+opt into this provider; Firebase functions and Android protocols are unchanged.
+The default Backend resolver now imports the local client's default export and
+identifies Backend correctly in validation errors.
+
+The local client includes nine local handlers by default: fixChat,
+fixPost, fixMutualStamp, fixUser, fixTag, fixMutual, mutualAction, sendMail and
+sendNotification. Constructor handlers override built-ins or add new names.
+Built-ins validate required arguments with backend/invalid-argument; repair
+responses preserve origin/status/result and mutualAction preserves its nested
+data.status shape. Mail returns simulated SMTP info, including accepted/rejected,
+envelope and a unique messageId/queue identifier. Notifications return a unique
+messageId per explicit token, or an empty array for uid-only requests because no
+local token directory exists. Calls change no model data; mail is not sent.
+sendNotification now also delivers locally through the postMessage transport
+described below.
+fixTag follows the consuming component's key/result contract; no server
+implementation was found. This provides a usable local default without importing
+application databases or server infrastructure into the framework.
+Affected consumers: edeqa-pwa-react-demo and thewhiskytalks.
+
+Status: provider ESLint, isolated Backend ESM/CommonJS builds, full framework and
+The Whisky Talks production builds, and public provider imports passed on Node.js
+24.21.0. Temporary fake-indexeddb checks cover history persistence/failures and
+all nine handlers, including validation, overrides, async custom errors, unique
+IDs and recipient variants; 15 successful and 148 rejected built-in calls were
+journaled. No repository tests were added or updated. The prior framework export
+blocker is resolved in the current working tree. Demo build remains blocked by
+legacy fetchCallable/fetchFunction imports in its Test and Widgets pages; those
+callers still require Backend migration. Real-browser validation remains pending.
+
+### Local notification postMessage delivery
+
+Decision: replace LocalTestMessaging's CustomEvent transport with asynchronous
+window.postMessage using the current origin and the envelope
+{type: "redequate:messaging:local-test:message", storageKey, message}. Backend's
+sendNotification and window.redequateMessaging.send share a private sender;
+Backend does not depend on the console API or construct Messaging/subscriptions.
+
+LocalTestMessaging receives message events from window and, when available,
+navigator.serviceWorker. Both paths validate the envelope, same origin, namespace
+and subscription. Window messages also require event.source === window. Each
+callback receives its own clone; disposer removes both listeners. Console send
+retains its signature and configurable storageKey. The old CustomEvent is removed.
+
+Reason: simulate foreground notification delivery through postMessage while
+preserving the existing addMessageListener → Notifications receiving flow and
+supporting worker-originated messages with the same local envelope.
+
+Consequences: sendNotification posts one message to the default Messaging
+namespace after validation, independent of uid/to count. It maps title/body/from,
+priority/tag and image (falling back to icon), retaining its previous result array
+and request history. PostMessage failures reject and are journaled; success does
+not acknowledge callback completion. Unsubscribed or absent listeners drop the
+message without a queue. This supersedes the earlier response-only notification
+simulation. No worker registration, remote push or system-notification behavior
+is added. Firebase/Android protocols and consumer worker files are unchanged.
+Affected consumers: edeqa-pwa-react-demo and thewhiskytalks.
+
+Status: ESLint, full framework and The Whisky Talks builds passed on Node.js
+24.21.0. Temporary ESM/CommonJS checks using simulated window/worker events and
+fake-indexeddb passed for Backend/console delivery, worker input, filtering,
+subscription/disposal, clones, callback failures and send-error journaling.
+Real-browser validation remains pending. Demo build still fails on legacy
+fetchCallable/fetchFunction imports. Existing LocalTestMessaging unit tests:
+3 pass and 3 fail because they expect the prior synchronous delivery; adapting
+those tests requires a separately authorized test update. No tests were changed.

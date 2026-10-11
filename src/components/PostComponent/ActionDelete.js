@@ -9,10 +9,10 @@ import ConfirmComponent from "../ConfirmComponent";
 import SelectItem from "../../controls/Select/SelectItem";
 
 export default ({postData, modalOnly = false, onMenuItemClick, onComplete, onRequestClose, open, type, ...selectProps}) => {
-    const [state, setState] = React.useState({});
-    const deletePost = modalOnly ? open : state.deletePost;
     const dispatch = useDispatch();
+    const [state, setState] = React.useState({});
     const {t} = useTranslation();
+    const deletePost = modalOnly ? open : state.deletePost;
 
     const handleClickDelete = evt => {
         evt && evt.stopPropagation();

@@ -13,10 +13,10 @@ export default (props) => {
     const {onChange, onDelete, postData} = props;
     const currentUserData = useCurrentUserData();
     const metaInfo = useMetaInfo();
-    const {t} = useTranslation();
     const [open, setOpen] = React.useState(false);
     const [editRequest, setEditRequest] = React.useState(0);
     const [deleteOpen, setDeleteOpen] = React.useState(false);
+    const {t} = useTranslation();
 
     const isDeleteAllowed = currentUserData && !currentUserData.disabled
         && (postData.uid === currentUserData.id || matchRole([Role.ADMIN], currentUserData));

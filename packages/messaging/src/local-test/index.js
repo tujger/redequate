@@ -1,5 +1,6 @@
 import {delay, fail, identifier} from "../../../_common/src/_packages";
 import MessagingBase from "../MessagingBase";
+import {defaultStorageKey, isMessage, messageType, sendMessage, validateStorageKey} from "./common";
 
 // Local simulation only
 export default class LocalTestMessaging extends MessagingBase {
@@ -17,10 +18,11 @@ export default class LocalTestMessaging extends MessagingBase {
         }
         await delay("LocalTestMessaging", "addMessageListener");
         const listener = event => {
-            if (event.detail?.storageKey !== this.storageKey) return;
+            if (event.origin !== window.location.origin || event.data?.type !== messageType ||
+                event.data.storageKey !== this.storageKey || !isMessage(event.data.message)) return;
             try {
                 if (!window.localStorage.getItem(this.storageKey)) return;
-                const pending = onMessage(window.structuredClone(event.detail.message));
+                const pending = onMessage(window.structuredClone(event.data.message));
                 if (pending && typeof pending.then === "function") {
                     Promise.resolve(pending).catch(reportError);
                 }
@@ -28,8 +30,16 @@ export default class LocalTestMessaging extends MessagingBase {
                 reportError(error);
             }
         };
-        window.addEventListener(messageEvent, listener);
-        return () => window.removeEventListener(messageEvent, listener);
+        const windowListener = event => {
+            if (event.source === window) listener(event);
+        };
+        const serviceWorker = window.navigator?.serviceWorker;
+        window.addEventListener("message", windowListener);
+        serviceWorker?.addEventListener("message", listener);
+        return () => {
+            window.removeEventListener("message", windowListener);
+            serviceWorker?.removeEventListener("message", listener);
+        };
     }
 
     async checkIfSubscribed() {
@@ -51,24 +61,5 @@ export default class LocalTestMessaging extends MessagingBase {
         window.localStorage.removeItem(this.storageKey);
     }
 }
-
-const defaultStorageKey = "redequate:messaging:local-test";
-const messageEvent = "redequate:messaging:local-test:message";
-
-const validateStorageKey = storageKey => {
-    if (typeof storageKey !== "string" || !storageKey.trim()) {
-        fail("messaging/invalid-argument", "storageKey must be a non-empty string.");
-    }
-};
-
-const sendMessage = (message, storageKey = defaultStorageKey) => {
-    validateStorageKey(storageKey);
-    if (!message || typeof message !== "object" || Array.isArray(message)) {
-        fail("messaging/invalid-argument", "Message must be an object.");
-    }
-    window.dispatchEvent(new window.CustomEvent(messageEvent, {
-        detail: {storageKey, message: window.structuredClone(message)}
-    }));
-};
 
 const reportError = error => console.error("[LocalTestMessaging] Message handler failed", error);

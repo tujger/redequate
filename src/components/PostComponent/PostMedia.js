@@ -17,8 +17,8 @@ export default (props) => {
     const {images: imagesGiven} = props;
     const history = useHistory();
     const ref = React.useRef({});
-    const windowData = useWindowData();
     const [state, setState] = React.useState({});
+    const windowData = useWindowData();
     const {selected = null, gallery} = state;
 
     const images = (imagesGiven || []).map(image => {

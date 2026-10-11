@@ -18,13 +18,13 @@ import ProgressView from "../ProgressView";
 import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData}) => {
-    const [state, setState] = React.useState({});
-    const {disabled} = state;
+    const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
-    const currentUserData = useCurrentUserData();
+    const [state, setState] = React.useState({});
     const {t} = useTranslation();
+    const {disabled} = state;
 
     const handleClickExtra = extraType => evt => {
         const prepareProcess = async () => {

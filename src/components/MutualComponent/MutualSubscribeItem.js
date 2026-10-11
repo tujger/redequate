@@ -28,12 +28,12 @@ const MutualSubscribeItem = (
         typeId,
         unsubscribeLabel,
     }) => {
-    const {t} = useTranslation();
-    const pages = usePages();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
+    const pages = usePages();
+    const {t} = useTranslation();
     const [disabled, setDisabled] = React.useState(false);
     const [menuOpen, setMenuOpen] = React.useState(false);
     const {key, userData = {}, value} = data;

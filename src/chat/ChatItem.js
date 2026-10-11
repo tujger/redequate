@@ -1,20 +1,8 @@
 import React from "react";
-import {Link} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import ListItemComponent from "../components/ListItemComponent";
-import MentionedTextComponent from "../components/MentionedTextComponent";
-import PostBody from "../components/PostComponent/PostBody";
-import PostButtons from "../components/PostComponent/PostButtons";
-import PostMedia from "../components/PostComponent/PostMedia";
-import PostMenu from "../components/PostComponent/PostMenu";
-import RotatingReplies from "../components/PostComponent/RotatingReplies";
-import cardStyles from "../components/PostComponent/styles/PostComponent.module.css";
-import textStyles from "../components/PostComponent/styles/PostText.module.css";
 import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
-import {mentionTags} from "../controllers/mentionTypes";
-import mentionStyles from "../controllers/styles/MentionTypes.module.css";
-import UserName from "../controls/UserName/UserName";
 import chatStyles from "./styles/ChatItem.module.css";
 
 export default (props) => {

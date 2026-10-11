@@ -4,8 +4,8 @@ import {useTranslation} from "react-i18next";
 import Select from "../../controls/Select/Select";
 
 export default ({show, range, onSelect}) => {
-    const {t} = useTranslation();
     const [open, setOpen] = React.useState(false);
+    const {t} = useTranslation();
 
     React.useEffect(() => {
         if (!show) setOpen(false);

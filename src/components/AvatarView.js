@@ -2,6 +2,34 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import classes from "./styles/AvatarView.module.css";
 
+export default ({admin, className, image, icon, initials, onclick, size = undefined, verified}) => {
+    const {t} = useTranslation();
+    const bgcolor = calculateBgColor(image, initials);
+    const statusClass = verified ? (admin ? classes.admin : "") : classes.notVerified;
+    const classNames = [
+        classes.avatar,
+        statusClass,
+        className || "",
+        size === "small" && classes.small,
+        size === "smaller" && classes.smaller
+    ].filter(Boolean).join(" ");
+    const style = bgcolor ? {
+        "--avatar-background-color": bgcolor,
+        "--avatar-text-color": getContrastText(bgcolor),
+    } : undefined;
+
+    return <div
+        className={classNames}
+        style={style}
+        onClick={onclick}
+        title={verified ? (admin ? t("User.Administrator") : null) : t("User.Not verified")}
+    >
+        {image && <img src={image} alt={t("User.Avatar")} className={classes.avatarImage}/>}
+        {!image && icon}
+        {!image && !icon && initials && initials.substr(0, 2).toUpperCase()}
+    </div>
+}
+
 const calculateBgColor = (image, initials) => {
     if (image || !initials) return null;
     let hash = 0
@@ -28,33 +56,3 @@ const getContrastText = bgcolor => {
 
     return contrastWithDark >= 3 ? "rgba(0, 0, 0, 0.87)" : "#fff";
 }
-
-const AvatarView = ({admin, className, image, icon, initials, onclick, size = undefined, verified}) => {
-    const bgcolor = calculateBgColor(image, initials);
-    const {t} = useTranslation();
-    const statusClass = verified ? (admin ? classes.admin : "") : classes.notVerified;
-    const classNames = [
-        classes.avatar,
-        statusClass,
-        className || "",
-        size === "small" && classes.small,
-        size === "smaller" && classes.smaller
-    ].filter(Boolean).join(" ");
-    const style = bgcolor ? {
-        "--avatar-background-color": bgcolor,
-        "--avatar-text-color": getContrastText(bgcolor),
-    } : undefined;
-
-    return <div
-        className={classNames}
-        style={style}
-        onClick={onclick}
-        title={verified ? (admin ? t("User.Administrator") : null) : t("User.Not verified")}
-    >
-        {image && <img src={image} alt={t("User.Avatar")} className={classes.avatarImage}/>}
-        {!image && icon}
-        {!image && !icon && initials && initials.substr(0, 2).toUpperCase()}
-    </div>
-}
-
-export default AvatarView;

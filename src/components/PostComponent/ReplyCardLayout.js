@@ -16,8 +16,8 @@ import textStyles from "./styles/PostText.module.css";
 export default React.forwardRef((props, ref) => {
     const {className, disableClick, disableButtons, level, pattern, postData, style, userData, highlighted} = props;
     const pages = usePages();
-    const windowData = useWindowData();
     const ancillaryRef = React.useRef();
+    const windowData = useWindowData();
 
     return <ListItemComponent
         avatar={<Link

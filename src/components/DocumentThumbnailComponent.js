@@ -15,9 +15,9 @@ const fallbacks = {
 
 export default ({className, title, url}) => {
     const [state, setState] = React.useState({});
-    const {src = url, thumbnail = url} = state;
-    const {t} = useTranslation();
     const storage = useStorage();
+    const {t} = useTranslation();
+    const {src = url, thumbnail = url} = state;
 
     React.useEffect(() => {
         let isMount = true;

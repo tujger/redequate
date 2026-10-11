@@ -2,6 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useBackend} from "../../../packages/backend";
 import {toDateString} from "../../controllers/DateFormat";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -23,14 +24,15 @@ export default (
         pattern,
         skeleton
     }) => {
-    const pages = usePages();
+    const backend = useBackend();
     const dispatch = useDispatch();
     const history = useHistory();
+    const pages = usePages();
+    const onPointerDown = useRippleEffect();
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const {key, userData, value} = data;
     const {t} = useTranslation();
-    const onPointerDown = useRippleEffect();
     const patternClass = pattern
         ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
         : styles.cardFlat;
@@ -49,7 +51,7 @@ export default (
         event.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(current => ({...current, disabled: true}));
-        mutualRequestAccept({requestId: key})
+        mutualRequestAccept({backend, requestId: key})
             .then(result => {
                 console.log(result);
                 onDelete(result);
