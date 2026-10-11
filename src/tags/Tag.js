@@ -49,7 +49,7 @@ export default ({allowOwner = true}) => {
     const isOwner = allowOwner && tag && tag.value && tag.value.uid && tag.value.uid === currentUserData.id;
 
     const fixErrors = () => {
-        backend.callFunction("fixTag", {
+        backend.request("fixTag", {
             key: tag.id
         })
             .then(({result = "Complete"}) => notifySnackbar(result))
@@ -180,7 +180,7 @@ export default ({allowOwner = true}) => {
                     fetchItemId: item => item.key,
                     onItemError: (error, options) => {
                         console.log(error, options);
-                        backend.callFunction("fixMutualStamp", {
+                        backend.request("fixMutualStamp", {
                             ...options,
                             id: options.id,
                             tag: tag.key,

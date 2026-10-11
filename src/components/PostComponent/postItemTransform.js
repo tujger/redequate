@@ -35,7 +35,7 @@ export default (
             return onItemError(error, {code, id: item.key, uid: currentUserData.id});
         } else {
             if (code === MutualError.NOT_FOUND) {
-                backend.callFunction("fixPost", currentUserData && currentUserData.id
+                backend.request("fixPost", currentUserData && currentUserData.id
                     ? {
                         code,
                         id: item.key,
@@ -48,7 +48,7 @@ export default (
                     .then(console.log)
                     .catch(console.error);
 
-                backend.callFunction("fixMutualStamp", {
+                backend.request("fixMutualStamp", {
                     code,
                     id: item.key,
                     uid: item.value,

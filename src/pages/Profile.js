@@ -115,7 +115,7 @@ const Profile = (
     }
 
     const fixErrors = () => {
-        backend.callFunction("fixUser", {
+        backend.request("fixUser", {
             key: userData.id
         })
             .then(({result = "Complete"}) => notifySnackbar(result))

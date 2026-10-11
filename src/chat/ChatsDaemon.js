@@ -81,7 +81,7 @@ export default ({clearText = text => text}) => {
                 metas[meta.id] = meta;
             }).catch(error => {
                 console.error(`[ChatsDaemon] failed for ${currentUserData.id}`, error)
-                backend.callFunction("fixChat", {id, uid: currentUserData.id})
+                backend.request("fixChat", {id, uid: currentUserData.id})
                     .then(console.log)
                     .catch(console.error);
             });

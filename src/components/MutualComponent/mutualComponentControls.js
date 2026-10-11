@@ -3,14 +3,14 @@ import Pagination from "../../controllers/FirebasePagination";
 import {MutualMode} from "./MutualConstants";
 
 export const mutualRequestAccept = ({backend, requestId}) => {
-    return backend.callFunction("mutualAction", {
+    return backend.request("mutualAction", {
         key: requestId,
         action: "accept",
     });
 }
 
 export const mutualRequestReject = ({backend, requestId}) => {
-    return backend.callFunction("mutualAction", {
+    return backend.request("mutualAction", {
         key: requestId,
         action: "reject",
     });

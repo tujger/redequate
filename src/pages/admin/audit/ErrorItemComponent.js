@@ -36,7 +36,7 @@ export default ({data, skeleton, label, onUserClick}) => {
         dispatch(ProgressView.SHOW);
         setState({...state, alert: false});
         console.log("[Error] try to fix", data);
-        backend.callFunction("fixError", {
+        backend.invoke("fixError", {
             key: data.key
         })
             .then(({result}) => notifySnackbar(result))
