@@ -6,7 +6,6 @@ export * from "./controls";
 export * from "./images";
 export * from "./layouts";
 export * from "./pages";
-export * from "./proptypes";
 export * from "./tags";
 export * from "./workers";
 export * from "./components/MutualComponent";
