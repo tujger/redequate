@@ -1633,3 +1633,88 @@ After simplification, lint and all 82 remaining tests pass on Node 24.21.0:
 the eight deleted modules no longer need import checks, and a tokenization
 regression was added. Registration still verifies all 31 Gen2 exports, defaults,
 instance selection and secrets, with network and token requests blocked.
+
+### Modular Firebase web services with compat Realtime Database
+
+Decision: use Firebase 13.0.0 modular Auth, Storage, Functions, Analytics and
+Messaging in Redequate and both web consumers. Retain compat app/database only
+for the existing RTDB API. This supersedes the full compat decision above.
+Firebase(config) returns the stable shared {app, config, database} handle, with a
+modular FirebaseApp and the existing database()/database.ServerValue API. Existing
+firebaseMessaging imports refer to that same handle. Provider constructors still
+accept {firebase}; application method and result contracts are preserved. Repeated
+initialization reuses the default app with identical configuration and rejects
+conflicting configuration rather than hiding the SDK error.
+
+Reason: migrate service adapters independently of database controllers and stored
+data. Keep Firebase imports external in both framework outputs and deduplicate
+the SDK in consumer Vite resolution so modular Auth and compat RTDB share the app
+and authentication state. Messaging awaits isSupported before service creation
+and keeps the unsupported-browser error for the Android native bridge fallback.
+
+Consequences: only compat app/database imports remain in runtime source. App
+reinitialization must use the public compatApp.delete(): modular deleteApp alone
+leaves the compat app registry pointing to a destroyed app. Compat deletion clears
+that registry and delegates modular service cleanup. Using private _delegate or
+INTERNAL APIs was rejected. Auth/Storage/Backend retain modular service instances
+for their supplied app; the existing reinitialization flow reloads the page.
+
+Both consumers import src/firebase-messaging-sw.js through Vite's native
+?worker&url pipeline. worker.format is es; hashed worker entries are emitted at
+the build root, and the development server sends Service-Worker-Allowed: /.
+The custom nested build and worker middleware were removed: relocating them to
+vite.config.mjs reduced files but retained unnecessary build machinery. Both
+applications now use Firebase Messaging, including the demo previously using
+LocalTestMessaging. Provider options serviceWorkerURL/serviceWorkerType select
+the emitted module worker; registration is lazy, cached and awaited until active.
+The scope remains /firebase-cloud-messaging-push-scope, and ServiceWorkerControl
+finds it by scope rather than a script URL. Hashed worker entries remain excluded
+from the PWA precache. Registration failures can be retried. On fresh-instance
+unsubscribe, getToken binds the custom registration before deleteToken; it requires
+already-granted permission and never requests permission during unsubscribe.
+Permission/token/deletion failures retain the local token for retry. Without a
+custom URL, providers retain the default Firebase registration behavior.
+
+Notification behavior belongs to the isolated redequate/messaging/firebase-worker
+ESM/CJS entry. initializeFirebaseMessagingWorker(config) installs the click handler
+before initializing Firebase and background message handling; consumer workers
+only import this initializer, import their selected configuration and call it once.
+The entry imports modular app and messaging/sw, with no React/UI, browser
+controllers or compat. Importing ServiceWorkerControl directly into workers was
+rejected because its UI and browser dependencies would cross the runtime boundary.
+The shared handlers preserve The Whisky Talks payload.data || payload.notification
+selection and notification display, tag-based existing-window focus or new-window
+opening. The demo now uses the same standard notificationclick handler, replacing
+its previously ineffective [fb-sw] notificationclick event. Application workers
+still select their own src/firebase-config.json; The Whisky Talks variant selection
+must precede the build. Firebase CDN scripts and /__/firebase/init.js are not used.
+
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Database data/paths,
+callable payloads/envelopes, notification token storage and Android bridge
+contracts are unchanged. Database migration and server SDK changes remain
+separate work; no deployment was performed.
+
+Status: implemented; changed provider lint, framework ESM/CJS and both web
+production builds pass on Node 24.21.0 using the currently selected development
+Firebase configurations. Temporary checks verify native module-worker output,
+selected project, absence of compat/CDN imports and development serving; Storage upload,
+metadata/path/progress and Messaging permission/support/token/listener contracts
+use SDK substitutes. Local Auth/RTDB emulator checks validate CJS signup, login,
+logout, profile/password updates, protected RTDB access, server timestamps and app
+reinitialization. Browser ESM checks in jsdom with shared fake IndexedDB validate
+persisted Auth restoration and protected compat RTDB reads/writes. A local HTTP
+callable substitute verifies authorization and single transport unwrapping. Shared
+worker ESM/CJS checks using SDK substitutes validate listener registration order,
+payload precedence, notification promise/error propagation, close/focus/open and
+waitUntil. Native worker provider checks cover activation, registration reuse and
+retry, explicit token binding, fresh-instance unsubscribe, permission/error token
+retention and unsupported-browser/default-registration paths. Update checks locate
+the exact Messaging scope despite script hash changes and ignore the root PWA.
+
+Existing targeted repository tests: 13 pass, 19 fail across four files because
+FirebaseAuth/UserDataJSON and Storage contract fixtures still supply the old
+namespace API/mocks. Integration fixtures also retain compat Auth calls. No tests
+were added or updated, per the project instruction. Fixture migration remains a
+separate authorized task. Real provider popup/redirect/email-link flows, cloud
+Storage and Functions, FCM delivery/token deletion, installed worker upgrades,
+production Firebase variant and Android WebView/native fallback remain unverified.

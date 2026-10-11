@@ -1,44 +1,36 @@
-import "firebase/compat/auth";
 import "firebase/compat/database";
-import "firebase/compat/functions";
-import "firebase/compat/storage";
-import "firebase/compat/analytics";
-import "firebase/compat/messaging";
 import firebase from "firebase/compat/app";
+import {getApp} from "firebase/app";
+import {getAnalytics, isSupported} from "firebase/analytics";
 
-export const firebaseMessaging = firebase;
+// Keep the handle stable for legacy database controllers importing this object.
+export const firebaseMessaging = {
+    app: undefined,
+    config: undefined,
+    database: Object.assign((...args) => firebase.app(firebaseMessaging.app.name).database(...args), {
+        ServerValue: firebase.database.ServerValue,
+    }),
+};
+
 const Firebase = firebaseConfig => {
-    try {
-        console.log("[Firebase] init")
-        firebase.initializeApp(firebaseConfig);
-        firebase.config = firebaseConfig;
-        if (firebaseConfig.measurementId) {
-            firebase.analytics();
-        }
-    } catch (e) {
-        console.error(e);
+    firebase.initializeApp(firebaseConfig);
+    firebaseMessaging.app = getApp();
+    firebaseMessaging.config = firebaseConfig;
+    if (firebaseConfig.measurementId) {
+        isSupported().then(supported => {
+            if (supported) getAnalytics(firebaseMessaging.app);
+        }).catch(error => console.error("[Firebase] Analytics initialization failed", error));
     }
-    // firebase.auth().getRedirectResult().then(res => {
-    //     console.log("[Firebase] redirect", res);
-    // }).catch(error => {
-    //     console.error(error);
-    // })
-    if (process.env.NODE_ENV === "development") {
-        // firebase.functions().useFunctionsEmulator("http://localhost:5001");
-    }
-    return firebase;
+    return firebaseMessaging;
 };
 
 export default Firebase;
 
-export const forceFirebaseReinit = () => {
-    console.log("[Firebase] reinit", firebase.config)
-    return firebase.app().delete().then(() => {
-        firebase.initializeApp(firebase.config);
-        // if (firebase.config && firebase.config.measurementId) {
-        //     firebase.analytics();
-        // }
-        window.location.reload(); // FIXME
-        return firebase;
-    });
-}
+export const forceFirebaseReinit = async () => {
+    const config = firebaseMessaging.config;
+    // Compat deletion also clears its app registry while database uses compat.
+    await firebase.app(firebaseMessaging.app.name).delete();
+    Firebase(config);
+    window.location.reload();
+    return firebaseMessaging;
+};

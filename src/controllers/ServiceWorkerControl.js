@@ -8,9 +8,8 @@ const activateUpdate = async registration => {
     try {
         registration.waiting.postMessage({type: "SKIP_WAITING"});
         const registrations = await navigator.serviceWorker.getRegistrations();
-        const messagingScriptURL = new URL("/firebase-messaging-sw.js", window.location.href).href;
-        const messagingRegistration = registrations.find(item =>
-            [item.active, item.waiting, item.installing].some(worker => worker && worker.scriptURL === messagingScriptURL));
+        const messagingScope = new URL("/firebase-cloud-messaging-push-scope", window.location.href).href;
+        const messagingRegistration = registrations.find(item => item.scope === messagingScope);
         if (messagingRegistration) {
             console.log("[SWC] activate update");
             messagingRegistration.update().then(() => {

@@ -175,6 +175,10 @@
             "import": "./core/messaging/firebase.mjs",
             "require": "./core/messaging/firebase.cjs"
         },
+        "./messaging/firebase-worker": {
+            "import": "./core/messaging/firebase-worker.mjs",
+            "require": "./core/messaging/firebase-worker.cjs"
+        },
         "./messaging/local-test": {
             "import": "./core/messaging/local-test.mjs",
             "require": "./core/messaging/local-test.cjs"

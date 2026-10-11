@@ -17,7 +17,7 @@ import {storageSourcePattern, withStorage} from './packages/storage/build.mjs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
-const externalExports = ['react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/, /^@uppy(?:\/|$)/];
+const externalExports = [/^firebase(?:\/|$)/, /^@firebase(?:\/|$)/, 'react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/, /^@uppy(?:\/|$)/];
 
 const postCssModules = {
     include: '**/*.module.css',
