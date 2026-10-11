@@ -1450,3 +1450,51 @@ Real-browser validation remains pending. Demo build still fails on legacy
 fetchCallable/fetchFunction imports. Existing LocalTestMessaging unit tests:
 3 pass and 3 fail because they expect the prior synchronous delivery; adapting
 those tests requires a separately authorized test update. No tests were changed.
+
+### The Whisky Talks Firebase Functions modernization
+
+Decision: retain Realtime Database and the web Firebase 13 compat providers;
+modernize The Whisky Talks Functions to native JavaScript ESM, modular Admin
+14.5.0 and Functions 7.4.0 on the existing Node 22 runtime. Keep all 30 functions
+on explicit firebase-functions/v1 APIs, with their names, factories and response
+envelopes preserved. All functions use the default Gen1 region (us-central1)
+without an explicit region wrapper. Backend.request unwraps the callable
+transport once.
+
+Reason: current SDKs support Gen1 and ESM. Firebase cannot upgrade deployed Gen1
+functions to Gen2 under the same name in place. Running both generations would
+duplicate the existing non-idempotent counters and notifications. Defer Gen2 to
+a separate rollout with duplicate-effect protection rather than expanding this
+SDK update or requiring downtime. This supersedes the initial Gen2 decision.
+
+Consequences: FCM uses sendEachForMulticast with batches of 500. SMTP is an
+admin-only Gen1 callable with GMAIL_EMAIL/GMAIL_PASSWORD bound through runWith;
+values are read inside the handler. mutualAction accepts {typeId, key, action},
+with separate database keys, and verifies the recipient; Redequate callers and
+its local handler follow that contract. Repairs await writes. User stamp repairs
+require the owner or an admin, but any authenticated tag viewer can remove a
+_tag/<tag>/<id> entry after the server verifies the post is absent. That branch
+ignores uid for authorization and cannot modify user stamps. Reply deletion
+without root skips its root counter and continues nested reply/image cleanup;
+post.to is not substituted for root. Diagnostics, mail and manual notifications
+require admin. HTTP fetchUser/fetchUsers/fetchConfig retain their envelopes;
+fetchConfig excludes credentials and secret configuration. Pagination's first
+key query has no control character boundary, which the RTDB emulator rejects.
+
+Affected consumers: thewhiskytalks and Redequate web callers. Demo Functions and
+Android remain unchanged; no Android calls to these endpoints were found.
+
+Status: Functions lint and all 30 native ESM/Gen1 exports pass locally. Framework
+and The Whisky Talks production builds and its existing app test passed during
+the SDK migration on Node 24.21.0. Temporary Auth/RTDB emulator checks cover
+repairs, ownership, mutual actions and HTTP contracts; FCM, SMTP, Storage and
+rules retrieval use mocks. Real delivery and Node 22 runtime execution were not
+verified. Framework units: 253 pass, three existing LocalTestMessaging failures
+expect synchronous delivery. Demo build remains blocked by legacy
+fetchCallable/fetchFunction imports. No repository tests were added or updated.
+
+No deployment or cloud secret creation was performed. Future deployment must
+provision the declared mail secrets. Current source RTDB rules still allow writes
+at users_public, which can trigger privileged user cleanup, and mutualrequests
+rules reference mutual paths. These rule issues and mutualAction retry/race
+idempotency remain unresolved outside this migration.
