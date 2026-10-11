@@ -2,10 +2,10 @@ import React from "react";
 import {InView} from "react-intersection-observer";
 
 export default ({live, className}) => {
-    const [scrolled, setScrolled] = React.useState(false);
-
     const scrollerShown = React.useRef();
     const taskRef = React.useRef();
+    const [scrolled, setScrolled] = React.useState(false);
+
     if (!live) return null;
 
     React.useEffect(() => {

@@ -27,10 +27,10 @@ export default React.forwardRef((props, ref) => {
         userData,
         highlighted
     } = props;
-    const pages = usePages();
     const {settings = {}} = useMetaInfo() || {};
-    const {postsRotateReplies, postsAllowEdit} = settings;
+    const pages = usePages();
     const ancillaryRef = React.useRef();
+    const {postsRotateReplies, postsAllowEdit} = settings;
 
     return <ListItemComponent
         avatar={<Link

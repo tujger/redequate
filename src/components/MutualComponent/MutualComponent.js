@@ -40,6 +40,8 @@ export default props => {
         unsubscribeLabel = t("Mutual.Unsubscribe"),
         unsubscribeComponent = <ActionComponent label={unsubscribeLabel}/>,
     } = props;
+    const backend = useBackend();
+    const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
@@ -54,8 +56,6 @@ export default props => {
         requestsCounter = null,
         hasRequest
     } = state;
-    const currentUserData = useCurrentUserData();
-    const backend = useBackend();
 
     const uidId = `${currentUserData.id}_${mutualId}`;
     const idUid = `${mutualId}_${currentUserData.id}`;

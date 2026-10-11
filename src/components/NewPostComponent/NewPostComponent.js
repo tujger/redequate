@@ -52,16 +52,16 @@ const NewPostComponent = props => {
         type = "posts",
         UploadProps = {}
     } = props;
+    const auth = useAuth();
     const currentUserData = useCurrentUserData();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
-    const windowData = useWindowData();
-    const auth = useAuth();
-    const storage = useStorage();
-    const [state, setState] = React.useState({});
     const isSendingRef = React.useRef(false);
     const previousOpenRequest = React.useRef(openRequest);
+    const storage = useStorage();
+    const [state, setState] = React.useState({});
+    const windowData = useWindowData();
     const {disabled, hiddenTag, images, open, ready, text, uppy, imageDescriptors} = state;
     const {camera = true, multi = true} = UploadProps;
 

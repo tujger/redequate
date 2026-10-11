@@ -8,8 +8,8 @@ import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData, mentions, modalOnly = false, onMenuItemClick, onComplete, openRequest, ...selectProps}) => {
     const metaInfo = useMetaInfo();
-    const windowData = useWindowData();
     const {t} = useTranslation();
+    const windowData = useWindowData();
     const {settings = {}} = metaInfo || {};
     const {postsAllowEdit} = settings;
 

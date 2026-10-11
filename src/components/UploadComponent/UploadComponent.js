@@ -31,18 +31,18 @@ const UploadComponent = (
         facingMode: givenFacingMode,
         multi = true
     }) => {
-    const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
-    const {uppy, facingMode, cameraTarget} = state;
-    const {t} = useTranslation();
     const metaInfo = useMetaInfo();
+    const refDashboard = React.useRef(null);
+    const refButton = React.useRef(null);
+    const [state, setState] = React.useState({facingMode: givenFacingMode || "user"});
+    const {t} = useTranslation();
+    const {uppy, facingMode, cameraTarget} = state;
     const {settings = {}} = metaInfo || {};
     const {
         uploadsAllow, uploadsTypes,
         uploadsMaxHeight, uploadsMaxSize, uploadsMaxWidth, uploadsQuality
     } = settings;
 
-    const refDashboard = React.useRef(null);
-    const refButton = React.useRef(null);
 
     const {
         width = uploadsMaxWidth,

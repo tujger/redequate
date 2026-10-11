@@ -5,14 +5,14 @@ import ReplyCardLayout from "./ReplyCardLayout";
 
 export default (props) => {
     const {level, postData, highlight} = props;
+    const ref = React.useRef();
+    const [state, setState] = React.useState({});
     const windowData = useWindowData();
+
+    const {highlighted} = state;
     const isNarrow = windowData && windowData.isNarrow
         ? windowData.isNarrow()
         : typeof window !== "undefined" && window.innerWidth < 600;
-
-    const ref = React.useRef();
-    const [state, setState] = React.useState({});
-    const {highlighted} = state;
 
     React.useEffect(() => {
         if (!highlight) return;

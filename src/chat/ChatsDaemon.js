@@ -11,10 +11,10 @@ import {ChatMeta} from "./ChatMeta";
 import {chatsCounterReducer} from "./chatsCounterReducer";
 
 export default ({clearText = text => text}) => {
+    const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
-    const backend = useBackend();
     const history = useHistory();
     const pages = usePages();
 

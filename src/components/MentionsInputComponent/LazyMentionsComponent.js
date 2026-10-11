@@ -22,6 +22,7 @@ const LazyMentionsComponent = ({
     value = ""
 }) => {
     const onSuggestionPointerDown = useRippleEffect();
+
     const handleChange = (event, nextValue, plainValue, mentions) => {
         onChange?.(event, nextValue, plainValue, mentions);
         if (mentions.length) onSelect?.(event, nextValue, plainValue, mentions);

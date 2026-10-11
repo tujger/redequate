@@ -21,14 +21,14 @@ export default (
         onComplete,
         UploadProps
     }) => {
+    const currentUserData = useCurrentUserData();
+    const metaInfo = useMetaInfo();
     const textTranslation = useTextTranslation();
+    const {i18n, t} = useTranslation();
     const [state, setState] = React.useState({});
     const {show, translated, title} = state;
-    const metaInfo = useMetaInfo();
     const {settings} = metaInfo || {};
     const {translateLimit} = settings;
-    const currentUserData = useCurrentUserData();
-    const {i18n, t} = useTranslation();
 
     const handleClick = evt => {
         evt.stopPropagation();

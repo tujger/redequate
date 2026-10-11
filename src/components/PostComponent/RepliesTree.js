@@ -17,14 +17,14 @@ import replyStyles from "./styles/PostReplies.module.css";
 export default (props) => {
     const {PostComponent, ...replyProps} = props;
     const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = replyProps;
+    const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const history = useHistory();
-    const pages = usePages();
-    const backend = useBackend();
-    const windowData = useWindowData();
-    const [state, setState] = React.useState({});
-    const {expanded, replies, userReplied, paginationOptions, rotating} = state;
     const metaInfo = useMetaInfo();
+    const pages = usePages();
+    const [state, setState] = React.useState({});
+    const windowData = useWindowData();
+    const {expanded, replies, userReplied, paginationOptions, rotating} = state;
     const {settings = {}} = metaInfo || {};
     const {postsRotateReplies} = settings;
 

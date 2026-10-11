@@ -12,18 +12,17 @@ import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentRe
 import MentionedTextComponent from "../MentionedTextComponent";
 import cardStyles from "./styles/PostComponent.module.css";
 import motionStyles from "./styles/PostMotion.module.css";
-import textStyles from "./styles/PostText.module.css";
 
 export default (props) => {
     const {items: givenItems, mentions, postId, type} = props;
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
-    const [state, setState] = React.useState({items: givenItems});
-    const {item, itemPrev, items} = state;
     const taskRef = React.useRef(null);
     const leavingRef = React.useRef(null);
     const rootRef = React.useRef(null);
+    const [state, setState] = React.useState({items: givenItems});
+    const {item, itemPrev, items} = state;
 
     const handleClick = () => {
         dispatch({type: lazyListComponentReducer.REFRESH});

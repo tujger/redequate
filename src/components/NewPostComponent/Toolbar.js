@@ -17,8 +17,8 @@ export default (
         title,
         uploadComponent,
     }) => {
-    const {t} = useTranslation();
     const onPointerDown = useRippleEffect();
+    const {t} = useTranslation();
 
     const handleKeyDown = handler => event => {
         if (disabled || (event.key !== "Enter" && event.key !== " ")) return;

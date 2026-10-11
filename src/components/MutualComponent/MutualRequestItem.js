@@ -24,15 +24,15 @@ export default (
         pattern,
         skeleton
     }) => {
-    const pages = usePages();
+    const backend = useBackend();
     const dispatch = useDispatch();
     const history = useHistory();
-    const backend = useBackend();
+    const pages = usePages();
+    const onPointerDown = useRippleEffect();
     const [state, setState] = React.useState({});
     const {disabled} = state;
     const {key, userData, value} = data;
     const {t} = useTranslation();
-    const onPointerDown = useRippleEffect();
     const patternClass = pattern
         ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
         : styles.cardFlat;
