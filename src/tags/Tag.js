@@ -50,7 +50,7 @@ export default ({allowOwner = true}) => {
 
     const fixErrors = () => {
         backend.request("fixTag", {
-            key: tag.id
+            key: tag.key
         })
             .then(({result = "Complete"}) => notifySnackbar(result))
             .catch(notifySnackbar)
