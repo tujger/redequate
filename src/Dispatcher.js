@@ -213,7 +213,8 @@ export default (props) => {
                 const savedUserData = store.getState().currentUserData?.userData;
                 const userData = savedUserData?.id === authUser.id
                     ? new UserData().fromJSON(savedUserData)
-                    : authUser;
+                    // eslint-disable-next-line react/prop-types -- authUser is an Auth model passed between pipeline steps.
+                    : new UserData().fromJSON(authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};

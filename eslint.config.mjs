@@ -17,7 +17,7 @@ export default [
             parser: babelParser,
             ecmaVersion: 2021,
             sourceType: 'module',
-            parserOptions: {ecmaFeatures: {jsx: true}},
+            parserOptions: {ecmaFeatures: {jsx: true}, requireConfigFile: false},
             globals: {
                 ...globals.es2021,
                 ...globals.node,
@@ -43,6 +43,7 @@ export default [
             'packages/backend/src/**/*.{js,mjs,cjs}', 'packages/backend/build.mjs',
             'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
             'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',
+            'packages/common/src/**/*.{js,mjs,cjs}',
             'packages/_common/src/**/*.{js,mjs,cjs}'
         ],
         languageOptions: {globals: globals.jest},

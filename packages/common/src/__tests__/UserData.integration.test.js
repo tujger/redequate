@@ -11,7 +11,7 @@ import {
     useCurrentUserData,
     UserData,
     watchUserChanged
-} from "../UserData";
+} from "../../../../src/controllers/UserData";
 import {auth, firebase, seedDatabase, store} from "../../../../src/__tests__/common";
 
 vi.mock("../../../../src/controllers/notifySnackbar", () => ({default: vi.fn()}));

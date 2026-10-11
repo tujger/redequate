@@ -1536,3 +1536,52 @@ provision the declared mail secrets. Current source RTDB rules still allow write
 at users_public, which can trigger privileged user cleanup, and mutualrequests
 rules reference mutual paths. These rule issues and mutualAction retry/race
 idempotency remain unresolved outside this migration.
+
+### Runtime-independent common for Functions
+
+Decision: packages/common is also a private redequate-common package for Node
+>=22. Its root and ./common exports share index.js. The full framework's
+redequate/common entry exports the neutral UserData model, UserRole, currentRole,
+matchRole, needAuth, normalizeSortName and SERVER_TIMESTAMP. Common imports no
+Firebase, React or browser controllers and creates no UserData instance at module
+scope.
+
+The UserData model, getters/setters, data mutation, serialization and date
+formatting belong to common. src/controllers/UserData.js creates this model and
+adds persistence/cache methods through UserData({extend}), whose callback receives
+the same model and its private mutable state. The state is not a model property
+or part of its JSON. The controller also owns current-user state and UI behavior.
+Both callable and new constructors, static fetch options, chain identity and
+stored record formats are preserved. The web root exports the frontend controller;
+Auth providers return the neutral common model. Login and Dispatcher restore a
+frontend model from Auth JSON before fetching or saving profile data; Dispatcher
+still prefers the saved profile for the same user. Functions can create the pure
+model without a browser or database. SERVER_TIMESTAMP remains the shared {".sv":"timestamp"}
+marker and restored markers are recognized by contents. This supersedes the
+intermediate helpers-only common split and server/index.js entry. No workspace
+or build-system migration is introduced. ESLint permits parsing without a Babel
+config because the package manifest establishes a separate Babel boundary.
+
+Reason: Functions need common imports without browser dependencies or the full
+framework's Node >=24.12 requirement. They install the small package under the
+redequate dependency name using file:vendor/redequate-common.tgz. The Whisky Talks
+Functions predeploy runs prepare-redequate-common: npm pack creates the archive
+from the sibling Redequate common package, then an explicit npm install refreshes
+the installed package and lockfile integrity. The archive is generated, ignored
+by Git and included in the Functions upload. Preparation requires the sibling
+checkout; Cloud Build installs from the self-contained uploaded archive. Registry
+publication was rejected in favor of a file dependency; source constants stay
+in Redequate. Affected consumers: Redequate, The Whisky Talks Functions/web and
+the demo web application. Android role values and data formats are unchanged.
+
+Status: source and built ESM/CJS common imports, targeted model/Auth tests,
+Functions tests/31 Gen1 registrations and framework/TWT web builds pass locally
+on Node 24.21.0; Node 22 is unavailable. Demo build remains blocked by its old
+fetchCallable/fetchFunction imports. The previous external file path was rejected
+for cloud delivery because the Functions upload excludes the sibling repository.
+Delivery now uses the generated local tarball. Firebase CLI 15.33.0 local source
+packaging includes the tarball and lockfile. Offline npm ci and all 82 Functions
+tests, including module imports and 31 Gen1 registrations, pass from the extracted
+source without the sibling checkout on Node 24.21.0. Node 22 and cloud deployment
+remain unverified.
+No registry publication or Functions deployment was performed.

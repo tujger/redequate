@@ -18,5 +18,4 @@ import packagejson from "../package.json";
 export const version = packagejson.version;
 
 export {default} from "./Dispatcher";
-export {UserData} from "../packages/common";
 export {useBackend} from "../packages/backend";
