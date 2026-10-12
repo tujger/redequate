@@ -12,13 +12,13 @@ import {MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
+import baseStyles from "../themes/Base.module.css";
 import {alertsCounterReducer} from "./alertsCounterReducer";
 import AlertsDaemon from "./AlertsDaemon";
 import AlertsList from "./AlertsList";
 import {alertsVisitReducer} from "./alertsVisitReducer";
-import baseStyles from "../themes/Base.module.css";
 
-const Alerts = ({daemon, fetchAlertContent}) => {
+export default ({daemon, fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -122,5 +122,3 @@ const Alerts = ({daemon, fetchAlertContent}) => {
         />}
     </>
 };
-
-export default Alerts;
