@@ -102,20 +102,18 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                     const toks = tokenizeText(matches[1]);
                     _targetTag = toks[0];
                     if (_targetTag && _targetTag.type === "tag" && _targetTag.value) {
-                        _targetTag = await firebase.database().ref("tag").child(_targetTag.value).once("value")
-                            .then(snapshot => {
-                                if (snapshot.exists()) {
-                                    const val = snapshot.val();
-                                    if (!val || val.hidden) {
-                                        _targetTag = undefined;
-                                    } else {
-                                        _targetTag.value = (val || {}).label || _targetTag.value;
-                                    }
-                                } else {
+                        _targetTag = await database.read(["tag", _targetTag.value]).then(value => {
+                            if (value !== undefined) {
+                                if (!value || value.hidden) {
                                     _targetTag = undefined;
+                                } else {
+                                    _targetTag.value = (value || {}).label || _targetTag.value;
                                 }
-                                return _targetTag;
-                            });
+                            } else {
+                                _targetTag = undefined;
+                            }
+                            return _targetTag;
+                        })
                     }
                 }
             } catch (e) {
@@ -219,9 +217,9 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             if (!_replyTo) return _id;
             let id = _replyTo, next = null, parentKey = null, rootKey = null, commentKey = null;
             while (id) {
-                const snapshot = await firebase.database().ref("posts").child(id).once("value");
-                if (snapshot.exists()) {
-                    next = snapshot.val();
+                const value = await database.read(["posts", id])
+                if (value !== undefined) {
+                    next = value;
                     parentKey = parentKey || id;
                     commentKey = rootKey || id;
                     rootKey = id;
@@ -237,6 +235,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             if (!_id) {
                 const pub = await _body._refPosts.push(_body._publishData());
                 _id = pub.key;
+                // _created = await database.read([, "created"])
                 _created = (await pub.child("created").once("value")).val();
             }
             cacheDatas.put(_id, _body);

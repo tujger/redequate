@@ -8,7 +8,7 @@ export {
     currentRole, matchRole, needAuth, normalizeSortName, SERVER_TIMESTAMP, UserRole
 } from "../../packages/common";
 
-export function watchUserChanged({auth, store, firebase}) {
+export function watchUserChanged({auth, database, store}) {
     return new Promise((resolve, reject) => {
         try {
             const refreshAction = () => {
@@ -31,9 +31,9 @@ export function watchUserChanged({auth, store, firebase}) {
                     console.warn("[UserData] changed", currentUserDataInstance.id, userData?.toJSON());
                     changed = true;
                 } else if (userData && userData.id === currentUserDataInstance.id) {
-                    const data = await firebase.database().ref("users_public").child(userData.id).child("updated").once("value");
-                    if (data.val() > currentUserDataInstance.public.updated) {
-                        console.warn(`[UserData] last timestamp ${data.val()} > than saved ${currentUserDataInstance.public.updated}`);
+                    const updated = await database.read(["users_public", userData.id, "updated"])
+                    if (updated > currentUserDataInstance.public.updated) {
+                        console.warn(`[UserData] last timestamp ${updated} > than saved ${currentUserDataInstance.public.updated}`);
                         changed = true;
                     }
                 }
