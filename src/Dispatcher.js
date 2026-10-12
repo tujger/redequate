@@ -284,11 +284,11 @@ export default (props) => {
         }
         const installUserChangeWatcher = async props => {
             (async () => {
-                const {auth, firebase, store} = props;
+                const {auth, database, store} = props;
                 setInterval(() => {
-                    watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
+                    watchUserChanged({auth, database, store}).then(() => refreshAll(store));
                 }, 30000)
-                watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
+                watchUserChanged({auth, database, store}).then(() => refreshAll(store));
             })().catch(console.error);
             return props;
         }
