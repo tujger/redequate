@@ -8,7 +8,7 @@ export default class FirebaseDatabase extends DatabaseBase {
         this._firebase = firebase;
     }
 
-    addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderByChild}) {
+    addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderBy}) {
         const effectivePath = path instanceof Array ? path.join("/") : path;
 
         const ref = this._firebase.database().ref(effectivePath);
@@ -16,14 +16,18 @@ export default class FirebaseDatabase extends DatabaseBase {
 
         if (onChange) {
             ref.on("value", snapshot => {
-                const value = snapshot.val();
-                // console.log(effectivePath, "onChange", snapshot.key, value)
-                onChange(value);
+                if(snapshot.exists()) {
+                    const value = snapshot.val();
+                    // console.log(effectivePath, "onChange", snapshot.key, value)
+                    onChange(value);
+                } else {
+                    onChange(undefined);
+                }
             }, onError);
         }
         if (onChildAdd) {
-            if(orderByChild) {
-                refChildAdd = ref.orderByChild(orderByChild).limitToLast(1);
+            if(orderBy) {
+                refChildAdd = ref.orderByChild(orderBy).limitToLast(1);
             } else {
                 refChildAdd = ref.orderByKey().limitToLast(1);
             }
@@ -61,12 +65,17 @@ export default class FirebaseDatabase extends DatabaseBase {
         }
     }
 
-    async read(path, {orderByChild = undefined} = {}) {
+    async read(path, {equalTo, orderBy} = {}) {
         const effectivePath = path instanceof Array ? path.join("/") : path;
 
         let ref = this._firebase.database().ref(effectivePath);
-        if(orderByChild) {
-            ref = ref.orderByChild(orderByChild).limitToLast(1);
+        if(orderBy) {
+            ref = ref.orderByChild(orderBy);
+        }
+        if(equalTo) {
+            ref = ref.equalTo(equalTo);
+        } else {
+            ref = ref.limitToLast(1);
         }
         const snapshot = await ref.once("value");
         if (snapshot.exists()) {
@@ -74,5 +83,9 @@ export default class FirebaseDatabase extends DatabaseBase {
         } else {
             return undefined;
         }
+    }
+
+    async write(path, value, {} = {}) {
+
     }
 }

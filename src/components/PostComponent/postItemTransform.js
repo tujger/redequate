@@ -7,8 +7,9 @@ export default (
     {
         allowedExtras,
         backend,
-        fetchItemId = item => item.key,
         currentUserData,
+        database,
+        fetchItemId = item => item.key,
         onItemError,
         type,
         typeId,
@@ -17,7 +18,7 @@ export default (
     currentUserData = currentUserData || useCurrentUserData();
     try {
         const postData = await cacheDatas.fetch(fetchItemId(item), id => {
-            return PostData({type, allowedExtras}).fetch(id);
+            return PostData({allowedExtras, database, type}).fetch(id);
         });
         await postData.fetchCounters();
         await postData.fetchExtras(currentUserData.id);

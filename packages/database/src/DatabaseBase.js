@@ -12,7 +12,14 @@ import {notImplemented} from '../../common/src/_packages'
 /** @typedef {{key: string, value: DatabaseRecord}} DatabaseEntry */
 
 export default class DatabaseBase {
-    addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError}) {
+    addEventListener(path, {
+        onChange,
+        onChildAdd,
+        onChildChange,
+        onChildRemove,
+        onError,
+        orderBy
+    }) {
         return notImplemented("addValueListener");
     }
 
@@ -25,17 +32,17 @@ export default class DatabaseBase {
      * @param {string} [key] Explicit record key.
      * @returns {Promise<string>} Created record key.
      */
-    async create(path, value, key) {
+    async create(path, value, key= undefined) {
         return notImplemented('create')
     }
 
     /**
      * Read a record as plain data, without provider references or snapshots.
-     * Access and read failures reject; an absent record resolves to null.
+     * Access and read failures reject; an absent record resolves to undefined.
      * @param {DatabasePath} path Record path.
-     * @returns {Promise<DatabaseRecord | null>}
+     * @returns {Promise<DatabaseRecord | undefined>}
      */
-    async read(path, {orderByChild = undefined} = {}) {
+    async read(path, {equalTo = undefined, orderBy = undefined} = {}) {
         return notImplemented('read')
     }
 
@@ -73,5 +80,7 @@ export default class DatabaseBase {
         yield notImplemented('iterate')
     }
 
-
+    async write(path, value, {} = {}) {
+        return notImplemented('write')
+    }
 }

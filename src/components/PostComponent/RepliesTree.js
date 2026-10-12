@@ -1,6 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
 import {useBackend} from "../../../packages/backend";
+import {useDatabase} from "../../../packages/database";
 import Pagination from "../../controllers/FirebasePagination";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -19,6 +20,7 @@ export default (props) => {
     const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = replyProps;
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
@@ -174,6 +176,7 @@ export default (props) => {
                         allowedExtras,
                         backend,
                         currentUserData,
+                        database,
                         type,
                     })}
                     itemComponent={item => <PostComponent

@@ -90,7 +90,7 @@ export function ChatMeta(database) {
                 _activeUids = Object.keys(_meta.members || {});
             }
             tasks.push(new Promise((resolve, reject) => {
-                database.read(["chats", _id], {orderByChild: "created"})
+                database.read(["chats", _id], {orderBy: "created"})
                     .then(value => {
                         Object.values(value).forEach(last => {
                             _lastMessage = last;
@@ -273,7 +273,7 @@ export function ChatMeta(database) {
             }
             _watchRef = database.addEventListener(["chats", _id], {
                 onChildAdd: watchListener,
-                orderByChild: "created"
+                orderBy: "created"
             });
             _visitRef = database.addEventListener(["chats", _id, "!meta", "members"], {
                 onChildChange: visitListener,

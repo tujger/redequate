@@ -4,6 +4,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
 import {useBackend} from "../../packages/backend";
+import {useDatabase} from "../../packages/database";
 import FlexFabComponent from "../components/FlexFabComponent";
 import JoinUsComponent from "../components/JoinUsComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
@@ -23,8 +24,9 @@ import styles from "./styles/Post.module.css";
 export default (props) => {
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
-    const history = useHistory();
+    const database = useDatabase();
     const dispatch = useDispatch();
+    const history = useHistory();
     const {id, comment, reply} = useParams();
     const [state, setState] = React.useState({highlight: reply});
     const {t} = useTranslation();
@@ -54,6 +56,7 @@ export default (props) => {
             allowedExtras,
             backend,
             currentUserData,
+            database,
             onItemError: error => {
                 throw error;
             },

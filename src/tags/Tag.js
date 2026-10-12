@@ -179,6 +179,7 @@ export default ({allowOwner = true}) => {
                 />}
                 itemTransform={postItemTransform({
                     backend,
+                    database,
                     fetchItemId: item => item.key,
                     onItemError: (error, options) => {
                         console.log(error, options);

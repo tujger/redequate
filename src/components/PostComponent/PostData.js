@@ -1,8 +1,8 @@
-import {tokenizeText} from "../MentionedTextComponent";
-import {cacheDatas} from "../../controllers/General";
 import {firebaseMessaging as firebase} from "../../controllers/Firebase";
+import {cacheDatas} from "../../controllers/General";
+import {tokenizeText} from "../MentionedTextComponent";
 
-export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
+export const PostData = function ({allowedExtras = ["like"], database, type = "posts"}) {
     let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root, _targetTag, _edit;
     const refRoot = firebase.database().ref();
 
@@ -168,25 +168,27 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
                 resolve(_body);
                 return;
             }
-            _body._refPosts.child(_id).once("value").then(async snapshot => {
-                if (snapshot.exists()) {
-                    _body._lastSnapshot = snapshot;
-                    const data = snapshot.val();
-                    data.replyTo = data.to;
-                    await _body.create(data);
-                    _created = data.created;
-                    cacheDatas.put(_id, _body);
-                    resolve(_body);
-                } else {
-                    reject(new Error(`Post not found: ${_id}`))
-                }
-            }).catch(reject)
+            database.addEventListener([type, _id], {
+                async onChange(value) {
+                    if (value !== undefined) {
+                        const data = value;
+                        data.replyTo = data.to;
+                        await _body.create(data);
+                        _created = data.created;
+                        cacheDatas.put(_id, _body);
+                        resolve(_body);
+                    } else {
+                        reject(new Error(`Post not found: ${_id}`))
+                    }
+                },
+                onError: reject
+            })
         }),
         fetchCounters: () => new Promise((resolve, reject) => {
             if (!_id) reject(new Error("Post not submitted yet."));
             _counters = {};
-            refRoot.child("_counters").child(_id).once("value").then(snapshot => {
-                _counters = snapshot.val() || {};
+            database.read(["_counters", _id]).then(value => {
+                _counters = value || {};
                 resolve(_body);
             })
         }),
@@ -201,18 +203,18 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
             }
             // eslint-disable-next-line camelcase
             const id_uid = `${_id}_${uid}`;
-            _body._refExtra.orderByChild("id_uid").equalTo(id_uid).once("value").then(snapshot => {
+            database.read(["extra"], {
+                equalTo: id_uid,
+                orderBy: "id_uid",
+            }).then(value => {
                 _extras = {};
-                snapshot.forEach(child => {
-                    if (child.exists()) {
-                        const val = child.val();
-                        if (allowedExtras.indexOf(val.type) >= 0) {
-                            _extras[val.type] = {key: child.key, value: val};
-                        }
+                Object.entries(value || {}).map(([key, val]) => {
+                    if (allowedExtras.indexOf(val.type) >= 0) {
+                        _extras[val.type] = {key, value: val};
                     }
                 });
-                resolve(_body);
-            })
+                resolve();
+            });
         }),
         fetchPath: async () => {
             if (!_replyTo) return _id;
@@ -320,15 +322,13 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
             };
             return value;
         },
-        _refRoot: refRoot,
         _refPosts: refRoot.child(type),
         _refExtra: refRoot.child("extra"),
         _updateVal: async (section, path, change, cache) => {
             path = `${section}/${path}`;
             if (cache[path] !== undefined) {
             } else {
-                const count = await _body._refRoot.child(path).once("value");
-                cache[path] = count.val() || 0;
+                cache[path] = (await database.read([path])) || 0;
             }
             cache[path] = cache[path] + change;
             return cache[path];
