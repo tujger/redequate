@@ -7,6 +7,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../../../packages/database";
 import counter from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {delay, usePages} from "../../controllers/General";
@@ -19,6 +20,7 @@ import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData}) => {
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -93,7 +95,7 @@ export default ({postData}) => {
             // setState(state => ({...state, disabled: true}));
         }
         const publishCounter = async () => {
-            return counter({path: [postData.id, "like"], increment});
+            return counter({database, path: [postData.id, "like"], increment});
         }
         const updateCounter = async result => {
             const json = result.toJSON();
@@ -131,9 +133,9 @@ export default ({postData}) => {
             const likes = extras.filter(extra => extra && extra.value && extra.value.type === "like");
             return likes.length;
         }
-        const publishCounter = async counter => {
-            await counter({path: [postData.id, "like"], value: counter});
-            return counter;
+        const publishCounter = async count => {
+            await counter({database, path: [postData.id, "like"], value: count});
+            return count;
         }
         const updateCounter = async counter => {
             postData.counter("like", counter);

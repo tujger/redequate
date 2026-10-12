@@ -1,6 +1,7 @@
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../../../packages/database";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import {lazyListComponentReducer} from "./lazyListComponentReducer";
@@ -29,6 +30,7 @@ function LazyListComponent(
         ItemProps = {},
         ["LazyListComponent_" + cache]: cacheData = {},
     }) {
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const [state, setState] = React.useState({});

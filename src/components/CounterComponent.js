@@ -1,7 +1,9 @@
 import React from "react";
+import {useDatabase} from "../../packages/database";
 import counterControl from "../controllers/counterControl";
 
 export default ({counter, path, prefix, suffix, live = false, onChange, showZero = false, zeroPrefix, zeroSuffix}) => {
+    const database = useDatabase()
     const [state, setState] = React.useState({});
     const {value} = state;
 
@@ -10,6 +12,7 @@ export default ({counter, path, prefix, suffix, live = false, onChange, showZero
         if (!path) return;
         if (counter === undefined && !live) return;
         const listener = counterControl({
+            database,
             onchange: newValue => {
                 setState(state => {
                     if (state.value !== newValue && onChange) onChange(newValue, state.value);

@@ -2,11 +2,12 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useBackend} from "../../../packages/backend";
+import {useDatabase} from "../../../packages/database";
 import counterControl from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, useCurrentUserData, UserRole} from "../../controllers/UserData";
 import TextField from "../../controls/TextField/TextField";
 import ConfirmComponent from "../ConfirmComponent";
 import InfoComponent from "../InfoComponent";
@@ -42,6 +43,7 @@ export default props => {
     } = props;
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const [state, setState] = React.useState({});
@@ -175,6 +177,7 @@ export default props => {
     // noinspection DuplicatedCode
     React.useEffect(() => {
         const listener = counterControl({
+            database,
             onchange: subscribers => {
                 setState(state => ({
                     ...state,
@@ -192,6 +195,7 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         const listener = counterControl({
+            database,
             onchange: subscribes => {
                 setState(state => ({
                     ...state,
@@ -207,19 +211,19 @@ export default props => {
 
     React.useEffect(() => {
         if (!hasPending) return;
-        const pendingRef = firebase.database().ref("mutualrequests").child(typeId).child(hasPending.key)
-        const listener = snapshot => {
-            if (!snapshot.exists()) {
-                setState(state => ({...state, hasPending: null, disabled: false}))
+        const listener = database.addEventListener(["mutualrequests", typeId, hasPending.key], {
+            onChange(value) {
+                if (value === undefined)
+                    setState(state => ({...state, hasPending: null, disabled: false}))
             }
-        }
-        pendingRef.on("value", listener)
-        return () => pendingRef.off("value", listener);
+        })
+        return () => listener.remove();
     }, [hasPending, typeId])
 
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         const listener = counterControl({
+            database,
             onchange: requestsCounter => {
                 setState(state => ({...state, requestsCounter}))
             },
