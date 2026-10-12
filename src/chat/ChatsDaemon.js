@@ -2,6 +2,7 @@ import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {useBackend} from "../../packages/backend";
+import {useDatabase} from "../../packages/database";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
@@ -13,6 +14,7 @@ import {chatsCounterReducer} from "./chatsCounterReducer";
 export default ({clearText = text => text}) => {
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
@@ -86,15 +88,17 @@ export default ({clearText = text => text}) => {
                     .catch(console.error);
             });
 
-        daemonNew.on("child_added", snapshot => {
-            return installListenerIfNeeded(snapshot.key);
-        });
-        daemonNew.on("child_changed", snapshot => {
-            return installListenerIfNeeded(snapshot.key, true);
+        const listener = database.addEventListener(["_chats", currentUserData.id], {
+            onChildAdd({key, value}) {
+                return installListenerIfNeeded(key);
+            },
+            onChildChange({key, value}) {
+                return installListenerIfNeeded(key, true);
+            }
         });
 
         return () => {
-            daemonNew && daemonNew.off();
+            listener.remove();
             pagination.reset();
             for (let id in metas) {
                 id && metas[id] && metas[id].unwatch();
