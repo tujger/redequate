@@ -10,6 +10,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../../../packages/database";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import LoadingComponent from "../../components/LoadingComponent";
 import MentionedSelectComponent from "../../components/MentionedSelectComponent";
@@ -31,6 +32,7 @@ import styles from "./styles/Settings.module.css";
 
 export default ({uploadable}) => {
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
@@ -112,7 +114,7 @@ export default ({uploadable}) => {
             updates["meta/maintenance"] = null;
         }
         firebase.database().ref().update(updates)
-            .then(() => firebase.database().ref("meta").once("value", snapshot => snapshot.val()))
+            .then(() => database.read("meta"))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
             .then(() => updateActivity({
@@ -271,27 +273,19 @@ export default ({uploadable}) => {
             return {};
         }
         const fetchBlockedNames = async props => {
-            const ref = firebase.database().ref("meta/blockedNames");
-            const snapshot = await ref.once("value");
-            const blockedNames = snapshot.val() || "";
+            const blockedNames = (await database.read(["meta", "blockedNames"])) || "";
             return {...props, blockedNames};
         }
         const fetchMaintenance = async props => {
-            const ref = firebase.database().ref("meta/maintenance");
-            const snapshot = await ref.once("value");
-            const meta = snapshot.val();
+            const meta = await database.read(["meta","maintenance"]);
             return {...props, maintenance: Boolean(meta), ...(meta || {})};
         }
         const fetchSettings = async props => {
-            const ref = firebase.database().ref("meta/settings");
-            const snapshot = await ref.once("value");
-            const settings = snapshot.val() || {};
+            const settings = (await database.read(["meta","settings"])) || {};
             return {...props, ...settings};
         }
         const fetchSupport = async props => {
-            const ref = firebase.database().ref("meta/support");
-            const snapshot = await ref.once("value");
-            const supportId = snapshot.val();
+            const supportId = await database.read(["meta","support"]);
             if (supportId) {
                 return UserData(firebase).fetch(supportId)
                     .then(userData => ({

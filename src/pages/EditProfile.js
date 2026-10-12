@@ -6,6 +6,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
 import {useAuth} from "../../packages/auth";
+import {useDatabase} from "../../packages/database";
 import {useMessaging} from "../../packages/messaging";
 import {useStorage} from "../../packages/storage";
 import ConfirmComponent from "../components/ConfirmComponent";
@@ -18,7 +19,14 @@ import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowDat
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, matchRole, normalizeSortName, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import {
+    logoutUser,
+    matchRole,
+    normalizeSortName,
+    UserRole,
+    useCurrentUserData,
+    UserData
+} from "../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
@@ -40,6 +48,7 @@ function EditProfile(props) {
     } = props;
     const auth = useAuth();
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
@@ -89,8 +98,7 @@ function EditProfile(props) {
             }
         }
         const checkIfNameIsBlocked = async () => {
-            const snapshot = await firebase.database().ref("meta/blockedNames").once("value");
-            const blockedNames = (snapshot.val() || "").split(/[\s\r\n]+/)
+            const blockedNames = (await database.read(["meta", "blockedNames"]) || "").split(/[\s\r\n]+/)
                 .map(item => normalizeSortName(item));
             if (blockedNames.indexOf(normalizeSortName(state.name)) >= 0) {
                 throw Error("This user user name is reserved for distilleries. If you are a distillery, please contact us using Contacts page.")
@@ -119,7 +127,7 @@ function EditProfile(props) {
             }
         }
         const checkIfProfileExists = async () => {
-            const exists = await firebase.database().ref("users_public").child(userData.id).child("email").once("value").then(snapshot => snapshot.exists());
+            const exists = await database.read(["users_public", userData.id, "email"]);
             if (!exists) {
                 await logoutUser({auth, store});
                 refreshAll(store);
