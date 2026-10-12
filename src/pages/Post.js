@@ -3,6 +3,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useAuth} from "../../packages/auth";
 import {useBackend} from "../../packages/backend";
 import {useDatabase} from "../../packages/database";
 import FlexFabComponent from "../components/FlexFabComponent";
@@ -22,6 +23,7 @@ import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Post.module.css";
 
 export default (props) => {
+    const auth = useAuth();
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const database = useDatabase();
@@ -73,7 +75,7 @@ export default (props) => {
             })
             .finally(() => dispatch(ProgressView.HIDE))
         // eslint-disable-next-line
-    }, [id, postData && postData.id, comment, reply]);
+    }, [id, postData && postData.id, comment, reply, currentUserData]);
 
     if (!postData) return <LoadingComponent/>;
 

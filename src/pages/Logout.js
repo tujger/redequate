@@ -3,6 +3,7 @@ import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory, withRouter} from "react-router-dom";
 import {useAuth} from "../../packages/auth";
+import {useDatabase} from "../../packages/database";
 import LoadingComponent from "../components/LoadingComponent";
 import {usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
@@ -14,6 +15,7 @@ import styles from "./styles/Logout.module.css";
 const Logout = (props) => {
     const {immediate = true} = props;
     const auth = useAuth();
+    const database = useDatabase();
     const history = useHistory();
     const pages = usePages();
     const store = useStore();

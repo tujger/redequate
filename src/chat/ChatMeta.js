@@ -105,7 +105,7 @@ export function ChatMeta(database) {
         fetchFor: async (currentUid, oppositeUid) => {
             let chats = [];
             const value = await database.read(["chats", oppositeUid, "!meta"]);
-            if(value !== undefined) {
+            if (value !== undefined) {
                 chats.push({key: oppositeUid, meta: value, persisted: true});
             }
             if (!chats.length) {
@@ -230,7 +230,7 @@ export function ChatMeta(database) {
                     console.error(error)
                 }
             }
-            await chatsRef.child(_id).child("!meta/timestamp").set(firebase.database.ServerValue.TIMESTAMP);
+            await database.write(["chats", _id, "!meta", "timestamp"], database.TIMESTAMP);
             const updatesIndex = {};
             await _body.forEachUid(async uid => {
                 const value = await database.read(["_chats", uid, _id]);
@@ -252,7 +252,7 @@ export function ChatMeta(database) {
             if (!_persisted) return;
             if (!_activeUids.indexOf(uid) < 0) return;
             console.log(`[ChatMeta] update visit for ${_id}`);
-            return chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
+            return database.write(["chats", "!meta", "members", uid], database.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = ({value}) => {

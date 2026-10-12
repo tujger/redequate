@@ -363,7 +363,7 @@ function EditProfile(props) {
         if (!id || id === ":id") {
             userData = currentUserData;
         } else {
-            userData = cacheDatas.put(id, UserData().create(id));
+            userData = cacheDatas.put(id, UserData(database).create(id));
         }
         userData.fetch([UserData.PUBLIC, UserData.ROLE])
             .then(() => isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))

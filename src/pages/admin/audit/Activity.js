@@ -4,6 +4,7 @@ import SortIcon from "@mui/icons-material/Sort";
 import StartDateIcon from "@mui/icons-material/Today";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
+import {useDatabase} from "../../../../packages/database";
 import AvatarView from "../../../components/AvatarView";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
@@ -31,6 +32,7 @@ const Activity = props => {
         activityFilter,
         activitySort = "asc"
     } = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const [state, setState] = React.useState({});
     const windowData = useWindowData();
@@ -225,7 +227,7 @@ const Activity = props => {
                         }}
                         onChange={(evt, value, token) => {
                             token && cacheDatas.fetch(token.id, id => {
-                                return UserData().fetch(id);
+                                return UserData(database).fetch(id);
                             }).then(() => handleItemClick("uid")(null, token.id))
                                 .catch(notifySnackbar);
                         }}

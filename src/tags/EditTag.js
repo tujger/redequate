@@ -163,7 +163,7 @@ export default ({allowOwner = true}) => {
             return key;
         }
         const publishTag = async key => {
-            await firebase.database().ref("tag").child(key).set(tag);
+            await database.write(["tag", key], tag);
             return key;
         }
         const auditActivity = async key => {

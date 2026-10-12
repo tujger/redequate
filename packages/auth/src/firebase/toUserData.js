@@ -1,7 +1,7 @@
 import {UserData} from "../../../common";
 import {fail} from "../../../common/src/_packages";
 
-export const toUserData = user => {
+export const toUserData = (user, Component = UserData) => {
     if (!user) return null;
     const json = user.toJSON();
     if (!json.uid) {
@@ -13,7 +13,7 @@ export const toUserData = user => {
         const number = Number(value);
         return value !== null && value !== undefined && value !== "" && Number.isFinite(number) ? number : null;
     };
-    return new UserData().fromJSON({
+    return new Component().fromJSON({
         id: json.uid,
         role: null,
         public: {

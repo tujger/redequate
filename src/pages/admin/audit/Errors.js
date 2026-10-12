@@ -2,6 +2,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
+import {useDatabase} from "../../../../packages/database";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
@@ -9,7 +10,7 @@ import {lazyListComponentReducer} from "../../../components/LazyListComponent/la
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import ProgressView from "../../../components/ProgressView";
 import Pagination from "../../../controllers/FirebasePagination";
-import {cacheDatas, useFirebase} from "../../../controllers/General";
+import {cacheDatas} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
@@ -20,8 +21,8 @@ import ErrorItemComponent from "./ErrorItemComponent";
 
 const Errors = props => {
     const {errorsMode = "all", errorsFilter} = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const [state, setState] = React.useState({});
 
     const {deleteOpen, random} = state;
@@ -33,7 +34,7 @@ const Errors = props => {
 
     const handleConfirmDeletion = evt => {
         dispatch(ProgressView.SHOW);
-        firebase.database().ref("errors").set(null)
+        database.delete(["errors"])
             .then(() => dispatch({type: lazyListComponentReducer.RESET}))
             .then(() => setState({...state, deleteOpen: false}))
             .catch(notifySnackbar)

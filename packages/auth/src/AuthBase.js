@@ -17,7 +17,7 @@ export default class AuthBase {
         return notImplemented("resolveRedirectResult");
     }
 
-    async resolveCurrentUser() {
+    async resolveCurrentUser(UserData) {
         return notImplemented("resolveCurrentUser");
     }
 

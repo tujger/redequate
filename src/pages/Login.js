@@ -5,6 +5,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
 import {useAuth} from "../../packages/auth";
+import {useDatabase} from "../../packages/database";
 import {useMessaging} from "../../packages/messaging";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
@@ -34,6 +35,7 @@ function Login(props) {
     } = props;
     const auth = useAuth();
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const location = useLocation();
@@ -160,7 +162,7 @@ function Login(props) {
         const fetchPublicAndPrivateData = async props => {
             const {deviceId} = props;
             // eslint-disable-next-line react/prop-types -- userData is an Auth model passed between pipeline steps.
-            const userData = new UserData().fromJSON(props.userData.toJSON());
+            const userData = new UserData(database).fromJSON(props.userData.toJSON());
             await userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
                 .then(() => userData.fetchPrivate(deviceId, true));
             return {...props, userData};

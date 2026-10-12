@@ -1,6 +1,7 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../../../packages/database";
 import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -15,6 +16,7 @@ import motionStyles from "./styles/PostMotion.module.css";
 
 export default (props) => {
     const {items: givenItems, mentions, postId, type} = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -78,7 +80,7 @@ export default (props) => {
         const fetchUserData = async props => {
             const {postData} = props;
             const userData = await cacheDatas.fetch(postData.uid, id => {
-                return UserData().fetch(id, [UserData.NAME, UserData.IMAGE]);
+                return UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]);
             });
             return {...props, userData};
         }

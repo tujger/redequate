@@ -21,7 +21,7 @@ export default async function onAuthStateChanged(auth, callback, onError) {
         let user;
         try {
             const state = read(auth);
-            user = toUserData(state.accounts.find(account => account.uid === state.session?.uid));
+            user = toUserData(state.accounts.find(account => account.uid === state.session?.uid), auth._UserData);
         } catch (error) {
             reportError(error);
             return;

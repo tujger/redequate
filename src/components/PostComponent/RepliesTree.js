@@ -1,5 +1,6 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
+import {useAuth} from "../../../packages/auth";
 import {useBackend} from "../../../packages/backend";
 import {useDatabase} from "../../../packages/database";
 import Pagination from "../../controllers/FirebasePagination";
@@ -18,6 +19,7 @@ import replyStyles from "./styles/PostReplies.module.css";
 export default (props) => {
     const {PostComponent, ...replyProps} = props;
     const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = replyProps;
+    const auth = useAuth();
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const database = useDatabase();
@@ -80,7 +82,7 @@ export default (props) => {
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {
-                return UserData()
+                return UserData(database)
                     .fetch(replies[0].value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userReplied => {
                         throw {replies, userReplied};
@@ -173,6 +175,7 @@ export default (props) => {
                     disableProgress={true}
                     pagination={() => new Pagination(paginationOptions)}
                     itemTransform={postItemTransform({
+                        auth,
                         allowedExtras,
                         backend,
                         currentUserData,

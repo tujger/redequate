@@ -54,7 +54,7 @@ export default class DatabaseBase {
      * @param {DatabaseRecord} changes Partial record data.
      * @returns {Promise<void>}
      */
-    async update(path, changes) {
+    async update(path, changes, {} = {}) {
         return notImplemented('update')
     }
 
@@ -64,7 +64,7 @@ export default class DatabaseBase {
      * @param {DatabasePath} path Record path.
      * @returns {Promise<void>}
      */
-    async delete(path) {
+    async delete(path, {} = {}) {
         return notImplemented('delete')
     }
 
@@ -82,5 +82,9 @@ export default class DatabaseBase {
 
     async write(path, value, {} = {}) {
         return notImplemented('write')
+    }
+
+    get TIMESTAMP() {
+        return notImplemented('timestamp')
     }
 }

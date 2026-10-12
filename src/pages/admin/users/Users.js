@@ -2,6 +2,7 @@ import AddIcon from "@mui/icons-material/Add";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
+import {useDatabase} from "../../../../packages/database";
 import FlexFabComponent from "../../../components/FlexFabComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
@@ -17,6 +18,7 @@ import {usersReducer} from "./usersReducer";
 
 function Users(props) {
     const {mode = "all", filter = "", invitation = true} = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const pages = usePages();
 
@@ -41,7 +43,7 @@ function Users(props) {
 
     const fetchUserData = async item => {
         // const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
-        const data = await UserData().fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
+        const data = await UserData(database).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
         return {key: item.key, value: data};
     }
 

@@ -1,3 +1,4 @@
+import {firebaseMessaging as firebase} from "../../../../src";
 import DatabaseBase from "../DatabaseBase";
 
 export default class FirebaseDatabase extends DatabaseBase {
@@ -65,6 +66,14 @@ export default class FirebaseDatabase extends DatabaseBase {
         }
     }
 
+    async delete(path, {} = {}) {
+        const effectivePath = path instanceof Array ? path.join("/") : path;
+
+        let ref = this._firebase.database().ref(effectivePath);
+        await ref.set(null);
+        return;
+    }
+
     async read(path, {equalTo, orderBy} = {}) {
         const effectivePath = path instanceof Array ? path.join("/") : path;
 
@@ -86,6 +95,15 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async write(path, value, {} = {}) {
+        const effectivePath = path instanceof Array ? path.join("/") : path;
 
+        let ref = this._firebase.database().ref(effectivePath);
+        const res = await ref.set(value);
+        console.log(effectivePath, value, res);
+        return;
+    }
+
+    get TIMESTAMP() {
+        return this._firebase.database.ServerValue.TIMESTAMP
     }
 }

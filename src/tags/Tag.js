@@ -6,6 +6,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useAuth} from "../../packages/auth";
 import {useBackend} from "../../packages/backend";
 import {useDatabase} from "../../packages/database";
 import FlexFabComponent from "../components/FlexFabComponent";
@@ -32,6 +33,7 @@ import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tag.module.css";
 
 export default ({allowOwner = true}) => {
+    const auth = useAuth();
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
     const database = useDatabase();
@@ -178,6 +180,7 @@ export default ({allowOwner = true}) => {
                     userData={item._userData}
                 />}
                 itemTransform={postItemTransform({
+                    auth,
                     backend,
                     database,
                     fetchItemId: item => item.key,

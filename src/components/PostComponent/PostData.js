@@ -136,7 +136,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         delete: () => {
             cacheDatas.remove(_id);
-            return _body._refPosts.child(_id).set(null);
+            return database.delete([type, _id]);
         },
         editOf: type => {
             if (!_edit) return null;
@@ -278,7 +278,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             if (!uid) throw new Error("'uid' is not defined.");
 
             const extra = _extras[type];
-            await _body._refExtra.child(extra.key).set(null);
+            await database.delete(["extra", extra.key]);
             delete _extras[type];
             _counters = _counters || {};
             _counters[type] = (_counters[type] || 1) - 1;

@@ -1,6 +1,7 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
+import {useDatabase} from "../../../packages/database";
 import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
@@ -32,6 +33,7 @@ export default props => {
         unsubscribeLabel,
         ItemProps,
     } = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const mixedId = typeId + "_" + mode + "_" + mutualId;
 
@@ -119,19 +121,19 @@ export default props => {
         if (itemTransform) return itemTransform;
         if (mode === MutualListMode.REQUESTS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData())
+                return cacheDatas.put(item.value.uid, UserData(database))
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBERS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData())
+                return cacheDatas.put(item.value.uid, UserData(database))
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBES) {
             return item => {
-                return cacheDatas.put(item.value.id, UserData())
+                return cacheDatas.put(item.value.id, UserData(database))
                     .fetch(item.value.id, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }

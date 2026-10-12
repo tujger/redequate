@@ -2,6 +2,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useBackend} from "../../../../packages/backend";
+import {useDatabase} from "../../../../packages/database";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
@@ -15,6 +16,7 @@ import errorStyles from "./styles/ErrorItemComponent.module.css";
 
 export default ({data, skeleton, label, onUserClick}) => {
     const backend = useBackend();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase()
     const [state, setState] = React.useState({});
@@ -41,7 +43,7 @@ export default ({data, skeleton, label, onUserClick}) => {
             key: data.key
         })
             .then(({result}) => notifySnackbar(result))
-            .then(() => firebase.database().ref("errors").child(data.key).set(null))
+            .then(() => database.delete(["errors", data.key]))
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
@@ -49,7 +51,7 @@ export default ({data, skeleton, label, onUserClick}) => {
 
     const handleRemove = () => {
         dispatch(ProgressView.SHOW);
-        firebase.database().ref("errors").child(data.key).set(null)
+        database.delete(["errors", data.key])
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
@@ -58,7 +60,7 @@ export default ({data, skeleton, label, onUserClick}) => {
     React.useEffect(() => {
         if (!data || !data.value || !data.value.uid) return;
         let isMounted = true;
-        const userData = cacheDatas.put(data.value.uid, UserData());
+        const userData = cacheDatas.put(data.value.uid, UserData(database));
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
             .then(() => isMounted && setState(state => ({...state, userData})))
             .catch(error => {

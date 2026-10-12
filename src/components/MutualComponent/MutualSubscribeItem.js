@@ -2,16 +2,16 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../../../packages/database";
 import {toDateString} from "../../controllers/DateFormat";
-import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
+import {cacheDatas, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, useCurrentUserData, UserRole} from "../../controllers/UserData";
 import Select from "../../controls/Select/Select";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import ListItemComponent from "../ListItemComponent";
-import ListSwipeableItemComponent from "../ListSwipeableItemComponent";
 import ProgressView from "../ProgressView";
 import styles from "./styles/MutualItem.module.css";
 
@@ -29,8 +29,8 @@ const MutualSubscribeItem = (
         unsubscribeLabel,
     }) => {
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const {t} = useTranslation();
@@ -68,7 +68,7 @@ const MutualSubscribeItem = (
         setDisabled(true);
         cacheDatas.remove(key);
         cacheDatas.remove(value.id);
-        firebase.database().ref("mutual").child(typeId).child(key).set(null)
+        database.delete(["mutual", typeId, key])
             .then(() => onDelete({key, value}))
             .catch(error => {
                 if (error && error.code === "PERMISSION_DENIED") {

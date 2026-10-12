@@ -75,7 +75,7 @@ const Chat = (props) => {
                 }
             })
             .then(() => chatMeta.fetch())
-            .then(() => cacheDatas.put(chatMeta.uidOtherThan(currentUserData.id), UserData()))
+            .then(() => cacheDatas.put(chatMeta.uidOtherThan(currentUserData.id), UserData(database)))
             .then(userData => userData.fetch(chatMeta.uidOtherThan(currentUserData.id), [UserData.IMAGE, UserData.NAME]))
             .then(userData => isMounted && setState(state => ({...state, chatMeta, userData})))
             .then(() => chatMeta.updateVisit(currentUserData.id))

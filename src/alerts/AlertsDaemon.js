@@ -3,7 +3,7 @@ import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {useDatabase} from "../../packages/database";
 import Pagination from "../controllers/FirebasePagination";
-import {MenuBadge, useFirebase, usePages, useStore} from "../controllers/General";
+import {MenuBadge, usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
 import {alertsCounterReducer} from "./alertsCounterReducer";
@@ -12,7 +12,6 @@ export default ({fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
@@ -42,6 +41,7 @@ export default ({fetchAlertContent}) => {
         let lastKey = null;
         const listener = database.addEventListener(["alerts", currentUserData.id], {
             onChildAdd({key, value}) {
+
                 if (!lastKey) {
                     lastKey = key;
                     return;
@@ -56,7 +56,7 @@ export default ({fetchAlertContent}) => {
                 if (match) {
                     return;
                 }
-                fetchAlertContent({firebase, pages}, value).then(({title, text}) => {
+                fetchAlertContent({database, pages}, value).then(({title, text}) => {
                     notifySnackbar({
                         id: pages.alerts.route,
                         onClick: () => history.push(pages.alerts.route),

@@ -1,11 +1,12 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../../packages/database";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import ListItemComponent from "../components/ListItemComponent";
 import ProgressView from "../components/ProgressView";
-import {useFirebase, usePages} from "../controllers/General";
+import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
 import UserName from "../controls/UserName/UserName";
@@ -13,8 +14,8 @@ import alertStyles from "./styles/AlertItem.module.css";
 
 export default ({data, skeleton, label, fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
@@ -22,7 +23,8 @@ export default ({data, skeleton, label, fetchAlertContent}) => {
 
     const handleClick = () => {
         dispatch(ProgressView.SHOW);
-        firebase.database().ref("alerts").child(currentUserData.id).child(data.key).child("new").set(null)
+        database.delete(["alerts", currentUserData.id, data.key, "new"])
+        // firebase.database().ref("alerts").child(currentUserData.id).child(data.key).child("new").set(null)
             .then(() => {
                 try {
                     delete data.value.new;
@@ -38,7 +40,7 @@ export default ({data, skeleton, label, fetchAlertContent}) => {
     React.useEffect(() => {
         if (!data) return;
         let isMounted = true;
-        fetchAlertContent({firebase, pages}, data.value)
+        fetchAlertContent({database, pages}, data.value)
             .then(result => isMounted && setState(state => ({...state, ...data.value, ...result})))
             .catch(error => {
                 isMounted && setState(state => ({...state, removed: true}));

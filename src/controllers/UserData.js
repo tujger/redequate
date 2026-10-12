@@ -80,7 +80,7 @@ export function currentUserData(state = {
     }
 }
 
-export function UserData() {
+export function UserData(database) {
     const extend = (_body, state) => {
         let _lastVisitUpdate = 0;
         const firebase = firebaseMessaging;
@@ -129,7 +129,7 @@ export function UserData() {
                 // updates[`users_private/${state.id}`] = null;
 
                 console.log("[UserData] delete", state.id);
-                await firebase.database().ref("users_public").child(state.id).set(null);
+                await database.delete(["users_public", state.id]);
                 // await firebase.database().ref().update(updates);
                 cacheDatas.remove(state.id);
                 return _body;
@@ -312,7 +312,7 @@ export function UserData() {
                     firebase.database().ref("users_public").child(state.id).child("email").once("value")
                         .then(snapshot => {
                             if (!snapshot.exists()) return;
-                            firebase.database().ref("users_public").child(state.id).child("visit").set(SERVER_TIMESTAMP);
+                            database.write(["users_public", state.id], database.TIMESTAMP);
                             _lastVisitUpdate = now;
                         })
                 }

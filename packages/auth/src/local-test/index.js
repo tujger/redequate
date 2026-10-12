@@ -20,12 +20,13 @@ import updateProfile from "./updateProfile";
 
 // Local simulation only: passwords and fake tokens are stored in plain text.
 export default class LocalTestAuth extends AuthBase {
-    constructor({storageKey = "redequate:auth:local-test"} = {}) {
+    constructor({storageKey = "redequate:auth:local-test", UserData = undefined} = {}) {
         super();
         if (!storageKey.trim()) {
             fail("auth/invalid-argument", "storageKey must be a non-empty string.");
         }
         this.storageKey = storageKey;
+        this._UserData = UserData;
     }
 
     async createUserWithEmailAndPassword(email, password) {
@@ -43,7 +44,7 @@ export default class LocalTestAuth extends AuthBase {
     async resolveCurrentUser() {
         await delay("LocalTestAuth", "resolveCurrentUser");
         const state = read(this);
-        return toUserData(state.accounts.find(account => account.uid === state.session?.uid));
+        return toUserData(state.accounts.find(account => account.uid === state.session?.uid), this._UserData);
     }
 
     async signOut() {
@@ -79,7 +80,7 @@ export default class LocalTestAuth extends AuthBase {
         const account = state.accounts.find(item => item.uid === state.redirect);
         state.redirect = null;
         write(this, state);
-        return toUserData(account);
+        return toUserData(account, this._UserData);
     }
 
     async sendEmailVerification(options) {

@@ -8,8 +8,8 @@ import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import {resolveAuth} from "../packages/auth/src";
 import {resolveBackend} from "../packages/backend/src";
-import {resolveDatabase} from "../packages/database/src";
 import {_AppContext} from "../packages/common/AppContext";
+import {resolveDatabase} from "../packages/database/src";
 import {resolveMessaging} from "../packages/messaging/src";
 import {resolveStorage} from "../packages/storage/src";
 import LoadingComponent from "./components/LoadingComponent";
@@ -115,6 +115,7 @@ export default (props) => {
         const initAuth = async props => {
             try {
                 const auth = await resolveAuth(authGiven);
+                auth._UserData = UserData;
                 console.log("[Dispatcher]", "auth resolved", {auth});
                 return {...props, auth};
             } catch (error) {
@@ -425,6 +426,7 @@ const DispatcherInitialized = (props) => {
         auth,
         backend,
         buildPages,
+        currentUserData,
         copyright,
         database,
         firebase,
@@ -448,7 +450,9 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    return <_AppContext value={{auth, backend, database, messaging, storage}}>
+    console.log("[Context]", {auth, backend, currentUserData, database, messaging, storage});
+
+    return <_AppContext value={{auth, backend, currentUserData, database, messaging, storage}}>
         <Provider store={store}>
             <>
                 {theme}

@@ -69,12 +69,12 @@ export function current(state) {
     return account;
 }
 
-export function toUserData(account) {
+export function toUserData(account, Component = UserData) {
     if (!account) return null;
     if (typeof account.uid !== "string" || !account.uid) {
         fail("auth/invalid-user-data", "Auth user has no identifier.");
     }
-    return new UserData().fromJSON({
+    return new Component().fromJSON({
         id: account.uid,
         role: null,
         public: {
@@ -110,7 +110,7 @@ export function login(auth, state, account) {
     account.lastLoginAt = Date.now();
     state.session = {uid: account.uid, token: `local-test:${identifier()}`};
     write(auth, state);
-    return toUserData(account);
+    return toUserData(account, auth._UserData);
 }
 
 export function providerAccount(state, provider) {

@@ -23,7 +23,7 @@ export default (
         await postData.fetchCounters();
         await postData.fetchExtras(currentUserData.id);
         const userData = await cacheDatas.fetch(postData.uid, id => {
-            return UserData().fetch(id, currentUserData.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
+            return UserData(database).fetch(id, currentUserData.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
         })
         postData._userData = userData;
         // console.log(postData)

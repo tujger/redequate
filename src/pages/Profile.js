@@ -12,6 +12,7 @@ import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
 import {useAuth} from "../../packages/auth";
 import {useBackend} from "../../packages/backend";
+import {useDatabase} from "../../packages/database";
 import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -102,6 +103,7 @@ const Profile = (
     const auth = useAuth();
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -138,7 +140,7 @@ const Profile = (
             setState({...state, userData: currentUserData});
             return;
         }
-        new UserData().fetch(id, [UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
+        new UserData(database).fetch(id, [UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
             .then(userData => isMounted && setState({...state, userData}))
             .catch(error => {
                 // notifySnackbar

@@ -3,12 +3,13 @@ import AllReadIcon from "@mui/icons-material/ClearAll";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
+import {useDatabase} from "../../packages/database";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
 import Pagination from "../controllers/FirebasePagination";
-import {MenuBadge, useFirebase, usePages} from "../controllers/General";
+import {MenuBadge, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
@@ -20,8 +21,8 @@ import {alertsVisitReducer} from "./alertsVisitReducer";
 
 export default ({daemon, fetchAlertContent}) => {
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const pages = usePages();
     const [state, setState] = React.useState({});
     const {allRead, allClear} = state;
@@ -59,7 +60,7 @@ export default ({daemon, fetchAlertContent}) => {
     const handleClearConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allClear: false});
-        firebase.database().ref("alerts").child(currentUserData.id).set(null)
+        database.write(["alerts", currentUserData.id], null)
             .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
