@@ -1711,11 +1711,18 @@ retry, explicit token binding, fresh-instance unsubscribe, permission/error toke
 retention and unsupported-browser/default-registration paths. Update checks locate
 the exact Messaging scope despite script hash changes and ignore the root PWA.
 
-Existing targeted repository tests: 13 pass, 19 fail across four files because
-FirebaseAuth/UserDataJSON and Storage contract fixtures still supply the old
-namespace API/mocks. Integration fixtures also retain compat Auth calls. No tests
-were added or updated, per the project instruction. Fixture migration remains a
-separate authorized task. Real provider popup/redirect/email-link flows, cloud
+Test fixture migration is now authorized and implemented: Auth, Storage and
+Messaging unit fixtures mock the modular SDK; emulator fixtures use the shared
+Firebase handle, modular Auth and compat RTDB. All 261 unit tests pass on Node
+24.21.0; all 38 integration tests pass against local Auth/RTDB emulators.
+FirebaseDatabase.read now applies limitToLast(1) only when orderBy is supplied
+without equalTo, preserving scalar reads such as users_public/<uid>/updated.
+The existing watchUserChanged test verifies the exact timestamp through the real
+adapter, the refresh notification and the profile update after clicking Refresh.
+Status: the timestamp-read blocker affecting both web consumers is resolved and
+verified locally. Mocking a successful read or weakening the notification
+assertion was rejected because it would hide the regression.
+Real provider popup/redirect/email-link flows, cloud
 Storage and Functions, FCM delivery/token deletion, installed worker upgrades,
 production Firebase variant and Android WebView/native fallback remain unverified.
 ### Common database operation contract
