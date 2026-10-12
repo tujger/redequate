@@ -1718,3 +1718,29 @@ were added or updated, per the project instruction. Fixture migration remains a
 separate authorized task. Real provider popup/redirect/email-link flows, cloud
 Storage and Functions, FCM delivery/token deletion, installed worker upgrades,
 production Firebase variant and Android WebView/native fallback remain unverified.
+### Common database operation contract
+
+Decision: DatabaseBase defines create, read, update, delete and iterate independently
+of Firebase. Every first argument accepts a string path or string[] joined with
+slashes; elements may include nested paths. Empty string/array denotes the root.
+Provider implementations own path normalization and validation.
+
+create(collectionPath, value, key?) resolves the created key and must not overwrite
+an existing record. read(recordPath) returns plain JSON-compatible record data or
+null for absence. update(recordPath, changes) requires an existing record, replaces
+top-level fields (including whole nested values), and removes fields assigned null.
+delete(recordPath) is idempotent. Writes resolve after success in provider storage.
+iterate(collectionPath) is an AsyncIterable of {key, value} for immediate records;
+early termination releases resources. No shared ordering or traversal-wide
+snapshot guarantee is imposed. Errors reject the operation or iterator next().
+
+Reason: keep callers independent of Firebase ref/child and snapshot objects while
+supporting both generated and caller-supplied keys. Callback-based iteration and
+a Firebase-shaped public reference API were rejected in favor of for await...of
+and composable path arguments. Provider-specific query and subscription contracts
+remain separate work.
+
+Affected consumers: both web applications; future Android API changes must preserve
+stored paths and record formats. Status: base signatures, JSDoc and notImplemented
+stubs added. Firebase/LocalTest implementations, Dispatcher integration and consumer
+migration are not part of this change.
