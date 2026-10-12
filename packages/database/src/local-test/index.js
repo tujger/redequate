@@ -1,0 +1,13 @@
+import {delay, fail} from "../../../common/src/_packages";
+import DatabaseBase from "../DatabaseBase";
+
+// Local simulation only: passwords and fake tokens are stored in plain text.
+export default class LocalTestDatabase extends DatabaseBase {
+    constructor({storageKey = "redequate:database:local-test"} = {}) {
+        super();
+        if (!storageKey.trim()) {
+            fail("database/invalid-argument", "storageKey must be a non-empty string.");
+        }
+        this.storageKey = storageKey;
+    }
+}
