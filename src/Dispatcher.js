@@ -6,9 +6,10 @@ import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
-import {_AppContext} from "../packages/common/AppContext";
 import {resolveAuth} from "../packages/auth/src";
 import {resolveBackend} from "../packages/backend/src";
+import {resolveDatabase} from "../packages/database/src";
+import {_AppContext} from "../packages/common/AppContext";
 import {resolveMessaging} from "../packages/messaging/src";
 import {resolveStorage} from "../packages/storage/src";
 import LoadingComponent from "./components/LoadingComponent";
@@ -75,6 +76,7 @@ export default (props) => {
     const {
         auth: authGiven,
         backend: backendGiven,
+        database: databaseGiven,
         firebase: firebaseGiven = undefined,
         firebaseConfig = undefined,
         locales,
@@ -100,7 +102,7 @@ export default (props) => {
     }, [width, state.store]);
 
     React.useEffect(() => {
-        let maintenanceRef, metaRef, unlisten;
+        let maintenanceRef, metaListener, unlisten;
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
@@ -124,6 +126,15 @@ export default (props) => {
                 const backend = await resolveBackend(backendGiven);
                 console.log("[Dispatcher]", "backend resolved", {backend});
                 return {...props, backend};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
+        const initDatabase = async props => {
+            try {
+                const database = await resolveDatabase(databaseGiven);
+                console.log("[Dispatcher]", "database resolved", {database});
+                return {...props, database};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -198,9 +209,8 @@ export default (props) => {
             return props;
         }
         const fetchMetaInfo = async props => {
-            const {firebase} = props;
-            const snapshot = await firebase.database().ref("meta/settings").once("value");
-            const settings = snapshot.val() || {};
+            const {database} = props;
+            const settings = (await database.read(["meta", "settings"])) || {};
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
@@ -284,29 +294,29 @@ export default (props) => {
         }
         const installMetaWatcher = async props => {
             (async () => {
-                const {firebase, store, t} = props;
+                const {database, firebase, store, t} = props;
                 let initial = true;
-                metaRef = firebase.database().ref("meta");
-                metaRef.on("value", snapshot => {
-                    const meta = snapshot.val() || {};
-                    const {maintenance, settings} = meta;
-                    if (initial) {
-                        initial = false;
-                    } else {
-                        console.warn("[Dispatcher] meta changed", meta);
-                        setState(state => ({...state, metaInfo: {settings}}));
-                        refreshAll(store);
-                        notifySnackbar(t("Reloaded due to settings changed"));
-                    }
-                    setState(state => {
-                        const metaInfo = state.metaInfo || {};
-                        if (JSON.stringify(maintenance || null) !== JSON.stringify(metaInfo.maintenance || null)) {
-                            console.warn("[Dispatcher] maintenance changed to", maintenance || "none");
-                            return {...state, metaInfo: {...metaInfo, maintenance}};
+                metaListener = database.addEventListener(["meta"], {
+                    onChange(meta) {
+                        const {maintenance, settings} = meta;
+                        if (initial) {
+                            initial = false;
+                        } else {
+                            console.warn("[Dispatcher] meta changed", meta);
+                            setState(state => ({...state, metaInfo: {settings}}));
+                            refreshAll(store);
+                            notifySnackbar(t("Reloaded due to settings changed"));
                         }
-                        return state;
-                    })
-                });
+                        setState(state => {
+                            const metaInfo = state.metaInfo || {};
+                            if (JSON.stringify(maintenance || null) !== JSON.stringify(metaInfo.maintenance || null)) {
+                                console.warn("[Dispatcher] maintenance changed to", maintenance || "none");
+                                return {...state, metaInfo: {...metaInfo, maintenance}};
+                            }
+                            return state;
+                        })
+                    }
+                })
             })().catch(console.error);
             return props;
         }
@@ -358,6 +368,7 @@ export default (props) => {
             .then(initFirebase)
             .then(initAuth)
             .then(initBackend)
+            .then(initDatabase)
             .then(initMessaging)
             .then(initStorage)
             .then(initStore)
@@ -383,7 +394,7 @@ export default (props) => {
 
         return () => {
             maintenanceRef && maintenanceRef.off();
-            metaRef && metaRef.off();
+            metaListener?.remove();
             unlisten && unlisten();
         }
         // eslint-disable-next-line
@@ -415,6 +426,7 @@ const DispatcherInitialized = (props) => {
         backend,
         buildPages,
         copyright,
+        database,
         firebase,
         store,
         menu: givenMenu,
@@ -436,7 +448,7 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    return <_AppContext value={{auth, backend, messaging, storage}}>
+    return <_AppContext value={{auth, backend, database, messaging, storage}}>
         <Provider store={store}>
             <>
                 {theme}
