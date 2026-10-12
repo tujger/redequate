@@ -7,6 +7,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
 import {useBackend} from "../../packages/backend";
+import {useDatabase} from "../../packages/database";
 import FlexFabComponent from "../components/FlexFabComponent";
 import InfoComponent from "../components/InfoComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
@@ -33,6 +34,7 @@ import styles from "./styles/Tag.module.css";
 export default ({allowOwner = true}) => {
     const backend = useBackend();
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
@@ -43,7 +45,6 @@ export default ({allowOwner = true}) => {
     const {t} = useTranslation();
     const windowData = useWindowData();
 
-    const db = firebase.database();
     const {tag} = state;
 
     const isCurrentUserAdmin = matchRole([UserRole.ADMIN], currentUserData);
@@ -62,9 +63,9 @@ export default ({allowOwner = true}) => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         dispatch({type: lazyListComponentReducer.RESET});
-        firebase.database().ref("tag").child(itemId).once("value")
-            .then(snapshot => {
-                if (snapshot.exists()) return {key: snapshot.key, value: snapshot.val()};
+        database.read(["tag", itemId])
+            .then(value => {
+                if (value !== undefined) return {key: itemId, value};
                 return Pagination({
                     ref: "tag",
                     child: "id",
@@ -193,7 +194,7 @@ export default ({allowOwner = true}) => {
                 live
                 noItemsComponent={<PostComponent label={t("Tag.No posts found")}/>}
                 pagination={() => new Pagination({
-                    ref: db.ref("_tag").child(tag.key),
+                    ref: firebase.database().ref("_tag").child(tag.key),
                     order: "desc",
                 })}
                 placeholder={<PostComponent skeleton={true}/>}

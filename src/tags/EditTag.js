@@ -4,6 +4,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useDatabase} from "../../packages/database";
 import {useStorage} from "../../packages/storage";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
@@ -18,7 +19,7 @@ import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import {matchRole, normalizeSortName, useCurrentUserData, UserData, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
@@ -28,6 +29,7 @@ import styles from "./styles/EditTag.module.css";
 
 export default ({allowOwner = true}) => {
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
@@ -350,10 +352,10 @@ export default ({allowOwner = true}) => {
             const tag = {};
             setState(state => ({...state, tag, newId: tagRef.key}));
         } else if (id) {
-            firebase.database().ref("tag").child(id).once("value")
-                .then(snapshot => {
-                    if (snapshot.exists()) return snapshot.val();
-                    throw Error(t("Tag.{{id}} is not found.", {id: id}));
+            database.read(["tag", id])
+                .then(value => {
+                    if(value === undefined) throw Error(t("Tag.{{id}} is not found.", {id: id}));
+                    return value;
                 })
                 .then(tag => {
                     if (isCurrentUserAdmin) {
