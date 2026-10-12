@@ -2,6 +2,7 @@ import {firebaseMessaging} from "./Firebase";
 
 export default (
     {
+        database,
         path,
         increase,
         increment,
@@ -16,13 +17,13 @@ export default (
         path = path.join("/");
     }
     if (onchange) {
-        const counterRef = firebaseMessaging.database().ref("_counters").child(path);
-        const listener = snapshot => {
-            onchange(snapshot.val());
-        }
-        counterRef.on("value", listener);
+        const listener = database.addEventListener(["_counters", path], {
+            onChange(value) {
+                onchange(value);
+            }
+        });
         return () => {
-            counterRef.off("value", listener);
+            listener.remove();
         }
     } else if (increase !== undefined || increment !== undefined || decrease !== undefined || value !== undefined) {
 
@@ -50,9 +51,6 @@ export default (
                 }
             })
     } else {
-        const counterRef = firebaseMessaging.database().ref("_counters").child(path);
-        return counterRef.once("value", snapshot => {
-            return snapshot.val();
-        });
+        return database.read(["_counters", path]);
     }
 }
