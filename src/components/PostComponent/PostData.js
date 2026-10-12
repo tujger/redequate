@@ -169,9 +169,8 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 return;
             }
             database.addEventListener([type, _id], {
-                async onChange(value) {
-                    if (value !== undefined) {
-                        const data = value;
+                async onChange(data) {
+                    if (data !== undefined) {
                         data.replyTo = data.to;
                         await _body.create(data);
                         _created = data.created;
