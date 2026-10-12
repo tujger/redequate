@@ -12,6 +12,7 @@ import postcss from 'rollup-plugin-postcss'
 import {authSourcePattern, withAuth} from './packages/auth/build.mjs'
 import {backendSourcePattern, withBackend} from './packages/backend/build.mjs'
 import {commonSourcePattern, withCommon} from './packages/common/build.mjs'
+import {databaseSourcePattern, withDatabase} from "./packages/database/build.mjs";
 import {messagingSourcePattern, withMessaging} from "./packages/messaging/build.mjs";
 import {storageSourcePattern, withStorage} from './packages/storage/build.mjs'
 
@@ -66,7 +67,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, messagingSourcePattern, storageSourcePattern],
+                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, databaseSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
                 svgr(),
                 resolve(),
@@ -198,7 +199,7 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, commonSourcePattern, backendSourcePattern, messagingSourcePattern, storageSourcePattern],
+                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, databaseSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
                 resolve(),
                 commonjs(),
@@ -206,5 +207,5 @@ export default () => {
                 json(),
             ]
         }
-    ].map(withAuth).map(withBackend).map(withCommon).map(withMessaging).map(withStorage)
+    ].map(withAuth).map(withBackend).map(withCommon).map(withDatabase).map(withMessaging).map(withStorage)
 }

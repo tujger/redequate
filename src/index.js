@@ -19,3 +19,4 @@ export const version = packagejson.version;
 
 export {default} from "./Dispatcher";
 export {useBackend} from "../packages/backend";
+export {useDatabase} from "../packages/database";

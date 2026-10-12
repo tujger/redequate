@@ -167,6 +167,18 @@
             "import": "./core/common/index.mjs",
             "require": "./core/common/index.cjs"
         },
+        "./database": {
+            "import": "./core/database/index.mjs",
+            "require": "./core/database/index.cjs"
+        },
+        "./database/firebase": {
+            "import": "./core/database/firebase.mjs",
+            "require": "./core/database/firebase.cjs"
+        },
+        "./database/local-test": {
+            "import": "./core/database/local-test.mjs",
+            "require": "./core/database/local-test.cjs"
+        },
         "./messaging": {
             "import": "./core/messaging/index.mjs",
             "require": "./core/messaging/index.cjs"
@@ -178,10 +190,6 @@
         "./messaging/firebase-worker": {
             "import": "./core/messaging/firebase-worker.mjs",
             "require": "./core/messaging/firebase-worker.cjs"
-        },
-        "./messaging/local-test": {
-            "import": "./core/messaging/local-test.mjs",
-            "require": "./core/messaging/local-test.cjs"
         },
         "./storage": {
             "import": "./core/storage/index.mjs",
