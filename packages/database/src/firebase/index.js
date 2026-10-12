@@ -74,7 +74,7 @@ export default class FirebaseDatabase extends DatabaseBase {
         }
         if(equalTo) {
             ref = ref.equalTo(equalTo);
-        } else {
+        } else if(orderBy) {
             ref = ref.limitToLast(1);
         }
         const snapshot = await ref.once("value");
