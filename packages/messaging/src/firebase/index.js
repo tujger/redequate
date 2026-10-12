@@ -7,7 +7,7 @@ export default class FirebaseMessaging extends MessagingBase {
     _registration = undefined;
     _tokenInitialized = false;
 
-    constructor({firebase, storageKey = "notification-token", serviceWorkerURL, serviceWorkerType = "classic"}) {
+    constructor({firebase, storageKey = "notification-token", serviceWorkerURL, serviceWorkerType = "module"}) {
         super();
         if (typeof storageKey !== "string" || !storageKey.trim()) {
             fail("messaging/invalid-argument", "storageKey must be a non-empty string.");
