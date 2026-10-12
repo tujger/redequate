@@ -1,6 +1,6 @@
+import {firebaseMessaging as firebase} from "../controllers/Firebase";
 import Pagination from "../controllers/FirebasePagination";
 import {UserData} from "../controllers/UserData";
-import {firebaseMessaging as firebase} from "../controllers/Firebase";
 
 const ONLINE_TIMEOUT = 60000;
 
@@ -13,9 +13,9 @@ Meta:
     _chats/__UID__/__KEY__/private: <__OPPOSITE_UID__> if chat is private
 */
 
-export function ChatMeta() {
+export function ChatMeta(database) {
     // eslint-disable-next-line one-var
-    let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef, _removeRef,
+    let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef,
         _redirect, _activeUids = [];
     const indexRef = firebase.database().ref("_chats");
     const chatsRef = firebase.database().ref("chats");
@@ -60,10 +60,10 @@ export function ChatMeta() {
         fetch: async (id) => {
             _id = _id || id;
             if (!_meta) {
-                const snapshot = await chatsRef.child(_id).child("!meta").once("value");
-                if (snapshot.exists()) {
+                const value = await database.read(["chats", _id, "!meta"])
+                if (value !== undefined) {
                     _persisted = true;
-                    _meta = snapshot.val();
+                    _meta = value;
                 }
             }
             if (!_meta) throw Error(`[ChatMeta] no meta for ${_id}`);
@@ -73,9 +73,9 @@ export function ChatMeta() {
             if (_persisted) {
                 for (let uid in _meta.members) {
                     tasks.push(new Promise((resolve, reject) => {
-                        indexRef.child(uid).child(_id).once("value")
-                            .then(snapshot => {
-                                if (snapshot.exists()) {
+                        database.read(["_chats", uid, _id])
+                            .then(value => {
+                                if (value !== undefined) {
                                     _activeUids.push(uid);
                                 }
                                 resolve();
@@ -90,14 +90,12 @@ export function ChatMeta() {
                 _activeUids = Object.keys(_meta.members || {});
             }
             tasks.push(new Promise((resolve, reject) => {
-                chatsRef.child(_id).orderByChild("created").limitToLast(1).once("value")
-                    .then(snap => {
-                        snap.forEach(snapshot => {
-                            if (snapshot.key !== "!meta") {
-                                _lastMessage = snapshot.val();
-                                _timestamp = _lastMessage.created;
-                            }
-                        })
+                database.read(["chats", _id], {orderByChild: "created"})
+                    .then(value => {
+                        Object.values(value).forEach(last => {
+                            _lastMessage = last;
+                            _timestamp = last.created;
+                        });
                         resolve();
                     }).catch(reject)
             }));
@@ -106,9 +104,9 @@ export function ChatMeta() {
         },
         fetchFor: async (currentUid, oppositeUid) => {
             let chats = [];
-            const snapshot = await chatsRef.child(oppositeUid).child("!meta").once("value");
-            if (snapshot.exists()) {
-                chats.push({key: oppositeUid, meta: snapshot.val(), persisted: true});
+            const value = await database.read(["chats", oppositeUid, "!meta"]);
+            if(value !== undefined) {
+                chats.push({key: oppositeUid, meta: value, persisted: true});
             }
             if (!chats.length) {
                 chats = await Pagination({
@@ -119,16 +117,14 @@ export function ChatMeta() {
                 }).next();
                 for (let i = chats.length - 1; i >= 0; i--) {
                     let chat = chats[i];
-                    const snapshot = await chatsRef.child(chat.key).child("!meta").once("value");
+                    chat.meta = await database.read(["chats", chat.key, "!meta"]);
                     chat.redirect = true;
-                    chat.meta = snapshot.val();
-
                     if (chat.meta && chat.meta.members) {
                         let remove = false;
                         for (let uid in chat.meta.members) {
                             try {
-                                const snapshot = await indexRef.child(uid).child(chat.key).once("value");
-                                if (!snapshot.exists()) {
+                                const value = await database.read(["_chats", uid, chat.key]);
+                                if (value === undefined) {
                                     remove = true;
                                     break;
                                 }
@@ -146,19 +142,19 @@ export function ChatMeta() {
             }
             if (!chats.length) {
                 const mixedId = [currentUid, oppositeUid].sort().join("_");
-                const snapshot = await indexRef.child(currentUid).child(mixedId).once("value");
-                if (snapshot.exists()) {
+                const value = await database.read(["_chats", currentUid, mixedId]);
+                if (value !== undefined) {
                     chats.push({
-                        key: snapshot.ref.key,
-                        value: snapshot.val(),
+                        key: mixedId,
+                        value,
                         redirect: true,
                         meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
                     });
                 }
             }
             if (!chats.length) {
-                const snapshot = await firebase.database().ref("users_public").child(oppositeUid).child(UserData.NAME).once("value");
-                if (snapshot.exists()) {
+                const value = await database.read(["users_public", oppositeUid, UserData.NAME]);
+                if (value !== undefined) {
                     const ref = chatsRef.push();
                     chats.push({
                         key: ref.key,
@@ -237,23 +233,19 @@ export function ChatMeta() {
             await chatsRef.child(_id).child("!meta/timestamp").set(firebase.database.ServerValue.TIMESTAMP);
             const updatesIndex = {};
             await _body.forEachUid(async uid => {
-                const snapshot = await indexRef.child(uid).child(_id).once("value");
-                if (!snapshot.exists()) return;
+                const value = await database.read(["_chats", uid, _id]);
+                if (value === undefined) return;
                 updatesIndex[`${uid}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
             });
             await indexRef.update(updatesIndex);
             return _body;
         },
         unwatch: () => {
-            _watchRef && _watchRef._listener && _watchRef.off("child_added", _watchRef._listener);
-            _watchRef = null;
-            _visitRef && _visitRef._listener && _visitRef.off("child_changed", _visitRef._listener);
-            _visitRef = null;
-            _removeRef && _removeRef._listener && _removeRef.off("child_removed", _removeRef._listener);
-            _removeRef = null;
+            _watchRef?.remove();
+            _visitRef?.remove();
         },
         unwatchOnline: () => {
-            _onlineRef && _onlineRef._listener && _onlineRef.off("value", _onlineRef._listener);
+            _onlineRef?.remove();
             _onlineRef = null;
         },
         updateVisit: uid => {
@@ -263,8 +255,8 @@ export function ChatMeta() {
             return chatsRef.child(_id).child("!meta/members").child(uid).set(firebase.database.ServerValue.TIMESTAMP);
         },
         watch: onChange => {
-            const watchListener = snapshot => {
-                const message = snapshot.val() || {};
+            const watchListener = ({value}) => {
+                const message = value || {};
                 if (!_lastMessage || (message && message.created !== _lastMessage.created
                     && message.text !== _lastMessage.text)) {
                     _lastMessage = message;
@@ -272,28 +264,26 @@ export function ChatMeta() {
                     onChange(message);
                 }
             };
-            const visitListener = snapshot => {
-                onChange({uid: snapshot.key, timestamp: snapshot.val(), type: "visit"});
+            const visitListener = ({key, value}) => {
+                onChange({uid: key, timestamp: value, type: "visit"});
             }
-            const removeListener = snapshot => {
+            const removeListener = ({value}) => {
                 _persisted = false;
-                onChange({removed: true, timestamp: snapshot.val(), type: "remove"});
+                onChange({removed: true, timestamp: value, type: "remove"});
             }
-            _watchRef = chatsRef.child(_id).orderByChild("created").limitToLast(1);
-            _watchRef.on("child_added", watchListener);
-            _watchRef._listener = watchListener;
-            _visitRef = chatsRef.child(_id).child("!meta/members").orderByKey();
-            _visitRef.on("child_changed", visitListener);
-            _visitRef._listener = visitListener;
-            _removeRef = chatsRef.child(_id).child("!meta/members");
-            _removeRef.on("child_removed", removeListener);
-            _removeRef._listener = removeListener;
+            _watchRef = database.addEventListener(["chats", _id], {
+                onChildAdd: watchListener,
+                orderByChild: "created"
+            });
+            _visitRef = database.addEventListener(["chats", _id, "!meta", "members"], {
+                onChildChange: visitListener,
+                onChildRemove: removeListener
+            })
         },
         watchOnline: ({uid, timeout = ONLINE_TIMEOUT, onChange}) => {
             let task;
-            const onlineListener = snapshot => {
+            const onlineListener = timestamp => {
                 const now = new Date().getTime();
-                const timestamp = snapshot.val();
                 if (now - timestamp < timeout) {
                     _meta = _meta || {};
                     _meta.members = _meta.members || {};
@@ -306,9 +296,9 @@ export function ChatMeta() {
                     onChange({online: false, timestamp});
                 }
             }
-            _onlineRef = chatsRef.child(_id).child("!meta/members").child(uid);
-            _onlineRef.on("value", onlineListener);
-            _onlineRef._listener = onlineListener;
+            _onlineRef = database.addEventListener(["chats", "!meta", "members", uid], {
+                onChange: onlineListener
+            });
         },
         toString: () => {
             return `[ChatMeta] ${_id}, active: ${_activeUids}, persisted: ${_persisted}, meta: ${JSON.stringify((_meta))}`;

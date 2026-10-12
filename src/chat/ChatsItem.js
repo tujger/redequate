@@ -2,6 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Link, useHistory} from "react-router-dom";
+import {useDatabase} from "../../packages/database";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
@@ -15,6 +16,7 @@ import chatStyles from "./styles/ChatsItem.module.css";
 export default props => {
     const {id, skeleton, label, onClick, userComponent, textComponent} = props;
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -30,7 +32,7 @@ export default props => {
     React.useEffect(() => {
         if (skeleton || label) return;
         let isMounted = true;
-        const chatMeta = ChatMeta();
+        const chatMeta = ChatMeta(database);
         chatMeta.getOrCreateFor(currentUserData.id, id)
             .then(() => chatMeta.fetch())
             .then(() => {

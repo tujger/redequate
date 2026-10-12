@@ -35,7 +35,7 @@ export default class DatabaseBase {
      * @param {DatabasePath} path Record path.
      * @returns {Promise<DatabaseRecord | null>}
      */
-    async read(path) {
+    async read(path, {orderByChild = undefined} = {}) {
         return notImplemented('read')
     }
 

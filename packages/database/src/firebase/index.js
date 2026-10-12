@@ -8,7 +8,7 @@ export default class FirebaseDatabase extends DatabaseBase {
         this._firebase = firebase;
     }
 
-    addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError}) {
+    addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderByChild}) {
         const effectivePath = path instanceof Array ? path.join("/") : path;
 
         const ref = this._firebase.database().ref(effectivePath);
@@ -22,7 +22,11 @@ export default class FirebaseDatabase extends DatabaseBase {
             }, onError);
         }
         if (onChildAdd) {
-            refChildAdd = ref.orderByKey().limitToLast(1);
+            if(orderByChild) {
+                refChildAdd = ref.orderByChild(orderByChild).limitToLast(1);
+            } else {
+                refChildAdd = ref.orderByKey().limitToLast(1);
+            }
             refChildAdd.on("child_added", snapshot => {
                 const key = snapshot.key;
                 const value = snapshot.val();
@@ -57,10 +61,14 @@ export default class FirebaseDatabase extends DatabaseBase {
         }
     }
 
-    async read(path) {
+    async read(path, {orderByChild = undefined} = {}) {
         const effectivePath = path instanceof Array ? path.join("/") : path;
 
-        const snapshot = await this._firebase.database().ref(effectivePath).once("value");
+        let ref = this._firebase.database().ref(effectivePath);
+        if(orderByChild) {
+            ref = ref.orderByChild(orderByChild).limitToLast(1);
+        }
+        const snapshot = await ref.once("value");
         if (snapshot.exists()) {
             return snapshot.val();
         } else {

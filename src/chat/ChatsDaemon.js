@@ -45,7 +45,7 @@ export default ({clearText = text => text}) => {
                     </React.Fragment>
                 }))
         }
-        const installListenerIfNeeded = (id, live) => ChatMeta().fetch(id)
+        const installListenerIfNeeded = (id, live) => ChatMeta(database).fetch(id)
             .then(meta => {
                 if (meta.lastMessage.uid === currentUserData.id) return;
                 if (meta.lastVisit(currentUserData.id) > meta.timestamp) return;

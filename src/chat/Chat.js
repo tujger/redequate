@@ -1,6 +1,7 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {useDatabase} from "../../packages/database";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
@@ -25,6 +26,7 @@ const Chat = (props) => {
         userComponent = userData => userData.name,
     } = props;
     const currentUserData = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
     const history = useHistory();
@@ -58,7 +60,7 @@ const Chat = (props) => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
-        const chatMeta = ChatMeta();
+        const chatMeta = ChatMeta(database);
         chatMeta.getOrCreateFor(currentUserData.id, id, history.location.state && history.location.state.meta)
             // .then(console.log)
             .catch(error => {
