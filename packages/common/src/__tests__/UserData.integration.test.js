@@ -1,4 +1,5 @@
 import {vi} from "vitest";
+import {signInAnonymously} from "firebase/auth";
 import notifySnackbar from "../../../../src/controllers/notifySnackbar";
 import {UserRole} from "../UserRole";
 import {
@@ -12,7 +13,7 @@ import {
     UserData,
     watchUserChanged
 } from "../../../../src/controllers/UserData";
-import {auth, firebase, seedDatabase, store} from "../../../../src/__tests__/common";
+import {auth, database, firebase, sdkAuth, seedDatabase, store} from "../../../../src/__tests__/common";
 
 vi.mock("../../../../src/controllers/notifySnackbar", () => ({default: vi.fn()}));
 
@@ -44,33 +45,42 @@ const userDataUserNotVerified = UserData().create("test_user_not_verified_id", {
 const rolesAdminUser = [UserRole.USER, UserRole.ADMIN];
 
 test("watchUserChanged", async () => {
-    const credential = await firebase.auth().createUserWithEmailAndPassword("watch@example.test", "test-password");
-    const user = UserData().create(credential.user.uid, {email: "watch@example.test", name: "Watcher", updated: 0});
+    const authenticatedUser = await auth.createUserWithEmailAndPassword("watch@example.test", "test-password");
+    const user = UserData().create(authenticatedUser.id, {email: "watch@example.test", name: "Watcher", updated: 0});
     useCurrentUserData(user);
-    await seedDatabase({users_public: {[user.id]: {...user.public, updated: Date.now() + 1000}}});
+    const updated = Date.now() + 1000;
+    await seedDatabase({users_public: {[user.id]: {...user.public, updated}}});
+    const timestamp = await firebase.database().ref(`users_public/${user.id}/updated`).once("value");
+    expect(timestamp.val()).toBe(updated);
     const original = auth.onAuthStateChanged.bind(auth);
     let subscription;
     vi.spyOn(auth, "onAuthStateChanged").mockImplementation(callback => {
         subscription = original(callback);
         return subscription;
     });
-    const refresh = watchUserChanged({auth, firebase, store});
+    const read = vi.spyOn(database, "read");
+    const refresh = watchUserChanged({auth, database, store});
     try {
+        await vi.waitFor(() => expect(read).toHaveBeenCalled());
+        expect(read).toHaveBeenCalledWith(["users_public", user.id, "updated"]);
+        expect(await read.mock.results[0].value).toBe(updated);
         await vi.waitFor(() => expect(notifySnackbar).toHaveBeenCalled());
         const warning = notifySnackbar.mock.calls.at(-1)[0];
+        expect(warning).toMatchObject({variant: "warning", buttonLabel: "Refresh"});
         warning.onButtonClick();
         await refresh;
         expect(store.getState().userData.id).toBe(user.id);
+        expect(store.getState().userData.public.updated).toBeGreaterThan(0);
     } finally {
         const unsubscribe = await subscription;
         unsubscribe?.();
     }
 });
 test("logoutUser", async () => {
-    await firebase.auth().signInAnonymously();
+    await signInAnonymously(sdkAuth);
     useCurrentUserData(userDataUser);
     await expect(logoutUser({auth, store})).resolves.toBeNull();
-    expect(firebase.auth().currentUser).toBeNull();
+    expect(sdkAuth.currentUser).toBeNull();
     expect(useCurrentUserData().role).toBe(UserRole.LOGIN);
     expect(store.getState().userData).toBeNull();
 });
@@ -203,7 +213,7 @@ describe("UserData", () => {
     it("delete", async () => {
         await seedDatabase({users_public: {[userDataUser.id]: userDataUser.public}});
         await expect(userDataUser.delete()).resolves.toEqual(userDataUser);
-        await firebase.auth().signInAnonymously();
+        await signInAnonymously(sdkAuth);
         expect((await firebase.database().ref(`users_public/${userDataUser.id}`).once("value")).exists()).toBe(false);
     });
     it("fetch", async () => {
@@ -211,14 +221,14 @@ describe("UserData", () => {
             email: "fresh@example.test", name: "Fresh User"
         });
         await expect(userDataUser.fetch(userDataUser.id, [UserData.PUBLIC, UserData.FORCE])).rejects.toThrow();
-        await firebase.auth().signInAnonymously();
+        await signInAnonymously(sdkAuth);
         await seedDatabase({users_public: {[userDataUser.id]: {...userDataUser.public, name: "Fetched name"}}});
         await userDataUser.fetch(userDataUser.id, [UserData.PUBLIC, UserData.FORCE]);
         expect(userDataUser.name).toBe("Fetched name");
     });
     it("fetchPrivate", async () => {
         await expect(userDataUser.fetchPrivate("device_id", true)).rejects.toThrow();
-        const {user} = await firebase.auth().signInAnonymously();
+        const {user} = await signInAnonymously(sdkAuth);
         const ownData = UserData().create(user.uid, {email: "own@example.test", name: "Owner"});
         await seedDatabase({users_private: {[user.uid]: {device_id: {os: "Test"}}}});
         await expect(ownData.fetchPrivate("device_id", true)).resolves.toBe(ownData);
@@ -242,7 +252,7 @@ describe("UserData", () => {
     });
     it("savePublic", async () => {
         await expect(userDataUser.savePublic()).resolves.toEqual(userDataUser);
-        await firebase.auth().signInAnonymously();
+        await signInAnonymously(sdkAuth);
         const saved = (await firebase.database().ref(`users_public/${userDataUser.id}`).once("value")).val();
         expect(saved).toMatchObject({name: "User name", _sort_name: "username_test_user_id"});
         expect(saved.updated).toEqual(expect.any(Number));

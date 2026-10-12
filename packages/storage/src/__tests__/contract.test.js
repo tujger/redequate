@@ -1,3 +1,4 @@
+
 import Firebase from "../firebase";
 import useStorage from "../useStorage";
 import AppProvider from "../../../common/AppContext";
@@ -8,6 +9,8 @@ import Base from "../StorageBase";
 import LocalTest from "../local-test";
 import {resolveStorage} from "../resolveStorage";
 import {render, unmount} from "../../../../src/__tests__/render";
+
+vi.mock("firebase/storage", () => ({getStorage: vi.fn(app => app)}));
 
 it("exposes abstract operations with rejected promises", async () => {
     for (const method of ["upload", "resolveDownloadURL", "resolveMetadata", "delete"]) {
@@ -28,7 +31,7 @@ it("resolves local defaults and preserves explicit providers", async () => {
     const structural = {operation: vi.fn()};
     expect(await resolveStorage(structural)).toBe(structural);
     expect(structural.operation).not.toHaveBeenCalled();
-    const sdk = {};
+    const sdk = {app: {}};
     const explicit = new Firebase({firebase: sdk});
     expect(await resolveStorage(explicit)).toBe(explicit);
     expect(get).not.toHaveBeenCalled();

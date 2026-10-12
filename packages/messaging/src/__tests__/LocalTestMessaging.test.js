@@ -12,6 +12,11 @@ async function run(promise) {
 beforeEach(() => {
     window.localStorage.clear(); delete window.redequateMessaging;
     vi.stubGlobal("structuredClone", clone);
+    vi.spyOn(window, "postMessage").mockImplementation((data, origin) => {
+        setTimeout(() => window.dispatchEvent(new MessageEvent("message", {
+            data: structuredClone(data), origin, source: window,
+        })), 0);
+    });
     vi.useFakeTimers(); vi.spyOn(Math, "random").mockReturnValue(0);
     vi.spyOn(console, "error").mockImplementation(() => {});
     messaging = new LocalTestMessaging(); disposers = [];
@@ -29,11 +34,11 @@ it("restores saved subscription across instances without subscribing again", asy
     const restored = new LocalTestMessaging();
     expect(await restored.checkIfSubscribed()).toBe(true);
     const handler = vi.fn(); await listen(restored, handler);
-    window.redequateMessaging.send({title: "restored"});
+    window.redequateMessaging.send({title: "restored"}); await vi.runAllTimersAsync();
     expect(handler).toHaveBeenCalledWith({title: "restored"});
     await run(restored.unsubscribe());
     expect(await messaging.checkIfSubscribed()).toBe(false);
-    window.redequateMessaging.send({title: "disabled"});
+    window.redequateMessaging.send({title: "disabled"}); await vi.runAllTimersAsync();
     expect(handler).toHaveBeenCalledOnce();
     expect(await run(messaging.subscribe())).not.toBe(token);
 });
@@ -42,14 +47,14 @@ it("isolates keys, clones messages independently and disposes listeners", async 
     const first = vi.fn(message => { message.nested.value = 2; });
     const second = vi.fn(); const isolated = vi.fn();
     const stop = await listen(messaging, first); await listen(messaging, second); await listen(other, isolated);
-    window.redequateMessaging.send({nested: {value: 1}});
+    window.redequateMessaging.send({nested: {value: 1}}); await vi.runAllTimersAsync();
     expect(first).not.toHaveBeenCalled();
     await run(messaging.subscribe()); await run(other.subscribe());
-    const original = {nested: {value: 1}}; window.redequateMessaging.send(original);
+    const original = {nested: {value: 1}}; window.redequateMessaging.send(original); await vi.runAllTimersAsync();
     expect(second).toHaveBeenLastCalledWith({nested: {value: 1}}); expect(original.nested.value).toBe(1);
     expect(isolated).not.toHaveBeenCalled();
-    window.redequateMessaging.send({title: "other"}, "other"); expect(isolated).toHaveBeenCalledOnce();
-    stop(); stop(); window.redequateMessaging.send(original); expect(first).toHaveBeenCalledOnce(); expect(second).toHaveBeenCalledTimes(2);
+    window.redequateMessaging.send({title: "other"}, "other"); await vi.runAllTimersAsync(); expect(isolated).toHaveBeenCalledOnce();
+    stop(); stop(); window.redequateMessaging.send(original); await vi.runAllTimersAsync(); expect(first).toHaveBeenCalledOnce(); expect(second).toHaveBeenCalledTimes(2);
 });
 it("isolates synchronous and asynchronous handler failures", async () => {
     await run(messaging.subscribe());
@@ -58,7 +63,7 @@ it("isolates synchronous and asynchronous handler failures", async () => {
     await listen(messaging, () => { throw sync; });
     await listen(messaging, async () => { throw asyncError; });
     const healthy = vi.fn(); await listen(messaging, healthy);
-    window.redequateMessaging.send({title: "test"}); await Promise.resolve(); await Promise.resolve();
+    window.redequateMessaging.send({title: "test"}); await vi.runAllTimersAsync();
     expect(healthy).toHaveBeenCalledOnce();
     expect(console.error).toHaveBeenCalledWith("[LocalTestMessaging] Message handler failed", sync);
     expect(console.error).toHaveBeenCalledWith("[LocalTestMessaging] Message handler failed", asyncError);

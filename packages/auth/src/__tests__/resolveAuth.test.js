@@ -1,7 +1,11 @@
 import {vi} from "vitest";
+import {getAuth} from "firebase/auth";
+
 import LocalTestAuth from "../local-test";
 import FirebaseAuth from "../firebase";
 import {resolveAuth} from "../resolveAuth";
+
+vi.mock("firebase/auth", () => ({getAuth: vi.fn(app => app)}));
 
 it("creates LocalTestAuth by default without reading or writing storage", async () => {
     const getItem = vi.spyOn(Storage.prototype, "getItem");
@@ -15,10 +19,11 @@ it("creates LocalTestAuth by default without reading or writing storage", async 
     expect(setItem).not.toHaveBeenCalled();
 });
 it("preserves explicitly configured Firebase and structural Auth instances", async () => {
-    const firebase = {auth: vi.fn()};
+    const firebase = {app: {}};
     const explicit = new FirebaseAuth({firebase});
     expect(await resolveAuth(explicit)).toBe(explicit);
-    expect(firebase.auth).not.toHaveBeenCalled();
+    expect(getAuth).toHaveBeenCalledWith(firebase.app);
+    expect(getAuth).toHaveBeenCalledTimes(1);
     const external = {signOut: vi.fn()};
     expect(await resolveAuth(external)).toBe(external);
     expect(external.signOut).not.toHaveBeenCalled();

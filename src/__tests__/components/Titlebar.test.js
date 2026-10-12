@@ -34,7 +34,7 @@ vi.mock("../../controllers/UserData", () => ({
   currentRole: (user) => user.role,
   matchRole: (roles) => !roles?.includes("blocked"),
   needAuth: (roles) => Boolean(roles?.includes("login")),
-  Role: { ADMIN: "admin" },
+  UserRole: { ADMIN: "admin" },
   useCurrentUserData: () => mockUser
 }));
 vi.mock("../../components/AvatarView", () => ({ default: vi.fn(() => <span data-testid="avatar" />) }));

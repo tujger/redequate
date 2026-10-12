@@ -30,7 +30,7 @@ vi.mock("../../controllers/General", () => ({
 }));
 vi.mock("../../controllers/UserData", () => ({
   matchRole: () => true,
-  Role: { ADMIN: "admin" },
+  UserRole: { ADMIN: "admin" },
   useCurrentUserData: () => mockUser
 }));
 vi.mock("../../controllers/Store", () => ({ refreshAll: (...args) => mockRefreshAll(...args) }));

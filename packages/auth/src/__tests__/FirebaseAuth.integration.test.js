@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {auth, firebase, emulatorRequest} from "../../../../src/__tests__/common";
+import {auth, sdkAuth, emulatorRequest} from "../../../../src/__tests__/common";
 
 it("registers and restores users through the Firebase Auth adapter", async () => {
     const user = await auth.createUserWithEmailAndPassword("adapter@example.test", "password");
@@ -53,5 +53,5 @@ it("routes verification, password reset and email-link requests to the emulator"
     } finally {
         window.history.replaceState(null, "", "/");
     }
-    expect(firebase.auth().currentUser.emailVerified).toBe(true);
+    expect(sdkAuth.currentUser.emailVerified).toBe(true);
 });

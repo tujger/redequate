@@ -8,7 +8,7 @@ vi.mock("@mui/icons-material/MoreVert", () => ({ default: () => null }));
 vi.mock("@mui/icons-material/ArrowDropDown", () => ({ default: () => null }));
 vi.mock("@mui/icons-material/ArrowDropUp", () => ({ default: () => null }));
 vi.mock("../../controllers/UserData", () => ({
-  Role: { ADMIN: "admin" },
+  UserRole: { ADMIN: "admin" },
   matchRole: () => false,
   useCurrentUserData: () => ({ id: "user", disabled: false })
 }));
