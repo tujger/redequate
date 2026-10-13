@@ -1,6 +1,7 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/BottomMenu.module.css";
@@ -20,7 +21,7 @@ const MenuLink = ({item}) => {
 
 const MenuSection = ({items}) => {
     const [first, ...menu] = items;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
 
     if (!first || first.disabled || !matchRole(first.roles, currentUserData)) return null;
 

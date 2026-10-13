@@ -8,7 +8,8 @@ import {enableDisabledPages, useStore} from "../../controllers/General";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {refreshAll} from "../../controllers/Store";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import BottomMenu from "./BottomMenu";
 import StickyHeader from "./StickyHeader";
 import styles from "./styles/TopBottomMenuLayout.module.css";
@@ -17,7 +18,7 @@ import baseStyles from "../../themes/Base.module.css";
 
 export default (props) => {
     const {menu, title, footerComponent, headerComponent = <HeaderComponent/>, random, copyright} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const store = useStore();
     const {t} = useTranslation();
 
