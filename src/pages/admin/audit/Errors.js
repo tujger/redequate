@@ -6,9 +6,10 @@ import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import LoadingComponent from "../../../components/LoadingComponent";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import ProgressView from "../../../components/ProgressView";
-import {useDatabase} from "../../../controllers";
+import {useDatabase, useRedirectToLogin} from "../../../controllers";
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
@@ -23,6 +24,7 @@ const Errors = props => {
     const {errorsMode = "all", errorsFilter} = props;
     const database = useDatabase();
     const dispatch = useDispatch();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({});
 
     const {deleteOpen, random} = state;
@@ -47,6 +49,8 @@ const Errors = props => {
         }
         // eslint-disable-next-line
     }, [errorsMode]);
+
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
 
     let pagination;
     let itemTransform;
