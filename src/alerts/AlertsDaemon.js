@@ -70,12 +70,12 @@ export default ({fetchAlertContent}) => {
                 dispatch({type: alertsCounterReducer.INCREASE});
             }
         })
+        console.log("[AlertsDaemon] installed");
         return () => {
             listener.remove();
             dispatch({type: MenuBadge.RESET, page: pages.alerts});
         }
     }, [currentUserData.id]);
 
-    console.log("[AlertsDaemon] installed")
     return null;
 }

@@ -98,6 +98,7 @@ export default ({clearText = text => text}) => {
             }
         });
 
+        console.log("[ChatsDaemon] installed");
         return () => {
             listener.remove();
             pagination.reset();
@@ -106,6 +107,5 @@ export default ({clearText = text => text}) => {
             }
         }
     }, [currentUserData.id]);
-    console.log("[ChatsDaemon] installed")
     return null;
 }
