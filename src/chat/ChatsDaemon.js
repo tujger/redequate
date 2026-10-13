@@ -1,9 +1,8 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import {useBackend} from "../../packages/backend";
-import {useDatabase} from "../../packages/database";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import {useBackend, useDatabase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";

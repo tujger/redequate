@@ -1,10 +1,10 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {useDatabase} from "../../packages/database";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
+import {useDatabase} from "../controllers";
 import {cacheDatas, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserData, UserData} from "../controllers/UserData";

@@ -1,9 +1,8 @@
 import React from "react";
-import {useDatabase} from "../../packages/database";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import ListItemComponent from "../components/ListItemComponent";
-import {cacheDatas, toDateString, useCurrentUserData, UserData} from "../controllers";
+import {cacheDatas, toDateString, useCurrentUserData, useDatabase, UserData} from "../controllers";
 import chatStyles from "./styles/ChatItem.module.css";
 
 export default (props) => {
