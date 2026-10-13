@@ -1,3 +1,4 @@
+import {useSetCurrentUserData} from "../controllers/useCurrentUserData";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
@@ -14,6 +15,7 @@ import styles from "./styles/Logout.module.css";
 const Logout = (props) => {
     const {immediate = true} = props;
     const auth = useAuth();
+    const setCurrentUserData = useSetCurrentUserData();
     const database = useDatabase();
     const history = useHistory();
     const pages = usePages();
@@ -22,7 +24,7 @@ const Logout = (props) => {
 
     const doLogout = () => {
         window.localStorage.removeItem(pages.login.route);
-        logoutUser({auth, store})
+        logoutUser({auth, onLogout: () => setCurrentUserData(null)})
             .then(() => {
                 refreshAll(store);
                 history.push(pages.home.route);
