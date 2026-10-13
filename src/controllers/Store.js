@@ -16,7 +16,6 @@ import {languageReducer} from "../reducers/languageReducer";
 import {refreshOnVisibilityReducer} from "../reducers/refreshOnVisibilityReducer";
 import {tagsReducer} from "../tags/tagsReducer";
 import {cacheDatas, Layout, MenuBadge} from "./General";
-import {currentUserData} from "./UserData";
 
 export default (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -26,7 +25,6 @@ export default (name, reducers) => {
         audit: auditReducer,
         chatsCounter: chatsCounterReducer,
         confirmComponentReducer,
-        currentUserData,
         dispatcherRoutedBodyReducer,
         language: languageReducer,
         lazyListComponentReducer,

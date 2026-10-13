@@ -1,14 +1,15 @@
-import {matchRole, useCurrentUserData} from "./UserData";
+import {matchRole} from "./UserData";
+import {getCurrentUserData} from "./useCurrentUserData";
 import {usePages} from "./General";
 
 export default function PagesPagination({start, size = 10}) {
-    const currentUserData = useCurrentUserData();
     const pages = usePages();
 
     const pagesFlat = Object.keys(pages).map(key => pages[key]);
     let count = 0, countTotal = 0, finished = false, started = true, order = "asc";
 
     const next = async () => {
+        const currentUserData = getCurrentUserData();
         started = true;
 
         let result = [];
