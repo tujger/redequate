@@ -1,4 +1,3 @@
-
 import {
     useContext,
     useSyncExternalStore
@@ -45,10 +44,14 @@ export default class UseAbstract {
     }
 
     useStore() {
-        const value = this.useValue();
-        const set = this.useSet();
+        const store = this.useInstance();
+        const value = useSyncExternalStore(
+            store.subscribe,
+            store.get,
+            store.getServerSnapshot
+        );
 
-        return [value, set];
+        return [value, store.set];
     }
 
     get(state = globalAppState) {
