@@ -4,11 +4,11 @@ import {useHistory, useParams} from "react-router-dom";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
-import {useDatabase} from "../controllers";
+import {useDatabase, useRedirectToLogin} from "../controllers";
 import {cacheDatas, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {UserData} from "../controllers/UserData";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import {UserData} from "../controllers/UserData";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
 import ChatHeader from "./ChatHeader";
@@ -17,7 +17,7 @@ import ChatList from "./ChatList";
 import {ChatMeta} from "./ChatMeta";
 import chatStyles from "./styles/Chat.module.css";
 
-const Chat = (props) => {
+export default (props) => {
     const {
         id: idFromProps,
         inputComponent = <TextField
@@ -33,6 +33,7 @@ const Chat = (props) => {
     const history = useHistory();
     const pages = usePages();
     const {id: idFromParams} = useParams();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({});
     const {userData, chatMeta} = state;
     const inputRef = React.useRef();
@@ -57,7 +58,7 @@ const Chat = (props) => {
     }
 
     React.useEffect(() => {
-        if (!id) return;
+        if (shouldRedirectToLogin || !id) return;
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
@@ -91,9 +92,9 @@ const Chat = (props) => {
             chatMeta.updateVisit(currentUserData.id);
         }
         // eslint-disable-next-line
-    }, [id]);
+    }, [id, currentUserData.id, shouldRedirectToLogin]);
 
-    if (!id) return <LoadingComponent/>
+    if (shouldRedirectToLogin || !id) return <LoadingComponent/>
     if (!chatMeta || !userData) return <LoadingComponent/>
     return <>
         {idFromParams && <ChatHeader
@@ -129,5 +130,3 @@ const Chat = (props) => {
         </>}
     </>
 };
-
-export default Chat;

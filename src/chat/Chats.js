@@ -3,36 +3,40 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import LoadingComponent from "../components/LoadingComponent";
+import {useRedirectToLogin} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import baseStyles from "../themes/Base.module.css";
 import ChatsDaemon from "./ChatsDaemon";
 import ChatsItem from "./ChatsItem";
-import baseStyles from "../themes/Base.module.css";
 
 export default (
     {
         daemon,
         textComponent = text => text,
         userComponent = userData => userData.name,
-        ...rest
+        ...props
+    }) => {
+    if (daemon) return <ChatsDaemon {...props} textComponent={textComponent} userComponent={userComponent}/>;
+    return <ChatsPage {...props} textComponent={textComponent} userComponent={userComponent}/>;
+}
+
+const ChatsPage = (
+    {
+        textComponent,
+        userComponent
     }) => {
     const currentUserData = useCurrentUserDataValue();
     const dispatch = useDispatch();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const {t} = useTranslation();
 
     React.useEffect(() => {
         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
-        // eslint-disable-next-line
-    }, []);
+    }, [currentUserData.id, dispatch]);
 
-    if (daemon) {
-        return <ChatsDaemon
-            {...rest}
-            daemon={daemon}
-            textComponent={textComponent}
-            userComponent={userComponent}
-        />
-    }
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
 
     return <div className={baseStyles.content}>
         <LazyListComponent

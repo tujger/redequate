@@ -253,9 +253,9 @@ export function ChatMeta(database) {
         },
         updateVisit: uid => {
             if (!_persisted) return;
-            if (!_activeUids.indexOf(uid) < 0) return;
+            if (_activeUids.indexOf(uid) >= 0) return;
             console.log(`[ChatMeta] update visit for ${_id}`);
-            return database.write(["chats", id, "!meta", "members", uid], database.TIMESTAMP);
+            return database.write(["chats", _id, "!meta", "members", uid], database.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = ({value}) => {
