@@ -1547,12 +1547,13 @@ Firebase, React or browser controllers and creates no UserData instance at modul
 scope.
 
 The UserData model, getters/setters, data mutation, serialization and date
-formatting belong to common. src/controllers/UserData.js creates this model and
-adds persistence/cache methods through UserData({extend}), whose callback receives
-the same model and its private mutable state. The state is not a model property
-or part of its JSON. The controller also owns current-user state and UI behavior.
-Both callable and new constructors, static fetch options, chain identity and
-stored record formats are preserved. The web root exports the frontend controller;
+formatting belong to common. UserData is a class with private instance state;
+src/controllers/UserData.js extends it with persistence/cache methods and uses
+_getState() as an internal subclass interface. Static fetch options are inherited.
+Both exports require new UserData(...); callable construction and the {extend}
+callback are removed. Methods retain instance binding for callback use, chain
+identity and stored record formats are preserved. The controller also owns
+current-user state and UI behavior. The web root exports the frontend controller;
 Auth providers return the neutral common model. Login and Dispatcher restore a
 frontend model from Auth JSON before fetching or saving profile data; Dispatcher
 still prefers the saved profile for the same user. Functions can create the pure
@@ -1751,3 +1752,24 @@ Affected consumers: both web applications; future Android API changes must prese
 stored paths and record formats. Status: base signatures, JSDoc and notImplemented
 stubs added. Firebase/LocalTest implementations, Dispatcher integration and consumer
 migration are not part of this change.
+
+### UserData class inheritance
+
+Decision: common UserData and the web controller are classes; the controller
+extends the common model. Construction requires new, replacing the callable
+factory and extend callback. Private state is accessible to subclasses through
+_getState(), and JSON contains only the existing record fields. Methods previously
+implemented as closures remain bound to instances for detached callback use.
+Reason: use explicit inheritance for model extensions and shared static options.
+Affected consumers: Redequate web, demo, The Whisky Talks web and Functions.
+Runtime factory calls in Redequate and The Whisky Talks must use new; Auth already
+constructs injected models with new. Android data formats are unchanged.
+Rejected: a compatibility factory, because both exports should be actual classes.
+Status: Redequate, demo and The Whisky Talks web builds pass. Runtime checks
+confirm subclass identity, isolated state, matching model JSON/getters, detached
+callbacks and built ESM/CommonJS exports. Targeted common/Auth suites have 50
+passing checks and three failures from unchanged calls without new. Existing
+tests using callable construction or extend are intentionally unchanged at the
+user's request and require migration before those suites can pass completely.
+Functions production sources have no callable UserData construction; their tests
+still contain callable/extend cases. No Functions deployment was performed.
