@@ -1,7 +1,7 @@
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useDatabase} from "../../../packages/database";
+import {useDatabase} from "../../controllers";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
 import {lazyListComponentReducer} from "./lazyListComponentReducer";
