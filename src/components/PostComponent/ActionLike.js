@@ -12,14 +12,15 @@ import counter from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {delay, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
 import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
@@ -35,7 +36,7 @@ export default ({postData}) => {
             setState(state => ({...state, disabled: true}));
         }
         const checkIfUserRegistered = async () => {
-            if (!currentUserData || !currentUserData.id) {
+            if (!currentUserData.id) {
                 history.push(pages.login.route);
                 throw "user not registered";
             }

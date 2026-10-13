@@ -4,7 +4,8 @@ import {useAuth, useBackend, useDatabase} from "../../controllers";
 import Pagination from "../../controllers/FirebasePagination";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import {UserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
@@ -19,7 +20,7 @@ export default (props) => {
     const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = replyProps;
     const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const history = useHistory();
     const metaInfo = useMetaInfo();

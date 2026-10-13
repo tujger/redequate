@@ -5,7 +5,7 @@ import {useTranslation} from "react-i18next";
 import {fetchDeviceId, useMetaInfo} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useTextTranslation} from "../../controllers/textTranslation";
-import {useCurrentUserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import MentionedTextComponent from "../MentionedTextComponent";
 import actionStyles from "./styles/PostActions.module.css";
@@ -21,7 +21,7 @@ export default (
         onComplete,
         UploadProps
     }) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const metaInfo = useMetaInfo();
     const textTranslation = useTextTranslation();
     const {i18n, t} = useTranslation();
