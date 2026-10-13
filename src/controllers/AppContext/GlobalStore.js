@@ -1,4 +1,3 @@
-
 export default class GlobalStore {
     constructor(initialValue = null) {
         this._initialValue = this._prepare(initialValue);
@@ -8,7 +7,7 @@ export default class GlobalStore {
 
     _prepare(value) {
         return process.env.NODE_ENV !== "production"
-            ? freeze(value)
+            ? deepFreeze(value)
             : value;
     }
 
@@ -35,22 +34,35 @@ export default class GlobalStore {
     reset = () => this.set(this._initialValue);
 }
 
-const freeze = (value, seen = new WeakSet()) => {
-    if (value === null || typeof value !== "object" || seen.has(value)) {
-        return value;
-    }
+const deepFreeze = value => {
+    const seen = new WeakSet();
+    const objects = [];
 
-    const prototype = Object.getPrototypeOf(value);
+    const visit = item => {
+        if (typeof item === "function") {
+            throw new TypeError("GlobalStore values must not contain functions");
+        }
+        if (item === null || typeof item !== "object" || seen.has(item)) return;
 
-    if (!Array.isArray(value) &&
-        prototype !== Object.prototype &&
-        prototype !== null) {
-        return value;
-    }
+        const prototype = Object.getPrototypeOf(item);
+        if (!Array.isArray(item) &&
+            prototype !== Object.prototype &&
+            prototype !== null) {
+            throw new TypeError("GlobalStore values must contain only plain objects and arrays");
+        }
 
-    seen.add(value);
+        seen.add(item);
+        objects.push(item);
+        Reflect.ownKeys(item).forEach(key => {
+            const descriptor = Object.getOwnPropertyDescriptor(item, key);
+            if (!Object.prototype.hasOwnProperty.call(descriptor, "value")) {
+                throw new TypeError("GlobalStore values must not contain accessor properties");
+            }
+            visit(descriptor.value);
+        });
+    };
 
-    Reflect.ownKeys(value).forEach(key => freeze(value[key], seen));
-
-    return Object.freeze(value);
+    visit(value);
+    objects.forEach(Object.freeze);
+    return value;
 };
