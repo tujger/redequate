@@ -6,7 +6,8 @@ import {useDatabase} from "../../controllers";
 import {toDateString} from "../../controllers/DateFormat";
 import {cacheDatas, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, useCurrentUserData, UserRole} from "../../controllers/UserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Select from "../../controls/Select/Select";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
@@ -28,7 +29,7 @@ const MutualSubscribeItem = (
         typeId,
         unsubscribeLabel,
     }) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();

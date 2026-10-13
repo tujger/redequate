@@ -17,6 +17,7 @@ export default ({fetchAlertContent}) => {
     const store = useStore();
 
     React.useEffect(() => {
+        if (!currentUserData.id) return;
         let lastVisit = 0;
         if (store.getState() && store.getState().alertsVisit) {
             const value = store.getState().alertsVisit;
@@ -73,8 +74,7 @@ export default ({fetchAlertContent}) => {
             listener.remove();
             dispatch({type: MenuBadge.RESET, page: pages.alerts});
         }
-        // eslint-disable-next-line
-    }, []);
+    }, [currentUserData.id]);
 
     console.log("[AlertsDaemon] installed")
     return null;

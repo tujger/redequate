@@ -6,7 +6,8 @@ import counterControl from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, useCurrentUserData, UserRole} from "../../controllers/UserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import TextField from "../../controls/TextField/TextField";
 import ConfirmComponent from "../ConfirmComponent";
 import InfoComponent from "../InfoComponent";
@@ -41,7 +42,7 @@ export default props => {
         unsubscribeComponent = <ActionComponent label={unsubscribeLabel}/>,
     } = props;
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
