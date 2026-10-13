@@ -1,13 +1,12 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import React from "react";
 import {useDispatch} from "react-redux";
-import {useBackend} from "../../../../packages/backend";
-import {useDatabase} from "../../../../packages/database";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import ListItemComponent from "../../../components/ListItemComponent";
 import ProgressView from "../../../components/ProgressView";
+import {useBackend, useDatabase} from "../../../controllers";
 import {cacheDatas, useFirebase} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
