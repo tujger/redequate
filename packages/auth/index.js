@@ -1,3 +1,1 @@
-export {default as useAuth} from "./src/useAuth";
-export {default as useCurrentUserData} from "./src/useCurrentUserData";
 export {default as AuthBase} from "./src/AuthBase";
