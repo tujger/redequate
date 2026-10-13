@@ -1,7 +1,8 @@
 import React from "react";
 import {Link} from "react-router-dom";
 import LanguageComponent from "../../components/LanguageComponent";
-import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import Menu from "../../controls/Menu/Menu";
 import menuStyles from "../../controls/Menu/Menu.module.css";
@@ -46,7 +47,7 @@ const MenuLink = ({item, onClick, selected, userData}) => {
 };
 
 export default ({items, onClick}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const menuItems = items.reduce((result, list) => {
         const visible = filterItems(list, currentUserData);
         if (visible.length > 1 && !Array.isArray(visible[0]) && !Array.isArray(visible[1])

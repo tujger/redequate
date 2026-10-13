@@ -10,7 +10,8 @@ import {enableDisabledPages, useStore} from "../../controllers/General";
 import {NotificationsSnackbar} from "../../controllers/Notifications";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {refreshAll} from "../../controllers/Store";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../../controllers/WrapperControl";
 import Button from "../../controls/Button/Button";
 import MainAppbar from "./MainAppbar";
@@ -45,7 +46,7 @@ export default (props) => {
     const pointerRef = React.useRef(null);
     const copyrightClicks = React.useRef(0);
     const {t} = useTranslation();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const store = useStore();
 
     const closeDrawer = React.useCallback(() => setMobileOpen(false), []);

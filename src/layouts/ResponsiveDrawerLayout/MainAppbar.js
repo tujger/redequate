@@ -5,14 +5,15 @@ import {Link, Route, Switch} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
 import {usePages} from "../../controllers/General";
-import {currentRole, matchRole, needAuth, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {currentRole, matchRole, needAuth, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MainAppbar.module.css";
 
 function MainAppbar(props) {
     const {badge, className, onHamburgerClick, label, logo} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const pages = usePages();
     const onPointerDown = useRippleEffect();
 
