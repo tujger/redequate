@@ -188,14 +188,14 @@ export class UserData {
     }
 
     toJSON() {
-        return {
+        return structuredClone({
             id: this._state.id,
             role: this._state.role,
             public: this._state.public,
             private: this._state.private,
             requested: this._state.requestedTimestamp,
             loaded: this._state.loaded,
-        };
+        });
     }
 
     toString() {
