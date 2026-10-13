@@ -13,7 +13,8 @@ import {fetchDeviceId, usePages, useStore} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import {logoutUser, UserRole, UserData} from "../controllers/UserData";
+import {useCurrentUserData} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -32,7 +33,7 @@ function Login(props) {
         transformUserDataOnFirstLogin,
     } = props;
     const auth = useAuth();
-    const currentUserData = useCurrentUserData();
+    const [currentUserData, setCurrentUserData] = useCurrentUserData();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
@@ -54,11 +55,10 @@ function Login(props) {
     const errorCallback = error => {
         notifySnackbar(error);
         dispatch(ProgressView.HIDE);
-        dispatch({type: "currentUserData", userData: null});
         setState(state => ({...state, requesting: false}));
         // refreshAll(store);
         window.localStorage.removeItem(pages.login.route);
-        return logoutUser({auth, store});
+        return logoutUser({auth, onLogout: () => setCurrentUserData(null)});
     };
 
     const finallyCallback = () => {
@@ -68,10 +68,9 @@ function Login(props) {
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser({auth, store})
+        logoutUser({auth, onLogout: () => setCurrentUserData(null)})
             .then(() => {
                 const provider = "google.com";
-                dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState(state => ({...state, requesting: true}));
                     return auth.signInWithPopup(provider)
@@ -88,10 +87,9 @@ function Login(props) {
     const requestLoginFacebook = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser({auth, store})
+        logoutUser({auth, onLogout: () => setCurrentUserData(null)})
             .then(() => {
                 const provider = "facebook.com";
-                dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState(state => ({...state, requesting: true}));
                     return auth.signInWithPopup(provider)
@@ -107,7 +105,7 @@ function Login(props) {
 
     const requestLoginToken = (token) => {
         dispatch(ProgressView.SHOW);
-        logoutUser({auth, store})
+        logoutUser({auth, onLogout: () => setCurrentUserData(null)})
             .then(() => {
                 setState(state => ({...state, requesting: true}));
                 return auth.signInWithCredential(token)
@@ -214,8 +212,7 @@ function Login(props) {
         }
         const updateCurrentUserData = async props => {
             const {userData} = props;
-            useCurrentUserData(userData);
-            dispatch({type: "currentUserData", userData});
+            setCurrentUserData(userData);
             refreshAll(store);
             return props;
         }
@@ -302,7 +299,7 @@ function Login(props) {
         history.goBack();
     }
 
-    if (currentUserData && currentUserData.id) {
+    if (currentUserData.id) {
         if (location.pathname === pages.login.route) {
             return <Redirect to={pages.profile.route}/>
         } else {
