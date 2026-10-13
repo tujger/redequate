@@ -3,7 +3,9 @@ import {useTranslation} from "react-i18next";
 import {connect} from "react-redux"
 import {fetchDeviceId} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserData} from "../controllers/useCurrentUserData";
+import {UserData} from "../controllers/UserData";
+import {useDatabase} from "../controllers";
 import Select from "../controls/Select/Select";
 import {languageReducer} from "../reducers/languageReducer";
 
@@ -12,15 +14,18 @@ const mapStateToProps = ({language}) => ({
 });
 
 export default connect(mapStateToProps)(({className, dispatch, ...props}) => {
-    const currentUserData = useCurrentUserData();
+    const [currentUserData, setCurrentUserData] = useCurrentUserData();
+    const database = useDatabase();
     const {i18n, t} = useTranslation();
 
     const handleLanguageChange = event => {
         console.log(`[LanguageComponent] change to ${event.target.value}`);
         i18n.changeLanguage(event.target.value);
         if (currentUserData.id) {
-            currentUserData.setPrivate(fetchDeviceId(), {locale: event.target.value})
-                .then(() => currentUserData.savePrivate())
+            const userData = new UserData(database).fromJSON(currentUserData.toJSON());
+            userData.setPrivate(fetchDeviceId(), {locale: event.target.value})
+                .then(() => userData.savePrivate())
+                .then(() => setCurrentUserData(userData))
                 .catch(notifySnackbar)
         } else {
             dispatch({type: languageReducer.CHANGE, locale: event.target.value});
