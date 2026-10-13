@@ -2,12 +2,12 @@ import React from "react";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import ListItemComponent from "../components/ListItemComponent";
-import {cacheDatas, toDateString, useCurrentUserData, useDatabase, UserData} from "../controllers";
+import {cacheDatas, toDateString, useCurrentUserDataValue, useDatabase, UserData} from "../controllers";
 import chatStyles from "./styles/ChatItem.module.css";
 
 export default (props) => {
     const {data, skeleton, textComponent} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const [state, setState] = React.useState({});
     const {authorData} = state;

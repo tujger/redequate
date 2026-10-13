@@ -4,7 +4,7 @@ import {useDispatch} from "react-redux";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import Pagination from "../controllers/FirebasePagination";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import ChatsDaemon from "./ChatsDaemon";
 import ChatsItem from "./ChatsItem";
 import baseStyles from "../themes/Base.module.css";
@@ -16,7 +16,7 @@ export default (
         userComponent = userData => userData.name,
         ...rest
     }) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const dispatch = useDispatch();
     const {t} = useTranslation();
 

@@ -8,14 +8,15 @@ import {lazyListComponentReducer} from "../components/LazyListComponent/lazyList
 import ListItemComponent from "../components/ListItemComponent";
 import {useDatabase} from "../controllers";
 import {cacheDatas, usePages} from "../controllers/General";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
+import {UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import UserName from "../controls/UserName/UserName";
 import {ChatMeta} from "./ChatMeta";
 import chatStyles from "./styles/ChatsItem.module.css";
 
 export default props => {
     const {id, skeleton, label, onClick, userComponent, textComponent} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();

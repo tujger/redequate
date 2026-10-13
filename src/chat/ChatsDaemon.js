@@ -6,13 +6,14 @@ import {useBackend, useDatabase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
+import {UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import {ChatMeta} from "./ChatMeta";
 import {chatsCounterReducer} from "./chatsCounterReducer";
 
 export default ({clearText = text => text}) => {
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
@@ -20,6 +21,7 @@ export default ({clearText = text => text}) => {
     const pages = usePages();
 
     React.useEffect(() => {
+        if (!currentUserData.id) return;
         const daemonNew = firebase.database().ref("_chats").child(currentUserData.id);
         const metas = {};
         const chatsWithNewMessages = [];
@@ -103,7 +105,7 @@ export default ({clearText = text => text}) => {
                 id && metas[id] && metas[id].unwatch();
             }
         }
-    }, []);
+    }, [currentUserData.id]);
     console.log("[ChatsDaemon] installed")
     return null;
 }

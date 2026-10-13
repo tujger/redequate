@@ -7,7 +7,8 @@ import ProgressView from "../components/ProgressView";
 import {useDatabase} from "../controllers";
 import {cacheDatas, useFirebase, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
+import {UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
 import ChatHeader from "./ChatHeader";
@@ -25,7 +26,7 @@ const Chat = (props) => {
         textComponent = text => <div>{text}</div>,
         userComponent = userData => userData.name,
     } = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
