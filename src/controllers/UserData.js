@@ -9,12 +9,12 @@ export {
 } from "../../packages/common";
 
 export class UserData extends UserDataCommon {
-    _database;
-    _lastVisitUpdate = 0;
+    #database;
+    #lastVisitUpdate = 0;
 
     constructor(database) {
         super();
-        this._database = database;
+        this.#database = database;
         for (const method of ["delete", "fetch", "fetchPrivate", "save", "savePublic", "savePrivate", "updateVisitTimestamp"]) {
             this[method] = this[method].bind(this);
         }
@@ -36,12 +36,9 @@ export class UserData extends UserDataCommon {
                     if (state.public[x] !== undefined && (state.public[x] || "").constructor.name === "String") {
                         state.public[x] = (state.public[x] || "").trim();
                     }
-
                     updates[`users_public/${state.id}/${x}`] = state.public[x];
                 }
-
             }
-
             updates[`users_public/${state.id}/updated`] = SERVER_TIMESTAMP;
         }
 
@@ -53,14 +50,10 @@ export class UserData extends UserDataCommon {
                         if (state.private[deviceId][x] !== undefined && (state.private[deviceId][x] || "").constructor.name === "String") {
                             state.private[deviceId][x] = (state.private[deviceId][x] || "").trim();
                         }
-
                         updates[`users_private/${state.id}/${deviceId}/${x}`] = state.private[deviceId][x];
                     }
-
                 }
-
             }
-
         }
 
         if (!state.public.updated) {
@@ -78,7 +71,7 @@ export class UserData extends UserDataCommon {
         // updates[`users_private/${state.id}`] = null;
 
         console.log("[UserData] delete", state.id);
-        await this._database.delete(["users_public", state.id]);
+        await this.#database.delete(["users_public", state.id]);
         // await firebaseMessaging.database().ref().update(updates);
         cacheDatas.remove(state.id);
         return this;
@@ -279,98 +272,62 @@ export class UserData extends UserDataCommon {
     updateVisitTimestamp(database) {
         const state = this._getState();
         const now = new Date().getTime();
-        if (state.id && state.persisted && (now - this._lastVisitUpdate) > 60000) {
+        if (state.id && state.persisted && (now - this.#lastVisitUpdate) > 60000) {
             database.read(["users_public", state.id, "email"])
                 .then(async value => {
                     if (value === undefined) return;
                     await database.write(["users_public", state.id, "visit"], database.TIMESTAMP);
-                    this._lastVisitUpdate = now;
+                    this.#lastVisitUpdate = now;
                 })
+                .catch(console.error);
         }
         return this;
     }
 }
 
-export function watchUserChanged({auth, database, store}) {
-    return new Promise((resolve, reject) => {
-        try {
-            const refreshAction = () => {
-                currentUserDataInstance.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
-                    .then(userData => {
-                        useCurrentUserData(userData);
-                        store.dispatch({type: "currentUserData", userData});
-                        resolve();
-                    })
-                    .catch(notifySnackbar)
-            }
-
-            auth.onAuthStateChanged(async userData => {
-                if (!currentUserDataInstance.id || !userData) return;
-                let changed = false;
-                if (currentUserDataInstance.role === UserRole.USER_NOT_VERIFIED && userData.verified) {
-                    console.warn("[UserData] verified", currentUserDataInstance.id, userData?.toJSON());
-                    changed = true;
-                } else if (userData.verified && currentUserDataInstance.verified !== userData.verified) {
-                    console.warn("[UserData] changed", currentUserDataInstance.id, userData?.toJSON());
-                    changed = true;
-                } else if (userData && userData.id === currentUserDataInstance.id) {
-                    const updated = await database.read(["users_public", userData.id, "updated"])
-                    if (updated > currentUserDataInstance.public.updated) {
-                        console.warn(`[UserData] last timestamp ${updated} > than saved ${currentUserDataInstance.public.updated}`);
-                        changed = true;
-                    }
-
-                }
-
-                if (changed) {
-                    return notifySnackbar({
-                        title: "Your profile has been changed. Please refresh for update",
-                        variant: "warning",
-                        priority: "high",
-                        buttonLabel: "Refresh",
-                        onButtonClick: refreshAction
-                    })
-                }
-
-            });
-        } catch (error) {
-            reject(error);
+export function watchUserChanged({auth, database, getUserData, onUserChanged}) {
+    return new Promise(resolve => {
+        const refreshAction = () => {
+            const snapshot = getUserData();
+            if (!snapshot?.id) return;
+            new UserData(database).fromJSON(snapshot.toJSON())
+                .fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
+                .then(userData => {
+                    if (getUserData()?.id !== userData.id) return;
+                    onUserChanged(userData);
+                    resolve();
+                })
+                .catch(notifySnackbar)
         }
 
+        auth.onAuthStateChanged(async userData => {
+            if (!userData?.id) {
+                onUserChanged(userData);
+                return;
+            }
+            const currentUserData = getUserData();
+            if (currentUserData.id !== userData.id) return;
+            const changed = userData.verified && (
+                currentUserData.role === UserRole.USER_NOT_VERIFIED ||
+                currentUserData.public.emailVerified !== userData.verified
+            ) || await database.read(["users_public", userData.id, "updated"]) > currentUserData.public.updated;
+            if (!changed) return;
+
+            console.warn("[UserData] changed", currentUserData.id, userData.toJSON());
+            return notifySnackbar({
+                title: "Your profile has been changed. Please refresh for update",
+                variant: "warning",
+                priority: "high",
+                buttonLabel: "Refresh",
+                onButtonClick: refreshAction
+            })
+        });
     })
 }
 
-export const logoutUser = async ({auth, store}) => {
-    // window.localStorage.removeItem("notification-token");
+export const logoutUser = async ({auth, onLogout}) => {
     await auth.signOut();
-    console.log("[UserData] logout", currentUserDataInstance);
-    currentUserDataInstance = new UserData();
-    restoreLanguage(store);
-    if (store) {
-        store.dispatch({type: "currentUserData", userData: null});
-    }
-
+    onLogout();
+    restoreLanguage();
     return null;
-}
-
-export function currentUserData(state = {
-    userData: null
-}, action) {
-    const {type, userData} = action;
-    if (type === "currentUserData") {
-        // This legacy accessor stores an instance; it is not a React hook.
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        useCurrentUserData(userData);
-        console.warn("[UserData] set current", userData && userData.public);
-        return {...state, userData: userData ? userData.toJSON() : null};
-    } else {
-        return state;
-    }
-}
-
-let currentUserDataInstance = new UserData();
-export const useCurrentUserData = userData => {
-    if (userData !== undefined) currentUserDataInstance = userData;
-    if (userData === null) currentUserDataInstance = new UserData();
-    return currentUserDataInstance;
-}
+};
