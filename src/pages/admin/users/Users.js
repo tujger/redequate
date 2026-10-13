@@ -5,8 +5,9 @@ import {Link} from "react-router-dom";
 import FlexFabComponent from "../../../components/FlexFabComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import LoadingComponent from "../../../components/LoadingComponent";
 import ProgressView from "../../../components/ProgressView";
-import {useDatabase} from "../../../controllers";
+import {useDatabase, useRedirectToLogin} from "../../../controllers";
 import Pagination from "../../../controllers/FirebasePagination";
 import {usePages} from "../../../controllers/General";
 import {UserData} from "../../../controllers/UserData";
@@ -21,6 +22,7 @@ function Users(props) {
     const database = useDatabase();
     const dispatch = useDispatch();
     const pages = usePages();
+    const shouldRedirectToLogin = useRedirectToLogin();
 
     const handleHeaderChange = type => evt => {
         if (type === "clear") {
@@ -46,6 +48,8 @@ function Users(props) {
         const data = await new UserData(database).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
         return {key: item.key, value: data};
     }
+
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
 
     let pagination;
     let itemTransform;
