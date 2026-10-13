@@ -379,7 +379,7 @@ export default ({allowOwner = true}) => {
 
     React.useEffect(() => {
         if (!tag || !tag.uid || tag.uid === "0") return;
-        UserData().fetch(tag.uid)
+        new UserData().fetch(tag.uid)
             .then(userData => {
                 setState(state => ({...state, owner: `$[user:${tag.uid}:${userData.name}]`}));
             })
