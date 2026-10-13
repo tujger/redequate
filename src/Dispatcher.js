@@ -9,6 +9,7 @@ import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-
 import {resolveAuth} from "../packages/auth/src";
 import {resolveBackend} from "../packages/backend/src";
 import {_AppContext} from "../packages/common/AppContext";
+import {useDatabase} from "../packages/database";
 import {resolveDatabase} from "../packages/database/src";
 import {resolveMessaging} from "../packages/messaging/src";
 import {resolveStorage} from "../packages/storage/src";
@@ -215,7 +216,7 @@ export default (props) => {
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
-            const {authUser, deviceId, store} = props;
+            const {authUser, database, deviceId, store} = props;
             if (!authUser) {
                 store.dispatch({type: "currentUserData", userData: null});
                 return props;
@@ -223,9 +224,9 @@ export default (props) => {
             try {
                 const savedUserData = store.getState().currentUserData?.userData;
                 const userData = savedUserData?.id === authUser.id
-                    ? new UserData().fromJSON(savedUserData)
+                    ? new UserData(database).fromJSON(savedUserData)
                     // eslint-disable-next-line react/prop-types -- authUser is an Auth model passed between pipeline steps.
-                    : new UserData().fromJSON(authUser.toJSON());
+                    : new UserData(database).fromJSON(authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};
@@ -426,7 +427,6 @@ const DispatcherInitialized = (props) => {
         auth,
         backend,
         buildPages,
-        currentUserData,
         copyright,
         database,
         firebase,
@@ -437,6 +437,7 @@ const DispatcherInitialized = (props) => {
         theme,
         title,
         textTranslation,
+        userData: currentUserData,
         windowData,
         metaInfo
     } = props;
@@ -485,9 +486,11 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
         title,
         logo,
         random,
+        userData,
         iosLayout = true
     } = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserData(userData);
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -499,7 +502,7 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
         const updateTitle = (location) => {
             console.log("[Dispatcher]", JSON.stringify(location));
             try {
-                if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
+                if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp(database);
             } catch (error) {
                 console.error(error);
             }
