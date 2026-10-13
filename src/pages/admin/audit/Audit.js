@@ -2,7 +2,9 @@ import React from "react";
 import {connect, useDispatch} from "react-redux";
 import {withRouter} from "react-router-dom";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import LoadingComponent from "../../../components/LoadingComponent";
 import NavigationToolbar from "../../../components/NavigationToolbar";
+import {useRedirectToLogin} from "../../../controllers";
 import {usePages} from "../../../controllers/General";
 import Tabs from "../../../controls/Tabs/Tabs";
 import Activity from "./Activity";
@@ -12,6 +14,9 @@ import Errors from "./Errors";
 const Audit = props => {
     const dispatch = useDispatch();
     const pages = usePages();
+    const shouldRedirectToLogin = useRedirectToLogin();
+
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
 
     const {
         children = [
