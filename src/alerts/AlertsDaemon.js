@@ -1,7 +1,7 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import {useDatabase} from "../../packages/database";
+import {useDatabase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 import {MenuBadge, usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
