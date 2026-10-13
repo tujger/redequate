@@ -15,13 +15,13 @@ import LoadingComponent from "../../components/LoadingComponent";
 import MentionedSelectComponent from "../../components/MentionedSelectComponent";
 import {tokenizeText} from "../../components/MentionedTextComponent";
 import ProgressView from "../../components/ProgressView";
-import {useDatabase} from "../../controllers";
+import {useDatabase, useRedirectToLogin} from "../../controllers";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {UserData} from "../../controllers/UserData";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {UserData} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import Select from "../../controls/Select/Select";
 import Switch from "../../controls/Switch/Switch";
@@ -38,7 +38,7 @@ export default ({uploadable}) => {
     const firebase = useFirebase();
     const history = useHistory();
     const {maintenance: maintenanceGiven} = useMetaInfo();
-    const {t} = useTranslation();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({
         error: null,
         details: {},
@@ -46,7 +46,9 @@ export default ({uploadable}) => {
         message: "Sorry, site is under technical maintenance now. Please come back later.",
         tab: 0,
     });
+    const {t} = useTranslation();
     const windowData = useWindowData();
+
     const isNarrow = windowData.isNarrow();
 
     const {
@@ -268,6 +270,7 @@ export default ({uploadable}) => {
         {icon: <AllIcon/>, label: "All options", value: -1},
     ];
     React.useEffect(() => {
+        if (shouldRedirectToLogin) return;
         const prepareFetching = async () => {
             dispatch(ProgressView.SHOW);
             setState(state => ({...state, disabled: true}));
@@ -278,15 +281,15 @@ export default ({uploadable}) => {
             return {...props, blockedNames};
         }
         const fetchMaintenance = async props => {
-            const meta = await database.read(["meta","maintenance"]);
+            const meta = await database.read(["meta", "maintenance"]);
             return {...props, maintenance: Boolean(meta), ...(meta || {})};
         }
         const fetchSettings = async props => {
-            const settings = (await database.read(["meta","settings"])) || {};
+            const settings = (await database.read(["meta", "settings"])) || {};
             return {...props, ...settings};
         }
         const fetchSupport = async props => {
-            const supportId = await database.read(["meta","support"]);
+            const supportId = await database.read(["meta", "support"]);
             if (supportId) {
                 return new UserData(database).fetch(supportId)
                     .then(userData => ({
@@ -318,9 +321,9 @@ export default ({uploadable}) => {
             .then(updateState)
             .catch(notifySnackbar)
             .finally(finalizeFetching);
-    }, [])
+    }, [shouldRedirectToLogin])
 
-    if (loaded === undefined) return <LoadingComponent/>;
+    if (shouldRedirectToLogin || loaded === undefined) return <LoadingComponent/>;
     const selectedTab = tabItems.find(item => item.value === tab);
     return <div className={baseStyles.content}>
         <Tabs

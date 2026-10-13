@@ -2,8 +2,9 @@ import MailIcon from "@mui/icons-material/Mail";
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import LoadingComponent from "../../components/LoadingComponent";
 import ProgressView from "../../components/ProgressView";
-import {useAuth} from "../../controllers";
+import {useAuth, useRedirectToLogin} from "../../controllers";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {TextMaskEmail} from "../../controllers/TextMasks";
@@ -17,6 +18,7 @@ export default () => {
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({requesting: false, error: ""});
 
     const {email = "", requesting, error = ""} = state;
@@ -41,6 +43,7 @@ export default () => {
             });
     };
 
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
     return <div className={baseStyles.content}>
         <div className={styles.fieldRow}>
             <MailIcon/>

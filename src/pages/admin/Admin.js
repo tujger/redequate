@@ -1,5 +1,7 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
+import LoadingComponent from "../../components/LoadingComponent";
+import {useRedirectToLogin} from "../../controllers";
 import {usePages} from "../../controllers/General";
 import Button from "../../controls/Button/Button";
 import baseStyles from "../../themes/Base.module.css";
@@ -8,6 +10,9 @@ import adminStyles from "./styles/Admin.module.css";
 export default ({fetchMenu, classes = {}}) => {
     const history = useHistory();
     const pages = usePages();
+    const shouldRedirectToLogin = useRedirectToLogin();
+
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
 
     const itemsFlat = Object.keys(pages)
         .map(item => pages[item])
