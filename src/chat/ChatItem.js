@@ -16,7 +16,7 @@ export default (props) => {
     React.useEffect(() => {
         if (skeleton) return;
         let isMounted = true;
-        const authorData = cacheDatas.put(data.uid, UserData(database));
+        const authorData = cacheDatas.put(data.uid, new UserData(database));
         authorData.fetch(data.uid, [UserData.IMAGE, UserData.NAME])
             .then(() => isMounted && setState({...state, authorData}))
 

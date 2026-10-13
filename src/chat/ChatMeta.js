@@ -92,10 +92,12 @@ export function ChatMeta(database) {
             tasks.push(new Promise((resolve, reject) => {
                 database.read(["chats", _id], {orderBy: "created"})
                     .then(value => {
-                        Object.values(value).forEach(last => {
-                            _lastMessage = last;
-                            _timestamp = last.created;
-                        });
+                        Object.entries(value || {}).forEach(([key, val]) => {
+                            if (key !== "!meta") {
+                                _lastMessage = val;
+                                _timestamp = val.created;
+                            }
+                        })
                         resolve();
                     }).catch(reject)
             }));
@@ -218,6 +220,7 @@ export function ChatMeta(database) {
                 try {
                     updatesMeta["members"] = _meta.members;
                     _activeUids = Object.keys(_meta.members || {});
+                    console.log("META", _id, updatesMeta);
                     await chatsRef.child(_id).child("!meta").update(updatesMeta);
                     const updatesIndex = {};
                     await _body.forEachUid(uid => {
@@ -252,7 +255,7 @@ export function ChatMeta(database) {
             if (!_persisted) return;
             if (!_activeUids.indexOf(uid) < 0) return;
             console.log(`[ChatMeta] update visit for ${_id}`);
-            return database.write(["chats", "!meta", "members", uid], database.TIMESTAMP);
+            return database.write(["chats", id, "!meta", "members", uid], database.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = ({value}) => {

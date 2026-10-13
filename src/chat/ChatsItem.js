@@ -37,7 +37,7 @@ export default props => {
             .then(() => chatMeta.fetch())
             .then(() => {
                 const uid = chatMeta.uidOtherThan(currentUserData.id);
-                return cacheDatas.put(uid, UserData(database)).fetch(uid, [UserData.IMAGE, UserData.NAME]);
+                return cacheDatas.put(uid, new UserData(database)).fetch(uid, [UserData.IMAGE, UserData.NAME]);
             })
             .then(userData => {
                 chatMeta.watch(({removed}) => {

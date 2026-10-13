@@ -34,7 +34,7 @@ export default ({clearText = text => text}) => {
             if (data.uid === currentUserData.id) return;
             console.log(`[ChatsDaemon] new message: ${JSON.stringify(data)}`)
             // if (!document.hasFocus()) return;
-            const userData = cacheDatas.put(data.uid, UserData(database));
+            const userData = cacheDatas.put(data.uid, new UserData(database));
             userData.fetch(data.uid, [UserData.NAME])
                 .then(() => notifySnackbar({
                     id: pages.chat.route + chatId,
