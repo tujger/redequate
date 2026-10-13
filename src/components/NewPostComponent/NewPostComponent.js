@@ -9,7 +9,8 @@ import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, useCurrentUserData, UserRole} from "../../controllers/UserData";
+import {matchRole, normalizeSortName, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import LoadingComponent from "../LoadingComponent";
@@ -52,7 +53,7 @@ const NewPostComponent = props => {
         UploadProps = {}
     } = props;
     const auth = useAuth();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
@@ -66,7 +67,7 @@ const NewPostComponent = props => {
 
     const handleOpen = evt => {
         evt && evt.stopPropagation();
-        if (!currentUserData || !currentUserData.id) {
+        if (!currentUserData.id) {
             history.push(pages.login.route);
             return;
         }
