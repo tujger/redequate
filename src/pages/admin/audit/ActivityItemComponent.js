@@ -44,7 +44,7 @@ export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => 
             const {uid} = props;
             if (!uid) return {...props, userData: {id: "", name: "Anonymous"}};
             if (uid === "0") return {...props, userData: {id: "0", name: "No user"}};
-            return cacheDatas.fetch(uid, id => UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]))
+            return cacheDatas.fetch(uid, id => new UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]))
                 .then(userData => ({...props, userData}))
                 .catch(error => catchUserFailed(uid)(error).then(userData => ({...props, userData})));
         }
@@ -70,7 +70,7 @@ export default ({data, classes: givenClasses, skeleton, label, onItemClick}) => 
             const userDatas = await Promise.all(uids
                 .map(async item => {
                     if (item.id === "0") return {key: item.key, userData: {id: item.id, name: "No user"}};
-                    return UserData(database)
+                    return new UserData(database)
                         .fetch(item.id, [UserData.NAME, UserData.IMAGE])
                         .then(userData => ({key: item.key, userData}))
                         .catch(error => catchUserFailed(item.id)(error)

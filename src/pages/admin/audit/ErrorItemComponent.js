@@ -60,7 +60,7 @@ export default ({data, skeleton, label, onUserClick}) => {
     React.useEffect(() => {
         if (!data || !data.value || !data.value.uid) return;
         let isMounted = true;
-        const userData = cacheDatas.put(data.value.uid, UserData(database));
+        const userData = cacheDatas.put(data.value.uid, new UserData(database));
         userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
             .then(() => isMounted && setState(state => ({...state, userData})))
             .catch(error => {

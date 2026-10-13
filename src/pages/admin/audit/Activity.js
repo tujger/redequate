@@ -227,7 +227,7 @@ const Activity = props => {
                         }}
                         onChange={(evt, value, token) => {
                             token && cacheDatas.fetch(token.id, id => {
-                                return UserData(database).fetch(id);
+                                return new UserData(database).fetch(id);
                             }).then(() => handleItemClick("uid")(null, token.id))
                                 .catch(notifySnackbar);
                         }}
