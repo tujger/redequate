@@ -437,7 +437,6 @@ const DispatcherInitialized = (props) => {
         theme,
         title,
         textTranslation,
-        userData: currentUserData,
         windowData,
         metaInfo
     } = props;
@@ -451,9 +450,9 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    console.log("[Context]", {auth, backend, currentUserData, database, messaging, storage});
+    console.log("[Context]", {auth, backend, database, messaging, storage});
 
-    return <_AppContext value={{auth, backend, currentUserData, database, messaging, storage}}>
+    return <_AppContext value={{auth, backend, database, messaging, storage}}>
         <Provider store={store}>
             <>
                 {theme}
@@ -486,10 +485,9 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
         title,
         logo,
         random,
-        userData,
         iosLayout = true
     } = props;
-    const currentUserData = useCurrentUserData(userData);
+    const currentUserData = useCurrentUserData();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
