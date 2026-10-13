@@ -2,7 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useHistory} from "react-router-dom";
 import {useMetaInfo, usePages} from "../controllers/General";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import {getScrollPosition} from "../helpers/useScrollPosition";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
 import ConfirmComponent from "./ConfirmComponent";
@@ -25,7 +25,7 @@ const loadGoogleIdentity = () => {
 };
 
 const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();

@@ -4,12 +4,13 @@ import {Route, Switch, useHistory} from "react-router-dom";
 import LoadingComponent from "./LoadingComponent";
 import {useMetaInfo, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, needAuth, UserRole as UserData, useCurrentUserData} from "../controllers/UserData";
+import {matchRole, needAuth, UserRole as UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import SystemAlert from "./SystemAlert";
 
 export default props => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
