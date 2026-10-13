@@ -8,9 +8,10 @@ import AvatarView from "../../../components/AvatarView";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import LoadingComponent from "../../../components/LoadingComponent";
 import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
 import NavigationToolbar from "../../../components/NavigationToolbar";
-import {useDatabase} from "../../../controllers";
+import {useDatabase, useRedirectToLogin} from "../../../controllers";
 import {toDateString} from "../../../controllers/DateFormat";
 import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useWindowData} from "../../../controllers/General";
@@ -34,6 +35,7 @@ const Activity = props => {
     } = props;
     const database = useDatabase();
     const dispatch = useDispatch();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({});
     const windowData = useWindowData();
 
@@ -102,6 +104,8 @@ const Activity = props => {
         key={item.key}
         onItemClick={handleItemClick}
     />
+
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
 
     let pagination;
     switch (activityMode) {
@@ -192,18 +196,18 @@ const Activity = props => {
                         title={"End date"}
                     />
                 </div>}
-            <Button
-                className={[activitySort === "asc" ? activityStyles.sortAsc : activityStyles.sortDesc].join(" ")}
-                icon={<SortIcon/>}
-                onClick={handleSortClick}
-                title={"Sort activity"}
-            />
-        </>}
+                <Button
+                    className={[activitySort === "asc" ? activityStyles.sortAsc : activityStyles.sortDesc].join(" ")}
+                    icon={<SortIcon/>}
+                    onClick={handleSortClick}
+                    title={"Sort activity"}
+                />
+            </>}
             rightButton={<Button
-                    icon={<RefreshIcon/>}
-                    onClick={() => setState({...state, random: Math.random()})}
-                    title={"Refresh activity"}
-                />}
+                icon={<RefreshIcon/>}
+                onClick={() => setState({...state, random: Math.random()})}
+                title={"Refresh activity"}
+            />}
         >
             <div className={activityStyles.toolbarRow}>
                 <div className={activityStyles.modeCell}>
