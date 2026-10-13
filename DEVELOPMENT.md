@@ -1773,3 +1773,73 @@ tests using callable construction or extend are intentionally unchanged at the
 user's request and require migration before those suites can pass completely.
 Functions production sources have no callable UserData construction; their tests
 still contain callable/extend cases. No Functions deployment was performed.
+
+### Internal global state contract
+
+Decision: use internal GlobalStore and inheritable UseAbstract with AppContext
+for new browser state. Module-level registration creates one store per key;
+the default browser AppContext uses globalAppState so values survive component
+and provider remounts. Updates notify only that store's subscribers through
+useSyncExternalStore, with Object.is suppressing unchanged values.
+Other Redux state remains during incremental migration; the generic state classes
+stay internal.
+
+GlobalStore owns development deepFreeze. Writes evaluate the updater, apply the
+normalization callback supplied by UseAbstract, freeze the result and then check
+Object.is before storing/notifying. Initial values follow the same preparation;
+isolated AppState stores retain the normalization callback through fork().
+Own data fields of objects, arrays and class instances are traversed/frozen through
+descriptors, without invoking getters or traversing prototypes. Functions and
+accessor functions are not traversed/frozen; their references are preserved.
+Mutating frozen data through a model method is prohibited in development.
+Web UserData keeps its database service and visit counter in #database and
+#lastVisitUpdate so reflection does not freeze shared services or runtime bookkeeping.
+Writes preserve the supplied value's identity; no cloning or serialization occurs.
+UserData.toJSON owns deep copying of exported model data so each export is
+independent and a new model can edit a frozen user's export without sharing nested references.
+This does not copy values on store writes or alter the JSON record format.
+
+The currentUserData hook owns the current UserData instance, including prototype,
+methods and provider dependencies. Its existing [value, setValue], value-only/set-only
+hooks and imperative getter are exposed through the web controllers API. Its
+initial value is new UserData(); null/undefined writes create a new anonymous model.
+Models without id retain their other fields for a future login merge. Automatic
+merging is not implemented. The previous snapshot conversion/read-model cache
+was rejected because it removed model functionality and changed reference identity.
+
+The legacy UserData accessor, current-user Redux reducer/actions and React bridge
+are removed. Dispatcher and login/profile/language handlers publish actual models.
+Logout resets the hook only after successful Auth sign-out; watchers use getter/
+update callbacks and ignore results for a different session user. Local operations
+may construct separate models, but the hook stores exactly the model they publish.
+
+Different hook keys own different stores: writes do not replace other values or
+notify other subscribers. Deliberately storing one object in multiple stores shares
+that reference. Mutating an instance and reassigning the same reference does not
+notify because Object.is sees no replacement. SSR request isolation remains deferred.
+
+Current-user Redux/localStorage caching is removed: existing persisted user fields
+are discarded during Redux restoration, while other stored slices remain.
+Auth.resolveCurrentUser restores the user on page load, returning an anonymous
+UserData when signed out. Firebase waits for authStateReady; both Firebase and
+LocalTest listeners also return anonymous models. Dispatcher stores that Auth
+result through the hook and enriches signed-in profiles from database; Redux does
+not decide how to resolve the user. This avoids a second state owner;
+keeping the Redux bridge or a separate local user cache was rejected. The web
+consumers now use the specialized model hook API; backend/Android record formats are unchanged.
+SSR remains deferred.
+
+Affected consumers: both web applications are migrated to the model hooks;
+the legacy UserData accessor and current-user Redux slice are no longer supported.
+Android data formats are unchanged. SSR request isolation and hydration are
+deferred; createAppState/getServerSnapshot are scaffolding, not a completed SSR
+contract. Status: React DOM checks verify direct model identity and methods,
+anonymous data/reset, separate hook types and subscriber isolation, Object.is,
+GlobalStore preparation for shared/isolated stores, production behavior and logout.
+Class-field checks verify frozen model data, unchanged method/accessor references,
+no getter evaluation, and mutable private database/visit bookkeeping.
+Write-order checks verify updater evaluation before normalization, freezing before
+notification, and Object.is suppression against the normalized value.
+Framework ESM/CommonJS and both consumer production builds pass. Demo useBackend imports now use the root export.
+Existing test fixtures for the removed accessor/reducer require a separate
+authorized migration; no test files were changed in this session.
