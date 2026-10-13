@@ -23,6 +23,7 @@ import SystemAlert from "../components/SystemAlert";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {TextMaskPhone} from "../controllers/TextMasks";
+import {useCurrentUserData as useCurrentUserData2, useCurrentUserDataValue} from "../controllers/useCurrentUserData2";
 import {matchRole, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
@@ -110,6 +111,8 @@ const Profile = (
     const {id} = useParams();
     const [state, setState] = React.useState({disabled: false});
     const {t} = useTranslation();
+    const currentUserData1 = useCurrentUserDataValue()
+    console.log(currentUserData1);
 
     const {userData, disabled} = state;
 

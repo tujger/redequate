@@ -31,6 +31,7 @@ import notifySnackbar from "./controllers/notifySnackbar";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
+import {useCurrentUserData as useCurrentUserData2, useSetCurrentUserData} from "./controllers/useCurrentUserData2";
 import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import Button from "./controls/Button/Button";
@@ -93,6 +94,7 @@ export default (props) => {
     const widthRef = React.useRef(width);
     const previousWidth = React.useRef(width);
     const {firebase} = state;
+    const setCurrentUserData = useSetCurrentUserData()
     widthRef.current = width;
 
     React.useEffect(() => {
@@ -237,6 +239,7 @@ export default (props) => {
         const fetchCurrentUserLastVisit = async props => {
             const {store, userData} = props;
             if (userData) {
+                setCurrentUserData(userData);
                 userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
                 cacheDatas.put(userData.id, userData);
                 store.dispatch({type: "currentUserData", userData});
