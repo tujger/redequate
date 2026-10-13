@@ -159,9 +159,17 @@
             "import": "./core/backend/firebase-client.mjs",
             "require": "./core/backend/firebase-client.cjs"
         },
+        "./backend/firebase-server": {
+            "import": "./core/backend/firebase-server.mjs",
+            "require": "./core/backend/firebase-server.cjs"
+        },
         "./backend/local-test-client": {
             "import": "./core/backend/local-test-client.mjs",
             "require": "./core/backend/local-test-client.cjs"
+        },
+        "./backend/local-test-server": {
+            "import": "./core/backend/local-test-server.mjs",
+            "require": "./core/backend/local-test-server.cjs"
         },
         "./common": {
             "import": "./core/common/index.mjs",

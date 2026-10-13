@@ -1843,3 +1843,56 @@ notification, and Object.is suppression against the normalized value.
 Framework ESM/CommonJS and both consumer production builds pass. Demo useBackend imports now use the root export.
 Existing test fixtures for the removed accessor/reducer require a separate
 authorized migration; no test files were changed in this session.
+
+### Publication repair compatibility and concurrent tag indexing
+
+Decision: The Whisky Talks supplies its Backend to every postItemTransform call
+using default missing-publication recovery. fixUser counts reply keys from both
+modern posts (with to) and legacy replies, deduplicating matching keys. Both
+collections must finish reading before post/reply counters are written; pagination
+callbacks enforce exact uid matching because subsequent equal-value pages use a
+prefix range in the existing Pagination helper.
+
+fixTag reads its initial index before scanning posts and applies repairs in a
+transaction on the target feed. Only entries whose current value still matches
+the initial value are changed; concurrent additions, changes and deletions are
+preserved. Whole-feed replacement was rejected because it erased links for posts
+created during the scan. This is not an atomic snapshot of posts: parallel text
+changes and same-value delete/recreate operations remain unresolved limitations.
+
+Affected consumers: The Whisky Talks web and Functions. Callable interfaces,
+stored record formats and Android contracts are unchanged. Legacy replies are
+counted without migrating or deleting them. Status: implemented; validation is
+recorded in the session result. No deployment performed.
+
+### Root publication marker
+
+Decision: PostData.publish stores to: 0 for root publications and the parent ID
+for replies, matching NewPostComponent and Discover's to == 0 query. A null
+marker was rejected because RTDB removes that field and excludes the publication
+from Discover. Mock refreshes the discover cache after successful publication.
+Affected consumers: both web applications; Android receives the established
+root-publication format. Existing records without to require separate repair;
+no stored-data migration or deployment is performed. Status: implemented.
+
+### Mutual consistency repair
+
+Decision: fixMutual({uid, typeId}) reconciles that user's directional relationship
+and incoming-request counters. Optional id and legacy NOT_FOUND calls additionally
+check a specific owned link. friend uses approval requests; following subscribes
+without approval. Erroneous following requests are completed as missing one-way
+subscriptions, while valid friend invitations remain pending. Missing request
+participants cause cleanup. Legacy friend/following targets resolve to users_public.
+
+Counter baselines and data repairs share one multipath update. Existing relationship
+triggers apply newly created/deleted link deltas; baselines must not pre-apply those
+deltas. Simultaneous repairs, delayed trigger retries and concurrent relationship
+changes are not fully protected; a separate concurrency protocol remains deferred.
+
+The previous invitation action/UI changes were rolled back. ProfileWithFriends
+uses an uncached Requests list and invokes repair once for a successfully read
+empty first page with a positive counter. Transformation failures are not emptiness.
+Affected consumers: Redequate controls/LocalTest Backend, The Whisky Talks Functions
+and web; demo retains the same optional component API. Stored paths and response
+envelopes are preserved; id/code are no longer required for a general fix call.
+Status: implemented; no deployment or remote repair performed.
