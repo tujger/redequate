@@ -11,7 +11,7 @@ import {useAuth} from "../controllers";
 import {usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -21,7 +21,7 @@ import styles from "./styles/Signup.module.css";
 
 const Signup = ({signup = true, additional}) => {
     const auth = useAuth();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();

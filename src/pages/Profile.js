@@ -21,8 +21,8 @@ import {useAuth, useBackend, useDatabase} from "../controllers";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {TextMaskPhone} from "../controllers/TextMasks";
-import {useCurrentUserData as useCurrentUserData2, useCurrentUserDataValue} from "../controllers/useCurrentUserData2";
-import {matchRole, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import {matchRole, UserRole, UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
@@ -101,7 +101,7 @@ const Profile = (
     }) => {
     const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
@@ -109,8 +109,6 @@ const Profile = (
     const {id} = useParams();
     const [state, setState] = React.useState({disabled: false});
     const {t} = useTranslation();
-    const currentUserData1 = useCurrentUserDataValue()
-    console.log(currentUserData1);
 
     const {userData, disabled} = state;
 
@@ -133,12 +131,12 @@ const Profile = (
 
     React.useEffect(() => {
         let isMounted = true;
-        if (!currentUserData) {
+        if (!currentUserData.id) {
             history.goBack();
             return;
         }
         if (!id) {
-            setState({...state, userData: currentUserData});
+            setState({...state, userData: new UserData(database).fromJSON(structuredClone(currentUserData.toJSON()))});
             return;
         }
         new UserData(database).fetch(id, [UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
@@ -152,7 +150,7 @@ const Profile = (
             isMounted = false;
         }
         // eslint-disable-next-line
-    }, [id]);
+    }, [id, currentUserData]);
 
     if (!userData) return <LoadingComponent/>;
     return <>
