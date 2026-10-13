@@ -166,20 +166,17 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 resolve(_body);
                 return;
             }
-            database.addEventListener([type, _id], {
-                async onChange(data) {
-                    if (data !== undefined) {
-                        data.replyTo = data.to;
-                        await _body.create(data);
-                        _created = data.created;
-                        cacheDatas.put(_id, _body);
-                        resolve(_body);
-                    } else {
-                        reject(new Error(`Post not found: ${_id}`))
-                    }
-                },
-                onError: reject
-            })
+            database.read([type, _id]).then(async data => {
+                if (data !== undefined) {
+                    data.replyTo = data.to;
+                    await _body.create(data);
+                    _created = data.created;
+                    cacheDatas.put(_id, _body);
+                    resolve(_body);
+                } else {
+                    reject(new Error(`Post not found: ${_id}`))
+                }
+            }).catch(reject);
         }),
         fetchCounters: () => new Promise((resolve, reject) => {
             if (!_id) reject(new Error("Post not submitted yet."));

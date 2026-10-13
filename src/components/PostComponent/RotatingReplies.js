@@ -80,7 +80,7 @@ export default (props) => {
         const fetchUserData = async props => {
             const {postData} = props;
             const userData = await cacheDatas.fetch(postData.uid, id => {
-                return UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]);
+                return new UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]);
             });
             return {...props, userData};
         }

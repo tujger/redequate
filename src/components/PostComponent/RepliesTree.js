@@ -82,7 +82,7 @@ export default (props) => {
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {
-                return UserData(database)
+                return new UserData(database)
                     .fetch(replies[0].value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userReplied => {
                         throw {replies, userReplied};
