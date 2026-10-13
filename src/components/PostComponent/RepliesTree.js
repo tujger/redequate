@@ -1,8 +1,6 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import {useAuth} from "../../../packages/auth";
-import {useBackend} from "../../../packages/backend";
-import {useDatabase} from "../../../packages/database";
+import {useAuth, useBackend, useDatabase} from "../../controllers";
 import Pagination from "../../controllers/FirebasePagination";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";

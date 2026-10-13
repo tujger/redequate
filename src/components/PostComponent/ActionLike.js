@@ -7,7 +7,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useDatabase} from "../../../packages/database";
+import {useDatabase} from "../../controllers";
 import counter from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {delay, usePages} from "../../controllers/General";
