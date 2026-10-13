@@ -36,8 +36,8 @@ export default {
     },
     fixMutual: args => {
         console.log("[LocalTestBackendClient] fixMutual", args);
-        validate(args, ["id", "uid", "typeId"]);
-        validateNotFound(args);
+        validate(args, ["uid", "typeId"]);
+        if (args.id !== undefined) validate(args, ["id"]);
         return complete(args, "Mutual fixed");
     },
     fixMutualStamp: args => {
