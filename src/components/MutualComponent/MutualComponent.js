@@ -1,8 +1,7 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
-import {useBackend} from "../../../packages/backend";
-import {useDatabase} from "../../../packages/database";
+import {useBackend, useDatabase} from "../../controllers";
 import counterControl from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase} from "../../controllers/General";
