@@ -210,7 +210,7 @@ function Login(props) {
             if (isFirstLogin) {
                 await userData.savePublic();
             } else {
-                userData.updateVisitTimestamp();
+                userData.updateVisitTimestamp(database);
             }
             return props;
         }
