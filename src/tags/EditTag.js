@@ -13,13 +13,13 @@ import {mutualRequest} from "../components/MutualComponent";
 import ProgressView from "../components/ProgressView";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
-import {useDatabase, useStorage} from "../controllers";
+import {useDatabase, useRedirectToLogin, useStorage} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, UserData, UserRole} from "../controllers/UserData";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import {matchRole, normalizeSortName, UserData, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
@@ -35,6 +35,7 @@ export default ({allowOwner = true}) => {
     const history = useHistory();
     const pages = usePages();
     const {id} = useParams();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({});
     const storage = useStorage();
     const {t} = useTranslation();
@@ -347,6 +348,7 @@ export default ({allowOwner = true}) => {
     }
 
     React.useEffect(() => {
+        if (shouldRedirectToLogin) return;
         if (!id) {
             const tagRef = firebase.database().ref("tag").push();
             const tag = {};
@@ -354,7 +356,7 @@ export default ({allowOwner = true}) => {
         } else if (id) {
             database.read(["tag", id])
                 .then(value => {
-                    if(value === undefined) throw Error(t("Tag.{{id}} is not found.", {id: id}));
+                    if (value === undefined) throw Error(t("Tag.{{id}} is not found.", {id: id}));
                     return value;
                 })
                 .then(tag => {
@@ -375,18 +377,18 @@ export default ({allowOwner = true}) => {
             uploadComponentClean(uppy);
         }
         // eslint-disable-next-line
-    }, [id]);
+    }, [id, shouldRedirectToLogin]);
 
     React.useEffect(() => {
-        if (!tag || !tag.uid || tag.uid === "0") return;
+        if (shouldRedirectToLogin || !tag || !tag.uid || tag.uid === "0") return;
         new UserData().fetch(tag.uid)
             .then(userData => {
                 setState(state => ({...state, owner: `$[user:${tag.uid}:${userData.name}]`}));
             })
             .catch(notifySnackbar);
-    }, [tag])
+    }, [tag, shouldRedirectToLogin])
 
-    if (!tag) return <LoadingComponent/>;
+    if (shouldRedirectToLogin || !tag) return <LoadingComponent/>;
     return <div className={baseStyles.content}>
         <div className={styles.profile}>
             <div className={styles.profileFieldImage}>
