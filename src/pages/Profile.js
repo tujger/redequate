@@ -136,7 +136,7 @@ const Profile = (
             return;
         }
         if (!id) {
-            setState({...state, userData: new UserData(database).fromJSON(structuredClone(currentUserData.toJSON()))});
+            setState({...state, userData: new UserData(database).fromJSON(currentUserData.toJSON())});
             return;
         }
         new UserData(database).fetch(id, [UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
