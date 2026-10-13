@@ -1,5 +1,5 @@
 import {useContext} from "react";
-import {_AppContext} from "../../common/AppContext";
+import {_AppContext} from "./AppContext";
 
 export default () => {
     const messaging = useContext(_AppContext)?.messaging;
