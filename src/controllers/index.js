@@ -28,3 +28,4 @@ export {default as useScrollPosition, getScrollPosition} from "../helpers/useScr
 export {useTextTranslation} from "./textTranslation";
 
 export * from "./useCurrentUserData";
+export * from "./useRedirectToLogin";
