@@ -6,6 +6,7 @@ import LoadingComponent from "../components/LoadingComponent";
 import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import ProgressView from "../components/ProgressView";
 import {uploadComponentResize} from "../components/UploadComponent/uploadComponentControls";
+import {useRedirectToLogin} from "../controllers";
 import {cacheDatas, useMetaInfo, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
@@ -18,6 +19,7 @@ export default () => {
     const metaInfo = useMetaInfo();
     const {id, reply} = useParams();
     const pages = usePages();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({highlight: reply, text: ""});
     const windowData = useWindowData();
 
@@ -40,6 +42,7 @@ export default () => {
     }
 
     React.useEffect(() => {
+        if (shouldRedirectToLogin) return;
         const extractDataFromURL = async props => {
             if (location.search) {
                 const search = new URLSearchParams(location.search);
@@ -124,9 +127,9 @@ export default () => {
             .catch(catchThrown)
             .catch(notifySnackbar)
             .finally(finalize);
-    }, [location]);
+    }, [location, shouldRedirectToLogin]);
 
-    if (!ready) return <LoadingComponent/>
+    if (shouldRedirectToLogin || !ready) return <LoadingComponent/>
     return <div className={baseStyles.content}>
         <NewPostComponent
             buttonComponent={null}
