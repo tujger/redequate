@@ -312,7 +312,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 text: _text,
                 uid: _uid,
                 images: _images || null,
-                to: _replyTo || null,
+                to: _replyTo || 0,
                 root: _root || null
             };
             return value;
