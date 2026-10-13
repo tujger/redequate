@@ -9,7 +9,7 @@ import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-
 import {resolveAuth} from "../packages/auth/src";
 import {resolveBackend} from "../packages/backend/src";
 import {useDatabase} from "./controllers";
-import {_AppContext} from "./controllers/AppContext/AppContext";
+import AppContext from "./controllers/AppContext/AppContext";
 import {resolveDatabase} from "../packages/database/src";
 import {resolveMessaging} from "../packages/messaging/src";
 import {resolveStorage} from "../packages/storage/src";
@@ -31,8 +31,8 @@ import notifySnackbar from "./controllers/notifySnackbar";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
-import {useCurrentUserData as useCurrentUserData2, useSetCurrentUserData} from "./controllers/useCurrentUserData2";
-import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
+import {getCurrentUserData, useCurrentUserDataValue, useSetCurrentUserData} from "./controllers/useCurrentUserData";
+import {matchRole, needAuth, UserData, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import Button from "./controls/Button/Button";
 import initInternationalization from "./helpers/initInternationalization";
@@ -62,7 +62,7 @@ console.error = function (...args) {
             return;
         }
         const firebase = useFirebase();
-        const currentUserData = useCurrentUserData();
+        const currentUserData = getCurrentUserData();
         if (!firebase || !firebase.database) return;
         firebase.database().ref("errors").push({
             error: args[0].stack || args[0],
@@ -94,7 +94,7 @@ export default (props) => {
     const widthRef = React.useRef(width);
     const previousWidth = React.useRef(width);
     const {firebase} = state;
-    const setCurrentUserData = useSetCurrentUserData()
+    const setCurrentUserData = useSetCurrentUserData();
     widthRef.current = width;
 
     React.useEffect(() => {
@@ -105,7 +105,7 @@ export default (props) => {
     }, [width, state.store]);
 
     React.useEffect(() => {
-        let maintenanceRef, metaListener, unlisten;
+        let maintenanceRef, metaListener;
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
@@ -164,17 +164,12 @@ export default (props) => {
         const initStore = async props => {
             return {...props, store: Store(title, reducers)};
         }
-        const restoreFirebaseAuth = async props => {
+        const restoreAuth = async props => {
             try {
-                const authUser = await new Promise(async (resolve, reject) => {
-                    unlisten = await props.auth.onAuthStateChanged(resolve, reject);
-                });
+                const authUser = await props.auth.resolveCurrentUser();
                 return {...props, authUser};
             } catch (error) {
                 throw {...props, fatal: error};
-            } finally {
-                unlisten && unlisten();
-                unlisten = null;
             }
         }
         const initWindowData = async props => {
@@ -218,17 +213,14 @@ export default (props) => {
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
-            const {authUser, database, deviceId, store} = props;
-            if (!authUser) {
-                store.dispatch({type: "currentUserData", userData: null});
+            const {authUser, database, deviceId} = props;
+            if (!authUser?.id) {
+                setCurrentUserData(authUser);
                 return props;
             }
             try {
-                const savedUserData = store.getState().currentUserData?.userData;
-                const userData = savedUserData?.id === authUser.id
-                    ? new UserData(database).fromJSON(savedUserData)
-                    // eslint-disable-next-line react/prop-types -- authUser is an Auth model passed between pipeline steps.
-                    : new UserData(database).fromJSON(authUser.toJSON());
+                // eslint-disable-next-line react/prop-types -- authUser is a provider model.
+                const userData = new UserData(database).fromJSON(authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};
@@ -237,12 +229,11 @@ export default (props) => {
             }
         }
         const fetchCurrentUserLastVisit = async props => {
-            const {store, userData} = props;
+            const {userData} = props;
             if (userData) {
-                setCurrentUserData(userData);
                 userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
                 cacheDatas.put(userData.id, userData);
-                store.dispatch({type: "currentUserData", userData});
+                setCurrentUserData(userData);
             }
             return props;
         }
@@ -253,7 +244,7 @@ export default (props) => {
                 const pvt = userData.private[deviceId];
                 i18n.changeLanguage(pvt.locale);
             } else {
-                restoreLanguage(store, i18n);
+                restoreLanguage(i18n);
             }
             return props;
         }
@@ -291,9 +282,9 @@ export default (props) => {
             (async () => {
                 const {auth, database, store} = props;
                 setInterval(() => {
-                    watchUserChanged({auth, database, store}).then(() => refreshAll(store));
+                    watchUserChanged({auth, database, getUserData: getCurrentUserData, onUserChanged: setCurrentUserData}).then(() => refreshAll(store));
                 }, 30000)
-                watchUserChanged({auth, database, store}).then(() => refreshAll(store));
+                watchUserChanged({auth, database, getUserData: getCurrentUserData, onUserChanged: setCurrentUserData}).then(() => refreshAll(store));
             })().catch(console.error);
             return props;
         }
@@ -377,7 +368,7 @@ export default (props) => {
             .then(initMessaging)
             .then(initStorage)
             .then(initStore)
-            .then(restoreFirebaseAuth)
+            .then(restoreAuth)
             .then(initWindowData)
             .then(initTextTranslation)
             .then(fetchDeviceId_)
@@ -400,7 +391,6 @@ export default (props) => {
         return () => {
             maintenanceRef && maintenanceRef.off();
             metaListener?.remove();
-            unlisten && unlisten();
         }
         // eslint-disable-next-line
     }, []);
@@ -455,7 +445,7 @@ const DispatcherInitialized = (props) => {
 
     console.log("[Context]", {auth, backend, database, messaging, storage});
 
-    return <_AppContext value={{auth, backend, database, messaging, storage}}>
+    return <AppContext value={{auth, backend, database, messaging, storage}}>
         <Provider store={store}>
             <>
                 {theme}
@@ -472,7 +462,7 @@ const DispatcherInitialized = (props) => {
                 <PWAPrompt promptOnVisit={3} timesToShow={3}/>
             </>
         </Provider>
-    </_AppContext>
+    </AppContext>
 }
 
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
@@ -490,7 +480,7 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
         random,
         iosLayout = true
     } = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
@@ -503,7 +493,9 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
         const updateTitle = (location) => {
             console.log("[Dispatcher]", JSON.stringify(location));
             try {
-                if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp(database);
+                if (currentUserData.id) {
+                    currentUserData.updateVisitTimestamp(database);
+                }
             } catch (error) {
                 console.error(error);
             }
