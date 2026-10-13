@@ -11,7 +11,7 @@ import {useDatabase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 import {MenuBadge, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
 import {alertsCounterReducer} from "./alertsCounterReducer";
@@ -20,7 +20,7 @@ import AlertsList from "./AlertsList";
 import {alertsVisitReducer} from "./alertsVisitReducer";
 
 export default ({daemon, fetchAlertContent}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const pages = usePages();

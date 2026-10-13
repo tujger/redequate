@@ -5,11 +5,11 @@ import {useDatabase} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
 import {MenuBadge, usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import {alertsCounterReducer} from "./alertsCounterReducer";
 
 export default ({fetchAlertContent}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();

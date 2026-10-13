@@ -8,12 +8,12 @@ import ProgressView from "../components/ProgressView";
 import {useDatabase} from "../controllers";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import UserName from "../controls/UserName/UserName";
 import alertStyles from "./styles/AlertItem.module.css";
 
 export default ({data, skeleton, label, fetchAlertContent}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
