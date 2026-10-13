@@ -4,13 +4,13 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useAuth, useStorage} from "../../controllers";
+import {useAuth, useDatabase, useStorage} from "../../controllers";
 import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, UserRole} from "../../controllers/UserData";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, normalizeSortName, UserRole} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import LoadingComponent from "../LoadingComponent";
@@ -54,6 +54,7 @@ const NewPostComponent = props => {
     } = props;
     const auth = useAuth();
     const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
@@ -169,7 +170,7 @@ const NewPostComponent = props => {
             return {text, images};
         }
         const buildData = async ({text, images}) => ({
-            created: firebase.database.ServerValue.TIMESTAMP,
+            created: database.TIMESTAMP,
             images: images || null,
             to: replyTo || 0,
             text: text || null,
@@ -181,7 +182,7 @@ const NewPostComponent = props => {
                 const {edit = {}} = editPostData;
                 const newEdit = firebase.database().ref().child(type).push();
                 edit[newEdit.key] = {
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    timestamp: database.TIMESTAMP,
                     uid: currentUserData.id,
                 };
                 const updates = {images, text, edit};
