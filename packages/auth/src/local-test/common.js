@@ -70,7 +70,7 @@ export function current(state) {
 }
 
 export function toUserData(account, Component = UserData) {
-    if (!account) return null;
+    if (!account) return new Component();
     if (typeof account.uid !== "string" || !account.uid) {
         fail("auth/invalid-user-data", "Auth user has no identifier.");
     }

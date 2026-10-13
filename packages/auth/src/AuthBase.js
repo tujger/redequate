@@ -17,7 +17,8 @@ export default class AuthBase {
         return notImplemented("resolveRedirectResult");
     }
 
-    async resolveCurrentUser(UserData) {
+    /** Restore the session and return UserData, including an anonymous model when signed out. */
+    async resolveCurrentUser() {
         return notImplemented("resolveCurrentUser");
     }
 

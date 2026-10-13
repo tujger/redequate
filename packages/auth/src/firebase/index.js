@@ -63,7 +63,7 @@ export default class FirebaseAuth extends AuthBase {
         };
         return onAuthStateChanged(this._auth, user => {
             try {
-                const pending = callback(user ? toUserData(user, this._UserData) : null);
+                const pending = callback(toUserData(user, this._UserData));
                 if (pending && typeof pending.then === "function") pending.catch(reportError);
             } catch (error) {
                 reportError(error);
@@ -72,13 +72,14 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async resolveCurrentUser() {
+        await this._auth.authStateReady();
         const user = this._auth.currentUser;
         return toUserData(user, this._UserData);
     }
 
     async resolveRedirectResult() {
         return getRedirectResult(this._auth)
-            .then(result => toUserData(result?.user, this._UserData));
+            .then(result => result?.user ? toUserData(result.user, this._UserData) : null);
     }
 
     async sendEmailVerification(options) {

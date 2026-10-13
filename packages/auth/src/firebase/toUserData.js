@@ -2,7 +2,7 @@ import {UserData} from "../../../common";
 import {fail} from "../../../common/src/_packages";
 
 export const toUserData = (user, Component = UserData) => {
-    if (!user) return null;
+    if (!user) return new Component();
     const json = user.toJSON();
     if (!json.uid) {
         fail("auth/invalid-user-data", "Auth user has no identifier.")
