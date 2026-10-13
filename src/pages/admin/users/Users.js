@@ -42,8 +42,8 @@ function Users(props) {
     }, [mode]);
 
     const fetchUserData = async item => {
-        // const data = await cacheDatas.put(item.key, UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
-        const data = await UserData(database).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
+        // const data = await cacheDatas.put(item.key, new UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
+        const data = await new UserData(database).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
         return {key: item.key, value: data};
     }
 
