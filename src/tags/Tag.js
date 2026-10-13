@@ -25,7 +25,8 @@ import Pagination from "../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../controllers/UserData";
+import {matchRole, UserRole} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tag.module.css";
@@ -33,7 +34,7 @@ import styles from "./styles/Tag.module.css";
 export default ({allowOwner = true}) => {
     const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();

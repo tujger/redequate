@@ -18,7 +18,8 @@ import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, useCurrentUserData, UserData, UserRole} from "../controllers/UserData";
+import {matchRole, normalizeSortName, UserData, UserRole} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
@@ -27,7 +28,7 @@ import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/EditTag.module.css";
 
 export default ({allowOwner = true}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const firebase = useFirebase();
