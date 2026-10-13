@@ -16,14 +16,15 @@ import {useAuth, useBackend, useDatabase} from "../controllers";
 import {cacheDatas, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, useCurrentUserData} from "../controllers/UserData";
+import {matchRole} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Post.module.css";
 
 export default (props) => {
     const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
