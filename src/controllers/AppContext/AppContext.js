@@ -15,12 +15,12 @@ if (typeof window !== "undefined") {
     );
 }
 
-export function registerStore(key, initialValue = null) {
+export function registerStore(key, initialValue = null, normalize) {
     if (registry.has(key)) {
         throw new Error(`Global store '${key}' already registered`);
     }
 
-    const store = new GlobalStore(initialValue);
+    const store = new GlobalStore(initialValue, normalize);
     registry.set(key, store);
 
     return store;
@@ -54,7 +54,7 @@ class AppState {
                     ? this._initialState[key]
                     : registered.getServerSnapshot();
 
-            store = new GlobalStore(initialValue);
+            store = registered.fork(initialValue);
             this._stores.set(key, store);
         }
 

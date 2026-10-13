@@ -1,14 +1,20 @@
+const identity = value => value;
+
 export default class GlobalStore {
-    constructor(initialValue = null) {
+    constructor(initialValue = null, normalize = identity) {
+        this._normalize = normalize;
         this._initialValue = this._prepare(initialValue);
         this._value = this._initialValue;
         this._listeners = new Set();
     }
 
+    fork(initialValue = this._initialValue) {
+        return new GlobalStore(initialValue, this._normalize);
+    }
+
     _prepare(value) {
-        return process.env.NODE_ENV !== "production"
-            ? deepFreeze(value)
-            : value;
+        const next = this._normalize(value);
+        return process.env.NODE_ENV !== "production" ? deepFreeze(next) : next;
     }
 
     get = () => this._value;
@@ -21,13 +27,13 @@ export default class GlobalStore {
     };
 
     set = update => {
-        const next = typeof update === "function"
+        const next = this._prepare(typeof update === "function"
             ? update(this._value)
-            : update;
+            : update);
 
         if (Object.is(next, this._value)) return;
 
-        this._value = this._prepare(next);
+        this._value = next;
         this._listeners.forEach(listener => listener());
     };
 
@@ -39,26 +45,13 @@ const deepFreeze = value => {
     const objects = [];
 
     const visit = item => {
-        if (typeof item === "function") {
-            throw new TypeError("GlobalStore values must not contain functions");
-        }
         if (item === null || typeof item !== "object" || seen.has(item)) return;
-
-        const prototype = Object.getPrototypeOf(item);
-        if (!Array.isArray(item) &&
-            prototype !== Object.prototype &&
-            prototype !== null) {
-            throw new TypeError("GlobalStore values must contain only plain objects and arrays");
-        }
 
         seen.add(item);
         objects.push(item);
         Reflect.ownKeys(item).forEach(key => {
             const descriptor = Object.getOwnPropertyDescriptor(item, key);
-            if (!Object.prototype.hasOwnProperty.call(descriptor, "value")) {
-                throw new TypeError("GlobalStore values must not contain accessor properties");
-            }
-            visit(descriptor.value);
+            if (Object.prototype.hasOwnProperty.call(descriptor, "value")) visit(descriptor.value);
         });
     };
 

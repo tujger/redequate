@@ -12,18 +12,20 @@ import {
 export default class UseAbstract {
     constructor(key, initialValue = null) {
         this._key = key;
-        this._store = registerStore(key, initialValue);
+        this._store = registerStore(key, initialValue, value => this._normalize(value));
+    }
+
+    _normalize(value) {
+        return value;
     }
 
     useInstance() {
         const context = useContext(_AppContext);
-
         if (typeof window === "undefined" && !context?.state) {
             throw new Error(
                 `SSR requires AppContext for '${this._key}'`
             );
         }
-
         return context?.state
             ? context.state.store(this._key)
             : this._store;
@@ -31,7 +33,6 @@ export default class UseAbstract {
 
     useValue() {
         const store = this.useInstance();
-
         return useSyncExternalStore(
             store.subscribe,
             store.get,
@@ -50,7 +51,6 @@ export default class UseAbstract {
             store.get,
             store.getServerSnapshot
         );
-
         return [value, store.set];
     }
 

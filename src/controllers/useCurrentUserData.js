@@ -1,10 +1,13 @@
-
 import UseAbstract from "./AppContext/UseAbstract";
+import {UserData} from "./UserData";
 
-const currentUserData = new UseAbstract(
-    "currentUserData",
-    null
-);
+class CurrentUserData extends UseAbstract {
+    _normalize(value) {
+        return value ?? new UserData();
+    }
+}
+
+const currentUserData = new CurrentUserData("currentUserData", new UserData());
 
 export const useCurrentUserData = () =>
     currentUserData.useStore();

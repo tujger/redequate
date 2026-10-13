@@ -19,7 +19,6 @@ export {
     needAuth,
     UserRole,
     UserData,
-    useCurrentUserData,
     normalizeSortName,
 } from "./UserData";
 export {default as notifySnackbar} from "./notifySnackbar";
@@ -27,3 +26,5 @@ export * as notifyConfirm from "./notifyConfirm";
 export {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
 export {default as useScrollPosition, getScrollPosition} from "../helpers/useScrollPosition";
 export {useTextTranslation} from "./textTranslation";
+
+export * from "./useCurrentUserData";
