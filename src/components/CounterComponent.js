@@ -1,5 +1,5 @@
 import React from "react";
-import {useDatabase} from "../../packages/database";
+import {useDatabase} from "../controllers";
 import counterControl from "../controllers/counterControl";
 
 export default ({counter, path, prefix, suffix, live = false, onChange, showZero = false, zeroPrefix, zeroSuffix}) => {
