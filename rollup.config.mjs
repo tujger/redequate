@@ -161,6 +161,13 @@ export default () => {
                 ThemeSeason: 'src/themes/ThemeSeason/index.js',
                 ThemeDayNight: 'src/themes/ThemeDayNight/index.js',
 
+                // hooks
+                useAuth: 'src/controllers/AppContext/useAuth.js',
+                useBackend: 'src/controllers/AppContext/useBackend.js',
+                useDatabase: 'src/controllers/AppContext/useDatabase.js',
+                useMessaging: 'src/controllers/AppContext/useMessaging.js',
+                useStorage: 'src/controllers/AppContext/useStorage.js',
+
                 // internal
                 __alertsVisitReducer: 'src/alerts/alertsVisitReducer.js',
                 __alertsCounterReducer: 'src/alerts/alertsCounterReducer.js',
