@@ -121,19 +121,19 @@ export default props => {
         if (itemTransform) return itemTransform;
         if (mode === MutualListMode.REQUESTS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData(database))
+                return cacheDatas.put(item.value.uid, new UserData(database))
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBERS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData(database))
+                return cacheDatas.put(item.value.uid, new UserData(database))
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBES) {
             return item => {
-                return cacheDatas.put(item.value.id, UserData(database))
+                return cacheDatas.put(item.value.id, new UserData(database))
                     .fetch(item.value.id, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
