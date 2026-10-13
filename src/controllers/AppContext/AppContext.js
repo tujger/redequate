@@ -8,7 +8,7 @@ import GlobalStore from "./GlobalStore";
 
 const registry = new Map();
 
-if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+if (typeof window !== "undefined") {
     window.redequate = window.redequate || {};
     window.redequate.cache = () => Object.fromEntries(
         Array.from(registry, ([key, store]) => [key, store.get()])
