@@ -287,7 +287,7 @@ export default ({uploadable}) => {
         const fetchSupport = async props => {
             const supportId = await database.read(["meta","support"]);
             if (supportId) {
-                return UserData(database).fetch(supportId)
+                return new UserData(database).fetch(supportId)
                     .then(userData => ({
                         ...props,
                         support: `$[user:${supportId}:${userData.name}]`
@@ -361,7 +361,7 @@ export default ({uploadable}) => {
                                 value: true,
                                 equals: "admin",
                                 size: 1000,
-                                transform: item => UserData(database)
+                                transform: item => new UserData(database)
                                     .fetch(item.key)
                                     .then(value => ({key: item.key, value}))
                                     .catch(notifySnackbar)
