@@ -10,10 +10,9 @@ export const languageReducer = (state = {locale: null}, action) => {
 };
 languageReducer.CHANGE = "language_Change";
 
-export const restoreLanguage = (store, i18n = getI18n()) => {
+export const restoreLanguage = (i18n = getI18n()) => {
     try {
-        // const savedLanguage = store.getState().language;
-        i18n.changeLanguage(/*(savedLanguage ? savedLanguage.locale : null) || i18n.options.fallbackLng[0]*/)
+        i18n.changeLanguage()
             .then(() => {
                 if (!i18n.options.resources) return;
                 if (i18n.options.resources[i18n.language]) return;
