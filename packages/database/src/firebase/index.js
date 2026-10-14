@@ -6,11 +6,11 @@ import update from "./update";
 import write from "./write";
 
 export default class FirebaseDatabase extends DatabaseBase {
-    _firebase = undefined;
+    #firebase = undefined;
 
     constructor({firebase}) {
         super();
-        this._firebase = firebase;
+        this.#firebase = firebase;
     }
 
     addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderBy}) {
@@ -41,6 +41,10 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     get TIMESTAMP() {
-        return this._firebase.database.ServerValue.TIMESTAMP
+        return this.#firebase.database.ServerValue.TIMESTAMP
+    }
+
+    increment(delta) {
+        return this.#firebase.database.ServerValue.increment(delta)
     }
 }

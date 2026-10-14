@@ -3,7 +3,7 @@ import {resolvePath} from "./common";
 export default async function read(path, {equalTo, orderBy} = {}) {
     const effectivePath = resolvePath(path);
 
-    let ref = this._firebase.database().ref(effectivePath);
+    let ref = this.#firebase.database().ref(effectivePath);
     if(orderBy) {
         ref = ref.orderByChild(orderBy);
     }

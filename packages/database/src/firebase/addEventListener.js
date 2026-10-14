@@ -3,7 +3,7 @@ import {resolvePath} from "./common";
 export default function addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderBy}) {
     const effectivePath = resolvePath(path);
 
-    const ref = this._firebase.database().ref(effectivePath);
+    const ref = this.#firebase.database().ref(effectivePath);
     let refChildAdd, refChildRemove;
 
     if (onChange) {

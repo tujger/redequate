@@ -13,5 +13,5 @@ export default async function update(path, changes, {} = {}) {
     } else {
         updates[resolvePath(path)] = changes;
     }
-    return this._firebase.database().ref().update(updates);
+    return this.#firebase.database().ref().update(updates);
 }
