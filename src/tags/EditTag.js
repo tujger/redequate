@@ -413,7 +413,6 @@ export default ({allowOwner = true}) => {
                             />}
                             camera={false}
                             color={"primary"}
-                            firebase={firebase}
                             limits={{width: 800, height: 600, size: 200000}}
                             onsuccess={handleUploadPhotoSuccess}
                             onerror={handleUploadPhotoError}

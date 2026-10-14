@@ -12,7 +12,7 @@ import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
 import {useAuth, useDatabase, useMessaging, useRedirectToLogin, useStorage} from "../controllers";
 import Pagination from "../controllers/FirebasePagination";
-import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
+import {cacheDatas, fetchDeviceId, usePages, useStore, useWindowData} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
@@ -42,7 +42,6 @@ function EditProfile(props) {
     const [currentUserData, setCurrentUserData] = useCurrentUserData();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const messaging = useMessaging();
     const pages = usePages();
@@ -408,7 +407,6 @@ function EditProfile(props) {
                             />}
                             camera={false}
                             color={"primary"}
-                            firebase={firebase}
                             limits={{width: 300, height: 300}}
                             onsuccess={handleUploadPhotoSuccess}
                             onerror={handleUploadPhotoError}

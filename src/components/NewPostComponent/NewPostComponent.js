@@ -438,7 +438,6 @@ const NewPostComponent = props => {
     const uploadComponent = ready && <UploadComponent
         button={uploadButton}
         camera={camera}
-        firebase={firebase}
         imageDescriptors={imageDescriptors}
         multi={true}
         onsuccess={handleUploadPhotoSuccess}
