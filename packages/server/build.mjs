@@ -2,6 +2,7 @@ import {builtinModules} from "node:module";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
+import {babel} from "@rollup/plugin-babel";
 import del from "rollup-plugin-delete";
 
 const source = path => fileURLToPath(new URL(path, import.meta.url));
@@ -35,12 +36,20 @@ export default {
     })),
     plugins: [
         del({targets: [outputDirectory]}),
-        nodeResolve(),
+        babel({
+            babelHelpers: "bundled",
+            babelrc: false,
+            configFile: false,
+            extensions: [".ts", ".tsx"],
+            include: directories.map(directory => `${directory}**/*.{ts,tsx}`),
+            presets: ["@babel/preset-react", ["@babel/preset-typescript", {allowDeclareFields: true}]],
+        }),
+        nodeResolve({extensions: [".mjs", ".js", ".json", ".node", ".ts", ".tsx"]}),
         {
             name: "server-source-boundary",
             generateBundle() {
                 for (const id of this.getModuleIds()) {
-                    if (!this.getModuleInfo(id).isExternal && !directories.some(directory => id.startsWith(directory))) {
+                    if (!this.getModuleInfo(id).isExternal && id !== "\0rollupPluginBabelHelpers.js" && !directories.some(directory => id.startsWith(directory))) {
                         this.error(`Server package cannot include modules outside its source boundary: ${id}`);
                     }
                 }
