@@ -1,10 +1,10 @@
-import {SERVER_TIMESTAMP, UserData as UserDataCommon, UserRole} from "../../packages/common";
+import {UserData as UserDataCommon, UserRole} from "../../packages/common";
 import {restoreLanguage} from "../reducers/languageReducer";
 import {cacheDatas} from "./General";
 import notifySnackbar from "./notifySnackbar";
 
 export {
-    currentRole, matchRole, needAuth, normalizeSortName, SERVER_TIMESTAMP, UserRole
+    currentRole, matchRole, needAuth, normalizeSortName, UserRole
 } from "../../packages/common";
 
 export class UserData extends UserDataCommon {
@@ -19,8 +19,11 @@ export class UserData extends UserDataCommon {
         }
     }
 
-    async _fetch(ref) {
-        return ref.once("value");
+    _dateFormatted(date) {
+        if (date === this.#database.TIMESTAMP) {
+            return super._dateFormatted(new Date().getTime());
+        }
+        return super._dateFormatted(date);
     }
 
     _prepareUpdates(includePublic, includePrivate) {
