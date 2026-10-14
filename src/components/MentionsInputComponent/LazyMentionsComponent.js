@@ -3,24 +3,25 @@ import {Mention, MentionsInput} from "react-mentions";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MentionsInputComponent.module.css";
 
-const LazyMentionsComponent = ({
-    autoFocus,
-    className,
-    disabled,
-    firebase,
-    fullWidth = true,
-    inputRef,
-    label,
-    mentionsParams = [],
-    multiline = false,
-    onApply,
-    onChange,
-    onKeyUp,
-    onSelect,
-    placeholder,
-    required,
-    value = ""
-}) => {
+export default (
+    {
+        autoFocus,
+        className,
+        disabled,
+        firebase,
+        fullWidth = true,
+        inputRef,
+        label,
+        mentionsParams = [],
+        multiline = false,
+        onApply,
+        onChange,
+        onKeyUp,
+        onSelect,
+        placeholder,
+        required,
+        value = ""
+    }) => {
     const onSuggestionPointerDown = useRippleEffect();
 
     const handleChange = (event, nextValue, plainValue, mentions) => {
@@ -71,5 +72,3 @@ const LazyMentionsComponent = ({
         </MentionsInput>
     </div>;
 };
-
-export default LazyMentionsComponent;

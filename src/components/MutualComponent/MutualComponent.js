@@ -4,10 +4,9 @@ import {useDispatch} from "react-redux";
 import {useBackend, useDatabase} from "../../controllers";
 import counterControl from "../../controllers/counterControl";
 import Pagination from "../../controllers/FirebasePagination";
-import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole} from "../../controllers/UserData";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
 import TextField from "../../controls/TextField/TextField";
 import ConfirmComponent from "../ConfirmComponent";
 import InfoComponent from "../InfoComponent";
@@ -45,7 +44,6 @@ export default props => {
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const [state, setState] = React.useState({});
     const {
         disabled = true,
