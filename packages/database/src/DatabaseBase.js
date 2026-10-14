@@ -11,6 +11,11 @@ import {notImplemented} from '../../common/src/_packages'
 /** @typedef {Object<string, DatabaseValue>} DatabaseRecord */
 /** @typedef {{key: string, value: DatabaseRecord}} DatabaseEntry */
 
+/**
+ * A prepared record creation function with a readonly temporary identifier.
+ * @typedef {((value: DatabaseRecord) => Promise<string>) & {readonly temporaryKey: string}} DatabaseCreate
+ */
+
 export default class DatabaseBase {
     addEventListener(path, {
         onChange,
@@ -24,15 +29,18 @@ export default class DatabaseBase {
     }
 
     /**
-     * Create a record in a collection without overwriting an existing record.
-     * The provider generates a key when none is supplied. Conflicts reject.
-     * Resolves after the record has been written to the provider's storage.
+     * Prepare record creation without writing to provider storage.
+     * Returns synchronously with a constant readonly temporaryKey identifying
+     * the prepared operation, not a guaranteed address in provider storage.
+     * Calling the function with data creates the record without overwriting an
+     * existing record. Missing, undefined or null data and key conflicts reject.
+     * The function resolves to the permanent key after a successful storage write.
+     * That key may differ from temporaryKey. Failed writes may be retried;
+     * creating a record at an already occupied key rejects.
      * @param {DatabasePath} path Collection path.
-     * @param {DatabaseRecord} value JSON-compatible record data.
-     * @param {string} [key] Explicit record key.
-     * @returns {Promise<string>} Created record key.
+     * @returns {DatabaseCreate} Prepared creation function.
      */
-    async create(path, value, key= undefined) {
+    create(path) {
         return notImplemented('create')
     }
 
@@ -80,6 +88,14 @@ export default class DatabaseBase {
         yield notImplemented('iterate')
     }
 
+    /**
+     * Create or fully replace the value at an exact path, including nested values.
+     * A null value deletes the data at that path; undefined or missing values reject.
+     * Resolves after a successful provider storage write. Storage failures reject.
+     * @param {DatabasePath} path Exact storage path.
+     * @param {DatabaseValue} value JSON-compatible value to write.
+     * @returns {Promise<void>}
+     */
     async write(path, value, {} = {}) {
         return notImplemented('write')
     }

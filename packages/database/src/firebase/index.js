@@ -1,5 +1,6 @@
 import DatabaseBase from "../DatabaseBase";
 import addEventListener from "./addEventListener";
+import createRecord from "./create";
 import deleteRecord from "./delete";
 import read from "./read";
 import update from "./update";
@@ -22,6 +23,10 @@ export default class FirebaseDatabase extends DatabaseBase {
             onError,
             orderBy
         });
+    }
+
+    create(path) {
+        return createRecord(this.#firebase, path);
     }
 
     async delete(path, {} = {}) {
