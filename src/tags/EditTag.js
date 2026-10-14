@@ -50,7 +50,6 @@ export default ({allowOwner = true}) => {
         showTagOpen,
         deleteTagOpen,
         changeOwnerOpen,
-        newId,
         owner = ""
     } = state;
 
@@ -76,7 +75,7 @@ export default ({allowOwner = true}) => {
             setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
         }
         const updateTagKey = async () => {
-            tag._key = id || newId;
+            tag._key = id;
         }
         const checkIfLabelNotEmpty = async () => {
             tag.label = (tag.label || "").trim();
@@ -164,7 +163,11 @@ export default ({allowOwner = true}) => {
             return key;
         }
         const publishTag = async key => {
-            await database.write(["tag", key], tag);
+            if (key) {
+                await database.write(["tag", key], tag);
+            } else {
+                key = await database.create(["tag"]).save(tag);
+            }
             return key;
         }
         const auditActivity = async key => {
@@ -350,9 +353,7 @@ export default ({allowOwner = true}) => {
     React.useEffect(() => {
         if (shouldRedirectToLogin) return;
         if (!id) {
-            const tagRef = firebase.database().ref("tag").push();
-            const tag = {};
-            setState(state => ({...state, tag, newId: tagRef.key}));
+            setState(state => ({...state, tag: {}}));
         } else if (id) {
             database.read(["tag", id])
                 .then(value => {
