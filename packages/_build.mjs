@@ -1,4 +1,4 @@
-export const packageSourcePattern = sourceDirectory => `${sourceDirectory}**/*.js`;
+export const packageSourcePattern = (sourceDirectory, extensions = "js") => `${sourceDirectory}**/*.${extensions}`;
 
 const isPackageSupportChunk = (chunk, sourceDirectory) => {
     return chunk.moduleIds.length > 0 && chunk.moduleIds.every(id => {

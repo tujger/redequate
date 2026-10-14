@@ -17,6 +17,8 @@ import {messagingSourcePattern, withMessaging} from "./packages/messaging/build.
 import {storageSourcePattern, withStorage} from './packages/storage/build.mjs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const babelExtensions = ['.js', '.jsx', '.es6', '.es', '.mjs', '.cjs', '.ts', '.tsx'];
+const resolveExtensions = ['.mjs', '.js', '.json', '.node', '.ts', '.tsx'];
 
 const externalExports = [/^firebase(?:\/|$)/, /^@firebase(?:\/|$)/, 'react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/, /^@uppy(?:\/|$)/];
 
@@ -67,10 +69,11 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
+                    extensions: babelExtensions,
                     include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, databaseSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
                 svgr(),
-                resolve(),
+                resolve({extensions: resolveExtensions}),
                 commonjs(),
                 babel(babelIosPwaPrompt),
                 json(),
@@ -206,9 +209,10 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
+                    extensions: babelExtensions,
                     include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, databaseSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
-                resolve(),
+                resolve({extensions: resolveExtensions}),
                 commonjs(),
                 babel(babelIosPwaPrompt),
                 json(),
