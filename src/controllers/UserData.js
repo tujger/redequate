@@ -78,7 +78,7 @@ export class UserData extends UserDataCommon {
             options = id;
         } else if (id && state.id && id !== state.id) {
             throw new Error(`Another user id fetched: ${id}!=${state.id}.`);
-        } else if (id) {
+        } else if (id && state.id !== id) {
             state.id = id;
         }
 
@@ -217,8 +217,10 @@ export class UserData extends UserDataCommon {
         }
 
         await Promise.all(tasks);
-        state.public._sort_name = state.sortName;
-        state.requestedTimestamp = new Date().getTime();
+        try {
+            state.public._sort_name = state.sortName;
+            state.requestedTimestamp = new Date().getTime();
+        } catch(e) {console.error(e)}
         return this;
     }
 
