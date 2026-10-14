@@ -1,13 +1,18 @@
-import {
-    useContext,
-    useSyncExternalStore
-} from "react";
+import {useContext, useSyncExternalStore} from "react";
+import {_AppContext, registry} from "./_common";
 
-import {
-    _AppContext,
-    registerStore,
-    globalAppState
-} from "./AppContext";
+
+import {globalAppState} from "./AppState";
+import GlobalStore from "./GlobalStore";
+
+function registerStore(key, initialValue = null, normalize) {
+    if (registry.has(key)) {
+        throw new Error(`Global store '${key}' already registered`);
+    }
+    const store = new GlobalStore(initialValue, normalize);
+    registry.set(key, store);
+    return store;
+}
 
 export default class UseAbstract {
     constructor(key, initialValue = null) {
