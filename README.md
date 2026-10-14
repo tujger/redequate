@@ -634,20 +634,26 @@ Constructors and `useAuth()` remain synchronous. Provider options may contain
 `{provider, idToken?, accessToken?}`. Email options may contain
 `{url, handleCodeInApp?}`. Implementations own their constructor configuration.
 
+### Independent common and server archive
+
+Functions can install the private `redequate-server` archive under the `redequate` dependency
+name to import `redequate/common`, `redequate/backend/common`,
+`redequate/backend/common-server`, `redequate/backend/firebase-server` and
+`redequate/backend/local-test-server` without frontend dependencies. Both ESM and
+CommonJS are supported on Node.js 22+. See [server packaging](packages/server/README.md)
+for build and delivery instructions.
+
 ### Internal common layer
 
-Shared code resides in `packages/common`; it has no public package subpath or
-separate npm package. Public classes are re-exported through `redequate`.
-`src/controllers/UserData.js` remains a compatibility re-export of the moved
-implementation, so existing components and tests retain their imports.
+Shared code resides in `packages/common`. Its `redequate/common` entry exports
+the neutral UserData model, role helpers and constants. The web controller in
+`src/controllers/UserData.js` extends that model with persistence and cache methods.
+Auth adapters construct the neutral model directly from normalized JSON.
 
-UserData retains its existing Firebase persistence and current-user helpers.
-Auth adapters construct it directly from normalized JSON. Auth replacement alone does
-not remove the application's Firebase profile and service dependencies.
-
-The internal `_common`, `auth`, `messaging` and `storage` modules live under
-`packages/`, including their existing tests and build configuration. They remain
-parts of one npm package, with unchanged public subpaths and `core` outputs.
+The `auth`, `backend`, `database`, `messaging` and `storage` modules live under
+`packages/`, including their existing tests and build configuration. Web entry
+points build into `core`; the `*-server` backend entries are available only in
+the server archive and never participate in the main package or frontend chunks.
 
 Auth runtime source lives in `packages/auth/src`; its build configuration remains in
 `packages/auth/build.mjs`.

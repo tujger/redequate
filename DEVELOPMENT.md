@@ -1896,3 +1896,36 @@ Affected consumers: Redequate controls/LocalTest Backend, The Whisky Talks Funct
 and web; demo retains the same optional component API. Stored paths and response
 envelopes are preserved; id/code are no longer required for a general fix call.
 Status: implemented; no deployment or remote repair performed.
+
+### Independent server archive and browser boundary
+
+Decision: packages/server is a maintained private redequate-server package,
+with its own manifest, build configuration, README and lockfile. It builds
+common, backend/common, backend/common-server, backend/firebase-server and
+backend/local-test-server into packages/server/dist in native ESM/CJS. The root
+export aliases common. packages/common is a shared source directory, without a
+separate package manifest or lockfile. Both builds consume its source entries;
+server packaging and dependency ownership belong exclusively to packages/server.
+Removing the common manifest also removes its separate Babel configuration boundary.
+
+Runtime dependencies belong to the server manifest. firebase-admin ^14.5.0 is
+installed by npm; declared dependency subpaths and Node builtins remain external
+to Rollup. Root development dependencies provide build tooling. Functions install
+the generated vendor/redequate-server.tgz under the redequate dependency name,
+preserving existing imports; preparation refreshes lockfile integrity.
+
+The main redequate package contains common/client entries only. The browser build
+rejects server source imports; the server build rejects client/UI sources.
+Reason: make server packaging and dependency ownership explicit without coupling
+Functions to frontend code. This supersedes the generated server-manifest approach
+and the earlier decision against a maintained server package. Joint frontend/server
+builds and shipping server entries inside the main package remain rejected.
+
+Affected consumers: both web applications and The Whisky Talks Functions.
+Backend entries are currently empty; implementation is separate work. Android data
+formats and callable contracts are unchanged. Status: framework and both web builds,
+lint, ESM/CJS entry imports and opposite-side rejection, prepack, isolated archive
+installation with firebase-admin and local SDK initialization pass on Node 24.21.0.
+Functions tests pass 86/88; two existing common tests still call UserData without
+new and require a separately authorized fixture migration. No test files changed.
+Node 22 and deployment remain unverified; no publication or deployment performed.
