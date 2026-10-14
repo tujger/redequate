@@ -1,5 +1,7 @@
+import {resolvePath} from "./common";
+
 export default function addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderBy}) {
-    const effectivePath = path instanceof Array ? path.join("/") : path;
+    const effectivePath = resolvePath(path);
 
     const ref = this._firebase.database().ref(effectivePath);
     let refChildAdd, refChildRemove;

@@ -1,5 +1,7 @@
+import {resolvePath} from "./common";
+
 export default async function deleteRecord(path, {} = {}) {
-    const effectivePath = path instanceof Array ? path.join("/") : path;
+    const effectivePath = resolvePath(path);
 
     let ref = this._firebase.database().ref(effectivePath);
     await ref.set(null);
