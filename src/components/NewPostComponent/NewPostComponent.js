@@ -180,15 +180,17 @@ const NewPostComponent = props => {
             if (editPostData) {
                 const {images, text} = data;
                 const {edit = {}} = editPostData;
-                const newEdit = firebase.database().ref().child(type).push();
-                edit[newEdit.key] = {
+
+                const editValue = {
                     timestamp: database.TIMESTAMP,
                     uid: currentUserData.id,
                 };
+                const editKey = await database.create([type, editPostData.id, "edit"]).save(editValue);
+                edit[editKey] = editValue;
+
                 const updates = new Map();
                 updates.set([type, editPostData.id, "images"], images);
                 updates.set([type, editPostData.id, "text"], text);
-                updates.set([type, editPostData.id, "edit"], edit);
                 return database.update(updates)
                     .then(() => {
                         updateActivity({
