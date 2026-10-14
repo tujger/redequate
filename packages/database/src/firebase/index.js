@@ -14,7 +14,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderBy}) {
-        return addEventListener.call(this, path, {
+        return addEventListener(this.#firebase, path, {
             onChange,
             onChildAdd,
             onChildChange,
@@ -25,19 +25,19 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async delete(path, {} = {}) {
-        return deleteRecord.call(this, path);
+        return deleteRecord(this.#firebase, path);
     }
 
     async read(path, {equalTo, orderBy} = {}) {
-        return read.call(this, path, {equalTo, orderBy});
+        return read(this.#firebase, path, {equalTo, orderBy});
     }
 
     async write(path, value, {} = {}) {
-        return write.call(this, path, value);
+        return write(this.#firebase, path, value);
     }
 
     async update(path, changes, {} = {}) {
-        return update.call(this, path, changes);
+        return update(this.#firebase, path, changes);
     }
 
     get TIMESTAMP() {

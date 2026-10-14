@@ -1,8 +1,8 @@
 import {resolvePath} from "./common";
 
-export default async function write(path, value, {} = {}) {
+export default async function write(firebase, path, value, {} = {}) {
     const effectivePath = resolvePath(path);
 
-    let ref = this.#firebase.database().ref(effectivePath);
+    let ref = firebase.database().ref(effectivePath);
     await ref.set(value);
 }
