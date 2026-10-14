@@ -1733,8 +1733,14 @@ of Firebase. Every first argument accepts a string path or string[] joined with
 slashes; elements may include nested paths. Empty string/array denotes the root.
 Provider implementations own path normalization and validation.
 
-create(collectionPath, value, key?) resolves the created key and must not overwrite
-an existing record. read(recordPath) returns plain JSON-compatible record data or
+create(collectionPath) synchronously returns a DatabaseDraft object with a readonly,
+constant temporaryKey identifying the prepared operation, without writing data.
+Calling draft.save(value) with a record returns Promise<string>, resolving to the
+permanent storage key after success; it may differ from temporaryKey.
+Missing, undefined or null data and conflicts with existing records reject.
+Failed writes may be retried; writing at an occupied key rejects.
+Exact-path writes belong to write(recordPath, value); create takes no explicit key.
+read(recordPath) returns plain JSON-compatible record data or
 null for absence. update(recordPath, changes) requires an existing record, replaces
 top-level fields (including whole nested values), and removes fields assigned null.
 delete(recordPath) is idempotent. Writes resolve after success in provider storage.
@@ -1743,15 +1749,31 @@ early termination releases resources. No shared ordering or traversal-wide
 snapshot guarantee is imposed. Errors reject the operation or iterator next().
 
 Reason: keep callers independent of Firebase ref/child and snapshot objects while
-supporting both generated and caller-supplied keys. Callback-based iteration and
+identifying drafts before writing without requiring providers to allocate permanent
+keys in advance. An optional value that switches create between preparation and writing
+was rejected because accidental undefined could silently skip a write.
+The draft exposes an explicit save method rather than attaching metadata to a
+callable function, keeping its identifier and operation explicit.
+Callback-based iteration and
 a Firebase-shaped public reference API were rejected in favor of for await...of
 and composable path arguments. Provider-specific query and subscription contracts
 remain separate work.
 
 Affected consumers: both web applications; future Android API changes must preserve
-stored paths and record formats. Status: base signatures, JSDoc and notImplemented
-stubs added. Firebase/LocalTest implementations, Dispatcher integration and consumer
-migration are not part of this change.
+stored paths and record formats. Status: DatabaseBase.ts expresses the contract
+through exported TypeScript types/interfaces and typed method signatures.
+The runtime base class and notImplemented stubs remain for provider inheritance;
+removing the class in favor of an interface alone would break existing JS providers.
+read and event values include scalar JSON data; update exposes path and batch forms.
+Comments retain behavioral guarantees that TypeScript cannot express.
+The web build, ESM/CommonJS exports, provider inheritance and base stub failures
+are verified on Node 24.21.0; existing Vitest/Vite transforms resolve the TS source.
+Type checking and declaration generation remain outside this conversion.
+Firebase prepares a push reference without writing and uses a transaction to
+create its record only when absent. Its permanent key equals temporaryKey;
+transactions require read as well as write access to the target node.
+LocalTest implementation, Dispatcher integration and consumer migration remain
+separate work.
 
 ### UserData class inheritance
 
@@ -2042,3 +2064,27 @@ installation with firebase-admin and local SDK initialization pass on Node 24.21
 Functions tests pass 86/88; two existing common tests still call UserData without
 new and require a separately authorized fixture migration. No test files changed.
 Node 22 and deployment remain unverified; no publication or deployment performed.
+
+### Incremental TypeScript source support
+
+Decision: web and server Rollup builds accept .ts and .tsx alongside existing JS.
+Babel 7's TypeScript preset removes types; the React preset transforms TSX.
+Extensionless imports resolve existing extensions first, then .ts and .tsx.
+Type-only declare fields are removed. Public entry paths and emitted ESM/CommonJS
+formats remain unchanged. Server Babel configuration applies only to TS/TSX,
+without loading the browser configuration or downleveling existing server JS.
+Its source boundary permits the internal Babel helper module while continuing
+to reject frontend sources; the browser boundary still rejects server Backend.
+
+Reason: allow contracts and individual modules to migrate incrementally without
+requiring a framework-wide conversion. Mandatory type checking, declaration-file
+generation and ESLint migration are separate work; transpilation does not validate
+types. Root development dependencies own this tooling, including the server build.
+
+Affected consumers: both web applications and the server archive continue to consume
+JavaScript through existing exports. No Android API or record-format changes.
+Status: web/server builds and service/server ESM/CommonJS imports pass on Node
+24.21.0. Temporary TS/TSX fixtures verify interfaces, type-only imports, declare
+fields, typed classes, extensionless resolution and both source boundaries.
+All four existing package build-helper tests pass; no test files were changed.
+Source-file conversion, consumer builds and publication are not part of this step.
