@@ -1,10 +1,8 @@
-import {firebaseMessaging as firebase} from "../../controllers/Firebase";
 import {cacheDatas} from "../../controllers/General";
 import {tokenizeText} from "../MentionedTextComponent";
 
 export const PostData = function ({allowedExtras = ["like"], database, type = "posts"}) {
     let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root, _targetTag, _edit;
-    const refRoot = firebase.database().ref();
 
     const _body = {
         get asString() {
@@ -230,10 +228,8 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         publish: () => async () => {
             if (!_id) {
-                const pub = await _body._refPosts.push(_body._publishData());
-                _id = pub.key;
-                // _created = await database.read([, "created"])
-                _created = (await pub.child("created").once("value")).val();
+                _id = await database.create(["posts"]).save(_body._publishData());
+                _created = await database.read(["posts", _id, "created"]);
             }
             cacheDatas.put(_id, _body);
             return _body;
@@ -263,9 +259,8 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 uid,
                 uid_id,
             };
-
-            const snapshot = await _body._refExtra.push(value);
-            _extras[type] = {key: snapshot.key, value}
+            const key = await database.create(["extra"]).save(value);
+            _extras[type] = {key, value}
             _counters = _counters || {};
             _counters[type] = (_counters[type] || 0) + 1;
             return _extras[type];
@@ -317,8 +312,6 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             };
             return value;
         },
-        _refPosts: refRoot.child(type),
-        _refExtra: refRoot.child("extra"),
         _updateVal: async (section, path, change, cache) => {
             path = `${section}/${path}`;
             if (cache[path] !== undefined) {
