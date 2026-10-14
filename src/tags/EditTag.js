@@ -380,7 +380,7 @@ export default ({allowOwner = true}) => {
 
     React.useEffect(() => {
         if (shouldRedirectToLogin || !tag || !tag.uid || tag.uid === "0") return;
-        new UserData().fetch(tag.uid)
+        new UserData(database).fetch(tag.uid)
             .then(userData => {
                 setState(state => ({...state, owner: `$[user:${tag.uid}:${userData.name}]`}));
             })
