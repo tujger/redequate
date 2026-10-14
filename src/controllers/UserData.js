@@ -1,6 +1,5 @@
 import {SERVER_TIMESTAMP, UserData as UserDataCommon, UserRole} from "../../packages/common";
 import {restoreLanguage} from "../reducers/languageReducer";
-import {firebaseMessaging} from "./Firebase";
 import {cacheDatas} from "./General";
 import notifySnackbar from "./notifySnackbar";
 
@@ -26,7 +25,7 @@ export class UserData extends UserDataCommon {
 
     _prepareUpdates(includePublic, includePrivate) {
         const state = this._getState();
-        const updates = {};
+        const updates = new Map();
         if (!state.id) throw new Error("[UserData] save failed: id is not defined");
         if (includePublic) {
             if (!state.public) throw new Error("[UserData] public section is not ready");
@@ -36,10 +35,10 @@ export class UserData extends UserDataCommon {
                     if (state.public[x] !== undefined && (state.public[x] || "").constructor.name === "String") {
                         state.public[x] = (state.public[x] || "").trim();
                     }
-                    updates[`users_public/${state.id}/${x}`] = state.public[x];
+                    updates.set(["users_public", state.id, x], state.public[x]);
                 }
             }
-            updates[`users_public/${state.id}/updated`] = SERVER_TIMESTAMP;
+            updates.set(["users_public", state.id, "updated"], this.#database.TIMESTAMP);
         }
 
         if (includePrivate) {
@@ -50,29 +49,22 @@ export class UserData extends UserDataCommon {
                         if (state.private[deviceId][x] !== undefined && (state.private[deviceId][x] || "").constructor.name === "String") {
                             state.private[deviceId][x] = (state.private[deviceId][x] || "").trim();
                         }
-                        updates[`users_private/${state.id}/${deviceId}/${x}`] = state.private[deviceId][x];
+                        updates.set(["users_private", state.id, deviceId, x], state.private[deviceId][x]);
                     }
                 }
             }
         }
 
         if (!state.public.updated) {
-            updates[`users_public/${state.id}/updated`] = SERVER_TIMESTAMP;
+            updates.set(["users_public", state.id, "updated"], this.#database.TIMESTAMP);
         }
-
         return updates;
     }
 
     async delete() {
         const state = this._getState();
-        // const updates = {};
-        // updates[`users_public/${state.id}`] = null;
-        // updates[`roles/${state.id}`] = null;
-        // updates[`users_private/${state.id}`] = null;
-
         console.log("[UserData] delete", state.id);
         await this.#database.delete(["users_public", state.id]);
-        // await firebaseMessaging.database().ref().update(updates);
         cacheDatas.remove(state.id);
         return this;
     }
@@ -100,15 +92,14 @@ export class UserData extends UserDataCommon {
         const force = options.indexOf(UserData.FORCE) >= 0;
 
         let _loading = {...state.loaded};
-        const ref = firebaseMessaging.database().ref("users_public");
 
         const tasks = [];
         if ((!_loading.public || force) && (fetchPublic || fetchFull)) {
             tasks.push(new Promise((resolve, reject) => {
-                this._fetch(ref.child(state.id))
-                    .then(snap => {
-                        if (snap.exists()) state.persisted = true;
-                        state.public = {...state.public, ...(snap.val() || {})};
+                this.#database.read(["users_public", state.id])
+                    .then(value => {
+                        if (value !== undefined) state.persisted = true;
+                        state.public = {...state.public, ...(value || {})};
                         if (!state.public.email) {
                             cacheDatas.remove(state.id);
                             state.id = undefined;
@@ -132,10 +123,10 @@ export class UserData extends UserDataCommon {
 
         if (fetchPrivate === true || fetchFull) {
             tasks.push(new Promise((resolve, reject) => {
-                this._fetch(firebaseMessaging.database().ref("users_private").child(state.id))
-                    .then(snap => {
-                        if (snap.exists()) state.persisted = true;
-                        state.private = {...state.private, ...(snap.val() || {})};
+                this.#database.read(["users_private", state.id])
+                    .then(value => {
+                        if (value !== undefined) state.persisted = true;
+                        state.private = {...state.private, ...(value || {})};
                         state.loaded = {...state.loaded, private: true};
                         // console.warn("[UserData] private", state.id, state.private);
                         resolve(state.private);
@@ -146,10 +137,9 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.role || force) && (fetchRole || fetchFull)) {
             tasks.push(new Promise((resolve, reject) => {
-                this._fetch(firebaseMessaging.database().ref("roles").child(state.id))
-                    .then(snap => {
-                        state.role = snap.val();
-                        // console.warn("[UserData] role", state.id, state.role);
+                this.#database.read(["roles", state.id])
+                    .then(value => {
+                        state.role = value;
                         state.loaded = {...state.loaded, role: true};
                         resolve(state.role);
                     }).catch(reject);
@@ -159,9 +149,9 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this._fetch(ref.child(state.id).child("updated"))
-                    .then(snap => {
-                        state.public.updated = snap.val();
+                this.#database.read(["users_public", state.id, "updated"])
+                    .then(value => {
+                        state.public.updated = value;
                         // console.warn("[UserData] updated", state.id, state.public.updated);
                         state.loaded = {...state.loaded, updated: true};
                         resolve(state.public.updated);
@@ -172,10 +162,10 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this._fetch(ref.child(state.id).child("name"))
-                    .then(snap => {
-                        if (snap.exists()) state.persisted = true;
-                        state.public.name = snap.val() || "";
+                this.#database.read(["users_public", state.id, "name"])
+                    .then(value => {
+                        if (value !== undefined) state.persisted = true;
+                        state.public.name = value || "";
                         // if (!state.public.name) {
                         //     cacheDatas.remove(state.id);
                         //     state.id = undefined;
@@ -191,10 +181,10 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.image || force) && (fetchImage && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this._fetch(ref.child(state.id).child("image"))
-                    .then(snap => {
-                        if (snap.exists()) state.persisted = true;
-                        state.public.image = snap.val();
+                this.#database.read(["users_public", state.id, "image"])
+                    .then(value => {
+                        if (value !== undefined) state.persisted = true;
+                        state.public.image = value;
                         // console.warn("[UserData] image", state.id, state.public.image);
                         state.loaded = {...state.loaded, image: true};
                         resolve(state.public.image);
@@ -205,10 +195,10 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.email || force) && (fetchEmail && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this._fetch(ref.child(state.id).child("email"))
-                    .then(snap => {
-                        if (snap.exists()) state.persisted = true;
-                        state.public.email = snap.val();
+                this.#database.read(["users_public", state.id, "email"])
+                    .then(value => {
+                        if (value !== undefined) state.persisted = true;
+                        state.public.email = value;
                         if (!state.public.email) {
                             cacheDatas.remove(state.id);
                             state.id = undefined;
@@ -233,39 +223,37 @@ export class UserData extends UserDataCommon {
         const state = this._getState();
         if (!state.loaded.private || force) {
             if (!deviceId) {
-                const snap = await this._fetch(firebaseMessaging.database().ref("users_private").child(state.id));
-                if (snap.exists()) state.persisted = true;
-                state.private = {...state.private, ...(snap.val() || {})}
+                const value = await this.#database.read(["users_private", state.id]);
+                if (value !== undefined) state.persisted = true;
+                state.private = {...state.private, ...(value || {})}
                 state.loaded = {...state.loaded, private: true};
             } else {
-                const snap = await this._fetch(firebaseMessaging.database().ref("users_private").child(state.id).child(deviceId));
-                if (snap.exists()) state.persisted = true;
-                state.private[deviceId] = {...state.private[deviceId], ...(snap.val() || {})};
+                const value = await this.#database.read(["users_private", state.id, deviceId]);
+                if (value !== undefined) state.persisted = true;
+                state.private[deviceId] = {...state.private[deviceId], ...(value || {})};
                 state.loaded = {...state.loaded, private: true};
             }
-
         }
-
         return this;
     }
 
     async save() {
         const updates = this._prepareUpdates(true, true);
-        await firebaseMessaging.database().ref().update(updates);
+        await this.#database.update(updates);
         return this;
     }
 
     async savePublic() {
         const state = this._getState();
         const updates = this._prepareUpdates(true, false);
-        await firebaseMessaging.database().ref().update(updates);
+        await this.#database.update(updates);
         state.persisted = true;
         return this;
     }
 
     async savePrivate() {
         const updates = this._prepareUpdates(false, true);
-        await firebaseMessaging.database().ref().update(updates);
+        await this.#database.update(updates);
         return this;
     }
 
