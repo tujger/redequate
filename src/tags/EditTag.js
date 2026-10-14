@@ -136,7 +136,7 @@ export default ({allowOwner = true}) => {
             tag.image = imageSaved || image || null;
         }
         const updateTimestamp = async () => {
-            tag.timestamp = tag.timestamp || firebase.database.ServerValue.TIMESTAMP;
+            tag.timestamp = tag.timestamp || database.TIMESTAMP;
         }
         const updateUid = async () => {
             tag.uid = tag.uid !== undefined ? tag.uid : currentUserData.id;
@@ -252,11 +252,11 @@ export default ({allowOwner = true}) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, hideTagOpen: false}));
 
-        const updates = {};
-        updates[`tag/${id}/hidden`] = true;
-        updates[`tag/${id}/_sort_name`] = null;
-        console.log("[EditTag] updates", updates)
-        firebase.database().ref().update(updates)
+        const updates = new Map();
+        updates.set(["tag", id, "hidden"], true);
+        updates.set(["tag", id, "_sort_name"], null);
+        console.log("[EditTag] updates", updates);
+        database.update(updates)
             .then(() => {
                 tag.hidden = true;
                 notifySnackbar({
@@ -278,14 +278,13 @@ export default ({allowOwner = true}) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, showTagOpen: false}));
 
-        const updates = {};
+        const updates = new Map();
         delete tag.hidden;
-        updates[`tag/${id}/hidden`] = null;
+        updates.set(["tag", id, "hidden"], null);
         tag._sort_name = tag.id;
-        updates[`tag/${id}/_sort_name`] = tag._sort_name;
-        console.log("[EditTag] updates", updates)
-
-        firebase.database().ref().update(updates)
+        updates.set(["tag", id, "_sort_name"], tag._sort_name);
+        console.log("[EditTag] updates", updates);
+        database.update(updates)
             .then(() => {
                 notifySnackbar({
                     title: t("Tag.{{label}} is visible now.", {label: tag.label}),
@@ -312,13 +311,13 @@ export default ({allowOwner = true}) => {
             setState(state => ({...state, disabled: true, deleteTagOpen: false}));
         }
         const createUpdates = async () => {
-            const updates = {};
-            updates[`tag/${id}`] = null;
+            const updates = new Map;
+            updates.set(["tag", id], null);
             return updates;
         }
         const publishUpdates = async updates => {
             console.log(updates);
-            return firebase.database().ref().update(updates);
+            return database.update(updates);
         }
         const onComplete = async () => {
             // history.goBack();

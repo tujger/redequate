@@ -1,17 +1,17 @@
-export default async function update(path, changes, {} = {}) {
-    if (changes === undefined) {
-        const result = {};
-        for (const p in path) {
-            result[p] = await upd.call(this, p, path[p]);
-        }
-        return result;
-    } else {
-        return upd.call(this, path, changes);
-    }
-}
+import {resolvePath} from "./common";
 
-function upd(path, changes) {
-    const effectivePath = path instanceof Array ? path.join("/") : path;
-    let ref = this._firebase.database().ref(effectivePath);
-    return ref.update(changes);
+export default async function update(path, changes, {} = {}) {
+    const updates = {};
+    if(path instanceof Map) {
+        for (const [p, value] of path) {
+            updates[resolvePath(p)] = value;
+        }
+    } else if(changes === undefined) {
+        for (const p in path) {
+            updates[resolvePath(p)] = path[p];
+        }
+    } else {
+        updates[resolvePath(path)] = changes;
+    }
+    return this._firebase.database().ref().update(updates);
 }

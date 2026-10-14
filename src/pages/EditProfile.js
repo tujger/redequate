@@ -179,14 +179,14 @@ function EditProfile(props) {
         }
         const saveByAdmin = async () => {
             if (isAdmin) {
-                const updates = {};
-                updates[`roles/${userData.id}`] = (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role;
+                const updates = new Map();
+                updates.set(["roles", userData.id], (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role);
                 if (role === UserRole.USER_NOT_VERIFIED) {
-                    updates[`users_public/${userData.id}/emailVerified`] = false;
+                    updates.set(["users_public", userData.id, "emailVerified"], false);
                 } else if (role === UserRole.USER || role === UserRole.ADMIN) {
-                    updates[`users_public/${userData.id}/emailVerified`] = true;
+                    updates.set(["users_public", userData.id, "emailVerified"], true);
                 }
-                updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
+                updates.set(["users_public", userData.id, "updated"], database.TIMESTAMP);
                 if (role !== userData.role) {
                     updateActivity({
                         uid: currentUserData.id,
@@ -198,7 +198,7 @@ function EditProfile(props) {
                         },
                     }).catch(console.error);
                 }
-                return firebase.database().ref().update(updates);
+                return database.update(updates);
             }
         }
         const refreshUserData = async () => {

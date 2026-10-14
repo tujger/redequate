@@ -193,19 +193,19 @@ export function ChatMeta(database) {
             }
         },
         removeUid: async uid => {
-            const updates = {};
-            // updates[`chats/${_id}/!meta/members/${uid}`] = null;
-            updates[`_chats/${uid}/${_id}`] = null;
+            const updates = new Map();
+// updates.set(["chats", _id, "!meta", "members", uid], null);
+            updates.set(["_chats", uid, _id], null);
             delete _meta.members[uid];
             if (_activeUids.indexOf(uid) >= 0) _activeUids.splice(_activeUids.indexOf(uid), 1);
             console.log(`[ChatMeta] remove uid ${uid} from ${_id}`);
             if (!_activeUids.length) {
                 console.log(`[ChatMeta] chat is empty! removing entirely: ${_id}`);
-                updates[`chats/${_id}`] = null;
+                updates.set(["chats", _id], null);
                 _persisted = false;
                 _activeUids = [];
             }
-            return firebase.database().ref().update(updates);
+            return database.update(updates);
         },
         uidOtherThan: uid => {
             for (let userId in fetchUids()) {
@@ -215,32 +215,34 @@ export function ChatMeta(database) {
             throw Error(`Other uid not found within chat ${_id}`);
         },
         update: async () => {
-            const updatesMeta = {};
+            const updatesMeta = new Map();
             if (!_persisted) {
                 try {
-                    updatesMeta["members"] = _meta.members;
+                    updatesMeta.set(["chats", _id, "!meta", "members"], _meta.members);
                     _activeUids = Object.keys(_meta.members || {});
                     console.log("META", _id, updatesMeta);
-                    await chatsRef.child(_id).child("!meta").update(updatesMeta);
-                    const updatesIndex = {};
+                    await database.update(updatesMeta);
+                    const updatesIndex = new Map();
                     await _body.forEachUid(uid => {
-                        updatesIndex[`${uid}/${_id}/private`] = _body.uidOtherThan(uid);
-                        updatesIndex[`${uid}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
-                    })
-                    await indexRef.update(updatesIndex);
+                        updatesIndex.set(["_chats", uid, _id, "private"], _body.uidOtherThan(uid));
+                        updatesIndex.set(["_chats", uid, _id, "timestamp"], database.TIMESTAMP);
+                    });
+                    await database.update(updatesIndex);
                     _persisted = true;
                 } catch (error) {
-                    console.error(error)
+                    console.error(error);
                 }
             }
+
             await database.write(["chats", _id, "!meta", "timestamp"], database.TIMESTAMP);
-            const updatesIndex = {};
+
+            const updatesIndex = new Map();
             await _body.forEachUid(async uid => {
                 const value = await database.read(["_chats", uid, _id]);
                 if (value === undefined) return;
-                updatesIndex[`${uid}/${_id}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
+                updatesIndex.set(["_chats", uid, _id, "timestamp"], database.TIMESTAMP);
             });
-            await indexRef.update(updatesIndex);
+            await database.update(updatesIndex);
             return _body;
         },
         unwatch: () => {

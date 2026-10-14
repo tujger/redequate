@@ -104,19 +104,19 @@ export default ({uploadable}) => {
     }
 
     const switchMaintenance = (value) => {
-        const updates = {};
+        const updates = new Map();
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, maintenanceOpen: false}));
         if (value) {
-            updates["meta/maintenance"] = {
+            updates.set(["meta", "maintenance"], {
                 message: message || "",
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                timestamp: database.TIMESTAMP,
                 person: {name: currentUserData.public.name, email: currentUserData.public.email}
-            }
+            })
         } else {
-            updates["meta/maintenance"] = null;
+            updates.set(["meta", "maintenance"], null);
         }
-        firebase.database().ref().update(updates)
+        database.update(updates)
             .then(() => database.read("meta"))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
@@ -163,7 +163,7 @@ export default ({uploadable}) => {
     };
 
     const handleSave = evt => {
-        const updates = {};
+        const updates = new Map();
         const settings = {}
         const prepareSaving = async () => {
             dispatch(ProgressView.SHOW);
@@ -178,13 +178,13 @@ export default ({uploadable}) => {
         }
         const addSupport = async token => {
             if (token.type === "user") {
-                updates.support = token.id || null;
+                updates.set(["meta", "support"], token.id || null);
                 return;
             }
             throw Error(`Incorrect token: ${JSON.stringify(token)}`);
         }
         const addBlockedNames = async () => {
-            updates.blockedNames = blockedNames || null;
+            updates.set(["meta", "blockedNames"], blockedNames || null);
         }
         const addPreferenceDynamicLinksUrlPrefix = async () => {
             settings.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix || null;
@@ -221,9 +221,9 @@ export default ({uploadable}) => {
             settings.uploadsQuality = uploadsAllow ? +uploadsQuality || 75 : null;
         }
         const publish = async () => {
-            updates.settings = settings;
-            console.log(updates)
-            return firebase.database().ref().child("meta").update(updates);
+            updates.set(["meta", "settings"], settings);
+            console.log(updates);
+            return database.update(updates);
         }
         const updateServiceActivity = async () => {
             if (Object.keys(details).length > 0) {
