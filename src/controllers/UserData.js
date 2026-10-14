@@ -20,7 +20,7 @@ export class UserData extends UserDataCommon {
     }
 
     _dateFormatted(date) {
-        if (date === this.#database.TIMESTAMP) {
+        if (date && date === this.#database?.TIMESTAMP) {
             return super._dateFormatted(new Date().getTime());
         }
         return super._dateFormatted(date);
