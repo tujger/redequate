@@ -121,6 +121,7 @@ export default ({uploadable}) => {
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
             .then(() => updateActivity({
+                database,
                 uid: currentUserData.id,
                 type: "Maintenance",
                 details: {
@@ -228,6 +229,7 @@ export default ({uploadable}) => {
         const updateServiceActivity = async () => {
             if (Object.keys(details).length > 0) {
                 updateActivity({
+                    database,
                     uid: currentUserData.id,
                     type: "Settings updated",
                     details
