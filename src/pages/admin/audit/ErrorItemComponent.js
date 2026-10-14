@@ -58,13 +58,13 @@ export default ({data, skeleton, label, onUserClick}) => {
     React.useEffect(() => {
         if (!data || !data.value || !data.value.uid) return;
         let isMounted = true;
-        const userData = cacheDatas.put(data.value.uid, new UserData(database));
-        userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
-            .then(() => isMounted && setState(state => ({...state, userData})))
+
+        cacheDatas.fetch(data.value.uid, id => new UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]))
+            .then(userData => isMounted && setState(state => ({...state, userData})))
             .catch(error => {
                 if (!isMounted) return;
-                console.log(error, userData)
-                userData.public.name = userData.public.name || (data.value.uid === "anonymous" ? "Anonymous" : "User deleted");
+                const userData = new UserData(database);
+                userData.public.name = data.value.uid === "anonymous" ? "Anonymous" : "User deleted";
                 if (data.value.uid !== "anonymous") console.log("[Error] user deleted", data.value.uid);
                 setState(state => ({...state, userData}))
             });
