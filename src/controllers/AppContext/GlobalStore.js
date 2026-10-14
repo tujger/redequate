@@ -1,20 +1,24 @@
+import {deepFreeze} from "./_common";
+
 const identity = value => value;
 
 export default class GlobalStore {
-    constructor(initialValue = null, normalize = identity) {
+    constructor(initialValue, normalize = identity, prepared = false) {
         this._normalize = normalize;
-        this._initialValue = this._prepare(initialValue);
+        this._initialValue = prepared ? initialValue : this._prepare(initialValue === undefined ? null : initialValue);
         this._value = this._initialValue;
         this._listeners = new Set();
     }
 
-    fork(initialValue = this._initialValue) {
-        return new GlobalStore(initialValue, this._normalize);
+    fork(initialValue) {
+        return arguments.length
+            ? new GlobalStore(initialValue, this._normalize)
+            : new GlobalStore(this._initialValue, this._normalize, true);
     }
 
     _prepare(value) {
         const next = this._normalize(value);
-        return process.env.NODE_ENV !== "production" ? deepFreeze(next) : next;
+        return deepFreeze(next);
     }
 
     get = () => this._value;
@@ -31,31 +35,17 @@ export default class GlobalStore {
             ? update(this._value)
             : update);
 
+        this._commit(next);
+    };
+
+    _commit(next) {
         if (Object.is(next, this._value)) return;
 
         this._value = next;
-        this._listeners.forEach(listener => listener());
-    };
+        for (const listener of Array.from(this._listeners)) {
+            if (this._listeners.has(listener)) listener();
+        }
+    }
 
-    reset = () => this.set(this._initialValue);
+    reset = () => this._commit(this._initialValue);
 }
-
-const deepFreeze = value => {
-    const seen = new WeakSet();
-    const objects = [];
-
-    const visit = item => {
-        if (item === null || typeof item !== "object" || seen.has(item)) return;
-
-        seen.add(item);
-        objects.push(item);
-        Reflect.ownKeys(item).forEach(key => {
-            const descriptor = Object.getOwnPropertyDescriptor(item, key);
-            if (Object.prototype.hasOwnProperty.call(descriptor, "value")) visit(descriptor.value);
-        });
-    };
-
-    visit(value);
-    objects.forEach(Object.freeze);
-    return value;
-};
