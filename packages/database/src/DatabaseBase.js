@@ -87,4 +87,8 @@ export default class DatabaseBase {
     get TIMESTAMP() {
         return notImplemented('timestamp')
     }
+
+    increment(delta) {
+        return notImplemented('increment')
+    }
 }
