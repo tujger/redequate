@@ -5,7 +5,7 @@ import {lazyListComponentReducer} from "../components/LazyListComponent/lazyList
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
 import {useDatabase, useRedirectToLogin} from "../controllers";
-import {cacheDatas, useFirebase, usePages} from "../controllers/General";
+import {cacheDatas, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import {UserData} from "../controllers/UserData";
@@ -29,7 +29,6 @@ export default (props) => {
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const {id: idFromParams} = useParams();
@@ -40,13 +39,12 @@ export default (props) => {
     const containerRef = React.useRef();
 
     const id = idFromProps || idFromParams;
-    const db = firebase.database();
 
     const handleSend = (value) => {
         dispatch(ProgressView.SHOW);
         const uid = currentUserData.id;
-        db.ref("chats").child(chatMeta.id).push({
-            created: firebase.database.ServerValue.TIMESTAMP,
+        database.create(["chats", chatMeta.id]).save({
+            created: database.TIMESTAMP,
             text: value,
             uid,
         })
