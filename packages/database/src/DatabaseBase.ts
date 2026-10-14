@@ -4,53 +4,77 @@ import {notImplemented} from '../../common/src/_packages'
  * A path relative to the provider root. Array elements are joined with '/'
  * and may themselves contain nested paths. '' and [] identify the root.
  * Providers validate and normalize paths; this base class does neither.
- * @typedef {string | string[]} DatabasePath
  */
+export type DatabasePath = string | string[];
 
-/** @typedef {null | boolean | number | string | DatabaseValue[] | DatabaseRecord} DatabaseValue */
-/** @typedef {Object<string, DatabaseValue>} DatabaseRecord */
-/** @typedef {{key: string, value: DatabaseRecord}} DatabaseEntry */
+export type DatabaseValue = null | boolean | number | string | DatabaseValue[] | DatabaseRecord;
 
-/**
- * A prepared record creation function with a readonly temporary identifier.
- * @typedef {((value: DatabaseRecord) => Promise<string>) & {readonly temporaryKey: string}} DatabaseCreate
- */
+export interface DatabaseRecord {
+    [key: string]: DatabaseValue;
+}
+
+export interface DatabaseEntry {
+    key: string;
+    value: DatabaseValue;
+}
+
+export interface DatabaseDraft {
+    readonly temporaryKey: string;
+    save(value: DatabaseRecord): Promise<string>;
+}
+
+export interface DatabaseListener {
+    remove(): void;
+}
+
+export interface DatabaseListenerOptions {
+    onChange?: (value: DatabaseValue | undefined) => void;
+    onChildAdd?: (entry: DatabaseEntry) => void;
+    onChildChange?: (entry: DatabaseEntry) => void;
+    onChildRemove?: (entry: DatabaseEntry) => void;
+    onError?: (error: Error) => void;
+    orderBy?: string;
+}
+
+export interface DatabaseReadOptions {
+    equalTo?: null | boolean | number | string;
+    orderBy?: string;
+}
+
+export type DatabaseOptions = Record<string, unknown>;
+export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;
 
 export default class DatabaseBase {
-    addEventListener(path, {
+    addEventListener(path: DatabasePath, {
         onChange,
         onChildAdd,
         onChildChange,
         onChildRemove,
         onError,
         orderBy
-    }) {
+    }: DatabaseListenerOptions): DatabaseListener {
         return notImplemented("addValueListener");
     }
 
     /**
      * Prepare record creation without writing to provider storage.
-     * Returns synchronously with a constant readonly temporaryKey identifying
+     * Returns a draft object synchronously with a constant readonly temporaryKey identifying
      * the prepared operation, not a guaranteed address in provider storage.
-     * Calling the function with data creates the record without overwriting an
+     * Calling draft.save(value) creates the record without overwriting an
      * existing record. Missing, undefined or null data and key conflicts reject.
-     * The function resolves to the permanent key after a successful storage write.
+     * The save method resolves to the permanent key after a successful storage write.
      * That key may differ from temporaryKey. Failed writes may be retried;
      * creating a record at an already occupied key rejects.
-     * @param {DatabasePath} path Collection path.
-     * @returns {DatabaseCreate} Prepared creation function.
      */
-    create(path) {
+    create(path: DatabasePath): DatabaseDraft {
         return notImplemented('create')
     }
 
     /**
-     * Read a record as plain data, without provider references or snapshots.
+     * Read a value as plain data, without provider references or snapshots.
      * Access and read failures reject; an absent record resolves to undefined.
-     * @param {DatabasePath} path Record path.
-     * @returns {Promise<DatabaseRecord | undefined>}
      */
-    async read(path, {equalTo = undefined, orderBy = undefined} = {}) {
+    async read(path: DatabasePath, {equalTo = undefined, orderBy = undefined}: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
         return notImplemented('read')
     }
 
@@ -58,21 +82,19 @@ export default class DatabaseBase {
      * Update an existing record's top-level fields. Nested values are replaced
      * in full; null removes a field. An absent record rejects, without creating it.
      * Resolves after the changes have been written to the provider's storage.
-     * @param {DatabasePath} path Record path.
-     * @param {DatabaseRecord} changes Partial record data.
-     * @returns {Promise<void>}
+     * The batch form writes values at multiple paths relative to the root.
      */
-    async update(path, changes, {} = {}) {
+    update(path: DatabasePath, changes: DatabaseRecord, options?: DatabaseOptions): Promise<void>;
+    update(updates: DatabaseUpdates): Promise<void>;
+    async update(path: DatabasePath | DatabaseUpdates, changes?: DatabaseRecord, {}: DatabaseOptions = {}): Promise<void> {
         return notImplemented('update')
     }
 
     /**
      * Delete a record. Deleting an absent record also succeeds.
      * Resolves after deletion in the provider's storage; write failures reject.
-     * @param {DatabasePath} path Record path.
-     * @returns {Promise<void>}
      */
-    async delete(path, {} = {}) {
+    async delete(path: DatabasePath, {}: DatabaseOptions = {}): Promise<void> {
         return notImplemented('delete')
     }
 
@@ -81,10 +103,8 @@ export default class DatabaseBase {
      * An empty collection yields nothing. Early termination, including break,
      * releases provider resources. No common ordering or consistent snapshot
      * across the traversal is guaranteed. Failures reject the next() operation.
-     * @param {DatabasePath} path Collection path.
-     * @returns {AsyncIterable<DatabaseEntry>}
      */
-    async* iterate(path) {
+    async* iterate(path: DatabasePath): AsyncIterableIterator<DatabaseEntry> {
         yield notImplemented('iterate')
     }
 
@@ -92,19 +112,16 @@ export default class DatabaseBase {
      * Create or fully replace the value at an exact path, including nested values.
      * A null value deletes the data at that path; undefined or missing values reject.
      * Resolves after a successful provider storage write. Storage failures reject.
-     * @param {DatabasePath} path Exact storage path.
-     * @param {DatabaseValue} value JSON-compatible value to write.
-     * @returns {Promise<void>}
      */
-    async write(path, value, {} = {}) {
+    async write(path: DatabasePath, value: DatabaseValue, {}: DatabaseOptions = {}): Promise<void> {
         return notImplemented('write')
     }
 
-    get TIMESTAMP() {
+    get TIMESTAMP(): DatabaseValue {
         return notImplemented('timestamp')
     }
 
-    increment(delta) {
+    increment(delta: number): DatabaseValue {
         return notImplemented('increment')
     }
 }
