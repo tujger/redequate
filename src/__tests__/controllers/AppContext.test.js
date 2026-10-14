@@ -9,7 +9,6 @@ import UseAbstract from "../../controllers/AppContext/UseAbstract";
 import GlobalStore from "../../controllers/AppContext/GlobalStore";
 import {UserData} from "../../controllers/UserData";
 import {getCurrentUserData, useCurrentUserData} from "../../controllers/useCurrentUserData";
-import {SERVER_TIMESTAMP} from "../../../packages/common";
 import {render, unmount} from "../render";
 
 let sequence = 0;
@@ -185,7 +184,7 @@ it.each(["initialState", "state"])("hydrates a transferred %s snapshot and then 
 });
 
 it("preserves UserData model APIs, freezes its own state and leaves private visit bookkeeping usable", async () => {
-    const database = {read: vi.fn().mockResolvedValue("user@example.test"), write: vi.fn().mockResolvedValue(), TIMESTAMP: SERVER_TIMESTAMP};
+    const database = {read: vi.fn().mockResolvedValue("user@example.test"), write: vi.fn().mockResolvedValue(), TIMESTAMP: {kind: "server-timestamp"}};
     const user = new UserData(database).create("visit-user", {name: "User", email: "user@example.test"});
     user._getState().persisted = true;
     const store = new GlobalStore(user);

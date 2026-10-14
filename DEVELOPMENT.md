@@ -1784,14 +1784,17 @@ useSyncExternalStore, with Object.is suppressing unchanged values.
 Other Redux state remains during incremental migration; the generic state classes
 stay internal.
 
-GlobalStore owns development deepFreeze. Writes evaluate the updater, apply the
-normalization callback supplied by UseAbstract, freeze the result and then check
+GlobalStore owns deepFreeze in both development and production. Writes evaluate
+the updater, apply the pure normalization callback supplied by UseAbstract,
+freeze the result and then check
 Object.is before storing/notifying. Initial values follow the same preparation;
-isolated AppState stores retain the normalization callback through fork().
+isolated AppState stores retain the normalization callback through fork(). Forks
+without supplied seeds reuse the prepared immutable baseline without normalizing
+it again; reset restores that exact baseline without another normalization.
 Own data fields of objects, arrays and class instances are traversed/frozen through
-descriptors, without invoking getters or traversing prototypes. Functions and
+descriptors, without invoking getters or freezing prototypes. Functions and
 accessor functions are not traversed/frozen; their references are preserved.
-Mutating frozen data through a model method is prohibited in development.
+Mutating frozen data through a model method is prohibited in every environment.
 Web UserData keeps its database service and visit counter in #database and
 #lastVisitUpdate so reflection does not freeze shared services or runtime bookkeeping.
 Writes preserve the supplied value's identity; no cloning or serialization occurs.
@@ -1816,7 +1819,13 @@ may construct separate models, but the hook stores exactly the model they publis
 Different hook keys own different stores: writes do not replace other values or
 notify other subscribers. Deliberately storing one object in multiple stores shares
 that reference. Mutating an instance and reassigning the same reference does not
-notify because Object.is sees no replacement. SSR request isolation remains deferred.
+notify because Object.is sees no replacement. Mutable built-ins (Date, Map/Set,
+their weak variants, buffers/views, RegExp and URL types) are rejected, including
+ordinary values from other realms. These objects retain mutable internal slots
+after Object.freeze. Arbitrary classes must keep observable data in own data
+fields and derive getters from those fields; private services and bookkeeping
+remain the model author's responsibility. Proxies and side-effectful getters
+are not an immutable-state abstraction.
 
 Current-user Redux/localStorage caching is removed: existing persisted user fields
 are discarded during Redux restoration, while other stored slices remain.
@@ -1827,13 +1836,12 @@ result through the hook and enriches signed-in profiles from database; Redux doe
 not decide how to resolve the user. This avoids a second state owner;
 keeping the Redux bridge or a separate local user cache was rejected. The web
 consumers now use the specialized model hook API; backend/Android record formats are unchanged.
-SSR remains deferred.
+Full application SSR remains deferred; the state-layer contract below is supported.
 
 Affected consumers: both web applications are migrated to the model hooks;
 the legacy UserData accessor and current-user Redux slice are no longer supported.
-Android data formats are unchanged. SSR request isolation and hydration are
-deferred; createAppState/getServerSnapshot are scaffolding, not a completed SSR
-contract. Status: React DOM checks verify direct model identity and methods,
+Android data formats are unchanged. Full Dispatcher/application SSR remains a
+separate migration. Status: React DOM checks verify direct model identity and methods,
 anonymous data/reset, separate hook types and subscriber isolation, Object.is,
 GlobalStore preparation for shared/isolated stores, production behavior and logout.
 Class-field checks verify frozen model data, unchanged method/accessor references,
@@ -1843,6 +1851,97 @@ notification, and Object.is suppression against the normalized value.
 Framework ESM/CommonJS and both consumer production builds pass. Demo useBackend imports now use the root export.
 Existing test fixtures for the removed accessor/reducer require a separate
 authorized migration; no test files were changed in this session.
+
+### Immutable state and request-local hydration contract
+
+Decision: keep UseAbstract/GlobalStore/AppState internal, class-based and without
+new dependencies. Freeze snapshots in production as well as development, using
+an iterative descriptor traversal and a WeakSet cache of successfully frozen
+graphs. Reject known mutable built-ins rather than clone or wrap them. Store
+notifications use the subscriber list captured at the start of the update;
+new listeners wait for the next update and removed listeners are skipped.
+
+Reason: production mutation previously changed snapshots without notifications;
+Object.freeze does not protect built-in internal slots. Fork/reset repeated
+normalization and could change initial values. AppState kept a caller-owned seed
+map by reference. These are concrete state bugs, rather than a reason to add a
+state-management library or a lifecycle manager.
+
+SSR: create a new createAppState(initialState) for every request, after loading
+the initial data. AppContext accepts an optional state prop for that instance;
+state and initialState are selected once per provider mount. Without state it
+creates a local state on the server; browser defaults still use globalAppState.
+The seed map is shallow-copied and its values frozen at AppState construction,
+while individual stores remain lazy. Server get/set/reset require an explicit
+local AppState; globalAppState access and server hooks outside AppContext fail.
+
+Hydration: getServerSnapshot always returns the immutable prepared initial
+snapshot, even after set. Transfer the same initial data to the browser and
+reconstruct application model instances where needed before creating its state.
+Serialization/model reconstruction belong to the application; no automatic
+snapshot transport or class serialization is introduced. Do not use set for
+server preload: complete the preload before createAppState(initialState).
+
+Registration: module-level constructors still register automatically. Ordinary
+cached imports reuse the module; a duplicate key fails even with matching initial
+data. HMR re-execution of registration requires a full page reload. Tests that
+need a fresh registry reset the entire module graph, including the Context.
+Rejected: implicit duplicate reuse, HMR compatibility inference, built-in wrappers,
+deep cloning, derived stores and a simultaneous full-application SSR migration.
+
+Affected consumers: edeqa-pwa-react-demo and thewhiskytalks retain model identity,
+hooks and client defaults. Native Android APIs/data/bridge formats are unchanged;
+web views receive the production immutability contract. Model edits must complete
+on a replacement instance before publishing it.
+
+Status: implementation and targeted unit/React/SSR/hydration checks are complete.
+Verification results and pre-existing fixture failures: STATE_AUDIT.md.
+
+### Complete login preparation before publishing immutable models
+
+Decision: finish the login model's notification-token update and database save
+before publishing it through useCurrentUserData. Notification failures retain
+the existing nonfatal login behavior. Disabled users are still published and
+redirected to their profile without subscribing. Already published models are
+immutable; later edits require replacement models.
+
+Reason: publishing before notification setup froze UserData.private, causing
+setPrivate/savePrivate to fail. Preparing the model first fixes this without
+copying it or weakening the store's production immutability. Login's mount effect
+must also run before its signed-in early return to preserve React hook order.
+
+Consequence: login waits for the notification attempt before publishing its
+current user. Keep the existing permission policy and subscription conditions.
+Rejected: removing freeze, cloning for this initial preparation, and publishing
+an additional notification-specific replacement when reordering is sufficient.
+Affected consumers: both web applications and their embedded web views; native
+Android, authentication/provider APIs and stored token formats are unchanged.
+Status: seven Login regressions and 70 state tests pass; five regressions fail
+against the original Login implementation. Framework and both web builds pass.
+
+### Provider-owned UserData timestamp markers
+
+Decision: common UserData formats resolved numeric dates and owns no provider
+timestamp marker. SERVER_TIMESTAMP/constants.js are removed from common and web
+exports. The web controller handles its database.TIMESTAMP by identity, then
+delegates ordinary dates to common; it also works without a database and leaves
+empty dates empty. Do not reintroduce Firebase marker-shape checks into common.
+
+Reason: timestamp sentinels belong to database implementations. A runtime-neutral
+model must not interpret Firebase's .sv shape. The frontend guard prevents
+created/updated getters from dereferencing a missing database.
+
+Affected consumers: both web applications and The Whisky Talks Functions. Test
+fixtures use provider-owned markers; the Functions common contract test uses
+new UserData and subclasses instead of the removed callable/extend API. Native
+Android and stored record formats are unchanged. Consumer vendor packages need
+their normal refresh before these updated tests target the installed new API.
+
+Status: 17 UserData unit tests, 77 state/Login tests, all 33 UserData emulator
+tests and five Functions common tests against the fresh server build pass.
+Web/server ESM/CJS builds pass. Functions vendor/lockfile were not refreshed;
+the Functions test was validated in a temporary package-resolution environment.
+Existing Auth/UI fixture failures remain outside this update.
 
 ### Publication repair compatibility and concurrent tag indexing
 
