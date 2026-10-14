@@ -8,7 +8,7 @@ const compat = new FlatCompat({baseDirectory: fileURLToPath(new URL('.', import.
 
 export default [
     {
-        ignores: ['**/node_modules/**', 'core/**', 'build/**', '.rpt2_cache/**', '**/.*']
+        ignores: ['**/node_modules/**', 'core/**', 'build/**', 'packages/server/dist/**', '.rpt2_cache/**', '**/.*']
     },
     ...compat.extends('standard', 'standard-react').map(config => ({...config, files})),
     {
@@ -41,6 +41,7 @@ export default [
             'packages/__tests__/**/*.{js,mjs,cjs}',
             'packages/auth/src/**/*.{js,mjs,cjs}', 'packages/auth/build.mjs',
             'packages/backend/src/**/*.{js,mjs,cjs}', 'packages/backend/build.mjs',
+            'packages/server/build.mjs',
             'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
             'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',
             'packages/common/src/**/*.{js,mjs,cjs}',
