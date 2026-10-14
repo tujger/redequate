@@ -188,6 +188,7 @@ function EditProfile(props) {
                 updates.set(["users_public", userData.id, "updated"], database.TIMESTAMP);
                 if (role !== userData.role) {
                     updateActivity({
+                        database,
                         uid: currentUserData.id,
                         type: "User role change",
                         details: {
@@ -280,6 +281,7 @@ function EditProfile(props) {
         }
         const publishActivity = async () => {
             updateActivity({
+                database,
                 uid: currentUserData.id,
                 type: "User delete",
                 details: userData.toJSON(),
