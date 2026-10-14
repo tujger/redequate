@@ -1,5 +1,4 @@
 import {UserRole} from "./UserRole.js";
-import {SERVER_TIMESTAMP} from "./constants.js";
 
 export class UserData {
     static PUBLIC = "public";
@@ -43,7 +42,6 @@ export class UserData {
 
     _dateFormatted(date) {
         if (!date) return "";
-        if (date[".sv"] === SERVER_TIMESTAMP[".sv"]) return this._dateFormatted(new Date().getTime());
         const _date = new Date(date);
         const now = new Date();
         if (now.getUTCFullYear() === _date.getUTCFullYear() &&
