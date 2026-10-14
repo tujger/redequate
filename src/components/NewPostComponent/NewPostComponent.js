@@ -203,7 +203,7 @@ const NewPostComponent = props => {
                         return {key: editPostData.id};
                     });
             } else {
-                return firebase.database().ref().child(type).push(data);
+                return database.create(type).save(data);
             }
         }
         const publishComplete = async snapshot => {
