@@ -2088,3 +2088,22 @@ Status: web/server builds and service/server ESM/CommonJS imports pass on Node
 fields, typed classes, extensionless resolution and both source boundaries.
 All four existing package build-helper tests pass; no test files were changed.
 Source-file conversion, consumer builds and publication are not part of this step.
+
+### Dispatcher-owned console error logging
+
+Decision: Dispatcher installs its console.error wrapper at effect startup, before
+database resolution. A closure supplies the resolved Database provider later;
+create(["errors"]).save stores the error string, provider TIMESTAMP and current
+user ID. Until the database is available, logging prints the original error and
+a notice that it was not saved. Provider failures go directly to the previous
+console handler, avoiding recursive logging. Cleanup restores that handler only
+if Dispatcher still owns the current wrapper; late resolution after cleanup
+cannot reinstall it. One active Dispatcher owns the global wrapper.
+
+Reason: remove Firebase access from error capture and tie the wrapper to application
+lifetime instead of module import. A database failure must not suppress console
+output or create an unhandled rejection.
+Affected consumers: both web applications; errors paths and stored fields remain
+unchanged, with no Android API changes. Status: direct checks verify provider
+availability, current-user lookup, failure handling and StrictMode-style cleanup;
+the web build passes on Node 24.21.0. No test files were changed.
