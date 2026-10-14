@@ -53,7 +53,6 @@ export default function({start}) {
     }
 
     const reset = async () => {
-        // firebase.database().goOnline();
         namesPagination.reset();
         emailsPagination.reset();
         countTotal = 0;

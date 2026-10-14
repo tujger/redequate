@@ -7,7 +7,7 @@ import ItemPlaceholderComponent from "../../../components/ItemPlaceholderCompone
 import ListItemComponent from "../../../components/ListItemComponent";
 import ProgressView from "../../../components/ProgressView";
 import {useBackend, useDatabase} from "../../../controllers";
-import {cacheDatas, useFirebase} from "../../../controllers/General";
+import {cacheDatas} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
 import Button from "../../../controls/Button/Button";
@@ -17,7 +17,6 @@ export default ({data, skeleton, label, onUserClick}) => {
     const backend = useBackend();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase()
     const [state, setState] = React.useState({});
 
     const {alert, userData, removed} = state;

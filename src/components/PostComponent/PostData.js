@@ -258,7 +258,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             const value = {
                 id: _id,
                 id_uid,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                timestamp: database.TIMESTAMP,
                 type,
                 uid,
                 uid_id,
@@ -308,7 +308,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         _publishData: () => {
             const value = {
-                created: _created || firebase.database.ServerValue.TIMESTAMP,
+                created: _created || database.TIMESTAMP,
                 text: _text,
                 uid: _uid,
                 images: _images || null,
