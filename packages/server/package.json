@@ -1,0 +1,53 @@
+{
+    "name": "redequate-server",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Independent common and backend entry points for Redequate Functions",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tujger/redequate.git",
+        "directory": "packages/server"
+    },
+    "type": "module",
+    "engines": {
+        "node": ">=22"
+    },
+    "exports": {
+        ".": {
+            "import": "./dist/common/index.mjs",
+            "require": "./dist/common/index.cjs"
+        },
+        "./common": {
+            "import": "./dist/common/index.mjs",
+            "require": "./dist/common/index.cjs"
+        },
+        "./backend/common": {
+            "import": "./dist/backend/common.mjs",
+            "require": "./dist/backend/common.cjs"
+        },
+        "./backend/common-server": {
+            "import": "./dist/backend/common-server.mjs",
+            "require": "./dist/backend/common-server.cjs"
+        },
+        "./backend/firebase-server": {
+            "import": "./dist/backend/firebase-server.mjs",
+            "require": "./dist/backend/firebase-server.cjs"
+        },
+        "./backend/local-test-server": {
+            "import": "./dist/backend/local-test-server.mjs",
+            "require": "./dist/backend/local-test-server.cjs"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "firebase-admin": "^14.5.0"
+    },
+    "scripts": {
+        "build": "npm --prefix ../.. run \"build server\"",
+        "prepack": "npm run build"
+    }
+}
