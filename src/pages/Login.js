@@ -13,8 +13,8 @@ import {fetchDeviceId, usePages, useStore} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, UserRole, UserData} from "../controllers/UserData";
 import {useCurrentUserData} from "../controllers/useCurrentUserData";
+import {logoutUser, UserData, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -210,15 +210,10 @@ function Login(props) {
             }
             return props;
         }
-        const updateCurrentUserData = async props => {
-            const {userData} = props;
-            setCurrentUserData(userData);
-            refreshAll(store);
-            return props;
-        }
         const checkIfUserDisabled = async props => {
             const {userData} = props;
             if (userData.role === UserRole.DISABLED) {
+                await updateCurrentUserData(props);
                 history.push(pages.profile.route);
                 throw "user-disabled";
             }
@@ -241,6 +236,12 @@ function Login(props) {
                     })
                     .catch(notifySnackbar)
             }
+            return props;
+        }
+        const updateCurrentUserData = async props => {
+            const {userData} = props;
+            setCurrentUserData(userData);
+            refreshAll(store);
             return props;
         }
         const doIfFirstLogin = async props => {
@@ -267,9 +268,9 @@ function Login(props) {
             .then(updatePrivateData)
             .then(transformUserDataIfNeeded)
             .then(publishUserData)
-            .then(updateCurrentUserData)
             .then(checkIfUserDisabled)
             .then(setupNotifications)
+            .then(updateCurrentUserData)
             .then(doIfFirstLogin)
             .catch(catchEvent)
             .catch(notifySnackbar)
@@ -299,15 +300,8 @@ function Login(props) {
         history.goBack();
     }
 
-    if (currentUserData.id) {
-        if (location.pathname === pages.login.route) {
-            return <Redirect to={pages.profile.route}/>
-        } else {
-            return <Redirect to={location.pathname}/>
-        }
-    }
-
     React.useEffect(() => {
+        if (currentUserData.id) return;
         if (location.state && location.state.loginWith) {
             if (location.state.loginWith === "google") {
                 requestLoginGoogle();
@@ -329,6 +323,14 @@ function Login(props) {
             setState(state => ({...state, requesting: false}));
         }
     }, [location.state && location.state.loginWith])
+
+    if (currentUserData.id) {
+        if (location.pathname === pages.login.route) {
+            return <Redirect to={pages.profile.route}/>
+        } else {
+            return <Redirect to={location.pathname}/>
+        }
+    }
 
     if (requesting) return <LoadingComponent/>
 
