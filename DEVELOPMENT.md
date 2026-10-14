@@ -1566,7 +1566,7 @@ config because the package manifest establishes a separate Babel boundary.
 Reason: Functions need common imports without browser dependencies or the full
 framework's Node >=24.12 requirement. They install the small package under the
 redequate dependency name using file:vendor/redequate-common.tgz. The Whisky Talks
-Functions predeploy runs prepare-redequate-common: npm pack creates the archive
+Functions predeploy runs prepare-redequate-server: npm pack creates the archive
 from the sibling Redequate common package, then an explicit npm install refreshes
 the installed package and lockfile integrity. The archive is generated, ignored
 by Git and included in the Functions upload. Preparation requires the sibling

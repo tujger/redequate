@@ -28,7 +28,7 @@ it is not embedded in the bundle. The backend entries are currently empty.
 Common imports do not initialize Firebase. The build tools come from the
 repository root and are not shipped to Functions.
 
-The Whisky Talks keeps its `prepare-redequate-common` command, which builds this
+The Whisky Talks keeps its `prepare-redequate-server` command, which builds this
 package, packs it as `vendor/redequate-server.tgz`, and reinstalls it to refresh
 lockfile integrity. The uploaded archive and its declared dependencies are
 sufficient for installation without the sibling Redequate checkout.
