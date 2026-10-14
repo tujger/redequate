@@ -8,13 +8,13 @@ import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
 import {resolveAuth} from "../packages/auth/src";
 import {resolveBackend} from "../packages/backend/src";
-import {useDatabase} from "./controllers";
-import AppContext from "./controllers/AppContext/AppContext";
 import {resolveDatabase} from "../packages/database/src";
 import {resolveMessaging} from "../packages/messaging/src";
 import {resolveStorage} from "../packages/storage/src";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
+import {useDatabase} from "./controllers";
+import AppContext from "./controllers/AppContext/AppContext";
 import Firebase from "./controllers/Firebase";
 import {
     cacheDatas,
@@ -46,33 +46,37 @@ const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayo
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-const origin = console.error;
-console.error = function (...args) {
-    origin.call(this, ...args);
-    // return;
-    try {
-        if (!args.length || args.length > 1) return;
-        if (args[0].toString().indexOf("no such file or directory") > 1) {
-            return;
+const installConsoleError = database => {
+    const origin = console.error;
+    const reportError = error => origin.call(console, error);
+    const handler = function (...args) {
+        origin.call(console, ...args);
+        try {
+            if (args.length !== 1) return;
+            const message = String(args[0]);
+            if (["no such file or directory", "Module not found", "memory access out of bounds"].some(filter => message.includes(filter))) return;
+
+            const draft = database?.create(["errors"]);
+            if (!draft) {
+                reportError("[Dispatcher] Error was not saved: database is unavailable.");
+                return;
+            }
+            const currentUserData = getCurrentUserData();
+            const saving = draft.save({
+                error: String(args[0]?.stack || message),
+                timestamp: database?.TIMESTAMP,
+                uid: currentUserData?.id || "anonymous"
+            });
+            Promise.resolve(saving).catch(reportError);
+        } catch (error) {
+            reportError(error);
         }
-        if (args[0].toString().indexOf("Module not found") > 1) {
-            return;
-        }
-        if (args[0].toString().indexOf("memory access out of bounds") > 1) {
-            return;
-        }
-        const firebase = useFirebase();
-        const currentUserData = getCurrentUserData();
-        if (!firebase || !firebase.database) return;
-        firebase.database().ref("errors").push({
-            error: args[0].stack || args[0],
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            uid: currentUserData.id || "anonymous"
-        });
-    } catch (error) {
-        origin.call(this, error);
-    }
-}
+    };
+    console.error = handler;
+    return () => {
+        if (console.error === handler) console.error = origin;
+    };
+};
 
 export default (props) => {
     const {
@@ -106,6 +110,7 @@ export default (props) => {
 
     React.useEffect(() => {
         let maintenanceRef, metaListener;
+        let consoleHandler;
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
@@ -137,8 +142,9 @@ export default (props) => {
         const initDatabase = async props => {
             try {
                 const database = await resolveDatabase(databaseGiven);
+                consoleHandler = installConsoleError(database);
                 console.log("[Dispatcher]", "database resolved", {database});
-                return {...props, database};
+                return {...props, consoleHandler, database};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -282,9 +288,19 @@ export default (props) => {
             (async () => {
                 const {auth, database, store} = props;
                 setInterval(() => {
-                    watchUserChanged({auth, database, getUserData: getCurrentUserData, onUserChanged: setCurrentUserData}).then(() => refreshAll(store));
+                    watchUserChanged({
+                        auth,
+                        database,
+                        getUserData: getCurrentUserData,
+                        onUserChanged: setCurrentUserData
+                    }).then(() => refreshAll(store));
                 }, 30000)
-                watchUserChanged({auth, database, getUserData: getCurrentUserData, onUserChanged: setCurrentUserData}).then(() => refreshAll(store));
+                watchUserChanged({
+                    auth,
+                    database,
+                    getUserData: getCurrentUserData,
+                    onUserChanged: setCurrentUserData
+                }).then(() => refreshAll(store));
             })().catch(console.error);
             return props;
         }
@@ -391,6 +407,7 @@ export default (props) => {
         return () => {
             maintenanceRef && maintenanceRef.off();
             metaListener?.remove();
+            consoleHandler?.();
         }
         // eslint-disable-next-line
     }, []);
