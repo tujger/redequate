@@ -3,7 +3,7 @@
     background-color: var(--avatar-background-color);
     border-radius: 50%;
     box-sizing: border-box;
-    color: var(--avatar-text-color);
+    color: contrast-color(var(--avatar-background-color));
     display: flex;
     flex-shrink: 0;
     font-family: Roboto, Helvetica, Arial, sans-serif;
