@@ -192,6 +192,7 @@ const NewPostComponent = props => {
                 return database.update(updates)
                     .then(() => {
                         updateActivity({
+                            database,
                             uid: currentUserData.id,
                             type: "Post edit",
                             details: {
