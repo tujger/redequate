@@ -170,6 +170,7 @@ export default ({allowOwner = true}) => {
         const auditActivity = async key => {
             if (ownerChanged !== null) {
                 updateActivity({
+                    database,
                     uid: currentUserData.id,
                     type: "Tag owner changed",
                     details: {
