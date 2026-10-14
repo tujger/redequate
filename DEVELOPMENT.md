@@ -2013,6 +2013,20 @@ to Rollup. Root development dependencies provide build tooling. Functions instal
 the generated vendor/redequate-server.tgz under the redequate dependency name,
 preserving existing imports; preparation refreshes lockfile integrity.
 
+Preparation is owned by packages/server/prepare-redequate-server.mjs and takes
+the target Functions directory as its required argument. Both web consumers
+invoke it from their npm commands and Firebase predeploy, avoiding duplicated
+build/pack/install logic. The demo also uses the server archive instead of the
+retired common package. Preparation needs the framework's Node.js 24.12+ build
+toolchain; deploying the prepared archive needs no sibling framework checkout.
+
+Shared preparation validated on Node.js 24.21.0 in both consumers: archive
+integrity matches lockfiles, lint and common imports pass, isolated archive
+installation supports ESM/CJS. The Whisky Talks Functions tests pass 88/88;
+demo tests pass 12/13. Its existing notification test expects no notificationType
+field, but functions/index.js already returns it. This consumer-specific fixture
+mismatch remains unresolved; no test files or notification behavior changed.
+
 The main redequate package contains common/client entries only. The browser build
 rejects server source imports; the server build rejects client/UI sources.
 Reason: make server packaging and dependency ownership explicit without coupling

@@ -28,7 +28,19 @@ it is not embedded in the bundle. The backend entries are currently empty.
 Common imports do not initialize Firebase. The build tools come from the
 repository root and are not shipped to Functions.
 
-The Whisky Talks keeps its `prepare-redequate-server` command, which builds this
-package, packs it as `vendor/redequate-server.tgz`, and reinstalls it to refresh
-lockfile integrity. The uploaded archive and its declared dependencies are
-sufficient for installation without the sibling Redequate checkout.
+Both The Whisky Talks and the demo use the shared preparation script:
+
+```sh
+node /path/to/redequate/packages/server/prepare-redequate-server.mjs /path/to/application/functions
+```
+
+The required Functions directory argument is resolved relative to the current
+working directory. The Redequate checkout is resolved from the script itself.
+Use Node.js 24.12+ and install the root development dependencies for preparation.
+The script builds this package, packs it as `vendor/redequate-server.tgz`, and
+reinstalls it under the `redequate` name to refresh lockfile integrity.
+Both applications expose `npm run prepare-redequate-server` from `functions/`
+and run it before lint during Firebase predeploy. Their npm command expects
+Redequate to be checked out next to the application repository.
+The uploaded archive and its declared dependencies are sufficient for installation
+without the sibling Redequate checkout.
