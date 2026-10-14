@@ -245,7 +245,7 @@ function Login(props) {
             return props;
         }
         const doIfFirstLogin = async props => {
-            console.log(props)
+            console.log("[Login]", "logged in", props);
             const {isFirstLogin} = props;
             if (onLogin && onLogin(isFirstLogin)) return;
             if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin});
