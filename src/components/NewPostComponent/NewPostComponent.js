@@ -185,8 +185,11 @@ const NewPostComponent = props => {
                     timestamp: database.TIMESTAMP,
                     uid: currentUserData.id,
                 };
-                const updates = {images, text, edit};
-                return firebase.database().ref().child(type).child(editPostData.id).update(updates)
+                const updates = new Map();
+                updates.set([type, editPostData.id, "images"], images);
+                updates.set([type, editPostData.id, "text"], text);
+                updates.set([type, editPostData.id, "edit"], edit);
+                return database.update(updates)
                     .then(() => {
                         updateActivity({
                             uid: currentUserData.id,
