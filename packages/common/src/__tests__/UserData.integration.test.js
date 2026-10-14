@@ -4,22 +4,20 @@ import notifySnackbar from "../../../../src/controllers/notifySnackbar";
 import {UserRole} from "../UserRole";
 import {
     currentRole,
-    currentUserData,
     logoutUser,
     matchRole,
     needAuth,
     normalizeSortName,
-    useCurrentUserData,
     UserData,
     watchUserChanged
 } from "../../../../src/controllers/UserData";
-import {auth, database, firebase, sdkAuth, seedDatabase, store} from "../../../../src/__tests__/common";
+import {auth, database, firebase, sdkAuth, seedDatabase} from "../../../../src/__tests__/common";
 
 vi.mock("../../../../src/controllers/notifySnackbar", () => ({default: vi.fn()}));
 
 let userDataUser;
 beforeEach(() => {
-    userDataUser = UserData().create("test_user_id", {
+    userDataUser = new UserData(database).create("test_user_id", {
         email: "user@mail.com",
         emailVerified: true,
         name: "User name",
@@ -27,16 +25,16 @@ beforeEach(() => {
     });
 });
 
-const userDataAdmin = UserData().create("test_admin_id", UserRole.ADMIN, {
+const userDataAdmin = new UserData(database).create("test_admin_id", UserRole.ADMIN, {
     email: "admin@mail.com",
     emailVerified: true,
     name: "Admin name",
 });
-const userDataUserDisabled = UserData().create("test_user_disabled_id", UserRole.DISABLED, {
+const userDataUserDisabled = new UserData(database).create("test_user_disabled_id", UserRole.DISABLED, {
     email: "disabled@mail.com",
     name: "Disabled user name",
 });
-const userDataUserNotVerified = UserData().create("test_user_not_verified_id", {
+const userDataUserNotVerified = new UserData(database).create("test_user_not_verified_id", {
     email: "notverified@mail.com",
     name: "Not verified user name",
 });
@@ -46,8 +44,9 @@ const rolesAdminUser = [UserRole.USER, UserRole.ADMIN];
 
 test("watchUserChanged", async () => {
     const authenticatedUser = await auth.createUserWithEmailAndPassword("watch@example.test", "test-password");
-    const user = UserData().create(authenticatedUser.id, {email: "watch@example.test", name: "Watcher", updated: 0});
-    useCurrentUserData(user);
+    const user = new UserData(database).create(authenticatedUser.id, {email: "watch@example.test", name: "Watcher", updated: 0});
+    const getUserData = () => user;
+    const onUserChanged = vi.fn();
     const updated = Date.now() + 1000;
     await seedDatabase({users_public: {[user.id]: {...user.public, updated}}});
     const timestamp = await firebase.database().ref(`users_public/${user.id}/updated`).once("value");
@@ -59,7 +58,7 @@ test("watchUserChanged", async () => {
         return subscription;
     });
     const read = vi.spyOn(database, "read");
-    const refresh = watchUserChanged({auth, database, store});
+    const refresh = watchUserChanged({auth, database, getUserData, onUserChanged});
     try {
         await vi.waitFor(() => expect(read).toHaveBeenCalled());
         expect(read).toHaveBeenCalledWith(["users_public", user.id, "updated"]);
@@ -69,8 +68,10 @@ test("watchUserChanged", async () => {
         expect(warning).toMatchObject({variant: "warning", buttonLabel: "Refresh"});
         warning.onButtonClick();
         await refresh;
-        expect(store.getState().userData.id).toBe(user.id);
-        expect(store.getState().userData.public.updated).toBeGreaterThan(0);
+        expect(onUserChanged).toHaveBeenCalledTimes(1);
+        expect(onUserChanged).toHaveBeenCalledWith(expect.objectContaining({
+            id: user.id, public: expect.objectContaining({updated}),
+        }));
     } finally {
         const unsubscribe = await subscription;
         unsubscribe?.();
@@ -78,22 +79,10 @@ test("watchUserChanged", async () => {
 });
 test("logoutUser", async () => {
     await signInAnonymously(sdkAuth);
-    useCurrentUserData(userDataUser);
-    await expect(logoutUser({auth, store})).resolves.toBeNull();
+    const onLogout = vi.fn();
+    await expect(logoutUser({auth, onLogout})).resolves.toBeNull();
     expect(sdkAuth.currentUser).toBeNull();
-    expect(useCurrentUserData().role).toBe(UserRole.LOGIN);
-    expect(store.getState().userData).toBeNull();
-});
-test("useCurrentUserData", async () => {
-    expect(useCurrentUserData()).toMatchObject({id: undefined, private: {}, public: {}, role: UserRole.LOGIN})
-    expect(useCurrentUserData(userDataAdmin)).toEqual(userDataAdmin)
-    expect(useCurrentUserData()).toEqual(userDataAdmin)
-    expect(useCurrentUserData(userDataUser)).toEqual(userDataUser)
-    expect(useCurrentUserData()).toEqual(userDataUser)
-});
-test("currentUserData", async () => {
-    expect(currentUserData({}, {type: "currentUserData", userData: userDataUser}))
-        .toEqual({userData: userDataUser.toJSON()})
+    expect(onLogout).toHaveBeenCalledExactlyOnceWith();
 });
 
 it("currentRole", () => {
@@ -217,7 +206,7 @@ describe("UserData", () => {
         expect((await firebase.database().ref(`users_public/${userDataUser.id}`).once("value")).exists()).toBe(false);
     });
     it("fetch", async () => {
-        userDataUser = UserData().create(window.crypto.randomUUID(), {
+        userDataUser = new UserData(database).create(window.crypto.randomUUID(), {
             email: "fresh@example.test", name: "Fresh User"
         });
         await expect(userDataUser.fetch(userDataUser.id, [UserData.PUBLIC, UserData.FORCE])).rejects.toThrow();
@@ -229,13 +218,13 @@ describe("UserData", () => {
     it("fetchPrivate", async () => {
         await expect(userDataUser.fetchPrivate("device_id", true)).rejects.toThrow();
         const {user} = await signInAnonymously(sdkAuth);
-        const ownData = UserData().create(user.uid, {email: "own@example.test", name: "Owner"});
+        const ownData = new UserData(database).create(user.uid, {email: "own@example.test", name: "Owner"});
         await seedDatabase({users_private: {[user.uid]: {device_id: {os: "Test"}}}});
         await expect(ownData.fetchPrivate("device_id", true)).resolves.toBe(ownData);
         expect(ownData.private.device_id).toEqual({os: "Test"});
     });
     it("fromJSON", () => {
-        const userData = UserData();
+        const userData = new UserData(database);
         expect(userData.fromJSON(userDataUser.toJSON())).toMatchObject({
             id: "test_user_id",
             public: {

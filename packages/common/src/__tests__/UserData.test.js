@@ -1,5 +1,4 @@
 import {vi} from "vitest";
-import {firebaseMessaging} from "../../../../src/controllers/Firebase";
 import {cacheDatas} from "../../../../src/controllers/General";
 import {UserData as CommonUserData} from "../UserData.js";
 import {SERVER_TIMESTAMP} from "../constants.js";
@@ -62,29 +61,29 @@ it("formats timestamp markers restored from JSON by their contents", () => {
     }
 });
 
-it("saves a public profile through the frontend adapter using the shared timestamp", async () => {
-    const update = vi.fn().mockResolvedValue();
-    const database = vi.spyOn(firebaseMessaging, "database").mockReturnValue({ref: () => ({update})});
-    try {
-        const user = new UserData().create("save-user", {name: " Alice ", email: "alice@example.test"});
-        expect(await user.savePublic()).toBe(user);
-        expect(update).toHaveBeenCalledWith(expect.objectContaining({
-            "users_public/save-user/name": "Alice",
-            "users_public/save-user/updated": SERVER_TIMESTAMP,
-        }));
-        expect(user.persisted).toBe(true);
-    } finally {
-        database.mockRestore();
-    }
+it("saves a public profile through the frontend adapter using the database timestamp", async () => {
+    const database = {update: vi.fn().mockResolvedValue(), TIMESTAMP: SERVER_TIMESTAMP};
+    const user = new UserData(database).create("save-user", {name: " Alice ", email: "alice@example.test"});
+    expect(await user.savePublic()).toBe(user);
+    expect(database.update).toHaveBeenCalledTimes(1);
+    const updates = database.update.mock.calls[0][0];
+    expect(updates).toBeInstanceOf(Map);
+    expect([...updates]).toEqual(expect.arrayContaining([
+        [["users_public", "save-user", "name"], "Alice"],
+        [["users_public", "save-user", "updated"], database.TIMESTAMP],
+    ]));
+    expect(user.persisted).toBe(true);
 });
 
-it("extends the shared model without accessing Firebase during construction", () => {
-    const database = vi.spyOn(firebaseMessaging, "database");
-    const user = new UserData().create("lazy", {name: "Lazy"});
-    expect(database).not.toHaveBeenCalled();
+it("extends the shared model without accessing the database during construction", () => {
+    const database = {read: vi.fn(), update: vi.fn(), delete: vi.fn()};
+    const user = new UserData(database).create("lazy", {name: "Lazy"});
+    expect(database.read).not.toHaveBeenCalled();
+    expect(database.update).not.toHaveBeenCalled();
+    expect(database.delete).not.toHaveBeenCalled();
     expect(UserData.PUBLIC).toBe(CommonUserData.PUBLIC);
     expect(user.fetch).toBeTypeOf("function");
-    expect(CommonUserData().fetch).toBeUndefined();
+    expect(new CommonUserData().fetch).toBeUndefined();
 });
 
 it("shares fetched state with getters, serialization and subsequent saves", async () => {
@@ -93,32 +92,37 @@ it("shares fetched state with getters, serialization and subsequent saves", asyn
         "users_private/fetched": {device: {locale: "en"}},
         "roles/fetched": UserRole.ADMIN,
     };
-    const once = vi.fn(async path => ({exists: () => values[path] !== undefined, val: () => structuredClone(values[path])}));
-    const update = vi.fn().mockResolvedValue();
-    const ref = (path = "") => ({
-        child: key => ref(`${path}/${key}`), once: () => once(path), update,
-    });
-    vi.spyOn(firebaseMessaging, "database").mockReturnValue({ref});
-    const user = UserData();
+    const database = {
+        read: vi.fn(async path => structuredClone(values[path.join("/")])),
+        update: vi.fn().mockResolvedValue(),
+        TIMESTAMP: SERVER_TIMESTAMP,
+    };
+    const user = new UserData(database);
     expect(await user.fetch("fetched", [UserData.FULL])).toBe(user);
     expect(user).toMatchObject({id: "fetched", name: "Fetched", role: UserRole.ADMIN, persisted: true});
     expect(user.toJSON()).toMatchObject({loaded: {public: true, private: true, role: true}, requested: expect.any(Number)});
     expect(await user.set({name: " Changed "})).toBe(user);
     await user.setPrivate("device", {locale: "ru"});
     expect(await user.save()).toBe(user);
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({
-        "users_public/fetched/name": "Changed", "users_private/fetched/device/locale": "ru",
-    }));
+    expect(database.read.mock.calls).toEqual([
+        [["users_public", "fetched"]],
+        [["users_private", "fetched"]],
+        [["roles", "fetched"]],
+    ]);
+    expect(database.update).toHaveBeenCalledTimes(1);
+    const updates = database.update.mock.calls[0][0];
+    expect(updates).toBeInstanceOf(Map);
+    expect([...updates]).toEqual(expect.arrayContaining([
+        [["users_public", "fetched", "name"], "Changed"],
+        [["users_private", "fetched", "device", "locale"], "ru"],
+    ]));
 });
 
 it("removes the frontend cache entry after deleting a profile", async () => {
-    const set = vi.fn().mockResolvedValue();
-    const child = vi.fn().mockReturnValue({set});
-    vi.spyOn(firebaseMessaging, "database").mockReturnValue({ref: () => ({child})});
+    const database = {delete: vi.fn().mockResolvedValue()};
     const remove = vi.spyOn(cacheDatas, "remove").mockImplementation(() => {});
-    const user = UserData().create("deleted", {name: "Deleted"});
+    const user = new UserData(database).create("deleted", {name: "Deleted"});
     expect(await user.delete()).toBe(user);
-    expect(child).toHaveBeenCalledWith("deleted");
-    expect(set).toHaveBeenCalledWith(null);
+    expect(database.delete).toHaveBeenCalledWith(["users_public", "deleted"]);
     expect(remove).toHaveBeenCalledWith("deleted");
 });

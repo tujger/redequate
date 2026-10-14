@@ -4,8 +4,6 @@ import "fake-indexeddb/auto";
 import Firebase from "../controllers/Firebase";
 import FirebaseDatabase from "../../packages/database/src/firebase";
 import FirebaseAuth from "../../packages/auth/src/firebase";
-import {createStore} from "redux";
-import {currentUserData, useCurrentUserData} from "../controllers/UserData";
 
 export const projectId = process.env.GCLOUD_PROJECT;
 export const databaseNamespace = `${projectId}-default-rtdb`;
@@ -25,10 +23,6 @@ connectAuthEmulator(sdkAuth, `http://${authHost}`, {disableWarnings: true});
 firebase.database().useEmulator("127.0.0.1", 9000);
 export const database = new FirebaseDatabase({firebase});
 export const auth = new FirebaseAuth({firebase});
-export const store = createStore((state, action) => ({
-    ...state,
-    ...currentUserData(state, action),
-}), {userData: null});
 
 export async function emulatorRequest(path, options = {}) {
     const response = await fetch(`http://${authHost}/emulator/v1/projects/${projectId}/${path}`, options);
@@ -47,7 +41,6 @@ export async function seedDatabase(value) {
 
 beforeEach(async () => {
     await auth.signOut();
-    useCurrentUserData(null);
     await emulatorRequest("accounts", {method: "DELETE"});
     await seedDatabase(null);
     window.localStorage.clear();
