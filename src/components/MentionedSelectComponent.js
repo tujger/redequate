@@ -66,8 +66,17 @@ export default (
         }
         const fetchItems = async props => {
             const {pagination} = props;
-            const items = await pagination("", firebase).next();
-            return {...props, items};
+            const source = pagination("", firebase);
+            const items = new Map();
+            while (!(source.position?.finished ?? source.finished)) {
+                const page = source.position ? await source.next(100) : await source.next();
+                for (const item of page) {
+                    if (!items.has(item.key)) {
+                        items.set(item.key, item);
+                    }
+                }
+            }
+            return {...props, items: [...items.values()]};
         }
         const transformItems = async props => {
             const {items, transform} = props;
