@@ -19,10 +19,16 @@ export const lazyListComponentReducer = (state = {}, action) => {
                 if (action.pagination) {
                     cachedData.pagination = action.pagination;
                 }
+                if (action.cursor) {
+                    cachedData.cursor = action.cursor;
+                }
                 const {pagination, items = []} = cachedData;
-                if (pagination) pagination.reset();
+                const source = cachedData.cursor || pagination;
+                if (source) {
+                    source.reset();
+                }
                 let newitems = items;
-                if (pagination && items.length > pagination.size) {
+                if (!cachedData.cursor && pagination && items.length > pagination.size) {
                     newitems = items.slice(0, pagination.size);
                 }
                 return {
@@ -45,8 +51,13 @@ export const lazyListComponentReducer = (state = {}, action) => {
                 if (action.pagination) {
                     cachedData.pagination = action.pagination;
                 }
-                const {pagination} = cachedData;
-                if (pagination) pagination.reset();
+                if (action.cursor) {
+                    cachedData.cursor = action.cursor;
+                }
+                const source = cachedData.cursor || cachedData.pagination;
+                if (source) {
+                    source.reset();
+                }
                 return {
                     ...state,
                     ["LazyListComponent_" + cache]: {
