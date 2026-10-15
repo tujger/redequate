@@ -46,16 +46,19 @@ export default function cursor(firebase, path, options, identity, run) {
             let query = key === undefined ? initialQuery : continuationQuery;
             if (key !== undefined) {
                 if (ascending) {
-                    query = byKey ? query.startAfter(key) : query.startAfter(value, key);
+                    query = byKey ? query.startAt(key) : query.startAt(value, key);
                 } else {
-                    query = byKey ? query.endBefore(key) : query.endBefore(value, key);
+                    query = byKey ? query.endAt(key) : query.endAt(value, key);
                 }
             }
-            query = ascending ? query.limitToFirst(size) : query.limitToLast(size);
+            const limit = key === undefined ? size : size + 1;
+            query = ascending ? query.limitToFirst(limit) : query.limitToLast(limit);
             const snapshot = await query.once("value");
             const children = [];
             snapshot.forEach(child => {
-                children.push(child);
+                if (child.key !== key) {
+                    children.push(child);
+                }
             });
             if (!ascending) {
                 children.reverse();
