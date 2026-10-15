@@ -1,7 +1,7 @@
 import React from "react";
 import {InView} from "react-intersection-observer";
 
-export default ({active = true, finished, loadNextPage, placeholder, placeholders}) => {
+export default ({active = true, finished, loadNextPage, placeholder, placeholders = 1}) => {
     const [state = active, setState] = React.useState();
 
     if (finished) return null;
