@@ -1,4 +1,4 @@
-import {fail, identifier} from "../../../common/src/_packages";
+import {fail, identifier} from "../../../common";
 import {sendMessage} from "../../../messaging/src/local-test/common";
 
 const isNonEmptyString = value => typeof value === "string" && Boolean(value.trim());

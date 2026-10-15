@@ -1,4 +1,4 @@
-import {delay, fail} from "../../../common/src/_packages";
+import {delay, fail} from "../../../common";
 import BackendBase from "../BackendBase";
 import {recordRequest, snapshot} from "./common";
 import defaultHandlers from "./handlers";
