@@ -22,7 +22,7 @@ export default (
 
     const loadNextPage = async () => {
         const current = session.current;
-        if (!current || current.cursor !== cursor || current.loading || cursor.position.finished) {
+        if (!current || current.cursor !== cursor || current.loading || cursor.position?.finished) {
             return;
         }
         current.loading = true;
@@ -91,7 +91,7 @@ export default (
 
     React.useEffect(() => {
         const current = {cursor, loading: false, progress: false};
-        cursor.reset();
+        cursor?.reset?.();
         session.current = current;
         setState({finished: false, items: [], cursor});
         return () => {
