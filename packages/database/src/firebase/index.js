@@ -2,6 +2,7 @@ import DatabaseBase from "../DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
 import deleteRecord from "./delete";
+import cursor from "./cursor";
 import read from "./read";
 import update from "./update";
 import write from "./write";
@@ -43,6 +44,10 @@ export default class FirebaseDatabase extends DatabaseBase {
 
     async update(path, changes, {} = {}) {
         return update(this.#firebase, path, changes);
+    }
+
+    cursor(path, options = {}) {
+        return cursor(this.#firebase, path, options);
     }
 
     get TIMESTAMP() {

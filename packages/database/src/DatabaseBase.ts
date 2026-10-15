@@ -41,6 +41,22 @@ export interface DatabaseReadOptions {
     orderBy?: string;
 }
 
+export interface DatabaseCursorPosition {
+    readonly index: number;
+    readonly key: string | undefined;
+    readonly finished: boolean;
+}
+
+export interface DatabaseCursorOptions extends Record<string, unknown> {
+    handle?: (entry: DatabaseEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
+}
+
+export interface DatabaseCursor {
+    readonly position: DatabaseCursorPosition;
+    next(n?: number): Promise<DatabaseEntry[]>;
+    reset(): void;
+}
+
 export type DatabaseOptions = Record<string, unknown>;
 export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;
 
@@ -99,13 +115,19 @@ export default class DatabaseBase {
     }
 
     /**
-     * Iterate over a collection's immediate records using for await...of.
-     * An empty collection yields nothing. Early termination, including break,
-     * releases provider resources. No common ordering or consistent snapshot
-     * across the traversal is guaranteed. Failures reject the next() operation.
+     * Prepare a cursor starting before the first immediate collection element.
+     * Initial position is {index: -1, key: undefined, finished: false}.
+     * next defaults to one surviving element and always resolves to an array.
+     * Optional handle callbacks run sequentially on deep copies: undefined keeps
+     * the read value, null deletes it, and any other result replaces it. Replaced
+     * values are reread before returning. Deleted entries do not advance index.
+     * Errors preserve progress through successful surviving entries, without
+     * rolling back completed actions. Methods must be called sequentially,
+     * outside handle. At the end, finished is true and next returns [].
+     * reset restores the initial position.
      */
-    async* iterate(path: DatabasePath): AsyncIterableIterator<DatabaseEntry> {
-        yield notImplemented('iterate')
+    cursor(path: DatabasePath, options: DatabaseCursorOptions = {}): DatabaseCursor {
+        return notImplemented('cursor')
     }
 
     /**
