@@ -13,7 +13,6 @@ import MentionedSelectComponent from "../../../components/MentionedSelectCompone
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import {useDatabase, useRedirectToLogin} from "../../../controllers";
 import {toDateString} from "../../../controllers/DateFormat";
-import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas, useWindowData} from "../../../controllers/General";
 import {mentionUsers} from "../../../controllers/mentionTypes";
 import notifySnackbar from "../../../controllers/notifySnackbar";
@@ -36,10 +35,12 @@ const Activity = props => {
     const database = useDatabase();
     const dispatch = useDispatch();
     const shouldRedirectToLogin = useRedirectToLogin();
-    const [state, setState] = React.useState({});
+    const [startDate, setStartDate] = React.useState();
+    const [endDate, setEndDate] = React.useState();
+    const [startDateAnchor, setStartDateAnchor] = React.useState();
+    const [endDateAnchor, setEndDateAnchor] = React.useState();
+    const [refresh, setRefresh] = React.useState();
     const windowData = useWindowData();
-
-    const {random, startDate, endDate, startDateAnchor, endDateAnchor} = state;
 
     const handleItemClick = activityMode => (event, activityFilterItem) => {
         event && event.stopPropagation();
@@ -71,20 +72,14 @@ const Activity = props => {
 
     const handleStartDate = startDate => {
         dispatch({type: lazyListComponentReducer.RESET});
-        setState({
-            ...state,
-            startDate,
-            startDateAnchor: null,
-        });
+        setStartDate(startDate);
+        setStartDateAnchor(null);
     };
 
     const handleEndDate = endDate => {
         dispatch({type: lazyListComponentReducer.RESET});
-        setState({
-            ...state,
-            endDate,
-            endDateAnchor: null,
-        });
+        setEndDate(endDate);
+        setEndDateAnchor(null);
     };
 
     const getDatePopoverStyle = anchor => {
@@ -98,48 +93,40 @@ const Activity = props => {
         };
     };
 
-    let itemTransform = item => item;
-    let itemComponent = item => <ActivityItemComponent
-        data={item}
-        key={item.key}
-        onItemClick={handleItemClick}
-    />
+    const listItemTransform = async data => ({
+        data, onClick: handleItemClick
+    })
+
+    const cursor = React.useMemo(() => {
+        switch (activityMode) {
+            case "all":
+                return database.cursor(["activity"], {
+                    order: activitySort,
+                    endDate: endDate?.toDate(),
+                    startDate: startDate?.toDate(),
+                });
+            case "type":
+                return database.cursor(["activity"], {
+                    order: activitySort,
+                    endDate: endDate?.toDate(),
+                    orderBy: ["type"],
+                    equalTo: activityFilterItem,
+                    startDate: startDate?.toDate(),
+                });
+            case "uid":
+                return database.cursor(["activity"], {
+                    order: activitySort,
+                    endDate: endDate?.toDate(),
+                    orderBy: ["uid"],
+                    equalTo: activityFilterItem,
+                    startDate: startDate?.toDate(),
+                });
+            default:
+                return undefined;
+        }
+    }, [activityMode, activityFilterItem, activitySort, startDate, endDate, refresh]);
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
-
-    let pagination;
-    switch (activityMode) {
-        case "all":
-            pagination = new Pagination({
-                endDate: endDate ? endDate.toDate() : undefined,
-                order: activitySort,
-                ref: "activity",
-                startDate: startDate ? startDate.toDate() : undefined,
-            })
-            break;
-        case "type":
-            pagination = new Pagination({
-                child: "type",
-                endDate: endDate ? endDate.toDate() : undefined,
-                equals: activityFilterItem,
-                order: activitySort,
-                ref: "activity",
-                start: activityFilter,
-                startDate: startDate ? startDate.toDate() : undefined,
-            })
-            break;
-        case "uid":
-            pagination = new Pagination({
-                child: "uid",
-                endDate: endDate ? endDate.toDate() : undefined,
-                equals: activityFilterItem,
-                order: activitySort,
-                ref: "activity",
-                startDate: startDate ? startDate.toDate() : undefined,
-            })
-            break;
-        default:
-    }
 
     const filteredItem = (() => {
         if (!activityFilterItem) return undefined;
@@ -165,12 +152,12 @@ const Activity = props => {
 
     const clearStartDate = () => {
         dispatch({type: lazyListComponentReducer.RESET});
-        setState(state => ({...state, startDate: null}));
+        setStartDate(null);
     };
 
     const clearEndDate = () => {
         dispatch({type: lazyListComponentReducer.RESET});
-        setState(state => ({...state, endDate: null}));
+        setEndDate(null);
     };
 
     return <>
@@ -180,19 +167,13 @@ const Activity = props => {
                 {!windowData.isNarrow() && <div className={activityStyles.dateButtons}>
                     <Button
                         icon={<StartDateIcon/>}
-                        onClick={event => setState(state => ({
-                            ...state,
-                            startDateAnchor: event.currentTarget
-                        }))}
+                        onClick={event => setStartDateAnchor(event.currentTarget)}
                         title={"Start date"}
                     />
                     <span className={activityStyles.separator}>&mdash;</span>
                     <Button
                         icon={<EndDateIcon/>}
-                        onClick={event => setState(state => ({
-                            ...state,
-                            endDateAnchor: event.currentTarget
-                        }))}
+                        onClick={event => setEndDateAnchor(event.currentTarget)}
                         title={"End date"}
                     />
                 </div>}
@@ -205,7 +186,7 @@ const Activity = props => {
             </>}
             rightButton={<Button
                 icon={<RefreshIcon/>}
-                onClick={() => setState({...state, random: Math.random()})}
+                onClick={() => setRefresh(Math.random())}
                 title={"Refresh activity"}
             />}
         >
@@ -239,11 +220,7 @@ const Activity = props => {
                     />}
                     {activityMode === "type" && !filteredItem && <MentionedSelectComponent
                         mention={{
-                            pagination: start => new Pagination({
-                                ref: "_activity/types",
-                                order: "asc",
-                                size: 100,
-                            }),
+                            pagination: () => database.cursor(["_activity", "types"]),
                             transform: item => ({id: item.key, display: item.key}),
                         }}
                         onChange={handleTypeSelect}
@@ -284,19 +261,13 @@ const Activity = props => {
                 {windowData.isNarrow() && <div className={activityStyles.dateButtons}>
                     <Button
                         icon={<StartDateIcon/>}
-                        onClick={event => setState(state => ({
-                            ...state,
-                            startDateAnchor: event.currentTarget
-                        }))}
+                        onClick={event => setStartDateAnchor(event.currentTarget)}
                         title={"Start date"}
                     />
                     <span className={activityStyles.separator}>&mdash;</span>
                     <Button
                         icon={<EndDateIcon/>}
-                        onClick={event => setState(state => ({
-                            ...state,
-                            endDateAnchor: event.currentTarget
-                        }))}
+                        onClick={event => setEndDateAnchor(event.currentTarget)}
                         title={"End date"}
                     />
                 </div>}
@@ -304,11 +275,10 @@ const Activity = props => {
         </NavigationToolbar>
         <div className={[baseStyles.content, activityStyles.center].filter(Boolean).join(" ")}>
             <LazyListComponent
-                key={random}
-                itemComponent={itemComponent}
-                itemTransform={itemTransform}
+                cursor={cursor}
+                ItemComponent={ActivityItemComponent}
+                itemTransform={listItemTransform}
                 noItemsComponent={<ActivityItemComponent label={"No activities found"}/>}
-                pagination={pagination}
                 placeholder={<ActivityItemComponent skeleton={true}/>}
             />
         </div>
