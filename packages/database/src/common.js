@@ -1,11 +1,11 @@
 import {fail} from "../../common/src/_packages";
 
-export function composeCursor(paths, options, createCursor, run) {
+export function composeCursor(queries, options, createCursor, run, path = queries) {
     const descriptions = run(() => {
         if (options === null || typeof options !== "object" || Array.isArray(options)) {
             fail("database/invalid-argument", "options must be an object.");
         }
-        return paths.map(description => {
+        return queries.map(description => {
             if (description === null || typeof description !== "object" || Array.isArray(description)) {
                 fail("database/invalid-argument", "Each cursor source must be an object with a path.");
             }
@@ -15,7 +15,7 @@ export function composeCursor(paths, options, createCursor, run) {
             }
             return {path, options: {...options, ...individual}};
         });
-    }, "cursor", {});
+    }, options, "cursor", {path});
     if (descriptions === undefined) {
         return undefined;
     }
@@ -24,17 +24,19 @@ export function composeCursor(paths, options, createCursor, run) {
     const sources = [];
     let readSize = 1;
     for (const description of descriptions) {
-        const path = (Array.isArray(description.path) ? description.path.join("/") : description.path)
-            .split("/").filter(Boolean).join("/");
-        if (!seen.has(path)) {
-            seen.set(path, new Set());
+        const tracking = {readSize: () => readSize};
+        if (descriptions.length > 1) {
+            const path = (Array.isArray(description.path) ? description.path.join("/") : description.path)
+                .split("/").filter(Boolean).join("/");
+            if (!seen.has(path)) {
+                seen.set(path, new Set());
+            }
+            const keys = seen.get(path);
+            tracking.accept = key => !keys.has(key);
+            tracking.processed = key => keys.add(key);
         }
-        const keys = seen.get(path);
-        const source = createCursor(description.path, description.options, {
-            readSize: () => readSize,
-            accept: key => !keys.has(key),
-            processed: key => keys.add(key)
-        });
+        const source = run(() => createCursor(description.path, description.options, tracking),
+            description.options, "cursor", {path: description.path});
         if (source === undefined) {
             return undefined;
         }
@@ -54,19 +56,22 @@ export function composeCursor(paths, options, createCursor, run) {
                     fail("database/invalid-argument", "n must be a positive safe integer.");
                 }
                 return true;
-            }, "cursor.next", {n});
+            }, options, "cursor.next", {path, n});
             if (!valid) {
                 return undefined;
             }
             readSize = n;
             if (sources.length === 1) {
-                return sources[0].next(n);
+                return run(() => sources[0].next(n), descriptions[0].options,
+                    "cursor.next", {path: descriptions[0].path, n});
             }
             const entries = [];
             while (entries.length < n && !sources.every(source => source.position.finished)) {
                 const source = sources[turn];
                 if (!source.position.finished) {
-                    const batch = await source.next(1);
+                    const description = descriptions[turn];
+                    const batch = await run(() => source.next(1), description.options,
+                        "cursor.next", {path: description.path, n: 1});
                     if (batch === undefined) {
                         return undefined;
                     }
@@ -83,8 +88,9 @@ export function composeCursor(paths, options, createCursor, run) {
             return entries;
         },
         reset() {
-            for (const source of sources) {
-                source.reset();
+            for (const [index, source] of sources.entries()) {
+                const description = descriptions[index];
+                run(() => source.reset(), description.options, "cursor.reset", {path: description.path});
             }
             for (const keys of seen.values()) {
                 keys.clear();
