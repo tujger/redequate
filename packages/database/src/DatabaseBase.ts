@@ -19,6 +19,7 @@ export interface DatabaseEntry {
 export interface DatabaseDraft {
     /** Identifies the draft; may differ from the permanent key. */
     readonly temporaryKey: string;
+
     /** Create without overwriting and return the permanent key. Null/undefined reject; failures allow retry. */
     save(value: DatabaseRecord): Promise<string | undefined>;
 }
@@ -95,12 +96,14 @@ export interface DatabaseCursor {
     /** Unique to this cursor instance; unchanged by reset. */
     readonly identifier: string;
     readonly position: DatabaseCursorPosition;
+
     /**
      * Return up to n surviving entries (default 1), or [] when finished.
      * Filtered/deleted entries do not advance index. Reads are buffered until consumed.
      * Errors preserve completed actions and progress; the failed entry can be retried.
      */
     next(n?: number): Promise<DatabaseEntry[] | undefined>;
+
     /** Restore initial position and clear buffers/deduplication, preserving options. */
     reset(): void;
 }
@@ -117,18 +120,13 @@ export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, 
 export default class DatabaseBase {
     onError: DatabaseErrorHandler;
 
-    constructor({onError = error => { throw error; }}: DatabaseOptions = {}) {
+    constructor(
+        {
+            onError = error => {
+                throw error;
+            }
+        }: DatabaseOptions = {}) {
         this.onError = onError;
-    }
-
-    protected identifyCursor(cursor: Omit<DatabaseCursor, "identifier"> | undefined): DatabaseCursor | undefined {
-        if (cursor === undefined) {
-            return undefined;
-        }
-        return Object.defineProperty(cursor, "identifier", {
-            value: identifier(),
-            enumerable: true
-        }) as DatabaseCursor;
     }
 
     protected handleError(error: unknown, options: DatabaseOptions | undefined,
@@ -160,15 +158,51 @@ export default class DatabaseBase {
         return result as T;
     }
 
-    addEventListener(path: DatabasePath, {
-        onChange,
-        onChildAdd,
-        onChildChange,
-        onChildRemove,
-        onError,
-        orderBy
-    }: DatabaseListenerOptions): DatabaseListener | undefined {
-        return notImplemented("addValueListener");
+    addEventListener(path: DatabasePath, options: DatabaseListenerOptions = {},
+                     subscribe: (callbacks: DatabaseListenerOptions) => DatabaseListener = () => notImplemented("addEventListener")): DatabaseListener | undefined {
+        let callbackFailure: { error: unknown } | undefined;
+        const report: DatabaseErrorHandler = (error, reason, context) => {
+            try {
+                this.handleError(error, options, reason, context);
+            } catch (failure) {
+                callbackFailure = {error: failure};
+                throw failure;
+            }
+        };
+        const callbackOptions = {
+            onError: report
+        };
+        // A callback can run during registration. Do not report its failure twice.
+        const registrationOptions: DatabaseOptions = {
+            onError: (error, reason, context) => {
+                if (callbackFailure && Object.is(callbackFailure.error, error)) {
+                    throw error;
+                }
+                this.handleError(error, options, reason, context);
+            }
+        };
+        return this.run(() => {
+            const {onChange, onChildAdd, onChildChange, onChildRemove, orderBy} = options;
+            const wrap = <T>(name: string, callback: ((value: T) => void) | undefined, argument: string) => {
+                if (typeof callback !== "function") {
+                    return callback;
+                }
+                return (value: T) => this.run(() => callback(value), callbackOptions,
+                    `addEventListener.${name}`, {path, [argument]: value});
+            };
+            const listener = subscribe({
+                onChange: wrap("onChange", onChange, "value"),
+                onChildAdd: wrap("onChildAdd", onChildAdd, "entry"),
+                onChildChange: wrap("onChildChange", onChildChange, "entry"),
+                onChildRemove: wrap("onChildRemove", onChildRemove, "entry"),
+                onError: error => report(error, "addEventListener", {path, orderBy}),
+                orderBy
+            });
+            return {
+                remove: () => this.run(() => listener.remove(), options,
+                    "addEventListener.remove", {path})
+            };
+        }, registrationOptions, "addEventListener", {path});
     }
 
     /**
@@ -181,7 +215,10 @@ export default class DatabaseBase {
     /**
      * Read plain data; absent records resolve to undefined.
      */
-    async read(path: DatabasePath, {equalTo = undefined, orderBy = undefined}: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
+    async read(path: DatabasePath, {
+        equalTo = undefined,
+        orderBy = undefined
+    }: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
         return notImplemented('read')
     }
 
@@ -210,8 +247,8 @@ export default class DatabaseBase {
      * Composition deduplicates by normalized path + key before handle, including
      * deletions, until reset. Each source uses its own effective onError.
      */
-    cursor(path: DatabasePath | DatabaseCursorSource[], options: DatabaseCursorOptions = {}): DatabaseCursor | undefined {
-        return notImplemented('cursor')
+    cursor(path: DatabasePath | DatabaseCursorSource[], options: DatabaseCursorOptions = {}): Pick<DatabaseCursor, "identifier"> {
+        return Object.freeze({identifier: identifier()});
     }
 
     /**
@@ -225,7 +262,7 @@ export default class DatabaseBase {
         return notImplemented('timestamp')
     }
 
-    increment(delta: number, options: DatabaseOptions = {}): DatabaseValue | undefined {
+    increment(delta: number): DatabaseValue | undefined {
         return notImplemented('increment')
     }
 }
