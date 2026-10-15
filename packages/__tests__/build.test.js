@@ -25,7 +25,7 @@ it.each([["auth", withAuth], ["messaging", withMessaging], ["storage", withStora
     expect(result.output[0].entryFileNames({name: "main"})).toBe("main.es.js");
     expect(result.output[1].entryFileNames({name: "main"})).toBe("[name].js");
     const local = {moduleIds: [source + "index.js", "\0rollupPluginBabelHelpers.js"]};
-    const shared = {moduleIds: [fileURLToPath(new URL("../_common/src/_packages.js", import.meta.url))]};
+    const shared = {moduleIds: [fileURLToPath(new URL("../_common/src/index.js", import.meta.url))]};
     const web = {moduleIds: ["/src/Dispatcher.js"]};
     expect(result.output[0].chunkFileNames(local)).toBe("chunks/[name]-[hash].mjs");
     expect(result.output[0].chunkFileNames(shared)).toBe("core.es.js");
