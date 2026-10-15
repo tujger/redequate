@@ -1,4 +1,4 @@
-import {delay, fail} from "../../../common/src/_packages";
+import {delay, fail} from "../../../common";
 import {changeEvent, read, toUserData} from "./common";
 
 export default async function onAuthStateChanged(auth, callback, onError) {

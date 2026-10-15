@@ -1,4 +1,4 @@
-import {delay, fail} from "../../../common/src/_packages";
+import {delay, fail} from "../../../common";
 import {read, login, providerAccount} from "./common";
 
 export default async function signInWithCredential(auth, credential) {
