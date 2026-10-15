@@ -7,7 +7,7 @@ export default async function read(firebase, path, {equalTo, orderBy} = {}) {
     if(orderBy) {
         ref = ref.orderByChild(orderBy);
     }
-    if(equalTo) {
+    if(equalTo !== undefined) {
         ref = ref.equalTo(equalTo);
     } else if(orderBy) {
         ref = ref.limitToLast(1);

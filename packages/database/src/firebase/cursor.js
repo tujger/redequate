@@ -1,5 +1,5 @@
 import {fail} from "../../../common/src/_packages";
-import {resolvePath} from "./common";
+import createCursorQuery from "./createCursorQuery";
 
 export default function cursor(firebase, path, options = {}) {
     if (options === null || typeof options !== "object" || Array.isArray(options)) {
@@ -10,11 +10,55 @@ export default function cursor(firebase, path, options = {}) {
         fail("database/invalid-argument", "handle must be a function or undefined.");
     }
     let position = Object.freeze({index: -1, key: undefined, finished: false});
+    let cursorValue;
 
-    const effectivePath = resolvePath(path);
+    const {initialQuery, continuationQuery, ascending, orderBy, startKey, endKey} = createCursorQuery(firebase, path, options);
+
+    const readPage = async (key, value, size) => {
+        let query = key === undefined ? initialQuery : continuationQuery;
+        if (key !== undefined) {
+            if (ascending) {
+                query = orderBy === undefined ? query.startAfter(key) : query.startAfter(value, key);
+            } else {
+                query = orderBy === undefined ? query.endBefore(key) : query.endBefore(value, key);
+            }
+        }
+        query = ascending ? query.limitToFirst(size) : query.limitToLast(size);
+        const snapshot = await query.once("value");
+        const children = [];
+        snapshot.forEach(child => {
+            children.push(child);
+        });
+        if (!ascending) {
+            children.reverse();
+        }
+        return children;
+    };
+
+    const handleEntry = async child => {
+        const entry = {key: child.key, value: child.val()};
+        if (!handle) {
+            return entry;
+        }
+        // A handler may mutate its input without requesting a write.
+        const replacement = await handle(structuredClone(entry));
+        if (replacement === undefined) {
+            return entry;
+        }
+        await child.ref.set(replacement);
+        if (replacement === null) {
+            return undefined;
+        }
+        const saved = await child.ref.once("value");
+        if (!saved.exists()) {
+            return undefined;
+        }
+        return {key: child.key, value: saved.val()};
+    };
 
     const reset = () => {
         position = Object.freeze({index: -1, key: undefined, finished: false});
+        cursorValue = undefined;
     };
 
     return {
@@ -25,40 +69,31 @@ export default function cursor(firebase, path, options = {}) {
             if (!Number.isSafeInteger(n) || n <= 0) {
                 fail("database/invalid-argument", "n must be a positive safe integer.");
             }
-            if (position.finished) return [];
+            if (position.finished) {
+                return [];
+            }
 
             const entries = [];
             let scanKey = position.key;
+            let scanValue = cursorValue;
             while (entries.length < n) {
                 const remaining = n - entries.length;
-                let query = firebase.database().ref(effectivePath).orderByKey();
-                if (scanKey !== undefined) query = query.startAfter(scanKey);
-                const snapshot = await query.limitToFirst(remaining).once("value");
-                const children = [];
-                snapshot.forEach(child => {
-                    children.push(child);
-                });
+                const children = await readPage(scanKey, scanValue, remaining);
                 for (const child of children) {
-                    let entry = {key: child.key, value: child.val()};
-                    if (handle) {
-                        // A handler may mutate its input without requesting a write.
-                        const replacement = await handle(JSON.parse(JSON.stringify(entry)));
-                        if (replacement !== undefined) {
-                            await child.ref.set(replacement);
-                            if (replacement === null) {
-                                scanKey = child.key;
-                                continue;
-                            }
-                            const saved = await child.ref.once("value");
-                            if (!saved.exists()) {
-                                scanKey = child.key;
-                                continue;
-                            }
-                            entry = {key: child.key, value: saved.val()};
-                        }
+                    const sortValue = orderBy === undefined ? child.key : child.child(orderBy).val();
+                    if ((startKey !== undefined && child.key < startKey) || (endKey !== undefined && child.key > endKey)) {
+                        scanKey = child.key;
+                        scanValue = sortValue;
+                        continue;
+                    }
+                    const entry = await handleEntry(child);
+                    scanKey = child.key;
+                    scanValue = sortValue;
+                    if (entry === undefined) {
+                        continue;
                     }
                     position = Object.freeze({index: position.index + 1, key: entry.key, finished: false});
-                    scanKey = child.key;
+                    cursorValue = sortValue;
                     entries.push(entry);
                 }
                 if (children.length < remaining) {

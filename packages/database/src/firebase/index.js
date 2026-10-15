@@ -8,53 +8,110 @@ import update from "./update";
 import write from "./write";
 
 export default class FirebaseDatabase extends DatabaseBase {
-    #firebase = undefined;
+    #firebase;
 
-    constructor({firebase}) {
-        super();
+    constructor({firebase, onError}) {
+        super({onError});
         this.#firebase = firebase;
     }
 
-    addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderBy}) {
-        return addEventListener(this.#firebase, path, {
-            onChange,
-            onChildAdd,
-            onChildChange,
-            onChildRemove,
-            onError,
-            orderBy
-        });
+    addEventListener(path, options = {}) {
+        let callbackFailure;
+        const report = (error, reason, context) => {
+            try {
+                this.handleError(error, options, reason, context);
+            } catch (failure) {
+                callbackFailure = {error: failure};
+                throw failure;
+            }
+        };
+        const callbackOptions = {
+            onError: report
+        };
+        // A callback can run during registration. Do not report its failure twice.
+        const registrationOptions = {
+            onError: (error, reason, context) => {
+                if (callbackFailure && Object.is(callbackFailure.error, error)) {
+                    throw error;
+                }
+                this.handleError(error, options, reason, context);
+            }
+        };
+        return this.run(() => {
+            const {onChange, onChildAdd, onChildChange, onChildRemove, orderBy} = options;
+            const wrap = (name, callback, argument) => {
+                if (typeof callback !== "function") {
+                    return callback;
+                }
+                return value => this.run(() => callback(value), callbackOptions,
+                    `addEventListener.${name}`, {path, [argument]: value});
+            };
+            const listener = addEventListener(this.#firebase, path, {
+                onChange: wrap("onChange", onChange, "value"),
+                onChildAdd: wrap("onChildAdd", onChildAdd, "entry"),
+                onChildChange: wrap("onChildChange", onChildChange, "entry"),
+                onChildRemove: wrap("onChildRemove", onChildRemove, "entry"),
+                onError: error => report(error, "addEventListener", {path, orderBy}),
+                orderBy
+            });
+            return {
+                remove: () => this.run(() => listener.remove(), options,
+                    "addEventListener.remove", {path})
+            };
+        }, registrationOptions, "addEventListener", {path});
     }
 
-    create(path) {
-        return createRecord(this.#firebase, path);
+    create(path, options = {}) {
+        return this.run(() => {
+            const draft = createRecord(this.#firebase, path);
+            return {
+                temporaryKey: draft.temporaryKey,
+                save: async value => this.run(() => draft.save(value), options,
+                    "create.save", {path, value})
+            };
+        }, options, "create", {path});
     }
 
-    async delete(path, {} = {}) {
-        return deleteRecord(this.#firebase, path);
+    async delete(path, options = {}) {
+        return this.run(() => deleteRecord(this.#firebase, path), options, "delete", {path});
     }
 
-    async read(path, {equalTo, orderBy} = {}) {
-        return read(this.#firebase, path, {equalTo, orderBy});
+    async read(path, options = {}) {
+        return this.run(() => read(this.#firebase, path, options), options, "read",
+            {path, equalTo: options?.equalTo, orderBy: options?.orderBy});
     }
 
-    async write(path, value, {} = {}) {
-        return write(this.#firebase, path, value);
+    async write(path, value, options = {}) {
+        return this.run(() => write(this.#firebase, path, value), options, "write", {path, value});
     }
 
-    async update(path, changes, {} = {}) {
-        return update(this.#firebase, path, changes);
+    async update(path, changes, options = {}) {
+        const batch = typeof path !== "string" && !Array.isArray(path);
+        return this.run(() => update(this.#firebase, path, batch ? undefined : changes),
+            batch ? changes ?? options : options, "update", batch ? {updates: path} : {path, changes});
     }
 
     cursor(path, options = {}) {
-        return cursor(this.#firebase, path, options);
+        return this.run(() => {
+            const source = cursor(this.#firebase, path, options);
+            return {
+                get position() {
+                    return source.position;
+                },
+                next: async (n = 1) => this.run(() => source.next(n), options,
+                    "cursor.next", {path, n}),
+                reset: () => this.run(() => source.reset(), options, "cursor.reset", {path})
+            };
+        }, options, "cursor", {path});
     }
 
     get TIMESTAMP() {
-        return this.#firebase.database.ServerValue.TIMESTAMP
+        return this.run(() => this.#firebase.database.ServerValue.TIMESTAMP,
+            undefined, "TIMESTAMP", {});
     }
 
-    increment(delta) {
-        return this.#firebase.database.ServerValue.increment(delta)
+    increment(delta, options = {}) {
+        return this.run(() => this.#firebase.database.ServerValue.increment(delta),
+            options, "increment", {delta});
     }
 }
