@@ -1,5 +1,5 @@
 import {deleteToken, getMessaging, getToken, isSupported, onMessage as onFirebaseMessage} from "firebase/messaging";
-import {fail} from "../../../common/src/_packages";
+import {fail} from "../../../common";
 import MessagingBase from "../MessagingBase";
 
 export default class FirebaseMessaging extends MessagingBase {
