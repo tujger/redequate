@@ -8,7 +8,7 @@ export {default as InfoComponent} from "./InfoComponent";
 export {default as ItemPlaceholderComponent} from "./ItemPlaceholderComponent";
 export {default as JoinUsComponent} from "./JoinUsComponent";
 export {default as listAction} from "./ListAction";
-export {default as LazyListComponent} from "./LazyListComponent/LazyListComponent";
+export {default as LazyListComponent} from "./LazyListComponent/LazyListComponentOld";
 export {lazyListComponentReducer} from "./LazyListComponent/lazyListComponentReducer";
 export {default as ListComponent} from "./ListComponent";
 export {default as LoadingComponent} from "./LoadingComponent";

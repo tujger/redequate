@@ -5,7 +5,7 @@ import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";

@@ -6,7 +6,7 @@ import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import LazyListComponent from "../LazyListComponent/LazyListComponentOld";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {MutualListMode} from "./MutualConstants";
 import MutualRequestItem from "./MutualRequestItem";

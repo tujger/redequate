@@ -1,6 +1,6 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
 import Pagination from "../controllers/FirebasePagination";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import AlertItem from "./AlertItem";

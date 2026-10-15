@@ -9,7 +9,7 @@ import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import LazyListComponent from "../LazyListComponent/LazyListComponent";
+import LazyListComponent from "../LazyListComponent/LazyListComponentOld";
 import postItemTransform from "./postItemTransform";
 import RotatingReplies from "./RotatingReplies";
 import cardStyles from "./styles/PostComponent.module.css";

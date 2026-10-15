@@ -8,7 +8,7 @@ import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
 import InfoComponent from "../components/InfoComponent";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import MentionedTextComponent from "../components/MentionedTextComponent";

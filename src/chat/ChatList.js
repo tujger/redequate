@@ -1,5 +1,5 @@
 import React from "react";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
 import ChatItem from "./ChatItem";
 import Pagination from "../controllers/FirebasePagination";
 
