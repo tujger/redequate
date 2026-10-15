@@ -17,70 +17,90 @@ export default (
     }) => {
     const dispatch = useDispatch();
     const [state, setState] = React.useState({});
+    const session = React.useRef();
     const {finished = false, items = []} = state.cursor === cursor ? state : {};
 
-    const loadNextPage = () => {
-        if (finished) {
+    const loadNextPage = async () => {
+        const current = session.current;
+        if (!current || current.cursor !== cursor || current.loading || cursor.position.finished) {
             return;
         }
-        if (!disableProgress) dispatch(ProgressView.SHOW);
+        current.loading = true;
+        current.progress = !disableProgress;
+        if (current.progress) {
+            dispatch(ProgressView.SHOW);
+        }
 
-        return cursor.next(page)
-            .then(async newitems => {
-                newitems = newitems.map(async (item, index) => {
-                    try {
-                        const itemProps = await itemTransform(item);
-                        return <ItemComponent key={item.key} {...itemProps}/>;
-                    } catch (error) {
+        try {
+            const entries = await cursor.next(page);
+            if (session.current !== current) {
+                return;
+            }
+            const newitems = await Promise.all(entries.map(async item => {
+                try {
+                    const itemProps = await itemTransform(item);
+                    return <ItemComponent key={item.key} {...itemProps}/>;
+                } catch (error) {
+                    if (session.current === current) {
                         console.error(error);
                     }
-                });
-                return Promise.all(newitems);
-            })
-            .then(newitems => newitems.filter(item => item !== undefined))
-            .then(newitems => {
-                console.log(`[Lazy] loaded ${items.length}+${newitems.length} items`);
-                return [...items, ...newitems];
-            })
-            .then(newitems => newitems.filter(item => {
-                newitems._cmp = newitems._cmp || {};
-                if (newitems._cmp[item.key]) return false;
-                newitems._cmp[item.key] = true;
-                return true;
-            }))
-            .then(items => ({
-                finished: cursor.position.finished,
-                items,
-                cursor,
-            }))
-            .catch(error => {
-                notifySnackbar({
-                    buttonLabel: "Refresh",
-                    error: error,
-                    onButtonClick: () => {
-                        window.location.reload()
-                    },
-                });
-                return {
-                    finished: true,
-                    items: [],
-                    cursor,
                 }
-            })
-            .then(update => setState(update))
-            .finally(() => {
-                if (!disableProgress) dispatch(ProgressView.HIDE);
+            }));
+            if (session.current !== current) {
+                return;
+            }
+            const finished = cursor.position.finished;
+            setState(previous => {
+                if (session.current !== current) {
+                    return previous;
+                }
+                const items = previous.cursor === cursor ? previous.items : [];
+                const seen = new Set();
+                return {
+                    cursor,
+                    finished,
+                    items: [...items, ...newitems].filter(item => {
+                        if (!item || seen.has(item.key)) {
+                            return false;
+                        }
+                        seen.add(item.key);
+                        return true;
+                    })
+                };
             });
+        } catch (error) {
+            if (session.current !== current) {
+                return;
+            }
+            notifySnackbar({
+                buttonLabel: "Refresh",
+                error,
+                onButtonClick: () => window.location.reload(),
+            });
+            setState(previous => session.current === current
+                ? {finished: true, items: [], cursor} : previous);
+        } finally {
+            current.loading = false;
+            if (session.current === current && current.progress) {
+                current.progress = false;
+                dispatch(ProgressView.HIDE);
+            }
+        }
     };
 
     React.useEffect(() => {
+        const current = {cursor, loading: false, progress: false};
         cursor.reset();
+        session.current = current;
         setState({finished: false, items: [], cursor});
         return () => {
-            if (!disableProgress) {
+            if (session.current === current) {
+                session.current = undefined;
+            }
+            if (current.progress) {
+                current.progress = false;
                 dispatch(ProgressView.HIDE);
             }
-            cursor.reset();
         };
     }, [cursor]);
 
