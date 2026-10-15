@@ -1,4 +1,4 @@
-import {delay, fail} from "../../../common/src/_packages";
+import {delay, fail} from "../../../common";
 import DatabaseBase from "../DatabaseBase";
 
 // Local simulation only: passwords and fake tokens are stored in plain text.
