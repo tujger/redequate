@@ -1,4 +1,4 @@
-import {notImplemented} from "../../common/src/_packages";
+import {notImplemented} from "../../common";
 
 export default class MessagingBase {
     async addMessageListener(onMessage) {
