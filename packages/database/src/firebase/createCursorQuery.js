@@ -1,5 +1,5 @@
 import {key} from "firebase-key";
-import {fail} from "../../../common/src/_packages";
+import {fail} from "../../../common";
 import {resolvePath} from "./common";
 
 export default function createCursorQuery(firebase, path, {

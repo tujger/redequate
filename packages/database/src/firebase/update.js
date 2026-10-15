@@ -1,4 +1,4 @@
-import {fail} from "../../../common/src/_packages";
+import {fail} from "../../../common";
 import {resolvePath} from "./common";
 
 export default async function update(firebase, path, changes, {} = {}) {

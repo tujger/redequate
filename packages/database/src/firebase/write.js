@@ -1,5 +1,5 @@
+import {fail} from "../../../common";
 import {resolvePath} from "./common";
-import {fail} from "../../../common/src/_packages";
 
 export default async function write(firebase, path, value) {
     if (value === undefined) {

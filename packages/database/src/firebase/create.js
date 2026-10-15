@@ -1,5 +1,5 @@
+import {fail} from "../../../common";
 import {resolvePath} from "./common";
-import {fail} from "../../../common/src/_packages";
 
 export default function createRecord(firebase, path, options, run) {
     return run(() => {
