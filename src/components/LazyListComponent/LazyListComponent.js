@@ -50,6 +50,7 @@ export default (
                 return;
             }
             const finished = cursor.position.finished;
+            console.log(`[Lazy] loaded ${items.length}+${newitems.filter(Boolean).length} items`);
             setState(previous => {
                 if (session.current !== current) {
                     return previous;
@@ -111,7 +112,6 @@ export default (
             key={`${cursor.identifier}:${items.length}`}
             loadNextPage={loadNextPage}
             placeholder={placeholder}
-            placeholders={1}
         />
         {finished && !items.length && noItemsComponent}
     </>
