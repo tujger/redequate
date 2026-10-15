@@ -2,17 +2,16 @@ import AddIcon from "@mui/icons-material/Add";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
+import {DatabaseOrder} from "../../../../packages/database/src";
 import FlexFabComponent from "../../../components/FlexFabComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../../../components/LoadingComponent";
 import ProgressView from "../../../components/ProgressView";
-import {useDatabase, useRedirectToLogin} from "../../../controllers";
-import Pagination from "../../../controllers/FirebasePagination";
+import {cacheDatas, useDatabase, useRedirectToLogin} from "../../../controllers";
 import {usePages} from "../../../controllers/General";
 import {UserData} from "../../../controllers/UserData";
 import baseStyles from "../../../themes/Base.module.css";
-import AllUsersPagination from "./AllUsersPagination";
 import UserItem from "./UserItem";
 import UsersHeader from "./UsersHeader";
 import {usersReducer} from "./usersReducer";
@@ -36,76 +35,67 @@ function Users(props) {
     }
 
     React.useEffect(() => {
-        // dispatch(ProgressView.SHOW);
         return () => {
             dispatch(ProgressView.HIDE);
         }
-        // eslint-disable-next-line
     }, [mode]);
-
-    const fetchUserData = async item => {
-        // const data = await cacheDatas.put(item.key, new UserData(firebase)).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
-        const data = await new UserData(database).fetch(item.key, [UserData.PUBLIC, UserData.ROLE]);
-        return {key: item.key, value: data};
-    }
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
 
-    let pagination;
-    let itemTransform;
+    const fetchUserData = async item => {
+        const data = await cacheDatas.fetch(item.key, id => {
+            return new UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE, UserData.PUBLIC, UserData.ROLE]);
+        });
+        const _date = data.value?.public?.visit;
+        return {key: item.key, value: data, _date};
+    }
+
+    const itemTransform = async item => {
+        return ({
+            children: JSON.stringify(item),
+            data: await fetchUserData(item)
+        });
+    };
+
+    let cursor;
     switch (mode) {
         case "active":
-            pagination = new Pagination({
-                ref: "users_public",
-                child: "visit",
-                start: 0,
-                order: "desc",
-            })
-            itemTransform = async item => {
-                const res = await fetchUserData(item);
-                res._date = res.value && res.value.public && res.value.public.visit;
-                return res;
-            }
+            cursor = database.cursor(["users_public"], {
+                order: DatabaseOrder.DESC,
+                orderBy: ["visit"],
+            });
             break;
         case "admins":
-            pagination = new Pagination({
-                ref: "roles",
-                value: true,
-                equals: "admin",
-            })
-            itemTransform = item => fetchUserData(item);
+            cursor = database.cursor(["roles"], {
+                equalTo: "admin"
+            });
             break;
         case "disabled":
-            pagination = new Pagination({
-                ref: "roles",
-                value: true,
-                equals: "disabled",
-            })
-            itemTransform = item => fetchUserData(item);
+            cursor = database.cursor(["roles"], {
+                equalTo: "disabled"
+            });
             break;
         case "notVerified":
-            pagination = new Pagination({
-                ref: "users_public",
-                child: "emailVerified",
-                equals: false,
-            })
-            itemTransform = item => fetchUserData(item);
+            cursor = database.cursor(["users_public"], {
+                equalTo: false,
+                orderBy: ["emailVerified"],
+            });
             break;
         case "recent":
-            pagination = new Pagination({
-                ref: "users_public",
-                child: "created",
+            cursor = database.cursor(["users_public"], {
+                order: DatabaseOrder.DESC,
+                orderBy: ["created"],
                 start: 0,
-                order: "desc",
-            })
-            itemTransform = item => fetchUserData(item);
+            });
             break;
         case "all":
         default:
-            pagination = new AllUsersPagination({
+            cursor = database.cursor([
+                {path: ["users_public"], orderBy: ["_sort_name"]},
+                {path: ["users_public"], orderBy: [UserData.EMAIL]},
+            ], {
                 start: filter
-            })
-            itemTransform = item => fetchUserData(item);
+            });
             break;
     }
 
@@ -113,9 +103,10 @@ function Users(props) {
         <UsersHeader filter={filter} handleChange={handleHeaderChange} mode={mode}/>
         <div className={[baseStyles.content].join(" ")}>
             <LazyListComponent
-                pagination={pagination}
+                cursor={cursor}
                 itemTransform={itemTransform}
-                itemComponent={item => <UserItem key={item.key} data={item}/>}
+                ItemComponent={UserItem}
+                page={25}
                 placeholder={<UserItem skeleton={true}/>}
                 noItemsComponent={<UserItem label={"No users found"}/>}
             />
