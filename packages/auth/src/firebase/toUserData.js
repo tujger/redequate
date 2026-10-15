@@ -1,5 +1,4 @@
-import {UserData} from "../../../common";
-import {fail} from "../../../common/src/_packages";
+import {fail, UserData} from "../../../common";
 
 export const toUserData = (user, Component = UserData) => {
     if (!user) return new Component();

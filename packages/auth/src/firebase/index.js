@@ -18,7 +18,7 @@ import {
     updatePassword,
     updateProfile
 } from "firebase/auth";
-import {fail} from "../../../common/src/_packages";
+import {fail} from "../../../common";
 import AuthBase from "../AuthBase";
 import {toUserData} from "./toUserData";
 
