@@ -2,11 +2,10 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useDatabase} from "../../controllers";
-import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import LazyListComponent from "../LazyListComponent/LazyListComponentOld";
+import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {MutualListMode} from "./MutualConstants";
 import MutualRequestItem from "./MutualRequestItem";
@@ -44,38 +43,31 @@ export default props => {
 
     const fetchPagination = () => {
         if (mode === MutualListMode.SUBSCRIBERS) {
-            return () => new Pagination({
-                ref: "mutual/" + typeId,
-                child: "id",
-                equals: mutualId,
+            return database.cursor(["mutual", typeId], {
+                equalTo: mutualId,
                 order,
+                orderBy: ["id"],
             })
         } else if (mode === MutualListMode.SELF) {
-            return () => new Pagination({
-                ref: "mutualstamps/_my/" + mutualId,
-                // child: "uid",
-                // equals: mutualId,
+            return database.cursor(["mutualstamps", "_my", mutualId], {
                 order,
             })
         } else if (mode === MutualListMode.SUBSCRIBES) {
-            return () => new Pagination({
-                ref: "mutual/" + typeId,
-                child: "uid",
-                equals: mutualId,
+            return database.cursor(["mutual", typeId], {
+                equalTo: mutualId,
                 order,
+                orderBy: ["uid"],
             })
         } else if (mode === MutualListMode.STAMPS) {
-            return () => new Pagination({
-                ref: "mutualstamps/" + typeId + "/" + mutualId,
+            return database.cursor(["mutualstamps", typeId, mutualId], {
                 order,
-            });
+            })
         } else if (mode === MutualListMode.REQUESTS) {
-            return () => new Pagination({
-                ref: "mutualrequests/" + typeId,
-                child: "id",
-                equals: mutualId,
+            return database.cursor(["mutualrequests", typeId, mutualId], {
+                equalTo: mutualId,
                 order,
-            });
+                orderBy: ["id"]
+            })
         }
     }
 
@@ -153,14 +145,11 @@ export default props => {
     }
 
     return <LazyListComponent
-        cache={cached ? mixedId : undefined}
-        itemComponent={fetchItemComponent()}
+        cursor={fetchPagination()}
+        ItemComponent={fetchItemComponent()}
         itemTransform={fetchItemTransform()}
         live={live}
         noItemsComponent={noItemsComponent}
-        pageTransform={pageTransform}
-        pagination={fetchPagination()}
         placeholder={placeholder}
-        ItemProps={ItemProps}
     />
 }
