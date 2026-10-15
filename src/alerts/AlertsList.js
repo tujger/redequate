@@ -6,7 +6,7 @@ import {useDatabase} from "../controllers";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import AlertItem from "./AlertItem";
 
-const AlertsList = ({fetchAlertContent}) => {
+export default ({fetchAlertContent}) => {
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const {t} = useTranslation();
@@ -27,5 +27,3 @@ const AlertsList = ({fetchAlertContent}) => {
         placeholder={<AlertItem skeleton/>}
     />
 }
-
-export default AlertsList;
