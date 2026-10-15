@@ -1,4 +1,4 @@
-import {delay, fail} from "../../../common/src/_packages";
+import {delay, fail} from "../../../common";
 import {normalizeEmail, read, createAccount, login} from "./common";
 
 export default async function signInWithEmailLink(auth, email) {
