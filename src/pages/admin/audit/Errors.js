@@ -2,6 +2,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
+import {DatabaseOrder} from "../../../../packages/database/src";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
@@ -10,7 +11,6 @@ import LoadingComponent from "../../../components/LoadingComponent";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import ProgressView from "../../../components/ProgressView";
 import {useDatabase, useRedirectToLogin} from "../../../controllers";
-import Pagination from "../../../controllers/FirebasePagination";
 import {cacheDatas} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import Button from "../../../controls/Button/Button";
@@ -47,26 +47,29 @@ const Errors = props => {
         return () => {
             dispatch(ProgressView.HIDE);
         }
-        // eslint-disable-next-line
     }, [errorsMode]);
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
 
-    let pagination;
-    let itemTransform;
+    let cursor;
     switch (errorsMode) {
         case "all":
-            pagination = new Pagination({
-                child: errorsFilter ? "uid" : undefined,
-                // eslint-disable-next-line no-unneeded-ternary
-                equals: errorsFilter ? errorsFilter : undefined,
-                order: "desc",
-                ref: "errors",
-            })
-            itemTransform = item => item;
+            cursor = database.cursor(["errors"], {
+                equalTo: errorsFilter || undefined,
+                order: DatabaseOrder.DESC,
+                orderBy: errorsFilter ? ["uid"] : undefined,
+            });
             break;
         default:
     }
+
+    const listItemTransform = async data => ({
+        data,
+        onUserClick: (event, errorsFilter) => {
+            event && event.stopPropagation();
+            dispatch({type: auditReducer.ERRORS, errorsMode: "all", errorsFilter});
+        }
+    })
 
     const filteredUserData = errorsFilter ? cacheDatas.get(errorsFilter) : null;
 
@@ -107,18 +110,10 @@ const Errors = props => {
         </NavigationToolbar>
         <div className={[baseStyles.content].filter(Boolean).join(" ")}>
             <LazyListComponent
-                key={random}
-                itemComponent={item => <ErrorItemComponent
-                    data={item}
-                    key={item.key}
-                    onUserClick={(event, errorsFilter) => {
-                        event && event.stopPropagation();
-                        dispatch({type: auditReducer.ERRORS, errorsMode: "all", errorsFilter});
-                    }}
-                />}
-                itemTransform={itemTransform}
+                cursor={cursor}
+                ItemComponent={ErrorItemComponent}
+                itemTransform={listItemTransform}
                 noItemsComponent={<ErrorItemComponent label={"No errors found"}/>}
-                pagination={pagination}
                 placeholder={<ErrorItemComponent skeleton={true}/>}
             />
         </div>
