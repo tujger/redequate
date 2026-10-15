@@ -1,8 +1,9 @@
+import {composeCursor} from "../common";
 import DatabaseBase from "../DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
-import deleteRecord from "./delete";
 import cursor from "./cursor";
+import deleteRecord from "./delete";
 import read from "./read";
 import update from "./update";
 import write from "./write";
@@ -92,8 +93,17 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     cursor(path, options = {}) {
+        if (Array.isArray(path) && path.some(part => typeof part === "object")) {
+            return this.identifyCursor(composeCursor(path, options,
+                (sourcePath, sourceOptions, tracking) => this.#createCursor(sourcePath, sourceOptions, tracking),
+                (operation, reason, context) => this.run(operation, options, reason, {path, ...context})));
+        }
+        return this.identifyCursor(this.#createCursor(path, options));
+    }
+
+    #createCursor(path, options, tracking) {
         return this.run(() => {
-            const source = cursor(this.#firebase, path, options);
+            const source = cursor(this.#firebase, path, options, tracking);
             return {
                 get position() {
                     return source.position;

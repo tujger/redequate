@@ -1,7 +1,7 @@
 import {fail} from "../../../common/src/_packages";
 import createCursorQuery from "./createCursorQuery";
 
-export default function cursor(firebase, path, options = {}) {
+export default function cursor(firebase, path, options = {}, tracking = {}) {
     if (options === null || typeof options !== "object" || Array.isArray(options)) {
         fail("database/invalid-argument", "options must be an object.");
     }
@@ -10,17 +10,30 @@ export default function cursor(firebase, path, options = {}) {
         fail("database/invalid-argument", "handle must be a function or undefined.");
     }
     let position = Object.freeze({index: -1, key: undefined, finished: false});
-    let cursorValue;
+    let scanKey;
+    let scanValue;
+    let buffer = [];
+    let offset = 0;
+    let exhausted = false;
 
-    const {initialQuery, continuationQuery, ascending, orderBy, startKey, endKey} = createCursorQuery(firebase, path, options);
+    const {
+        initialQuery,
+        continuationQuery,
+        ascending,
+        orderBy,
+        byValue,
+        startKey,
+        endKey
+    } = createCursorQuery(firebase, path, options);
+    const byKey = orderBy === undefined && !byValue;
 
     const readPage = async (key, value, size) => {
         let query = key === undefined ? initialQuery : continuationQuery;
         if (key !== undefined) {
             if (ascending) {
-                query = orderBy === undefined ? query.startAfter(key) : query.startAfter(value, key);
+                query = byKey ? query.startAfter(key) : query.startAfter(value, key);
             } else {
-                query = orderBy === undefined ? query.endBefore(key) : query.endBefore(value, key);
+                query = byKey ? query.endBefore(key) : query.endBefore(value, key);
             }
         }
         query = ascending ? query.limitToFirst(size) : query.limitToLast(size);
@@ -58,7 +71,11 @@ export default function cursor(firebase, path, options = {}) {
 
     const reset = () => {
         position = Object.freeze({index: -1, key: undefined, finished: false});
-        cursorValue = undefined;
+        scanKey = undefined;
+        scanValue = undefined;
+        buffer = [];
+        offset = 0;
+        exhausted = false;
     };
 
     return {
@@ -74,32 +91,43 @@ export default function cursor(firebase, path, options = {}) {
             }
 
             const entries = [];
-            let scanKey = position.key;
-            let scanValue = cursorValue;
             while (entries.length < n) {
-                const remaining = n - entries.length;
-                const children = await readPage(scanKey, scanValue, remaining);
-                for (const child of children) {
-                    const sortValue = orderBy === undefined ? child.key : child.child(orderBy).val();
-                    if ((startKey !== undefined && child.key < startKey) || (endKey !== undefined && child.key > endKey)) {
-                        scanKey = child.key;
-                        scanValue = sortValue;
-                        continue;
+                if (offset === buffer.length) {
+                    if (exhausted) {
+                        break;
                     }
-                    const entry = await handleEntry(child);
+                    const size = tracking.readSize?.() ?? n - entries.length;
+                    buffer = await readPage(scanKey, scanValue, size);
+                    offset = 0;
+                    exhausted = buffer.length < size;
+                    if (!buffer.length) {
+                        break;
+                    }
+                }
+                const child = buffer[offset];
+                const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
+                if ((startKey !== undefined && child.key < startKey) || (endKey !== undefined && child.key > endKey)
+                    || tracking.accept?.(child.key) === false) {
                     scanKey = child.key;
                     scanValue = sortValue;
-                    if (entry === undefined) {
-                        continue;
-                    }
-                    position = Object.freeze({index: position.index + 1, key: entry.key, finished: false});
-                    cursorValue = sortValue;
-                    entries.push(entry);
+                    offset++;
+                    continue;
                 }
-                if (children.length < remaining) {
-                    position = Object.freeze({...position, finished: true});
-                    break;
+                const entry = await handleEntry(child);
+                tracking.processed?.(child.key);
+                scanKey = child.key;
+                scanValue = sortValue;
+                offset++;
+                if (entry === undefined) {
+                    continue;
                 }
+                position = Object.freeze({index: position.index + 1, key: entry.key, finished: false});
+                entries.push(entry);
+            }
+            if (exhausted && offset === buffer.length) {
+                position = Object.freeze({...position, finished: true});
+                buffer = [];
+                offset = 0;
             }
             return entries;
         },

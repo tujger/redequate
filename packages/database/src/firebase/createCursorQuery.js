@@ -2,7 +2,15 @@ import {key} from "firebase-key";
 import {fail} from "../../../common/src/_packages";
 import {resolvePath} from "./common";
 
-export default function createCursorQuery(firebase, path, {orderBy, equalTo, start, end, startDate, endDate, order = "asc"}) {
+export default function createCursorQuery(firebase, path, {
+    orderBy,
+    equalTo,
+    start,
+    end,
+    startDate,
+    endDate,
+    order = "asc"
+}) {
     orderBy = resolvePath(orderBy);
     if (orderBy !== undefined && (typeof orderBy !== "string" || !orderBy)) {
         fail("database/invalid-argument", "orderBy must be a non-empty field path.");
@@ -28,7 +36,15 @@ export default function createCursorQuery(firebase, path, {orderBy, equalTo, sta
         }
     }
     const ref = firebase.database().ref(resolvePath(path));
-    const baseQuery = orderBy === undefined ? ref.orderByKey() : ref.orderByChild(orderBy);
+    const byValue = orderBy === undefined && equalTo !== undefined;
+    let baseQuery;
+    if (orderBy !== undefined) {
+        baseQuery = ref.orderByChild(orderBy);
+    } else if (byValue) {
+        baseQuery = ref.orderByValue();
+    } else {
+        baseQuery = ref.orderByKey();
+    }
     const ascending = order === "asc";
     let initialQuery = baseQuery;
     let continuationQuery = baseQuery;
@@ -49,5 +65,5 @@ export default function createCursorQuery(firebase, path, {orderBy, equalTo, sta
             continuationQuery = continuationQuery.startAt(start);
         }
     }
-    return {initialQuery, continuationQuery, ascending, orderBy, startKey, endKey};
+    return {initialQuery, continuationQuery, ascending, orderBy, byValue, startKey, endKey};
 }
