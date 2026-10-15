@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {delay, fail, notImplemented, identifier, resolvePackage} from "../_packages";
+import {delay, fail, identifier, notImplemented, resolvePackage} from "../index";
 
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 it("keeps full error codes and abstract method names", () => {
