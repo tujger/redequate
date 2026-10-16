@@ -1750,7 +1750,7 @@ transactions. The batch form writes values at paths relative to the root.
 Write failures reject.
 delete(recordPath) is idempotent. Writes resolve after success in provider storage.
 cursor(collectionPath, options) returns a cursor object with position,
-next(n = 1) and reset. Position contains index, key and finished; the
+count and next(n = 1). Position contains index, key and finished; the
 initial index is -1. Optional handle controls replacement/deletion during next;
 next returns up to n surviving entries. Firebase traversal, handle and selection
 options are implemented; see the cursor decision below.
@@ -1762,7 +1762,7 @@ was rejected because accidental undefined could silently skip a write.
 The draft exposes an explicit save method rather than attaching metadata to a
 callable function, keeping its identifier and operation explicit.
 The earlier for await...of API was replaced with an explicit cursor to support
-explicit position, record operations and reset. Provider references remain
+explicit position and record operations. Provider references remain
 internal, and path arguments stay composable. Provider-specific query and subscription contracts
 remain separate work.
 
@@ -1793,7 +1793,7 @@ without Firebase references or snapshots. A normally returning handler makes the
 failed operation return undefined; its return value is ignored. Handler exceptions
 propagate without being reported again. Handlers are synchronous.
 
-Firebase applies this to direct methods, draft.save, cursor.next/reset, listener
+Firebase applies this to direct methods, draft.save, cursor.next, listener
 removal, subscription errors and user listener callbacks. Deferred operations use
 the options supplied at creation. Batch update accepts options as its second
 argument. Synchronous factories remain synchronous. TIMESTAMP uses the constructor
@@ -2151,18 +2151,18 @@ the web build passes on Node 24.21.0. No test files were changed.
 ### Database cursor with sequential handle processing
 
 Decision: replace iterate with cursor(path, options), returning an object with
-readonly position ({index, key, finished}), next(n = 1), reset
+readonly position ({index, key, finished}), count, next(n = 1)
 and optional options.handle. DatabaseBase assigns each ordinary or composed cursor
-a readonly id, stable across next/reset and unique to the instance, so
+a readonly id, stable throughout its lifetime and unique to the instance, so
 web consumers can reset observer lifecycle when the cursor changes.
 Providers obtain this identity through super.cursor(); Firebase cursor.js owns
 cursor construction and delegates composition to composeCursor. Internal sources
-have no id; composeCursor handles creation/next/reset errors using each
+have no id; composeCursor handles creation/next errors using each
 source's effective options, while atomic cursors throw directly.
 next returns up to n surviving entries. Initial position is
 {index: -1, key: undefined, finished: false}; the first entry has index 0.
 Reading past the end returns [] and retains the last position with finished true.
-Reset restores the initial state. No current entry is exposed; live cursors
+Restarting traversal requires a new cursor; reset was removed. No current entry is exposed; live cursors
 also deliver entry changes through subscribe.
 
 Reason: make traversal position explicit and retain it across record operations.
@@ -2172,7 +2172,7 @@ versus array results was rejected; it always returns an array. Dedicated cursor
 update and delete were removed; mutations during traversal belong to handle.
 No current Firebase reference is retained outside element processing.
 
-Handle receives a deep JSON copy of {key, value} and runs sequentially, awaited
+Handle receives (structuredClone(value), key) and runs sequentially, awaited
 before advancing. Undefined means no automatic write and discards input mutations;
 results retain the original read value. Null deletes the candidate without
 advancing index. Every other result fully replaces the record, even the same object
@@ -2227,8 +2227,6 @@ https://github.com/firebase/firebase-admin-node/issues/2350.
 If the boundary was deleted, all fetched rows are retained and any extra row stays
 buffered. This changes provider traversal only; stored data and consumer APIs
 remain unchanged. Real-environment confirmation of the workaround is pending.
-Reset clears both
-public position and private continuation value while retaining selection templates.
 Changing sort fields through handle or concurrent writes may repeat or omit rows.
 
 Cursor composition accepts a non-empty array of flat {path, ...options} sources.
@@ -2242,17 +2240,24 @@ Round-robin next(1) consumes these blocks locally instead of issuing a network
 read for every record. Prefetch does not invoke handle or advance public position;
 date/duplicate filtering and handle run at consumption, with failed candidates
 retained for retry. Query exhaustion does not finish a source while its buffer
-still contains candidates. Reset also discards buffers. Per-record network reads
+still contains candidates. Per-record network reads
 were rejected because composition was much slower than AllUsersPagination.
 Identity is normalized collection path plus key, not key alone. Internal hooks
 skip duplicates before handle and mark successful processing, including deletion;
 failed handling remains retryable. This prevents repeated mutation when name and
 email searches find the same user. The coordinator handles each source failure
 once with that source's effective onError. A handled failure stops next with
-undefined, preserving completed progress. Reset clears all children and identities.
+undefined, preserving completed progress. A new cursor starts a fresh traversal and deduplication lifetime.
 Users combines normalized-name and email searches (email only for a non-empty
 filter). Stored formats and Android protocols are unchanged. Both web consumers
 continue on story/move-database-to-module; consumer runtime validation is pending.
+
+Cursor count starts at zero and counts entries returned by successful next calls,
+plus delivered add notifications minus delivered remove notifications; change does
+not affect it. Atomic sources count independently, while composition counts only
+its own returned entries and forwarded notifications. Buffered or filtered entries
+do not count. Repeated deliveries, including independent subscriptions, count again;
+count is not a unique-key cardinality and may be negative for unread removals.
 
 Cursor subscriptions are activated by subscribe(listener), without a live option.
 Each call independently attaches child_added/child_changed/child_removed to the
@@ -2269,7 +2274,7 @@ also applied locally when field ordering prevents querying both dimensions.
 Composition forwards each source's events directly, including overlapping results,
 and releases all source listeners through one unsubscribe. Errors use the source's
 effective onError. Subscription events do not invoke handle, update traversal
-buffers or alter position; reset continues to affect traversal only.
+buffers or alter position.
 
 Reason: build subscription behavior incrementally. The previous combined live,
 render-order, cache synchronization and handler-processing implementation was
@@ -2296,5 +2301,5 @@ Firebase checks cover deep input isolation, sequential callbacks, result values,
 survivor filling, partial failures/retry, handle deletion and ordinary traversal.
 Web build and ESM/CommonJS checks pass on Node 24.21.0; selection checks cover both
 directions, duplicates, exact equality, inclusive/falsy bounds, nested/missing fields,
-reset and handler progress across pages. No test files were changed.
+independent cursor lifetimes and handler progress across pages. No test files were changed.
 Real RTDB validation and consumer migration remain unperformed.
