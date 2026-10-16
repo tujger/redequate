@@ -1,4 +1,5 @@
 import {fail} from "../../../common";
+import {DatabaseOrder} from "../DatabaseBase";
 
 export function composeCursor(queries, options, createCursor, run, path = queries, identity) {
     const descriptions = run(() => {
@@ -55,6 +56,9 @@ export function composeCursor(queries, options, createCursor, run, path = querie
 
     return {
         subscribe: subscribe.bind(null, state),
+        get order() {
+            return options.order ?? DatabaseOrder.ASC
+        },
         get position() {
             return sources.length === 1 ? sources[0].position : state.position;
         },

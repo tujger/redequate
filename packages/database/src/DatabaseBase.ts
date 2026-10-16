@@ -111,6 +111,8 @@ export interface DatabaseCursorSource extends DatabaseCursorOptions {
 export interface DatabaseCursor {
     /** Unique to this cursor instance; unchanged by reset. */
     readonly id: string;
+    /** Outer cursor order; defaults to asc. */
+    readonly order: DatabaseOrder;
     readonly position: DatabaseCursorPosition;
 
     /**
