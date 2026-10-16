@@ -41,7 +41,7 @@ export default ({data, skeleton, label, fetchAlertContent}) => {
         if (!data) return;
         let isMounted = true;
         fetchAlertContent({database, pages}, data.value)
-            .then(result => isMounted && setState(state => ({...state, ...data.value, ...result})))
+            .then(result => isMounted && setState({...data.value, ...result}))
             .catch(error => {
                 isMounted && setState(state => ({...state, removed: true}));
                 console.error(data.value, error);
@@ -50,7 +50,7 @@ export default ({data, skeleton, label, fetchAlertContent}) => {
             isMounted = false;
         }
         // eslint-disable-next-line
-    }, []);
+    }, [data, fetchAlertContent]);
 
     if (removed) return null;
     if (label) return <ItemPlaceholderComponent label={label} classes={null} pattern={"flat"}/>
