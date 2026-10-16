@@ -25,7 +25,7 @@ export default class FirebaseMessaging extends MessagingBase {
     }
 
     async addMessageListener(onMessage) {
-        if (typeof onMessage !== "function") {
+        if (!(onMessage instanceof Function)) {
             fail("messaging/invalid-argument", "Message listener must be a function.");
         }
         return onFirebaseMessage(await resolveFirebaseMessaging(this._firebase), payload => {
