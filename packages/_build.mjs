@@ -19,7 +19,7 @@ export const withPackage = (entries, sourceDirectory) => config => ({
             if (output.format === "es" && isPackageSupportChunk(chunk, sourceDirectory)) {
                 return "chunks/[name]-[hash].mjs";
             }
-            return typeof output.chunkFileNames === "function"
+            return output.chunkFileNames instanceof Function
                 ? output.chunkFileNames(chunk)
                 : output.chunkFileNames;
         },
@@ -27,7 +27,7 @@ export const withPackage = (entries, sourceDirectory) => config => ({
             if (Object.hasOwn(entries, chunk.name)) {
                 return output.format === "cjs" ? "[name].cjs" : "[name].mjs";
             }
-            return typeof output.entryFileNames === "function"
+            return output.entryFileNames instanceof Function
                 ? output.entryFileNames(chunk)
                 : output.entryFileNames || "[name].js";
         },
