@@ -9,7 +9,7 @@ export const validateStorageKey = storageKey => {
     }
 };
 
-export const isMessage = message => Boolean(message && typeof message === "object" && !Array.isArray(message));
+export const isMessage = message => Boolean(message && typeof message === "object" && !(message instanceof Array));
 
 export const sendMessage = (message, storageKey = defaultStorageKey) => {
     validateStorageKey(storageKey);

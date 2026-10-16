@@ -13,7 +13,7 @@ export default class LocalTestMessaging extends MessagingBase {
     }
 
     async addMessageListener(onMessage) {
-        if (typeof onMessage !== "function") {
+        if (!(onMessage instanceof Function)) {
             fail("messaging/invalid-argument", "Message listener must be a function.");
         }
         await delay("LocalTestMessaging", "addMessageListener");
@@ -23,7 +23,7 @@ export default class LocalTestMessaging extends MessagingBase {
             try {
                 if (!window.localStorage.getItem(this.storageKey)) return;
                 const pending = onMessage(window.structuredClone(event.data.message));
-                if (pending && typeof pending.then === "function") {
+                if (pending && pending.then instanceof Function) {
                     Promise.resolve(pending).catch(reportError);
                 }
             } catch (error) {
