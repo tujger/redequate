@@ -1,8 +1,8 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {DatabaseOrder} from "../../../packages/database/src";
 import {useDatabase} from "../../controllers";
-import Pagination from "../../controllers/FirebasePagination";
 import {cacheDatas, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {UserData} from "../../controllers/UserData";
@@ -164,11 +164,10 @@ export default (props) => {
         if (items) return;
         let isMount = true;
         const fetchReplies = async () => {
-            return Pagination({
-                ref: type,
-                equals: postId,
-                child: "to",
-                order: "desc",
+            return database.cursor([type], {
+                equalTo: postId,
+                order: DatabaseOrder.DESC,
+                orderBy: ["to"]
             }).next()
         }
         const updateState = async items => {

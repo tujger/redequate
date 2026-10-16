@@ -93,7 +93,6 @@ export default (props) => {
             throw {replies, userReplied};
         }
         const updateState = async props => {
-            // console.error(postId, {paginationOptions, ...props})
             if (props instanceof Error) throw props;
             isMounted && setState(state => ({...state, paginationOptions, ...props}))
         }

@@ -9,11 +9,10 @@ import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {useDatabase} from "../../controllers";
 import counter from "../../controllers/counterControl";
-import Pagination from "../../controllers/FirebasePagination";
 import {delay, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole} from "../../controllers/UserData";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
@@ -122,12 +121,10 @@ export default ({postData}) => {
             setState(state => ({...state, disabled: true}));
         }
         const fetchExtras = async () => {
-            return Pagination({
-                ref: "extra",
-                child: "id",
-                equals: postData.id,
-                size: 10000
-            }).next();
+            return database.cursor(["extra"], {
+                equalTo: postData.id,
+                orderBy: ["id"]
+            }).next(10000);
         }
         const filterLikes = async extras => {
             if (!extras) return 0;
