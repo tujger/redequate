@@ -27,7 +27,10 @@ function createCursor(firebase, path, options = {}, tracking = {}) {
     const query = createCursorQuery(firebase, path, options);
     const state = {
         ...query,
-        path, options, tracking,
+        path,
+        options,
+        tracking,
+        count: 0,
         byKey: query.orderBy === undefined && !query.byValue,
         position: Object.freeze({index: -1, key: undefined, finished: false}),
         scanKey: undefined,
@@ -38,11 +41,13 @@ function createCursor(firebase, path, options = {}, tracking = {}) {
     };
     return {
         subscribe: subscribe.bind(null, state),
+        get count() {
+            return state.count;
+        },
         get position() {
             return state.position;
         },
-        next: next.bind(null, state),
-        reset: reset.bind(null, state)
+        next: next.bind(null, state)
     };
 }
 
@@ -109,6 +114,7 @@ function subscribe(state, notify, onError = state.options.onError) {
             if (active && initialized
                 && (startKey === undefined || child.key >= startKey)
                 && (endKey === undefined || child.key <= endKey)) {
+                state.count += type === "add" ? 1 : type === "remove" ? -1 : 0;
                 notify({type, entry: {key: child.key, value: child.val()}});
             }
         }]);
@@ -178,15 +184,6 @@ async function next(state, n = 1) {
         state.buffer = [];
         state.offset = 0;
     }
-        console.log(entries)
+    state.count += entries.length;
     return entries;
-}
-
-function reset(state) {
-    state.position = Object.freeze({index: -1, key: undefined, finished: false});
-    state.scanKey = undefined;
-    state.scanValue = undefined;
-    state.buffer = [];
-    state.offset = 0;
-    state.exhausted = false;
 }

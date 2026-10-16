@@ -25,6 +25,7 @@ export function composeCursor(queries, options, createCursor, run, path = querie
         descriptions, options, run, path, identity,
         seen: new Map(),
         sources: [],
+        count: 0,
         readSize: 1,
         turn: 0,
         position: Object.freeze({index: -1, key: undefined, finished: false})
@@ -56,14 +57,16 @@ export function composeCursor(queries, options, createCursor, run, path = querie
 
     return {
         subscribe: subscribe.bind(null, state),
+        get count() {
+            return state.count;
+        },
         get order() {
             return options.order ?? DatabaseOrder.ASC
         },
         get position() {
             return sources.length === 1 ? sources[0].position : state.position;
         },
-        next: next.bind(null, state),
-        reset: reset.bind(null, state)
+        next: next.bind(null, state)
     };
 }
 
@@ -102,6 +105,7 @@ function subscribe(state, listener) {
             const subscription = run(() => source.subscribe(
                 event => {
                     subscribed[counters[event.type]]++;
+                    state.count += event.type === "add" ? 1 : event.type === "remove" ? -1 : 0;
                     return run(() => listener(event), description.options, "cursor.subscribe", context);
                 }
             ), description.options, "cursor.subscribe", context);
@@ -131,8 +135,12 @@ async function next(state, n = 1) {
     }
     state.readSize = n;
     if (sources.length === 1) {
-        return run(() => sources[0].next(n), descriptions[0].options,
+        const entries = await run(() => sources[0].next(n), descriptions[0].options,
             "cursor.next", {path: descriptions[0].path, n});
+        if (entries !== undefined) {
+            state.count += entries.length;
+        }
+        return entries;
     }
     const entries = [];
     while (entries.length < n && !sources.every(source => source.position.finished)) {
@@ -154,19 +162,6 @@ async function next(state, n = 1) {
     if (sources.every(source => source.position.finished)) {
         state.position = Object.freeze({...state.position, finished: true});
     }
+    state.count += entries.length;
     return entries;
-}
-
-function reset(state) {
-    const {sources, descriptions, seen, run} = state;
-    for (const [index, source] of sources.entries()) {
-        const description = descriptions[index];
-        run(() => source.reset(), description.options, "cursor.reset", {path: description.path});
-    }
-    for (const keys of seen.values()) {
-        keys.clear();
-    }
-    state.turn = 0;
-    state.readSize = 1;
-    state.position = Object.freeze({index: -1, key: undefined, finished: false});
 }

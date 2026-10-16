@@ -107,8 +107,10 @@ export interface DatabaseCursorSource extends DatabaseCursorOptions {
 
 /** Call methods sequentially, outside handle. Concurrent data changes may cause repeats or omissions. */
 export interface DatabaseCursor {
-    /** Unique to this cursor instance; unchanged by reset. */
+    /** Unique to this cursor instance. */
     readonly id: string;
+    /** Returned entries plus delivered adds minus removes; repeated deliveries count again. */
+    readonly count: number;
     /** Outer cursor order; defaults to asc. */
     readonly order: DatabaseOrder;
     readonly position: DatabaseCursorPosition;
@@ -122,9 +124,6 @@ export interface DatabaseCursor {
 
     /** Subscribe to changes without initial entries; returns an independent subscription. */
     subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined;
-
-    /** Restore initial position and clear buffers/deduplication, preserving options. */
-    reset(): void;
 }
 
 export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;
@@ -265,7 +264,7 @@ export default class DatabaseBase {
      * A non-empty source-object array composes cursors in round-robin order;
      * string arrays remain paths. Nested compositions are unsupported.
      * Composition deduplicates by normalized path + key before handle, including
-     * deletions, until reset. Each source uses its own effective onError.
+     * deletions, for this cursor's lifetime. Each source uses its own effective onError.
      */
     cursor(path: DatabasePath | DatabaseCursorSource[], options: DatabaseCursorOptions = {}): Pick<DatabaseCursor, "id"> {
         return Object.freeze({id: identifier()});
