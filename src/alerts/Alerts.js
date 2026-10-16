@@ -3,12 +3,12 @@ import AllReadIcon from "@mui/icons-material/ClearAll";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
+import {DatabaseOrder} from "../../packages/database/src";
 import ConfirmComponent from "../components/ConfirmComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
 import {useDatabase} from "../controllers";
-import Pagination from "../controllers/FirebasePagination";
 import {MenuBadge, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
@@ -35,19 +35,13 @@ export default ({daemon, fetchAlertContent}) => {
     const handleAllReadConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allRead: false});
-        new Pagination({
-            ref: "alerts/" + currentUserData.id,
-            order: "desc",
-            size: 10000,
-            timeout: 180000,
-            update: (key, data) => {
-                const newdata = JSON.parse(JSON.stringify(data));
-                if (newdata) {
-                    delete newdata.new;
-                }
-                return newdata;
-            }
-        }).next()
+        database.cursor(["alerts", currentUserData.id], {
+            handle({value}) {
+                return {...value, new: null};
+            },
+            order: DatabaseOrder.DESC
+        })
+            .next(1000)
             .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))

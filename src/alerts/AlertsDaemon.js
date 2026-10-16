@@ -2,7 +2,6 @@ import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {useDatabase} from "../controllers";
-import Pagination from "../controllers/FirebasePagination";
 import {MenuBadge, usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
@@ -23,18 +22,13 @@ export default ({fetchAlertContent}) => {
             const value = store.getState().alertsVisit;
             lastVisit = value.timestamp;
         }
-        const alertsPagination = new Pagination({
-            ref: "alerts/" + currentUserData.id,
-            child: "timestamp",
-            start: lastVisit,
-            size: 10000,
-            timeout: 180000,
-            update: () => {
-            }
+        const cursor = database.cursor(["alerts", currentUserData.id], {
+            orderBy: ["timestamp"],
+            start: lastVisit
         });
-        alertsPagination.next().then(() => {
-            if (alertsPagination.countTotal) {
-                dispatch({type: alertsCounterReducer.VALUE, value: alertsPagination.countTotal});
+        cursor.next(10000).then(() => {
+            if (cursor.count) {
+                dispatch({type: alertsCounterReducer.VALUE, value: cursor.count});
                 dispatch({type: MenuBadge.INCREASE, page: pages.alerts});
             }
         }).catch(notifySnackbar);
@@ -42,7 +36,6 @@ export default ({fetchAlertContent}) => {
         let lastKey = null;
         const listener = database.addEventListener(["alerts", currentUserData.id], {
             onChildAdd({key, value}) {
-
                 if (!lastKey) {
                     lastKey = key;
                     return;
