@@ -26,8 +26,8 @@ import Pagination from "../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, UserRole} from "../controllers/UserData";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tag.module.css";
@@ -68,11 +68,9 @@ export default ({allowOwner = true}) => {
         database.read(["tag", itemId])
             .then(value => {
                 if (value !== undefined) return {key: itemId, value};
-                return Pagination({
-                    ref: "tag",
-                    child: "id",
-                    equals: itemId,
-                    size: 1
+                return database.cursor(["tag"], {
+                    equalTo: itemId,
+                    orderBy: ["id"]
                 }).next().then(items => items[0])
             })
             .then(tag => {

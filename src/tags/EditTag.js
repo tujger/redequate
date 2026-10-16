@@ -14,7 +14,6 @@ import ProgressView from "../components/ProgressView";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
 import {useDatabase, useRedirectToLogin, useStorage} from "../controllers";
-import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
@@ -85,11 +84,10 @@ export default ({allowOwner = true}) => {
         }
         const checkIfIdValid = async () => {
             const updatedId = tag.id || normalizeSortName(tag.label);
-            const existing = await new Pagination({
-                ref: "tag",
-                child: "id",
-                equals: updatedId,
-            }).next();
+            const existing = await database.cursor(["tag"], {
+                equalTo: updatedId,
+                orderBy: ["id"]
+            }).next(10);
             const other = existing.filter(item => item.key !== tag._key);
             if (other.length) {
                 console.error(`[EditTag] already exists '${updatedId}' from '${tag.label}' for '${tag._key}', found: ${JSON.stringify(other)}`);
@@ -102,12 +100,10 @@ export default ({allowOwner = true}) => {
             return updatedId;
         }
         const checkIfLabelValid = async updatedId => {
-            const existing = await new Pagination({
-                ref: "tag",
-                child: "label",
-                equals: tag.label,
-            }).next();
-            console.log(existing);
+            const existing = await database.cursor(["tag"], {
+                equalTo: tag.label,
+                orderBy: ["label"]
+            }).next(10);
             const labels = existing.filter(item => item.key !== tag._key);
             if (labels.length) {
                 console.error(`[EditTag] not available '${tag.label}' for '${updatedId}/${tag._key}, found: ${JSON.stringify(labels)}`);
@@ -194,8 +190,8 @@ export default ({allowOwner = true}) => {
         const subscribeToTag = async key => {
             if (isNew) {
                 return mutualRequest({
-                    firebase,
                     currentUserData,
+                    database,
                     mutualId: key,
                     mutualType: "tag",
                     typeId: "watching"
