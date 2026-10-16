@@ -3,7 +3,7 @@ import {changeEvent, read, toUserData} from "./common";
 
 export default async function onAuthStateChanged(auth, callback, onError) {
     await delay("LocalTestAuth", "onAuthStateChanged");
-    if (typeof callback !== "function" || (onError !== undefined && typeof onError !== "function")) {
+    if (!(callback instanceof Function) || (onError !== undefined && !(onError instanceof Function))) {
         fail("auth/invalid-argument", "Auth state listeners must be functions.");
     }
     const reportError = error => {
@@ -31,7 +31,7 @@ export default async function onAuthStateChanged(auth, callback, onError) {
         previous = signature;
         try {
             const pending = callback(user);
-            if (pending && typeof pending.then === "function") {
+            if (pending && pending.then instanceof Function) {
                 Promise.resolve(pending).catch(reportError);
             }
         } catch (error) {

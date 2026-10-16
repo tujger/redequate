@@ -3,7 +3,7 @@ import {read, write, current} from "./common";
 
 export default async function updateProfile(auth, fields) {
     await delay("LocalTestAuth", "updateProfile");
-    if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
+    if (!fields || typeof fields !== "object" || fields instanceof Array) {
         fail("auth/invalid-argument", "Profile fields must be an object.");
     }
     const state = read(auth);

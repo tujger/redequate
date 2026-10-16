@@ -26,15 +26,15 @@ const validAccount = account => account && typeof account.uid === "string" &&
     (account.photoURL === null || typeof account.photoURL === "string") &&
     Number.isFinite(account.createdAt) && Number.isFinite(account.lastLoginAt);
 
-const validState = state => state && state.version === 1 && Array.isArray(state.accounts) &&
+const validState = state => state && state.version === 1 && state.accounts instanceof Array &&
     state.accounts.every(validAccount) &&
     new Set(state.accounts.map(account => account.uid)).size === state.accounts.length &&
     new Set(state.accounts.map(account => account.email)).size === state.accounts.length &&
     (state.session === null || (state.session && typeof state.session.token === "string" &&
         state.accounts.some(account => account.uid === state.session.uid))) &&
     (state.redirect === null || state.accounts.some(account => account.uid === state.redirect)) &&
-    Array.isArray(state.links) && state.links.every(email => typeof email === "string") &&
-    Array.isArray(state.mail) && state.mail.every(item => item && typeof item.type === "string" &&
+    state.links instanceof Array && state.links.every(email => typeof email === "string") &&
+    state.mail instanceof Array && state.mail.every(item => item && typeof item.type === "string" &&
         typeof item.email === "string" && Number.isFinite(item.timestamp));
 
 export function read(auth) {
