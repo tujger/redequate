@@ -1,4 +1,7 @@
-import {identifier, notImplemented} from '../../common'
+import {identifier, notImplemented} from '../../../common'
+import {DatabaseOrder} from "./DatabaseOrder";
+
+export {DatabaseOrder} from "./DatabaseOrder";
 
 /**
  * Provider-relative path; array parts are joined with '/'. '' and [] mean root.
@@ -73,11 +76,6 @@ export interface DatabaseCursorSubscription {
     readonly changed: number;
     readonly removed: number;
     unsubscribe(): void;
-}
-
-export enum DatabaseOrder {
-    ASC = "asc",
-    DESC = "desc"
 }
 
 export interface DatabaseCursorOptions extends DatabaseOptions {

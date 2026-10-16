@@ -1,5 +1,5 @@
 import {delay, fail} from "../../../common";
-import DatabaseBase from "../DatabaseBase";
+import DatabaseBase from "../common/DatabaseBase";
 
 // Local simulation only: passwords and fake tokens are stored in plain text.
 export default class LocalTestDatabase extends DatabaseBase {

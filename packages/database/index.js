@@ -1,1 +1,1 @@
-export {default as DatabaseBase} from "./src/DatabaseBase";
+export {default as DatabaseBase} from "./src/common/DatabaseBase";

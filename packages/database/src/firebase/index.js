@@ -1,4 +1,4 @@
-import DatabaseBase from "../DatabaseBase";
+import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
 import cursor from "./cursor";

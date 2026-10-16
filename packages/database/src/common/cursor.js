@@ -1,5 +1,5 @@
 import {fail} from "../../../common";
-import {DatabaseOrder} from "../DatabaseBase";
+import {DatabaseOrder} from "./DatabaseOrder";
 
 export function composeCursor(queries, options, createCursor, run, path = queries, identity) {
     const descriptions = run(() => {

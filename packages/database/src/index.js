@@ -1,2 +1,3 @@
-export {default as DatabaseBase, DatabaseOrder} from "./DatabaseBase";
+export {default as DatabaseBase} from "./common/DatabaseBase";
+export {DatabaseOrder} from "./common/DatabaseOrder";
 export {resolveDatabase} from "./resolveDatabase";

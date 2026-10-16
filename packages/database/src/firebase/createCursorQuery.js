@@ -1,6 +1,6 @@
 import {key} from "firebase-key";
 import {fail} from "../../../common";
-import {DatabaseOrder} from "../DatabaseBase";
+import {DatabaseOrder} from "../common/DatabaseOrder";
 import {resolvePath} from "./common";
 
 export default function createCursorQuery(firebase, path, {
