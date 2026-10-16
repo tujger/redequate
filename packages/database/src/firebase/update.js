@@ -2,7 +2,7 @@ import {fail} from "../../../common";
 import {resolvePath} from "./common";
 
 export default async function update(firebase, path, changes, {} = {}) {
-    if ((typeof path === "string" || Array.isArray(path)) && changes === undefined) {
+    if ((typeof path === "string" || path instanceof Array) && changes === undefined) {
         fail("database/invalid-argument", "changes must be provided when path is a string or array.");
     }
     const updates = {};

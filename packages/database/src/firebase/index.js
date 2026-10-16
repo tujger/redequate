@@ -43,7 +43,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async update(path, changes, options = {}) {
-        const batch = typeof path !== "string" && !Array.isArray(path);
+        const batch = typeof path !== "string" && !(path instanceof Array);
         return this.run(() => update(this.#firebase, path, batch ? undefined : changes),
             batch ? changes ?? options : options, "update", batch ? {updates: path} : {path, changes});
     }

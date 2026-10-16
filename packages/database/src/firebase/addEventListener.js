@@ -10,7 +10,7 @@ import {resolvePath} from "./common";
  */
 export default function addEventListener(firebase, path, {onChange, onChildAdd, onChildChange, onChildRemove, onError, orderBy}) {
     for (const [name, handler] of Object.entries({onChange, onChildAdd, onChildChange, onChildRemove, onError})) {
-        if (handler !== undefined && typeof handler !== "function") {
+        if (handler !== undefined && !(handler instanceof Function)) {
             fail("database/invalid-argument", `${name} must be a function or undefined.`);
         }
     }

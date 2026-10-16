@@ -9,7 +9,7 @@ export default function createRecord(firebase, path, options, run) {
         return {
             async save(value) {
                 return run(async () => {
-                    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+                    if (value === null || typeof value !== "object" || value instanceof Array) {
                         fail("database/invalid-argument", "value must be a record object.");
                     }
                     const result = await ref.transaction(current => {
