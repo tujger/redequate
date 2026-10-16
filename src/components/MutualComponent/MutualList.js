@@ -1,6 +1,7 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
+import {DatabaseOrder} from "../../../packages/database/src";
 import {useDatabase} from "../../controllers";
 import {cacheDatas} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
@@ -24,8 +25,7 @@ export default props => {
         noItemsComponent = <ItemPlaceholderComponent label={t("Mutual.Items not found.")} pattern={"flat"}/>,
         onChanged = () => {
         },
-        order = "desc",
-        pageTransform = items => items,
+        order = DatabaseOrder.DESC,
         pattern,
         placeholder = <ItemPlaceholderComponent skeleton={true} pattern={"flat"}/>,
         typeId,
