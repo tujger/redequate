@@ -59,13 +59,9 @@ export interface DatabaseCursorPosition {
     readonly finished: boolean;
 }
 
-export interface DatabaseCursorEntry extends DatabaseEntry {
-    readonly path: string;
-}
-
 export interface DatabaseCursorEvent {
     type: "add" | "change" | "remove";
-    entry: DatabaseCursorEntry;
+    entry: DatabaseEntry;
 }
 
 export interface DatabaseCursorSubscription {
@@ -122,7 +118,7 @@ export interface DatabaseCursor {
      * Filtered/deleted entries do not advance index. Reads are buffered until consumed.
      * Errors preserve completed actions and progress; the failed entry can be retried.
      */
-    next(n?: number): Promise<DatabaseCursorEntry[] | undefined>;
+    next(n?: number): Promise<DatabaseEntry[] | undefined>;
 
     /** Subscribe to changes without initial entries; returns an independent subscription. */
     subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined;

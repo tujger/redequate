@@ -95,8 +95,6 @@ async function handleEntry(state, child) {
 
 function subscribe(state, notify, onError = state.options.onError) {
     const {path, initialQuery, startKey, endKey} = state;
-    const entryPath = (path instanceof Array ? path.join("/") : path)
-        .split("/").filter(Boolean).join("/");
     let active = true;
     let initialized = false;
     let failed = false;
@@ -111,7 +109,7 @@ function subscribe(state, notify, onError = state.options.onError) {
             if (active && initialized
                 && (startKey === undefined || child.key >= startKey)
                 && (endKey === undefined || child.key <= endKey)) {
-                notify({type, entry: {path: entryPath, key: child.key, value: child.val()}});
+                notify({type, entry: {key: child.key, value: child.val()}});
             }
         }]);
     const unsubscribe = () => {
