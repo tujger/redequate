@@ -2264,17 +2264,30 @@ events without deduplication. Successful unsubscribe sets active to false and
 retains the metrics. Internal source subscriptions have no metrics.
 A one-time value read marks
 baseline completion; initial events are skipped. Events carry type and an entry
-with normalized path, key and value, without a display index. Date key bounds are
+with key and value, identical to entries returned by next, without a display index. Date key bounds are
 also applied locally when field ordering prevents querying both dimensions.
 Composition forwards each source's events directly, including overlapping results,
 and releases all source listeners through one unsubscribe. Errors use the source's
 effective onError. Subscription events do not invoke handle, update traversal
-buffers or alter position. Those behaviors and UI integration are deferred;
-reset continues to affect traversal only.
+buffers or alter position; reset continues to affect traversal only.
 
 Reason: build subscription behavior incrementally. The previous combined live,
 render-order, cache synchronization and handler-processing implementation was
 rejected as too complex. Keep notifications independent of traversal at this step.
+Do not mirror the list's loaded records or compute notification indices in the
+cursor: that would require synchronizing two mutable collections. The list owns
+its displayed records and applies changes/removals by record
+key, ignoring unknown keys. Subscription events retain the simple {type, entry}
+shape. LazyList shares addition between pages and live events; changes and removals
+are handled only in the subscription. Pages append; live additions prepend for
+desc and append for asc only after the displayed traversal is finished. This
+assumes new records fall at the ascending end, as with timestamp keys; arbitrary
+orderBy insertion is not supported. The public readonly cursor.order exposes the
+outer direction (asc by default), including for compositions. Page loads and notifications run directly,
+without an operation queue; asynchronous transformations apply on completion,
+so strict event ordering is not guaranteed. Serialization was rejected to keep
+the component simple. Cursor changes invalidate the old session; toggling
+live only changes the subscription. Finished state is preserved by live events.
 Stored data and Android protocols are unchanged; web runtime validation is pending.
 
 Status: Firebase traversal and independent subscription notifications are implemented.
