@@ -15,10 +15,10 @@ export const notImplemented = method => {
 };
 export const identifier = () => {
     const crypto = globalThis.crypto;
-    if (typeof crypto?.randomUUID === "function") return crypto.randomUUID();
+    if (crypto?.randomUUID instanceof Function) return crypto.randomUUID();
 
     const bytes = new Uint8Array(16);
-    if (typeof crypto?.getRandomValues === "function") {
+    if (crypto?.getRandomValues instanceof Function) {
         crypto.getRandomValues(bytes);
     } else {
         // Format-compatible fallback without cryptographic randomness.
@@ -33,7 +33,7 @@ export const identifier = () => {
 };
 export const resolvePackage = async (instance, name, loadDefault) => {
     if (instance === undefined) return loadDefault();
-    if (instance === null || typeof instance !== "object" || Array.isArray(instance)) {
+    if (instance === null || typeof instance !== "object" || instance instanceof Array) {
         const className = name[0].toUpperCase() + name.slice(1);
         const article = /^[aeiou]/i.test(className) ? "an" : "a";
         throw new Error(`Dispatcher ${name} must be ${article} ${className} instance created with new ${className}(...)`);
