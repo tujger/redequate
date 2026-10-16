@@ -4,7 +4,7 @@ import {sendMessage} from "../../../messaging/src/local-test/common";
 const isNonEmptyString = value => typeof value === "string" && Boolean(value.trim());
 
 const validate = (args, fields = []) => {
-    if (!args || typeof args !== "object" || Array.isArray(args)) {
+    if (!args || typeof args !== "object" || args instanceof Array) {
         fail("backend/invalid-argument", "Function arguments must be an object.");
     }
     for (const field of fields) {
@@ -94,7 +94,7 @@ export default {
         }
         let tokens = [];
         if (args.to !== undefined) {
-            tokens = Array.isArray(args.to) ? [...args.to] : [args.to];
+            tokens = args.to instanceof Array ? [...args.to] : [args.to];
             if (!tokens.length || !tokens.every(isNonEmptyString)) {
                 fail("backend/invalid-argument", "to must be a non-empty string or an array of non-empty strings.");
             }

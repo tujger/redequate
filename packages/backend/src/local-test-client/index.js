@@ -10,8 +10,8 @@ export default class LocalTestBackendClient extends BackendBase {
         if (typeof storageKey !== "string" || !storageKey.trim()) {
             fail("backend/invalid-argument", "storageKey must be a non-empty string.");
         }
-        if (!handlers || typeof handlers !== "object" || Array.isArray(handlers) ||
-            Object.entries(handlers).some(([name, handler]) => !name.trim() || typeof handler !== "function")) {
+        if (!handlers || typeof handlers !== "object" || handlers instanceof Array ||
+            Object.entries(handlers).some(([name, handler]) => !name.trim() || !(handler instanceof Function))) {
             fail("backend/invalid-argument", "handlers must be an object of named functions.");
         }
         this._storageKey = storageKey;
