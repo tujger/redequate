@@ -1,5 +1,3 @@
-import {firebaseMessaging as firebase} from "../../controllers/Firebase";
-import Pagination from "../../controllers/FirebasePagination";
 import {MutualMode} from "./MutualConstants";
 
 export const mutualRequestAccept = ({backend, requestId, typeId}) => {
@@ -21,41 +19,41 @@ export const mutualRequestReject = ({backend, requestId, typeId}) => {
 export const mutualRequest = async (
     {
         currentUserData,
+        database,
         mutualId,
         mutualType,
         mutualMode = MutualMode.SIMPLEX_QUIET,
         typeId,
         message
     }) => {
-    let ref = firebase.database().ref();
     const uidId = `${currentUserData.id}_${mutualId}`;
     const idUid = `${mutualId}_${currentUserData.id}`;
+
+    const existing = await database.cursor(["mutual", typeId], {
+        equalTo: uidId,
+        orderBy: ["uid_id"]
+    }).then();
+
+    if (existing.length > 0) {
+        return null;
+    }
+    const path = [];
     let request = {
         uid: currentUserData.id,
         id: mutualId,
         uid_id: uidId,
         id_uid: idUid,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        timestamp: database.TIMESTAMP,
         type: mutualType,
     };
     if (mutualMode === MutualMode.SIMPLEX_QUIET) {
-        ref = ref.child("mutual").child(typeId);
+        path.push("mutual", typeId);
     } else if (mutualMode === MutualMode.DUPLEX_APPROVE) {
-        ref = ref.child("mutualrequests").child(typeId);
+        path.push("mutualrequests", typeId);
         request = {...request, typeId};
         if (message) request = {...request, message};
     }
 
-    const existing = new Pagination({
-        ref: "mutual/" + typeId,
-        child: "uid_id",
-        equals: uidId,
-        size: 10,
-    });
-    if (existing.length > 0) {
-        return null;
-    } else {
-        return ref.push(request)
-            .then(ref => ({key: ref.key, value: {...request, timestamp: new Date().getTime()}}));
-    }
+    return database.create(path).save(request)
+        .then(key => ({key, value: {...request, timestamp: new Date().getTime()}}));
 }

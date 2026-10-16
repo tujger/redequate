@@ -3,7 +3,6 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useBackend, useDatabase} from "../../controllers";
 import counterControl from "../../controllers/counterControl";
-import Pagination from "../../controllers/FirebasePagination";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import {matchRole, UserRole} from "../../controllers/UserData";
@@ -65,7 +64,7 @@ export default props => {
     const pushRequest = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: true});
-        mutualRequest({currentUserData, message, mutualId, mutualMode, mutualType, typeId})
+        mutualRequest({currentUserData, database, message, mutualId, mutualMode, mutualType, typeId})
             .then(hasPending => {
                 if (mutualMode === MutualMode.DUPLEX_APPROVE) {
                     setState(state => ({
@@ -98,12 +97,12 @@ export default props => {
         }
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: false});
-        new Pagination({
-            ref: "mutual/" + typeId,
-            child: "uid_id",
-            equals: uidId,
-            update: () => null
-        }).next()
+
+        database.cursor(["mutual", typeId], {
+            equalTo: uidId,
+            handle: () => null,
+            orderBy: ["uid_id"],
+        }).next(10)
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
     }
@@ -130,20 +129,10 @@ export default props => {
 
     React.useEffect(() => {
         let isMounted = true;
-        const pendingPagination = new Pagination({
-            ref: "mutualrequests/" + typeId,
-            child: "uid_id",
-            equals: uidId,
-            size: 1,
-        });
-        const subscribePagination = new Pagination({
-            ref: "mutual/" + typeId,
-            child: "uid_id",
-            equals: uidId,
-            size: 1,
-        });
-        pendingPagination.next()
-            .then(items => items[0])
+        database.cursor(["mutualrequests", typeId], {
+            equalTo: uidId,
+            orderBy: ["uid_id"]
+        }).next().then(items => items[0])
             .then(hasPending => {
                 if (hasPending && isMounted) {
                     setState(state => ({
@@ -155,7 +144,10 @@ export default props => {
                     throw "done";
                 }
             })
-            .then(() => subscribePagination.next())
+            .then(() => database.cursor(["mutual", typeId], {
+                equalTo: uidId,
+                orderBy: ["uid_id"]
+            }).next())
             .then(items => items[0])
             .then(subscribed => {
                 isMounted && setState(state => ({
@@ -233,11 +225,10 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         let isMutualRequestsCheckMount = true;
-        new Pagination({
-            ref: "mutualrequests/" + typeId,
-            child: "uid_id",
-            equals: idUid,
-        }).next()
+        database.cursor(["mutualrequests", typeId], {
+            equalTo: idUid,
+            orderBy: ["uid_id"]
+        }).next(10)
             .then(items => items && items[0])
             .then(hasRequest => {
                 if (hasRequest && isMutualRequestsCheckMount) {

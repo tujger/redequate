@@ -41,7 +41,7 @@ export default props => {
         dispatch({type: lazyListComponentReducer.REFRESH, ...(cached ? {cache: mixedId} : {})});
     }
 
-    const fetchPagination = () => {
+    const fetchCursor = () => {
         if (mode === MutualListMode.SUBSCRIBERS) {
             return database.cursor(["mutual", typeId], {
                 equalTo: mutualId,
@@ -145,7 +145,7 @@ export default props => {
     }
 
     return <LazyListComponent
-        cursor={fetchPagination()}
+        cursor={fetchCursor()}
         ItemComponent={fetchItemComponent()}
         itemTransform={fetchItemTransform()}
         live={live}
