@@ -14,10 +14,10 @@ export default class LocalTestStorage extends StorageBase {
 
     async upload({auth, blob, metadata = {}, name, onProgress} = {}) {
         await delay("LocalTestStorage", "upload");
-        if (!auth || typeof auth.resolveCurrentUser !== "function" || !(blob instanceof window.Blob) ||
-            !metadata || typeof metadata !== "object" || Array.isArray(metadata) ||
+        if (!auth || !(auth.resolveCurrentUser instanceof Function) || !(blob instanceof window.Blob) ||
+            !metadata || typeof metadata !== "object" || metadata instanceof Array ||
             (name !== undefined && typeof name !== "string") ||
-            (onProgress !== undefined && typeof onProgress !== "function")) {
+            (onProgress !== undefined && !(onProgress instanceof Function))) {
             fail("storage/invalid-argument", "Upload requires Auth, Blob, metadata and an optional name/progress callback.");
         }
         const user = await auth.resolveCurrentUser();
