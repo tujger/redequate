@@ -50,7 +50,7 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async onAuthStateChanged(callback, onError) {
-        if (typeof callback !== "function" || (onError !== undefined && typeof onError !== "function")) {
+        if (!(callback instanceof Function) || (onError !== undefined && !(onError instanceof Function))) {
             fail("auth/invalid-argument", "Auth state listeners must be functions.");
         }
         const reportError = error => {
@@ -64,7 +64,7 @@ export default class FirebaseAuth extends AuthBase {
         return onAuthStateChanged(this._auth, user => {
             try {
                 const pending = callback(toUserData(user, this._UserData));
-                if (pending && typeof pending.then === "function") pending.catch(reportError);
+                if (pending && pending.then instanceof Function) pending.catch(reportError);
             } catch (error) {
                 reportError(error);
             }
