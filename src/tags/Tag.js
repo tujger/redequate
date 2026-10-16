@@ -6,6 +6,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {DatabaseOrder} from "../../packages/database/src";
 import FlexFabComponent from "../components/FlexFabComponent";
 import InfoComponent from "../components/InfoComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
@@ -198,7 +199,7 @@ export default ({allowOwner = true}) => {
                 noItemsComponent={<PostComponent label={t("Tag.No posts found")}/>}
                 pagination={() => new Pagination({
                     ref: firebase.database().ref("_tag").child(tag.key),
-                    order: "desc",
+                    order: DatabaseOrder.DESC,
                 })}
                 placeholder={<PostComponent skeleton={true}/>}
             />

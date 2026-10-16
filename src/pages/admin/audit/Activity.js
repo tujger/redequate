@@ -4,6 +4,7 @@ import SortIcon from "@mui/icons-material/Sort";
 import StartDateIcon from "@mui/icons-material/Today";
 import React from "react";
 import {connect, useDispatch} from "react-redux";
+import {DatabaseOrder} from "../../../../packages/database/src";
 import AvatarView from "../../../components/AvatarView";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
@@ -53,7 +54,7 @@ const Activity = props => {
     }
 
     const handleSortClick = evt => {
-        const sort = activitySort === "asc" ? "desc" : "asc";
+        const sort = activitySort === DatabaseOrder.ASC ? DatabaseOrder.DESC : DatabaseOrder.ASC;
         dispatch({type: lazyListComponentReducer.RESET});
         dispatch({
             type: auditReducer.ACTIVITY,
