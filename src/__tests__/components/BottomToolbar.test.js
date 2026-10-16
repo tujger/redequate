@@ -17,9 +17,9 @@ vi.mock("react-router-dom", () => {
     useLocation: () => ({ pathname: mockPathname })
   };
 });
-vi.mock("../../controllers/UserData", () => ({
+vi.mock("../../controllers/UserData", async importOriginal => ({
+  ...await importOriginal(),
   matchRole: () => true,
-  useCurrentUserData: () => ({ id: "user" })
 }));
 
 describe("BottomToolbar", () => {
@@ -138,3 +138,5 @@ describe("BottomToolbar", () => {
     expect(document.querySelector('[role="menu"]')).toBeNull();
   });
 });
+
+vi.mock("../../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => ({ id: "user" })}));

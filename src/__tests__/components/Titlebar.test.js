@@ -30,12 +30,12 @@ vi.mock("react-router-dom", () => {
   };
 });
 vi.mock("../../controllers/General", () => ({ usePages: () => mockPages }));
-vi.mock("../../controllers/UserData", () => ({
+vi.mock("../../controllers/UserData", async importOriginal => ({
+  ...await importOriginal(),
   currentRole: (user) => user.role,
   matchRole: (roles) => !roles?.includes("blocked"),
   needAuth: (roles) => Boolean(roles?.includes("login")),
   UserRole: { ADMIN: "admin" },
-  useCurrentUserData: () => mockUser
 }));
 vi.mock("../../components/AvatarView", () => ({ default: vi.fn(() => <span data-testid="avatar" />) }));
 vi.mock("../../components/ProgressView", () => ({ default: () => <div data-testid="progress" /> }));
@@ -100,3 +100,5 @@ describe("Titlebar", () => {
     expect(container.querySelector("h6").textContent).toBe("Not found");
   });
 });
+
+vi.mock("../../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => mockUser}));

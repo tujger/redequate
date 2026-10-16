@@ -28,10 +28,10 @@ vi.mock("../../controllers/General", () => ({
   enableDisabledPages: () => mockEnableDisabledPages(),
   useStore: () => ({ id: "store" })
 }));
-vi.mock("../../controllers/UserData", () => ({
+vi.mock("../../controllers/UserData", async importOriginal => ({
+  ...await importOriginal(),
   matchRole: () => true,
   UserRole: { ADMIN: "admin" },
-  useCurrentUserData: () => mockUser
 }));
 vi.mock("../../controllers/Store", () => ({ refreshAll: (...args) => mockRefreshAll(...args) }));
 vi.mock("../../controllers/WrapperControl", () => ({
@@ -220,3 +220,5 @@ describe("ResponsiveDrawerLayout", () => {
     }
   });
 });
+
+vi.mock("../../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => mockUser}));

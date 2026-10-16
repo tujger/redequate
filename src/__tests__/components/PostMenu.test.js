@@ -7,10 +7,10 @@ import PostMenu from "../../components/PostComponent/PostMenu";
 vi.mock("@mui/icons-material/MoreVert", () => ({ default: () => null }));
 vi.mock("@mui/icons-material/ArrowDropDown", () => ({ default: () => null }));
 vi.mock("@mui/icons-material/ArrowDropUp", () => ({ default: () => null }));
-vi.mock("../../controllers/UserData", () => ({
+vi.mock("../../controllers/UserData", async importOriginal => ({
+  ...await importOriginal(),
   UserRole: { ADMIN: "admin" },
   matchRole: () => false,
-  useCurrentUserData: () => ({ id: "user", disabled: false })
 }));
 vi.mock("../../controllers/General", () => ({
   useMetaInfo: () => ({ settings: { postsAllowEdit: true } })
@@ -68,3 +68,5 @@ describe("PostMenu", () => {
     expect(container.querySelector('[data-action="delete"]').getAttribute("data-open")).toBe("true");
   });
 });
+
+vi.mock("../../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => ({ id: "user", disabled: false })}));

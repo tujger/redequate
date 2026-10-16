@@ -16,9 +16,9 @@ vi.mock("react-router-dom", () => {
     useHistory: () => ({ push: mockPush })
   };
 });
-vi.mock("../../controllers/UserData", () => ({
+vi.mock("../../controllers/UserData", async importOriginal => ({
+  ...await importOriginal(),
   matchRole: (roles) => roles !== "blocked",
-  useCurrentUserData: () => ({ id: "user" })
 }));
 
 describe("MenuSection", () => {
@@ -255,3 +255,5 @@ describe("MenuSection", () => {
     }
   });
 });
+
+vi.mock("../../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => ({ id: "user" })}));

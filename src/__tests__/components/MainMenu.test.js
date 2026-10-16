@@ -13,9 +13,9 @@ vi.mock("react-router-dom", () => {
     Link: ({ children, to, ...props }) => React.createElement("a", { ...props, href: to, onClick: event => { event.preventDefault(); props.onClick?.(event); } }, children)
   };
 });
-vi.mock("../../controllers/UserData", () => ({
+vi.mock("../../controllers/UserData", async importOriginal => ({
+  ...await importOriginal(),
   matchRole: (roles) => roles !== "blocked",
-  useCurrentUserData: () => ({ id: "user" })
 }));
 vi.mock("../../components/LanguageComponent", () => ({ default: () => <span data-testid="language" /> }));
 
@@ -92,3 +92,5 @@ describe("MainMenu", () => {
     expect(closeDrawer).toHaveBeenCalledTimes(1);
   });
 });
+
+vi.mock("../../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => ({ id: "user" })}));
