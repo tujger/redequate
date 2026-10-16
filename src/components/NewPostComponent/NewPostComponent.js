@@ -5,7 +5,6 @@ import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {useAuth, useDatabase, useStorage} from "../../controllers";
-import Pagination from "../../controllers/FirebasePagination";
 import {useFirebase, usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -325,10 +324,9 @@ const NewPostComponent = props => {
             const {context, _savedContext, _savedText, givenText, givenTag} = props;
             let hiddenTag;
             if (givenTag) {
-                const item = await Pagination({
-                    ref: "tag",
-                    child: "id",
-                    equals: givenTag
+                const item = await database.cursor(["tag"], {
+                    equalTo: givenTag,
+                    orderBy: ["id"]
                 }).next().then(items => items[0]);
                 if (item) {
                     hiddenTag = String.fromCharCode(1) + `$[tag:${givenTag}:${item.key}]` + String.fromCharCode(2);
