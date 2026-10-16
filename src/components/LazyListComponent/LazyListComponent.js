@@ -112,7 +112,6 @@ export default (
 
     React.useEffect(() => {
         const current = {cursor, loading: false, progress: false};
-        cursor?.reset?.();
         session.current = current;
         return () => {
             setItems([]);
