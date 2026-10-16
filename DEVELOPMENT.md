@@ -2172,7 +2172,8 @@ versus array results was rejected; it always returns an array. Dedicated cursor
 update and delete were removed; mutations during traversal belong to handle.
 No current Firebase reference is retained outside element processing.
 
-Handle receives (structuredClone(value), key) and runs sequentially, awaited
+The current contract and provider pass handle a structuredClone of {key, value}
+(the proposed value/key signature is not present in the current sources). It runs sequentially, awaited
 before advancing. Undefined means no automatic write and discards input mutations;
 results retain the original read value. Null deletes the candidate without
 advancing index. Every other result fully replaces the record, even the same object
@@ -2301,5 +2302,11 @@ Firebase checks cover deep input isolation, sequential callbacks, result values,
 survivor filling, partial failures/retry, handle deletion and ordinary traversal.
 Web build and ESM/CommonJS checks pass on Node 24.21.0; selection checks cover both
 directions, duplicates, exact equality, inclusive/falsy bounds, nested/missing fields,
-independent cursor lifetimes and handler progress across pages. No test files were changed.
-Real RTDB validation and consumer migration remain unperformed.
+independent cursor lifetimes and handler progress across pages.
+Tracked FirebaseDatabase unit and emulator integration suites now cover CRUD,
+transactional drafts, selection, cursor buffering/composition, count, handlers,
+listeners and error routing. The local RTDB emulator confirms the 83-record
+equal-value pagination regression in both directions, deleted continuation keys,
+server values and subscription behavior. Test-only access is limited to the
+database_test branch in emulator rules; production rules are unchanged.
+Production RTDB validation and consumer migration remain unperformed.
