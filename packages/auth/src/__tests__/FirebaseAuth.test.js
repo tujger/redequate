@@ -7,7 +7,7 @@ vi.mock("firebase/auth", () => {
     const GoogleAuthProvider = vi.fn();
     GoogleAuthProvider.credential = vi.fn(() => "credential");
     return {
-        getAuth: vi.fn(app => app),
+        getAuth: vi.fn(app => Object.assign(app, {authStateReady: vi.fn().mockResolvedValue()})),
         GoogleAuthProvider,
         FacebookAuthProvider: vi.fn(),
         ...Object.fromEntries(methods.map(method => [method, vi.fn((target, ...args) => target[method](...args))])),
@@ -71,7 +71,7 @@ it("normalizes restored users and subscription updates including errors", async 
     notify(sdk.currentUser);
     expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({id: json.uid, _userData: true}));
     notify(null);
-    expect(callback).toHaveBeenLastCalledWith(null);
+    expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({_userData: true, id: undefined}));
     const providerError = Object.assign(new Error("Failed"), {code: "auth/example"});
     notifyError(providerError);
     expect(onError).toHaveBeenLastCalledWith(providerError);
@@ -147,7 +147,7 @@ it("uses modular current user operations and reports missing authentication with
     for (const method of ["updatePassword", "updateProfile", "sendEmailVerification"]) {
         await expect(auth[method]({})).rejects.toMatchObject(expected);
     }
-    expect(await auth.resolveCurrentUser()).toBeNull();
+    expect(await auth.resolveCurrentUser()).toMatchObject({_userData: true, id: undefined});
 });
 it("configures Google and Facebook providers and preserves explicit providers", () => {
     const google = {setCustomParameters: vi.fn(), addScope: vi.fn()};

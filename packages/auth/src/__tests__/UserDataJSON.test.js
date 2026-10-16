@@ -27,7 +27,7 @@ const restore = (provider, uid = "json-user") => {
     if (provider === "firebase") {
         const data = {...account, createdAt: "1234", lastLoginAt: "5678", providerData: [{providerId: "password"}]};
         const user = {...data, toJSON: () => structuredClone(data), updatePassword: vi.fn()};
-        return new FirebaseAuth({firebase: {app: {currentUser: user}}}).resolveCurrentUser();
+        return new FirebaseAuth({firebase: {app: {currentUser: user, authStateReady: vi.fn().mockResolvedValue()}}}).resolveCurrentUser();
     }
     const auth = new LocalTestAuth();
     window.localStorage.setItem(auth.storageKey, JSON.stringify({

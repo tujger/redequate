@@ -1,3 +1,5 @@
+import AppProvider from "../../../../src/controllers/AppContext/AppContext";
+import useAuth from "../../../../src/controllers/AppContext/useAuth";
 import React from "react";
 import {vi} from "vitest";
 import {render, unmount} from "../../../../src/__tests__/render";

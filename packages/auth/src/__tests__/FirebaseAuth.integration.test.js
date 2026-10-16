@@ -13,7 +13,7 @@ it("registers and restores users through the Firebase Auth adapter", async () =>
     expect(await auth.resolveCurrentUser()).toMatchObject({name: "Adapter User"});
     await auth.updatePassword("new-password");
     await auth.signOut();
-    expect(await auth.resolveCurrentUser()).toBeNull();
+    expect(await auth.resolveCurrentUser()).toMatchObject({_userData: true, id: undefined});
     await expect(auth.updatePassword("password")).rejects.toMatchObject({code: "auth/no-current-user"});
     await expect(auth.signInWithEmailAndPassword(user.email, "password")).rejects.toBeDefined();
     expect((await auth.signInWithEmailAndPassword(user.email, "new-password")).id).toBe(user.id);
@@ -22,7 +22,7 @@ it("awaits subscription setup and returns a working synchronous unsubscribe", as
     const callback = vi.fn();
     const unsubscribe = await auth.onAuthStateChanged(callback);
     try {
-        await vi.waitFor(() => expect(callback).toHaveBeenLastCalledWith(null));
+        await vi.waitFor(() => expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({_userData: true, id: undefined})));
         const user = await auth.createUserWithEmailAndPassword("subscriber@example.test", "password");
         await vi.waitFor(() => expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({id: user.id, _userData: true})));
         unsubscribe();

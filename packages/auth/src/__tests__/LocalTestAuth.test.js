@@ -67,7 +67,7 @@ it("rejects duplicates and invalid credentials without changing the session", as
 it("signs out while preserving accounts and permits subsequent password login", async () => {
     const user = await register();
     await run(auth.signOut());
-    expect(await run(auth.resolveCurrentUser())).toBeNull();
+    expect(await run(auth.resolveCurrentUser())).toMatchObject({_userData: true, id: undefined});
     expect(stored().accounts).toHaveLength(1);
     expect((await run(auth.signInWithEmailAndPassword(user.email, "password"))).id).toBe(user.id);
 });
@@ -75,7 +75,7 @@ it("isolates keys while sharing sessions between matching namespaces", async () 
     const user = await register();
     expect((await run(new LocalTestAuth().resolveCurrentUser())).id).toBe(user.id);
     const separate = new LocalTestAuth({storageKey: "separate"});
-    expect(await run(separate.resolveCurrentUser())).toBeNull();
+    expect(await run(separate.resolveCurrentUser())).toMatchObject({_userData: true, id: undefined});
     await run(separate.signOut());
     expect((await run(auth.resolveCurrentUser())).id).toBe(user.id);
 });
@@ -147,7 +147,7 @@ it("simulates email verification, records reset requests and consumes email sign
 it("notifies peers on user changes but not on reset requests", async () => {
     const callback = vi.fn();
     unsubscribes.push(await run(new LocalTestAuth().onAuthStateChanged(callback)));
-    expect(callback).toHaveBeenLastCalledWith(null);
+    expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({_userData: true, id: undefined}));
     await register();
     expect(callback).toHaveBeenCalledTimes(2);
     await vi.advanceTimersByTimeAsync(1000);
@@ -156,7 +156,7 @@ it("notifies peers on user changes but not on reset requests", async () => {
     await run(auth.updateProfile({displayName: "Changed"}));
     expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({name: "Changed", _userData: true}));
     await run(auth.signOut());
-    expect(callback).toHaveBeenLastCalledWith(null);
+    expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({_userData: true, id: undefined}));
     unsubscribes[0]();
     const calls = callback.mock.calls.length;
     await register().catch(() => run(auth.signInWithEmailAndPassword("user@example.test", "password")));
@@ -173,7 +173,7 @@ it("observes cross-tab storage changes and clearing the namespace", async () => 
     expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({name: "Other tab", _userData: true}));
     window.localStorage.removeItem(auth.storageKey);
     window.dispatchEvent(new window.StorageEvent("storage", {key: null, storageArea: window.localStorage}));
-    expect(callback).toHaveBeenLastCalledWith(null);
+    expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({_userData: true, id: undefined}));
 });
 it("preserves corrupt documents and reports subscription errors", async () => {
     const onError = vi.fn();
