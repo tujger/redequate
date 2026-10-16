@@ -10,6 +10,7 @@ export default (
         disableProgress,
         itemTransform = async item => ({children: JSON.stringify(item)}),
         ItemComponent = ListItemComponent,
+        live = false,
         noItemsComponent,
         cursor,
         page = 10,
@@ -90,6 +91,19 @@ export default (
     };
 
     React.useEffect(() => {
+        if (!live) return;
+        const handle = (...args) => {
+            console.log(args);
+        }
+        console.log("SUBSCR", cursor);
+        const subscribed = cursor.subscribe(handle);
+        return () => {
+            console.log("UNSUBSCR", subscribed);
+            subscribed.unsubscribe();
+        }
+    }, [cursor, live]);
+
+    React.useEffect(() => {
         const current = {cursor, loading: false, progress: false};
         cursor?.reset?.();
         session.current = current;
@@ -109,7 +123,7 @@ export default (
         {items}
         <Observer
             finished={finished}
-            key={`${cursor.identifier}:${items.length}`}
+            key={`${cursor.id}:${items.length}`}
             loadNextPage={loadNextPage}
             placeholder={placeholder}
         />
