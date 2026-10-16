@@ -11,7 +11,6 @@ import ProgressView from "../components/ProgressView";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
 import {useAuth, useDatabase, useMessaging, useRedirectToLogin, useStorage} from "../controllers";
-import Pagination from "../controllers/FirebasePagination";
 import {cacheDatas, fetchDeviceId, usePages, useStore, useWindowData} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
@@ -97,12 +96,10 @@ function EditProfile(props) {
             const uniqueError = [];
             for (const field of publicFields) {
                 if (field.unique) {
-                    const values = await new Pagination({
-                        ref: "users_public",
-                        child: "name",
-                        equals: (state[field.id] !== undefined && (state[field.id] || "").constructor.name === "String")
-                            ? (state[field.id] || "").trim() : state[field.id]
-                    }).next();
+                    const values = await database.cursor(["users_public"], {
+                        equalTo: (state[field.id] || "").trim(),
+                        orderBy: ["name"]
+                    }).next(10);
                     for (const value of (values || [])) {
                         if (value.key && value.key !== userData.id) {
                             uniqueError.push(field.id);
