@@ -1728,7 +1728,7 @@ Storage and Functions, FCM delivery/token deletion, installed worker upgrades,
 production Firebase variant and Android WebView/native fallback remain unverified.
 ### Common database operation contract
 
-Decision: DatabaseBase defines create, read, update, delete and iterate independently
+Decision: DatabaseBase defines create, read, update, delete and cursor independently
 of Firebase. Every first argument accepts a string path or string[] joined with
 slashes; elements may include nested paths. Empty string/array denotes the root.
 Provider implementations own path normalization and validation.
@@ -1741,12 +1741,19 @@ Missing, undefined or null data and conflicts with existing records reject.
 Failed writes may be retried; writing at an occupied key rejects.
 Exact-path writes belong to write(recordPath, value); create takes no explicit key.
 read(recordPath) returns plain JSON-compatible record data or
-null for absence. update(recordPath, changes) requires an existing record, replaces
-top-level fields (including whole nested values), and removes fields assigned null.
+null for absence. update(recordPath, changes) updates supplied top-level fields,
+preserves unspecified fields, replaces nested values in full, and removes fields
+assigned null. Absence does not cause rejection: non-null fields may create the
+record; empty changes or removals alone need not create it. This aligns the
+contract with Firebase update semantics without adding existence checks or
+transactions. The batch form writes values at paths relative to the root.
+Write failures reject.
 delete(recordPath) is idempotent. Writes resolve after success in provider storage.
-iterate(collectionPath) is an AsyncIterable of {key, value} for immediate records;
-early termination releases resources. No shared ordering or traversal-wide
-snapshot guarantee is imposed. Errors reject the operation or iterator next().
+cursor(collectionPath, options) returns a cursor object with position,
+next(n = 1) and reset. Position contains index, key and finished; the
+initial index is -1. Optional handle controls replacement/deletion during next;
+next returns up to n surviving entries. Firebase traversal, handle and selection
+options are implemented; see the cursor decision below.
 
 Reason: keep callers independent of Firebase ref/child and snapshot objects while
 identifying drafts before writing without requiring providers to allocate permanent
@@ -1754,9 +1761,9 @@ keys in advance. An optional value that switches create between preparation and 
 was rejected because accidental undefined could silently skip a write.
 The draft exposes an explicit save method rather than attaching metadata to a
 callable function, keeping its identifier and operation explicit.
-Callback-based iteration and
-a Firebase-shaped public reference API were rejected in favor of for await...of
-and composable path arguments. Provider-specific query and subscription contracts
+The earlier for await...of API was replaced with an explicit cursor to support
+explicit position, record operations and reset. Provider references remain
+internal, and path arguments stay composable. Provider-specific query and subscription contracts
 remain separate work.
 
 Affected consumers: both web applications; future Android API changes must preserve
@@ -1774,6 +1781,39 @@ create its record only when absent. Its permanent key equals temporaryKey;
 transactions require read as well as write access to the target node.
 LocalTest implementation, Dispatcher integration and consumer migration remain
 separate work.
+
+
+### Database operation error handling
+
+Decision: DatabaseBase owns the default onError handler and shared sync/async
+operation wrapper. Constructor onError defaults to throwing the original error;
+operation options.onError overrides it. The handler receives (error, reason,
+context), where reason names the operation and context contains its arguments,
+without Firebase references or snapshots. A normally returning handler makes the
+failed operation return undefined; its return value is ignored. Handler exceptions
+propagate without being reported again. Handlers are synchronous.
+
+Firebase applies this to direct methods, draft.save, cursor.next/reset, listener
+removal, subscription errors and user listener callbacks. Deferred operations use
+the options supplied at creation. Batch update accepts options as its second
+argument. Synchronous factories remain synchronous. TIMESTAMP uses the constructor
+handler; increment accepts operation options.
+
+DatabaseBase.addEventListener owns callback/error handling and removal error
+handling. Providers call super with a subscription factory; Firebase's helper
+only maps snapshots and manages SDK subscriptions, including partial cleanup.
+Synchronous registration callbacks retain the guard against reporting a thrown
+callback/onError failure twice.
+
+Reason: keep error reporting and policy independent of Firebase without changing
+successful results or forcing a handler on callers that prefer rejection/throw.
+Types now include undefined for handled failures of operations returning data.
+
+Affected consumers: Redequate, demo and The Whisky Talks web/Functions callers.
+Defaults preserve existing throwing/rejection behavior; callers installing a
+non-throwing handler must accept undefined results. Stored formats and Android
+protocols are unchanged. Status: implemented for Firebase; LocalTest operations
+remain unimplemented and consumer integration verification is pending.
 
 ### UserData class inheritance
 
@@ -2107,3 +2147,141 @@ Affected consumers: both web applications; errors paths and stored fields remain
 unchanged, with no Android API changes. Status: direct checks verify provider
 availability, current-user lookup, failure handling and StrictMode-style cleanup;
 the web build passes on Node 24.21.0. No test files were changed.
+
+### Database cursor with sequential handle processing
+
+Decision: replace iterate with cursor(path, options), returning an object with
+readonly position ({index, key, finished}), next(n = 1), reset
+and optional options.handle. DatabaseBase assigns each ordinary or composed cursor
+a readonly id, stable across next/reset and unique to the instance, so
+web consumers can reset observer lifecycle when the cursor changes.
+Providers obtain this identity through super.cursor(); Firebase cursor.js owns
+cursor construction and delegates composition to composeCursor. Internal sources
+have no id; composeCursor handles creation/next/reset errors using each
+source's effective options, while atomic cursors throw directly.
+next returns up to n surviving entries. Initial position is
+{index: -1, key: undefined, finished: false}; the first entry has index 0.
+Reading past the end returns [] and retains the last position with finished true.
+Reset restores the initial state. No current entry is exposed; live cursors
+also deliver entry changes through subscribe.
+
+Reason: make traversal position explicit and retain it across record operations.
+The working async iterator and its filtering/pagination/callback logic were removed
+so this contract can be developed incrementally. Overloading next with scalar
+versus array results was rejected; it always returns an array. Dedicated cursor
+update and delete were removed; mutations during traversal belong to handle.
+No current Firebase reference is retained outside element processing.
+
+Handle receives a deep JSON copy of {key, value} and runs sequentially, awaited
+before advancing. Undefined means no automatic write and discards input mutations;
+results retain the original read value. Null deletes the candidate without
+advancing index. Every other result fully replaces the record, even the same object
+reference or false/0/empty string. Replacements are reread for server-resolved values;
+records absent after rereading are treated as deleted. next continues reading until
+n survivors or collection exhaustion, so a call may process many deleted records.
+Use position.finished to detect completion; exact full batches may need another read.
+
+Position advances after each successful survivor. Errors stop next at the last
+successful survivor, with no processing of subsequent elements. Completed database
+or external actions are not rolled back; failed post-write reads can cause repeat
+processing on retry. Methods are called sequentially, outside handle. No global
+snapshot or exact index under concurrent collection changes is guaranteed.
+
+Affected consumers: the new web Database API replaces iterate; no consumer uses
+it yet. Functions/Admin Pagination, server exports and Android formats are unchanged.
+Selection uses orderBy (field path), equalTo (exact equality),
+inclusive start/end and order (asc by default, or desc). Names follow read/listener
+orderBy/equalTo and Pagination order/start/end. A string start without end implies
+end = start + "\uf8ff" for prefix matching; numbers retain an open upper bound.
+Desc yields rows in descending order. startDate/endDate independently constrain
+record keys using firebase-key minimum/maximum keys for their milliseconds.
+With orderBy, Firebase cannot also range-query keys: the cursor filters the key
+range before handle and fills the requested number of survivors, potentially
+reading extra rows. Dates do not change field ordering and can accompany equalTo.
+Without orderBy/equalTo, dates supply unspecified query bounds; explicit key
+bounds and date bounds are intersected through the cursor's key filter.
+Existing Activity cursor callers now pass dates through startDate/endDate.
+Without orderBy, a defined equalTo selects orderByValue; otherwise ordering is by
+key. Presence is checked against undefined, so false, zero, empty string and null
+also select value equality. Continuation uses the original record value plus key
+to traverse ties in both directions, retaining block caching and date filtering.
+This supports the scalar roles/<uid> structure used by Users admins/disabled
+without a new option or changing stored data. Explicit field ordering retains
+priority over value ordering. Value-range ordering and timeout remain outside
+this step.
+False, zero, empty string and null are valid field-query bounds; key bounds must
+be strings. Equality excludes start/end, but not dates. Missing sort fields are null;
+object sort values reject before handling. Index is relative to the selection.
+
+createCursorQuery owns validation and construction of immutable first-page and
+continuation templates at cursor creation; reads start at next or a live
+subscription. Continuation
+uses the original scalar sort value plus key, captured before handle, to traverse
+ties. The opposite range boundary remains in effect on all pages, including exact
+equality. Continuation uses inclusive startAt/endAt and requests one additional
+row, removing the previous boundary key only if present. Desc uses limitToLast
+and reverses each page. Exclusive startAfter/endBefore were rejected after a real
+Firebase response returned limit-1 despite further matching records, causing
+premature exhaustion; a similar SDK issue is tracked at
+https://github.com/firebase/firebase-admin-node/issues/2350.
+If the boundary was deleted, all fetched rows are retained and any extra row stays
+buffered. This changes provider traversal only; stored data and consumer APIs
+remain unchanged. Real-environment confirmation of the workaround is pending.
+Reset clears both
+public position and private continuation value while retaining selection templates.
+Changing sort fields through handle or concurrent writes may repeat or omit rows.
+
+Cursor composition accepts a non-empty array of flat {path, ...options} sources.
+String arrays, including [], remain single paths. Source options override outer
+options; explicit undefined removes an inherited setting. Nested compositions
+are not supported. A small coordinator alternates sources, retains the turn
+between next calls, and returns at most n unique entries without a global sort.
+Each source reads a block sized by the current outer next(n), retaining unread
+Firebase snapshots until consumption. A new n changes only the next refill size.
+Round-robin next(1) consumes these blocks locally instead of issuing a network
+read for every record. Prefetch does not invoke handle or advance public position;
+date/duplicate filtering and handle run at consumption, with failed candidates
+retained for retry. Query exhaustion does not finish a source while its buffer
+still contains candidates. Reset also discards buffers. Per-record network reads
+were rejected because composition was much slower than AllUsersPagination.
+Identity is normalized collection path plus key, not key alone. Internal hooks
+skip duplicates before handle and mark successful processing, including deletion;
+failed handling remains retryable. This prevents repeated mutation when name and
+email searches find the same user. The coordinator handles each source failure
+once with that source's effective onError. A handled failure stops next with
+undefined, preserving completed progress. Reset clears all children and identities.
+Users combines normalized-name and email searches (email only for a non-empty
+filter). Stored formats and Android protocols are unchanged. Both web consumers
+continue on story/move-database-to-module; consumer runtime validation is pending.
+
+Cursor subscriptions are activated by subscribe(listener), without a live option.
+Each call independently attaches child_added/child_changed/child_removed to the
+configured query and returns a flat subscription object with unsubscribe(), the
+cursor id, subscribed (creation time as a Date), active and
+added/changed/removed counters. Each public subscription maintains independent
+counters, incremented before invoking the listener; composition counts forwarded
+events without deduplication. Successful unsubscribe sets active to false and
+retains the metrics. Internal source subscriptions have no metrics.
+A one-time value read marks
+baseline completion; initial events are skipped. Events carry type and an entry
+with normalized path, key and value, without a display index. Date key bounds are
+also applied locally when field ordering prevents querying both dimensions.
+Composition forwards each source's events directly, including overlapping results,
+and releases all source listeners through one unsubscribe. Errors use the source's
+effective onError. Subscription events do not invoke handle, update traversal
+buffers or alter position. Those behaviors and UI integration are deferred;
+reset continues to affect traversal only.
+
+Reason: build subscription behavior incrementally. The previous combined live,
+render-order, cache synchronization and handler-processing implementation was
+rejected as too complex. Keep notifications independent of traversal at this step.
+Stored data and Android protocols are unchanged; web runtime validation is pending.
+
+Status: Firebase traversal and independent subscription notifications are implemented.
+Move remains deferred. Simulated
+Firebase checks cover deep input isolation, sequential callbacks, result values,
+survivor filling, partial failures/retry, handle deletion and ordinary traversal.
+Web build and ESM/CommonJS checks pass on Node 24.21.0; selection checks cover both
+directions, duplicates, exact equality, inclusive/falsy bounds, nested/missing fields,
+reset and handler progress across pages. No test files were changed.
+Real RTDB validation and consumer migration remain unperformed.

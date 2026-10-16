@@ -2,6 +2,7 @@
 
 ## Code style
 
+- Prefer `instanceof` over `typeof` where applicable; retain `typeof` for primitives and checks where replacement changes the intended accepted values.
 - Do not add wrapping parentheses `()` around JSX components in `return` statements or JSX markup unless necessary.
 - Do not replace or remove Material UI icons during component conversions; keep their imports and usage unchanged.
 - Use the minimum nesting needed to express selector relationships.

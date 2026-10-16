@@ -117,8 +117,8 @@ export default ({badge = {}, items, className, endIcon}) => {
         }}
         onMouseEnter={() => hasMenu && window.innerWidth > 599 && setOpen(true)}
         onMouseLeave={event => {
-            if (!sectionRef.current?.contains(event.relatedTarget)
-                && !menuRef.current?.contains(event.relatedTarget)) closeMenu();
+            if (!sectionRef.current?.contains?.(event.relatedTarget)
+                && !menuRef.current?.contains?.(event.relatedTarget)) closeMenu();
         }}
         ref={sectionRef}
     >
