@@ -1,4 +1,4 @@
-import {identifier, notImplemented} from '../../common/src/_packages'
+import {identifier, notImplemented} from '../../common'
 
 /**
  * Provider-relative path; array parts are joined with '/'. '' and [] mean root.
@@ -59,6 +59,26 @@ export interface DatabaseCursorPosition {
     readonly finished: boolean;
 }
 
+export interface DatabaseCursorEntry extends DatabaseEntry {
+    readonly path: string;
+}
+
+export interface DatabaseCursorEvent {
+    type: "add" | "change" | "remove";
+    entry: DatabaseCursorEntry;
+}
+
+export interface DatabaseCursorSubscription {
+    readonly id: string;
+    /** Subscription creation time. */
+    readonly subscribed: Date;
+    readonly active: boolean;
+    readonly added: number;
+    readonly changed: number;
+    readonly removed: number;
+    unsubscribe(): void;
+}
+
 export enum DatabaseOrder {
     ASC = "asc",
     DESC = "desc"
@@ -94,7 +114,7 @@ export interface DatabaseCursorSource extends DatabaseCursorOptions {
 /** Call methods sequentially, outside handle. Concurrent data changes may cause repeats or omissions. */
 export interface DatabaseCursor {
     /** Unique to this cursor instance; unchanged by reset. */
-    readonly identifier: string;
+    readonly id: string;
     readonly position: DatabaseCursorPosition;
 
     /**
@@ -102,7 +122,10 @@ export interface DatabaseCursor {
      * Filtered/deleted entries do not advance index. Reads are buffered until consumed.
      * Errors preserve completed actions and progress; the failed entry can be retried.
      */
-    next(n?: number): Promise<DatabaseEntry[] | undefined>;
+    next(n?: number): Promise<DatabaseCursorEntry[] | undefined>;
+
+    /** Subscribe to changes without initial entries; returns an independent subscription. */
+    subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined;
 
     /** Restore initial position and clear buffers/deduplication, preserving options. */
     reset(): void;
@@ -146,9 +169,10 @@ export default class DatabaseBase {
         let result;
         try {
             result = operation();
-            if (result && typeof (result as Promise<T>).then === "function") {
+            if (result && (result as Promise<T>).then instanceof Function) {
                 return Promise.resolve(result).catch(error => {
                     this.handleError(error, options, reason, context);
+                    return undefined;
                 });
             }
         } catch (error) {
@@ -184,7 +208,7 @@ export default class DatabaseBase {
         return this.run(() => {
             const {onChange, onChildAdd, onChildChange, onChildRemove, orderBy} = options;
             const wrap = <T>(name: string, callback: ((value: T) => void) | undefined, argument: string) => {
-                if (typeof callback !== "function") {
+                if (!(callback instanceof Function)) {
                     return callback;
                 }
                 return (value: T) => this.run(() => callback(value), callbackOptions,
@@ -247,8 +271,8 @@ export default class DatabaseBase {
      * Composition deduplicates by normalized path + key before handle, including
      * deletions, until reset. Each source uses its own effective onError.
      */
-    cursor(path: DatabasePath | DatabaseCursorSource[], options: DatabaseCursorOptions = {}): Pick<DatabaseCursor, "identifier"> {
-        return Object.freeze({identifier: identifier()});
+    cursor(path: DatabasePath | DatabaseCursorSource[], options: DatabaseCursorOptions = {}): Pick<DatabaseCursor, "id"> {
+        return Object.freeze({id: identifier()});
     }
 
     /**
