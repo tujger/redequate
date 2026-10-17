@@ -81,7 +81,7 @@ and `.integration.test.js` files with `--mode integration`. Tests live in each
 module's source directory: `src/__tests__` and `packages/*/src/__tests__`.
 Package build helpers are covered in `packages/__tests__`. Unit tests cover
 Auth, Messaging and Storage contracts, provider selection, Contexts and local
-providers; LocalTestStorage uses `fake-indexeddb`. Firebase Messaging and Storage
+providers; LocalStorage uses `fake-indexeddb`. Firebase Messaging and Storage
 use mocked SDKs, without real message delivery or cloud uploads.
 Auth and UserData integration tests use the Firebase emulators. The emulator runner owns the local
 service settings and `demo-redequate-tests` project ID; it generates Firebase
@@ -508,20 +508,20 @@ MIT © [tujger](https://github.com/tujger)
 
 ```jsx
 import Dispatcher, {UserData} from "redequate";
-import LocalTestAuth from "redequate/auth/local-test";
+import LocalAuth from "redequate/auth/local";
 import {useAuth} from "redequate/auth";
 
-const auth = new LocalTestAuth();
+const auth = new LocalAuth();
 
 <Dispatcher auth={auth} {...props} />
 ```
 
-LocalTestAuth is intended exclusively for testing, not production. It simulates
+LocalAuth is intended exclusively for testing, not production. It simulates
 all current Auth operations using browser localStorage, without importing Firebase.
 The previous `redequate/auth/memory` subpath has been removed.
 
-`new LocalTestAuth({storageKey: "my-app:local-auth"})` selects a storage namespace;
-the default is `redequate:auth:local-test`. Accounts and sessions survive reloads.
+`new LocalAuth({storageKey: "my-app:local-auth"})` selects a storage namespace;
+the default is `redequate:auth:local`. Accounts and sessions survive reloads.
 Instances using the same key share state, including auth-state notifications in
 the same window and across tabs. Different keys isolate accounts and sessions.
 Construction does not access storage. Unavailable storage, invalid stored data
@@ -545,7 +545,7 @@ needed and signs in with verified email. These operations send no real email.
 The stored `mail` array records operation type, email, timestamp and optional URL.
 
 Google and Facebook sign-in use stable fake accounts at
-`google@local-test.example` and `facebook@local-test.example`. Provider names
+`google@local.example` and `facebook@local.example`. Provider names
 accept `google`/`facebook`, `google.com`/`facebook.com`, or objects with `providerId`.
 Provider options are accepted but have no effect. Credential sign-in accepts a
 non-empty string as a simulated Google token, or an object with `provider` or
@@ -569,14 +569,14 @@ the resulting object directly; it does not construct an explicitly supplied clas
 Create the object outside render or with `useMemo` to keep its identity stable.
 Built-in implementations extend `AuthBase`; inheritance is optional for external
 modules, and Dispatcher does not require `instanceof`. There is no registry.
-LocalTestAuth keeps significant operation implementations in individual default-export
-modules and shared helpers in `packages/auth/src/local-test/common.js`.
+LocalAuth keeps significant operation implementations in individual default-export
+modules and shared helpers in `packages/auth/src/local/common.js`.
 
-CommonJS uses `const LocalTestAuth = require("redequate/auth/local-test").default`
-and `const auth = new LocalTestAuth(options)`.
+CommonJS uses `const LocalAuth = require("redequate/auth/local").default`
+and `const auth = new LocalAuth(options)`.
 
 Dispatcher selects the supplied object once per mount, or dynamically imports
-LocalTestAuth and constructs `new LocalTestAuth()` when `auth` is omitted.
+LocalAuth and constructs `new LocalAuth()` when `auth` is omitted.
 FirebaseAuth requires explicit construction with `{firebase}` and selection
 through the `auth` prop. Null, arrays, classes without an instance and other non-object values are configuration errors. Selection errors use the existing initialization error UI.
 To change implementations, remount Dispatcher. `useAuth()` returns the selected
@@ -587,7 +587,12 @@ shares it.
 
 The Auth module covers authentication only. Dispatcher, UserData and application
 flows still use Firebase for profiles, roles, CRUD and other services. Supplying
-LocalTestAuth does not make the entire application work offline without Firebase.
+LocalAuth does not make the entire application work offline without Firebase.
+
+Local providers now use `local` module paths and storage namespaces, with
+`Local` class names. Previous module paths have no compatibility aliases.
+Existing local data remains under its previous keys and is not automatically
+migrated or deleted; the new default keys start with fresh local state.
 
 ### Auth contract
 
@@ -639,7 +644,7 @@ Constructors and `useAuth()` remain synchronous. Provider options may contain
 Functions can install the private `redequate-server` archive under the `redequate` dependency
 name to import `redequate/common`, `redequate/backend/common`,
 `redequate/backend/common-server`, `redequate/backend/firebase-server` and
-`redequate/backend/local-test-server` without frontend dependencies. Both ESM and
+`redequate/backend/local-server` without frontend dependencies. Both ESM and
 CommonJS are supported on Node.js 22+. See [server packaging](packages/server/README.md)
 for build and delivery instructions.
 

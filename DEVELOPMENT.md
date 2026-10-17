@@ -917,17 +917,17 @@ explicit identity and creates its lazy default once. All four builds, 114 unit
 tests and 38 Firebase integration tests passed; no permanent tests were changed.
 
 
-### LocalTestAuth naming and intended use
+### LocalAuth naming and intended use
 
-Decision: rename the MemoryAuth scaffold to LocalTestAuth and publish it at
-redequate/auth/local-test. Remove the old memory subpath without an alias.
+Decision: rename the MemoryAuth scaffold to LocalAuth and publish it at
+redequate/auth/local. Remove the old memory subpath without an alias.
 
 Reason: the intended implementation is exclusively for testing, with future
 localStorage or IndexedDB persistence. Memory-only naming misrepresented both
 persistence and intended use. This module is not intended for production; it
 remains an unimplemented AuthBase subclass and does not yet store data or
 authenticate. Firebase remains the lazy default.
-Status: validated. Build and packed ESM/CommonJS imports of local-test passed;
+Status: validated. Build and packed ESM/CommonJS imports of local passed;
 import graphs remain isolated from Firebase and other implementations. The old
 memory subpath is not exported and no memory artifacts remain in npm pack.
 
@@ -972,9 +972,9 @@ integration tests passed. Rollup watcher restarted with the new entry points;
 no permanent test cases were added or changed.
 
 
-### LocalTestAuth localStorage simulation
+### LocalAuth localStorage simulation
 
-Decision: implement all current Auth operations in LocalTestAuth using a
+Decision: implement all current Auth operations in LocalAuth using a
 versioned localStorage document per configurable storageKey. Preserve current
 runtime auth-user snapshots, {user} sign-in results and synchronous from(json),
 rather than the outdated README promise of direct UserData results. Import no
@@ -991,7 +991,7 @@ method and duration only when greater than 100 ms.
 Consequences: reloads restore sessions, matching keys share state across
 instances/tabs, and different keys isolate simulations. Auth replacement alone
 does not remove the web applications' Firebase profile/CRUD/service dependency.
-Rejected: importing UserData into LocalTestAuth or migrating those services as
+Rejected: importing UserData into LocalAuth or migrating those services as
 part of this change. FirebaseAuth remains the default.
 Affected consumers: demo and The Whisky Talks may opt in to this Auth module;
 Android contracts and backend tokens remain unchanged.
@@ -1000,7 +1000,7 @@ ESLint, framework build, 114 unit tests and both web consumer builds passed.
 Existing Firebase/UserData integration tests have four failures out of 36:
 watch/logout fixtures omit the Auth argument, fromFirebaseAuth was removed, and
 fetch no longer matches the rejection expectation. Those tests do not import
-LocalTestAuth; reconciling them with the ongoing Auth migration remains separate.
+LocalAuth; reconciling them with the ongoing Auth migration remains separate.
 No permanent tests were added or changed.
 
 ### Minimal Messaging contract
@@ -1025,19 +1025,19 @@ Status: base stubs only; provider implementations and consumer migration remain
 separate work.
 
 
-### LocalTestAuth default and module-owned Auth tests
+### LocalAuth default and module-owned Auth tests
 
-Decision: resolve omitted Dispatcher auth through a lazy LocalTestAuth import.
+Decision: resolve omitted Dispatcher auth through a lazy LocalAuth import.
 FirebaseAuth requires explicit new FirebaseAuth({firebase}); its constructor is
-not relaxed. Significant LocalTestAuth overrides use individual default-export
-files, with shared helpers in auth/src/local-test/common.js. Storage format and
+not relaxed. Significant LocalAuth overrides use individual default-export
+files, with shared helpers in auth/src/local/common.js. Storage format and
 authentication results remain unchanged.
 
 Reason: make the local simulation the default while preserving explicit provider
 configuration. Keep implementation helpers together without creating a file for
 every short operation.
 
-Consequences: applications omitting auth share the standard local-test storage
+Consequences: applications omitting auth share the standard local storage
 namespace for their origin. This choice replaces the earlier lazy Firebase
 default; Firebase profile/CRUD/service dependencies remain separate. Demo and
 The Whisky Talks already supply configured FirebaseAuth instances. Android
@@ -1052,7 +1052,7 @@ failures recorded above are resolved without changing UserData runtime behavior.
 
 Status: 164 unit tests, 39 emulator tests, ESLint, framework build and both web
 consumer builds passed on Node.js 24.21.0. Packed ESM/CommonJS operation scenarios,
-AuthBase inheritance and isolated LocalTestAuth import graphs passed.
+AuthBase inheritance and isolated LocalAuth import graphs passed.
 
 
 ### Normalized Auth results and pure UserData model
@@ -1071,7 +1071,7 @@ UserData results (id/verified/name/image instead of SDK fields). The pure model
 loads database dependencies lazily; UI/current-user controls retain barrel and
 legacy controller exports. Native Auth ESM uses a shared .mjs model chunk while
 web core preserves its existing bundler interop. Local storage schema, default
-LocalTest selection and explicit Firebase configuration remain unchanged.
+Local selection and explicit Firebase configuration remain unchanged.
 Business roles and profile persistence still require the existing services.
 Affected consumers: framework login/registration/Dispatcher updated; demo and
 The Whisky Talks use explicit FirebaseAuth. Android backend/token formats are
@@ -1125,8 +1125,8 @@ warning remains. No consumer-facing Auth result changes in this simplification.
 
 ### Remove unused Auth token retrieval
 
-Decision: remove resolveToken from AuthBase, FirebaseAuth and LocalTestAuth.
-LocalTest's shared conversion helper is named toUserData and still constructs
+Decision: remove resolveToken from AuthBase, FirebaseAuth and LocalAuth.
+Local's shared conversion helper is named toUserData and still constructs
 UserData directly from account JSON. Firebase test fixtures implement SDK toJSON.
 
 Reason: resolveToken has no production callers in the framework or inspected
@@ -1159,15 +1159,15 @@ task controls or metadata updates.
 
 Consequences: providers own file naming and SDK conversion. Image processing and
 replacement cleanup remain caller responsibilities. Public storage,
-storage/firebase and storage/local-test subpaths use the existing joint Rollup
+storage/firebase and storage/local subpaths use the existing joint Rollup
 ESM/CommonJS build. Existing Firebase URLs and Android/backend contracts are
 unchanged. Storage adoption in the web consumers is ongoing.
 
 
-### LocalTestStorage IndexedDB simulation
+### LocalStorage IndexedDB simulation
 
 Decision: implement all four operations using an IndexedDB database per
-storageKey (default redequate:storage:local-test). Version 1 files store is keyed
+storageKey (default redequate:storage:local). Version 1 files store is keyed
 by fullPath with a unique URL index; records contain Blob, data URL and metadata.
 Upload obtains user.id through auth.resolveCurrentUser(), generates a UUID path
 and adds a UUID fragment to the data URL so identical bytes remain independent.
@@ -1217,10 +1217,10 @@ ESLint and framework ESM/CommonJS builds passed on Node.js 24.21.0. No permanent
 tests were added or changed. Consumer migration and real push delivery validation
 remain separate work.
 
-### LocalTestMessaging and console delivery
+### LocalMessaging and console delivery
 
 Decision: simulate Messaging with a UUID token stored directly in localStorage
-under storageKey (default redequate:messaging:local-test). subscribe reuses it
+under storageKey (default redequate:messaging:local). subscribe reuses it
 until unsubscribe removes it; browser notification permission is not requested.
 Methods simulate 0–2000 ms latency and log durations greater than 100 ms.
 addMessageListener attaches a window event listener and returns its disposer. Delivery
@@ -1234,7 +1234,7 @@ Console API: construction installs window.redequateMessaging.send(message,
 storageKey), with the default key when omitted. For example:
 window.redequateMessaging.send({title: "Test", body: "Console message"}).
 The initial transport (superseded by Local notification postMessage delivery
-below) dispatches redequate:messaging:local-test:message with
+below) dispatches redequate:messaging:local:message with
 {storageKey, message}. Messages are already in the public foreground callback
 format; each handler receives a structured clone. Delivery is limited to the
 current tab with no queue/history. Handler throws and async rejections are
@@ -1256,7 +1256,7 @@ Decision: extend MessagingBase to four async operations: checkIfSubscribed,
 subscribe, unsubscribe and addMessageListener. The listener registration name
 replaces onMessage without an alias; Firebase's internal SDK onMessage remains.
 checkIfSubscribed returns a boolean from localStorage without SDK calls, prompts,
-writes or simulated latency. LocalTest checks its existing storageKey token.
+writes or simulated latency. Local checks its existing storageKey token.
 Firebase accepts a configurable storageKey, defaulting to the historical
 notification-token key, saves the token only after getToken succeeds and removes
 it only after deleteToken completes successfully. SDK/storage errors pass through.
@@ -1273,14 +1273,14 @@ Setup subscribes and awaits addMessageListener; callbacks receive normalized
 messages directly and snackbar mapping uses image/from/priority/tag and body
 with a title fallback. Android fallback remains in subscription setup; native
 subscriptions do not create the browser Firebase cache. The resolver's copied
-Auth names are corrected. No separate subscription flag or LocalTest data
+Auth names are corrected. No separate subscription flag or Local data
 migration is needed. This supersedes the earlier three-operation contract.
 Affected consumers: edeqa-pwa-react-demo, thewhiskytalks; Android bridge names
 and token formats are unchanged. Custom Messaging providers must implement the
 new check and renamed listener registration method.
 
 Status: contract and simulated Firebase cache/listener/error checks passed.
-Real Chrome checks passed for LocalTest state across reload, conditional startup
+Real Chrome checks passed for Local state across reload, conditional startup
 registration, iOS guard, normalized messages, storage failures, resolver and
 Android fallback. Browser checks use extracted Dispatcher watcher code rather
 than a full application mount. Provider ESLint and framework ESM/CommonJS builds
@@ -1310,7 +1310,7 @@ Status: framework and both linked web consumer production builds passed on
 Node.js 24.21.0, as did all 38 Firebase emulator integration tests, public
 ESM/CommonJS module/provider imports, shared Context/UserData checks and
 npm pack --dry-run. Unit tests: 177 passed, one failed on async observer error
-handling in LocalTestAuth; the same test fails in a temporary HEAD checkout at
+handling in LocalAuth; the same test fails in a temporary HEAD checkout at
 the original paths. That unrelated Auth issue is left for separate work.
 All 321 module/configuration ESLint errors match the baseline, with none added.
 
@@ -1326,7 +1326,7 @@ selection and existing error codes. The helpers remain outside public exports.
 Unit coverage now includes Messaging and Storage providers, contracts, Contexts,
 package build helpers and real IndexedDB transactions through fake-indexeddb.
 
-Consequences: LocalTestAuth forwards asynchronous observer failures to onError;
+Consequences: LocalAuth forwards asynchronous observer failures to onError;
 FirebaseStorage implements resolveDownloadURL and accepts paths as well as URLs
 for reference operations. Public module paths and stored data formats are
 unchanged. Shared ESM support chunks must use .mjs throughout their import graph.
@@ -1335,7 +1335,7 @@ bundled config can change import.meta.url for an imported build helper.
 Affected consumers: edeqa-pwa-react-demo and thewhiskytalks; Android protocols
 are unchanged.
 
-Status: the previous LocalTestAuth unit failure is resolved. All 225 unit tests
+Status: the previous LocalAuth unit failure is resolved. All 225 unit tests
 and 38 Firebase emulator integration tests pass; provider ESLint and framework
 and linked web consumer production builds pass. Firebase Messaging/Storage
 tests mock the SDK and do not verify real delivery or cloud Storage rules.
@@ -1362,7 +1362,7 @@ backend entry imports pass in both formats. The Whisky Talks friends, following,
 main profile and Groups pages render without missing-export errors. Groups
 reports a separate React list-key warning. No tests were added or updated.
 
-### LocalTestBackendClient handlers and IndexedDB history
+### LocalBackendClient handlers and IndexedDB history
 
 Decision: accept named synchronous or asynchronous handlers in the local Backend
 constructor and return their results through request(name, args). Simulate the
@@ -1416,13 +1416,13 @@ callers still require Backend migration. Real-browser validation remains pending
 
 ### Local notification postMessage delivery
 
-Decision: replace LocalTestMessaging's CustomEvent transport with asynchronous
+Decision: replace LocalMessaging's CustomEvent transport with asynchronous
 window.postMessage using the current origin and the envelope
-{type: "redequate:messaging:local-test:message", storageKey, message}. Backend's
+{type: "redequate:messaging:local:message", storageKey, message}. Backend's
 sendNotification and window.redequateMessaging.send share a private sender;
 Backend does not depend on the console API or construct Messaging/subscriptions.
 
-LocalTestMessaging receives message events from window and, when available,
+LocalMessaging receives message events from window and, when available,
 navigator.serviceWorker. Both paths validate the envelope, same origin, namespace
 and subscription. Window messages also require event.source === window. Each
 callback receives its own clone; disposer removes both listeners. Console send
@@ -1447,7 +1447,7 @@ Status: ESLint, full framework and The Whisky Talks builds passed on Node.js
 fake-indexeddb passed for Backend/console delivery, worker input, filtering,
 subscription/disposal, clones, callback failures and send-error journaling.
 Real-browser validation remains pending. Demo build still fails on legacy
-fetchCallable/fetchFunction imports. Existing LocalTestMessaging unit tests:
+fetchCallable/fetchFunction imports. Existing LocalMessaging unit tests:
 3 pass and 3 fail because they expect the prior synchronous delivery; adapting
 those tests requires a separately authorized test update. No tests were changed.
 
@@ -1505,7 +1505,7 @@ and The Whisky Talks production builds and its existing app test passed during
 the SDK migration on Node 24.21.0. Temporary Auth/RTDB emulator checks cover
 repairs, ownership, mutual actions and HTTP contracts; FCM, SMTP, Storage and
 rules retrieval use mocks. Real delivery and Node 22 runtime execution were not
-verified. Framework units: 253 pass, three existing LocalTestMessaging failures
+verified. Framework units: 253 pass, three existing LocalMessaging failures
 expect synchronous delivery. Demo build remains blocked by legacy
 fetchCallable/fetchFunction imports. The initial SDK migration did not add or
 update repository tests.
@@ -1666,7 +1666,7 @@ the build root, and the development server sends Service-Worker-Allowed: /.
 The custom nested build and worker middleware were removed: relocating them to
 vite.config.mjs reduced files but retained unnecessary build machinery. Both
 applications now use Firebase Messaging, including the demo previously using
-LocalTestMessaging. Provider options serviceWorkerURL/serviceWorkerType select
+LocalMessaging. Provider options serviceWorkerURL/serviceWorkerType select
 the emitted module worker; registration is lazy, cached and awaited until active.
 The scope remains /firebase-cloud-messaging-push-scope, and ServiceWorkerControl
 finds it by scope rather than a script URL. Hashed worker entries remain excluded
@@ -1779,7 +1779,7 @@ Type checking and declaration generation remain outside this conversion.
 Firebase prepares a push reference without writing and uses a transaction to
 create its record only when absent. Its permanent key equals temporaryKey;
 transactions require read as well as write access to the target node.
-LocalTest implementation, Dispatcher integration and consumer migration remain
+Local implementation, Dispatcher integration and consumer migration remain
 separate work.
 
 
@@ -1812,7 +1812,7 @@ Types now include undefined for handled failures of operations returning data.
 Affected consumers: Redequate, demo and The Whisky Talks web/Functions callers.
 Defaults preserve existing throwing/rejection behavior; callers installing a
 non-throwing handler must accept undefined results. Stored formats and Android
-protocols are unchanged. Status: implemented for Firebase; LocalTest operations
+protocols are unchanged. Status: implemented for Firebase; Local operations
 remain unimplemented and consumer integration verification is pending.
 
 ### UserData class inheritance
@@ -1893,7 +1893,7 @@ Current-user Redux/localStorage caching is removed: existing persisted user fiel
 are discarded during Redux restoration, while other stored slices remain.
 Auth.resolveCurrentUser restores the user on page load, returning an anonymous
 UserData when signed out. Firebase waits for authStateReady; both Firebase and
-LocalTest listeners also return anonymous models. Dispatcher stores that Auth
+Local listeners also return anonymous models. Dispatcher stores that Auth
 result through the hook and enriches signed-in profiles from database; Redux does
 not decide how to resolve the user. This avoids a second state owner;
 keeping the Redux bridge or a separate local user cache was rejected. The web
@@ -2053,7 +2053,7 @@ changes are not fully protected; a separate concurrency protocol remains deferre
 The previous invitation action/UI changes were rolled back. ProfileWithFriends
 uses an uncached Requests list and invokes repair once for a successfully read
 empty first page with a positive counter. Transformation failures are not emptiness.
-Affected consumers: Redequate controls/LocalTest Backend, The Whisky Talks Functions
+Affected consumers: Redequate controls/Local Backend, The Whisky Talks Functions
 and web; demo retains the same optional component API. Stored paths and response
 envelopes are preserved; id/code are no longer required for a general fix call.
 Status: implemented; no deployment or remote repair performed.
@@ -2063,7 +2063,7 @@ Status: implemented; no deployment or remote repair performed.
 Decision: packages/server is a maintained private redequate-server package,
 with its own manifest, build configuration, README and lockfile. It builds
 common, backend/common, backend/common-server, backend/firebase-server and
-backend/local-test-server into packages/server/dist in native ESM/CJS. The root
+backend/local-server into packages/server/dist in native ESM/CJS. The root
 export aliases common. packages/common is a shared source directory, without a
 separate package manifest or lockfile. Both builds consume its source entries;
 server packaging and dependency ownership belong exclusively to packages/server.
@@ -2310,3 +2310,17 @@ equal-value pagination regression in both directions, deleted continuation keys,
 server values and subscription behavior. Test-only access is limited to the
 database_test branch in emulator rules; production rules are unchanged.
 Production RTDB validation and consumer migration remain unperformed.
+
+### Local provider naming
+
+Decision: use local/Local names throughout the local providers, including public
+module paths, classes, build entries, storage keys, events and simulated tokens.
+Reason: apply one name consistently across the framework's local implementations.
+Old imports have no compatibility aliases; existing local data stays under its
+previous keys and is not migrated or deleted. Applications using local providers
+must update imports and start with the new default storage namespaces, or pass
+their previous storageKey explicitly. Firebase data and Android protocols are
+unchanged. No old provider names were found in the inspected web consumer source
+or Android app source. Compatibility aliases and automatic data migration were
+rejected for this complete rename. Status: framework and server builds, all 134
+affected unit tests, and ESM/CommonJS entry checks passed on Node.js 24.21.0.
