@@ -1,15 +1,15 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
+import {DatabaseOrder} from "../../../packages/database/src";
 import {useAuth, useBackend, useDatabase} from "../../controllers";
-import Pagination from "../../controllers/FirebasePagination";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {UserData} from "../../controllers/UserData";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {UserData} from "../../controllers/UserData";
 import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import LazyListComponent from "../LazyListComponent/LazyListComponentOld";
+import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import postItemTransform from "./postItemTransform";
 import RotatingReplies from "./RotatingReplies";
 import cardStyles from "./styles/PostComponent.module.css";
@@ -36,10 +36,9 @@ export default (props) => {
     React.useEffect(() => {
         let isMounted = true;
         const paginationOptions = {
-            ref: type,
-            equals: postId,
-            child: "to",
-            order: "desc",
+            equalTo: postId,
+            order: DatabaseOrder.DESC,
+            orderBy: ["to"],
         };
 
         const prepareChecking = async () => {
@@ -61,8 +60,7 @@ export default (props) => {
                 throw {
                     expanded: true,
                     paginationOptions: {
-                        ref: type,
-                        equals: expand,
+                        equalTo: expand,
                     },
                     a: 2
                 };
@@ -76,8 +74,7 @@ export default (props) => {
             if (level === 0) throw {expanded: true, a: 5};
         }
         const fetchExistingRepliesIfComment = async () => {
-            const pagination = new Pagination(paginationOptions);
-            return pagination.next();
+            return database.cursor([type], paginationOptions).next(10);
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {
@@ -166,12 +163,13 @@ export default (props) => {
                 />
             </div>
         </div>}
-        <div className={[replyStyles.replyRow, level > 1 ? replyStyles.sectionReply : replyStyles.sectionComment].join(" ")}>
+        <div
+            className={[replyStyles.replyRow, level > 1 ? replyStyles.sectionReply : replyStyles.sectionComment].join(" ")}>
             {level > 0 && level < MAX_INDENTING_LEVELS && <div className={replyStyles.replyIndent}/>}
             <div className={cardStyles.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
-                    pagination={() => new Pagination(paginationOptions)}
+                    cursor={database.cursor([type], paginationOptions)}
                     itemTransform={postItemTransform({
                         auth,
                         allowedExtras,
@@ -180,7 +178,7 @@ export default (props) => {
                         database,
                         type,
                     })}
-                    itemComponent={item => <PostComponent
+                    ItemComponent={item => <PostComponent
                         {...replyProps}
                         collapsible={false}
                         disableClick
@@ -198,5 +196,4 @@ export default (props) => {
             </div>
         </div>
     </>
-    // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

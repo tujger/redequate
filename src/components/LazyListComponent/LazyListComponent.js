@@ -26,6 +26,7 @@ export default (
     const renderItem = async (current, item) => {
         try {
             const itemProps = await itemTransform(item);
+            if(!itemProps) return null;
             return <ItemComponent {...itemProps} key={item.key}/>;
         } catch (error) {
             if (session.current === current) {
