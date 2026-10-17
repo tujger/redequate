@@ -102,7 +102,7 @@ export default (props) => {
             userData={userData}
         />}
         <div
-            className={baseStyles.content}
+            className={[baseStyles.content, chatStyles.chat].join(" ")}
             ref={containerRef}
         >
             <ChatList
