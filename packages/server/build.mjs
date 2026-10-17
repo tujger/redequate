@@ -9,7 +9,7 @@ const source = path => fileURLToPath(new URL(path, import.meta.url));
 const outputDirectory = source("./dist/");
 const manifest = JSON.parse(readFileSync(source("./package.json"), "utf8"));
 const dependencies = Object.keys(manifest.dependencies || {});
-const backendNames = ["common", "common-server", "firebase-server", "local-test-server"];
+const backendNames = ["common", "common-server", "firebase-server", "local-server"];
 const directories = [
     source("../common/src/"),
     ...backendNames

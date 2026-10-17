@@ -34,9 +34,9 @@
             "import": "./dist/backend/firebase-server.mjs",
             "require": "./dist/backend/firebase-server.cjs"
         },
-        "./backend/local-test-server": {
-            "import": "./dist/backend/local-test-server.mjs",
-            "require": "./dist/backend/local-test-server.cjs"
+        "./backend/local-server": {
+            "import": "./dist/backend/local-server.mjs",
+            "require": "./dist/backend/local-server.cjs"
         },
         "./package.json": "./package.json"
     },

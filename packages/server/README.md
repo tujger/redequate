@@ -16,7 +16,7 @@ Functions imports. Both ESM `import` and CommonJS `require` support:
 - `redequate/backend/common`
 - `redequate/backend/common-server`
 - `redequate/backend/firebase-server`
-- `redequate/backend/local-test-server`
+- `redequate/backend/local-server`
 
 The root export is an alias for common. Client entry points are not exported.
 The browser build rejects server sources; this build rejects client and UI
