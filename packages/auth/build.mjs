@@ -7,7 +7,7 @@ export const authSourcePattern = packageSourcePattern(sourceDirectory, "{js,ts,t
 const entries = {
     "auth/index": fileURLToPath(new URL("./src/index.js", import.meta.url)),
     "auth/firebase": fileURLToPath(new URL("./src/firebase/index.js", import.meta.url)),
-    "auth/local-test": fileURLToPath(new URL("./src/local-test/index.js", import.meta.url)),
+    "auth/local": fileURLToPath(new URL("./src/local/index.js", import.meta.url)),
 };
 
 export const withAuth = withPackage(entries, sourceDirectory);
