@@ -149,9 +149,9 @@
             "import": "./core/auth/firebase.mjs",
             "require": "./core/auth/firebase.cjs"
         },
-        "./auth/local-test": {
-            "import": "./core/auth/local-test.mjs",
-            "require": "./core/auth/local-test.cjs"
+        "./auth/local": {
+            "import": "./core/auth/local.mjs",
+            "require": "./core/auth/local.cjs"
         },
         "./backend": {
             "import": "./core/backend/index.mjs",
@@ -165,9 +165,9 @@
             "import": "./core/backend/firebase-client.mjs",
             "require": "./core/backend/firebase-client.cjs"
         },
-        "./backend/local-test-client": {
-            "import": "./core/backend/local-test-client.mjs",
-            "require": "./core/backend/local-test-client.cjs"
+        "./backend/local-client": {
+            "import": "./core/backend/local-client.mjs",
+            "require": "./core/backend/local-client.cjs"
         },
         "./common": {
             "import": "./core/common/index.mjs",
@@ -181,9 +181,9 @@
             "import": "./core/database/firebase.mjs",
             "require": "./core/database/firebase.cjs"
         },
-        "./database/local-test": {
-            "import": "./core/database/local-test.mjs",
-            "require": "./core/database/local-test.cjs"
+        "./database/local": {
+            "import": "./core/database/local.mjs",
+            "require": "./core/database/local.cjs"
         },
         "./messaging": {
             "import": "./core/messaging/index.mjs",
@@ -205,9 +205,9 @@
             "import": "./core/storage/firebase.mjs",
             "require": "./core/storage/firebase.cjs"
         },
-        "./storage/local-test": {
-            "import": "./core/storage/local-test.mjs",
-            "require": "./core/storage/local-test.cjs"
+        "./storage/local": {
+            "import": "./core/storage/local.mjs",
+            "require": "./core/storage/local.cjs"
         },
         "./_common": null,
         "./_common/*": null,
