@@ -18,7 +18,7 @@ const openDatabase = storage => new Promise((resolve, reject) => {
     request.onerror = () => reject(request.error);
     request.onblocked = () => {
         blocked = true;
-        reject(new Error("LocalTestStorage database upgrade is blocked."));
+        reject(new Error("LocalStorage database upgrade is blocked."));
     };
 });
 
@@ -33,7 +33,7 @@ export async function fileOperation(storage, operation, value) {
             const files = transaction.objectStore("files");
             let result, failure;
             transaction.oncomplete = () => resolve(result);
-            transaction.onabort = () => reject(failure || transaction.error || new Error("LocalTestStorage transaction aborted."));
+            transaction.onabort = () => reject(failure || transaction.error || new Error("LocalStorage transaction aborted."));
             if (operation === "upload") {
                 files.add(value);
                 return;
@@ -62,6 +62,6 @@ export const toDataURL = blob => new Promise((resolve, reject) => {
     const reader = new window.FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(reader.error);
-    reader.onabort = () => reject(new Error("LocalTestStorage file reading aborted."));
+    reader.onabort = () => reject(new Error("LocalStorage file reading aborted."));
     reader.readAsDataURL(blob);
 });

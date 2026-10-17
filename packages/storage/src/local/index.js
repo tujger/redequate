@@ -3,8 +3,8 @@ import StorageBase from "../StorageBase";
 import {fileOperation, toDataURL} from "./common";
 
 // Local simulation only: IndexedDB is used for store blobs
-export default class LocalTestStorage extends StorageBase {
-    constructor({storageKey = "redequate:storage:local-test"} = {}) {
+export default class LocalStorage extends StorageBase {
+    constructor({storageKey = "redequate:storage:local"} = {}) {
         super();
         if (typeof storageKey !== "string" || !storageKey.trim()) {
             fail("storage/invalid-argument", "storageKey must be a non-empty string.");
@@ -13,7 +13,7 @@ export default class LocalTestStorage extends StorageBase {
     }
 
     async upload({auth, blob, metadata = {}, name, onProgress} = {}) {
-        await delay("LocalTestStorage", "upload");
+        await delay("LocalStorage", "upload");
         if (!auth || !(auth.resolveCurrentUser instanceof Function) || !(blob instanceof window.Blob) ||
             !metadata || typeof metadata !== "object" || metadata instanceof Array ||
             (name !== undefined && typeof name !== "string") ||
@@ -44,17 +44,17 @@ export default class LocalTestStorage extends StorageBase {
     }
 
     async resolveDownloadURL(pathOrURL) {
-        await delay("LocalTestStorage", "resolveDownloadURL");
+        await delay("LocalStorage", "resolveDownloadURL");
         return (await fileOperation(this, "read", pathOrURL)).url;
     }
 
     async resolveMetadata(pathOrURL) {
-        await delay("LocalTestStorage", "resolveMetadata");
+        await delay("LocalStorage", "resolveMetadata");
         return (await fileOperation(this, "read", pathOrURL)).metadata;
     }
 
     async delete(pathOrURL) {
-        await delay("LocalTestStorage", "delete");
+        await delay("LocalStorage", "delete");
         await fileOperation(this, "delete", pathOrURL);
     }
 }

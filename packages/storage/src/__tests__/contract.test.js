@@ -6,7 +6,7 @@ import React from "react";
 import {vi} from "vitest";
 import Base from "../StorageBase";
 
-import LocalTest from "../local-test";
+import Local from "../local";
 import {resolveStorage} from "../resolveStorage";
 import {render, unmount} from "../../../../src/__tests__/render";
 
@@ -22,10 +22,10 @@ it("resolves local defaults and preserves explicit providers", async () => {
     const set = vi.spyOn(Storage.prototype, "setItem");
     const first = await resolveStorage();
     const second = await resolveStorage();
-    expect(first).toBeInstanceOf(LocalTest);
-    expect(second).toBeInstanceOf(LocalTest);
+    expect(first).toBeInstanceOf(Local);
+    expect(second).toBeInstanceOf(Local);
     expect(second).not.toBe(first);
-    const provider = new LocalTest();
+    const provider = new Local();
     expect(await resolveStorage(provider)).toBe(provider);
     for (const value of [null, [], 1, "invalid"]) await expect(resolveStorage(value)).rejects.toThrow("Dispatcher storage");
     const structural = {operation: vi.fn()};

@@ -1,6 +1,6 @@
 import {vi} from "vitest";
 import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
-import LocalTestStorage from "../local-test";
+import LocalStorage from "../local";
 
 let storage, auth;
 const clone = globalThis.structuredClone;
@@ -8,7 +8,7 @@ beforeEach(() => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     vi.stubGlobal("structuredClone", clone);
     vi.spyOn(Math, "random").mockReturnValue(0);
-    storage = new LocalTestStorage();
+    storage = new LocalStorage();
     auth = {resolveCurrentUser: vi.fn().mockResolvedValue({id: "user"})};
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -19,7 +19,7 @@ it("persists files across instances and resolves both path and URL", async () =>
     expect(result.url).toMatch(/^data:text\/plain;base64,aGVsbG8=#/);
     expect(result.metadata).toMatchObject({contentType: "text/plain", size: 5, customMetadata: {note: "test", uid: "user", filename: "file.txt"}});
     expect(onProgress.mock.calls).toEqual([["0"], ["100"]]);
-    storage = new LocalTestStorage();
+    storage = new LocalStorage();
     expect(await storage.resolveDownloadURL(result.metadata.fullPath)).toBe(result.url);
     expect(await storage.resolveMetadata(result.url)).toEqual(result.metadata);
     const detached = await storage.resolveMetadata(result.url);
@@ -34,13 +34,13 @@ it("keeps identical files independent and namespaces isolated", async () => {
     const second = await upload();
     expect(first.url).not.toBe(second.url);
     expect(first.metadata.fullPath).not.toBe(second.metadata.fullPath);
-    const other = new LocalTestStorage({storageKey: "other"});
+    const other = new LocalStorage({storageKey: "other"});
     await expect(other.resolveMetadata(first.url)).rejects.toMatchObject({code: "storage/object-not-found"});
     await storage.delete(first.metadata.fullPath);
     expect(await storage.resolveDownloadURL(second.url)).toBe(second.url);
 });
 it("validates arguments and requires an authenticated user", async () => {
-    for (const key of [null, "", " ", 1]) expect(() => new LocalTestStorage({storageKey: key})).toThrow("storageKey");
+    for (const key of [null, "", " ", 1]) expect(() => new LocalStorage({storageKey: key})).toThrow("storageKey");
     for (const options of [{auth: null}, {blob: {}}, {metadata: []}, {name: 3}, {onProgress: "bad"}]) {
         await expect(upload(options)).rejects.toMatchObject({code: "storage/invalid-argument"});
     }
@@ -89,7 +89,7 @@ it("passes FileReader errors through without persisting a file", async () => {
     await expect(upload()).rejects.toBe(error);
     expect(open).not.toHaveBeenCalled();
     read.mockImplementation(function () { this.onabort(); });
-    await expect(upload()).rejects.toThrow("LocalTestStorage file reading aborted.");
+    await expect(upload()).rejects.toThrow("LocalStorage file reading aborted.");
     expect(open).not.toHaveBeenCalled();
 });
 it("stores unnamed untyped Blobs and detaches supplied metadata", async () => {
@@ -109,7 +109,7 @@ it("rejects blocked IndexedDB upgrades and closes a late connection", async () =
     vi.spyOn(window.indexedDB, "open").mockReturnValue(request);
     const onProgress = vi.fn();
     const pending = upload({onProgress});
-    const rejected = expect(pending).rejects.toThrow("LocalTestStorage database upgrade is blocked.");
+    const rejected = expect(pending).rejects.toThrow("LocalStorage database upgrade is blocked.");
     await vi.waitFor(() => expect(request.onblocked).toBeTypeOf("function"));
     request.onblocked();
     await rejected;
