@@ -120,9 +120,19 @@ export default (props) => {
             console.log("[Dispatcher]", "firebase resolved", {firebase});
             return {...props, firebase};
         }
+        const initDatabase = async props => {
+            try {
+                const database = await resolveDatabase(databaseGiven);
+                consoleHandler = installConsoleError(database);
+                console.log("[Dispatcher]", "database resolved", {database});
+                return {...props, consoleHandler, database};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
         const initAuth = async props => {
             try {
-                const auth = await resolveAuth(authGiven);
+                const auth = await resolveAuth(authGiven, props.database);
                 auth._UserData = UserData;
                 console.log("[Dispatcher]", "auth resolved", {auth});
                 return {...props, auth};
@@ -135,16 +145,6 @@ export default (props) => {
                 const backend = await resolveBackend(backendGiven);
                 console.log("[Dispatcher]", "backend resolved", {backend});
                 return {...props, backend};
-            } catch (error) {
-                throw {...props, fatal: error};
-            }
-        }
-        const initDatabase = async props => {
-            try {
-                const database = await resolveDatabase(databaseGiven);
-                consoleHandler = installConsoleError(database);
-                console.log("[Dispatcher]", "database resolved", {database});
-                return {...props, consoleHandler, database};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -378,9 +378,9 @@ export default (props) => {
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
             .then(initFirebase)
+            .then(initDatabase)
             .then(initAuth)
             .then(initBackend)
-            .then(initDatabase)
             .then(initMessaging)
             .then(initStorage)
             .then(initStore)
