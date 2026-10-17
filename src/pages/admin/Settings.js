@@ -16,8 +16,7 @@ import MentionedSelectComponent from "../../components/MentionedSelectComponent"
 import {tokenizeText} from "../../components/MentionedTextComponent";
 import ProgressView from "../../components/ProgressView";
 import {useDatabase, useRedirectToLogin} from "../../controllers";
-import Pagination from "../../controllers/FirebasePagination";
-import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
+import {useMetaInfo, useWindowData} from "../../controllers/General";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
@@ -35,7 +34,6 @@ export default ({uploadable}) => {
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const {maintenance: maintenanceGiven} = useMetaInfo();
     const shouldRedirectToLogin = useRedirectToLogin();
@@ -307,7 +305,6 @@ export default ({uploadable}) => {
             }
         }
         const updateState = async props => {
-            console.log(props)
             setState(state => ({...state, ...props}));
         }
         const finalizeFetching = async () => {
@@ -361,17 +358,15 @@ export default ({uploadable}) => {
                         mention={{
                             ...mentionUsers,
                             trigger: "",
-                            displayTransform: (id, display) => display,
-                            pagination: () => new Pagination({
-                                ref: firebase.database().ref("roles"),
-                                value: true,
-                                equals: "admin",
-                                size: 1000,
-                                transform: item => new UserData(database)
-                                    .fetch(item.key)
-                                    .then(value => ({key: item.key, value}))
-                                    .catch(notifySnackbar)
-                            })
+                            pagination: () => database.cursor(["roles"], {
+                                equalTo: "admin"
+                            }),
+                            transform: item => new UserData(database)
+                                .fetch(item.key)
+                                .then(item => {
+                                    return {id: item.id, display: item.name};
+                                })
+                                .catch(notifySnackbar),
                         }}
                         onChange={(evt, value) => {
                             handleChange("support")({target: {value}})
