@@ -4,8 +4,8 @@ import {recordRequest, snapshot} from "./common";
 import defaultHandlers from "./handlers";
 
 // Local simulation only; request history is persisted in IndexedDB.
-export default class LocalTestBackendClient extends BackendBase {
-    constructor({handlers = {}, storageKey = "redequate:backend:local-test-client"} = {}) {
+export default class LocalBackendClient extends BackendBase {
+    constructor({handlers = {}, storageKey = "redequate:backend:local-client"} = {}) {
         super();
         if (typeof storageKey !== "string" || !storageKey.trim()) {
             fail("backend/invalid-argument", "storageKey must be a non-empty string.");
@@ -25,7 +25,7 @@ export default class LocalTestBackendClient extends BackendBase {
         const startedAt = Date.now();
         const record = {name, args: snapshot(args), startedAt};
         try {
-            await delay("LocalTestBackendClient", "request");
+            await delay("LocalBackendClient", "request");
             if (!Object.prototype.hasOwnProperty.call(this._handlers, name)) {
                 fail("backend/not-found", `No local handler registered for ${name}.`);
             }

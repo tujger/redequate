@@ -1,4 +1,4 @@
-const reportError = error => console.error("[LocalTestBackendClient] Request history failed", error);
+const reportError = error => console.error("[LocalBackendClient] Request history failed", error);
 
 export const snapshot = value => {
     try {
@@ -26,7 +26,7 @@ const openDatabase = storageKey => new Promise((resolve, reject) => {
     request.onerror = () => reject(request.error);
     request.onblocked = () => {
         blocked = true;
-        reject(new Error("LocalTestBackendClient database upgrade is blocked."));
+        reject(new Error("LocalBackendClient database upgrade is blocked."));
     };
 });
 
@@ -37,7 +37,7 @@ export async function recordRequest(storageKey, record) {
         await new Promise((resolve, reject) => {
             const transaction = database.transaction("requests", "readwrite");
             transaction.oncomplete = () => resolve();
-            transaction.onabort = () => reject(transaction.error || new Error("LocalTestBackendClient transaction aborted."));
+            transaction.onabort = () => reject(transaction.error || new Error("LocalBackendClient transaction aborted."));
             transaction.objectStore("requests").add(record);
         });
     } catch (error) {

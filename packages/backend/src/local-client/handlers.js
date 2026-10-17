@@ -1,5 +1,5 @@
 import {fail, identifier} from "../../../common";
-import {sendMessage} from "../../../messaging/src/local-test/common";
+import {sendMessage} from "../../../messaging/src/local/common";
 
 const isNonEmptyString = value => typeof value === "string" && Boolean(value.trim());
 
@@ -25,23 +25,23 @@ const complete = (origin, result) => ({origin, status: "COMPLETE", result});
 // Local responses and in-page notification delivery; no remote operations.
 export default {
     fixChat: args => {
-        console.log("[LocalTestBackendClient] fixChat", args);
+        console.log("[LocalBackendClient] fixChat", args);
         validate(args, ["id"]);
         return complete(args, "Chat fixed");
     },
     fixError: args => {
-        console.log("[LocalTestBackendClient] fixError", args);
+        console.log("[LocalBackendClient] fixError", args);
         validate(args, ["key"]);
         return complete(args, "Error fixed");
     },
     fixMutual: args => {
-        console.log("[LocalTestBackendClient] fixMutual", args);
+        console.log("[LocalBackendClient] fixMutual", args);
         validate(args, ["uid", "typeId"]);
         if (args.id !== undefined) validate(args, ["id"]);
         return complete(args, "Mutual fixed");
     },
     fixMutualStamp: args => {
-        console.log("[LocalTestBackendClient] fixMutualStamp", args);
+        console.log("[LocalBackendClient] fixMutualStamp", args);
         validate(args, ["id"]);
         validateNotFound(args);
         if (!isNonEmptyString(args.tag) && !isNonEmptyString(args.uid)) {
@@ -50,22 +50,22 @@ export default {
         return complete(args, "Mutual stamp fixed");
     },
     fixPost: args => {
-        console.log("[LocalTestBackendClient] fixPost", args);
+        console.log("[LocalBackendClient] fixPost", args);
         validate(args, ["id"]);
         return complete(args, "Post fixed");
     },
     fixTag: args => {
-        console.log("[LocalTestBackendClient] fixTag", args);
+        console.log("[LocalBackendClient] fixTag", args);
         validate(args, ["key"]);
         return complete(args, "Tag fixed");
     },
     fixUser: args => {
-        console.log("[LocalTestBackendClient] fixUser", args);
+        console.log("[LocalBackendClient] fixUser", args);
         validate(args, ["key"]);
         return complete(args, "Pending fixes, refresh later");
     },
     mutualAction: args => {
-        console.log("[LocalTestBackendClient] mutualAction", args);
+        console.log("[LocalBackendClient] mutualAction", args);
         validate(args, ["key", "typeId"]);
         if (args.action !== "accept" && args.action !== "reject") {
             fail("backend/invalid-argument", "action must be accept or reject.");
@@ -73,7 +73,7 @@ export default {
         return {data: {status: "COMPLETE"}};
     },
     sendMail: args => {
-        console.log("[LocalTestBackendClient] sendMail", args);
+        console.log("[LocalBackendClient] sendMail", args);
         validate(args, ["from", "to", "subject", "message"]);
         const id = identifier();
         return {
@@ -81,13 +81,13 @@ export default {
                 accepted: [args.to],
                 rejected: [],
                 envelope: {from: args.from, to: [args.to]},
-                messageId: `<${id}@local-test.redequate>`,
+                messageId: `<${id}@local.redequate>`,
                 response: `250 2.0.0 OK: queued as ${id}`
             }
         };
     },
     sendNotification: args => {
-        console.log("[LocalTestBackendClient] sendNotification", args);
+        console.log("[LocalBackendClient] sendNotification", args);
         validate(args, ["body"]);
         if (args.uid !== undefined && !isNonEmptyString(args.uid)) {
             fail("backend/invalid-argument", "uid must be a non-empty string.");
