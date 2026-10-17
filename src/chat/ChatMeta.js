@@ -1,5 +1,4 @@
 import {firebaseMessaging as firebase} from "../controllers/Firebase";
-import Pagination from "../controllers/FirebasePagination";
 import {UserData} from "../controllers/UserData";
 
 const ONLINE_TIMEOUT = 60000;
@@ -111,12 +110,10 @@ export function ChatMeta(database) {
                 chats.push({key: oppositeUid, meta: value, persisted: true});
             }
             if (!chats.length) {
-                chats = await Pagination({
-                    ref: indexRef.child(currentUid),
-                    child: "private",
-                    equals: oppositeUid,
-                    size: 10
-                }).next();
+                chats = await database.cursor(["_chats", currentUid], {
+                    equalTo: oppositeUid,
+                    orderBy: ["private"]
+                }).next(10);
                 for (let i = chats.length - 1; i >= 0; i--) {
                     let chat = chats[i];
                     chat.meta = await database.read(["chats", chat.key, "!meta"]);

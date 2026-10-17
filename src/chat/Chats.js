@@ -1,11 +1,11 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
+import {DatabaseOrder} from "../../packages/database/src";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
-import {useRedirectToLogin} from "../controllers";
-import Pagination from "../controllers/FirebasePagination";
+import {useDatabase, useRedirectToLogin} from "../controllers";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import baseStyles from "../themes/Base.module.css";
 import ChatsDaemon from "./ChatsDaemon";
@@ -28,6 +28,7 @@ const ChatsPage = (
         userComponent
     }) => {
     const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const shouldRedirectToLogin = useRedirectToLogin();
     const {t} = useTranslation();
@@ -40,25 +41,23 @@ const ChatsPage = (
 
     return <div className={baseStyles.content}>
         <LazyListComponent
-            cache={"chats"}
-            itemComponent={item => <ChatsItem
-                id={item.key}
-                key={item.key}
+            // cache={"chats"}
+            cursor={database.cursor(["_chats", currentUserData.id], {
+                order: DatabaseOrder.DESC,
+                orderBy: ["timestamp"],
+                start: 0
+            })}
+            ItemComponent={item => <ChatsItem
+                id={item.id}
                 lastMessageTimestamp={item.value.timestamp}
                 textComponent={textComponent}
                 userComponent={userComponent}
             />}
             itemTransform={async item => {
                 if (item.key === "!meta") return null;
-                return item
+                return {id: item.key, ...item}
             }}
             noItemsComponent={<ChatsItem label={t("Chat.No chats found")}/>}
-            pagination={() => new Pagination({
-                child: "timestamp",
-                order: "desc",
-                start: 0,
-                ref: "_chats/" + currentUserData.id,
-            })}
             placeholder={<ChatsItem skeleton/>}
         />
     </div>

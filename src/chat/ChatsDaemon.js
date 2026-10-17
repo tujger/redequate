@@ -3,11 +3,10 @@ import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import {useBackend, useDatabase} from "../controllers";
-import Pagination from "../controllers/FirebasePagination";
-import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
+import {cacheDatas, MenuBadge, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {UserData} from "../controllers/UserData";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import {UserData} from "../controllers/UserData";
 import {ChatMeta} from "./ChatMeta";
 import {chatsCounterReducer} from "./chatsCounterReducer";
 
@@ -16,21 +15,13 @@ export default ({clearText = text => text}) => {
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
 
     React.useEffect(() => {
         if (!currentUserData.id) return;
-        const daemonNew = firebase.database().ref("_chats").child(currentUserData.id);
         const metas = {};
         const chatsWithNewMessages = [];
-        const pagination = new Pagination({
-            child: "timestamp",
-            order: "desc",
-            ref: daemonNew,
-            size: 10000,
-        });
         const newMessage = (data, chatId) => {
             if (data.uid === currentUserData.id) return;
             console.log(`[ChatsDaemon] new message: ${JSON.stringify(data)}`)
@@ -101,7 +92,7 @@ export default ({clearText = text => text}) => {
         console.log("[ChatsDaemon] installed");
         return () => {
             listener.remove();
-            pagination.reset();
+            // pagination.reset();
             for (let id in metas) {
                 id && metas[id] && metas[id].unwatch();
             }
