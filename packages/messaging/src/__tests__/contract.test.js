@@ -5,7 +5,7 @@ import React from "react";
 import {vi} from "vitest";
 import Base from "../MessagingBase";
 
-import LocalTest from "../local-test";
+import Local from "../local";
 import {resolveMessaging} from "../resolveMessaging";
 import {render, unmount} from "../../../../src/__tests__/render";
 
@@ -19,10 +19,10 @@ it("resolves local defaults and preserves explicit providers", async () => {
     const set = vi.spyOn(Storage.prototype, "setItem");
     const first = await resolveMessaging();
     const second = await resolveMessaging();
-    expect(first).toBeInstanceOf(LocalTest);
-    expect(second).toBeInstanceOf(LocalTest);
+    expect(first).toBeInstanceOf(Local);
+    expect(second).toBeInstanceOf(Local);
     expect(second).not.toBe(first);
-    const provider = new LocalTest();
+    const provider = new Local();
     expect(await resolveMessaging(provider)).toBe(provider);
     for (const value of [null, [], 1, "invalid"]) await expect(resolveMessaging(value)).rejects.toThrow("Dispatcher messaging");
     const structural = {operation: vi.fn()};

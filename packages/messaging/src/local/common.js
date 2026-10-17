@@ -1,7 +1,7 @@
 import {fail} from "../../../common";
 
-export const defaultStorageKey = "redequate:messaging:local-test";
-export const messageType = "redequate:messaging:local-test:message";
+export const defaultStorageKey = "redequate:messaging:local";
+export const messageType = "redequate:messaging:local:message";
 
 export const validateStorageKey = storageKey => {
     if (typeof storageKey !== "string" || !storageKey.trim()) {

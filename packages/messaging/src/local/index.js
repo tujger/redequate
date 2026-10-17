@@ -3,7 +3,7 @@ import MessagingBase from "../MessagingBase";
 import {defaultStorageKey, isMessage, messageType, sendMessage, validateStorageKey} from "./common";
 
 // Local simulation only
-export default class LocalTestMessaging extends MessagingBase {
+export default class LocalMessaging extends MessagingBase {
     constructor({storageKey = defaultStorageKey} = {}) {
         super();
         validateStorageKey(storageKey);
@@ -16,7 +16,7 @@ export default class LocalTestMessaging extends MessagingBase {
         if (!(onMessage instanceof Function)) {
             fail("messaging/invalid-argument", "Message listener must be a function.");
         }
-        await delay("LocalTestMessaging", "addMessageListener");
+        await delay("LocalMessaging", "addMessageListener");
         const listener = event => {
             if (event.origin !== window.location.origin || event.data?.type !== messageType ||
                 event.data.storageKey !== this.storageKey || !isMessage(event.data.message)) return;
@@ -47,7 +47,7 @@ export default class LocalTestMessaging extends MessagingBase {
     }
 
     async subscribe() {
-        await delay("LocalTestMessaging", "subscribe");
+        await delay("LocalMessaging", "subscribe");
         let token = window.localStorage.getItem(this.storageKey);
         if (!token) {
             token = identifier();
@@ -57,9 +57,9 @@ export default class LocalTestMessaging extends MessagingBase {
     }
 
     async unsubscribe() {
-        await delay("LocalTestMessaging", "unsubscribe");
+        await delay("LocalMessaging", "unsubscribe");
         window.localStorage.removeItem(this.storageKey);
     }
 }
 
-const reportError = error => console.error("[LocalTestMessaging] Message handler failed", error);
+const reportError = error => console.error("[LocalMessaging] Message handler failed", error);

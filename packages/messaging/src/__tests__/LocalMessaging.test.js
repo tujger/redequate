@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import LocalTestMessaging from "../local-test";
+import LocalMessaging from "../local";
 let messaging, disposers;
 const clone = globalThis.structuredClone;
 async function run(promise) {
@@ -19,7 +19,7 @@ beforeEach(() => {
     });
     vi.useFakeTimers(); vi.spyOn(Math, "random").mockReturnValue(0);
     vi.spyOn(console, "error").mockImplementation(() => {});
-    messaging = new LocalTestMessaging(); disposers = [];
+    messaging = new LocalMessaging(); disposers = [];
 });
 afterEach(() => {
     disposers.forEach(dispose => dispose());
@@ -31,7 +31,7 @@ it("restores saved subscription across instances without subscribing again", asy
     expect(await messaging.checkIfSubscribed()).toBe(false);
     const token = await run(messaging.subscribe());
     expect(await run(messaging.subscribe())).toBe(token);
-    const restored = new LocalTestMessaging();
+    const restored = new LocalMessaging();
     expect(await restored.checkIfSubscribed()).toBe(true);
     const handler = vi.fn(); await listen(restored, handler);
     window.redequateMessaging.send({title: "restored"}); await vi.runAllTimersAsync();
@@ -43,7 +43,7 @@ it("restores saved subscription across instances without subscribing again", asy
     expect(await run(messaging.subscribe())).not.toBe(token);
 });
 it("isolates keys, clones messages independently and disposes listeners", async () => {
-    const other = new LocalTestMessaging({storageKey: "other"});
+    const other = new LocalMessaging({storageKey: "other"});
     const first = vi.fn(message => { message.nested.value = 2; });
     const second = vi.fn(); const isolated = vi.fn();
     const stop = await listen(messaging, first); await listen(messaging, second); await listen(other, isolated);
@@ -65,8 +65,8 @@ it("isolates synchronous and asynchronous handler failures", async () => {
     const healthy = vi.fn(); await listen(messaging, healthy);
     window.redequateMessaging.send({title: "test"}); await vi.runAllTimersAsync();
     expect(healthy).toHaveBeenCalledOnce();
-    expect(console.error).toHaveBeenCalledWith("[LocalTestMessaging] Message handler failed", sync);
-    expect(console.error).toHaveBeenCalledWith("[LocalTestMessaging] Message handler failed", asyncError);
+    expect(console.error).toHaveBeenCalledWith("[LocalMessaging] Message handler failed", sync);
+    expect(console.error).toHaveBeenCalledWith("[LocalMessaging] Message handler failed", asyncError);
 });
 it("validates console inputs and callbacks and passes storage errors through", async () => {
     for (const message of [null, [], "message"]) expect(() => window.redequateMessaging.send(message)).toThrow("Message must");
