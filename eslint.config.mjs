@@ -41,6 +41,7 @@ export default [
             'packages/__tests__/**/*.{js,mjs,cjs}',
             'packages/auth/src/**/*.{js,mjs,cjs}', 'packages/auth/build.mjs',
             'packages/backend/src/**/*.{js,mjs,cjs}', 'packages/backend/build.mjs',
+            'packages/database/src/**/*.{js,mjs,cjs}', 'packages/database/build.mjs',
             'packages/server/build.mjs',
             'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
             'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',
