@@ -1,16 +1,15 @@
 import AddIcon from "@mui/icons-material/Add";
 import React from "react";
-import {useTranslation} from "react-i18next";
 import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";
 import NavigationToolbar from "../components/NavigationToolbar";
-import Pagination from "../controllers/FirebasePagination";
+import {useDatabase} from "../controllers";
 import {usePages} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {normalizeSortName} from "../controllers/UserData";
@@ -29,9 +28,9 @@ const Tags = (props) => {
         noItemsCoponent = <ItemPlaceholderComponent skeleton={true} pattern={"flat"} label={"No tags found"}/>,
         ItemProps = {counter: true}
     } = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const pages = usePages();
-    const {t} = useTranslation();
 
     const mode = forceMode || inheritMode;
 
@@ -92,35 +91,27 @@ const Tags = (props) => {
             }
         }
     };
+    let cursor;
     switch (mode) {
         case "all":
-            paginationOptions = {
-                ref: "tag",
-                child: "_sort_name",
-                equals: equals,
-            };
-            if (filter && !equals) {
-                paginationOptions.start = normalizeSortName(filter);
-                paginationOptions.end = normalizeSortName(filter) + "\uf8ff";
-            }
+            cursor = database.cursor(["tag"], {
+                equalTo: equals,
+                orderBy: ["_sort_name"],
+                start: filter && !equals ? normalizeSortName(filter) : undefined
+            });
             break;
         case "hidden":
-            paginationOptions = {
-                ref: "tag",
-                child: "hidden",
-                equals: true,
-            }
+            cursor = database.cursor(["tag"], {
+                equalTo: true,
+                orderBy: ["hidden"]
+            });
             break;
         case "uid":
-            paginationOptions = {
-                ref: "tag",
-                child: "uid",
-                equals: equals,
-            }
-            if (filter && !equals) {
-                paginationOptions.start = normalizeSortName(filter);
-                paginationOptions.end = normalizeSortName(filter) + "\uf8ff";
-            }
+            cursor = database.cursor(["tag"], {
+                equalTo: equals,
+                orderBy: ["uid"],
+                start: filter && !equals ? normalizeSortName(filter) : undefined
+            });
             break;
         default:
             break;
@@ -141,14 +132,11 @@ const Tags = (props) => {
         </NavigationToolbar>
         <div className={baseStyles.content}>
             <LazyListComponent
-                itemComponent={itemComponent}
+                cursor={cursor}
+                ItemComponent={itemComponent}
                 itemTransform={itemTransform}
-                pagination={() => new Pagination(paginationOptions)}
                 noItemsComponent={noItemsCoponent}
                 placeholder={<ItemPlaceholderComponent skeleton={true} pattern={"flat"}/>}
-                ItemProps={{
-                    counter: true
-                }}
             />
         </div>
         <Link

@@ -9,7 +9,7 @@ import {useHistory, useParams} from "react-router-dom";
 import {DatabaseOrder} from "../../packages/database/src";
 import FlexFabComponent from "../components/FlexFabComponent";
 import InfoComponent from "../components/InfoComponent";
-import LazyListComponent from "../components/LazyListComponent/LazyListComponentOld";
+import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import MentionedTextComponent from "../components/MentionedTextComponent";
@@ -22,8 +22,7 @@ import postItemTransform from "../components/PostComponent/postItemTransform";
 import ProgressView from "../components/ProgressView";
 import ShareComponent from "../components/ShareComponent";
 import {useAuth, useBackend, useDatabase} from "../controllers";
-import Pagination from "../controllers/FirebasePagination";
-import {useFirebase, usePages, useWindowData} from "../controllers/General";
+import {usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
@@ -38,7 +37,6 @@ export default ({allowOwner = true}) => {
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages()
     const {id: itemId} = useParams();
@@ -171,7 +169,7 @@ export default ({allowOwner = true}) => {
         </div>
         <div className={baseStyles.content}>
             <LazyListComponent
-                itemComponent={item => <PostComponent
+                ItemComponent={item => <PostComponent
                     key={item.id}
                     mentions={[mentionUsers, mentionTags]}
                     postData={item}
@@ -195,10 +193,7 @@ export default ({allowOwner = true}) => {
                 })}
                 live
                 noItemsComponent={<PostComponent label={t("Tag.No posts found")}/>}
-                pagination={() => new Pagination({
-                    ref: firebase.database().ref("_tag").child(tag.key),
-                    order: DatabaseOrder.DESC,
-                })}
+                cursor={database.cursor(["_tag", tag.key], {order: DatabaseOrder.DESC})}
                 placeholder={<PostComponent skeleton={true}/>}
             />
         </div>
