@@ -1,7 +1,7 @@
 import {vi} from "vitest";
 import FirebaseAuth from "../firebase";
 
-import LocalTestAuth from "../local-test";
+import LocalAuth from "../local";
 
 vi.mock("firebase/auth", () => ({getAuth: vi.fn(app => app)}));
 
@@ -29,7 +29,7 @@ const restore = (provider, uid = "json-user") => {
         const user = {...data, toJSON: () => structuredClone(data), updatePassword: vi.fn()};
         return new FirebaseAuth({firebase: {app: {currentUser: user, authStateReady: vi.fn().mockResolvedValue()}}}).resolveCurrentUser();
     }
-    const auth = new LocalTestAuth();
+    const auth = new LocalAuth();
     window.localStorage.setItem(auth.storageKey, JSON.stringify({
         version: 1,
         accounts: [account],
@@ -41,7 +41,7 @@ const restore = (provider, uid = "json-user") => {
     return auth.resolveCurrentUser();
 };
 
-it.each(["firebase", "local-test"])("restores normalized UserData through %s", async provider => {
+it.each(["firebase", "local"])("restores normalized UserData through %s", async provider => {
     const user = await restore(provider);
     expect(user).toMatchObject({id: "json-user", _userData: true, verified: true});
     const json = user.toJSON();
@@ -67,6 +67,6 @@ it.each(["firebase", "local-test"])("restores normalized UserData through %s", a
     expect(user).not.toHaveProperty("uid");
     expect(user).not.toHaveProperty("user");
 });
-it.each(["firebase", "local-test"])("rejects malformed %s user records with Error", async provider => {
+it.each(["firebase", "local"])("rejects malformed %s user records with Error", async provider => {
     await expect(restore(provider, "")).rejects.toThrow(Error);
 });

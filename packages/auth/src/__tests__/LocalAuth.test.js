@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import LocalTestAuth from "../local-test";
+import LocalAuth from "../local";
 
 // Attach rejection handling before advancing timers, including failing operations.
 async function run(promise) {
@@ -17,7 +17,7 @@ beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValue(0);
     vi.spyOn(console, "debug").mockImplementation(() => {});
-    auth = new LocalTestAuth();
+    auth = new LocalAuth();
     unsubscribes = [];
 });
 afterEach(() => {
@@ -31,18 +31,18 @@ const stored = () => JSON.parse(window.localStorage.getItem(auth.storageKey));
 
 it("constructs without accessing storage and validates its namespace", () => {
     const getItem = vi.spyOn(Storage.prototype, "getItem");
-    expect(new LocalTestAuth()).toBeInstanceOf(LocalTestAuth);
+    expect(new LocalAuth()).toBeInstanceOf(LocalAuth);
     expect(auth).not.toHaveProperty("from");
     expect(auth).not.toHaveProperty("resolveToken");
     expect(getItem).not.toHaveBeenCalled();
-    expect(() => new LocalTestAuth({storageKey: ""})).toThrow();
+    expect(() => new LocalAuth({storageKey: ""})).toThrow();
 });
 it("registers, normalizes email and restores detached user snapshots", async () => {
     const user = await run(auth.createUserWithEmailAndPassword(" User@Example.test ", "password"));
     expect(user).toMatchObject({email: "user@example.test", verified: false});
     expect(user.toJSON()).not.toHaveProperty("password");
     expect(user.toJSON()).not.toHaveProperty("token");
-    expect(await run(new LocalTestAuth().resolveCurrentUser())).toMatchObject({id: user.id, _userData: true});
+    expect(await run(new LocalAuth().resolveCurrentUser())).toMatchObject({id: user.id, _userData: true});
     const parsed = await run(auth.resolveCurrentUser());
     expect(parsed).toMatchObject({id: user.id, _userData: true, public: {email: user.email, provider: "password"}});
     expect(parsed.toJSON().loaded).toMatchObject({public: true});
@@ -73,8 +73,8 @@ it("signs out while preserving accounts and permits subsequent password login", 
 });
 it("isolates keys while sharing sessions between matching namespaces", async () => {
     const user = await register();
-    expect((await run(new LocalTestAuth().resolveCurrentUser())).id).toBe(user.id);
-    const separate = new LocalTestAuth({storageKey: "separate"});
+    expect((await run(new LocalAuth().resolveCurrentUser())).id).toBe(user.id);
+    const separate = new LocalAuth({storageKey: "separate"});
     expect(await run(separate.resolveCurrentUser())).toMatchObject({_userData: true, id: undefined});
     await run(separate.signOut());
     expect((await run(auth.resolveCurrentUser())).id).toBe(user.id);
@@ -106,20 +106,20 @@ it("keeps user data free of Auth operations and rejects invalid profile fields",
 });
 it("uses stable fake providers and rejects collisions and unsupported credentials", async () => {
     const google = (await run(auth.signInWithPopup("google.com")));
-    expect(google).toMatchObject({email: "google@local-test.example", verified: true});
+    expect(google).toMatchObject({email: "google@local.example", verified: true});
     expect((await run(auth.signInWithCredential("fake-token"))).id).toBe(google.id);
-    expect((await run(auth.signInWithCredential({provider: "facebook", accessToken: "fake"}))).email).toBe("facebook@local-test.example");
+    expect((await run(auth.signInWithCredential({provider: "facebook", accessToken: "fake"}))).email).toBe("facebook@local.example");
     expect((await run(auth.signInWithPopup({providerId: "google.com"}))).id).toBe(google.id);
     await expect(run(auth.signInWithCredential(""))).rejects.toMatchObject({code: "auth/invalid-credential"});
     await expect(run(auth.signInWithPopup("unknown"))).rejects.toMatchObject({code: "auth/operation-not-supported"});
-    const separate = new LocalTestAuth({storageKey: "collision"});
-    await run(separate.createUserWithEmailAndPassword("google@local-test.example", "password"));
+    const separate = new LocalAuth({storageKey: "collision"});
+    await run(separate.createUserWithEmailAndPassword("google@local.example", "password"));
     await expect(run(separate.signInWithPopup("google"))).rejects.toMatchObject({code: "auth/account-exists-with-different-credential"});
 });
 it("persists and consumes redirect results once", async () => {
     await run(auth.signInWithRedirect("facebook.com"));
-    const reloaded = new LocalTestAuth();
-    expect((await run(reloaded.resolveRedirectResult())).email).toBe("facebook@local-test.example");
+    const reloaded = new LocalAuth();
+    expect((await run(reloaded.resolveRedirectResult())).email).toBe("facebook@local.example");
     expect(await run(auth.resolveRedirectResult())).toBeNull();
 });
 it("simulates email verification, records reset requests and consumes email sign-in requests", async () => {
@@ -146,7 +146,7 @@ it("simulates email verification, records reset requests and consumes email sign
 });
 it("notifies peers on user changes but not on reset requests", async () => {
     const callback = vi.fn();
-    unsubscribes.push(await run(new LocalTestAuth().onAuthStateChanged(callback)));
+    unsubscribes.push(await run(new LocalAuth().onAuthStateChanged(callback)));
     expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({_userData: true, id: undefined}));
     await register();
     expect(callback).toHaveBeenCalledTimes(2);
@@ -206,7 +206,7 @@ it.each([0, 100, 101, 2000])("waits %i ms and logs only delays greater than 100 
     await run(auth.resolveCurrentUser());
     expect(Date.now() - before).toBe(milliseconds);
     expect(console.debug).toHaveBeenCalledTimes(milliseconds > 100 ? 1 : 0);
-    if (milliseconds > 100) expect(console.debug).toHaveBeenCalledWith(`[LocalTestAuth] resolveCurrentUser: ${milliseconds} ms`);
+    if (milliseconds > 100) expect(console.debug).toHaveBeenCalledWith(`[LocalAuth] resolveCurrentUser: ${milliseconds} ms`);
 });
 it("delays password updates once without exposing an Auth parser", async () => {
     await register();
@@ -234,8 +234,8 @@ it("logs observer errors without an error callback and contains error callback f
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const observerError = new Error("observer");
     unsubscribes.push(await run(auth.onAuthStateChanged(async () => { throw observerError; })));
-    expect(log).toHaveBeenCalledWith("[LocalTestAuth] Auth state observer failed", observerError);
+    expect(log).toHaveBeenCalledWith("[LocalAuth] Auth state observer failed", observerError);
     const errorCallbackFailure = new Error("error callback");
     unsubscribes.push(await run(auth.onAuthStateChanged(() => { throw observerError; }, () => { throw errorCallbackFailure; })));
-    expect(log).toHaveBeenCalledWith("[LocalTestAuth] Auth error callback failed", errorCallbackFailure);
+    expect(log).toHaveBeenCalledWith("[LocalAuth] Auth error callback failed", errorCallbackFailure);
 });
