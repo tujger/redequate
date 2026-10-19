@@ -11,13 +11,18 @@ const manifest = JSON.parse(readFileSync(source("./package.json"), "utf8"));
 const dependencies = Object.keys(manifest.dependencies || {});
 const backendNames = ["common", "common-server", "firebase-server", "local-server"];
 const directories = [
+    source("./src/"),
     source("../common/src/"),
+    source("../database/src/"),
     ...backendNames
         .map(name => source(`../backend/src/${name}/`)),
 ];
 
 const entries = {
+    index: source("./src/index.js"),
     "common/index": source("../common/src/index.js"),
+    ...Object.fromEntries(["index", "firebase", "local"]
+        .map(name => [`database/${name}`, source(`../database/src/${name === "index" ? "index.js" : `${name}/index.js`}`)])),
     ...Object.fromEntries(backendNames
         .map(name => [`backend/${name}`, source(`../backend/src/${name}/index.js`)])),
 };
@@ -49,7 +54,7 @@ export default {
             name: "server-source-boundary",
             generateBundle() {
                 for (const id of this.getModuleIds()) {
-                    if (!this.getModuleInfo(id).isExternal && id !== "\0rollupPluginBabelHelpers.js" && !directories.some(directory => id.startsWith(directory))) {
+                    if (!this.getModuleInfo(id).isExternal && id !== "\0rollupPluginBabelHelpers.js" && id !== source("../common/index.js") && !directories.some(directory => id.startsWith(directory))) {
                         this.error(`Server package cannot include modules outside its source boundary: ${id}`);
                     }
                 }
