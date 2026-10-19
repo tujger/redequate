@@ -1,23 +1,15 @@
 import {fail} from "../../../common";
-import {composeCursor} from "../common/cursor";
+import {composeCursor, normalizePath} from "../common/cursor";
 import createCursorQuery from "./createCursorQuery";
 
 export default function cursor(firebase, path, options, identity, run) {
     const queries = path instanceof Array && path.some(part => typeof part === "object")
         ? path : [{path}];
 
-    const result = composeCursor(queries, options, createCursor.bind(null, firebase), run, path, identity);
-
-    if (result === undefined) {
-        return undefined;
-    }
-    return Object.defineProperty(result, "id", {
-        value: identity.id,
-        enumerable: true
-    });
+    return composeCursor(queries, options, createCursor.bind(null, firebase), run, path, identity);
 }
 
-function createCursor(firebase, path, options = {}, tracking = {}) {
+function createCursor(firebase, path, options = {}) {
     if (options === null || typeof options !== "object" || options instanceof Array) {
         fail("database/invalid-argument", "options must be an object.");
     }
@@ -28,8 +20,8 @@ function createCursor(firebase, path, options = {}, tracking = {}) {
     const state = {
         ...query,
         path,
+        entryPath: normalizePath(path),
         options,
-        tracking,
         count: 0,
         byKey: query.orderBy === undefined && !query.byValue,
         position: Object.freeze({index: -1, key: undefined, finished: false}),
@@ -78,7 +70,7 @@ async function readPage(state, key, value, size) {
 
 async function handleEntry(state, child) {
     const {handle} = state.options;
-    const entry = {key: child.key, value: child.val()};
+    const entry = {path: state.entryPath, key: child.key, value: child.val()};
     if (!handle) {
         return entry;
     }
@@ -95,7 +87,7 @@ async function handleEntry(state, child) {
     if (!saved.exists()) {
         return undefined;
     }
-    return {key: child.key, value: saved.val()};
+    return {path: state.entryPath, key: child.key, value: saved.val()};
 }
 
 function subscribe(state, notify, onError = state.options.onError) {
@@ -115,7 +107,7 @@ function subscribe(state, notify, onError = state.options.onError) {
                 && (startKey === undefined || child.key >= startKey)
                 && (endKey === undefined || child.key <= endKey)) {
                 state.count += type === "add" ? 1 : type === "remove" ? -1 : 0;
-                notify({type, entry: {key: child.key, value: child.val()}});
+                notify({type, entry: {path: state.entryPath, key: child.key, value: child.val()}});
             }
         }]);
     const unsubscribe = () => {
@@ -137,7 +129,7 @@ function subscribe(state, notify, onError = state.options.onError) {
 }
 
 async function next(state, n = 1) {
-    const {tracking, byKey, byValue, orderBy, startKey, endKey} = state;
+    const {byKey, byValue, orderBy, startKey, endKey} = state;
     if (!Number.isSafeInteger(n) || n <= 0) {
         fail("database/invalid-argument", "n must be a positive safe integer.");
     }
@@ -151,7 +143,7 @@ async function next(state, n = 1) {
             if (state.exhausted) {
                 break;
             }
-            const size = tracking.readSize?.() ?? n - entries.length;
+            const size = n - entries.length;
             state.buffer = await readPage(state, state.scanKey, state.scanValue, size);
             state.offset = 0;
             state.exhausted = state.buffer.length < size;
@@ -161,15 +153,13 @@ async function next(state, n = 1) {
         }
         const child = state.buffer[state.offset];
         const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
-        if ((startKey !== undefined && child.key < startKey) || (endKey !== undefined && child.key > endKey)
-            || tracking.accept?.(child.key) === false) {
+        if ((startKey !== undefined && child.key < startKey) || (endKey !== undefined && child.key > endKey)) {
             state.scanKey = child.key;
             state.scanValue = sortValue;
             state.offset++;
             continue;
         }
         const entry = await handleEntry(state, child);
-        tracking.processed?.(child.key);
         state.scanKey = child.key;
         state.scanValue = sortValue;
         state.offset++;
