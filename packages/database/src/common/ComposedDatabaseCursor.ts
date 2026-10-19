@@ -15,6 +15,9 @@ type Source = {
     offset: number;
     headers: DatabaseGroupEntry[];
 };
+type NextProps = {n: number; byGroup: boolean; entries: CursorEntry[]};
+type SourceProps = NextProps & {source: Source};
+
 type CreateCursor = (path: DatabasePath, options: DatabaseCursorOptions) => DatabaseCursor | undefined;
 
 interface CursorRun {
@@ -47,6 +50,40 @@ function isHeaderAncestor(header: DatabaseGroupEntry, entry: DatabaseGroupEntry)
         if (parent === header) return true;
     }
     return false;
+}
+
+function appendUniqueEntry(props: SourceProps & {
+    entry: DatabaseEntry; origin: DatabaseCursor;
+    seen: Map<string, Set<string>>; origins: WeakMap<DatabaseEntry, DatabaseCursor>;
+}) {
+    const {source, entries, entry, origin, seen, origins} = props;
+    const identity = origin.path === undefined ? `id:${origin.id}` : `path:${origin.path}`;
+    let keys = seen.get(identity);
+    if (!keys) {
+        keys = new Set();
+        seen.set(identity, keys);
+    }
+    if (!keys.has(entry.key)) {
+        keys.add(entry.key);
+        const returned = origins.has(entry) && origins.get(entry) !== origin ? {...entry} : entry;
+        origins.set(returned, origin);
+        entries.push(...source.headers.splice(0), returned);
+    }
+    return {...props, source, entries, seen, origins};
+}
+
+function formPage(props: NextProps & {header: CursorEntry[]; heading: DatabaseGroupEntry | undefined}) {
+    const {n, byGroup, entries, header, heading} = props;
+    const result = entries.splice(0, byGroup ? entries.length : n);
+    if (result.length) result.unshift(...header.splice(0));
+    if (heading) {
+        for (const entry of result) {
+            if (!isRecord(entry) && entry !== heading && !headerParents.has(entry)) {
+                headerParents.set(entry, heading);
+            }
+        }
+    }
+    return {...props, entries, header, result};
 }
 
 function unsubscribeSources(subscriptions: {subscription: DatabaseCursorSubscription; cursor: DatabaseCursor}[],
@@ -90,84 +127,91 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
     }
 
     async next(n = 1): Promise<CursorEntry[] | undefined> {
+        let props = await this.#prepareNext(n);
+        if (!props) return undefined;
+        try {
+            const collected = await this.#collectEntries(props);
+            if (!collected) {
+                this.#pending = props.entries;
+                return undefined;
+            }
+            props = collected;
+        } catch (error) {
+            this.#pending = props.entries;
+            throw error;
+        }
+        return this.#commitNext(formPage({...props, header: this.#header, heading: this._heading}));
+    }
+
+    async #prepareNext(n: number): Promise<NextProps | undefined> {
         const valid = await this.#run(async () => {
             this.#header.push(...await super.next(n) ?? []);
             return true;
         }, {onError: this.onError}, "cursor.next", {...this.#context, n});
         if (!valid) return undefined;
-
-        const byGroup = ComposedDatabaseCursor.#hasGroup(this);
-        const entries = this.#pending;
+        const props = {n, byGroup: ComposedDatabaseCursor.#hasGroup(this), entries: this.#pending};
         this.#pending = [];
-        try {
-            while (byGroup ? this.#turn < this.#sources.length
-                : entries.length < n && this.#sources.some(isSourceAvailable)) {
-                const source = this.#sources[this.#turn];
-                if (isSourceAvailable(source)) {
-                    if (source.offset === source.entries.length) {
-                        const read = () => source.cursor.next(n);
-                        const batch = source.cursor instanceof ComposedDatabaseCursor
-                            ? await read()
-                            : await this.#run(read, {onError: source.cursor.onError ?? this.onError},
-                                "cursor.next", {path: source.cursor.path, n});
-                        if (batch !== undefined) {
-                            const valid = this.#run(() => validateBatch(batch,
-                                ComposedDatabaseCursor.#hasGroup(source.cursor) ? Infinity : n,
-                                source.cursor.position.finished), {onError: this.onError},
-                                "cursor.next", {path: source.cursor.path, n});
-                            if (!valid) {
-                                this.#pending = entries;
-                                return undefined;
-                            }
-                        }
-                        if (batch === undefined) {
-                            this.#pending = entries;
-                            return undefined;
-                        }
-                        source.entries = batch;
-                        source.offset = 0;
-                    }
-                    do {
-                        if (source.offset === source.entries.length) break;
-                        const entry = source.entries[source.offset++];
-                        if (!isRecord(entry)) {
-                            source.headers = source.headers.filter(header => isHeaderAncestor(header, entry));
-                            source.headers.push(entry);
-                            continue;
-                        }
-                        const origin = source.cursor instanceof ComposedDatabaseCursor
-                            ? source.cursor.#origins.get(entry)! : source.cursor;
-                        const identity = origin.path === undefined ? `id:${origin.id}` : `path:${origin.path}`;
-                        let keys = this.#seen.get(identity);
-                        if (!keys) {
-                            keys = new Set();
-                            this.#seen.set(identity, keys);
-                        }
-                        if (!keys.has(entry.key)) {
-                            keys.add(entry.key);
-                            const returned = this.#origins.has(entry) && this.#origins.get(entry) !== origin
-                                ? {...entry} : entry;
-                            this.#origins.set(returned, origin);
-                            entries.push(...source.headers.splice(0), returned);
-                        }
-                    } while (byGroup);
-                }
-                this.#turn = byGroup ? this.#turn + 1 : (this.#turn + 1) % this.#sources.length;
+        return props;
+    }
+
+    async #collectEntries(props: NextProps): Promise<NextProps | undefined> {
+        const {n, byGroup} = props;
+        while (byGroup ? this.#turn < this.#sources.length
+            : props.entries.length < n && this.#sources.some(isSourceAvailable)) {
+            const source = this.#sources[this.#turn];
+            if (isSourceAvailable(source)) {
+                const filled = await this.#fillSource({...props, source});
+                if (!filled) return undefined;
+                const consumed = this.#consumeSource(filled);
+                props = {...props, entries: consumed.entries};
             }
-        } catch (error) {
-            this.#pending = entries;
-            throw error;
+            this.#turn = byGroup ? this.#turn + 1 : (this.#turn + 1) % this.#sources.length;
         }
+        return {...props, entries: props.entries};
+    }
+
+    async #fillSource(props: SourceProps): Promise<SourceProps | undefined> {
+        const {source, n} = props;
+        if (source.offset < source.entries.length) return props;
+        const read = () => source.cursor.next(n);
+        const batch = source.cursor instanceof ComposedDatabaseCursor
+            ? await read()
+            : await this.#run(read, {onError: source.cursor.onError ?? this.onError},
+                "cursor.next", {path: source.cursor.path, n});
+        if (batch === undefined) return undefined;
+        const valid = this.#run(() => validateBatch(batch,
+            ComposedDatabaseCursor.#hasGroup(source.cursor) ? Infinity : n,
+            source.cursor.position.finished), {onError: this.onError},
+            "cursor.next", {path: source.cursor.path, n});
+        if (!valid) return undefined;
+        source.entries = batch;
+        source.offset = 0;
+        return {...props, source};
+    }
+
+    #consumeSource(props: SourceProps): SourceProps {
+        const {source, byGroup} = props;
+        let {entries} = props;
+        do {
+            if (source.offset === source.entries.length) break;
+            const entry = source.entries[source.offset++];
+            if (!isRecord(entry)) {
+                source.headers = source.headers.filter(header => isHeaderAncestor(header, entry));
+                source.headers.push(entry);
+                continue;
+            }
+            const origin = source.cursor instanceof ComposedDatabaseCursor
+                ? source.cursor.#origins.get(entry)! : source.cursor;
+            const appended = appendUniqueEntry({...props, entries, entry, origin,
+                seen: this.#seen, origins: this.#origins});
+            entries = appended.entries;
+        } while (byGroup);
+        return {...props, source, entries};
+    }
+
+    #commitNext(props: NextProps & {result: CursorEntry[]}): CursorEntry[] {
+        const {byGroup, entries, result} = props;
         if (byGroup) this.#turn = 0;
-        const result = entries.splice(0, byGroup ? entries.length : n);
-        if (result.length) result.unshift(...this.#header.splice(0));
-        if (this._heading) {
-            for (const entry of result) {
-                if (!isRecord(entry) && entry !== this._heading && !headerParents.has(entry)) {
-                    headerParents.set(entry, this._heading);
-                }
-            }
-        }
         this.#pending = entries;
         this._position = Object.freeze({
             index: this._position.index + result.length,

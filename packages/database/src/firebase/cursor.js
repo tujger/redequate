@@ -21,7 +21,7 @@ export default class FirebaseCursor extends DatabaseCursor {
         this.#header.push(...await super.next(n));
         if (this.position.finished) return [];
         const state = this.#state;
-        const entries = await readEntries(state, this.handle, n);
+        const {entries} = await readEntries({state, handle: this.handle, n, entries: []});
         const result = [...this.#header.splice(0), ...entries];
         this._position = Object.freeze({
             index: this.position.index + result.length,
@@ -46,32 +46,49 @@ export default class FirebaseCursor extends DatabaseCursor {
     }
 }
 
-async function readEntries(state, handle, n) {
-    const {byValue, orderBy, startKey, endKey} = state;
-    const byKey = orderBy === undefined && !byValue;
-    const entries = [];
+async function readEntries(props) {
+    const {state, n, entries} = props;
     while (entries.length < n) {
-        if (state.offset === state.buffer.length) {
-            if (state.exhausted) break;
-            const size = n - entries.length;
-            state.buffer = await readPage(state, state.scanKey, state.scanValue, size);
-            state.offset = 0;
-            state.exhausted = state.buffer.length < size;
-            if (!state.buffer.length) break;
-        }
-        const child = state.buffer[state.offset];
-        // Capture the ordered value before handle can replace or delete it.
-        const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
-        const inRange = (startKey === undefined || child.key >= startKey)
-            && (endKey === undefined || child.key <= endKey);
-        const entry = inRange ? await handleEntry(handle, child) : undefined;
-        state.scanKey = child.key;
-        state.scanValue = sortValue;
-        state.offset++;
-        if (entry !== undefined) entries.push(entry);
+        props = await fillBuffer(props);
+        if (state.offset === state.buffer.length) break;
+        props = prepareCandidate(props);
+        props = await handleEntry(props);
+        props = advanceScan(props);
     }
-    return entries;
+    return {...props, state, entries};
 }
+
+const fillBuffer = async (props) => {
+    const {state, n, entries} = props;
+    if (state.offset < state.buffer.length || state.exhausted) return props;
+    const page = await readPage({...props, key: state.scanKey, value: state.scanValue, size: n - entries.length});
+    state.buffer = page.children;
+    state.offset = 0;
+    state.exhausted = page.children.length < page.size;
+    return {...props, state};
+};
+
+const prepareCandidate = (props) => {
+    const {state} = props;
+    const {byValue, orderBy, startKey, endKey} = state;
+    const child = state.buffer[state.offset];
+    const byKey = orderBy === undefined && !byValue;
+    // Capture the ordered value before handle can replace or delete it.
+    const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
+    const inRange = (startKey === undefined || child.key >= startKey)
+        && (endKey === undefined || child.key <= endKey);
+    return {...props, child, sortValue, entry: inRange ? {key: child.key, value: child.val()} : undefined,
+        replacement: undefined};
+};
+
+const advanceScan = (props) => {
+    const {state, child, sortValue, entry, entries} = props;
+    state.scanKey = child.key;
+    state.scanValue = sortValue;
+    state.offset++;
+    if (entry !== undefined) entries.push(entry);
+    return {...props, state, entries};
+};
 
 function subscribeEntries(state, notify, onError) {
     const {initialQuery, startKey, endKey} = state;
@@ -108,16 +125,23 @@ function subscribeEntries(state, notify, onError) {
     return {unsubscribe};
 }
 
-function detachCallbacks(query, callbacks) {
+const detachCallbacks = (query, callbacks) => {
     let failure;
     for (const [event, callback] of callbacks) {
         try { query.off(event, callback); }
         catch (error) { failure ??= {error}; }
     }
     if (failure) throw failure.error;
+};
+
+async function readPage(props) {
+    props = preparePageQuery(props);
+    props = await fetchPage(props);
+    return extractChildren(props);
 }
 
-async function readPage(state, key, value, size) {
+const preparePageQuery = (props) => {
+    const {state, key, value, size} = props;
     const {initialQuery, continuationQuery, ascending, orderBy, byValue} = state;
     const byKey = orderBy === undefined && !byValue;
     let query = key === undefined ? initialQuery : continuationQuery;
@@ -130,36 +154,47 @@ async function readPage(state, key, value, size) {
     }
     const limit = key === undefined ? size : size + 1;
     query = ascending ? query.limitToFirst(limit) : query.limitToLast(limit);
-    const snapshot = await query.once("value");
+    return {...props, query};
+};
+
+const fetchPage = async (props) => {
+    const {query} = props;
+    return {...props, snapshot: await query.once("value")};
+};
+
+const extractChildren = (props) => {
+    const {state, snapshot, key} = props;
     const children = [];
     snapshot.forEach(child => {
-        if (child.key !== key) {
-            children.push(child);
-        }
+        if (child.key !== key) children.push(child);
     });
-    if (!ascending) {
-        children.reverse();
-    }
-    return children;
+    if (!state.ascending) children.reverse();
+    return {...props, children};
+};
+
+async function handleEntry(props) {
+    props = await invokeHandle(props);
+    props = await saveReplacement(props);
+    return rereadEntry(props);
 }
 
-async function handleEntry(handle, child) {
-    const entry = {key: child.key, value: child.val()};
-    if (!handle) {
-        return entry;
-    }
+const invokeHandle = async (props) => {
+    const {handle, entry} = props;
+    if (!handle || entry === undefined) return props;
     // A handler may mutate its input without requesting a write.
-    const replacement = await handle(structuredClone(entry));
-    if (replacement === undefined) {
-        return entry;
-    }
+    return {...props, replacement: await handle(structuredClone(entry))};
+};
+
+const saveReplacement = async (props) => {
+    const {child, replacement} = props;
+    if (replacement === undefined) return props;
     await child.ref.set(replacement);
-    if (replacement === null) {
-        return undefined;
-    }
+    return {...props, entry: undefined};
+};
+
+const rereadEntry = async (props) => {
+    const {child, replacement} = props;
+    if (replacement === undefined || replacement === null) return props;
     const saved = await child.ref.once("value");
-    if (!saved.exists()) {
-        return undefined;
-    }
-    return {key: child.key, value: saved.val()};
-}
+    return {...props, entry: saved.exists() ? {key: child.key, value: saved.val()} : undefined};
+};
