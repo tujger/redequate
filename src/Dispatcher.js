@@ -132,8 +132,7 @@ export default (props) => {
         }
         const initAuth = async props => {
             try {
-                const auth = await resolveAuth(authGiven, props.database);
-                auth._UserData = UserData;
+                const auth = await resolveAuth(authGiven, {database: props.database, UserData});
                 console.log("[Dispatcher]", "auth resolved", {auth});
                 return {...props, auth};
             } catch (error) {

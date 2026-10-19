@@ -2,6 +2,7 @@ import compatFirebase from "firebase/compat/app";
 import {connectAuthEmulator, getAuth} from "firebase/auth";
 import "fake-indexeddb/auto";
 import Firebase from "../controllers/Firebase";
+import {UserData} from "../controllers/UserData";
 import FirebaseDatabase from "../../packages/database/src/firebase";
 import FirebaseAuth from "../../packages/auth/src/firebase";
 
@@ -22,7 +23,7 @@ export const sdkAuth = getAuth(firebase.app);
 connectAuthEmulator(sdkAuth, `http://${authHost}`, {disableWarnings: true});
 firebase.database().useEmulator("127.0.0.1", 9000);
 export const database = new FirebaseDatabase({firebase});
-export const auth = new FirebaseAuth({firebase});
+export const auth = new FirebaseAuth({firebase, database, UserData});
 
 export async function emulatorRequest(path, options = {}) {
     const response = await fetch(`http://${authHost}/emulator/v1/projects/${projectId}/${path}`, options);
