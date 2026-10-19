@@ -168,8 +168,7 @@ function EditProfile(props) {
         const updateFieldsInAuth = async () => {
             if (isSameUser(userData, currentUserData)) {
                 auth.updateProfile({
-                    displayName: userData.name,
-                    photoURL: userData.image
+                    public: {name: userData.name, image: userData.image}
                 }).catch(console.error)
             }
         }
