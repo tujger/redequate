@@ -2517,9 +2517,12 @@ including rollback, concurrent session changes and single-delay behavior.
 
 Decision: keep AuthBase.ts at packages/auth/src with its interfaces and type
 aliases in that same file. Type database, profile sections, provider/email options,
-callbacks, unsubscribe and Promise results; a generic UserData parameter preserves
-custom model contracts. Shared construction is now owned by AuthBase, as described
-below. Move resolveAuth, loadUserData and saveUserData into src/common;
+callbacks, unsubscribe and Promise results. AuthBase guarantees the UserData
+contract; custom model constructors remain supported at runtime. Generic standalone
+interfaces remain available, but the base class itself is not generic: its default
+constructor cannot guarantee an arbitrary subtype. Shared construction is now
+owned by AuthBase, as described below. Move resolveAuth, loadUserData and
+saveUserData into src/common;
 provider implementations and helpers remain JavaScript. Public entry paths,
 lazy default Auth and runtime behavior are unchanged. Declaration generation and
 mandatory type checking remain separate work.

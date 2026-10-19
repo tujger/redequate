@@ -78,17 +78,17 @@ export interface AuthImplementation<User extends UserData = UserData> {
     updateProfile(fields: AuthProfileFields): Promise<void>;
 }
 
-export default class AuthBase<User extends UserData = UserData> {
+export default class AuthBase {
     database?: DatabaseBase;
-    #UserData: AuthUserDataConstructor<User>;
+    #UserData: AuthUserDataConstructor;
 
-    constructor(options: AuthOptions<User> = {}) {
+    constructor(options: AuthOptions = {}) {
         validateConstructorOptions(options);
         this.database = options.database;
-        this.#UserData = options.UserData ?? DefaultUserData as AuthUserDataConstructor<User>;
+        this.#UserData = options.UserData ?? DefaultUserData;
     }
 
-    protected _createUserData = (data?: AuthUserDataJSON): User => {
+    protected _createUserData = (data?: AuthUserDataJSON): UserData => {
         if (data !== undefined && (typeof data.id !== "string" || !data.id)) {
             fail("auth/invalid-user-data", "Auth user has no identifier.");
         }
@@ -122,11 +122,11 @@ export default class AuthBase<User extends UserData = UserData> {
         this._requireDatabase();
     }
 
-    onAuthStateChanged(callback: AuthStateCallback<User>, onError?: AuthErrorCallback): void {
+    onAuthStateChanged(callback: AuthStateCallback, onError?: AuthErrorCallback): void {
         validateCallbacks(callback, onError);
     }
 
-    async resolveRedirectResult(): Promise<User | null> {
+    async resolveRedirectResult(): Promise<UserData | null> {
         return notImplemented("resolveRedirectResult");
     }
 
@@ -180,7 +180,7 @@ export default class AuthBase<User extends UserData = UserData> {
         validateString(password, "password");
     }
 
-    protected async _saveProfile(user: Pick<User, "id">, fields: AuthProfileFields): Promise<void> {
+    protected async _saveProfile(user: Pick<UserData, "id">, fields: AuthProfileFields): Promise<void> {
         if (!user?.id) fail("auth/no-current-user", "An authenticated user is required.");
         validateProfile(fields);
         await saveUserData(user, fields, this._requireDatabase());
