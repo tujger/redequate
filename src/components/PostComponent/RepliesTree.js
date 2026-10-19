@@ -27,7 +27,7 @@ export default (props) => {
     const pages = usePages();
     const [state, setState] = React.useState({});
     const windowData = useWindowData();
-    const {expanded, replies, userReplied, paginationOptions, rotating} = state;
+    const {expanded, replies, userReplied, cursorOptions, rotating} = state;
     const {settings = {}} = metaInfo || {};
     const {postsRotateReplies} = settings;
 
@@ -35,7 +35,7 @@ export default (props) => {
 
     React.useEffect(() => {
         let isMounted = true;
-        const paginationOptions = {
+        const cursorOptions = {
             equalTo: postId,
             order: DatabaseOrder.DESC,
             orderBy: ["to"],
@@ -59,7 +59,7 @@ export default (props) => {
             if (expand && level === 0) {
                 throw {
                     expanded: true,
-                    paginationOptions: {
+                    cursorOptions: {
                         equalTo: expand,
                     },
                     a: 2
@@ -74,7 +74,7 @@ export default (props) => {
             if (level === 0) throw {expanded: true, a: 5};
         }
         const fetchExistingRepliesIfComment = async () => {
-            return database.cursor([type], paginationOptions).next(10);
+            return database.cursor([type], cursorOptions).next(10);
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {
@@ -91,7 +91,7 @@ export default (props) => {
         }
         const updateState = async props => {
             if (props instanceof Error) throw props;
-            isMounted && setState(state => ({...state, paginationOptions, ...props}))
+            isMounted && setState(state => ({...state, cursorOptions, ...props}))
         }
         const finalizeChecking = async () => {
         }
@@ -114,7 +114,7 @@ export default (props) => {
         }
     }, [givenExpanded]);
 
-    if (!paginationOptions) return null;
+    if (!cursorOptions) return null;
     if (postsRotateReplies === "outside" && rotating && replies && replies.length) {
         return <div className={replyStyles.replyRow}>
             <div className={replyStyles.replyIndent}/>
@@ -169,7 +169,7 @@ export default (props) => {
             <div className={cardStyles.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
-                    cursor={database.cursor([type], paginationOptions)}
+                    cursor={database.cursor([type], cursorOptions)}
                     itemTransform={postItemTransform({
                         auth,
                         allowedExtras,
