@@ -358,7 +358,7 @@ export default ({uploadable}) => {
                         mention={{
                             ...mentionUsers,
                             trigger: "",
-                            pagination: () => database.cursor(["roles"], {
+                            cursor: () => database.cursor(["roles"], {
                                 equalTo: "admin"
                             }),
                             transform: item => new UserData(database)
