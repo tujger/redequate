@@ -260,7 +260,8 @@ export default class DatabaseBase {
      * Ready cursors retain their options and may themselves be compositions.
      */
     cursor(path: DatabasePath | (DatabaseCursorSource | DatabaseCursor)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
-        return new DatabaseCursor(options);
+        return new DatabaseCursor(options, typeof path === "string"
+            || path instanceof Array && path.every(part => typeof part === "string") ? path as DatabasePath : undefined);
     }
 
     /**
