@@ -14,7 +14,7 @@ import ProgressView from "../components/ProgressView";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
 import {useDatabase, useRedirectToLogin, useStorage} from "../controllers";
-import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
+import {cacheDatas, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
@@ -30,7 +30,6 @@ export default ({allowOwner = true}) => {
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const {id} = useParams();
