@@ -59,10 +59,10 @@ export default class PagesCursor extends DatabaseCursor {
         while (result.length - initial < n && this.#pages.length) {
             const page = this.#pages.shift()!;
             if (!matchRole(page.roles, user)) continue;
-            result.push({path: "pages", key: pageKey(page),
+            result.push({key: pageKey(page),
                 value: {route: page.route, name: page.label || page.title || ""}});
         }
-        const count = result.length - initial;
+        const count = result.length;
         this._count += count;
         this._position = Object.freeze({
             index: this.position.index + count,
