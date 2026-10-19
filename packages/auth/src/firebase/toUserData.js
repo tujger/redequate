@@ -1,7 +1,7 @@
 import {fail, UserData} from "../../../common";
 
-export const toUserData = (user, Component = UserData) => {
-    if (!user) return new Component();
+export const toUserData = (user, Component = UserData, database) => {
+    if (!user) return new Component(database);
     const json = user.toJSON();
     if (!json.uid) {
         fail("auth/invalid-user-data", "Auth user has no identifier.")
@@ -12,7 +12,7 @@ export const toUserData = (user, Component = UserData) => {
         const number = Number(value);
         return value !== null && value !== undefined && value !== "" && Number.isFinite(number) ? number : null;
     };
-    return new Component().fromJSON({
+    return new Component(database).fromJSON({
         id: json.uid,
         role: null,
         public: {

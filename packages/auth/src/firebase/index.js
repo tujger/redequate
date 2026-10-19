@@ -18,18 +18,24 @@ import {
     updatePassword,
     updateProfile
 } from "firebase/auth";
-import {fail} from "../../../common";
+import {fail, UserData} from "../../../common";
 import AuthBase from "../AuthBase";
 import {toUserData} from "./toUserData";
+import loadUserData from "../loadUserData";
 
 export default class FirebaseAuth extends AuthBase {
     _auth = undefined;
-    _UserData = undefined;
+    #UserData;
 
-    constructor({firebase, UserData: Component}) {
+    constructor({firebase, database, UserData: Component = UserData}) {
         super();
         this._auth = getAuth(firebase.app);
-        this._UserData = Component;
+        this.#UserData = Component;
+        this.database = database;
+    }
+
+    userData(user) {
+        return loadUserData(toUserData(user, this.#UserData, this.database), this.database);
     }
 
     currentUser() {
@@ -46,7 +52,7 @@ export default class FirebaseAuth extends AuthBase {
 
     async createUserWithEmailAndPassword(email, password) {
         return createUserWithEmailAndPassword(this._auth, email, password)
-            .then(result => toUserData(result?.user, this._UserData));
+            .then(result => this.userData(result?.user));
     }
 
     async onAuthStateChanged(callback, onError) {
@@ -61,25 +67,36 @@ export default class FirebaseAuth extends AuthBase {
                 console.error("[FirebaseAuth] Auth error callback failed", callbackError);
             }
         };
-        return onAuthStateChanged(this._auth, user => {
+        let sequence = 0;
+        let active = true;
+        const unsubscribe = onAuthStateChanged(this._auth, user => {
+            const current = ++sequence;
             try {
-                const pending = callback(toUserData(user, this._UserData));
+                const result = this.userData(user);
+                const deliver = loaded => {
+                    if (active && current === sequence) return callback(loaded);
+                };
+                const pending = result && result.then instanceof Function ? result.then(deliver) : deliver(result);
                 if (pending && pending.then instanceof Function) pending.catch(reportError);
             } catch (error) {
                 reportError(error);
             }
         }, reportError);
+        return () => {
+            active = false;
+            unsubscribe();
+        };
     }
 
     async resolveCurrentUser() {
         await this._auth.authStateReady();
         const user = this._auth.currentUser;
-        return toUserData(user, this._UserData);
+        return this.userData(user);
     }
 
     async resolveRedirectResult() {
         return getRedirectResult(this._auth)
-            .then(result => result?.user ? toUserData(result.user, this._UserData) : null);
+            .then(result => result?.user ? this.userData(result.user) : null);
     }
 
     async sendEmailVerification(options) {
@@ -101,22 +118,22 @@ export default class FirebaseAuth extends AuthBase {
     async signInWithCredential(token) {
         const credential = GoogleAuthProvider.credential(token);
         return signInWithCredential(this._auth, credential)
-            .then(result => toUserData(result?.user, this._UserData));
+            .then(result => this.userData(result?.user));
     }
 
     async signInWithEmailAndPassword(email, password) {
         return signInWithEmailAndPassword(this._auth, email, password)
-            .then(result => toUserData(result?.user, this._UserData));
+            .then(result => this.userData(result?.user));
     }
 
     async signInWithEmailLink(email) {
         return signInWithEmailLink(this._auth, email, window.location.href)
-            .then(result => toUserData(result?.user, this._UserData));
+            .then(result => this.userData(result?.user));
     }
 
     async signInWithPopup(provider, options) {
         return signInWithPopup(this._auth, this.provider(provider))
-            .then(result => toUserData(result?.user, this._UserData));
+            .then(result => this.userData(result?.user));
     }
 
     async signInWithRedirect(provider, options) {
