@@ -1,7 +1,7 @@
 import {delay, fail} from "../../../common";
 import {read, login, providerAccount} from "./common";
 
-export default async function signInWithCredential(auth, credential) {
+export default async function signInWithCredential(auth, credential, UserData) {
     await delay("LocalAuth", "signInWithCredential");
     if (!credential || (typeof credential === "string" && !credential.trim()) ||
         (typeof credential !== "string" && typeof credential !== "object")) {
@@ -9,5 +9,5 @@ export default async function signInWithCredential(auth, credential) {
     }
     const state = read(auth);
     return login(auth, state, providerAccount(state,
-        typeof credential === "string" ? "google.com" : credential.provider || credential.providerId));
+        typeof credential === "string" ? "google.com" : credential.provider || credential.providerId), UserData);
 }

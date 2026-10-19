@@ -1,7 +1,7 @@
 import {delay, fail} from "../../../common";
 import {normalizeEmail, checkPassword, read, createAccount, login} from "./common";
 
-export default async function createUserWithEmailAndPassword(auth, email, password) {
+export default async function createUserWithEmailAndPassword(auth, email, password, UserData) {
     await delay("LocalAuth", "createUserWithEmailAndPassword");
     email = normalizeEmail(email);
     checkPassword(password);
@@ -11,5 +11,5 @@ export default async function createUserWithEmailAndPassword(auth, email, passwo
     }
     const account = createAccount(email, "password", password);
     state.accounts.push(account);
-    return login(auth, state, account);
+    return login(auth, state, account, UserData);
 }

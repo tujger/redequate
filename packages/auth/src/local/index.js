@@ -1,5 +1,6 @@
-import {delay, fail} from "../../../common";
+import {delay, fail, UserData} from "../../../common";
 import AuthBase from "../AuthBase";
+import loadUserData from "../loadUserData";
 import {
     changePassword,
     current,
@@ -20,31 +21,34 @@ import updateProfile from "./updateProfile";
 
 // Local simulation only: passwords and fake tokens are stored in plain text.
 export default class LocalAuth extends AuthBase {
-    constructor({storageKey = "redequate:auth:local", UserData = undefined} = {}) {
+    #UserData;
+
+    constructor({storageKey = "redequate:auth:local", database, UserData: Component = UserData} = {}) {
         super();
         if (!storageKey.trim()) {
             fail("auth/invalid-argument", "storageKey must be a non-empty string.");
         }
         this.storageKey = storageKey;
-        this._UserData = UserData;
+        this.#UserData = Component;
+        this.database = database;
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        return createUserWithEmailAndPassword(this, email, password);
+        return createUserWithEmailAndPassword(this, email, password, this.#UserData);
     }
 
     async signInWithEmailAndPassword(email, password) {
-        return signInWithEmailAndPassword(this, email, password);
+        return signInWithEmailAndPassword(this, email, password, this.#UserData);
     }
 
     async onAuthStateChanged(callback, onError) {
-        return onAuthStateChanged(this, callback, onError);
+        return onAuthStateChanged(this, callback, onError, this.#UserData);
     }
 
     async resolveCurrentUser() {
         await delay("LocalAuth", "resolveCurrentUser");
         const state = read(this);
-        return toUserData(state.accounts.find(account => account.uid === state.session?.uid), this._UserData);
+        return loadUserData(toUserData(state.accounts.find(account => account.uid === state.session?.uid), this.#UserData, this.database), this.database);
     }
 
     async signOut() {
@@ -58,11 +62,11 @@ export default class LocalAuth extends AuthBase {
     async signInWithPopup(provider, options) {
         await delay("LocalAuth", "signInWithPopup");
         const state = read(this);
-        return login(this, state, providerAccount(state, provider));
+        return login(this, state, providerAccount(state, provider), this.#UserData);
     }
 
     async signInWithCredential(credential) {
-        return signInWithCredential(this, credential);
+        return signInWithCredential(this, credential, this.#UserData);
     }
 
     async signInWithRedirect(provider, options) {
@@ -70,7 +74,7 @@ export default class LocalAuth extends AuthBase {
         const state = read(this);
         const account = providerAccount(state, provider);
         state.redirect = account.uid;
-        login(this, state, account);
+        await login(this, state, account, this.#UserData);
     }
 
     async resolveRedirectResult() {
@@ -78,9 +82,14 @@ export default class LocalAuth extends AuthBase {
         const state = read(this);
         if (!state.redirect) return null;
         const account = state.accounts.find(item => item.uid === state.redirect);
+        const previousState = JSON.stringify(state);
+        const user = await loadUserData(toUserData(account, this.#UserData, this.database), this.database);
+        if (JSON.stringify(read(this)) !== previousState) {
+            fail("auth/state-changed", "Local authentication changed while resolving redirect.");
+        }
         state.redirect = null;
         write(this, state);
-        return toUserData(account, this._UserData);
+        return user;
     }
 
     async sendEmailVerification(options) {
@@ -116,7 +125,7 @@ export default class LocalAuth extends AuthBase {
     }
 
     async signInWithEmailLink(email) {
-        return signInWithEmailLink(this, email);
+        return signInWithEmailLink(this, email, this.#UserData);
     }
 
     async updatePassword(password) {

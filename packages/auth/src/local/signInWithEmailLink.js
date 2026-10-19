@@ -1,7 +1,7 @@
 import {delay, fail} from "../../../common";
 import {normalizeEmail, read, createAccount, login} from "./common";
 
-export default async function signInWithEmailLink(auth, email) {
+export default async function signInWithEmailLink(auth, email, UserData) {
     await delay("LocalAuth", "signInWithEmailLink");
     email = normalizeEmail(email);
     const state = read(auth);
@@ -13,5 +13,5 @@ export default async function signInWithEmailLink(auth, email) {
     }
     account.emailVerified = true;
     state.links = state.links.filter(item => item !== email);
-    return login(auth, state, account);
+    return login(auth, state, account, UserData);
 }

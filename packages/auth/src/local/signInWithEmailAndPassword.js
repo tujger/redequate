@@ -1,7 +1,7 @@
 import {delay, fail} from "../../../common";
 import {normalizeEmail, read, login} from "./common";
 
-export default async function signInWithEmailAndPassword(auth, email, password) {
+export default async function signInWithEmailAndPassword(auth, email, password, UserData) {
     await delay("LocalAuth", "signInWithEmailAndPassword");
     email = normalizeEmail(email);
     const state = read(auth);
@@ -9,5 +9,5 @@ export default async function signInWithEmailAndPassword(auth, email, password) 
     if (!account || typeof password !== "string" || account.password === null || account.password !== password) {
         fail("auth/invalid-credential", "Invalid email or password.");
     }
-    return login(auth, state, account);
+    return login(auth, state, account, UserData);
 }

@@ -1,5 +1,5 @@
-
 import {delay, fail, identifier, UserData} from "../../../common";
+import loadUserData from "../loadUserData";
 
 export const changeEvent = "redequate:local-auth-changed";
 
@@ -69,12 +69,12 @@ export function current(state) {
     return account;
 }
 
-export function toUserData(account, Component = UserData) {
-    if (!account) return new Component();
+export function toUserData(account, Component = UserData, database) {
+    if (!account) return new Component(database);
     if (typeof account.uid !== "string" || !account.uid) {
         fail("auth/invalid-user-data", "Auth user has no identifier.");
     }
-    return new Component().fromJSON({
+    return new Component(database).fromJSON({
         id: account.uid,
         role: null,
         public: {
@@ -106,11 +106,17 @@ export function createAccount(email, provider = "password", password = null) {
     };
 }
 
-export function login(auth, state, account) {
-    account.lastLoginAt = Date.now();
+export async function login(auth, state, account, Component) {
+    const previousState = JSON.stringify(read(auth));
+    const lastLoginAt = Date.now();
+    const user = await loadUserData(toUserData({...account, lastLoginAt}, Component, auth.database), auth.database);
+    if (JSON.stringify(read(auth)) !== previousState) {
+        fail("auth/state-changed", "Local authentication changed during sign-in.");
+    }
+    account.lastLoginAt = lastLoginAt;
     state.session = {uid: account.uid, token: `local:${identifier()}`};
     write(auth, state);
-    return toUserData(account, auth._UserData);
+    return user;
 }
 
 export function providerAccount(state, provider) {
