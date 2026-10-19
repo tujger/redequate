@@ -197,6 +197,10 @@
             "import": "./core/messaging/firebase-worker.mjs",
             "require": "./core/messaging/firebase-worker.cjs"
         },
+        "./messaging/local": {
+            "import": "./core/messaging/local.mjs",
+            "require": "./core/messaging/local.cjs"
+        },
         "./storage": {
             "import": "./core/storage/index.mjs",
             "require": "./core/storage/index.cjs"
