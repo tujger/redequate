@@ -1,9 +1,8 @@
 import React from "react";
 import {Link} from "react-router-dom";
-import Pagination from "./FirebasePagination";
-import {normalizeSortName} from "./UserData";
 import {usePages} from "./General";
 import mentionStyles from "./styles/MentionTypes.module.css";
+import {normalizeSortName} from "./UserData";
 
 const ComponentUser = ({children, disableClick, display, label, id, className, style, ...rest}) => {
     const pages = usePages();
@@ -31,12 +30,9 @@ export const mentionUsers = {
     className: mentionStyles.user,
     displayTransform: (id, display) => "@" + display,
     markup: "$[user:__id__:__display__]",
-    pagination: (start) => new Pagination({
-        ref: "users_public",
-        child: "_sort_name",
-        size: 10,
+    cursor: (start, database) => database.cursor(["users_public"], {
+        orderBy: ["_sort_name"],
         start: normalizeSortName(start),
-        order: "asc"
     }),
     transform: item => ({id: item.key, display: item.value.name || item.value.email}),
     trigger: "@",
@@ -48,12 +44,9 @@ export const mentionTags = {
     className: mentionStyles.tag,
     displayTransform: (id, display) => "#" + display,
     markup: "$[tag:__id__:__display__]",
-    pagination: (start) => new Pagination({
-        ref: "tag",
-        child: "_sort_name",
-        size: 10,
+    cursor: (start, database) => database.cursor(["tag"], {
+        orderBy: ["_sort_name"],
         start: normalizeSortName(start),
-        order: "asc"
     }),
     transform: item => ({id: item.value.id, display: item.value.label}),
     trigger: "#",
