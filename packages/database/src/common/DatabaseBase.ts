@@ -21,13 +21,9 @@ export interface DatabaseEntry {
     value: DatabaseValue;
 }
 
-export interface DatabaseCursorEntry extends DatabaseEntry {
-    /** Normalized source collection path, excluding key; '' means root. */
-    readonly path: DatabasePath;
-}
-
-export interface DatabaseCursorGroupEntry extends DatabaseEntry {
-    value: {group: string};
+/** A group heading has no value; key is the configured group string. */
+export interface DatabaseGroupEntry {
+    key: string;
 }
 
 export interface DatabaseDraft {
@@ -75,7 +71,7 @@ export interface DatabaseCursorPosition {
 
 export interface DatabaseCursorEvent {
     type: "add" | "change" | "remove";
-    entry: DatabaseCursorEntry;
+    entry: DatabaseEntry;
 }
 
 export interface DatabaseCursorSubscription {
@@ -90,7 +86,7 @@ export interface DatabaseCursorSubscription {
 }
 
 export interface DatabaseCursorOptions extends DatabaseOptions {
-    /** Emit one heading before the first result; compositions return source blocks. */
+    /** Emit one heading before the first result; compositions return source blocks. Headings count as entries. */
     group?: string;
     /** Field path. If omitted, order by value when equalTo is defined, otherwise by key. */
     orderBy?: DatabasePath;
@@ -110,7 +106,7 @@ export interface DatabaseCursorOptions extends DatabaseOptions {
      * Runs sequentially on deep copies. Undefined leaves storage and the read value
      * unchanged; null deletes; any other result replaces the value and is reread.
      */
-    handle?: (entry: DatabaseCursorEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
+    handle?: (entry: DatabaseEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
 }
 
 /** Source options override outer options; explicit undefined clears an inherited option. */
@@ -255,11 +251,15 @@ export default class DatabaseBase {
      * Create a cursor over immediate children, initially before the first entry.
      * A non-empty array of source descriptions or fresh DatabaseCursor implementations
      * composes cursors in round-robin order; string arrays remain paths.
-     * Composition buffers next(n) results and deduplicates by normalized path + key.
+     * Records, handlers and events use plain {key, value} objects. Group headings
+     * are {key: group} objects, additional to the data page size. Null/undefined
+     * composition sources are skipped.
+     * Composition buffers next(n) results and deduplicates by the original source's
+     * normalized cursor.path + key, falling back to cursor.id + key without a path.
      * Each source runs its own handle before buffering; composition never reruns it.
      * Ready cursors retain their options and may themselves be compositions.
      */
-    cursor(path: DatabasePath | (DatabaseCursorSource | DatabaseCursor)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
+    cursor(path: DatabasePath | (DatabaseCursorSource | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
         return new DatabaseCursor(options, typeof path === "string"
             || path instanceof Array && path.every(part => typeof part === "string") ? path as DatabasePath : undefined);
     }

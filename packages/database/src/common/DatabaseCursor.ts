@@ -2,7 +2,7 @@ import normalizePath from "./normalizePath";
 import {DatabaseOrder} from "./DatabaseOrder";
 import {fail, identifier} from "../../../common";
 import type {
-    DatabaseCursorEntry, DatabaseCursorGroupEntry, DatabaseCursorEvent,
+    DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent,
     DatabaseCursorPosition, DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath
 } from "./DatabaseBase";
 
@@ -11,7 +11,15 @@ export class DatabaseCursor {
     readonly #id: string;
     readonly #options: Readonly<DatabaseCursorOptions>;
     readonly #path?: string;
-    #headingReturned = false;
+    protected _started = false;
+    protected _heading?: DatabaseGroupEntry;
+
+    protected static _assertFresh(cursor: DatabaseCursor): void {
+        if (cursor._started) {
+            fail("database/invalid-argument", "Composition requires fresh cursors used exclusively by the composition.");
+        }
+    }
+
     protected _count = 0;
     protected _position: DatabaseCursorPosition = Object.freeze({index: -1, key: undefined, finished: false});
 
@@ -19,7 +27,8 @@ export class DatabaseCursor {
         if (options === null || typeof options !== "object" || options instanceof Array) {
             fail("database/invalid-argument", "options must be an object.");
         }
-        const {id = identifier(), group, order = DatabaseOrder.ASC, handle} = options;
+        const {id = identifier(), ...cursorOptions} = options;
+        const {group, order = DatabaseOrder.ASC, handle} = cursorOptions;
         if (group !== undefined && typeof group !== "string") {
             fail("database/invalid-argument", "group must be a string.");
         }
@@ -45,7 +54,7 @@ export class DatabaseCursor {
                 fail("database/invalid-argument", "Query bounds must be null, booleans, finite numbers or strings.");
             }
         }
-        this.#options = Object.freeze({...options, order,
+        this.#options = Object.freeze({...cursorOptions, order,
             orderBy: orderBy instanceof Array ? [...orderBy] : orderBy});
         this.#path = path === undefined ? undefined : normalizePath(path);
     }
@@ -66,16 +75,15 @@ export class DatabaseCursor {
     get count(): number { return this._count; }
     get position(): DatabaseCursorPosition { return this._position; }
 
-    /** Group headings are additional; grouped compositions return whole source blocks. */
-    async next(n = 1): Promise<(DatabaseCursorEntry | DatabaseCursorGroupEntry)[] | undefined> {
+    /** Validate and supply the initial heading; subclasses account for their complete result. */
+    async next(n = 1): Promise<(DatabaseEntry | DatabaseGroupEntry)[] | undefined> {
         if (!Number.isSafeInteger(n) || n <= 0) {
             fail("database/invalid-argument", "n must be a positive safe integer.");
         }
-        if (this.group === undefined || this.#headingReturned || this._position.finished) return [];
-        this.#headingReturned = true;
-        const heading = {key: this.path ?? this.id, value: {group: this.group}};
-        this._count++;
-        this._position = Object.freeze({...this._position, index: this._position.index + 1, key: heading.key});
+        this._started = true;
+        if (this.group === undefined || this._heading || this._position.finished) return [];
+        const heading = {key: this.group};
+        this._heading = heading;
         return [heading];
     }
 
