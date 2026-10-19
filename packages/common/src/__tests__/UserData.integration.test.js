@@ -60,9 +60,10 @@ test("watchUserChanged", async () => {
     const read = vi.spyOn(database, "read");
     const refresh = watchUserChanged({auth, database, getUserData, onUserChanged});
     try {
-        await vi.waitFor(() => expect(read).toHaveBeenCalled());
-        expect(read).toHaveBeenCalledWith(["users_public", user.id, "updated"]);
-        expect(await read.mock.results[0].value).toBe(updated);
+        const path = ["users_public", user.id, "updated"];
+        await vi.waitFor(() => expect(read).toHaveBeenCalledWith(path));
+        const index = read.mock.calls.findIndex(([requested]) => JSON.stringify(requested) === JSON.stringify(path));
+        expect(await read.mock.results[index].value).toBe(updated);
         await vi.waitFor(() => expect(notifySnackbar).toHaveBeenCalled());
         const warning = notifySnackbar.mock.calls.at(-1)[0];
         expect(warning).toMatchObject({variant: "warning", buttonLabel: "Refresh"});
