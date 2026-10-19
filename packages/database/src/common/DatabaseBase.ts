@@ -1,6 +1,8 @@
-import {identifier, notImplemented} from '../../../common'
+import {notImplemented} from '../../../common'
+import {DatabaseCursor} from "./DatabaseCursor";
 import {DatabaseOrder} from "./DatabaseOrder";
 
+export {DatabaseCursor};
 export {DatabaseOrder} from "./DatabaseOrder";
 
 /**
@@ -17,6 +19,15 @@ export interface DatabaseRecord {
 export interface DatabaseEntry {
     key: string;
     value: DatabaseValue;
+}
+
+export interface DatabaseCursorEntry extends DatabaseEntry {
+    /** Normalized source collection path, excluding key; '' means root. */
+    readonly path: DatabasePath;
+}
+
+export interface DatabaseCursorGroupEntry extends DatabaseEntry {
+    value: {group: string};
 }
 
 export interface DatabaseDraft {
@@ -64,7 +75,7 @@ export interface DatabaseCursorPosition {
 
 export interface DatabaseCursorEvent {
     type: "add" | "change" | "remove";
-    entry: DatabaseEntry;
+    entry: DatabaseCursorEntry;
 }
 
 export interface DatabaseCursorSubscription {
@@ -79,6 +90,8 @@ export interface DatabaseCursorSubscription {
 }
 
 export interface DatabaseCursorOptions extends DatabaseOptions {
+    /** Emit one heading before the first result; compositions return source blocks. */
+    group?: string;
     /** Field path. If omitted, order by value when equalTo is defined, otherwise by key. */
     orderBy?: DatabasePath;
     /** Exact match; excludes start/end, but allows date bounds. */
@@ -97,33 +110,12 @@ export interface DatabaseCursorOptions extends DatabaseOptions {
      * Runs sequentially on deep copies. Undefined leaves storage and the read value
      * unchanged; null deletes; any other result replaces the value and is reread.
      */
-    handle?: (entry: DatabaseEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
+    handle?: (entry: DatabaseCursorEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
 }
 
 /** Source options override outer options; explicit undefined clears an inherited option. */
 export interface DatabaseCursorSource extends DatabaseCursorOptions {
     path: DatabasePath;
-}
-
-/** Call methods sequentially, outside handle. Concurrent data changes may cause repeats or omissions. */
-export interface DatabaseCursor {
-    /** Unique to this cursor instance. */
-    readonly id: string;
-    /** Returned entries plus delivered adds minus removes; repeated deliveries count again. */
-    readonly count: number;
-    /** Outer cursor order; defaults to asc. */
-    readonly order: DatabaseOrder;
-    readonly position: DatabaseCursorPosition;
-
-    /**
-     * Return up to n surviving entries (default 1), or [] when finished.
-     * Filtered/deleted entries do not advance index. Reads are buffered until consumed.
-     * Errors preserve completed actions and progress; the failed entry can be retried.
-     */
-    next(n?: number): Promise<DatabaseEntry[] | undefined>;
-
-    /** Subscribe to changes without initial entries; returns an independent subscription. */
-    subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined;
 }
 
 export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;
@@ -261,13 +253,14 @@ export default class DatabaseBase {
 
     /**
      * Create a cursor over immediate children, initially before the first entry.
-     * A non-empty source-object array composes cursors in round-robin order;
-     * string arrays remain paths. Nested compositions are unsupported.
-     * Composition deduplicates by normalized path + key before handle, including
-     * deletions, for this cursor's lifetime. Each source uses its own effective onError.
+     * A non-empty array of source descriptions or fresh DatabaseCursor implementations
+     * composes cursors in round-robin order; string arrays remain paths.
+     * Composition buffers next(n) results and deduplicates by normalized path + key.
+     * Each source runs its own handle before buffering; composition never reruns it.
+     * Ready cursors retain their options and may themselves be compositions.
      */
-    cursor(path: DatabasePath | DatabaseCursorSource[], options: DatabaseCursorOptions = {}): Pick<DatabaseCursor, "id"> {
-        return Object.freeze({id: identifier()});
+    cursor(path: DatabasePath | (DatabaseCursorSource | DatabaseCursor)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
+        return new DatabaseCursor(options);
     }
 
     /**
