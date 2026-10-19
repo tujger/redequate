@@ -20,36 +20,10 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
 
     let refChildAdd, refChildRemove;
 
-    const valueListener = snapshot => {
-        if(snapshot.exists()) {
-            const value = snapshot.val();
-            // console.log(effectivePath, "onChange", snapshot.key, value)
-            onChange(value);
-        } else {
-            onChange(undefined);
-        }
-    }
-
-    const childAddListener = snapshot => {
-        const key = snapshot.key;
-        const value = snapshot.val();
-        // console.log(effectivePath, "onChildAdd", key, value)
-        onChildAdd({key, value});
-    }
-
-    const childChangeListener = snapshot => {
-        const key = snapshot.key;
-        const value = snapshot.val();
-        // console.log(effectivePath, "onChildChange", key, value)
-        onChildChange({key, value});
-    }
-
-    const childRemoveListener = snapshot => {
-        const key = snapshot.key
-        const value = snapshot.val();
-        // console.log(effectivePath, "onChildRemove", key, value)
-        onChildRemove({key, value});
-    }
+    const valueListener = notifyValue.bind(null, onChange);
+    const childAddListener = notifyEntry.bind(null, onChildAdd);
+    const childChangeListener = notifyEntry.bind(null, onChildChange);
+    const childRemoveListener = notifyEntry.bind(null, onChildRemove);
 
     const remove = () => {
         refChildAdd?.off("child_added", childAddListener);
@@ -79,4 +53,12 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
     }
 
     return {remove};
+}
+
+function notifyValue(handler, snapshot) {
+    handler(snapshot.exists() ? snapshot.val() : undefined);
+}
+
+function notifyEntry(handler, snapshot) {
+    handler({key: snapshot.key, value: snapshot.val()});
 }

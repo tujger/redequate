@@ -1,5 +1,4 @@
 import {DatabaseCursor} from "../common/DatabaseCursor";
-import normalizePath from "../common/normalizePath";
 import createCursorQuery from "./createCursorQuery";
 
 export default class FirebaseCursor extends DatabaseCursor {
@@ -8,18 +7,8 @@ export default class FirebaseCursor extends DatabaseCursor {
 
     constructor(firebase, path, options = {}) {
         super(options, path);
-        const query = createCursorQuery(firebase, path, this);
-        const cursor = this;
         this.#state = {
-            ...query,
-            path,
-            entryPath: normalizePath(path),
-            options: this,
-            get count() { return cursor._count; },
-            set count(value) { cursor._count = value; },
-            get position() { return cursor._position; },
-            set position(value) { cursor._position = value; },
-            byKey: query.orderBy === undefined && !query.byValue,
+            ...createCursorQuery(firebase, path, this),
             scanKey: undefined,
             scanValue: undefined,
             buffer: [],
@@ -29,28 +18,108 @@ export default class FirebaseCursor extends DatabaseCursor {
     }
 
     async next(n = 1) {
-        const position = this.position;
-        const heading = await super.next(n);
-        this.#header.push(...heading);
-        this._count -= heading.length;
-        this._position = position;
-        const entries = await next(this.#state, n);
-        const headers = this.#header.splice(0);
-        this._count += headers.length;
-        this._position = Object.freeze({...this.position,
-            index: this.position.index + headers.length,
-            key: entries.length ? this.position.key : headers.length ? headers[headers.length - 1].key : this.position.key});
-        return [...headers, ...entries];
+        this.#header.push(...await super.next(n));
+        if (this.position.finished) return [];
+        const state = this.#state;
+        const entries = await readEntries(state, this.handle, n);
+        const result = [...this.#header.splice(0), ...entries];
+        this._position = Object.freeze({
+            index: this.position.index + result.length,
+            key: result.length ? result[result.length - 1].key : this.position.key,
+            finished: state.exhausted && state.offset === state.buffer.length
+        });
+        this._count += result.length;
+        if (this.position.finished) {
+            state.buffer = [];
+            state.offset = 0;
+        }
+        return result;
     }
 
     subscribe(listener) {
         super.subscribe(listener);
-        return subscribe(this.#state, listener);
+        return subscribeEntries(this.#state, event => {
+            this._started = true;
+            this._count += event.type === "add" ? 1 : event.type === "remove" ? -1 : 0;
+            return listener(event);
+        }, error => this.onError(error, "cursor.subscribe", {path: this.path}));
     }
 }
 
+async function readEntries(state, handle, n) {
+    const {byValue, orderBy, startKey, endKey} = state;
+    const byKey = orderBy === undefined && !byValue;
+    const entries = [];
+    while (entries.length < n) {
+        if (state.offset === state.buffer.length) {
+            if (state.exhausted) break;
+            const size = n - entries.length;
+            state.buffer = await readPage(state, state.scanKey, state.scanValue, size);
+            state.offset = 0;
+            state.exhausted = state.buffer.length < size;
+            if (!state.buffer.length) break;
+        }
+        const child = state.buffer[state.offset];
+        // Capture the ordered value before handle can replace or delete it.
+        const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
+        const inRange = (startKey === undefined || child.key >= startKey)
+            && (endKey === undefined || child.key <= endKey);
+        const entry = inRange ? await handleEntry(handle, child) : undefined;
+        state.scanKey = child.key;
+        state.scanValue = sortValue;
+        state.offset++;
+        if (entry !== undefined) entries.push(entry);
+    }
+    return entries;
+}
+
+function subscribeEntries(state, notify, onError) {
+    const {initialQuery, startKey, endKey} = state;
+    let active = true, initialized = false, failed = false, registering = true;
+    const report = error => {
+        if (active && !failed) {
+            failed = true;
+            // Registration errors go through the composition's existing boundary.
+            if (registering) throw error;
+            onError(error);
+        }
+    };
+    const callbacks = [["child_added", "add"], ["child_changed", "change"], ["child_removed", "remove"]]
+        .map(([event, type]) => [event, child => {
+            if (active && initialized
+                && (startKey === undefined || child.key >= startKey)
+                && (endKey === undefined || child.key <= endKey)) {
+                return notify({type, entry: {key: child.key, value: child.val()}});
+            }
+        }]);
+    const unsubscribe = () => {
+        if (!active) return;
+        active = false;
+        detachCallbacks(initialQuery, callbacks);
+    };
+    try {
+        for (const [event, callback] of callbacks) initialQuery.on(event, callback, report);
+        initialQuery.once("value").then(() => { initialized = true; }, report);
+        registering = false;
+    } catch (error) {
+        unsubscribe();
+        throw error;
+    }
+    return {unsubscribe};
+}
+
+function detachCallbacks(query, callbacks) {
+    let failure;
+    for (const [event, callback] of callbacks) {
+        try { query.off(event, callback); }
+        catch (error) { failure ??= {error}; }
+    }
+    if (failure) throw failure.error;
+}
+
 async function readPage(state, key, value, size) {
-    const {initialQuery, continuationQuery, ascending, byKey} = state;
+    const {initialQuery, continuationQuery, ascending, orderBy, byValue} = state;
+    const byKey = orderBy === undefined && !byValue;
     let query = key === undefined ? initialQuery : continuationQuery;
     if (key !== undefined) {
         if (ascending) {
@@ -74,9 +143,8 @@ async function readPage(state, key, value, size) {
     return children;
 }
 
-async function handleEntry(state, child) {
-    const {handle} = state.options;
-    const entry = {path: state.entryPath, key: child.key, value: child.val()};
+async function handleEntry(handle, child) {
+    const entry = {key: child.key, value: child.val()};
     if (!handle) {
         return entry;
     }
@@ -93,90 +161,5 @@ async function handleEntry(state, child) {
     if (!saved.exists()) {
         return undefined;
     }
-    return {path: state.entryPath, key: child.key, value: saved.val()};
-}
-
-function subscribe(state, notify, onError = state.options.onError) {
-    const {path, initialQuery, startKey, endKey} = state;
-    let active = true;
-    let initialized = false;
-    let failed = false;
-    const report = error => {
-        if (active && !failed) {
-            failed = true;
-            onError(error, "cursor.subscribe", {path});
-        }
-    };
-    const callbacks = [["child_added", "add"], ["child_changed", "change"], ["child_removed", "remove"]]
-        .map(([event, type]) => [event, child => {
-            if (active && initialized
-                && (startKey === undefined || child.key >= startKey)
-                && (endKey === undefined || child.key <= endKey)) {
-                state.count += type === "add" ? 1 : type === "remove" ? -1 : 0;
-                notify({type, entry: {path: state.entryPath, key: child.key, value: child.val()}});
-            }
-        }]);
-    const unsubscribe = () => {
-        active = false;
-        for (const [event, callback] of callbacks) {
-            initialQuery.off(event, callback);
-        }
-    };
-    try {
-        for (const [event, callback] of callbacks) {
-            initialQuery.on(event, callback, report);
-        }
-        initialQuery.once("value").then(() => { initialized = true; }, report);
-    } catch (error) {
-        unsubscribe();
-        throw error;
-    }
-    return {unsubscribe};
-}
-
-async function next(state, n = 1) {
-    const {byKey, byValue, orderBy, startKey, endKey} = state;
-    if (state.position.finished) {
-        return [];
-    }
-
-    const entries = [];
-    while (entries.length < n) {
-        if (state.offset === state.buffer.length) {
-            if (state.exhausted) {
-                break;
-            }
-            const size = n - entries.length;
-            state.buffer = await readPage(state, state.scanKey, state.scanValue, size);
-            state.offset = 0;
-            state.exhausted = state.buffer.length < size;
-            if (!state.buffer.length) {
-                break;
-            }
-        }
-        const child = state.buffer[state.offset];
-        const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
-        if ((startKey !== undefined && child.key < startKey) || (endKey !== undefined && child.key > endKey)) {
-            state.scanKey = child.key;
-            state.scanValue = sortValue;
-            state.offset++;
-            continue;
-        }
-        const entry = await handleEntry(state, child);
-        state.scanKey = child.key;
-        state.scanValue = sortValue;
-        state.offset++;
-        if (entry === undefined) {
-            continue;
-        }
-        state.position = Object.freeze({index: state.position.index + 1, key: entry.key, finished: false});
-        entries.push(entry);
-    }
-    if (state.exhausted && state.offset === state.buffer.length) {
-        state.position = Object.freeze({...state.position, finished: true});
-        state.buffer = [];
-        state.offset = 0;
-    }
-    state.count += entries.length;
-    return entries;
+    return {key: child.key, value: saved.val()};
 }

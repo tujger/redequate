@@ -26,11 +26,15 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     cursor(path, options = {}) {
-        const queries = path instanceof Array && path.some(part => typeof part === "object")
+        const run = this.run.bind(this);
+        const queries = path instanceof Array && path.some(part => typeof part !== "string")
             ? path : [{path}];
-        return composeCursor(queries, options,
-            (path, options) => new FirebaseCursor(this.#firebase, path, options),
-            this.run.bind(this), path);
+        // Leave invalid options intact for the composition's constructor to validate.
+        const effective = options === null || typeof options !== "object" || options instanceof Array
+            ? options : {...options, onError: options.onError ?? this.onError};
+        return composeCursor(queries, effective,
+            (path, options) => new FirebaseCursor(this.#firebase, path,
+                {...options, onError: options?.onError ?? this.onError}), run, path);
     }
 
     async delete(path, options = {}) {
