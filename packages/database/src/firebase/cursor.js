@@ -1,46 +1,52 @@
-import {fail} from "../../../common";
-import {composeCursor, normalizePath} from "../common/cursor";
+import {DatabaseCursor} from "../common/DatabaseCursor";
+import normalizePath from "../common/normalizePath";
 import createCursorQuery from "./createCursorQuery";
 
-export default function cursor(firebase, path, options, identity, run) {
-    const queries = path instanceof Array && path.some(part => typeof part === "object")
-        ? path : [{path}];
+export default class FirebaseCursor extends DatabaseCursor {
+    #state;
+    #header = [];
 
-    return composeCursor(queries, options, createCursor.bind(null, firebase), run, path, identity);
-}
+    constructor(firebase, path, options = {}) {
+        super(options, path);
+        const query = createCursorQuery(firebase, path, this);
+        const cursor = this;
+        this.#state = {
+            ...query,
+            path,
+            entryPath: normalizePath(path),
+            options: this,
+            get count() { return cursor._count; },
+            set count(value) { cursor._count = value; },
+            get position() { return cursor._position; },
+            set position(value) { cursor._position = value; },
+            byKey: query.orderBy === undefined && !query.byValue,
+            scanKey: undefined,
+            scanValue: undefined,
+            buffer: [],
+            offset: 0,
+            exhausted: false
+        };
+    }
 
-function createCursor(firebase, path, options = {}) {
-    if (options === null || typeof options !== "object" || options instanceof Array) {
-        fail("database/invalid-argument", "options must be an object.");
+    async next(n = 1) {
+        const position = this.position;
+        const heading = await super.next(n);
+        this.#header.push(...heading);
+        this._count -= heading.length;
+        this._position = position;
+        const entries = await next(this.#state, n);
+        const headers = this.#header.splice(0);
+        this._count += headers.length;
+        this._position = Object.freeze({...this.position,
+            index: this.position.index + headers.length,
+            key: entries.length ? this.position.key : headers.length ? headers[headers.length - 1].key : this.position.key});
+        return [...headers, ...entries];
     }
-    if (options.handle !== undefined && !(options.handle instanceof Function)) {
-        fail("database/invalid-argument", "handle must be a function or undefined.");
+
+    subscribe(listener) {
+        super.subscribe(listener);
+        return subscribe(this.#state, listener);
     }
-    const query = createCursorQuery(firebase, path, options);
-    const state = {
-        ...query,
-        path,
-        entryPath: normalizePath(path),
-        options,
-        count: 0,
-        byKey: query.orderBy === undefined && !query.byValue,
-        position: Object.freeze({index: -1, key: undefined, finished: false}),
-        scanKey: undefined,
-        scanValue: undefined,
-        buffer: [],
-        offset: 0,
-        exhausted: false
-    };
-    return {
-        subscribe: subscribe.bind(null, state),
-        get count() {
-            return state.count;
-        },
-        get position() {
-            return state.position;
-        },
-        next: next.bind(null, state)
-    };
 }
 
 async function readPage(state, key, value, size) {
@@ -130,9 +136,6 @@ function subscribe(state, notify, onError = state.options.onError) {
 
 async function next(state, n = 1) {
     const {byKey, byValue, orderBy, startKey, endKey} = state;
-    if (!Number.isSafeInteger(n) || n <= 0) {
-        fail("database/invalid-argument", "n must be a positive safe integer.");
-    }
     if (state.position.finished) {
         return [];
     }

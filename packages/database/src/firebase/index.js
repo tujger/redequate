@@ -1,7 +1,8 @@
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
-import cursor from "./cursor";
+import FirebaseCursor from "./cursor";
+import {composeCursor} from "../common/ComposedDatabaseCursor";
 import deleteRecord from "./delete";
 import read from "./read";
 import update from "./update";
@@ -25,8 +26,11 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     cursor(path, options = {}) {
-        const tracking = super.cursor(path, options);
-        return cursor(this.#firebase, path, options, tracking, this.run.bind(this));
+        const queries = path instanceof Array && path.some(part => typeof part === "object")
+            ? path : [{path}];
+        return composeCursor(queries, options,
+            (path, options) => new FirebaseCursor(this.#firebase, path, options),
+            this.run.bind(this), path);
     }
 
     async delete(path, options = {}) {

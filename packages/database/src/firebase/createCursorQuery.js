@@ -1,5 +1,4 @@
 import {key} from "firebase-key";
-import {fail} from "../../../common";
 import {DatabaseOrder} from "../common/DatabaseOrder";
 import {resolvePath} from "./common";
 
@@ -13,15 +12,6 @@ export default function createCursorQuery(firebase, path, {
     order = DatabaseOrder.ASC
 }) {
     orderBy = resolvePath(orderBy);
-    if (orderBy !== undefined && (typeof orderBy !== "string" || !orderBy)) {
-        fail("database/invalid-argument", "orderBy must be a non-empty field path.");
-    }
-    if (order !== DatabaseOrder.ASC && order !== DatabaseOrder.DESC) {
-        fail("database/invalid-argument", "order must be asc or desc.");
-    }
-    if (equalTo !== undefined && (start !== undefined || end !== undefined)) {
-        fail("database/invalid-argument", "equalTo cannot be combined with start or end.");
-    }
     const startKey = startDate === undefined ? undefined : key(startDate, "min");
     const endKey = endDate === undefined ? undefined : key(endDate, "max");
     if (typeof start === "string" && end === undefined) {
