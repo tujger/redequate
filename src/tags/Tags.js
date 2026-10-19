@@ -71,7 +71,6 @@ const Tags = (props) => {
         // eslint-disable-next-line
     }, [mode, filter]);
 
-    let paginationOptions;
     let itemTransform = item => {
         return {
             key: item.key,
