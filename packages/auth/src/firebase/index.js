@@ -15,35 +15,30 @@ import {
     signInWithPopup,
     signInWithRedirect,
     signOut,
-    updatePassword,
-    updateProfile
+    updatePassword
 } from "firebase/auth";
-import {fail, UserData} from "../../../common";
 import AuthBase from "../AuthBase";
+import observeAuthState from "../common/observeAuthState";
+import saveCurrentProfile from "../common/saveCurrentProfile";
+import loadUserData from "../common/loadUserData";
+import initialProfile from "../common/initialProfile";
+import emailOptions from "../common/emailOptions";
 import {toUserData} from "./toUserData";
-import loadUserData from "../loadUserData";
 
 export default class FirebaseAuth extends AuthBase {
     _auth = undefined;
-    #UserData;
 
-    constructor({firebase, database, UserData: Component = UserData}) {
-        super();
-        this._auth = getAuth(firebase.app);
-        this.#UserData = Component;
-        this.database = database;
+    constructor(options = {}) {
+        super(options);
+        this._auth = getAuth(options.firebase.app);
     }
 
-    userData(user) {
-        return loadUserData(toUserData(user, this.#UserData, this.database), this.database);
+    _userData(user) {
+        return loadUserData(toUserData(user, this._createUserData), this.database);
     }
 
-    currentUser() {
-        const user = this._auth.currentUser;
-        if (!user) {
-            fail("auth/no-current-user", "An authenticated user is required.");
-        }
-        return user;
+    _currentUser() {
+        return this._requireCurrentUser(this._auth.currentUser);
     }
 
     async checkSignInWithEmailLink() {
@@ -51,93 +46,83 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        return createUserWithEmailAndPassword(this._auth, email, password)
-            .then(result => this.userData(result?.user));
+        super.createUserWithEmailAndPassword(email, password);
+        const result = await createUserWithEmailAndPassword(this._auth, email, password);
+        const user = toUserData(result?.user, this._createUserData);
+        await this._saveProfile(user, initialProfile(user));
+        return loadUserData(user, this.database);
     }
 
     async onAuthStateChanged(callback, onError) {
-        if (!(callback instanceof Function) || (onError !== undefined && !(onError instanceof Function))) {
-            fail("auth/invalid-argument", "Auth state listeners must be functions.");
-        }
-        const reportError = error => {
-            try {
-                if (onError) onError(error);
-                else console.error("[FirebaseAuth] Auth state observer failed", error);
-            } catch (callbackError) {
-                console.error("[FirebaseAuth] Auth error callback failed", callbackError);
-            }
-        };
-        let sequence = 0;
-        let active = true;
-        const unsubscribe = onAuthStateChanged(this._auth, user => {
-            const current = ++sequence;
-            try {
-                const result = this.userData(user);
-                const deliver = loaded => {
-                    if (active && current === sequence) return callback(loaded);
-                };
-                const pending = result && result.then instanceof Function ? result.then(deliver) : deliver(result);
-                if (pending && pending.then instanceof Function) pending.catch(reportError);
-            } catch (error) {
-                reportError(error);
-            }
-        }, reportError);
-        return () => {
-            active = false;
-            unsubscribe();
-        };
+        super.onAuthStateChanged(callback, onError);
+        return observeAuthState({
+            auth: this, callback, onError,
+            subscribe: (next, error) => onAuthStateChanged(this._auth, user => {
+                try {
+                    next(toUserData(user, this._createUserData));
+                } catch (failure) {
+                    error(failure);
+                }
+            }, error)
+        });
     }
 
-    async resolveCurrentUser() {
+    async resolveCurrentUser(options) {
+        super.resolveCurrentUser(options);
         await this._auth.authStateReady();
         const user = this._auth.currentUser;
-        return this.userData(user);
+        return this._userData(user);
     }
 
     async resolveRedirectResult() {
         return getRedirectResult(this._auth)
-            .then(result => result?.user ? this.userData(result.user) : null);
+            .then(result => result?.user ? this._userData(result.user) : null);
     }
 
     async sendEmailVerification(options) {
-        return sendEmailVerification(this.currentUser());
+        super.sendEmailVerification(options);
+        return sendEmailVerification(this._currentUser(), emailOptions(options));
     }
 
     async sendPasswordResetEmail(email, options) {
-        return sendPasswordResetEmail(this._auth, email);
+        super.sendPasswordResetEmail(email, options);
+        return sendPasswordResetEmail(this._auth, email, emailOptions(options));
     }
 
     async sendSignInLinkToEmail(email, options) {
-        const actionCodeSettings = {
-            url: window.location.origin + "/signup/" + email,
-            handleCodeInApp: true,
-        };
+        super.sendSignInLinkToEmail(email, options);
+        const actionCodeSettings = emailOptions(options, email);
         return sendSignInLinkToEmail(this._auth, email, actionCodeSettings)
     }
 
     async signInWithCredential(token) {
+        super.signInWithCredential(token);
         const credential = GoogleAuthProvider.credential(token);
         return signInWithCredential(this._auth, credential)
-            .then(result => this.userData(result?.user));
+            .then(result => this._userData(result?.user));
     }
 
     async signInWithEmailAndPassword(email, password) {
+        super.signInWithEmailAndPassword(email, password);
         return signInWithEmailAndPassword(this._auth, email, password)
-            .then(result => this.userData(result?.user));
+            .then(result => this._userData(result?.user));
     }
 
     async signInWithEmailLink(email) {
+        super.signInWithEmailLink(email);
         return signInWithEmailLink(this._auth, email, window.location.href)
-            .then(result => this.userData(result?.user));
+            .then(result => this._userData(result?.user));
     }
 
     async signInWithPopup(provider, options) {
-        return signInWithPopup(this._auth, this.provider(provider))
-            .then(result => this.userData(result?.user));
+        super.signInWithPopup(provider, options);
+        return signInWithPopup(this._auth, this._provider(provider))
+            .then(result => this._userData(result?.user));
     }
 
     async signInWithRedirect(provider, options) {
-        return signInWithRedirect(this._auth, this.provider(provider))
+        super.signInWithRedirect(provider, options);
+        return signInWithRedirect(this._auth, this._provider(provider))
     }
 
     async signOut() {
@@ -145,30 +130,32 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async updatePassword(password) {
-        return updatePassword(this.currentUser(), password)
+        super.updatePassword(password);
+        return updatePassword(this._currentUser(), password)
     }
 
-    async updateProfile({...fields}) {
-        return updateProfile(this.currentUser(), {...fields});
+    async updateProfile(fields) {
+        super.updateProfile(fields);
+        await saveCurrentProfile(this, fields);
     }
 
-    provider(provider) {
+    _provider(provider) {
         if (provider === "google.com") {
-            provider = this.providerGoogle();
+            provider = this._providerGoogle();
         } else if (provider === "facebook.com") {
-            provider = this.providerFacebook();
+            provider = this._providerFacebook();
         }
         return provider;
     }
 
-    providerGoogle() {
+    _providerGoogle() {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({prompt: "select_account"});
         provider.addScope("https://www.googleapis.com/auth/userinfo.email");
         return provider;
     }
 
-    providerFacebook() {
+    _providerFacebook() {
         const provider = new FacebookAuthProvider();
         provider.addScope("email");
         provider.setCustomParameters({prompt: "select_account"});
