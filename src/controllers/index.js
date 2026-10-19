@@ -6,7 +6,7 @@ export * from "./AppContext";
 export * from "./General";
 export * from "./DateFormat";
 export {default as Pagination} from "./FirebasePagination";
-export {default as PagesPagination} from "./PagesPagination";
+export {default as PagesCursor} from "./PagesCursor";
 export * as Store from "./Store";
 export {TextMaskEmail, TextMaskPhone} from "./TextMasks";
 export {default as ThemeSeason} from "../themes/ThemeSeason";

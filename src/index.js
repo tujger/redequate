@@ -10,6 +10,8 @@ export * from "./tags";
 export * from "./workers";
 export * from "./components/MutualComponent";
 
+export {DatabaseCursor} from "../packages/database/src/common/DatabaseCursor";
+
 export {default as Dispatcher} from "./Dispatcher";
 export {WebWorker} from "./workers/WebWorker";
 
