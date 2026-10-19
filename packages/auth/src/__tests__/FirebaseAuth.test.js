@@ -1,5 +1,6 @@
 import {vi} from "vitest";
 import {UserData} from "../../../common";
+import {createDatabase} from "./fixtures/database";
 import FirebaseAuth from "../firebase";
 import * as modularAuth from "firebase/auth";
 
@@ -15,6 +16,28 @@ vi.mock("firebase/auth", () => {
     };
 });
 beforeEach(() => vi.clearAllMocks());
+
+it.each(["sendEmailVerification", "sendPasswordResetEmail", "sendSignInLinkToEmail"])(
+    "forwards explicit email settings for %s without changing the caller's options", async method => {
+        const send = vi.fn().mockResolvedValue();
+        const user = {sendEmailVerification: send};
+        const sdk = {currentUser: user, [method]: send};
+        const auth = new FirebaseAuth({firebase: {app: sdk}, database: createDatabase()});
+        const options = Object.freeze({url: "https://example.test/continue", handleCodeInApp: false, language: "en"});
+        if (method === "sendEmailVerification") await auth[method](options);
+        else await auth[method]("user@example.test", options);
+        expect(send).toHaveBeenCalledWith(...(method === "sendEmailVerification" ? [] : ["user@example.test"]), options);
+    }
+);
+
+it("retains email-link defaults when supplied fields are undefined", async () => {
+    const sdk = {sendSignInLinkToEmail: vi.fn().mockResolvedValue()};
+    const auth = new FirebaseAuth({firebase: {app: sdk}});
+    await auth.sendSignInLinkToEmail("user@example.test", {url: undefined, handleCodeInApp: undefined});
+    expect(sdk.sendSignInLinkToEmail).toHaveBeenCalledWith("user@example.test", {
+        url: window.location.origin + "/signup/user@example.test", handleCodeInApp: true
+    });
+});
 
 const json = {
     uid: "sdk-user",
@@ -33,9 +56,9 @@ it.each(["createUserWithEmailAndPassword", "signInWithEmailAndPassword", "signIn
         const raw = sdkUser();
         const sdk = {[method]: vi.fn().mockResolvedValue({user: raw, credential: {secret: "hidden"}, additionalUserInfo: {isNewUser: true}})};
         const firebase = {app: sdk};
-        const auth = new FirebaseAuth({firebase});
+        const auth = new FirebaseAuth({firebase, database: createDatabase()});
         expect(modularAuth.getAuth).toHaveBeenCalledWith(firebase.app);
-        const result = await auth[method]("sdk@example.test", "password");
+        const result = await auth[method]("sdk@example.test", method === "signInWithPopup" ? {} : "password");
         expect(result).toMatchObject({id: json.uid, _userData: true, name: json.displayName, email: json.email, verified: true, image: json.photoURL});
         expect(result.public).toMatchObject({created: 1234, lastLogin: 5678, provider: "password"});
         expect(result).not.toHaveProperty("user");
@@ -170,10 +193,11 @@ it("handles provider-free and incomplete auth fields without SDK methods", async
 it("forwards login arguments, browser links and sign-out to the SDK", async () => {
     const methods = ["createUserWithEmailAndPassword", "signInWithEmailAndPassword", "signInWithEmailLink", "signInWithCredential", "signInWithPopup", "signInWithRedirect", "signOut", "isSignInWithEmailLink", "sendPasswordResetEmail", "sendSignInLinkToEmail"];
     const sdk = Object.fromEntries(methods.map(method => [method, vi.fn().mockResolvedValue({user: null})]));
+    sdk.createUserWithEmailAndPassword.mockResolvedValue({user: sdkUser()});
     const credential = {};
     const provider = {};
     const credentialFactory = modularAuth.GoogleAuthProvider.credential.mockReturnValue(credential);
-    const auth = new FirebaseAuth({firebase: {app: sdk}});
+    const auth = new FirebaseAuth({firebase: {app: sdk}, database: createDatabase()});
     for (const method of ["createUserWithEmailAndPassword", "signInWithEmailAndPassword"]) {
         await auth[method]("email", "password");
         expect(sdk[method]).toHaveBeenCalledWith("email", "password");
@@ -193,26 +217,24 @@ it("forwards login arguments, browser links and sign-out to the SDK", async () =
     await auth.signOut();
     expect(sdk.signOut).toHaveBeenCalledWith();
     await auth.sendPasswordResetEmail("email");
-    expect(sdk.sendPasswordResetEmail).toHaveBeenCalledWith("email");
+    expect(sdk.sendPasswordResetEmail).toHaveBeenCalledWith("email", undefined);
     await auth.sendSignInLinkToEmail("email");
     expect(sdk.sendSignInLinkToEmail).toHaveBeenCalledWith("email", {url: window.location.origin + "/signup/email", handleCodeInApp: true});
 });
 it("uses modular current user operations and reports missing authentication with the full error", async () => {
     const user = {updatePassword: vi.fn().mockResolvedValue("password result"), updateProfile: vi.fn().mockResolvedValue("profile result"), sendEmailVerification: vi.fn().mockResolvedValue("verification result")};
     const sdk = {currentUser: user};
-    const auth = new FirebaseAuth({firebase: {app: sdk}});
-    expect(auth.currentUser()).toBe(user);
+    const auth = new FirebaseAuth({firebase: {app: sdk}, database: createDatabase()});
+    expect(auth._currentUser()).toBe(user);
     expect(await auth.updatePassword("new password")).toBe("password result");
     expect(modularAuth.updatePassword).toHaveBeenCalledWith(user, "new password");
-    expect(await auth.updateProfile({displayName: "name"})).toBe("profile result");
-    expect(modularAuth.updateProfile).toHaveBeenCalledWith(user, {displayName: "name"});
     expect(await auth.sendEmailVerification()).toBe("verification result");
-    expect(modularAuth.sendEmailVerification).toHaveBeenCalledWith(user);
+    expect(modularAuth.sendEmailVerification).toHaveBeenCalledWith(user, undefined);
     sdk.currentUser = null;
     const expected = {code: "auth/no-current-user", message: "An authenticated user is required."};
-    try { auth.currentUser(); throw new Error("Expected authentication failure"); } catch (error) { expect(error).toMatchObject(expected); }
+    try { auth._currentUser(); throw new Error("Expected authentication failure"); } catch (error) { expect(error).toMatchObject(expected); }
     for (const method of ["updatePassword", "updateProfile", "sendEmailVerification"]) {
-        await expect(auth[method]({})).rejects.toMatchObject(expected);
+        await expect(auth[method](method === "updatePassword" ? "password" : {})).rejects.toMatchObject(expected);
     }
     expect(await auth.resolveCurrentUser()).toMatchObject({_userData: true, id: undefined});
 });
@@ -224,14 +246,14 @@ it("configures Google and Facebook providers and preserves explicit providers", 
     modularAuth.GoogleAuthProvider.mockImplementation(Google);
     modularAuth.FacebookAuthProvider.mockImplementation(Facebook);
     const auth = new FirebaseAuth({firebase: {app: {}}});
-    expect(auth.provider("google.com")).toBe(google);
+    expect(auth._provider("google.com")).toBe(google);
     expect(google.setCustomParameters).toHaveBeenCalledWith({prompt: "select_account"});
     expect(google.addScope).toHaveBeenCalledWith("https://www.googleapis.com/auth/userinfo.email");
-    expect(auth.provider("facebook.com")).toBe(facebook);
+    expect(auth._provider("facebook.com")).toBe(facebook);
     expect(facebook.addScope).toHaveBeenCalledWith("email");
     expect(facebook.setCustomParameters).toHaveBeenCalledWith({prompt: "select_account"});
     const explicit = {};
-    expect(auth.provider(explicit)).toBe(explicit);
+    expect(auth._provider(explicit)).toBe(explicit);
 });
 it.each([[null, undefined], [() => {}, null], ["callback", () => {}]])("rejects invalid observers before SDK registration", async (callback, onError) => {
     const sdk = vi.fn();
@@ -261,4 +283,31 @@ it("contains synchronous and asynchronous observers and error callback failures"
     await auth.onAuthStateChanged(() => { throw sync; }, () => { throw reportingError; });
     expect(() => notify(null)).not.toThrow();
     expect(log).toHaveBeenCalledWith("[FirebaseAuth] Auth error callback failed", reportingError);
+});
+
+it("leaves email rules and normalization to the Firebase SDK", async () => {
+    const failure = Object.assign(new Error("SDK email validation"), {code: "auth/invalid-email"});
+    const sdk = {signInWithEmailAndPassword: vi.fn().mockRejectedValue(failure)};
+    const auth = new FirebaseAuth({firebase: {app: sdk}});
+    await expect(auth.signInWithEmailAndPassword(" Invalid Email ", "short")).rejects.toBe(failure);
+    expect(sdk.signInWithEmailAndPassword).toHaveBeenCalledWith(" Invalid Email ", "short");
+});
+
+it("invalidates a pending profile when a newer provider identity is malformed", async () => {
+    let notify, finish;
+    const load = new Promise(resolve => { finish = resolve; });
+    const auth = new FirebaseAuth({
+        firebase: {app: {onAuthStateChanged: callback => { notify = callback; return vi.fn(); }}},
+        database: {read: vi.fn(() => load)}
+    });
+    const callback = vi.fn();
+    const onError = vi.fn();
+    const unsubscribe = await auth.onAuthStateChanged(callback, onError);
+    notify(sdkUser());
+    notify(sdkUser({uid: null}));
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "auth/invalid-user-data"}));
+    finish(undefined);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(callback).not.toHaveBeenCalled();
+    unsubscribe();
 });

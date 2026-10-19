@@ -1,18 +1,21 @@
+import {installIndexedDB, flushIndexedDB} from "./fixtures/indexedDB";
 import {vi} from "vitest";
 import FirebaseAuth from "../firebase";
 
+import {writeState} from "../local/database";
 import LocalAuth from "../local";
 
 vi.mock("firebase/auth", () => ({getAuth: vi.fn(app => app)}));
 
 beforeEach(() => {
+    installIndexedDB();
     window.localStorage.clear();
     vi.spyOn(Date, "now").mockReturnValue(123456);
     vi.spyOn(Math, "random").mockReturnValue(0);
 });
 afterEach(() => window.localStorage.clear());
 
-const restore = (provider, uid = "json-user") => {
+const restore = async (provider, uid = "json-user") => {
     const account = {
         uid,
         email: "json@example.test",
@@ -30,14 +33,12 @@ const restore = (provider, uid = "json-user") => {
         return new FirebaseAuth({firebase: {app: {currentUser: user, authStateReady: vi.fn().mockResolvedValue()}}}).resolveCurrentUser();
     }
     const auth = new LocalAuth();
-    window.localStorage.setItem(auth.storageKey, JSON.stringify({
-        version: 1,
-        accounts: [account],
-        session: {uid, token: "hidden"},
-        redirect: null,
-        links: [],
-        mail: []
-    }));
+    await writeState(auth, {
+        revision: null,
+        accounts: [{key: uid, namespace: auth.storageKey, email: account.email, name: account.displayName,
+            image: account.photoURL, emailVerified: true, created: 1234, lastLogin: 5678, provider: "password", password: "hidden"}],
+        session: {key: uid, token: "hidden"}, redirect: null, links: [], mail: []
+    });
     return auth.resolveCurrentUser();
 };
 

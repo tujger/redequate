@@ -1,3 +1,4 @@
+import {installIndexedDB, flushIndexedDB} from "./fixtures/indexedDB";
 import {vi} from "vitest";
 import {getAuth} from "firebase/auth";
 import {UserData} from "../../../common";
@@ -7,6 +8,7 @@ import FirebaseAuth from "../firebase";
 import {resolveAuth} from "../resolveAuth";
 
 vi.mock("firebase/auth", () => ({getAuth: vi.fn(app => app)}));
+beforeEach(() => installIndexedDB());
 
 it("creates LocalAuth by default without reading or writing storage", async () => {
     const getItem = vi.spyOn(Storage.prototype, "getItem");
@@ -24,13 +26,14 @@ it("creates LocalAuth by default without reading or writing storage", async () =
     expect(setItem).not.toHaveBeenCalled();
 });
 it("uses the default model for implicit auth and accepts a constructor model", async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({toFake: ["setTimeout", "clearTimeout", "Date"]});
     try {
         class CustomUserData extends UserData {}
         const defaultAuth = await resolveAuth();
         const customAuth = await resolveAuth(undefined, {UserData: CustomUserData});
         const restored = Promise.all([defaultAuth.resolveCurrentUser(), customAuth.resolveCurrentUser()]);
         await vi.runAllTimersAsync();
+    await flushIndexedDB();
         const [defaultUser, customUser] = await restored;
         expect(defaultUser.constructor).toBe(UserData);
         expect(customUser).toBeInstanceOf(CustomUserData);
@@ -39,7 +42,7 @@ it("uses the default model for implicit auth and accepts a constructor model", a
     }
 });
 it.each([LocalAuth, FirebaseAuth])("preserves the constructor configuration of an existing %s", async Auth => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({toFake: ["setTimeout", "clearTimeout", "Date"]});
     try {
         const firebase = {app: {currentUser: null, authStateReady: vi.fn().mockResolvedValue()}};
         const originalDatabase = {read: vi.fn()};
@@ -54,6 +57,7 @@ it.each([LocalAuth, FirebaseAuth])("preserves the constructor configuration of a
         expect(auth.database).toBe(originalDatabase);
         const restored = auth.resolveCurrentUser();
         await vi.runAllTimersAsync();
+    await flushIndexedDB();
         expect(await restored).toBeInstanceOf(OriginalUserData);
         expect(auth.storageKey).not.toBe("ignored");
         expect(getAuth).toHaveBeenCalledTimes(initializations);
