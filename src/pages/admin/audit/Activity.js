@@ -221,7 +221,7 @@ const Activity = props => {
                     />}
                     {activityMode === "type" && !filteredItem && <MentionedSelectComponent
                         mention={{
-                            pagination: () => database.cursor(["_activity", "types"]),
+                            cursor: () => database.cursor(["_activity", "types"]),
                             transform: item => ({id: item.key, display: item.key}),
                         }}
                         onChange={handleTypeSelect}
