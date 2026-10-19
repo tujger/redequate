@@ -2325,87 +2325,83 @@ or Android app source. Compatibility aliases and automatic data migration were
 rejected for this complete rename. Status: framework and server builds, all 134
 affected unit tests, and ESM/CommonJS entry checks passed on Node.js 24.21.0.
 
-### Cursor entry source paths
+### Cursor records, identity and composition
 
-Decision: DatabaseCursorEntry extends DatabaseEntry with a readonly path for the
-source collection, excluding the record key. Cursor next results, handle inputs
-and subscription events carry this path; Firebase emits a normalized string with
-empty segments removed and '' for root. Composition preserves each leaf source's
-path. The generic DatabaseEntry and non-cursor listeners retain their contracts.
-Reason: identify records by collection and key when composing multiple sources.
-Cursor-wide paths remain deferred. The composition decision below adds existing
-cursors; entry paths alone do not provide deduplication before handle.
-Consumers matching exact entry objects must allow the new field. Stored values,
-Firebase queries and Android protocols are unchanged. Status: framework build
-and 11 temporary path scenarios passed. Existing database unit checks: 47 pass;
-9 fail only because exact entry expectations omit the new path field. Test files
-remain unchanged per project instructions; those expectations need updating
-before the database suite can pass with the extended contract.
+Decision: cursor records, handle inputs and subscription events use DatabaseEntry
+{key, value}; remove DatabaseCursorEntry and per-record path metadata. Cursor
+identity remains available through id, and collection identity through path.
+Compositions retain each returned record's original leaf cursor internally,
+including nested compositions and custom DatabaseCursor subclasses.
 
-### Composition of DatabaseCursor implementations
+Deduplicate by normalized leaf cursor.path plus key; use cursor.id plus key when
+path is absent, keeping the two identity namespaces distinct. The proposed move
+to id-only deduplication was rejected because separately created selections of
+the same collection must continue suppressing overlapping records. Each source
+still performs its own handle before buffering; composition does not rerun it.
 
-Decision: accept source descriptions and fresh structural DatabaseCursor
-implementations in the same cursor source array, including nested compositions.
-Ready cursors keep their configuration and must be consumed exclusively by their
-composition. Reject visibly advanced or repeated instances in the source array.
-No additional integration protocol is required. Each source is read with next(n),
-using the current outer page size when its buffer needs filling. Composition
-alternates buffered entries and deduplicates returned results by normalized
-collection path plus key. Completion includes exhausting all source buffers;
-results staged before a source error are retained for retry.
+All FirebaseDatabase.cursor calls return compositions, including a single path.
+Returning FirebaseCursor directly was rejected to keep grouping, error handling
+and subscription metadata in one implementation. Null and undefined source-array
+elements are skipped; an empty composition finishes without records. String
+arrays, including [], retain their meaning as collection paths.
 
-Reason: support user implementations through the existing cursor contract.
-Consequences: each source runs its own handle before buffering; composition never
-reruns it, but independent sources can each handle the same database record.
-This supersedes deduplication before handle and the internal tracking hooks.
-Subscriptions retain independent, non-deduplicated events. Stored data and Android
-protocols are unchanged. Web consumers can keep their source descriptions; code
-relying on processing an overlapping record only once must account for per-source
-handling. A newly created cursor's freshness and exclusive use remain caller
-responsibilities beyond the metadata that can be checked.
+Sources retain only their cursor, buffered entries, offset and pending group
+headings. Original request arguments are retained solely for validation error
+contexts. Caller-owned custom cursors must call super.next(n), be fresh and be
+used exclusively by their composition. One lifecycle indicator tracks use;
+public position.index/key/finished and count are retained.
 
-DatabaseCursor and related types are published from redequate and
-redequate/database through generated declarations and manifest types routes.
-Existing root runtime exports retain permissive any declarations; full framework
-typing is separate work. A runtime base class and a configureComposition protocol
-were rejected in favor of structural implementations and ordinary next(n).
-
-Status: framework build, 11 temporary composition scenarios and strict TypeScript
-ESM/CommonJS imports from the packed archive passed. Existing database units:
-46 pass; 9 exact expectations omit entry.path and 1 mock requires the removed
-tracking hooks. Tracked tests remain unchanged per project instructions.
+Affected consumers: edeqa-pwa-react-demo, thewhiskytalks. Stored data, CRUD and
+Android protocols are unchanged. Status: implemented; validation recorded below.
 
 ### Cursor groups
 
-Decision: group?: string adds a once-per-lifetime heading before the first
-surviving result. Headings have {key, value: {group}} without path; next returns
-DatabaseCursorEntry | DatabaseCursorGroupEntry. Ordinary cursors use their
-normalized collection path as heading key, compositions use their id. A parent's
-group is not inherited by sources. Group presence switches composition from
-round-robin to whole source blocks: each active source receives next(n) once per
-call, and results can exceed n. Headings count as returned entries but do not
-consume the data page size, invoke handle or appear in subscription events.
-Empty or deduplicated blocks retain unissued headings until a unique entry is
-available. Nested built-in group detection and heading ancestry remain internal;
-ready external cursors expose group and return their own heading. No public
-grouped flag or configuration protocol is added.
+Decision: DatabaseGroupEntry is {key: group}, without value or id. Ordinary
+records always have value, including when it is null or falsy. This replaces
+DatabaseCursorGroupEntry and {key, value: {group}} headings. Renderers distinguish
+records with 'value' in entry; The Whisky Talks Search is updated accordingly.
 
-Reason: support grouped search results with the existing buffer and cursor APIs.
-Consumers rendering cursor results must distinguish headings by the absence of
-path; exact next(n) size assumptions do not apply to grouped compositions. The
-Whisky Talks Search is the motivating consumer; its source is not modified here.
-Ungrouped traversal, stored data and Android protocols remain unchanged.
-Status: framework build, 24 temporary group/composition checks and strict
-TypeScript ESM/CommonJS checks against the packed declarations passed. Existing
-database units remain at 46 passed and 10 known failures (entry.path expectations
-and removed tracking hooks); tracked test files remain unchanged.
+Keep once-per-lifetime synthetic headings and grouped source-block ordering.
+Separating grouping from next() was rejected for this change because it requires
+a new consumer API. Headings count as returned entries, do not consume data page
+size, do not invoke handle and are absent from subscription events. Parent groups
+are not inherited by sources. Pending headings and their internal ancestry remain
+necessary to preserve nested groups when empty or duplicate-only blocks are
+suppressed. Failed reads retain pending headings for retry.
+
+The base next(n) validates, marks the cursor used and supplies the initial heading;
+it does not advance count or position. Subclasses account for the entire returned
+batch, including its heading. This removes counter rollback in built-in cursors;
+custom subclasses that previously counted data only must adjust their accounting.
+
+Affected consumers: thewhiskytalks; no stored data or Android protocol change.
+Status: implemented; validation recorded below.
+
+### Cursor state, subscriptions and errors
+
+Decision: FirebaseCursor owns Firebase query continuation, scan bounds and buffers;
+its generic count and position remain on DatabaseCursor. Remove proxy accessors
+and redundant source path/options from Firebase pagination state. Ordered scan
+key/value remain separate from the last returned key because filtering and async
+handle can advance, replace or delete candidates.
+
+Keep subscription metadata and counters by explicit user choice. Subscription id
+is a getter over cursor.id. Independent subscriptions retain their deliveries and
+counters; cleanup attempts every source even when one unsubscribe fails.
+
+Reuse DatabaseBase.run at composition boundaries. Nested compositions propagate
+already processed failures without invoking onError again; synchronous callbacks
+during registration likewise propagate handler exceptions once. No new error
+framework, compatibility adapter or custom cursor integration protocol is added.
+
+Status: implemented; validation recorded below.
 
 ### Runtime DatabaseCursor and server database exports
 
 Decision: replace the structural DatabaseCursor interface with a runtime class in
 packages/database/src/common/DatabaseCursor.ts. It owns initial metadata and
-protected counter/position fields; base next/subscribe validate arguments and
-return undefined so subclasses can call the corresponding supermethods. Public
+protected counter/position fields. Base next validates arguments and supplies an
+initial group heading; base subscribe validates the listener and returns undefined. Public
 built-in cursors inherit it and compositions require instanceof, retaining
 freshness, duplicate-instance and returned-entry checks. User cursors must extend
 the constructor from their installed package and format. This supersedes accepting
@@ -2427,7 +2423,8 @@ have separate class identities; callers must not mix their cursors. Grouping,
 pagination, storage formats and Android protocols remain unchanged. Both web
 consumers remain on story/move-database-to-module; custom cursors must migrate to
 extends DatabaseCursor. Consumer sources and tracked tests are not changed here.
-Status: implementation complete; final archive validation pending.
+Status: implemented; framework/server builds and ESM/CommonJS database exports
+and server root/database constructor identity validated.
 
 
 ### Pages cursor and inherited group headings
@@ -2440,16 +2437,151 @@ date bounds or subscription override. The Whisky Talks Search is the motivating
 consumer; consumer source is not changed here.
 
 DatabaseCursor owns option getters and once-per-lifetime heading creation in
-next(n); subclasses consume the returned initial array and count their data. The
-base constructor optionally accepts a source path for the heading key; absent a
-path, it uses the cursor id. Composition filters empty or duplicate-only groups
+next(n); subclasses consume the initial array and account for all returned entries.
+The base constructor optionally accepts a collection path for source identity;
+heading keys use the configured group string. Composition filters empty or duplicate-only groups
 after reading, retaining headings across failed reads. A grouped static cursor
 can return a heading alone on its first exhausted read. This replaces preparing
 headings separately in each implementation; a separate _completeNext helper and
 passing batches into super.next were rejected. Stored formats and Android
 protocols are unchanged. Both web consumers remain on story/move-database-to-module.
 
-Status: implemented. Framework/server builds, strict source type checking and 42
-temporary traversal/group/query checks pass. Generated ESM/CommonJS root exports
-share their database constructor bindings. Web consumer runtime validation remains
-pending; tracked tests and consumer sources were not changed.
+Status: cursor simplification validated on Node.js 24.21.0: 430 unit tests
+(including 85 database/custom-cursor tests), 51 emulator integration tests,
+strict database TypeScript checks, framework/server builds and ESM/CommonJS
+database exports pass. Both web consumers build against the current framework;
+The Whisky Talks Search consumes the new group-entry shape. Browser interaction
+and production Firebase validation remain pending.
+
+### Auth resolution dependencies
+
+Decision: resolveAuth accepts an options object as its second argument and passes
+it only to the lazy default LocalAuth constructor. Existing Auth instances are
+returned unchanged. Dispatcher supplies the resolved database, without UserData.
+LocalAuth and FirebaseAuth accept UserData through their constructors, defaulting
+to the neutral common model; they retain it privately and pass it as an argument
+to internal helpers. Post-construction injection through _UserData is removed.
+
+Both web consumers explicitly construct FirebaseAuth with firebase, database and
+the web UserData model. This keeps model selection with the application and avoids
+mutating provider internals during resolution. Stored data and Android contracts
+are unchanged. Status: all 91 Auth unit tests pass, including constructor models
+for sign-in, session restoration, subscriptions and anonymous users. Framework
+ESM/CommonJS and both web consumer production builds pass. Authenticated browser
+validation remains manual.
+
+
+### Shared Auth profile persistence
+
+Decision: AuthBase owns saveProfile, updateProfile({public, role, private}) for the
+current user. Provider implementations call the internal loadUserData helper
+for database loading; the redundant public resolveUser wrapper is removed.
+resolveCurrentUser remains the current-session API. LocalAuth registration
+(including newly simulated provider accounts) and Firebase email/password
+registration save their initial public profile before returning. Supplied fields
+are updated through a root-relative database batch at users_public/<uid>,
+roles/<uid> and users_private/<uid>; omitted fields are retained. Default null
+roles and empty private sections are not registration writes, so ordinary signup
+does not require permission to write protected roles. Passwords/session records
+remain provider-owned. Firebase SDK profile updates and local account profile
+updates are replaced by database writes; EditProfile uses the section-based API.
+
+Reason: creating an Auth account alone did not create its application profile.
+Both web consumers use the shared framework path. Stored profile paths and
+Android record formats are unchanged; direct callers of updateProfile must adopt
+the section-based argument. Registration needs an operational database; the
+current LocalDatabase class remains a stub and is not expanded in this change.
+A Firebase account can exist after a profile write fails; cross-service rollback
+is not attempted. Password registration now persists the profile immediately,
+so later web login sees persisted=true rather than treating that profile as new.
+Status: 102 Auth unit tests and all 51 emulator integration tests pass. Framework
+ESM/CommonJS and both web consumer production builds pass. Real authenticated
+browser validation remains manual.
+
+
+### Local login resolves the installed current user
+
+Decision: LocalAuth login saves the initial profile, silently installs the local
+session and calls resolveCurrentUser({skipDelay: true}) for its return value.
+Success emits the same-window auth event after database loading. Failure restores
+the exact previous stored document (including an absent key) only while the pending
+state is unchanged; later logout/login writes are preserved. The internal option
+avoids a second simulated delay; ordinary resolveCurrentUser() retains its delay.
+Storage events in other tabs can expose the intermediate write; this is not an
+atomic transaction across localStorage and database. Auth/database record formats
+and web consumer call sites are unchanged. Status: all 104 Auth unit tests pass,
+including rollback, concurrent session changes and single-delay behavior.
+
+
+### Auth contract in TypeScript and common helpers
+
+Decision: keep AuthBase.ts at packages/auth/src with its interfaces and type
+aliases in that same file. Type database, profile sections, provider/email options,
+callbacks, unsubscribe and Promise results; a generic UserData parameter preserves
+custom model contracts. Shared construction is now owned by AuthBase, as described
+below. Move resolveAuth, loadUserData and saveUserData into src/common;
+provider implementations and helpers remain JavaScript. Public entry paths,
+lazy default Auth and runtime behavior are unchanged. Declaration generation and
+mandatory type checking remain separate work.
+
+Status: all 104 Auth unit tests and the framework build pass. Native ESM/CommonJS
+checks verify AuthBase exports, provider inheritance identity and lazy resolution.
+
+
+### AuthBase supermethod validation
+
+Decision: built-in providers call super(options) for database/model configuration
+and call super.method(...) at the start of each operation needing argument checks.
+Those supermethods validate synchronously and throw on failure; provider logic
+continues in the calling implementation. Protected operation-dispatch hooks were
+rejected. AuthImplementation in AuthBase.ts describes the async provider contract,
+while validation-only supermethods return void. Shared createUserData and
+saveProfile remain on the base; profile loading, current-profile saving and
+subscription delivery use functions in src/common. Local subscriptions alone
+suppress duplicate states. Source errors invalidate pending profile delivery.
+
+Shared checks cover string types, provider/credential shape, known options,
+callbacks, configuration and profile sections before provider effects. Email
+normalization and password rules remain provider-owned; SDK failures pass through.
+Local delays follow shared validation. Local session installation/rollback and
+Firebase account/profile ordering remain provider-specific. Structural external
+instances, profile paths and Android contracts are unchanged.
+Status: all 179 Auth unit tests and 51 emulator integration tests pass. Framework
+ESM/CommonJS exports, inheritance, lazy resolution and validation checks pass;
+both web consumers build successfully. Mandatory type checking remains separate
+work; authenticated browser validation remains manual.
+
+### Shared Auth construction and local IndexedDB persistence
+
+Decision: AuthBase owns UserData defaults and identifier validation; internal class
+methods use an underscore prefix. Provider operations call synchronous supermethods
+for validation. Registration, profile updates and email verification require an
+injected database before provider effects; saving is never silently skipped.
+
+LocalAuth now uses IndexedDB `redequate:local` with namespaced auth_accounts,
+auth_state, auth_links and auth_mail stores, all with string key paths. Account
+key is also UserData.id and the injected profile database's user identifier.
+Transactions guard writes and login rollback by revision. Same-window events and
+BroadcastChannel notify observers after successful writes; broadcasts carry only
+namespace and revision. Auth and profile storage are not one atomic transaction.
+Old localStorage data is neither migrated nor touched. LocalDatabase remains a
+stub; Storage and Backend keep separate databases. Web API/profile paths and
+Android formats remain unchanged; existing local browser test sessions reset.
+Status: 194 Auth unit tests and 51 emulator integration tests pass. Framework and
+both web consumers build; ESM/CommonJS imports, inheritance, lazy resolution and
+database guards pass. Authenticated browser validation remains manual.
+
+### Shared email options without social-login changes
+
+Decision: Auth providers share email-option preparation. Explicit defined values
+override defaults; email-link defaults remain /signup/<email> on the current
+origin with handleCodeInApp=true. Firebase now forwards verification/reset/link
+options to its SDK; Local records url and handleCodeInApp in simulated mail.
+SDK validation remains authoritative for Firebase-specific requirements.
+Social-login handling and One Tap are excluded. Repeated profile loading in Login
+and Dispatcher is deferred because those paths also serve social login. storageKey
+and its validation remain LocalAuth-owned. Public signatures and profile paths
+are unchanged; callers that previously supplied ignored email options now receive
+the SDK's handling of those options.
+Status: 200 Auth unit tests and 51 emulator integration tests pass; framework and
+both web consumer production builds pass.

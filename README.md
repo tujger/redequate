@@ -511,13 +511,13 @@ import Dispatcher, {UserData} from "redequate";
 import LocalAuth from "redequate/auth/local";
 import {useAuth} from "redequate/auth";
 
-const auth = new LocalAuth();
+const auth = new LocalAuth({database, UserData});
 
 <Dispatcher auth={auth} {...props} />
 ```
 
 LocalAuth is intended exclusively for testing, not production. It simulates
-all current Auth operations using browser localStorage, without importing Firebase.
+all current Auth operations using browser IndexedDB, without importing Firebase.
 The previous `redequate/auth/memory` subpath has been removed.
 
 `new LocalAuth({storageKey: "my-app:local-auth"})` selects a storage namespace;
@@ -526,12 +526,34 @@ Instances using the same key share state, including auth-state notifications in
 the same window and across tabs. Different keys isolate accounts and sessions.
 Construction does not access storage. Unavailable storage, invalid stored data
 and failed writes reject operations with an `auth/*` error code; invalid data
-is never silently replaced. Removing the storage key resets the simulation.
+is never silently replaced. Records live in `redequate:local`, in the
+`auth_accounts`, `auth_state`, `auth_links`, and `auth_mail` stores. Every record
+uses a string `key`; account keys also identify UserData and profile records.
+Clear these stores to reset the simulation. Old localStorage data is untouched
+and is not migrated. Storage and Backend keep their own databases.
+Pass the application's database in the constructor to load the signed-in user's
+`users_public`, `roles`, and `users_private` records. FirebaseAuth accepts the same
+`database` option alongside `firebase`. Registration and profile updates require
+a database, as does email verification. These checks run in AuthBase before
+provider effects. Registration saves the initial public profile before returning;
+passwords and sessions remain with the authentication provider. Dispatcher passes
+its resolved database only when constructing the default LocalAuth; explicitly
+supplied instances must receive their database in the constructor.
 
-Every async Auth operation waits a random integer delay of 0–2000 ms, including
-failed operations. Delays greater than 100 ms are logged through `console.debug`
-with the method name and duration. Internal calls do not add another delay;
+LocalAuth provider operations wait a random integer delay of 0–2000 ms.
+Shared argument validation rejects malformed inputs before provider access or
+simulated delays. Provider-level failures still follow their operation's delay.
+Delays greater than 100 ms are logged through `console.debug` with the method name
+and duration. Internal calls do not add another delay;
 Internal JSON conversion is synchronous. No password or token is logged.
+Local sign-in saves a new profile, installs the session, then obtains its result
+through `resolveCurrentUser({skipDelay: true})`. Same-window sign-in notifications
+are emitted after the profile loads. On failure, the previous local state is
+restored only if that pending session is still unchanged; a later logout or login
+is preserved. Transactions compare revisions to reject conflicting writes.
+Cross-tab notifications use BroadcastChannel messages containing only namespace
+and revision; sign-in publishes after profile loading. Auth and the injected
+profile database do not share an atomic transaction.
 
 Email addresses are trimmed and lowercased; passwords require six characters.
 Registration signs in an initially unverified account. Passwords and fake session
@@ -542,7 +564,8 @@ change its password. `sendSignInLinkToEmail()` records a pending email;
 `checkSignInWithEmailLink()` checks for any pending request, without inspecting a
 URL. `signInWithEmailLink(email)` consumes that request, creates an account if
 needed and signs in with verified email. These operations send no real email.
-The stored `mail` array records operation type, email, timestamp and optional URL.
+The `auth_mail` records contain operation type, email, creation time and optional
+`url` and `handleCodeInApp` settings.
 
 Google and Facebook sign-in use stable fake accounts at
 `google@local.example` and `facebook@local.example`. Provider names
@@ -553,7 +576,14 @@ non-empty string as a simulated Google token, or an object with `provider` or
 without navigation; `resolveRedirectResult()` consumes that result once.
 `signOut()` clears the session and pending redirect, preserving accounts.
 
-`updateProfile({displayName, photoURL})` persists supported fields (strings or null).
+`updateProfile({public, role, private})` saves supplied fields for the current user
+through one database batch: `users_public/<uid>`, `roles/<uid>` and
+`users_private/<uid>`. Nested updates preserve other fields; undefined values are
+skipped and null deletes the addressed value. For example,
+`auth.updateProfile({public: {name: "Alice", image: "photo.png"}, private: {device: {locale: "en"}}})`.
+The default null role and empty private section need no registration writes.
+Database rules control permission to change roles. Profile updates do not write
+Firebase Authentication displayName/photoURL or the local account's profile fields.
 Password changes require an active session and use `auth.updatePassword()`.
 Auth-state subscriptions
 emit their initial state and changed current-user snapshots; mail records alone do not emit. Await the subscription to obtain its synchronous
@@ -563,12 +593,19 @@ provided; setup failures reject the subscription Promise.
 Firebase is also available explicitly as the default export of
 `redequate/auth/firebase`. Each implementation exports a class constructed with
 `new Auth(...args)`. Arguments are implementation-specific, for example
-`new FirebaseAuth({firebase})`. An external package can expose the same
+`new FirebaseAuth({firebase, database, UserData})`. An external package can expose the same
 class: `<Dispatcher auth={new MyAuth(options)} {...props} />`. Dispatcher receives
 the resulting object directly; it does not construct an explicitly supplied class.
 Create the object outside render or with `useMemo` to keep its identity stable.
-Built-in implementations extend `AuthBase`; inheritance is optional for external
-modules, and Dispatcher does not require `instanceof`. There is no registry.
+Built-in implementations extend `AuthBase` and call `super(options)` for shared
+`database` and `UserData` configuration. Each implementation calls the matching
+supermethod before its provider logic, for example
+`super.signInWithEmailAndPassword(email, password)`. Validation is synchronous:
+invalid arguments throw immediately, while valid arguments let the implementation
+continue. No protected operation-dispatch methods are needed. Shared model
+construction, profile saving and subscription utilities remain reusable.
+External structural instances remain supported without inheritance or an
+`instanceof` requirement; there is no registry.
 LocalAuth keeps significant operation implementations in individual default-export
 modules and shared helpers in `packages/auth/src/local/common.js`.
 
@@ -576,7 +613,13 @@ CommonJS uses `const LocalAuth = require("redequate/auth/local").default`
 and `const auth = new LocalAuth(options)`.
 
 Dispatcher selects the supplied object once per mount, or dynamically imports
-LocalAuth and constructs `new LocalAuth()` when `auth` is omitted.
+LocalAuth and constructs `new LocalAuth({database})` when `auth` is omitted.
+Both implementations accept an optional `UserData` constructor, defaulting to the
+neutral model from `redequate/common`. Dispatcher does not choose or replace this
+model. Pass the web `UserData` exported by `redequate` to the Auth constructor when
+its persistence methods are needed. An explicitly supplied Auth instance keeps
+all of its constructor configuration; Dispatcher does not inject dependencies
+into it.
 FirebaseAuth requires explicit construction with `{firebase}` and selection
 through the `auth` prop. Null, arrays, classes without an instance and other non-object values are configuration errors. Selection errors use the existing initialization error UI.
 To change implementations, remount Dispatcher. `useAuth()` returns the selected
@@ -596,14 +639,21 @@ migrated or deleted; the new default keys start with fresh local state.
 
 ### Auth contract
 
-`AuthBase`, exported from `redequate/auth`, supplies explicit `Not implemented`
-defaults. Built-in implementations override supported operations. The current
-runtime signatures are defined in `packages/auth/src/AuthBase.js`. All operations below
+`AuthBase`, exported from `redequate/auth`, supplies shared profile persistence
+and model construction. Its operation supermethods check arguments; implementations
+then load profiles and deliver auth-state updates using common utilities.
+`AuthImplementation` in the same TypeScript file describes the async provider
+contract; validation-only supermethods return void. Operations with no shared
+validation or implementation retain `Not implemented` defaults. Email
+normalization and password policies remain provider-specific; Firebase SDK errors
+pass through unchanged. Argument shape failures use `auth/invalid-argument`.
+The current
+runtime signatures are defined in `packages/auth/src/AuthBase.ts`. All operations below
 return Promises.
 
 | Method | Result |
 | --- | --- |
-| `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives `UserData` or null |
+| `onAuthStateChanged(callback, onError?)` | `Promise<unsubscribe>`; callback receives `UserData`, including an anonymous model |
 | `createUserWithEmailAndPassword(email, password)` | `Promise<UserData>` |
 | `signInWithEmailAndPassword(email, password)` | `Promise<UserData>` |
 | `signInWithPopup(provider, options?)` | `Promise<UserData>` |
@@ -615,9 +665,9 @@ return Promises.
 | `signInWithEmailLink(email)` | `Promise<UserData>` |
 | `sendEmailVerification(options?)` | `Promise<void>` |
 | `sendPasswordResetEmail(email, options?)` | `Promise<void>` |
-| `resolveCurrentUser()` | `Promise<UserData \| null>` |
+| `resolveCurrentUser()` | `Promise<UserData>`; anonymous model when signed out |
 | `updatePassword(password)` | `Promise<void>` |
-| `updateProfile(fields)` | `Promise<void>` |
+| `updateProfile({public?, role?, private?})` | `Promise<void>` |
 | `signOut()` | `Promise<void>` |
 
 Authentication results are detached `UserData` objects with `id`, `email`, `name`,
@@ -626,10 +676,11 @@ provider user methods, passwords and tokens are not included. Each adapter
 forms the UserData JSON object (`id`, `role`, `public`, `private`, `requested`,
 `loaded`) and passes it directly to `new UserData().fromJSON({...})`. Auth has no public parser, and UserData has no
 `fromAuth()` method. Provider failures pass through unchanged, including their error codes.
-Built-in validation failures use `Error`. Missing current users and redirect results return null.
+Built-in validation failures use `Error`. Missing redirect results return null;
+session restoration returns an anonymous UserData when signed out.
 Password changes use Auth methods. Token retrieval remains in the Firebase
-backend integration. Profile database
-persistence and stored business roles remain outside Auth.
+backend integration. AuthBase shares profile saving and loading through database;
+application code continues to own profile forms and business role decisions.
 
 Session restoration uses the initial auth-state callback. Obtain the synchronous
 unsubscribe function with
@@ -637,7 +688,11 @@ unsubscribe function with
 Constructors and `useAuth()` remain synchronous. Provider options may contain
 `scopes` and `parameters`; credential objects may contain
 `{provider, idToken?, accessToken?}`. Email options may contain
-`{url, handleCodeInApp?}`. Implementations own their constructor configuration.
+`{url, handleCodeInApp?}`. Firebase forwards these settings to its SDK; Local records
+them in its simulated mail. Email-link requests default to the current origin's
+`/signup/<email>` URL and `handleCodeInApp: true`. Explicit values override defaults;
+undefined values retain them. SDK validation still applies to supplied values.
+Implementations own their constructor configuration.
 
 ### Independent common and server archive
 
