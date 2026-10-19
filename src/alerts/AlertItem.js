@@ -24,7 +24,6 @@ export default ({data, skeleton, label, fetchAlertContent}) => {
     const handleClick = () => {
         dispatch(ProgressView.SHOW);
         database.delete(["alerts", currentUserData.id, data.key, "new"])
-        // firebase.database().ref("alerts").child(currentUserData.id).child(data.key).child("new").set(null)
             .then(() => {
                 try {
                     delete data.value.new;

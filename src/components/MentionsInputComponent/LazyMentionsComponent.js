@@ -9,7 +9,6 @@ export default (
         autoFocus,
         className,
         disabled,
-        firebase,
         fullWidth = true,
         inputRef,
         label,

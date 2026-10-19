@@ -5,7 +5,7 @@ import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {useAuth, useDatabase, useStorage} from "../../controllers";
-import {useFirebase, usePages, useWindowData} from "../../controllers/General";
+import {usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
@@ -54,7 +54,6 @@ const NewPostComponent = props => {
     const auth = useAuth();
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const isSendingRef = React.useRef(false);
@@ -474,7 +473,6 @@ const NewPostComponent = props => {
                         className={componentStyles.messageBox}
                         color={"secondary"}
                         disabled={disabled}
-                        firebase={firebase}
                         mentionsParams={mentions}
                         multiline={true}
                         onChange={handleChange}
