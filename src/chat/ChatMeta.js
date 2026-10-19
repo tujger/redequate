@@ -16,7 +16,6 @@ export function ChatMeta(database) {
     // eslint-disable-next-line one-var
     let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef,
         _redirect, _activeUids = [];
-    const indexRef = firebase.database().ref("_chats");
     const chatsRef = firebase.database().ref("chats");
 
     const fetchUids = () => {
@@ -154,6 +153,7 @@ export function ChatMeta(database) {
             if (!chats.length) {
                 const value = await database.read(["users_public", oppositeUid, UserData.NAME]);
                 if (value !== undefined) {
+                    // database.create(["chats"]).save()
                     const ref = chatsRef.push();
                     chats.push({
                         key: ref.key,
