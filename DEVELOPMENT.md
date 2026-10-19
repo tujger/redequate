@@ -2324,3 +2324,132 @@ unchanged. No old provider names were found in the inspected web consumer source
 or Android app source. Compatibility aliases and automatic data migration were
 rejected for this complete rename. Status: framework and server builds, all 134
 affected unit tests, and ESM/CommonJS entry checks passed on Node.js 24.21.0.
+
+### Cursor entry source paths
+
+Decision: DatabaseCursorEntry extends DatabaseEntry with a readonly path for the
+source collection, excluding the record key. Cursor next results, handle inputs
+and subscription events carry this path; Firebase emits a normalized string with
+empty segments removed and '' for root. Composition preserves each leaf source's
+path. The generic DatabaseEntry and non-cursor listeners retain their contracts.
+Reason: identify records by collection and key when composing multiple sources.
+Cursor-wide paths remain deferred. The composition decision below adds existing
+cursors; entry paths alone do not provide deduplication before handle.
+Consumers matching exact entry objects must allow the new field. Stored values,
+Firebase queries and Android protocols are unchanged. Status: framework build
+and 11 temporary path scenarios passed. Existing database unit checks: 47 pass;
+9 fail only because exact entry expectations omit the new path field. Test files
+remain unchanged per project instructions; those expectations need updating
+before the database suite can pass with the extended contract.
+
+### Composition of DatabaseCursor implementations
+
+Decision: accept source descriptions and fresh structural DatabaseCursor
+implementations in the same cursor source array, including nested compositions.
+Ready cursors keep their configuration and must be consumed exclusively by their
+composition. Reject visibly advanced or repeated instances in the source array.
+No additional integration protocol is required. Each source is read with next(n),
+using the current outer page size when its buffer needs filling. Composition
+alternates buffered entries and deduplicates returned results by normalized
+collection path plus key. Completion includes exhausting all source buffers;
+results staged before a source error are retained for retry.
+
+Reason: support user implementations through the existing cursor contract.
+Consequences: each source runs its own handle before buffering; composition never
+reruns it, but independent sources can each handle the same database record.
+This supersedes deduplication before handle and the internal tracking hooks.
+Subscriptions retain independent, non-deduplicated events. Stored data and Android
+protocols are unchanged. Web consumers can keep their source descriptions; code
+relying on processing an overlapping record only once must account for per-source
+handling. A newly created cursor's freshness and exclusive use remain caller
+responsibilities beyond the metadata that can be checked.
+
+DatabaseCursor and related types are published from redequate and
+redequate/database through generated declarations and manifest types routes.
+Existing root runtime exports retain permissive any declarations; full framework
+typing is separate work. A runtime base class and a configureComposition protocol
+were rejected in favor of structural implementations and ordinary next(n).
+
+Status: framework build, 11 temporary composition scenarios and strict TypeScript
+ESM/CommonJS imports from the packed archive passed. Existing database units:
+46 pass; 9 exact expectations omit entry.path and 1 mock requires the removed
+tracking hooks. Tracked tests remain unchanged per project instructions.
+
+### Cursor groups
+
+Decision: group?: string adds a once-per-lifetime heading before the first
+surviving result. Headings have {key, value: {group}} without path; next returns
+DatabaseCursorEntry | DatabaseCursorGroupEntry. Ordinary cursors use their
+normalized collection path as heading key, compositions use their id. A parent's
+group is not inherited by sources. Group presence switches composition from
+round-robin to whole source blocks: each active source receives next(n) once per
+call, and results can exceed n. Headings count as returned entries but do not
+consume the data page size, invoke handle or appear in subscription events.
+Empty or deduplicated blocks retain unissued headings until a unique entry is
+available. Nested built-in group detection and heading ancestry remain internal;
+ready external cursors expose group and return their own heading. No public
+grouped flag or configuration protocol is added.
+
+Reason: support grouped search results with the existing buffer and cursor APIs.
+Consumers rendering cursor results must distinguish headings by the absence of
+path; exact next(n) size assumptions do not apply to grouped compositions. The
+Whisky Talks Search is the motivating consumer; its source is not modified here.
+Ungrouped traversal, stored data and Android protocols remain unchanged.
+Status: framework build, 24 temporary group/composition checks and strict
+TypeScript ESM/CommonJS checks against the packed declarations passed. Existing
+database units remain at 46 passed and 10 known failures (entry.path expectations
+and removed tracking hooks); tracked test files remain unchanged.
+
+### Runtime DatabaseCursor and server database exports
+
+Decision: replace the structural DatabaseCursor interface with a runtime class in
+packages/database/src/common/DatabaseCursor.ts. It owns initial metadata and
+protected counter/position fields; base next/subscribe validate arguments and
+return undefined so subclasses can call the corresponding supermethods. Public
+built-in cursors inherit it and compositions require instanceof, retaining
+freshness, duplicate-instance and returned-entry checks. User cursors must extend
+the constructor from their installed package and format. This supersedes accepting
+structural implementations and the previous type-only export decision.
+
+The main root and /database re-export the same class. The server archive adds
+/database, /database/firebase and /database/local using the same database sources,
+and an independent root entry preserving common exports plus DatabaseCursor.
+Common stays independent of database. Server source boundaries include database,
+the server root and the existing common forwarding entry, with firebase-key
+external and declared in the server manifest/lockfile. No SDK adapter or automatic
+Firebase initialization is added. Remove the custom declarations generator and
+manifest types routes; public .d.ts publication is discontinued while source
+TypeScript contracts remain.
+
+Reason: simplify recognition and inheritance for user cursors and expose database
+uniformly in the server archive. Separate installations and ESM/CommonJS builds
+have separate class identities; callers must not mix their cursors. Grouping,
+pagination, storage formats and Android protocols remain unchanged. Both web
+consumers remain on story/move-database-to-module; custom cursors must migrate to
+extends DatabaseCursor. Consumer sources and tracked tests are not changed here.
+Status: implementation complete; final archive validation pending.
+
+
+### Pages cursor and inherited group headings
+
+Decision: expose PagesCursor from redequate as a DatabaseCursor subclass over the
+registered application pages. Use database-style field ordering and bounds rather
+than PagesPagination's substring search; compute _sort_name from label/title. Keep
+PagesPagination for existing consumers. Page cursors are read-only, with no handle,
+date bounds or subscription override. The Whisky Talks Search is the motivating
+consumer; consumer source is not changed here.
+
+DatabaseCursor owns option getters and once-per-lifetime heading creation in
+next(n); subclasses consume the returned initial array and count their data. The
+base constructor optionally accepts a source path for the heading key; absent a
+path, it uses the cursor id. Composition filters empty or duplicate-only groups
+after reading, retaining headings across failed reads. A grouped static cursor
+can return a heading alone on its first exhausted read. This replaces preparing
+headings separately in each implementation; a separate _completeNext helper and
+passing batches into super.next were rejected. Stored formats and Android
+protocols are unchanged. Both web consumers remain on story/move-database-to-module.
+
+Status: implemented. Framework/server builds, strict source type checking and 42
+temporary traversal/group/query checks pass. Generated ESM/CommonJS root exports
+share their database constructor bindings. Web consumer runtime validation remains
+pending; tracked tests and consumer sources were not changed.

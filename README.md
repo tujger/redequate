@@ -672,3 +672,93 @@ The web ESM entry is `core/index.es.js`, with `.es.js` core chunks, preserving
 Vite's existing CommonJS default-import behavior. Auth ESM entries and their
 shared Context/AuthBase/Babel-helper chunks use `.mjs` for native Node imports.
 Both formats share one Context within their build; default Auth remains lazy.
+
+### Cursor composition
+
+`database.cursor()` accepts a path or a non-empty array containing source
+descriptions (`{path, ...options}`), fresh `DatabaseCursor` implementations, or
+both. A ready cursor can itself be a composition. Ready cursors must extend
+`DatabaseCursor`, retain their own selection options and handlers, and must be
+consumed exclusively by their composition. Source-description options override
+outer options; outer selection options do not reconfigure ready cursors.
+
+Each source is read through `next(n)` using the current requested page size.
+Composition buffers these results and alternates sources one entry at a time.
+An exhausted source remains available until its buffer is consumed. A changed
+page size applies when a buffer next needs filling. Duplicate results are removed
+by normalized collection `path` plus `key` for the composition's lifetime.
+Different collections may return the same key.
+
+Set `group: "Title"` on a cursor or source description to emit one heading
+`{key, value: {group: "Title"}}` before its first result. Headings have no `path`;
+ordinary cursor entries always have one. Empty groups emit no heading. A plain
+cursor uses its normalized collection path as the heading key; a composition
+uses its cursor id. A composition's own group wraps its results and is not
+inherited by its sources. Ready implementations expose their optional `group`
+and return their own heading.
+
+If any source has a group, including nested built-in compositions, results are
+returned as whole source blocks in source order rather than interleaved. Each
+active source receives `next(n)` once per call, so the total may exceed `n`, plus
+headings. Headings count toward `count` and `position.index`, but not the requested
+data page size. They are not passed to `handle` or emitted by subscriptions.
+
+Source `handle` callbacks run during source reads, before composition buffers
+results. Consuming a buffer does not invoke `handle` again. Independent cursors
+may each handle the same record; composition only deduplicates their results.
+Subscription events are forwarded without deduplication. Unsubscribing a
+composition only removes the subscriptions it created.
+
+```ts
+import {DatabaseCursor} from "redequate";
+// The same class is available from "redequate/database".
+
+class CustomCursor extends DatabaseCursor {
+    // Implement next(n); override subscribe(listener) only for live sources.
+    // Use this._count and this._position to maintain inherited metadata.
+}
+
+const cursor = database.cursor([
+    {path: ["users_public"], orderBy: ["_sort_name"], start: filter},
+    customCursor, // extends DatabaseCursor
+]);
+```
+
+`DatabaseCursor` stores cursor options and exposes them through getters, alongside
+id, path, count and position. Its constructor accepts options and an optional source
+path; without a path, the cursor id is used for its heading. Base `next(n)` validates
+the size and returns an initial array containing the group heading once, or `[]`.
+It counts the heading and advances position; subclasses append up to n data entries
+and account for those entries separately. Base `subscribe(listener)` only validates
+the listener and returns undefined; static cursors need not override it. A composition accepts instances
+using `instanceof DatabaseCursor`, so subclasses must extend the constructor
+exported by the same installed package and module format. Separate package copies
+or mixing ESM and CommonJS constructors can fail this check.
+
+The server archive also exports DatabaseCursor from its root and provides
+`redequate/database`, `redequate/database/firebase` and `redequate/database/local`.
+The class lives in `packages/database/src/common/DatabaseCursor.ts`; common stays
+independent of database. Public declaration files are no longer generated or
+published; TypeScript contracts remain in source.
+
+### Pages cursor
+
+```js
+import {PagesCursor, normalizeSortName} from "redequate";
+
+const pages = new PagesCursor({
+    group: "Pages",
+    orderBy: ["_sort_name"],
+    start: normalizeSortName(filter),
+});
+const entries = await pages.next(10);
+```
+
+PagesCursor reads the registered application pages, skips dynamic routes and checks
+the current user's roles while reading. Entries have `path: "pages"` and
+`value: {route, name}`. Query fields come from page definitions; `_sort_name` is
+computed from the label or title without changing the page. Ordering, inclusive
+start/end bounds, prefix search and equalTo follow cursor query semantics. With no
+bounds, all eligible pages are returned. Handle and date bounds are unsupported.
+It has no live subscription implementation. PagesPagination remains available.
+Empty group headings are filtered by composition after traversal and deduplication.
