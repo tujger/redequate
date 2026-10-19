@@ -41,12 +41,15 @@ export default (
             allowSuggestionsAboveCursor
             aria-label={label}
             autoFocus={autoFocus}
+            classNames={{mentions__suggestions: styles.suggestions}}
             disabled={disabled}
             inputRef={inputRef}
             onChange={handleChange}
             onKeyUp={handleKeyUp}
             placeholder={placeholder}
             singleLine={!multiline}
+            style={{suggestions: {zIndex: 1301}}}
+            suggestionsPortalHost={typeof document === "undefined" ? undefined : document.body}
             value={value || ""}
         >
             {mentionsParams.map((mention, index) => <Mention
@@ -64,10 +67,17 @@ export default (
                 }}
                 displayTransform={mention.displayTransform}
                 markup={mention.markup}
-                renderSuggestion={(entry, search, highlighted, index, focused) => <span
-                    className={[styles.suggestion, focused && styles.suggestionFocused].filter(Boolean).join(" ")}
-                    onPointerDown={onSuggestionPointerDown}
-                >{entry.display}</span>}
+                renderSuggestion={(entry, search, highlighted, index, focused) => {
+                    console.log(entry)
+                    return <span
+                        className={[
+                            styles.suggestion,
+                            focused && entry.id !== entry.display && styles.suggestionFocused,
+                            entry.id === entry.display && styles.group
+                        ].filter(Boolean).join(" ")}
+                        onPointerDown={onSuggestionPointerDown}
+                    >{entry.display}</span>;
+                }}
                 trigger={mention.trigger}
             />)}
         </MentionsInput>
