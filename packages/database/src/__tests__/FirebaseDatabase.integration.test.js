@@ -93,11 +93,11 @@ it("isolates handler mutations, deletes, replaces and resolves server timestamp 
     expect(await readAll(cursor, 2)).toEqual([{key: "a", value: {n: 1}}, {key: "c", value: {n: 30, timestamp: expect.any(Number)}}]);
     expect(await database.read([path, "a"])).toEqual({n: 1});expect(await database.read([path, "b"])).toBeUndefined();expect(cursor.count).toBe(2);
 });
-it("merges overlapping cursors without duplicate records or repeated handle calls", async () => {
+it("deduplicates overlapping paths after each source handles its own records", async () => {
     await seed({a: {score: 1}, b: {score: 2}, c: {score: 3}});const handle = vi.fn();
     const cursor = database.cursor([{path, start: 1, end: 2}, {path, start: 2, end: 3}], {orderBy: "score", handle});
     const entries = await readAll(cursor, 2);
-    expect(entries.map(entry => entry.key).sort()).toEqual(["a", "b", "c"]);expect(cursor.count).toBe(3);expect(handle).toHaveBeenCalledTimes(3);
+    expect(entries.map(entry => entry.key).sort()).toEqual(["a", "b", "c"]);expect(cursor.count).toBe(3);expect(handle).toHaveBeenCalledTimes(4);
 });
 it("delivers subscription changes after the baseline and updates count before callbacks", async () => {
     await seed({a: {score: 1}});const cursor = database.cursor(path), events = [];
@@ -132,4 +132,29 @@ it("passes permission errors to onError with operation context", async () => {
     const onError = vi.fn();
     await expect(database.read("database_denied", {onError})).resolves.toBeUndefined();
     expect(onError).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({code: "PERMISSION_DENIED"}), "read", {path: "database_denied", equalTo: undefined, orderBy: undefined});
+});
+
+it.each(["asc", "desc"])("keeps live updates independent of an in-flight %s page", async order => {
+    await seed({a: {score: 1}, b: {score: 2}});
+    let resume, entered;
+    const waiting = new Promise(resolve => { entered = resolve; });
+    const paused = new Promise(resolve => { resume = resolve; });
+    let first = true;
+    const cursor = database.cursor(path, {order, handle: async () => {
+        if (first) { first = false;entered();await paused; }
+    }});
+    const events = [];
+    const subscription = await subscribe(cursor, event => events.push(event));
+    const page = cursor.next(2);
+    await waiting;
+    try {
+        await database.write([path, "c"], {score: 3});
+        await vi.waitFor(() => expect(events).toEqual([{type: "add", entry: {key: "c", value: {score: 3}}}]));
+    } finally {
+        resume();
+    }
+    expect((await page).map(entry => entry.key)).toEqual(order === "asc" ? ["a", "b"] : ["b", "a"]);
+    expect((await readAll(cursor)).map(entry => entry.key)).toEqual(order === "asc" ? ["c"] : []);
+    expect(cursor.count).toBe(order === "asc" ? 4 : 3);
+    subscription.unsubscribe();
 });

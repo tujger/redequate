@@ -1,7 +1,10 @@
 import {vi} from "vitest";
 import {key as dateKey} from "firebase-key";
 import FirebaseDatabase from "../firebase";
-import {composeCursor} from "../common/cursor";
+import {composeCursor} from "../common/ComposedDatabaseCursor";
+import {DatabaseCursor} from "../common/DatabaseCursor";
+import DatabaseBase from "../common/DatabaseBase";
+import FirebaseCursor from "../firebase/cursor";
 import {createFirebase} from "./fixtures/firebase";
 
 let fixture, database;
@@ -124,21 +127,27 @@ it("counts independent deliveries and cleans up a failed composed subscription",
     const composed = database.cursor([{path: "one"}, {path: "two"}], {onError});
     expect(composed.subscribe(vi.fn())).toBeUndefined();expect(fixture.sdk.listeners).toHaveLength(0);expect(onError).toHaveBeenCalledTimes(1);
 });
-it("composes buffered sources, inherits/overrides options and deduplicates before handle", async () => {
+it("inherits source options and deduplicates by normalized cursor path after handling", async () => {
     const sources = [], options = [];
-    const create = (path, effective, tracking) => {
-        options.push(effective);let done = false, count = 0;
-        const source = {get count() { return count; }, position: {finished: false}, next: vi.fn(async () => {
-            if (done) return [];done = true;source.position.finished = true;
-            if (tracking.accept?.("a") === false) return [];
-            tracking.processed?.("a");count++;return [{key: "a", value: path}];
-        })};sources.push(source);return source;
+    const create = (path, effective) => {
+        options.push(effective);
+        class Source extends DatabaseCursor {
+            constructor() { super(effective, path); }
+            async next(n) {
+                await super.next(n);
+                if (this.position.finished) return [];
+                this._position = Object.freeze({index: 0, key: "a", finished: true});
+                this._count++;
+                return [{key: "a", value: path}];
+            }
+        }
+        const source = new Source();sources.push(source);return source;
     };
-    const run = operation => operation();
-    const cursor = composeCursor([{path: ["records"], order: "desc"}, {path: "records", orderBy: undefined}], {orderBy: "score", order: "asc"}, create, run, undefined, {id: "test"});
+    const cursor = composeCursor([{path: ["records"], order: "desc"}, {path: "records", orderBy: undefined}],
+        {orderBy: "score", order: "asc"}, create, operation => operation());
     expect(options[0]).toMatchObject({orderBy: "score", order: "desc"});expect(options[1].orderBy).toBeUndefined();
     expect(await cursor.next(3)).toEqual([{key: "a", value: ["records"]}]);
-    expect(cursor.count).toBe(1);expect(sources.map(source => source.count)).toEqual([1, 0]);expect(cursor.position.finished).toBe(true);
+    expect(cursor.count).toBe(1);expect(sources.map(source => source.count)).toEqual([1, 1]);expect(cursor.position.finished).toBe(true);
 });
 it("fills composition buffers once per source and consumes them without per-record reads", async () => {
     fixture.sdk.once.mockImplementation(ref => Promise.resolve(fixture.snapshot(ref.path === "one" ? {a: 1, c: 3, e: 5} : {b: 2, d: 4, f: 6})));
@@ -163,17 +172,24 @@ it("applies date bounds to subscriptions and reports callback/cancellation failu
     expect(onError).toHaveBeenCalledTimes(2);
     subscription.unsubscribe();
 });
-it("does not count a failed source batch as delivered by the composed cursor", async () => {
-    const onError = vi.fn(), first = {position: {finished: false}, count: 0}, second = {position: {finished: false}, count: 0};
-    first.next = async () => { first.position.finished = true; first.count++; return [{key: "a", value: 1}]; };
-    second.next = async () => { throw new Error("second failed"); };
-    const syncRun = (operation, options, reason, context) => {
-        try {
-            const result = operation();
-            return result?.then instanceof Function ? result.catch(error => options.onError(error, reason, context)) : result;
-        } catch (error) { options.onError(error, reason, context); }
-    };
-    const cursor = composeCursor([{path: "one"}, {path: "two"}], {onError}, path => path === "one" ? first : second, syncRun, undefined, {id: "failure"});
+it("retains staged source results across a suppressed composition failure", async () => {
+    const onError = vi.fn();
+    class Source extends DatabaseCursor {
+        fail = false;
+        async next(n) {
+            await super.next(n);
+            if (this.fail) { this.fail = false; throw new Error("second failed"); }
+            if (this.position.finished) return [];
+            this._position = Object.freeze({index: 0, key: "a", finished: true});
+            this._count++;
+            return [{key: "a", value: 1}];
+        }
+    }
+    const first = new Source({}, "one"), second = new Source({}, "two");second.fail = true;
+    const owner = new DatabaseBase({onError});
+    const cursor = composeCursor([first, second], {onError}, vi.fn(), owner.run.bind(owner));
     expect(await cursor.next(2)).toBeUndefined();
     expect(first.count).toBe(1);expect(second.count).toBe(0);expect(cursor.count).toBe(0);expect(onError).toHaveBeenCalledTimes(1);
+    expect(await cursor.next(2)).toEqual([{key: "a", value: 1}, {key: "a", value: 1}]);
+    expect(cursor.count).toBe(2);
 });
