@@ -1,5 +1,7 @@
 import {vi} from "vitest";
+import {UserData} from "../../../common";
 import LocalAuth from "../local";
+import {changeEvent} from "../local/common";
 
 // Attach rejection handling before advancing timers, including failing operations.
 async function run(promise) {
@@ -37,6 +39,27 @@ it("constructs without accessing storage and validates its namespace", () => {
     expect(getItem).not.toHaveBeenCalled();
     expect(() => new LocalAuth({storageKey: ""})).toThrow();
 });
+it("uses the constructor model for sign-in, restoration and subscriptions", async () => {
+    class CustomUserData extends UserData {}
+    auth = new LocalAuth({UserData: CustomUserData});
+    const callback = vi.fn();
+    unsubscribes.push(await run(auth.onAuthStateChanged(callback)));
+    expect(callback.mock.calls.at(-1)[0]).toBeInstanceOf(CustomUserData);
+    expect((await run(auth.resolveCurrentUser())).id).toBeUndefined();
+    expect(await register()).toBeInstanceOf(CustomUserData);
+    expect(callback.mock.calls.at(-1)[0]).toBeInstanceOf(CustomUserData);
+    expect(await run(auth.resolveCurrentUser())).toBeInstanceOf(CustomUserData);
+    await run(auth.signOut());
+    expect(callback.mock.calls.at(-1)[0]).toBeInstanceOf(CustomUserData);
+    expect(callback.mock.calls.at(-1)[0].id).toBeUndefined();
+    expect(await run(auth.signInWithEmailAndPassword("user@example.test", "password"))).toBeInstanceOf(CustomUserData);
+    expect(await run(auth.signInWithPopup("google.com"))).toBeInstanceOf(CustomUserData);
+    expect(await run(auth.signInWithCredential("token"))).toBeInstanceOf(CustomUserData);
+    await run(auth.sendSignInLinkToEmail("user@example.test"));
+    expect(await run(auth.signInWithEmailLink("user@example.test"))).toBeInstanceOf(CustomUserData);
+    await run(auth.signInWithRedirect("facebook.com"));
+    expect(await run(auth.resolveRedirectResult())).toBeInstanceOf(CustomUserData);
+});
 it("registers, normalizes email and restores detached user snapshots", async () => {
     const user = await run(auth.createUserWithEmailAndPassword(" User@Example.test ", "password"));
     expect(user).toMatchObject({email: "user@example.test", verified: false});
@@ -49,6 +72,131 @@ it("registers, normalizes email and restores detached user snapshots", async () 
     expect(parsed.toJSON().requested).toEqual(expect.any(Number));
     user.public.name = "Unsaved";
     expect((await run(auth.resolveCurrentUser())).public.name).toBeNull();
+});
+it("loads database data for the local user and skips reads after sign-out", async () => {
+    const read = vi.fn(path => Promise.resolve({
+        users_public: {name: "Stored name"}, roles: "admin", users_private: {device: {locale: "en"}}
+    }[path[0]]));
+    auth = new LocalAuth({database: {read}});
+    const user = await register();
+    expect(user).toMatchObject({name: "Stored name", role: "admin", private: {device: {locale: "en"}}});
+    expect(read.mock.calls.map(([path]) => path)).toEqual([
+        ["users_public", user.id], ["roles", user.id], ["users_private", user.id]
+    ]);
+    await run(auth.signOut());
+    await run(auth.resolveCurrentUser());
+    expect(read).toHaveBeenCalledTimes(3);
+    const failure = new Error("database unavailable");
+    read.mockRejectedValue(failure);
+    await expect(run(auth.signInWithEmailAndPassword(user.email, "password"))).rejects.toBe(failure);
+});
+it("does not create a registration or notify observers when its database load fails", async () => {
+    const failure = new Error("database unavailable");
+    auth = new LocalAuth({database: {read: vi.fn().mockRejectedValue(failure)}});
+    const callback = vi.fn();
+    unsubscribes.push(await run(auth.onAuthStateChanged(callback)));
+    const event = vi.fn();
+    window.addEventListener(changeEvent, event);
+    try {
+        await expect(register()).rejects.toBe(failure);
+        expect(window.localStorage.getItem(auth.storageKey)).toBeNull();
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(event).not.toHaveBeenCalled();
+    } finally {
+        window.removeEventListener(changeEvent, event);
+    }
+});
+it.each([
+    ["password", () => auth.signInWithEmailAndPassword("user@example.test", "password")],
+    ["email link", () => auth.signInWithEmailLink("link@example.test")],
+    ["popup", () => auth.signInWithPopup("google.com")],
+    ["credential", () => auth.signInWithCredential("fake-token")],
+    ["redirect", () => auth.signInWithRedirect("facebook.com")]
+])("preserves the previous session and account on failed %s database load", async (name, signIn) => {
+    await register();
+    await run(auth.sendSignInLinkToEmail("link@example.test"));
+    const before = window.localStorage.getItem(auth.storageKey);
+    const failure = new Error("database unavailable");
+    auth = new LocalAuth({database: {read: vi.fn().mockRejectedValue(failure)}});
+    const callback = vi.fn();
+    unsubscribes.push(await run(new LocalAuth().onAuthStateChanged(callback)));
+    const event = vi.fn();
+    window.addEventListener(changeEvent, event);
+    try {
+        await expect(run(signIn())).rejects.toBe(failure);
+        expect(window.localStorage.getItem(auth.storageKey)).toBe(before);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(event).not.toHaveBeenCalled();
+    } finally {
+        window.removeEventListener(changeEvent, event);
+    }
+});
+it("loads user data before activating a successful password session", async () => {
+    const user = await register();
+    await run(auth.signOut());
+    const before = window.localStorage.getItem(auth.storageKey);
+    const read = vi.fn(() => {
+        expect(window.localStorage.getItem(auth.storageKey)).toBe(before);
+        return Promise.resolve({name: "Stored name"});
+    });
+    auth = new LocalAuth({database: {read}});
+    const event = vi.fn();
+    window.addEventListener(changeEvent, event);
+    try {
+        const signedIn = await run(auth.signInWithEmailAndPassword(user.email, "password"));
+        expect(signedIn).toMatchObject({id: user.id, name: "Stored name"});
+        expect(stored().session.uid).toBe(user.id);
+        expect(event).toHaveBeenCalledTimes(1);
+        expect(read).toHaveBeenCalledTimes(3);
+    } finally {
+        window.removeEventListener(changeEvent, event);
+    }
+});
+it("does not restore a stale session after sign-out during a pending database load", async () => {
+    await register();
+    let finishLoad;
+    const load = new Promise(resolve => { finishLoad = resolve; });
+    const read = vi.fn(() => load);
+    auth = new LocalAuth({database: {read}});
+    const signedIn = expect(auth.signInWithEmailAndPassword("user@example.test", "password"))
+        .rejects.toMatchObject({code: "auth/state-changed"});
+    await vi.runAllTimersAsync();
+    expect(read).toHaveBeenCalledTimes(3);
+    await run(auth.signOut());
+    const afterSignOut = window.localStorage.getItem(auth.storageKey);
+    finishLoad(undefined);
+    await signedIn;
+    expect(window.localStorage.getItem(auth.storageKey)).toBe(afterSignOut);
+    expect(stored().session).toBeNull();
+});
+it("keeps a redirect result available when its database load fails", async () => {
+    await run(auth.signInWithRedirect("facebook.com"));
+    const before = window.localStorage.getItem(auth.storageKey);
+    const failure = new Error("database unavailable");
+    auth = new LocalAuth({database: {read: vi.fn().mockRejectedValue(failure)}});
+    const event = vi.fn();
+    window.addEventListener(changeEvent, event);
+    try {
+        await expect(run(auth.resolveRedirectResult())).rejects.toBe(failure);
+        expect(window.localStorage.getItem(auth.storageKey)).toBe(before);
+        expect(event).not.toHaveBeenCalled();
+    } finally {
+        window.removeEventListener(changeEvent, event);
+    }
+});
+it("reports database observer failures without publishing an unloaded user", async () => {
+    const user = await register();
+    const failure = new Error("read failed");
+    const read = vi.fn().mockRejectedValue(failure);
+    const observer = new LocalAuth({database: {read}});
+    const callback = vi.fn();
+    const onError = vi.fn();
+    unsubscribes.push(await run(observer.onAuthStateChanged(callback, onError)));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onError).toHaveBeenCalledWith(failure);
+    expect(callback).not.toHaveBeenCalled();
+    expect(read).toHaveBeenCalledWith(["users_public", user.id]);
 });
 it.each([
     ["invalid", "password", "invalid-email"],

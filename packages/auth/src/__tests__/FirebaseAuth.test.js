@@ -1,4 +1,5 @@
 import {vi} from "vitest";
+import {UserData} from "../../../common";
 import FirebaseAuth from "../firebase";
 import * as modularAuth from "firebase/auth";
 
@@ -46,6 +47,28 @@ it.each(["createUserWithEmailAndPassword", "signInWithEmailAndPassword", "signIn
         expect(raw.displayName).toBe(json.displayName);
     }
 );
+it("uses the constructor model for sign-in, restoration and subscriptions", async () => {
+    class CustomUserData extends UserData {}
+    let notify;
+    const sdk = {
+        currentUser: sdkUser(),
+        signInWithEmailAndPassword: vi.fn().mockResolvedValue({user: sdkUser()}),
+        onAuthStateChanged: callback => { notify = callback; return vi.fn(); }
+    };
+    const auth = new FirebaseAuth({firebase: {app: sdk}, UserData: CustomUserData});
+    expect(await auth.signInWithEmailAndPassword("sdk@example.test", "password")).toBeInstanceOf(CustomUserData);
+    expect(await auth.resolveCurrentUser()).toBeInstanceOf(CustomUserData);
+    const callback = vi.fn();
+    const unsubscribe = await auth.onAuthStateChanged(callback);
+    notify(sdk.currentUser);
+    expect(callback.mock.calls.at(-1)[0]).toBeInstanceOf(CustomUserData);
+    sdk.currentUser = null;
+    expect(await auth.resolveCurrentUser()).toBeInstanceOf(CustomUserData);
+    notify(null);
+    expect(callback.mock.calls.at(-1)[0]).toBeInstanceOf(CustomUserData);
+    expect(callback.mock.calls.at(-1)[0].id).toBeUndefined();
+    unsubscribe();
+});
 it("normalizes redirect results and uses null only when no result exists", async () => {
     const getRedirectResult = vi.fn().mockResolvedValueOnce({user: sdkUser()}).mockResolvedValueOnce({user: null});
     const auth = new FirebaseAuth({firebase: {app: {getRedirectResult}}});
@@ -80,6 +103,50 @@ it("normalizes restored users and subscription updates including errors", async 
     expect(onError).toHaveBeenLastCalledWith(expect.objectContaining({code: "auth/invalid-user-data"}));
     unsubscribe();
     expect(stop).toHaveBeenCalledOnce();
+});
+it("loads the signed-in user's database profile and forwards read errors", async () => {
+    const failure = new Error("database unavailable");
+    const read = vi.fn(path => {
+        if (path[0] === "users_public") return Promise.resolve({name: "Stored name", image: "stored.png"});
+        if (path[0] === "roles") return Promise.resolve("admin");
+        return Promise.resolve({device: {locale: "en"}});
+    });
+    const sdk = {currentUser: sdkUser()};
+    const auth = new FirebaseAuth({firebase: {app: sdk}, database: {read}});
+    const user = await auth.resolveCurrentUser();
+    expect(user).toMatchObject({name: "Stored name", image: "stored.png", role: "admin", private: {device: {locale: "en"}}});
+    expect(read.mock.calls.map(([path]) => path)).toEqual([
+        ["users_public", json.uid], ["roles", json.uid], ["users_private", json.uid]
+    ]);
+    read.mockRejectedValue(failure);
+    await expect(auth.resolveCurrentUser()).rejects.toBe(failure);
+    sdk.currentUser = null;
+    expect(await auth.resolveCurrentUser()).toMatchObject({id: undefined});
+    expect(read).toHaveBeenCalledTimes(6);
+});
+it("waits for database data before notifying and reports read failures", async () => {
+    let notify;
+    let finishRead;
+    const read = vi.fn(path => path[0] === "users_public"
+        ? new Promise(resolve => { finishRead = resolve; })
+        : Promise.resolve(undefined));
+    const auth = new FirebaseAuth({
+        firebase: {app: {onAuthStateChanged: callback => { notify = callback; }}},
+        database: {read}
+    });
+    const callback = vi.fn();
+    const onError = vi.fn();
+    await auth.onAuthStateChanged(callback, onError);
+    notify(sdkUser());
+    expect(callback).not.toHaveBeenCalled();
+    finishRead({name: "Database name"});
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledWith(expect.objectContaining({name: "Database name"})));
+    const failure = new Error("read failed");
+    read.mockRejectedValue(failure);
+    notify(sdkUser());
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+    notify(null);
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledWith(expect.objectContaining({id: undefined})));
 });
 it("passes provider failures through unchanged", async () => {
     const error = Object.assign(new Error("Invalid login"), {code: "auth/invalid-credential"});
