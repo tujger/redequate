@@ -17,7 +17,7 @@ export async function uploadComponentClean(uppy, key) {
 async function uploadComponentDelete(deleteFile, storage) {
     if (deleteFile) {
         try {
-            console.log("[Upload] delete old file from firebase", deleteFile);
+            console.log("[Upload] delete old file from storage", deleteFile);
             return storage.delete(deleteFile);
         } catch (e) {
             console.error("[Upload]", e);
