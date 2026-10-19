@@ -1,5 +1,5 @@
 import React from "react";
-import {useFirebase} from "../controllers/General";
+import {useDatabase} from "../controllers";
 import notifySnackbar from "../controllers/notifySnackbar";
 import Select from "../controls/Select/Select";
 import {tokenizeText} from "./MentionedTextComponent";
@@ -17,7 +17,7 @@ export default (
         placeholder,
         value = ""
     }) => {
-    const firebase = useFirebase();
+    const database = useDatabase();
     const [state, setState] = React.useState({items: [], input: value});
     const {items, selected = "", input} = state;
 
@@ -56,17 +56,17 @@ export default (
     React.useLayoutEffect(() => {
         const importValues = async () => {
             if (!mention) throw Error("Mention is not defined");
-            const {pagination, transform} = mention;
-            return {pagination, transform, value};
+            const {cursor, transform} = mention;
+            return {cursor, transform, value};
         }
         const checkIfValuesValid = async props => {
-            const {pagination} = props;
-            if (!pagination) throw "skip";
+            const {cursor} = props;
+            if (!cursor) throw "skip";
             return props;
         }
         const fetchItems = async props => {
-            const {pagination} = props;
-            const source = pagination("", firebase);
+            const {cursor} = props;
+            const source = cursor("", database);
             const items = new Map();
             while (!(source.position?.finished ?? source.finished)) {
                 const page = source.position ? await source.next(100) : await source.next();

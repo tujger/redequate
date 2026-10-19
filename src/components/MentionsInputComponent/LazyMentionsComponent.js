@@ -1,5 +1,6 @@
 import React from "react";
 import {Mention, MentionsInput} from "react-mentions";
+import {useDatabase} from "../../controllers";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/MentionsInputComponent.module.css";
 
@@ -22,6 +23,7 @@ export default (
         required,
         value = ""
     }) => {
+    const database = useDatabase();
     const onSuggestionPointerDown = useRippleEffect();
 
     const handleChange = (event, nextValue, plainValue, mentions) => {
@@ -52,11 +54,11 @@ export default (
                 key={mention.type || index}
                 className={mention.className}
                 data={(query, callback) => {
-                    if (!query || !mention.pagination) {
+                    if (!query || !mention.cursor) {
                         callback([]);
                         return;
                     }
-                    mention.pagination(query, firebase).next()
+                    mention.cursor(query, database).next(10)
                         .then(items => Promise.all(items.map(item => mention.transform ? mention.transform(item) : item)))
                         .then(callback)
                         .catch(() => callback([]));
