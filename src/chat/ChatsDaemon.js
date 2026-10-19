@@ -92,7 +92,6 @@ export default ({clearText = text => text}) => {
         console.log("[ChatsDaemon] installed");
         return () => {
             listener.remove();
-            // pagination.reset();
             for (let id in metas) {
                 id && metas[id] && metas[id].unwatch();
             }
