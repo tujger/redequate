@@ -1,127 +1,26 @@
 import {notImplemented} from '../../../common'
 import {DatabaseCursor} from "./DatabaseCursor";
-import {DatabaseOrder} from "./DatabaseOrder";
+import type {
+    DatabasePath, DatabaseValue, DatabaseRecord, DatabaseDraft,
+    DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler, DatabaseOptions,
+    DatabaseListenerOptions, DatabaseReadOptions, DatabaseCursorOptions, DatabaseCursorSource,
+    DatabaseUpdates
+} from "./DatabaseTypes";
 
 export {DatabaseCursor};
 export {DatabaseOrder} from "./DatabaseOrder";
+export type {
+    DatabaseNamedPathSegment, DatabasePathSegment, DatabasePath, DatabaseFieldPath,
+    DatabaseValue, DatabaseRecord, DatabaseEntry, DatabaseGroupEntry,
+    DatabaseDraft, DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler,
+    DatabaseOptions, DatabaseListenerOptions, DatabaseQueryValue, DatabaseReadOptions,
+    DatabaseCursorPosition, DatabaseCursorEvent, DatabaseCursorSubscription, DatabaseCursorOptions,
+    DatabaseCursorSource, DatabaseUpdates
+} from "./DatabaseTypes";
 
 /**
- * Provider-relative path; array parts are joined with '/'. '' and [] mean root.
- */
-export type DatabasePath = string | string[];
-
-export type DatabaseValue = null | boolean | number | string | DatabaseValue[] | DatabaseRecord;
-
-export interface DatabaseRecord {
-    [key: string]: DatabaseValue;
-}
-
-export interface DatabaseEntry {
-    key: string;
-    value: DatabaseValue;
-}
-
-/** A group heading has no value; key is the configured group string. */
-export interface DatabaseGroupEntry {
-    key: string;
-}
-
-export interface DatabaseDraft {
-    /** Identifies the draft; may differ from the permanent key. */
-    readonly temporaryKey: string;
-
-    /** Create without overwriting and return the permanent key. Null/undefined reject; failures allow retry. */
-    save(value: DatabaseRecord): Promise<string | undefined>;
-}
-
-export interface DatabaseListener {
-    remove(): void;
-}
-
-export type DatabaseErrorContext = Record<string, unknown>;
-export type DatabaseErrorHandler = (error: unknown, reason: string, context: DatabaseErrorContext) => void;
-
-export interface DatabaseOptions extends Record<string, unknown> {
-    onError?: DatabaseErrorHandler;
-}
-
-export interface DatabaseListenerOptions extends DatabaseOptions {
-    onChange?: (value: DatabaseValue | undefined) => void;
-    onChildAdd?: (entry: DatabaseEntry) => void;
-    onChildChange?: (entry: DatabaseEntry) => void;
-    onChildRemove?: (entry: DatabaseEntry) => void;
-    orderBy?: string;
-}
-
-export type DatabaseQueryValue = null | boolean | number | string;
-
-export interface DatabaseReadOptions extends DatabaseOptions {
-    equalTo?: DatabaseQueryValue;
-    orderBy?: string;
-}
-
-export interface DatabaseCursorPosition {
-    /** Last returned entry's index within the selection; initially -1. */
-    readonly index: number;
-    /** Last returned key; initially undefined. */
-    readonly key: string | undefined;
-    /** All sources and buffered entries are exhausted; initially false. */
-    readonly finished: boolean;
-}
-
-export interface DatabaseCursorEvent {
-    type: "add" | "change" | "remove";
-    entry: DatabaseEntry;
-}
-
-export interface DatabaseCursorSubscription {
-    readonly id: string;
-    /** Subscription creation time. */
-    readonly subscribed: Date;
-    readonly active: boolean;
-    readonly added: number;
-    readonly changed: number;
-    readonly removed: number;
-    unsubscribe(): void;
-}
-
-export interface DatabaseCursorOptions extends DatabaseOptions {
-    /** Emit one heading before the first result; compositions return source blocks. Headings count as entries. */
-    group?: string;
-    /** Field path. If omitted, order by value when equalTo is defined, otherwise by key. */
-    orderBy?: DatabasePath;
-    /** Exact match; excludes start/end, but allows date bounds. */
-    equalTo?: DatabaseQueryValue;
-    /** Inclusive ordered-value bound; a string without end implies end = start + "\uf8ff". */
-    start?: DatabaseQueryValue;
-    /** Inclusive ordered-value bound. */
-    end?: DatabaseQueryValue;
-    /** Inclusive minimum timestamp key; date filtering precedes handle. */
-    startDate?: Date;
-    /** Inclusive maximum timestamp key, including the entire millisecond. */
-    endDate?: Date;
-    /** Defaults to asc. */
-    order?: DatabaseOrder;
-    /**
-     * Runs sequentially on deep copies. Undefined leaves storage and the read value
-     * unchanged; null deletes; any other result replaces the value and is reread.
-     */
-    handle?: (entry: DatabaseEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
-}
-
-/** Source options override outer options; explicit undefined clears an inherited option. */
-export interface DatabaseCursorSource extends DatabaseCursorOptions {
-    path: DatabasePath;
-}
-
-export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;
-
-/**
- * Errors throw/reject by default. Per-operation onError overrides the default
- * and synchronously receives (error, operation name, argument context).
- * Returning normally suppresses the error with an undefined result; handler
- * exceptions propagate once. Drafts, cursors and listeners retain their options.
- * Write promises resolve after storage confirms the operation.
+ * onError may suppress a failure by returning normally; the operation then returns undefined.
+ * Drafts, cursors and listeners retain their options. Writes resolve after storage confirms them.
  */
 export default class DatabaseBase {
     onError: DatabaseErrorHandler;
@@ -212,16 +111,12 @@ export default class DatabaseBase {
         }, registrationOptions, "addEventListener", {path});
     }
 
-    /**
-     * Prepare creation with an automatic key, without writing. Call draft.save to persist.
-     */
+    /** No write until draft.save(). */
     create(path: DatabasePath, options: DatabaseOptions = {}): DatabaseDraft | undefined {
         return notImplemented('create')
     }
 
-    /**
-     * Read plain data; absent records resolve to undefined.
-     */
+    /** Collections return records keyed by child ID; absent paths return undefined. */
     async read(path: DatabasePath, {
         equalTo = undefined,
         orderBy = undefined
@@ -230,9 +125,8 @@ export default class DatabaseBase {
     }
 
     /**
-     * Merge top-level fields; nested values are replaced, null removes a field.
-     * Non-null fields may create an absent record; empty changes/removals need not.
-     * The batch form writes values at paths relative to the root.
+     * Shallow merge: nested values are replaced; null deletes. Non-null values may create records.
+     * Batch paths are root-relative.
      */
     update(path: DatabasePath, changes: DatabaseRecord, options?: DatabaseOptions): Promise<void>;
     update(updates: DatabaseUpdates, options?: DatabaseOptions): Promise<void>;
@@ -240,33 +134,23 @@ export default class DatabaseBase {
         return notImplemented('update')
     }
 
-    /**
-     * Delete a record; absent records also succeed.
-     */
+    /** Absent records also succeed. */
     async delete(path: DatabasePath, {}: DatabaseOptions = {}): Promise<void> {
         return notImplemented('delete')
     }
 
     /**
-     * Create a cursor over immediate children, initially before the first entry.
-     * A non-empty array of source descriptions or fresh DatabaseCursor implementations
-     * composes cursors in round-robin order; string arrays remain paths.
-     * Records, handlers and events use plain {key, value} objects. Group headings
-     * are {key: group} objects, additional to the data page size. Null/undefined
-     * composition sources are skipped.
-     * Composition buffers next(n) results and deduplicates by the original source's
-     * normalized cursor.path + key, falling back to cursor.id + key without a path.
-     * Each source runs its own handle before buffering; composition never reruns it.
-     * Ready cursors retain their options and may themselves be compositions.
+     * Iterates immediate children. Arrays starting with a string are paths;
+     * source lists compose fresh cursors round-robin, skipping null/undefined.
+     * Compositions deduplicate by source path + key (or cursor ID + key without a path)
+     * and run each source's handle once, before buffering.
      */
     cursor(path: DatabasePath | (DatabaseCursorSource | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
-        return new DatabaseCursor(options, typeof path === "string"
-            || path instanceof Array && path.every(part => typeof part === "string") ? path as DatabasePath : undefined);
+        return new DatabaseCursor(options, typeof path === "string" || path instanceof Array
+            && (path.length === 0 || typeof path[0] === "string") ? path as DatabasePath : undefined);
     }
 
-    /**
-     * Create or fully replace an exact path. Null deletes; undefined/missing values reject.
-     */
+    /** Full replacement. Null deletes; undefined rejects. */
     async write(path: DatabasePath, value: DatabaseValue, {}: DatabaseOptions = {}): Promise<void> {
         return notImplemented('write')
     }

@@ -4,7 +4,7 @@ import type {
     DatabasePath, DatabaseCursorSource, DatabaseEntry, DatabaseGroupEntry,
     DatabaseCursorEvent, DatabaseCursorOptions, DatabaseCursorSubscription,
     DatabaseErrorContext, DatabaseOptions
-} from "./DatabaseBase";
+} from "./DatabaseTypes";
 
 type CursorInput = DatabaseCursorSource | DatabaseCursor | null | undefined;
 type CursorEntry = DatabaseEntry | DatabaseGroupEntry;
@@ -57,7 +57,8 @@ function appendUniqueEntry(props: SourceProps & {
     seen: Map<string, Set<string>>; origins: WeakMap<DatabaseEntry, DatabaseCursor>;
 }) {
     const {source, entries, entry, origin, seen, origins} = props;
-    const identity = origin.path === undefined ? `id:${origin.id}` : `path:${origin.path}`;
+    const identity = origin.path === undefined ? `id:${origin.id}`
+        : `path:${typeof origin.path === "string" ? origin.path : JSON.stringify(origin.path)}`;
     let keys = seen.get(identity);
     if (!keys) {
         keys = new Set();
@@ -118,9 +119,10 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
             && cursor.#sources.some(source => ComposedDatabaseCursor.#hasGroup(source.cursor));
     }
 
-    constructor(sources: Source[], options: DatabaseCursorOptions, run: CursorRun, path: CursorPath) {
-        super(options, typeof path === "string" || path instanceof Array && path.every(part => typeof part === "string")
-            ? path as DatabasePath : undefined);
+    constructor(sources: Source[], options: DatabaseCursorOptions, run: CursorRun, path: CursorPath,
+        cursorPath?: () => DatabasePath) {
+        super(options, cursorPath?.() ?? (typeof path === "string" || path instanceof Array
+            && (path.length === 0 || typeof path[0] === "string") ? path as DatabasePath : undefined));
         this.#context = {path};
         this.#run = run;
         this.#sources = sources;
@@ -284,10 +286,10 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
     }
 
     static create(queries: CursorInput[], options: DatabaseCursorOptions, createCursor: CreateCursor,
-        run: CursorRun, path: CursorPath): ComposedDatabaseCursor | undefined {
+        run: CursorRun, path: CursorPath, cursorPath?: () => DatabasePath): ComposedDatabaseCursor | undefined {
         const sources: Source[] = [];
         const composition = run(() => {
-            const composition = new ComposedDatabaseCursor(sources, options, run, path);
+            const composition = new ComposedDatabaseCursor(sources, options, run, path, cursorPath);
             const cursors = new Set<DatabaseCursor>();
             for (const description of queries) {
                 if (description == null) continue;
@@ -299,7 +301,7 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
                     cursors.add(description);
                 } else if (typeof description !== "object" || description instanceof Array
                     || !(typeof description.path === "string" || description.path instanceof Array
-                        && description.path.every(part => typeof part === "string"))) {
+                        && (description.path.length === 0 || typeof description.path[0] === "string"))) {
                     fail("database/invalid-argument", "Each cursor source must be a DatabaseCursor or an object with a path.");
                 }
             }
@@ -324,7 +326,7 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
 }
 
 export function composeCursor(queries: CursorInput[], options: DatabaseCursorOptions,
-    createCursor: CreateCursor, run: CursorRun, path: CursorPath = queries
+    createCursor: CreateCursor, run: CursorRun, path: CursorPath = queries, cursorPath?: () => DatabasePath
 ): ComposedDatabaseCursor | undefined {
-    return ComposedDatabaseCursor.create(queries, options, createCursor, run, path);
+    return ComposedDatabaseCursor.create(queries, options, createCursor, run, path, cursorPath);
 }

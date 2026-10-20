@@ -1,16 +1,16 @@
-import normalizePath from "./normalizePath";
+import validatePath from "./validatePath";
 import {DatabaseOrder} from "./DatabaseOrder";
 import {fail, identifier} from "../../../common";
 import type {
     DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent,
-    DatabaseCursorPosition, DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath
-} from "./DatabaseBase";
+    DatabaseCursorPosition, DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath, DatabaseFieldPath
+} from "./DatabaseTypes";
 
 /** Base for cursors consumed sequentially, exclusively by their owner or composition. */
 export class DatabaseCursor {
     readonly #id: string;
     readonly #options: Readonly<DatabaseCursorOptions>;
-    readonly #path?: string;
+    readonly #path?: DatabasePath;
     protected _started = false;
     protected _heading?: DatabaseGroupEntry;
 
@@ -40,11 +40,8 @@ export class DatabaseCursor {
         }
         this.#id = id;
         const {orderBy, equalTo, start, end} = options;
-        if (orderBy !== undefined && !(typeof orderBy === "string" && normalizePath(orderBy)
-            || orderBy instanceof Array && orderBy.length && orderBy.every(part => typeof part === "string")
-                && normalizePath(orderBy))) {
-            fail("database/invalid-argument", "orderBy must be a non-empty field path.");
-        }
+        if (path !== undefined) validatePath(path);
+        if (orderBy !== undefined) validatePath(orderBy);
         if (equalTo !== undefined && (start !== undefined || end !== undefined)) {
             fail("database/invalid-argument", "equalTo cannot be combined with start or end.");
         }
@@ -56,14 +53,14 @@ export class DatabaseCursor {
         }
         this.#options = Object.freeze({...cursorOptions, order,
             orderBy: orderBy instanceof Array ? [...orderBy] : orderBy});
-        this.#path = path === undefined ? undefined : normalizePath(path);
+        this.#path = path instanceof Array ? [...path] : path;
     }
 
     get id(): string { return this.#id; }
-    get path(): string | undefined { return this.#path; }
+    get path(): DatabasePath | undefined { return this.#path; }
     get group(): string | undefined { return this.#options.group; }
     get order(): DatabaseOrder { return this.#options.order!; }
-    get orderBy(): DatabasePath | undefined { return this.#options.orderBy; }
+    get orderBy(): DatabaseFieldPath | undefined { return this.#options.orderBy; }
     get start() { return this.#options.start; }
     get end() { return this.#options.end; }
     get equalTo() { return this.#options.equalTo; }
