@@ -100,7 +100,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                     const toks = tokenizeText(matches[1]);
                     _targetTag = toks[0];
                     if (_targetTag && _targetTag.type === "tag" && _targetTag.value) {
-                        _targetTag = await database.read(["tag", _targetTag.value]).then(value => {
+                        _targetTag = await database.read(["tag", {tag_id: _targetTag.value}]).then(value => {
                             if (value !== undefined) {
                                 if (!value || value.hidden) {
                                     _targetTag = undefined;
@@ -134,7 +134,8 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         delete: () => {
             cacheDatas.remove(_id);
-            return database.delete([type, _id]);
+            // UNKNOWN: type is configurable; its record key has no single confirmed wildcard name.
+            return database.delete(["posts", {post_id: _id}]);
         },
         editOf: type => {
             if (!_edit) return null;
@@ -164,7 +165,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 resolve(_body);
                 return;
             }
-            database.read([type, _id]).then(async data => {
+            database.read(["posts", {post_id: _id}]).then(async data => {
                 if (data !== undefined) {
                     data.replyTo = data.to;
                     await _body.create(data);
@@ -179,7 +180,8 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         fetchCounters: () => new Promise((resolve, reject) => {
             if (!_id) reject(new Error("Post not submitted yet."));
             _counters = {};
-            database.read(["_counters", _id]).then(value => {
+            // UNKNOWN: _counters contains several key schemes; type does not identify the key field.
+            database.read(["_counters", {post_id: _id}]).then(value => {
                 _counters = value || {};
                 resolve(_body);
             })
@@ -212,7 +214,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             if (!_replyTo) return _id;
             let id = _replyTo, next = null, parentKey = null, rootKey = null, commentKey = null;
             while (id) {
-                const value = await database.read(["posts", id])
+                const value = await database.read(["posts", {post_id: id}])
                 if (value !== undefined) {
                     next = value;
                     parentKey = parentKey || id;
@@ -229,7 +231,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         publish: () => async () => {
             if (!_id) {
                 _id = await database.create(["posts"]).save(_body._publishData());
-                _created = await database.read(["posts", _id, "created"]);
+                _created = await database.read(["posts", {post_id: _id}, "created"]);
             }
             cacheDatas.put(_id, _body);
             return _body;
@@ -270,7 +272,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             if (!uid) throw new Error("'uid' is not defined.");
 
             const extra = _extras[type];
-            await database.delete(["extra", extra.key]);
+            await database.delete(["extra", {extra_id: extra.key}]);
             delete _extras[type];
             _counters = _counters || {};
             _counters[type] = (_counters[type] || 1) - 1;
@@ -313,10 +315,12 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             return value;
         },
         _updateVal: async (section, path, change, cache) => {
+            // UNKNOWN: path is an opaque relative key and may contain multiple segments.
+            const recordPath = [section, {post_id: `${path}`}];
             path = `${section}/${path}`;
             if (cache[path] !== undefined) {
             } else {
-                cache[path] = (await database.read([path])) || 0;
+                cache[path] = (await database.read(recordPath)) || 0;
             }
             cache[path] = cache[path] + change;
             return cache[path];
