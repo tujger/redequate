@@ -1,7 +1,6 @@
 import {DatabaseCursor} from "../../packages/database/src/common/DatabaseCursor";
 import {DatabaseOrder} from "../../packages/database/src/common/DatabaseOrder";
-import type {DatabaseCursorOptions} from "../../packages/database/src/common/DatabaseBase";
-import normalizePath from "../../packages/database/src/common/normalizePath";
+import type {DatabaseCursorOptions} from "../../packages/database/src/common/DatabaseTypes";
 import {fail} from "../../packages/common";
 import {matchRole, normalizeSortName} from "./UserData";
 import {getCurrentUserData} from "./useCurrentUserData";
@@ -36,7 +35,10 @@ export default class PagesCursor extends DatabaseCursor {
         if (this.handle !== undefined || this.startDate !== undefined || this.endDate !== undefined) {
             fail("database/invalid-argument", "PagesCursor does not support handle or date bounds.");
         }
-        const fields = this.orderBy === undefined ? undefined : normalizePath(this.orderBy).split("/");
+        const fields = this.orderBy === undefined ? undefined
+            : (typeof this.orderBy === "string" ? this.orderBy === "" ? [] : [this.orderBy] : this.orderBy)
+                .map(part => typeof part === "string" ? part
+                    : part[Object.getOwnPropertyNames(part).find(key => key !== "_")!] as string);
         const end = this.end === undefined && typeof this.start === "string" ? this.start + "\uf8ff" : this.end;
         const value = (page: Page) => fields
             ? fields.reduce<unknown>((value, field) => value !== null && typeof value === "object"
