@@ -69,7 +69,7 @@ const MutualSubscribeItem = (
         setDisabled(true);
         cacheDatas.remove(key);
         cacheDatas.remove(value.id);
-        database.delete(["mutual", typeId, key])
+        database.delete(["mutual", {typeId, _: true}, {mutual_id: key}])
             .then(() => onDelete({key, value}))
             .catch(error => {
                 if (error && error.code === "PERMISSION_DENIED") {

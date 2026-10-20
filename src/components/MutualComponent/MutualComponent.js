@@ -98,7 +98,7 @@ export default props => {
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: false});
 
-        database.cursor(["mutual", typeId], {
+        database.cursor(["mutual", {typeId, _: true}], {
             equalTo: uidId,
             handle: () => null,
             orderBy: ["uid_id"],
@@ -129,7 +129,7 @@ export default props => {
 
     React.useEffect(() => {
         let isMounted = true;
-        database.cursor(["mutualrequests", typeId], {
+        database.cursor(["mutualrequests", {typeId, _: true}], {
             equalTo: uidId,
             orderBy: ["uid_id"]
         }).next().then(items => items[0])
@@ -144,7 +144,7 @@ export default props => {
                     throw "done";
                 }
             })
-            .then(() => database.cursor(["mutual", typeId], {
+            .then(() => database.cursor(["mutual", {typeId, _: true}], {
                 equalTo: uidId,
                 orderBy: ["uid_id"]
             }).next())
@@ -201,7 +201,7 @@ export default props => {
 
     React.useEffect(() => {
         if (!hasPending) return;
-        const listener = database.addEventListener(["mutualrequests", typeId, hasPending.key], {
+        const listener = database.addEventListener(["mutualrequests", {typeId, _: true}, {pending: hasPending.key}], {
             onChange(value) {
                 if (value === undefined)
                     setState(state => ({...state, hasPending: null, disabled: false}))
@@ -225,7 +225,7 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         let isMutualRequestsCheckMount = true;
-        database.cursor(["mutualrequests", typeId], {
+        database.cursor(["mutualrequests", {typeId, _: true}], {
             equalTo: idUid,
             orderBy: ["uid_id"]
         }).next(10)
