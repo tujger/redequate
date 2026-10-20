@@ -38,10 +38,10 @@ export class UserData extends UserDataCommon {
                     if (state.public[x] !== undefined && (state.public[x] || "").constructor.name === "String") {
                         state.public[x] = (state.public[x] || "").trim();
                     }
-                    updates.set(["users_public", state.id, x], state.public[x]);
+                    updates.set(["users_public", {user_id: state.id}, {[x]: x}], state.public[x]);
                 }
             }
-            updates.set(["users_public", state.id, "updated"], this.#database.TIMESTAMP);
+            updates.set(["users_public", {user_id: state.id}, "updated"], this.#database.TIMESTAMP);
         }
 
         if (includePrivate) {
@@ -52,14 +52,14 @@ export class UserData extends UserDataCommon {
                         if (state.private[deviceId][x] !== undefined && (state.private[deviceId][x] || "").constructor.name === "String") {
                             state.private[deviceId][x] = (state.private[deviceId][x] || "").trim();
                         }
-                        updates.set(["users_private", state.id, deviceId, x], state.private[deviceId][x]);
+                        updates.set(["users_private", {user_id: state.id}, {device_id: deviceId}, {[x]: x}], state.private[deviceId][x]);
                     }
                 }
             }
         }
 
         if (!state.public.updated) {
-            updates.set(["users_public", state.id, "updated"], this.#database.TIMESTAMP);
+            updates.set(["users_public", {user_id: state.id}, "updated"], this.#database.TIMESTAMP);
         }
         return updates;
     }
@@ -67,7 +67,7 @@ export class UserData extends UserDataCommon {
     async delete() {
         const state = this._getState();
         console.log("[UserData] delete", state.id);
-        await this.#database.delete(["users_public", state.id]);
+        await this.#database.delete(["users_public", {user_id: state.id}]);
         cacheDatas.remove(state.id);
         return this;
     }
@@ -99,7 +99,7 @@ export class UserData extends UserDataCommon {
         const tasks = [];
         if ((!_loading.public || force) && (fetchPublic || fetchFull)) {
             tasks.push(new Promise((resolve, reject) => {
-                this.#database.read(["users_public", state.id])
+                this.#database.read(["users_public", {user_id: state.id}])
                     .then(value => {
                         if (value !== undefined) state.persisted = true;
                         state.public = {...state.public, ...(value || {})};
@@ -126,7 +126,7 @@ export class UserData extends UserDataCommon {
 
         if (fetchPrivate === true || fetchFull) {
             tasks.push(new Promise((resolve, reject) => {
-                this.#database.read(["users_private", state.id])
+                this.#database.read(["users_private", {user_id: state.id}])
                     .then(value => {
                         if (value !== undefined) state.persisted = true;
                         state.private = {...state.private, ...(value || {})};
@@ -140,7 +140,7 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.role || force) && (fetchRole || fetchFull)) {
             tasks.push(new Promise((resolve, reject) => {
-                this.#database.read(["roles", state.id])
+                this.#database.read(["roles", {user_id: state.id}])
                     .then(value => {
                         state.role = value;
                         state.loaded = {...state.loaded, role: true};
@@ -152,7 +152,7 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.updated || force) && (fetchUpdated && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this.#database.read(["users_public", state.id, "updated"])
+                this.#database.read(["users_public", {user_id: state.id}, "updated"])
                     .then(value => {
                         state.public.updated = value;
                         // console.warn("[UserData] updated", state.id, state.public.updated);
@@ -165,7 +165,7 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.name || force) && (fetchName && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this.#database.read(["users_public", state.id, "name"])
+                this.#database.read(["users_public", {user_id: state.id}, "name"])
                     .then(value => {
                         if (value !== undefined) state.persisted = true;
                         state.public.name = value || "";
@@ -184,7 +184,7 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.image || force) && (fetchImage && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this.#database.read(["users_public", state.id, "image"])
+                this.#database.read(["users_public", {user_id: state.id}, "image"])
                     .then(value => {
                         if (value !== undefined) state.persisted = true;
                         state.public.image = value;
@@ -198,7 +198,7 @@ export class UserData extends UserDataCommon {
 
         if ((!_loading.email || force) && (fetchEmail && !fetchFull && !fetchPublic)) {
             tasks.push(new Promise((resolve, reject) => {
-                this.#database.read(["users_public", state.id, "email"])
+                this.#database.read(["users_public", {user_id: state.id}, "email"])
                     .then(value => {
                         if (value !== undefined) state.persisted = true;
                         state.public.email = value;
@@ -220,7 +220,9 @@ export class UserData extends UserDataCommon {
         try {
             state.public._sort_name = state.sortName;
             state.requestedTimestamp = new Date().getTime();
-        } catch(e) {console.error(e)}
+        } catch (e) {
+            console.error(e)
+        }
         return this;
     }
 
@@ -228,12 +230,12 @@ export class UserData extends UserDataCommon {
         const state = this._getState();
         if (!state.loaded.private || force) {
             if (!deviceId) {
-                const value = await this.#database.read(["users_private", state.id]);
+                const value = await this.#database.read(["users_private", {user_id: state.id}]);
                 if (value !== undefined) state.persisted = true;
                 state.private = {...state.private, ...(value || {})}
                 state.loaded = {...state.loaded, private: true};
             } else {
-                const value = await this.#database.read(["users_private", state.id, deviceId]);
+                const value = await this.#database.read(["users_private", {user_id: state.id}, {device_id: deviceId}]);
                 if (value !== undefined) state.persisted = true;
                 state.private[deviceId] = {...state.private[deviceId], ...(value || {})};
                 state.loaded = {...state.loaded, private: true};
@@ -266,10 +268,10 @@ export class UserData extends UserDataCommon {
         const state = this._getState();
         const now = new Date().getTime();
         if (state.id && state.persisted && (now - this.#lastVisitUpdate) > 60000) {
-            database.read(["users_public", state.id, "email"])
+            database.read(["users_public", {user_id: state.id}, "email"])
                 .then(async value => {
                     if (value === undefined) return;
-                    await database.write(["users_public", state.id, "visit"], database.TIMESTAMP);
+                    await database.write(["users_public", {user_id: state.id}, "visit"], database.TIMESTAMP);
                     this.#lastVisitUpdate = now;
                 })
                 .catch(console.error);
@@ -303,7 +305,7 @@ export function watchUserChanged({auth, database, getUserData, onUserChanged}) {
             const changed = userData.verified && (
                 currentUserData.role === UserRole.USER_NOT_VERIFIED ||
                 currentUserData.public.emailVerified !== userData.verified
-            ) || await database.read(["users_public", userData.id, "updated"]) > currentUserData.public.updated;
+            ) || await database.read(["users_public", {user_id: userData.id}, "updated"]) > currentUserData.public.updated;
             if (!changed) return;
 
             console.warn("[UserData] changed", currentUserData.id, userData.toJSON());

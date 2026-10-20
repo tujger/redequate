@@ -113,7 +113,7 @@ function EditProfile(props) {
             }
         }
         const checkIfProfileExists = async () => {
-            const exists = await database.read(["users_public", userData.id, "email"]);
+            const exists = await database.read(["users_public", {user_id: userData.id}, "email"]);
             if (!exists) {
                 await logoutUser({auth, onLogout: () => setCurrentUserData(null)});
                 refreshAll(store);
@@ -175,13 +175,13 @@ function EditProfile(props) {
         const saveByAdmin = async () => {
             if (isAdmin) {
                 const updates = new Map();
-                updates.set(["roles", userData.id], (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role);
+                updates.set(["roles", {user_id: userData.id}], (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role);
                 if (role === UserRole.USER_NOT_VERIFIED) {
-                    updates.set(["users_public", userData.id, "emailVerified"], false);
+                    updates.set(["users_public", {user_id: userData.id}, "emailVerified"], false);
                 } else if (role === UserRole.USER || role === UserRole.ADMIN) {
-                    updates.set(["users_public", userData.id, "emailVerified"], true);
+                    updates.set(["users_public", {user_id: userData.id}, "emailVerified"], true);
                 }
-                updates.set(["users_public", userData.id, "updated"], database.TIMESTAMP);
+                updates.set(["users_public", {user_id: userData.id}, "updated"], database.TIMESTAMP);
                 if (role !== userData.role) {
                     updateActivity({
                         database,
