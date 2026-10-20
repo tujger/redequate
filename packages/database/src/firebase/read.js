@@ -1,4 +1,4 @@
-import resolvePath from "./resolvePath";
+import resolvePath from "../common/resolvePath";
 
 export default async function read(firebase, path, {equalTo, orderBy} = {}) {
     const effectivePath = resolvePath(path);

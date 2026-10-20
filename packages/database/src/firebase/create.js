@@ -1,5 +1,5 @@
 import {fail} from "../../../common";
-import resolvePath from "./resolvePath";
+import resolvePath from "../common/resolvePath";
 
 export default function createRecord(firebase, path, options, run) {
     return run(() => {
@@ -19,9 +19,6 @@ async function saveRecord(ref, value) {
     if (value === null || typeof value !== "object" || value instanceof Array) {
         fail("database/invalid-argument", "value must be a record object.");
     }
-    const result = await ref.transaction(current => current === null ? value : undefined, undefined, false);
-    if (!result.committed) {
-        fail("database/already-exists", "A record already exists at the generated key.");
-    }
+    await ref.set(value);
     return ref.key;
 }

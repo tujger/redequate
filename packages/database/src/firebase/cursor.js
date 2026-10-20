@@ -1,6 +1,6 @@
 import {DatabaseCursor} from "../common/DatabaseCursor";
 import createCursorQuery from "./createCursorQuery";
-import resolvePath from "./resolvePath";
+import resolvePath from "../common/resolvePath";
 
 export default class FirebaseCursor extends DatabaseCursor {
     #state;
@@ -78,9 +78,11 @@ const prepareCandidate = (props) => {
     const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
     const inRange = (startKey === undefined || child.key >= startKey)
         && (endKey === undefined || child.key <= endKey);
-    return {...props, child, sortValue, entry: inRange ? {key: child.key, value: child.val()} : undefined,
+    return {...props, child, sortValue, entry: inRange && hasOrderedField(child, orderBy) ? {key: child.key, value: child.val()} : undefined,
         replacement: undefined};
 };
+
+const hasOrderedField = (snapshot, orderBy) => !orderBy || snapshot.child(orderBy).exists();
 
 const advanceScan = (props) => {
     const {state, child, sortValue, entry, entries} = props;
@@ -92,7 +94,8 @@ const advanceScan = (props) => {
 };
 
 function subscribeEntries(state, notify, onError) {
-    const {initialQuery, startKey, endKey} = state;
+    const {initialQuery, startKey, endKey, orderBy} = state;
+    const orderedEntries = new Map();
     let active = true, initialized = false, failed = false, registering = true;
     const report = error => {
         if (active && !failed) {
@@ -104,11 +107,24 @@ function subscribeEntries(state, notify, onError) {
     };
     const callbacks = [["child_added", "add"], ["child_changed", "change"], ["child_removed", "remove"]]
         .map(([event, type]) => [event, child => {
-            if (active && initialized
-                && (startKey === undefined || child.key >= startKey)
-                && (endKey === undefined || child.key <= endKey)) {
-                return notify({type, entry: {key: child.key, value: child.val()}});
+            if (!active || (startKey !== undefined && child.key < startKey)
+                || (endKey !== undefined && child.key > endKey)) return;
+            let entry = {key: child.key, value: child.val()};
+            let effectiveType = type;
+            if (orderBy) {
+                const previous = orderedEntries.get(child.key);
+                const included = type !== "remove" && hasOrderedField(child, orderBy);
+                if (included) orderedEntries.set(child.key, entry);
+                else orderedEntries.delete(child.key);
+                if (!included && !previous) return;
+                if (!included) {
+                    effectiveType = "remove";
+                    entry = previous;
+                } else {
+                    effectiveType = previous ? "change" : "add";
+                }
             }
+            if (initialized) return notify({type: effectiveType, entry});
         }]);
     const unsubscribe = () => {
         if (!active) return;
@@ -197,5 +213,5 @@ const rereadEntry = async (props) => {
     const {child, replacement} = props;
     if (replacement === undefined || replacement === null) return props;
     const saved = await child.ref.once("value");
-    return {...props, entry: saved.exists() ? {key: child.key, value: saved.val()} : undefined};
+    return {...props, entry: saved.exists() && hasOrderedField(saved, props.state.orderBy) ? {key: child.key, value: saved.val()} : undefined};
 };

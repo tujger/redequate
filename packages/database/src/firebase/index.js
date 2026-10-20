@@ -7,7 +7,7 @@ import deleteRecord from "./delete";
 import read from "./read";
 import update from "./update";
 import write from "./write";
-import resolvePath from "./resolvePath";
+import resolvePath from "../common/resolvePath";
 
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;

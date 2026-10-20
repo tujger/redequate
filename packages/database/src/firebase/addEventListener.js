@@ -1,5 +1,5 @@
 import {fail} from "../../../common";
-import resolvePath from "./resolvePath";
+import resolvePath from "../common/resolvePath";
 
 /**
  * Listen for value and child events, returning an independent remove handle.
