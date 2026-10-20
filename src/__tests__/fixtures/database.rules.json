@@ -15,6 +15,11 @@
         ".write": "auth != null && auth.uid === $user_id"
       }
     },
+    "database_write_only": {
+      "$record_id": {
+        ".write": "!data.exists()"
+      }
+    },
     "database_test": {
       ".read": true,
       ".write": true,
