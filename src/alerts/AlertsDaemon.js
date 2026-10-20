@@ -22,7 +22,7 @@ export default ({fetchAlertContent}) => {
             const value = store.getState().alertsVisit;
             lastVisit = value.timestamp;
         }
-        const cursor = database.cursor(["alerts", currentUserData.id], {
+        const cursor = database.cursor(["alerts", {user_id: currentUserData.id}], {
             orderBy: ["timestamp"],
             start: lastVisit
         });
@@ -34,7 +34,7 @@ export default ({fetchAlertContent}) => {
         }).catch(notifySnackbar);
 
         let lastKey = null;
-        const listener = database.addEventListener(["alerts", currentUserData.id], {
+        const listener = database.addEventListener(["alerts", {user_id: currentUserData.id}], {
             onChildAdd({key, value}) {
                 if (!lastKey) {
                     lastKey = key;
