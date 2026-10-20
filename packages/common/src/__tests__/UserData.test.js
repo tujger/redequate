@@ -127,8 +127,8 @@ it("saves a public profile through the frontend adapter using the database times
     const updates = database.update.mock.calls[0][0];
     expect(updates).toBeInstanceOf(Map);
     expect([...updates]).toEqual(expect.arrayContaining([
-        [["users_public", "save-user", "name"], "Alice"],
-        [["users_public", "save-user", "updated"], database.TIMESTAMP],
+        [["users_public", {user_id: "save-user"}, "name"], "Alice"],
+        [["users_public", {user_id: "save-user"}, "updated"], database.TIMESTAMP],
     ]));
     expect(user.persisted).toBe(true);
 });
@@ -151,7 +151,7 @@ it("shares fetched state with getters, serialization and subsequent saves", asyn
         "roles/fetched": UserRole.ADMIN,
     };
     const database = {
-        read: vi.fn(async path => structuredClone(values[path.join("/")])),
+        read: vi.fn(async path => structuredClone(values[path.map(segment => typeof segment === "string" ? segment : Object.values(segment)[0]).join("/")])),
         update: vi.fn().mockResolvedValue(),
         TIMESTAMP: {kind: "server-timestamp"},
     };
@@ -163,16 +163,16 @@ it("shares fetched state with getters, serialization and subsequent saves", asyn
     await user.setPrivate("device", {locale: "ru"});
     expect(await user.save()).toBe(user);
     expect(database.read.mock.calls).toEqual([
-        [["users_public", "fetched"]],
-        [["users_private", "fetched"]],
-        [["roles", "fetched"]],
+        [["users_public", {user_id: "fetched"}]],
+        [["users_private", {user_id: "fetched"}]],
+        [["roles", {user_id: "fetched"}]],
     ]);
     expect(database.update).toHaveBeenCalledTimes(1);
     const updates = database.update.mock.calls[0][0];
     expect(updates).toBeInstanceOf(Map);
     expect([...updates]).toEqual(expect.arrayContaining([
-        [["users_public", "fetched", "name"], "Changed"],
-        [["users_private", "fetched", "device", "locale"], "ru"],
+        [["users_public", {user_id: "fetched"}, "name"], "Changed"],
+        [["users_private", {user_id: "fetched"}, {device_id: "device"}, "locale"], "ru"],
     ]));
 });
 
@@ -181,6 +181,6 @@ it("removes the frontend cache entry after deleting a profile", async () => {
     const remove = vi.spyOn(cacheDatas, "remove").mockImplementation(() => {});
     const user = new UserData(database).create("deleted", {name: "Deleted"});
     expect(await user.delete()).toBe(user);
-    expect(database.delete).toHaveBeenCalledWith(["users_public", "deleted"]);
+    expect(database.delete).toHaveBeenCalledWith(["users_public", {user_id: "deleted"}]);
     expect(remove).toHaveBeenCalledWith("deleted");
 });
