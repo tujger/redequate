@@ -10,7 +10,7 @@ import LoadingComponent from "../../../components/LoadingComponent";
 import ProgressView from "../../../components/ProgressView";
 import {cacheDatas, useDatabase, useRedirectToLogin} from "../../../controllers";
 import {usePages} from "../../../controllers/General";
-import {UserData} from "../../../controllers/UserData";
+import {normalizeSortName, UserData} from "../../../controllers/UserData";
 import baseStyles from "../../../themes/Base.module.css";
 import UserItem from "./UserItem";
 import UsersHeader from "./UsersHeader";
@@ -63,6 +63,8 @@ function Users(props) {
             cursor = database.cursor(["users_public"], {
                 order: DatabaseOrder.DESC,
                 orderBy: ["visit"],
+                start: 0,
+                end: Number.MAX_SAFE_INTEGER,
             });
             break;
         case "admins":
@@ -94,7 +96,7 @@ function Users(props) {
                 {path: ["users_public"], orderBy: ["_sort_name"]},
                 {path: ["users_public"], orderBy: [UserData.EMAIL]},
             ], {
-                start: filter
+                start: normalizeSortName(filter)
             });
             break;
     }
