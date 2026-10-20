@@ -1,4 +1,3 @@
-import {firebaseMessaging as firebase} from "../controllers/Firebase";
 import {UserData} from "../controllers/UserData";
 
 const ONLINE_TIMEOUT = 60000;
@@ -16,7 +15,6 @@ export function ChatMeta(database) {
     // eslint-disable-next-line one-var
     let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef,
         _redirect, _activeUids = [];
-    const chatsRef = firebase.database().ref("chats");
 
     const fetchUids = () => {
         return (_meta || {}).members || {};
@@ -153,10 +151,9 @@ export function ChatMeta(database) {
             if (!chats.length) {
                 const value = await database.read(["users_public", {user_id: oppositeUid}, UserData.NAME]);
                 if (value !== undefined) {
-                    // database.create(["chats"]).save()
-                    const ref = chatsRef.push();
+                    const key = await database.create(["chats"]).save({})
                     chats.push({
-                        key: ref.key,
+                        key,
                         value: {private: oppositeUid},
                         redirect: true,
                         meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
