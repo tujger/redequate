@@ -47,6 +47,7 @@ export default class PagesCursor extends DatabaseCursor {
         this.#pages = (Object.values(usePages() ?? {}) as Page[])
             .filter(page => page._route && !page._route.includes(":"))
             .map(page => ({...page, _sort_name: normalizeSortName(page.label || page.title || "")}))
+            .filter(page => !fields?.length || value(page) !== undefined)
             .filter(page => this.equalTo !== undefined ? compare(value(page), this.equalTo) === 0
                 : (this.start === undefined || compare(value(page), this.start) >= 0)
                     && (end === undefined || compare(value(page), end) <= 0))
