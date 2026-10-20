@@ -309,7 +309,7 @@ export default (props) => {
                 let initial = true;
                 metaListener = database.addEventListener(["meta"], {
                     onChange(meta) {
-                        const {maintenance, settings} = meta;
+                        const {maintenance, settings} = meta || {};
                         if (initial) {
                             initial = false;
                         } else {
