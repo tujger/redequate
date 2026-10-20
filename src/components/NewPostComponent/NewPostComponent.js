@@ -183,13 +183,12 @@ const NewPostComponent = props => {
                     timestamp: database.TIMESTAMP,
                     uid: currentUserData.id,
                 };
-                // UNKNOWN: type is configurable; its record key has no single confirmed wildcard name.
-                const editKey = await database.create(["posts", {post_id: editPostData.id}, "edit"]).save(editValue);
+                const editKey = await database.create([{type}, {post_id: editPostData.id}, "edit"]).save(editValue);
                 edit[editKey] = editValue;
 
                 const updates = new Map();
-                updates.set(["posts", {post_id: editPostData.id}, "images"], images);
-                updates.set(["posts", {post_id: editPostData.id}, "text"], text);
+                updates.set([{type}, {post_id: editPostData.id}, "images"], images);
+                updates.set([{type}, {post_id: editPostData.id}, "text"], text);
                 return database.update(updates)
                     .then(() => {
                         updateActivity({
@@ -202,13 +201,13 @@ const NewPostComponent = props => {
                                 uid: editPostData.uid,
                             }
                         })
-                        return {key: editPostData.id};
+                        return editPostData.id;
                     });
             } else {
-                return database.create(["posts"]).save(data);
+                return database.create([{type}]).save(data);
             }
         }
-        const publishComplete = async snapshot => {
+        const publishComplete = async key => {
             dispatch({
                 type: newPostComponentReducer.SAVE,
                 _savedText: undefined,
@@ -223,7 +222,7 @@ const NewPostComponent = props => {
                 images: null,
                 hiddenTag: null
             }));
-            onComplete({key: snapshot.key})
+            onComplete({key})
         }
         const finalizePublishing = async () => {
             isSendingRef.current = false;
