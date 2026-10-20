@@ -1,5 +1,5 @@
 import {fail} from "../../../common";
-import {resolvePath} from "./common";
+import resolvePath from "./resolvePath";
 
 /**
  * Listen for value and child events, returning an independent remove handle.
@@ -15,6 +15,7 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
         }
     }
     const effectivePath = resolvePath(path);
+    orderBy = orderBy === undefined ? undefined : resolvePath(orderBy);
 
     const ref = firebase.database().ref(effectivePath);
 
@@ -37,7 +38,9 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
             ref.on("value", valueListener, onError);
         }
         if (onChildAdd) {
-            refChildAdd = orderBy ? ref.orderByChild(orderBy).limitToLast(1) : ref.orderByKey().limitToLast(1);
+            const query = orderBy === undefined ? ref.orderByKey()
+                : orderBy === "" ? ref.orderByValue() : ref.orderByChild(orderBy);
+            refChildAdd = query.limitToLast(1);
             refChildAdd.on("child_added", childAddListener, onError);
         }
         if (onChildChange) {

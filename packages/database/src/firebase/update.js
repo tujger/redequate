@@ -1,5 +1,5 @@
 import {fail} from "../../../common";
-import {resolvePath} from "./common";
+import resolvePath from "./resolvePath";
 
 export default async function update(firebase, path, changes, {} = {}) {
     if ((typeof path === "string" || path instanceof Array) && changes === undefined) {

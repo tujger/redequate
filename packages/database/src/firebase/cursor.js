@@ -1,12 +1,13 @@
 import {DatabaseCursor} from "../common/DatabaseCursor";
 import createCursorQuery from "./createCursorQuery";
+import resolvePath from "./resolvePath";
 
 export default class FirebaseCursor extends DatabaseCursor {
     #state;
     #header = [];
 
     constructor(firebase, path, options = {}) {
-        super(options, path);
+        super(options, resolvePath(path));
         this.#state = {
             ...createCursorQuery(firebase, path, this),
             scanKey: undefined,

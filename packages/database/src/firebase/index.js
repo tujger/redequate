@@ -7,6 +7,7 @@ import deleteRecord from "./delete";
 import read from "./read";
 import update from "./update";
 import write from "./write";
+import resolvePath from "./resolvePath";
 
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;
@@ -27,14 +28,17 @@ export default class FirebaseDatabase extends DatabaseBase {
 
     cursor(path, options = {}) {
         const run = this.run.bind(this);
-        const queries = path instanceof Array && path.some(part => typeof part !== "string")
+        const pathIsDatabasePath = typeof path === "string" || path instanceof Array
+            && (path.length === 0 || typeof path[0] === "string");
+        const queries = path instanceof Array && !pathIsDatabasePath
             ? path : [{path}];
         // Leave invalid options intact for the composition's constructor to validate.
         const effective = options === null || typeof options !== "object" || options instanceof Array
             ? options : {...options, onError: options.onError ?? this.onError};
         return composeCursor(queries, effective,
             (path, options) => new FirebaseCursor(this.#firebase, path,
-                {...options, onError: options?.onError ?? this.onError}), run, path);
+                {...options, onError: options?.onError ?? this.onError}), run, path,
+            pathIsDatabasePath ? () => resolvePath(path) : undefined);
     }
 
     async delete(path, options = {}) {
