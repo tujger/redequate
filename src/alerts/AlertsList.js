@@ -11,7 +11,7 @@ export default ({fetchAlertContent}) => {
     const database = useDatabase();
     const {t} = useTranslation();
 
-    const cursor = React.useMemo(() => database.cursor(["alerts", currentUserData.id], {
+    const cursor = React.useMemo(() => database.cursor(["alerts", {user_id: currentUserData.id}], {
         order: DatabaseOrder.DESC,
     }), [database, currentUserData.id]);
 
