@@ -176,7 +176,7 @@ export default props => {
                     subscribers,
                 }))
             },
-            path: `${mutualId}/mutual/${typeId}_s`
+            path: [{id: mutualId}, "mutual", {typeId, _: true}, "s"]
         })
         return () => listener();
     }, [mutualId, typeId]);
@@ -194,7 +194,7 @@ export default props => {
                     subscribes,
                 }))
             },
-            path: `${mutualId}/mutual/${typeId}`
+            path: [{id: mutualId}, "mutual", {typeId, _: true}]
         })
         return () => listener();
     }, [mutualId, typeId, mutualMode]);
@@ -217,7 +217,7 @@ export default props => {
             onchange: requestsCounter => {
                 setState(state => ({...state, requestsCounter}))
             },
-            path: [currentUserData.id, "mutualrequests", typeId]
+            path: [{id: currentUserData.id}, "mutualrequests", {typeId, _:true}]
         });
         return () => listener();
     }, [mutualId, typeId, mutualMode, isSameUser, currentUserData.id])
