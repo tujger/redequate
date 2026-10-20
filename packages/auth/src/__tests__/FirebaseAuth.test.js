@@ -139,7 +139,7 @@ it("loads the signed-in user's database profile and forwards read errors", async
     const user = await auth.resolveCurrentUser();
     expect(user).toMatchObject({name: "Stored name", image: "stored.png", role: "admin", private: {device: {locale: "en"}}});
     expect(read.mock.calls.map(([path]) => path)).toEqual([
-        ["users_public", json.uid], ["roles", json.uid], ["users_private", json.uid]
+        ["users_public", {user_id: json.uid}], ["roles", {user_id: json.uid}], ["users_private", {user_id: json.uid}]
     ]);
     read.mockRejectedValue(failure);
     await expect(auth.resolveCurrentUser()).rejects.toBe(failure);

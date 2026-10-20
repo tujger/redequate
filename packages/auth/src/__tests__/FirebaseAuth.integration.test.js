@@ -4,7 +4,7 @@ import {auth, database, sdkAuth, emulatorRequest} from "../../../../src/__tests_
 it("registers and restores users through the Firebase Auth adapter", async () => {
     const user = await auth.createUserWithEmailAndPassword("adapter@example.test", "password");
     expect((await auth.resolveCurrentUser()).id).toBe(user.id);
-    expect(await database.read(["users_public", user.id])).toMatchObject({email: user.email, provider: "password"});
+    expect(await database.read(["users_public", {user_id: user.id}])).toMatchObject({email: user.email, provider: "password"});
     expect(user).toMatchObject({id: user.id, _userData: true, public: {email: user.email, provider: "password"}});
     expect(user).not.toHaveProperty("user");
     expect(auth).not.toHaveProperty("resolveToken");
@@ -14,8 +14,8 @@ it("registers and restores users through the Firebase Auth adapter", async () =>
         public: {name: "Adapter User", image: "https://example.test/photo"},
         private: {device: {locale: "en"}}
     });
-    expect(await database.read(["users_public", user.id, "name"])).toBe("Adapter User");
-    expect(await database.read(["users_private", user.id, "device", "locale"])).toBe("en");
+    expect(await database.read(["users_public", {user_id: user.id}, "name"])).toBe("Adapter User");
+    expect(await database.read(["users_private", {user_id: user.id}, {device_id: "device"}, "locale"])).toBe("en");
     expect(sdkAuth.currentUser.displayName).toBeNull();
     expect(await auth.resolveCurrentUser()).toMatchObject({name: "Adapter User", private: {device: {locale: "en"}}});
     await auth.updatePassword("new-password");

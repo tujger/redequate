@@ -90,7 +90,7 @@ it("loads database data for the local user and skips reads after sign-out", asyn
     const user = await register();
     expect(user).toMatchObject({name: "Stored name", role: "admin", private: {device: {locale: "en"}}});
     expect(read.mock.calls.map(([path]) => path)).toEqual([
-        ["users_public", user.id], ["roles", user.id], ["users_private", user.id]
+        ["users_public", {user_id: user.id}], ["roles", {user_id: user.id}], ["users_private", {user_id: user.id}]
     ]);
     await run(auth.signOut());
     await run(auth.resolveCurrentUser());
@@ -209,7 +209,7 @@ it("reports database observer failures without publishing an unloaded user", asy
     await Promise.resolve();
     expect(onError).toHaveBeenCalledWith(failure);
     expect(callback).not.toHaveBeenCalled();
-    expect(read).toHaveBeenCalledWith(["users_public", user.id]);
+    expect(read).toHaveBeenCalledWith(["users_public", {user_id: user.id}]);
 });
 it.each([
     ["invalid", "password", "invalid-email"],
@@ -250,7 +250,7 @@ it("updates profile and password through Auth", async () => {
     const restored = (await run(auth.signInWithEmailAndPassword(user.email, "final-password")));
     expect(restored).toMatchObject({name: "Tester", image: "https://example.test/photo"});
     await run(auth.updateProfile({public: {name: null, image: null}}));
-    expect(await database.read(["users_public", user.id, "name"])).toBeUndefined();
+    expect(await database.read(["users_public", {user_id: user.id}, "name"])).toBeUndefined();
     expect(await run(auth.resolveCurrentUser())).toMatchObject({public: {name: null, image: null}});
 });
 it("keeps user data free of Auth operations and rejects invalid profile fields", async () => {
@@ -358,7 +358,7 @@ it("observes BroadcastChannel changes and closing a subscription", async () => {
     const callback = vi.fn();
     const unsubscribe = await run(auth.onAuthStateChanged(callback));
     unsubscribes.push(unsubscribe);
-    await database.update(new Map([[["users_public", user.id, "name"], "Other tab"]]));
+    await database.update(new Map([[["users_public", {user_id: user.id}, "name"], "Other tab"]]));
     const channel = new BroadcastChannel(channelName);
     channel.postMessage({namespace: "other", revision: "ignored"});
     await flushIndexedDB();

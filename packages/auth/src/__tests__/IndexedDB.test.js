@@ -14,17 +14,20 @@ beforeEach(() => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 });
 
-it("opens redequate:local lazily and uses the same keyPath in every store", async () => {
+it("opens redequate:local lazily and preserves Auth store keys in the shared schema", async () => {
     const open = vi.spyOn(indexedDB, "open");
     const auth = new LocalAuth();
     expect(open).not.toHaveBeenCalled();
     await auth.resolveCurrentUser({skipDelay: true});
-    expect(open).toHaveBeenCalledWith("redequate:local", 1);
+    expect(open).toHaveBeenCalledWith("redequate:local", 2);
     const database = await openLocalDatabase();
     try {
-        expect([...database.objectStoreNames]).toEqual(["auth_accounts", "auth_links", "auth_mail", "auth_state"]);
+        expect([...database.objectStoreNames]).toEqual(["auth_accounts", "auth_links", "auth_mail", "auth_state", "database_records"]);
         const transaction = database.transaction([...database.objectStoreNames]);
-        for (const name of database.objectStoreNames) expect(transaction.objectStore(name).keyPath).toBe("key");
+        for (const name of ["auth_accounts", "auth_links", "auth_mail", "auth_state"]) {
+            expect(transaction.objectStore(name).keyPath).toBe("key");
+        }
+        expect(transaction.objectStore("database_records").keyPath).toEqual(["namespace", "key"]);
         const index = transaction.objectStore("auth_accounts").index("email");
         expect(index.unique).toBe(true);
         expect(index.keyPath).toEqual(["namespace", "email"]);
@@ -41,7 +44,7 @@ it("uses key across account, session and profile, while keeping mail/link keys s
     expect(before.accounts[0]).toMatchObject({key: user.id, namespace: auth.storageKey, email: user.email});
     expect(before.accounts[0]).not.toHaveProperty("uid");
     expect(before.session.key).toBe(user.id);
-    expect(await database.read(["users_public", user.id, "email"])).toBe(user.email);
+    expect(await database.read(["users_public", {user_id: user.id}, "email"])).toBe(user.email);
     const keys = [before.accounts[0].key, before.links[0].key, ...before.mail.map(record => record.key)];
     expect(new Set(keys).size).toBe(keys.length);
     await auth.updatePassword("changed-password");

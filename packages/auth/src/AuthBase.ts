@@ -1,7 +1,7 @@
 import {fail, notImplemented, UserData as DefaultUserData} from "../../common";
 import type {UserData} from "../../common";
 import type DatabaseBase from "../../database/src/common/DatabaseBase";
-import type {DatabaseValue} from "../../database/src/common/DatabaseBase";
+import type {DatabaseValue} from "../../database/src/common/DatabaseTypes";
 import saveUserData from "./common/saveUserData";
 import {
     validateString, validateEmailOptions, validateProvider, validateProviderOptions,
