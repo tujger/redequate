@@ -8,7 +8,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {useDatabase} from "../../controllers";
-import counter from "../../controllers/counterControl";
+import counterControl from "../../controllers/counterControl";
 import {delay, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
@@ -95,12 +95,10 @@ export default ({postData}) => {
             // setState(state => ({...state, disabled: true}));
         }
         const publishCounter = async () => {
-            return counter({database, path: [{id: postData.id}, "like"], increment});
+            return counterControl({database, path: [{id: postData.id}, "like"], increment});
         }
-        const updateCounter = async result => {
-            const json = result.toJSON();
-            const value = (json && json.snapshot) || 0;
-            postData.counter("like", value);
+        const updateCounter = async value => {
+            postData.counter("like", value ?? 0);
         }
         const finalizeChanging = async () => {
             dispatch(ProgressView.HIDE);
@@ -132,7 +130,7 @@ export default ({postData}) => {
             return likes.length;
         }
         const publishCounter = async count => {
-            await counter({database, path: [{id: postData.id}, "like"], value: count});
+            await counterControl({database, path: [{id: postData.id}, "like"], value: count});
             return count;
         }
         const updateCounter = async counter => {

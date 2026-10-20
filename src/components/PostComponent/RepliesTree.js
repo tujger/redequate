@@ -60,7 +60,8 @@ export default (props) => {
                 throw {
                     expanded: true,
                     cursorOptions: {
-                        equalTo: expand,
+                        start: expand,
+                        end: expand,
                     },
                     a: 2
                 };

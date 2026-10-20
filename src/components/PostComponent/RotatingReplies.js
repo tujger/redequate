@@ -168,7 +168,7 @@ export default (props) => {
                 equalTo: postId,
                 order: DatabaseOrder.DESC,
                 orderBy: ["to"]
-            }).next()
+            }).next(10)
         }
         const updateState = async items => {
             isMount && setState(state => ({...state, items}));

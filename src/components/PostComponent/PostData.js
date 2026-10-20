@@ -135,7 +135,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         delete: () => {
             cacheDatas.remove(_id);
             // UNKNOWN: type is configurable; its record key has no single confirmed wildcard name.
-            return database.delete(["posts", {post_id: _id}]);
+            return database.delete([{type}, {post_id: _id}]);
         },
         editOf: type => {
             if (!_edit) return null;
@@ -165,7 +165,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 resolve(_body);
                 return;
             }
-            database.read(["posts", {post_id: _id}]).then(async data => {
+            database.read([{type}, {post_id: _id}]).then(async data => {
                 if (data !== undefined) {
                     data.replyTo = data.to;
                     await _body.create(data);
@@ -181,7 +181,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             if (!_id) reject(new Error("Post not submitted yet."));
             _counters = {};
             // UNKNOWN: _counters contains several key schemes; type does not identify the key field.
-            database.read(["_counters", {post_id: _id}]).then(value => {
+            database.read(["_counters", {id: _id}]).then(value => {
                 _counters = value || {};
                 resolve(_body);
             })
@@ -207,14 +207,14 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                         _extras[val.type] = {key, value: val};
                     }
                 });
-                resolve();
+                resolve(_body);
             });
         }),
         fetchPath: async () => {
             if (!_replyTo) return _id;
             let id = _replyTo, next = null, parentKey = null, rootKey = null, commentKey = null;
             while (id) {
-                const value = await database.read(["posts", {post_id: id}])
+                const value = await database.read([{type}, {post_id: id}])
                 if (value !== undefined) {
                     next = value;
                     parentKey = parentKey || id;
@@ -230,8 +230,8 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         publish: () => async () => {
             if (!_id) {
-                _id = await database.create(["posts"]).save(_body._publishData());
-                _created = await database.read(["posts", {post_id: _id}, "created"]);
+                _id = await database.create([{type}]).save(_body._publishData());
+                _created = await database.read([{type}, {post_id: _id}, "created"]);
             }
             cacheDatas.put(_id, _body);
             return _body;
