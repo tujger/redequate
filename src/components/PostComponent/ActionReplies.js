@@ -36,7 +36,7 @@ export default ({postData, disableClick}) => {
         </Button>
         <CounterComponent
             counter={postData.counter("replied")}
-            path={disableClick ? `${postData.id}/replied` : undefined}
+            path={disableClick ? [{id: postData.id}, "replied"] : undefined}
             showZero
         />
     </div>

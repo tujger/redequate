@@ -95,7 +95,7 @@ export default ({postData}) => {
             // setState(state => ({...state, disabled: true}));
         }
         const publishCounter = async () => {
-            return counter({database, path: [postData.id, "like"], increment});
+            return counter({database, path: [{id: postData.id}, "like"], increment});
         }
         const updateCounter = async result => {
             const json = result.toJSON();
@@ -132,7 +132,7 @@ export default ({postData}) => {
             return likes.length;
         }
         const publishCounter = async count => {
-            await counter({database, path: [postData.id, "like"], value: count});
+            await counter({database, path: [{id: postData.id}, "like"], value: count});
             return count;
         }
         const updateCounter = async counter => {
