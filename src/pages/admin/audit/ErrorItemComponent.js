@@ -41,8 +41,7 @@ export default ({data, skeleton, label, onUserClick}) => {
             key: data.key
         })
             .then(({result}) => notifySnackbar(result))
-            // UNKNOWN: errors has no declared record-key wildcard in consumer rules.
-            .then(() => database.delete(["errors", {error_id: data.key}]))
+            .then(() => database.delete(["errors", {id: data.key, _: true}]))
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
@@ -50,8 +49,7 @@ export default ({data, skeleton, label, onUserClick}) => {
 
     const handleRemove = () => {
         dispatch(ProgressView.SHOW);
-        // UNKNOWN: errors has no declared record-key wildcard in consumer rules.
-        database.delete(["errors", {error_id: data.key}])
+        database.delete(["errors", {id: data.key, _: true}])
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
