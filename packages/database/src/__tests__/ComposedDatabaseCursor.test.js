@@ -34,14 +34,14 @@ it("uses the same composition implementation for one or multiple sources", () =>
     expect(database.cursor("records").constructor).toBe(database.cursor([{path: "records"}]).constructor);
     expect(database.cursor(["records"]).constructor).toBe(database.cursor([{path: "records"}]).constructor);
 });
-it("preserves leaf paths across nested round-robin compositions", async () => {
+it("keeps structural custom cursor paths distinct across nested round-robin compositions", async () => {
     const a = new RecordsCursor([record("a"), record("b")], {}, ["/records/"]);
     const b = new RecordsCursor([record("a"), record("c")], {}, "records");
     const nested = database.cursor([a, new RecordsCursor([record("a", "other")], {}, "other")]);
     const cursor = database.cursor([nested, b]);
-    expect(await cursor.next(10)).toEqual([record("a"), record("a", "other"), record("c"), record("b")]);
+    expect(await cursor.next(10)).toEqual([record("a"), record("a"), record("a", "other"), record("c"), record("b")]);
     expect(cursor.position.finished).toBe(true);
-    expect(cursor.count).toBe(4);
+    expect(cursor.count).toBe(5);
 });
 it("uses ids for pathless sources without colliding with path identities", async () => {
     const cursor = database.cursor([

@@ -2,6 +2,8 @@ import {vi} from "vitest";
 import {key as dateKey} from "firebase-key";
 import {database, firebase} from "../../../../src/__tests__/common";
 
+// UNKNOWN: this generic integration fixture has no declared record-key field;
+// plain string children also verify compatibility with existing callers.
 const path = "database_test";
 const subscriptions = [];
 afterEach(() => {

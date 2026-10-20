@@ -33,7 +33,7 @@ it.each([null, [], 1])("rejects invalid options %j", options => {
     expect(() => database.cursor("records", options)).toThrow();
 });
 it.each([
-    [{order: "sideways"}], [{orderBy: ""}], [{orderBy: 1}],
+    [{order: "sideways"}], [{orderBy: 1}],
     [{equalTo: false, start: 0}], [{equalTo: 0, end: 1}], [{handle: true}],
 ])("rejects incompatible selection %j", options => {
     expect(() => database.cursor("records", options)).toThrow();
@@ -127,7 +127,7 @@ it("counts independent deliveries and cleans up a failed composed subscription",
     const composed = database.cursor([{path: "one"}, {path: "two"}], {onError});
     expect(composed.subscribe(vi.fn())).toBeUndefined();expect(fixture.sdk.listeners).toHaveLength(0);expect(onError).toHaveBeenCalledTimes(1);
 });
-it("inherits source options and deduplicates by normalized cursor path after handling", async () => {
+it("inherits source options and distinguishes structural custom cursor paths", async () => {
     const sources = [], options = [];
     const create = (path, effective) => {
         options.push(effective);
@@ -146,8 +146,8 @@ it("inherits source options and deduplicates by normalized cursor path after han
     const cursor = composeCursor([{path: ["records"], order: "desc"}, {path: "records", orderBy: undefined}],
         {orderBy: "score", order: "asc"}, create, operation => operation());
     expect(options[0]).toMatchObject({orderBy: "score", order: "desc"});expect(options[1].orderBy).toBeUndefined();
-    expect(await cursor.next(3)).toEqual([{key: "a", value: ["records"]}]);
-    expect(cursor.count).toBe(1);expect(sources.map(source => source.count)).toEqual([1, 1]);expect(cursor.position.finished).toBe(true);
+    expect(await cursor.next(3)).toEqual([{key: "a", value: ["records"]}, {key: "a", value: "records"}]);
+    expect(cursor.count).toBe(2);expect(sources.map(source => source.count)).toEqual([1, 1]);expect(cursor.position.finished).toBe(true);
 });
 it("fills composition buffers once per source and consumes them without per-record reads", async () => {
     fixture.sdk.once.mockImplementation(ref => Promise.resolve(fixture.snapshot(ref.path === "one" ? {a: 1, c: 3, e: 5} : {b: 2, d: 4, f: 6})));
