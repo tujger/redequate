@@ -34,7 +34,7 @@ export interface DatabaseDraft {
     /** May differ from the permanent key. */
     readonly temporaryKey: string;
 
-    /** Never overwrites. Null/undefined reject; failures allow retry. */
+    /** Null/undefined reject; failures allow retry. Firebase overwrite protection depends on rules. */
     save(value: DatabaseRecord): Promise<string | undefined>;
 }
 
@@ -90,7 +90,7 @@ export interface DatabaseCursorSubscription {
 export interface DatabaseCursorOptions extends DatabaseOptions {
     /** Headings count as entries, in addition to the requested page size. */
     group?: string;
-    /** Defaults to value order with equalTo, key order otherwise. */
+    /** Defaults to value order with equalTo, key order otherwise. Missing ordered fields are skipped. */
     orderBy?: DatabaseFieldPath;
     /** Exact match; excludes start/end, but allows date bounds. */
     equalTo?: DatabaseQueryValue;
@@ -114,5 +114,8 @@ export interface DatabaseCursorOptions extends DatabaseOptions {
 export interface DatabaseCursorSource extends DatabaseCursorOptions {
     path: DatabasePath;
 }
+
+/** Synchronous replacement; undefined aborts, null deletes. May run repeatedly. */
+export type DatabaseUpdater = (value: DatabaseValue) => DatabaseValue | undefined;
 
 export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;

@@ -1,4 +1,5 @@
 import {fail} from "../../../common";
+import resolvePath from "./resolvePath";
 import {DatabaseCursor} from "./DatabaseCursor";
 import type {
     DatabasePath, DatabaseCursorSource, DatabaseEntry, DatabaseGroupEntry,
@@ -58,7 +59,7 @@ function appendUniqueEntry(props: SourceProps & {
 }) {
     const {source, entries, entry, origin, seen, origins} = props;
     const identity = origin.path === undefined ? `id:${origin.id}`
-        : `path:${typeof origin.path === "string" ? origin.path : JSON.stringify(origin.path)}`;
+        : `path:${resolvePath(origin.path)}`;
     let keys = seen.get(identity);
     if (!keys) {
         keys = new Set();

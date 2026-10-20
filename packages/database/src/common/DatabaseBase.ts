@@ -4,7 +4,7 @@ import type {
     DatabasePath, DatabaseValue, DatabaseRecord, DatabaseDraft,
     DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler, DatabaseOptions,
     DatabaseListenerOptions, DatabaseReadOptions, DatabaseCursorOptions, DatabaseCursorSource,
-    DatabaseUpdates
+    DatabaseUpdates, DatabaseUpdater
 } from "./DatabaseTypes";
 
 export {DatabaseCursor};
@@ -15,7 +15,7 @@ export type {
     DatabaseDraft, DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler,
     DatabaseOptions, DatabaseListenerOptions, DatabaseQueryValue, DatabaseReadOptions,
     DatabaseCursorPosition, DatabaseCursorEvent, DatabaseCursorSubscription, DatabaseCursorOptions,
-    DatabaseCursorSource, DatabaseUpdates
+    DatabaseCursorSource, DatabaseUpdates, DatabaseUpdater
 } from "./DatabaseTypes";
 
 /**
@@ -126,11 +126,13 @@ export default class DatabaseBase {
 
     /**
      * Shallow merge: nested values are replaced; null deletes. Non-null values may create records.
-     * Batch paths are root-relative.
+     * Batch paths are root-relative. Callback replaces atomically and returns the final value;
+     * requires read/write access.
      */
+    update(path: DatabasePath, callback: DatabaseUpdater, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
     update(path: DatabasePath, changes: DatabaseRecord, options?: DatabaseOptions): Promise<void>;
     update(updates: DatabaseUpdates, options?: DatabaseOptions): Promise<void>;
-    async update(path: DatabasePath | DatabaseUpdates, changes?: DatabaseRecord | DatabaseOptions, options: DatabaseOptions = {}): Promise<void> {
+    async update(path: DatabasePath | DatabaseUpdates, changes?: DatabaseRecord | DatabaseUpdater | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
         return notImplemented('update')
     }
 
