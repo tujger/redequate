@@ -35,7 +35,7 @@ export default ({daemon, fetchAlertContent}) => {
     const handleAllReadConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allRead: false});
-        database.cursor(["alerts", currentUserData.id], {
+        database.cursor(["alerts", {user_id: currentUserData.id}], {
             handle({value}) {
                 return {...value, new: null};
             },
@@ -54,7 +54,7 @@ export default ({daemon, fetchAlertContent}) => {
     const handleClearConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allClear: false});
-        database.write(["alerts", currentUserData.id], null)
+        database.write(["alerts", {user_id: currentUserData.id}], null)
             .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
