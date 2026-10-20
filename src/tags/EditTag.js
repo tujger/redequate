@@ -159,7 +159,7 @@ export default ({allowOwner = true}) => {
         }
         const publishTag = async key => {
             if (key) {
-                await database.write(["tag", key], tag);
+                await database.write(["tag", {tag_id: key}], tag);
             } else {
                 key = await database.create(["tag"]).save(tag);
             }
@@ -252,8 +252,8 @@ export default ({allowOwner = true}) => {
         setState(state => ({...state, disabled: true, hideTagOpen: false}));
 
         const updates = new Map();
-        updates.set(["tag", id, "hidden"], true);
-        updates.set(["tag", id, "_sort_name"], null);
+        updates.set(["tag", {tag_id: id}, "hidden"], true);
+        updates.set(["tag", {tag_id: id}, "_sort_name"], null);
         console.log("[EditTag] updates", updates);
         database.update(updates)
             .then(() => {
@@ -279,9 +279,9 @@ export default ({allowOwner = true}) => {
 
         const updates = new Map();
         delete tag.hidden;
-        updates.set(["tag", id, "hidden"], null);
+        updates.set(["tag", {tag_id: id}, "hidden"], null);
         tag._sort_name = tag.id;
-        updates.set(["tag", id, "_sort_name"], tag._sort_name);
+        updates.set(["tag", {tag_id: id}, "_sort_name"], tag._sort_name);
         console.log("[EditTag] updates", updates);
         database.update(updates)
             .then(() => {
@@ -311,7 +311,7 @@ export default ({allowOwner = true}) => {
         }
         const createUpdates = async () => {
             const updates = new Map;
-            updates.set(["tag", id], null);
+            updates.set(["tag", {tag_id: id}], null);
             return updates;
         }
         const publishUpdates = async updates => {
@@ -350,7 +350,7 @@ export default ({allowOwner = true}) => {
         if (!id) {
             setState(state => ({...state, tag: {}}));
         } else if (id) {
-            database.read(["tag", id])
+            database.read(["tag", {tag_id: id}])
                 .then(value => {
                     if (value === undefined) throw Error(t("Tag.{{id}} is not found.", {id: id}));
                     return value;

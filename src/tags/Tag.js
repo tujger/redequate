@@ -63,7 +63,7 @@ export default ({allowOwner = true}) => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         dispatch({type: lazyListComponentReducer.RESET});
-        database.read(["tag", itemId])
+        database.read(["tag", {tag_id: itemId}])
             .then(value => {
                 if (value !== undefined) return {key: itemId, value};
                 return database.cursor(["tag"], {
@@ -193,7 +193,7 @@ export default ({allowOwner = true}) => {
                 })}
                 live
                 noItemsComponent={<PostComponent label={t("Tag.No posts found")}/>}
-                cursor={database.cursor(["_tag", tag.key], {order: DatabaseOrder.DESC})}
+                cursor={database.cursor(["_tag", {tag_id: tag.key}], {order: DatabaseOrder.DESC})}
                 placeholder={<PostComponent skeleton={true}/>}
             />
         </div>
