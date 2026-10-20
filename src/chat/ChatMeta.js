@@ -58,7 +58,7 @@ export function ChatMeta(database) {
         fetch: async (id) => {
             _id = _id || id;
             if (!_meta) {
-                const value = await database.read(["chats", _id, "!meta"])
+                const value = await database.read(["chats", {chat_id: _id}, "!meta"])
                 if (value !== undefined) {
                     _persisted = true;
                     _meta = value;
@@ -71,7 +71,7 @@ export function ChatMeta(database) {
             if (_persisted) {
                 for (let uid in _meta.members) {
                     tasks.push(new Promise((resolve, reject) => {
-                        database.read(["_chats", uid, _id])
+                        database.read(["_chats", {user_id: uid}, {chat_id: _id}])
                             .then(value => {
                                 if (value !== undefined) {
                                     _activeUids.push(uid);
@@ -88,7 +88,7 @@ export function ChatMeta(database) {
                 _activeUids = Object.keys(_meta.members || {});
             }
             tasks.push(new Promise((resolve, reject) => {
-                database.read(["chats", _id], {orderBy: "created"})
+                database.read(["chats", {chat_id: _id}], {orderBy: "created"})
                     .then(value => {
                         Object.entries(value || {}).forEach(([key, val]) => {
                             if (key !== "!meta") {
@@ -104,24 +104,24 @@ export function ChatMeta(database) {
         },
         fetchFor: async (currentUid, oppositeUid) => {
             let chats = [];
-            const value = await database.read(["chats", oppositeUid, "!meta"]);
+            const value = await database.read(["chats", {chat_id: oppositeUid}, "!meta"]);
             if (value !== undefined) {
                 chats.push({key: oppositeUid, meta: value, persisted: true});
             }
             if (!chats.length) {
-                chats = await database.cursor(["_chats", currentUid], {
+                chats = await database.cursor(["_chats", {user_id: currentUid}], {
                     equalTo: oppositeUid,
                     orderBy: ["private"]
                 }).next(10);
                 for (let i = chats.length - 1; i >= 0; i--) {
                     let chat = chats[i];
-                    chat.meta = await database.read(["chats", chat.key, "!meta"]);
+                    chat.meta = await database.read(["chats", {chat_id: chat.key}, "!meta"]);
                     chat.redirect = true;
                     if (chat.meta && chat.meta.members) {
                         let remove = false;
                         for (let uid in chat.meta.members) {
                             try {
-                                const value = await database.read(["_chats", uid, chat.key]);
+                                const value = await database.read(["_chats", {user_id: uid}, {chat_id: chat.key}]);
                                 if (value === undefined) {
                                     remove = true;
                                     break;
@@ -140,7 +140,7 @@ export function ChatMeta(database) {
             }
             if (!chats.length) {
                 const mixedId = [currentUid, oppositeUid].sort().join("_");
-                const value = await database.read(["_chats", currentUid, mixedId]);
+                const value = await database.read(["_chats", {user_id: currentUid}, {chat_id: mixedId}]);
                 if (value !== undefined) {
                     chats.push({
                         key: mixedId,
@@ -151,7 +151,7 @@ export function ChatMeta(database) {
                 }
             }
             if (!chats.length) {
-                const value = await database.read(["users_public", oppositeUid, UserData.NAME]);
+                const value = await database.read(["users_public", {user_id: oppositeUid}, UserData.NAME]);
                 if (value !== undefined) {
                     // database.create(["chats"]).save()
                     const ref = chatsRef.push();
@@ -191,14 +191,14 @@ export function ChatMeta(database) {
         },
         removeUid: async uid => {
             const updates = new Map();
-// updates.set(["chats", _id, "!meta", "members", uid], null);
-            updates.set(["_chats", uid, _id], null);
+// updates.set(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], null);
+            updates.set(["_chats", {user_id: uid}, {chat_id: _id}], null);
             delete _meta.members[uid];
             if (_activeUids.indexOf(uid) >= 0) _activeUids.splice(_activeUids.indexOf(uid), 1);
             console.log(`[ChatMeta] remove uid ${uid} from ${_id}`);
             if (!_activeUids.length) {
                 console.log(`[ChatMeta] chat is empty! removing entirely: ${_id}`);
-                updates.set(["chats", _id], null);
+                updates.set(["chats", {chat_id: _id}], null);
                 _persisted = false;
                 _activeUids = [];
             }
@@ -215,14 +215,14 @@ export function ChatMeta(database) {
             const updatesMeta = new Map();
             if (!_persisted) {
                 try {
-                    updatesMeta.set(["chats", _id, "!meta", "members"], _meta.members);
+                    updatesMeta.set(["chats", {chat_id: _id}, "!meta", "members"], _meta.members);
                     _activeUids = Object.keys(_meta.members || {});
                     console.log("META", _id, updatesMeta);
                     await database.update(updatesMeta);
                     const updatesIndex = new Map();
                     await _body.forEachUid(uid => {
-                        updatesIndex.set(["_chats", uid, _id, "private"], _body.uidOtherThan(uid));
-                        updatesIndex.set(["_chats", uid, _id, "timestamp"], database.TIMESTAMP);
+                        updatesIndex.set(["_chats", {user_id: uid}, {chat_id: _id}, "private"], _body.uidOtherThan(uid));
+                        updatesIndex.set(["_chats", {user_id: uid}, {chat_id: _id}, "timestamp"], database.TIMESTAMP);
                     });
                     await database.update(updatesIndex);
                     _persisted = true;
@@ -231,13 +231,13 @@ export function ChatMeta(database) {
                 }
             }
 
-            await database.write(["chats", _id, "!meta", "timestamp"], database.TIMESTAMP);
+            await database.write(["chats", {chat_id: _id}, "!meta", "timestamp"], database.TIMESTAMP);
 
             const updatesIndex = new Map();
             await _body.forEachUid(async uid => {
-                const value = await database.read(["_chats", uid, _id]);
+                const value = await database.read(["_chats", {user_id: uid}, {chat_id: _id}]);
                 if (value === undefined) return;
-                updatesIndex.set(["_chats", uid, _id, "timestamp"], database.TIMESTAMP);
+                updatesIndex.set(["_chats", {user_id: uid}, {chat_id: _id}, "timestamp"], database.TIMESTAMP);
             });
             await database.update(updatesIndex);
             return _body;
@@ -254,7 +254,7 @@ export function ChatMeta(database) {
             if (!_persisted) return;
             if (_activeUids.indexOf(uid) >= 0) return;
             console.log(`[ChatMeta] update visit for ${_id}`);
-            return database.write(["chats", _id, "!meta", "members", uid], database.TIMESTAMP);
+            return database.write(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], database.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = ({value}) => {
@@ -273,11 +273,11 @@ export function ChatMeta(database) {
                 _persisted = false;
                 onChange({removed: true, timestamp: value, type: "remove"});
             }
-            _watchRef = database.addEventListener(["chats", _id], {
+            _watchRef = database.addEventListener(["chats", {chat_id: _id}], {
                 onChildAdd: watchListener,
                 orderBy: "created"
             });
-            _visitRef = database.addEventListener(["chats", _id, "!meta", "members"], {
+            _visitRef = database.addEventListener(["chats", {chat_id: _id}, "!meta", "members"], {
                 onChildChange: visitListener,
                 onChildRemove: removeListener
             })
@@ -298,7 +298,7 @@ export function ChatMeta(database) {
                     onChange({online: false, timestamp});
                 }
             }
-            _onlineRef = database.addEventListener(["chats", "!meta", "members", uid], {
+            _onlineRef = database.addEventListener(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], {
                 onChange: onlineListener
             });
         },
