@@ -107,7 +107,7 @@ const MutualSubscribeItem = (
         subtitle={<span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={[{id: key}, "mutual", {[`${typeId}_s`]: typeId, _: true}]}
+                        path={[{id: key}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />
@@ -148,7 +148,7 @@ const MutualSubscribeItem = (
                 {counter && <span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={[{id: key}, "mutual", {[`${typeId}_s`]: typeId, _: true}]}
+                        path={[{id: key}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />

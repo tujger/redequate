@@ -32,7 +32,7 @@ export const mutualRequest = async (
     const existing = await database.cursor(["mutual", {typeId, _: true}], {
         equalTo: uidId,
         orderBy: ["uid_id"]
-    }).then();
+    }).next();
 
     if (existing.length > 0) {
         return null;

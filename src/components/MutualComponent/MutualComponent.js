@@ -176,7 +176,7 @@ export default props => {
                     subscribers,
                 }))
             },
-            path: [{id: mutualId}, "mutual", {[`${typeId}_s`]: typeId, _: true}]
+            path: [{id: mutualId}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]
         })
         return () => listener();
     }, [mutualId, typeId]);
