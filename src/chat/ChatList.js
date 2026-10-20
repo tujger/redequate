@@ -9,7 +9,7 @@ export default ({chatKey, chatMeta, containerRef, textComponent, scrollerClassNa
 
     return <LazyListComponent
         containerRef={containerRef}
-        cursor={database.cursor(["chats", chatKey], {order: DatabaseOrder.DESC})}
+        cursor={database.cursor(["chats", {chat_id: chatKey}], {order: DatabaseOrder.DESC})}
         disableProgress
         ItemComponent={item => <ChatItem
             chatMeta={chatMeta}

@@ -42,7 +42,7 @@ const ChatsPage = (
     return <div className={baseStyles.content}>
         <LazyListComponent
             // cache={"chats"}
-            cursor={database.cursor(["_chats", currentUserData.id], {
+            cursor={database.cursor(["_chats", {user_id: currentUserData.id}], {
                 order: DatabaseOrder.DESC,
                 orderBy: ["timestamp"],
                 start: 0

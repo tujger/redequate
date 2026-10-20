@@ -80,7 +80,7 @@ export default ({clearText = text => text}) => {
                     .catch(console.error);
             });
 
-        const listener = database.addEventListener(["_chats", currentUserData.id], {
+        const listener = database.addEventListener(["_chats", {user_id: currentUserData.id}], {
             onChildAdd({key, value}) {
                 return installListenerIfNeeded(key);
             },
