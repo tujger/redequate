@@ -2574,6 +2574,155 @@ Status: 194 Auth unit tests and 51 emulator integration tests pass. Framework an
 both web consumers build; ESM/CommonJS imports, inheritance, lazy resolution and
 database guards pass. Authenticated browser validation remains manual.
 
+### LocalDatabase IndexedDB helpers
+
+Decision: shared IndexedDB `redequate:local` version 2 adds `database_records`
+with compound keyPath [namespace, key]. Namespace is LocalDatabase.storageKey;
+key is an exact string. The common schema owner preserves Auth stores, records
+and indexes when upgrading from version 1 and creates missing stores/indexes.
+
+Local helpers expose openDatabase, getRecord, addRecord, putRecord and deleteRecord.
+Reads return the stored value or undefined; add rejects duplicate keys, put
+creates/replaces, and deleting an absent record succeeds. CRUD helpers close
+connections after each operation and resolve only after transaction completion.
+Path/tree semantics, listeners and cursors remain future provider work;
+LocalDatabase methods still delegate to DatabaseBase. Public web and Android
+interfaces are unchanged.
+
+Status: all 207 tests across Auth and LocalDatabase helpers pass on Node 24.21.0,
+including version 1 migration, namespace isolation, conflicts and transaction aborts.
+
+### Named database path segments
+
+Decision: DatabasePath arrays accept named segments containing exactly one
+string-valued field, for example ["users_public", {uid: "u123"}, "email"]. The
+shared parser validates and copies segments while preserving field names for
+future Local queries; local/helpers reexports it. Firebase substitutes each
+named segment's value, so this example retains users_public/u123/email behavior
+for reads, writes, drafts, updates (including Map batches), deletes and listeners.
+
+Cursor arrays starting with a string are paths; arrays of source descriptions
+or ready cursors remain compositions. Source descriptions can contain named
+paths. Normalized cursor identity uses segment values so equivalent Firebase
+paths deduplicate. DatabaseFieldPath keeps orderBy limited to strings/string
+arrays. Local CRUD and schema are unchanged; LocalDatabase remains a stub.
+
+Affected consumers: demo and The Whisky Talks both have corresponding
+story/move-database-to-module branches. Existing paths, returned data and Android
+formats are unchanged; this is an additive JavaScript path representation.
+Status: all 310 database/Auth unit tests pass on Node 24.21.0, including named
+paths across Firebase operations, validation, composition and deduplication.
+
+Local CRUD helpers now also accept DatabasePath, validate it before opening
+IndexedDB and join segment values with '/' into the existing exact record key.
+Strings remain unchanged, including repeated/leading/trailing slashes. Named
+segments do not yet perform field queries or select physical stores. Schema,
+namespace isolation and transaction behavior are unchanged. All 320 database/Auth
+unit tests pass on Node 24.21.0.
+
+### Internal database paths use named identity segments
+
+Decision: migrate frontend and Auth database calls, nested identities and Map
+batch keys to named segments. Collection/property names and service nodes stay
+strings. User identity is uid; private device maps use deviceId. Consumer rules
+and Functions trigger paths establish chatId, alertId, tagId, tagKey (for _tag),
+postId, extraId, typeId and mutualId. In mutualstamps the recipient map is keyed
+by uid, including the _my branch. Mutual record keys are mutualId rather than
+the record's id field, which identifies its target.
+
+Do not infer a field from a local variable alone. Unresolved identities use the
+literal property UNKNOWN with their original value. Review these nine segments:
+- src/components/NewPostComponent/NewPostComponent.js: the edit draft,
+  images update and text update use a configurable collection type (three sites).
+- src/components/PostComponent/PostData.js: delete/fetch use configurable type;
+  fetchCounters uses a counter key; _updateVal receives an opaque relative key
+  (four sites). _updateVal preserves its original string cache address.
+- src/pages/admin/audit/ErrorItemComponent.js: both error deletion paths lack a
+  declared identity field (two sites).
+
+Old join('/') paths in counterControl and FirebasePagination are explicitly
+excluded. Firebase addresses, operation values and Android formats are unchanged.
+Auth's private-field batch builder preserves named device segments recursively;
+test database fixtures accept both legacy and named representations.
+
+Validation: a temporary AST comparison verifies the 104 named segments across
+20 changed frontend files unwrap to their original expressions and operations;
+the dynamic _updateVal address is equivalent by construction. All 592 unit tests
+pass on Node 24.21.0 after adapting fixtures and expected path arguments.
+
+### Consolidated database path normalization
+
+Decision: Firebase owns normalizePath and its named-segment validation and
+slash-path conversion. Firebase's resolvePath preserves exact slashes and still
+permits undefined; Firebase cursor paths retain their normalized string form.
+Cursor entry points distinguish paths from cursor source lists by their
+argument's first array element. Common cursors retain structural path arrays,
+and Local IndexedDB interprets named segments structurally in its own path helper. Earlier parser
+references above describe the superseded implementation.
+
+### Database identity names follow consumer rules
+
+Decision: named path properties use wildcard names from The Whisky Talks'
+database.rules.json verbatim, without '$'. These supersede the camelCase/uid
+identity names in the earlier migration entry:
+- users_public, users_private, roles, alerts and _chats user keys: user_id.
+- chats and _chats chat keys: chat_id; posts keys: post_id; tag keys: tag_id.
+- mutual, mutualrequests and mutualstamps type keys: type_id (explicit user override
+  of the rules wildcard mutual_type).
+- mutual and mutualrequests record keys: mutual_id (not the record's id field).
+- mutualstamps recipient keys, including _my, and chat member keys: user_id.
+
+roles/user_id is established by rules' roles/auth.uid lookup; member and _my
+identities are confirmed by their writers. All named path properties use
+snake_case, including device_id, alert_id, extra_id and _tag/tag_key from
+models/trigger paths where rules provide no alternative. Local variable names,
+record fields and other API parameters retain their existing spelling.
+The existing nine UNKNOWN segments remain unresolved. Indexed child fields uid
+and id retain their names: they do not name wildcard keys. In particular alert
+record.uid identifies the author, while alerts/user_id identifies the recipient.
+Renaming changes path metadata only; segment values and Firebase addresses stay
+the same. Old join('/') exclusions remain in force.
+
+Pending checks explicitly deferred by the user; remind them when reporting this
+change, and check these separately before changing their behavior:
+- src/chat/ChatMeta.js, watchOnline: the current subscription omits chat_id
+  between chats and !meta. Compare with watch/updateVisit and consumer rules.
+- src/components/MutualComponent/MutualList.js, REQUESTS: verify querying the
+  mutualrequests/type_id collection instead of descending into mutual_id
+  before filtering its children by id.
+
+### Database path follow-up audit
+
+The later full-path audit resolved the two deferred checks above. ChatMeta's
+online listener now includes chat_id, matching updateVisit and the chat member
+rules. MutualList REQUESTS now queries mutualrequests/type_id and filters its
+immediate request records by their id field; the production trigger confirms the
+request key is a separate mutual_id. These changes alter the previously incorrect
+subscription/query addresses to match the writers.
+
+The audit also found two `_counters` calls in counterControl whose `path` can
+represent either a post key or a slash-delimited composite address. It joins array
+inputs as before and uses a named UNKNOWN segment for database reads/listeners;
+the direct Firebase transaction retains its original string child path. Configurable
+`type` record keys in NewPostComponent and PostData, and `_counters` keys in
+PostData, use UNKNOWN instead of inferring `${type}_id`. Errors record keys also
+use UNKNOWN because the consumer rules declare no wildcard. UNKNOWN changes only
+the in-memory path metadata; Firebase receives the same addresses. Opaque relative
+keys in PostData retain their exact slash-delimited values. The exact names can be
+resolved only after those key schemes are specified in the consumers.
+
+Read-only consumer check: both demo and The Whisky Talks have matching
+story/move-database-to-module branches. Demo has no additional named database
+identity calls in its src tree; its maintenance page uses raw Firebase paths.
+The Whisky Talks has legacy unnamed segments in Contacts (chat_id),
+ProfileWithFriends (composite `_counters` key), FirebaseUpdate (two `_counters`
+schemes), Groups/Profile (dynamic collection and key), and CounterComponent
+(composite counter path). Its NewsFabComponent forwards a path prop and its
+maintenance page uses raw Firebase strings. Consumer code was not edited because
+it is outside the repository write allowlist. Raw Firebase addresses remain
+compatible; these sites need local annotations or named paths when consumer edits
+are permitted.
+
 ### Shared email options without social-login changes
 
 Decision: Auth providers share email-option preparation. Explicit defined values
@@ -2588,3 +2737,128 @@ are unchanged; callers that previously supplied ignored email options now receiv
 the SDK's handling of those options.
 Status: 200 Auth unit tests and 51 emulator integration tests pass; framework and
 both web consumer production builds pass.
+
+### Local IndexedDB dynamic segment fields
+
+Local `DatabasePath` uses `{friendship: "m123", _: true}` for a single
+dynamic named segment; `_: true` is exactly equivalent to `_: 0`. Paths with
+multiple dynamic levels use numeric markers, such as `{friendship: "m123", _: 0}`
+and `{active: "a456", _: 1}`. In the `records`
+object store, these segments become `_key0: "friendship", _value0: "m123"`
+and `_key1: "active", _value1: "a456"`. `_key` without a numeric suffix
+remains the serialized record identity and, with `_collection`, forms the
+object store primary key. `_keyN` names a dynamic segment; `_valueN` holds
+its value. The `id` returned by type queries is the value at the highest
+dynamic level.
+
+Indexes are `_key0` on `[_collection, _key0]`, `_key1` on
+`[_collection, _key1]`, and `_key0_key1` on
+`[_collection, _key0, _key1]`. Local type queries use `_keyN` conditions;
+a string type query means `_key0`. This physical schema replaces the earlier
+`_typeN`/`_idN` fields and indexes. Existing Local IndexedDB databases are
+not migrated. Firebase omits `_` when normalizing a path, so its
+addresses remain unchanged.
+
+### LocalDatabase public CRUD
+
+LocalDatabase uses the IndexedDB record helpers for draft creation, exact
+record and top-level field reads/writes/deletes, and top-level update merges.
+`_: true` and `_: 0` address the same record; numeric levels address nested
+identities. Absent reads return undefined and deletes succeed. The provider
+uses DatabaseBase's per-operation error handling and rejects read queries and
+batch updates until those behaviors have a concrete Local implementation.
+Listeners and cursors remain unsupported. Existing Firebase paths and Android
+data formats are unchanged. Public CRUD is covered by fake-IndexedDB tests;
+consumer browser validation remains outstanding.
+
+### LocalDatabase public listeners
+
+LocalDatabase now implements DatabaseBase's existing addEventListener contract
+for value and child add/change/remove callbacks. A namespace-scoped operation
+queue orders initial snapshots and successful LocalDatabase CRUD notifications;
+each listener has an independent remove handle. IndexedDB remains the source
+of truth, while a local dispatcher delivers notifications to instances sharing
+the same storageKey in this JavaScript context. Child additions follow the
+Firebase adapter's last-child query, including an existing last child at
+registration and a new child entering that result. Errors use DatabaseBase's
+callback and subscription contexts. Local range cursors remain separate work.
+Cross-context listeners share one BroadcastChannel per storageKey and JavaScript
+context while subscribed. Writes publish changed paths only after IndexedDB
+commit; receivers filter subscriptions and reread IndexedDB without
+rebroadcasting. Firebase paths and persisted record formats are unchanged.
+
+### Local creation time and atomic updates
+
+LocalDatabase resolves its own timestamp and increment markers at write time,
+including nested values and draft saves. These markers do not use Firebase's
+server-value format. Increment uses zero when the previous value is not numeric;
+timestamp resolves to epoch milliseconds. A new object record receives a plain
+`timestamp` field in its value unless the caller supplied that field. Existing
+records keep their creation timestamp through whole-record replacements and
+field or batch updates. Existing records without a timestamp are not backfilled;
+primitive values and nested fields do not receive one. Deleting and recreating
+a record starts a new creation time.
+
+New IndexedDB databases use the original records schema without `_updatedAt`
+or its index. Connections open without an explicit version so existing version 2
+databases remain accessible. Legacy version 2 indexes remain in those databases,
+but LocalDatabase no longer uses them and removes `_updatedAt` from rows it writes.
+
+Local batch update accepts Map DatabasePath keys and root-relative string keys.
+String keys address a record by its existing path values, reject ambiguous
+matches, and use a dynamic `id` identity for a new record. All entries are
+validated and applied within one IndexedDB readwrite transaction, with one
+listener refresh after commit. Overlapping record and field paths reject the
+batch. Firebase payloads, web consumer API signatures and Android data
+contracts are unchanged.
+
+### Direct Firebase path resolution
+
+Firebase uses one resolvePath function in firebase/resolvePath.ts, imported
+directly by operations and cursors. The normalizePath name, common.js wrapper
+and preserveSlashes option are removed. Resolution always joins named segment
+values and normalizes empty slash components. Undefined/null paths reject;
+createCursorQuery skips resolution when orderBy is absent.
+
+The _ property is Local metadata and is entirely ignored by Firebase, including
+its value and validation. Each object segment still requires exactly one other
+named string value. Local marker semantics remain Local-owned. All 633 unit
+tests pass on Node 24.21.0, including arbitrary _ metadata and cursor coverage.
+
+### Database contracts separated from the base class
+
+DatabaseTypes.ts owns all 22 database interfaces and aliases. It imports only
+DatabaseOrder through import type. DatabaseBase, cursors, Firebase resolvePath,
+Auth and PagesCursor import contracts directly from that module, removing the
+DatabaseCursor -> DatabaseBase source dependency. DatabaseBase retains explicit
+type reexports and its existing runtime class/enum exports for compatibility.
+Definitions and behavior are unchanged. Comments retain non-obvious contract
+rules and omit descriptions already expressed by names and signatures.
+All 633 unit tests pass on Node 24.21.0.
+
+### orderBy uses DatabasePath segments
+
+DatabaseFieldPath aliases DatabasePath for cursor, read and listener options.
+DatabaseCursor validates and preserves orderBy without splitting strings on '/'.
+Firebase resolves it through resolvePath before SDK calls. PagesCursor and Local
+listeners treat a string as one field name and arrays as ready field segments;
+named segments contribute their string value and _ metadata is ignored. Nested
+fields should be supplied as arrays. Local read queries remain unsupported.
+Tests cover named segments, inclusive cursor bounds, Firebase read/listen queries,
+Pages sorting and initial/live Local child ordering.
+
+### Shared path validation
+
+common/validatePath validates path and orderBy without converting or mutating
+them. Strings and arrays of strings/named segments are supported; '' and []
+mean root, while empty array segments and empty named values reject. Objects
+have one non-empty string-valued name besides ignored _ metadata.
+DatabaseCursor, Firebase resolvePath, Local helpers and Local subscriptions use
+this validator. Local retains collection requirements, dynamic-level checks
+and fixed-condition conflict checks. String wildcard listener paths validate
+their split segments before creating internal wildcard descriptors.
+
+An explicit root orderBy selects whole values: Firebase uses orderByValue and
+Pages/Local access the complete value. Omitted orderBy retains prior behavior.
+The earlier empty named-value normalization in Firebase is superseded: malformed
+segments now reject consistently before execution.
