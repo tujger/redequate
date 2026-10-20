@@ -34,8 +34,9 @@ it("stores different dynamic types in one object store with explicit indexes", a
             request.onsuccess = resolve;
             request.onerror = () => reject(request.error);
         });
-        expect(request.result).toEqual({_collection: "mutual", _key: JSON.stringify([["dynamic", 0, "friendship", "m123"]]),
-            _key0: "friendship", _value0: "m123", _conditions: {}, id: "m123", value: created(first)});
+        expect(request.result).toMatchObject({_collection: "mutual", _key: JSON.stringify([["dynamic", 0, "friendship", "m123"]]),
+            _key0: "friendship", _value0: "m123", id: "m123", value: created(first)});
+        expect(request.result).not.toHaveProperty("_conditions");
     } finally { database.close(); }
 });
 
@@ -72,13 +73,15 @@ it("identifies records by fixed conditions and dynamic levels regardless of segm
         "members", {active: "a456", _: 1}];
     const value = {nested: {status: "ready"}, id: "user data"};
     await addRecord("test", first, value);
-    await addRecord("test", second, {nested: {status: "second"}});
+    await expect(addRecord("test", second, {nested: {status: "second"}})).rejects.toMatchObject({name: "ConstraintError"});
+    expect(await getRecord("test", second)).toEqual(created(value));
+    await putRecord("test", second, {nested: {status: "second"}});
     await addRecord("test", ["mutual", {user_id: "u999"}, {friendship: "m123", _: 0},
         "members", {active: "a456", _: 1}], {nested: {status: "other user"}});
-    expect(await getRecord("test", first)).toEqual(created(value));
+    expect(await getRecord("test", first)).toEqual(created({nested: {status: "second"}}));
     expect(await getRecord("test", second)).toEqual(created({nested: {status: "second"}}));
     expect(await getRecordsByType("test", ["mutual", {_key0: "friendship", _key1: "active", user_id: "u123"}]))
-        .toEqual([{id: "a456", value: created({nested: {status: "second"}})}, {id: "a456", value: created(value)}]);
+        .toEqual([{id: "a456", value: created({nested: {status: "second"}})}]);
     expect(await getRecordsByType("test", ["mutual", {_key1: "active", user_id: "u999"}]))
         .toEqual([{id: "a456", value: created({nested: {status: "other user"}})}]);
     const database = await openDatabase("test");
@@ -89,7 +92,7 @@ it("identifies records by fixed conditions and dynamic levels regardless of segm
             ["dynamic", 0, "friendship", "m123"], ["literal", "members"],
             ["dynamic", 1, "active", "a456"]])]);
         await Promise.all([count, record].map(request => new Promise(resolve => { request.onsuccess = resolve; })));
-        expect(count.result).toBe(3);
+        expect(count.result).toBe(2);
         expect(record.result).toMatchObject({_key0: "friendship", _value0: "m123",
             _key1: "active", _value1: "a456", id: "a456"});
     } finally { database.close(); }

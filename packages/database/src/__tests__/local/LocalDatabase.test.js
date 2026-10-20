@@ -42,7 +42,7 @@ it("assembles a private user subtree from separate device records", async () => 
         [[...user, {device_id: "tablet"}, "locale"], "fr"],
         [["users_private", {user_id: "u2"}, {device_id: "phone"}, "locale"], "de"]
     ]));
-    expect(await database.read(user)).toBeUndefined();
+    expect(await database.read(user)).toEqual(await database.readSubtree(user));
     expect(await database.readSubtree(user)).toEqual({
         phone: created({locale: "en", enabled: true}), tablet: created({locale: "fr"})
     });
@@ -87,7 +87,8 @@ it("preserves nested collections and named record paths in a collection subtree"
     expect(await database.read([...theme, "options"])).toEqual({
         dark: created({enabled: true}), light: created({enabled: false})
     });
-    expect(await database.read(theme)).toEqual(created({label: "Theme"}));
+    expect(await database.read(theme)).toEqual(created({label: "Theme",
+        options: {dark: created({enabled: true}), light: created({enabled: false})}}));
     expect(await database.read([...theme, "label"])).toBe("Theme");
     await database.write([...theme, "options"], {default: "dark"});
     const options = {default: "dark"};
@@ -191,7 +192,8 @@ it("reads, writes, updates and deletes records with dynamic levels", async () =>
 
     await database.write(nested, {name: "nested"});
     expect(await database.read(nested)).toEqual(created({name: "nested"}));
-    expect(await database.read(friendship)).toEqual(created({name: "second", nested: {kept: true}}));
+    expect(await database.read(friendship)).toEqual(created({name: "second", nested: {kept: true},
+        members: {u456: created({name: "nested"})}}));
     await database.delete(nested);
     expect(await database.read(nested)).toBeUndefined();
     await database.write(friendship, null);

@@ -61,7 +61,8 @@ it("uses named collections in batch replacements and type queries without storin
     }
     const rows = await getAllRecords("batch");
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({_collection: "replies", _key0: "kind", _conditions: {}});
+    expect(rows[0]).not.toHaveProperty("_conditions");
+    expect(rows[0]).toMatchObject({_collection: "replies", _key0: "kind"});
     await database.update(new Map([[[{type: "replies"}], {r1: {text: "replaced"}}]]));
     expect(await database.read(["replies"])).toEqual({r1: created({text: "replaced"})});
     await database.delete([{type: "replies"}]);

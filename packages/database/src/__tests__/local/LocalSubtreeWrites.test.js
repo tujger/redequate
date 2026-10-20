@@ -40,7 +40,7 @@ it.each(["write", "batch"])("replaces a record subtree through %s and preserves 
     else await database.update(new Map([[parent, value]]));
     expect(await database.read(child)).toEqual(created({uid: "changed"}));
     expect(await database.read(sibling)).toBeUndefined();
-    expect(await database.read(parent)).toEqual(created({text: "new"}));
+    expect(await database.read(parent)).toEqual(created({text: "new", edit: {e1: created({uid: "changed"})}}));
     expect(await database.read(other)).toEqual(created({text: "unrelated"}));
     await database.write(parent, {text: "flat"});
     expect(await database.read(child)).toBeUndefined();
@@ -54,7 +54,7 @@ it("replaces only supplied update fields and their descendants", async () => {
     await database.update(parent, {edit: {e1: {uid: "changed"}}});
     expect(await database.read(child)).toEqual(created({uid: "changed"}));
     expect(await database.read(sibling)).toBeUndefined();
-    expect(await database.read(parent)).toEqual(created({text: "new", kept: true}));
+    expect(await database.read(parent)).toEqual(created({text: "new", kept: true, edit: {e1: created({uid: "changed"})}}));
     await database.update(parent, {edit: null});
     expect(await database.read(child)).toBeUndefined();
     expect(await database.read(parent)).toEqual(created({text: "new", kept: true}));
@@ -73,7 +73,7 @@ it("preserves existing timestamps and resolves increments when replacing a colle
     await database.write(parent, {count: 3, timestamp: 123});
     await database.write(child, {count: 4, timestamp: 456});
     await database.write(["posts"], {p1: {count: database.increment(2), edit: {e1: {count: database.increment(3)}}}});
-    expect(await database.read(parent)).toEqual({count: 5, timestamp: 123});
+    expect(await database.read(parent)).toEqual({count: 5, timestamp: 123, edit: {e1: {count: 7, timestamp: 456}}});
     expect(await database.read(child)).toEqual({count: 7, timestamp: 456});
 });
 it("preserves explicit grandchildren and removes omitted branches", async () => {
@@ -105,7 +105,8 @@ it.each([
             [["users_public", {user_id: "u1"}], {name: "new"}],
             [first, {text: "first"}], [second, {text: "second"}]
         ]))).rejects.toMatchObject({code: "database/invalid-argument"});
-        expect(await database.read(parent)).toEqual(created({text: "old", kept: true}));
+        expect(await database.read(parent)).toEqual(created({text: "old", kept: true,
+            edit: {e1: created({uid: "alice"}), e2: created({uid: "bob"})}}));
         expect(await database.read(["users_public", {user_id: "u1"}])).toBeUndefined();
         expect(notify).toHaveBeenCalledOnce();
     } finally { listener.remove(); }
@@ -115,9 +116,10 @@ it("allows independent fields and collections while retaining callback replaceme
     await seed(database);
     await database.update(new Map([[[...parent, "text"], "new"], [[...parent, "kept"], false],
         [["replies", {post_id: "p1"}], {text: "reply"}]]));
-    expect(await database.read(parent)).toEqual(created({text: "new", kept: false}));
+    expect(await database.read(parent)).toEqual(created({text: "new", kept: false,
+        edit: {e1: created({uid: "alice"}), e2: created({uid: "bob"})}}));
     expect(await database.read(child)).toEqual(created({uid: "alice"}));
     await database.update(parent, value => value);
-    expect(await database.read(child)).toBeUndefined();
+    expect(await database.read(child)).toEqual(created({uid: "alice"}));
     expect(await database.readSubtree(parent)).toMatchObject({edit: {e1: {uid: "alice"}, e2: {uid: "bob"}}});
 });
