@@ -41,7 +41,7 @@ export default ({daemon, fetchAlertContent}) => {
             },
             order: DatabaseOrder.DESC
         })
-            .next(1000)
+            .next(10000)
             .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
