@@ -6,8 +6,8 @@ import {useDatabase} from "../../controllers";
 import {toDateString} from "../../controllers/DateFormat";
 import {cacheDatas, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole} from "../../controllers/UserData";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
 import Select from "../../controls/Select/Select";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
@@ -107,7 +107,7 @@ const MutualSubscribeItem = (
         subtitle={<span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={[{id: key}, "mutual", {typeId, _: true}, "s"]}
+                        path={[{id: key}, "mutual", {[`${typeId}_s`]: typeId, _: true}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />
@@ -148,7 +148,7 @@ const MutualSubscribeItem = (
                 {counter && <span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={[{id: key}, "mutual", {typeId, _: true}, "s"]}
+                        path={[{id: key}, "mutual", {[`${typeId}_s`]: typeId, _: true}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />
