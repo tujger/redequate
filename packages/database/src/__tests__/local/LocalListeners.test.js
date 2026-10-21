@@ -5,9 +5,9 @@ import LocalDatabase from "../../local";
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
-const collection = ["records"];
-const record = key => ["records", {record_id: key, _: true}];
-const created = value => ({...value, timestamp: expect.any(Number)});
+const collection = ["meta"];
+const record = key => ["meta", {record_id: key, _: true}];
+const created = value => value;
 
 it.each([
     {orderBy: ["details", "score"], last: "a"},
@@ -15,32 +15,31 @@ it.each([
     {orderBy: "details/score", last: "b"}
 ])("orders child additions by ready field segments: %j", async ({orderBy, last}) => {
     const database = new LocalDatabase({storageKey: "field-order"});
-    await database.write(record("a"), {details: {score: 2}, "details/score": 1});
-    await database.write(record("b"), {details: {score: 1}, "details/score": 2});
+    await database.update(record("a"), () => ({details: {score: 2}, "details/score": 1}));
+    await database.update(record("b"), () => ({details: {score: 1}, "details/score": 2}));
     const onChildAdd = vi.fn();
     const listener = database.addEventListener(collection, {orderBy, onChildAdd});
     try {
-        await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledOnce());
-        expect(onChildAdd.mock.calls[0][0].key).toBe(last);
-        await database.write(record("c"), {details: {score: 3}, "details/score": 3});
+        await vi.waitFor(() => expect(onChildAdd).not.toHaveBeenCalled());
+        await database.update(record("c"), () => ({details: {score: 3}, "details/score": 3}));
         expect(onChildAdd.mock.calls.at(-1)[0].key).toBe("c");
     } finally { listener.remove(); }
 });
 
-it("delivers initial value and last ordered child, then CRUD events with Firebase payloads", async () => {
+it("delivers initial value and only keys above the initial maximum, then CRUD events", async () => {
     const database = new LocalDatabase({storageKey: "events"});
-    await database.write(record("a"), {score: 1});
-    await database.write(record("b"), {score: 2});
+    await database.update(record("a"), () => ({score: 1}));
+    await database.update(record("b"), () => ({score: 2}));
     const onChange = vi.fn(), onChildAdd = vi.fn(), onChildChange = vi.fn(), onChildRemove = vi.fn();
     const listener = database.addEventListener(collection, {onChange, onChildAdd, onChildChange, onChildRemove, orderBy: "score"});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
     expect(onChange).toHaveBeenLastCalledWith({a: created({score: 1}), b: created({score: 2})});
-    expect(onChildAdd).toHaveBeenCalledExactlyOnceWith({key: "b", value: created({score: 2})});
-    await database.write(record("c"), {score: 3});
+    expect(onChildAdd).not.toHaveBeenCalled();
+    await database.update(record("c"), () => ({score: 3}));
     expect(onChildAdd).toHaveBeenLastCalledWith({key: "c", value: created({score: 3})});
     await database.update(record("a"), {score: 4});
     expect(onChildChange).toHaveBeenLastCalledWith({key: "a", value: created({score: 4})});
-    expect(onChildAdd).toHaveBeenLastCalledWith({key: "a", value: created({score: 4})});
+    expect(onChildAdd).toHaveBeenLastCalledWith({key: "c", value: created({score: 3})});
     await database.delete(record("a"));
     expect(onChildRemove).toHaveBeenLastCalledWith({key: "a", value: created({score: 4})});
     expect(onChildAdd).toHaveBeenLastCalledWith({key: "c", value: created({score: 3})});
@@ -53,13 +52,13 @@ it("watches records and fields, including creation, replacement and deletion", a
     const a = database.addEventListener(record("a"), {onChange: recordValue, onChildChange: childChange, onChildRemove: childRemove});
     const b = database.addEventListener([...record("a"), "name"], {onChange: fieldValue});
     await vi.waitFor(() => expect(fieldValue).toHaveBeenCalledWith(undefined));
-    await database.write(record("a"), {name: "first", kept: true});
-    await database.write([...record("a"), "name"], "second");
+    await database.update(record("a"), () => ({name: "first", kept: true}));
+    await database.update([...record("a"), "name"], () => "second");
     expect(fieldValue).toHaveBeenLastCalledWith("second");
     expect(childChange).toHaveBeenCalledWith({key: "name", value: "second"});
     await database.delete([...record("a"), "kept"]);
     expect(childRemove).toHaveBeenCalledWith({key: "kept", value: true});
-    await database.write(record("a"), null);
+    await database.delete(record("a"));
     expect(recordValue).toHaveBeenLastCalledWith(undefined);
     expect(fieldValue).toHaveBeenLastCalledWith(undefined);
     a.remove();b.remove();
@@ -74,7 +73,7 @@ it("keeps subscribers independent and stops initial or later delivery after remo
     first.addEventListener(collection, {onChange: removed}).remove();
     await vi.waitFor(() => expect(two).toHaveBeenCalledOnce());
     a.remove();a.remove();
-    const draft = first.create(collection);
+    const draft = first.create([...collection, "id"]);
     await draft.save({score: 1});
     expect(one).toHaveBeenCalledOnce();
     expect(two).toHaveBeenCalledTimes(2);
@@ -86,10 +85,10 @@ it("keeps named record paths distinct and accepts Firebase-style string addresse
     const database = new LocalDatabase({storageKey: "paths-listeners"});
     const named = vi.fn(), other = vi.fn(), stringPath = vi.fn();
     const a = database.addEventListener(record("a"), {onChange: named});
-    const b = database.addEventListener(["records", {other_id: "a", _: true}], {onChange: other});
-    const c = database.addEventListener("records/a", {onChange: stringPath});
+    const b = database.addEventListener(["meta", {other_id: "a", _: true}], {onChange: other});
+    const c = database.addEventListener("meta/a", {onChange: stringPath});
     await vi.waitFor(() => expect(stringPath).toHaveBeenCalledOnce());
-    await database.write(record("a"), {name: "one"});
+    await database.update(record("a"), () => ({name: "one"}));
     expect(named).toHaveBeenLastCalledWith(created({name: "one"}));
     expect(other).toHaveBeenCalledOnce();
     expect(stringPath).toHaveBeenLastCalledWith(created({name: "one"}));
@@ -133,14 +132,14 @@ it("publishes a complete settings collection only after commit and stays silent 
     const onChange = vi.fn();
     const listener = database.addEventListener(settings, {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
-    await database.write(settings, {theme: {value: "dark"}, locale: {value: "en"}});
+    await database.update(settings, () => ({theme: {value: "dark"}, locale: {value: "en"}}));
     expect(onChange).toHaveBeenCalledTimes(2);
     expect(onChange).toHaveBeenLastCalledWith({theme: created({value: "dark"}), locale: created({value: "en"})});
     await expect(database.update(new Map([[settings, {theme: {value: "light"}}],
-        [["records", {record_id: "bad", _: true}], {bad: () => "cannot clone"}]])))
+        [["meta", {record_id: "bad", _: true}], {bad: () => "cannot clone"}]])))
         .rejects.toBeInstanceOf(Error);
     expect(onChange).toHaveBeenCalledTimes(2);
-    expect(await database.read(settings)).toEqual({theme: created({value: "dark"}), locale: created({value: "en"})});
+    expect(await database.readSubtree(settings)).toEqual({theme: created({value: "dark"}), locale: created({value: "en"})});
     await database.update(settings, {locale: null});
     expect(onChange).toHaveBeenCalledTimes(3);
     expect(onChange).toHaveBeenLastCalledWith({theme: created({value: "dark"})});
@@ -149,16 +148,53 @@ it("publishes a complete settings collection only after commit and stays silent 
 
 it.each([{orderBy: ""}, {orderBy: []}])("orders root values for Local listeners: %j", async ({orderBy}) => {
     const database = new LocalDatabase({storageKey: "root-order"});
-    await database.write(record("a"), 3);
-    await database.write(record("b"), 1);
+    await database.update(record("a"), () => 3);
+    await database.update(record("b"), () => 1);
     const onChildAdd = vi.fn();
     const listener = database.addEventListener(collection, {orderBy, onChildAdd});
     try {
-        await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledOnce());
-        expect(onChildAdd.mock.calls[0][0]).toEqual({key: "a", value: 3});
-        await database.write(record("c"), 0);
+        await vi.waitFor(() => expect(onChildAdd).not.toHaveBeenCalled());
+        await database.update(record("c"), () => 0);
         expect(onChildAdd).toHaveBeenCalledOnce();
-        await database.write(record("d"), 4);
+        await database.update(record("d"), () => 4);
         expect(onChildAdd.mock.calls.at(-1)[0]).toEqual({key: "d", value: 4});
     } finally { listener.remove(); }
+});
+
+it("uses numeric key order, ignores older additions, and observes writes queued during subscription", async () => {
+    const database = new LocalDatabase({storageKey: "key-boundary"});
+    await database.update(record("2"), () => 1);
+    await database.update(record("10"), () => 1);
+    const added = vi.fn();
+    const listener = database.addEventListener(collection, {onChildAdd: added});
+    await database.update(record("11"), () => 2);
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "11", value: 2});
+    await database.update(record("9"), () => 3);
+    await database.delete(record("10"));
+    await database.update(record("10"), () => 4);
+    expect(added).toHaveBeenCalledOnce();
+    listener.remove();
+    await database.update(record("12"), () => 5);
+    expect(added).toHaveBeenCalledOnce();
+});
+
+it("uses signed and padded numeric key ordering for the addition boundary", async () => {
+    const database = new LocalDatabase({storageKey: "numeric-boundary"});
+    await database.update(record("-2"), () => true);
+    await database.update(record("2"), () => true);
+    const added = vi.fn();
+    const listener = database.addEventListener(collection, {onChildAdd: added});
+    await database.update(record("02"), () => true);
+    await database.update(record("-1"), () => true);
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "02", value: true});
+    listener.remove();
+});
+
+it("emits the first child for an empty collection without an initial replay", async () => {
+    const database = new LocalDatabase({storageKey: "empty-boundary"});
+    const added = vi.fn();
+    const listener = database.addEventListener(collection, {onChildAdd: added});
+    await database.update(record("a"), () => ({score: 1}));
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "a", value: created({score: 1})});
+    listener.remove();
 });

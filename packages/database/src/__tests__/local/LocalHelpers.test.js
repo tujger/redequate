@@ -1,19 +1,20 @@
 import {vi} from "vitest";
 import {IDBFactory, IDBDatabase, IDBTransaction} from "fake-indexeddb";
 import {addRecord, deleteRecord, getRecord, getRecordsByType, interpretPath, openDatabase, putRecord} from "../../local/helpers";
+import {indexesForStore, LOCAL_COLLECTIONS} from "../../local/constants";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 const friendship = ["mutual", {friendship: "m123", _: true}];
 const subscription = ["mutual", {subscription: "m123", _: true}];
-const created = value => ({...value, timestamp: expect.any(Number)});
+const created = value => value;
 
 it("stores different dynamic types in one object store with explicit indexes", async () => {
     const first = {type: "user kind", user_id: "u_1", nested_data: {friend_id: "u_2"}};
     await addRecord("test", friendship, first);
     await addRecord("test", subscription, {type: "premium"});
-    await addRecord("test", ["other", {friendship: "m123", _: true}], {type: "other collection"});
+    await addRecord("test", ["errors", {friendship: "m123", _: true}], {type: "other collection"});
     expect(await getRecord("test", friendship)).toEqual(created(first));
     expect(await getRecord("test", subscription)).toEqual(created({type: "premium"}));
     expect(await getRecordsByType("test", ["mutual", "friendship"])).toEqual([{id: "m123", value: created(first)}]);
@@ -22,10 +23,10 @@ it("stores different dynamic types in one object store with explicit indexes", a
     ]);
     const database = await openDatabase("test");
     try {
-        expect([...database.objectStoreNames]).toEqual(["posts", "records", "replies"]);
-        const store = database.transaction("records").objectStore("records");
+        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS).sort());
+        const store = database.transaction("mutual").objectStore("mutual");
         expect(store.keyPath).toEqual(["_collection", "_key"]);
-        expect([...store.indexNames]).toEqual(["_key0", "_key0_key1", "_key1"]);
+        expect([...store.indexNames]).toEqual(Object.keys(indexesForStore("mutual")).sort());
         expect(store.index("_key0").keyPath).toEqual(["_collection", "_key0"]);
         expect(store.index("_key1").keyPath).toEqual(["_collection", "_key1"]);
         expect(store.index("_key0_key1").keyPath).toEqual(["_collection", "_key0", "_key1"]);
@@ -86,7 +87,7 @@ it("identifies records by fixed conditions and dynamic levels regardless of segm
         .toEqual([{id: "a456", value: created({nested: {status: "other user"}})}]);
     const database = await openDatabase("test");
     try {
-        const store = database.transaction("records").objectStore("records");
+        const store = database.transaction("mutual").objectStore("mutual");
         const count = store.count();
         const record = store.get(["mutual", JSON.stringify([["fixed", "user_id", "u123"],
             ["dynamic", 0, "friendship", "m123"], ["literal", "members"],
@@ -99,10 +100,10 @@ it("identifies records by fixed conditions and dynamic levels regardless of segm
 });
 
 it("keeps fixed named segments out of dynamic type indexes", async () => {
-    const path = ["users", {user_id: "u123"}];
+    const path = ["users_public", {user_id: "u123"}];
     await putRecord("test", path, {profile: {name: "Alex"}});
     expect(await getRecord("test", path)).toEqual(created({profile: {name: "Alex"}}));
-    expect(await getRecordsByType("test", ["users", "user_id"])).toEqual([]);
+    expect(await getRecordsByType("test", ["users_public", "user_id"])).toEqual([]);
 });
 
 it("keeps fixed and dynamic identities distinct when their named values match", async () => {

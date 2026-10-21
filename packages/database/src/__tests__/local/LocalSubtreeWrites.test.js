@@ -8,12 +8,12 @@ const parent = ["posts", {post_id: "p1"}];
 const child = [...parent, "edit", {edit_id: "e1"}];
 const sibling = [...parent, "edit", {edit_id: "e2"}];
 const other = ["posts", {post_id: "p10"}];
-const created = value => ({...value, timestamp: expect.any(Number)});
+const created = value => value;
 const seed = async database => {
-    await database.write(parent, {text: "old", kept: true});
-    await database.write(child, {uid: "alice"});
-    await database.write(sibling, {uid: "bob"});
-    await database.write(other, {text: "unrelated"});
+    await database.update(parent, () => ({text: "old", kept: true}));
+    await database.update(child, () => (({uid: "alice"})));
+    await database.update(sibling, () => ( {uid: "bob"}));
+    await database.update(other, () => ( {text: "unrelated"}));
 };
 
 it.each([[parent], [[...parent, "edit"]], [["posts"]]])("deletes a path and all of its descendants: %j", async path => {
@@ -27,7 +27,7 @@ it.each([[parent], [[...parent, "edit"]], [["posts"]]])("deletes a path and all 
 });
 it("deletes child rows even when the parent row is absent", async () => {
     const database = new LocalDatabase({storageKey: "orphan"});
-    await database.write(child, {uid: "alice"});
+    await database.update(child, () => ({uid: "alice"}));
     await database.delete(parent);
     expect(await database.read(child)).toBeUndefined();
     expect(await database.readSubtree(parent)).toBeUndefined();
@@ -36,13 +36,13 @@ it.each(["write", "batch"])("replaces a record subtree through %s and preserves 
     const database = new LocalDatabase({storageKey: "replace-tree"});
     await seed(database);
     const value = {text: "new", edit: {e1: {uid: "changed"}}};
-    if (mode === "write") await database.write(parent, value);
+    if (mode === "write") await database.update(parent, () => value);
     else await database.update(new Map([[parent, value]]));
     expect(await database.read(child)).toEqual(created({uid: "changed"}));
     expect(await database.read(sibling)).toBeUndefined();
     expect(await database.read(parent)).toEqual(created({text: "new", edit: {e1: created({uid: "changed"})}}));
     expect(await database.read(other)).toEqual(created({text: "unrelated"}));
-    await database.write(parent, {text: "flat"});
+    await database.update(parent, () => ({text: "flat"}));
     expect(await database.read(child)).toBeUndefined();
     expect(await database.readSubtree(parent)).toEqual(created({text: "flat"}));
 });
@@ -62,28 +62,28 @@ it("replaces only supplied update fields and their descendants", async () => {
 it("keeps ordinary nested JSON inline regardless of the write entry point", async () => {
     const direct = new LocalDatabase({storageKey: "direct"}), collection = new LocalDatabase({storageKey: "collection"});
     const value = {text: "post", details: {child: {name: "value"}}};
-    await direct.write(parent, value);
-    await collection.write(["posts"], {p1: value});
+    await direct.update(parent, () => value);
+    await collection.update(["posts"], () => ({p1: value}));
     expect(await direct.read(parent)).toEqual(created(value));
-    expect(await collection.read(parent)).toEqual(created(value));
-    expect(await collection.read([...parent, "details"])).toEqual(value.details);
+    expect(await collection.read(parent)).toEqual(created({text: "post", details: {child: created({name: "value"})}}));
+    expect(await collection.read([...parent, "details"])).toEqual({child: created({name: "value"})});
 });
-it("preserves existing timestamps and resolves increments when replacing a collection", async () => {
+it("omits unspecified timestamps and resolves increments when replacing a collection", async () => {
     const database = new LocalDatabase({storageKey: "collection-markers"});
-    await database.write(parent, {count: 3, timestamp: 123});
-    await database.write(child, {count: 4, timestamp: 456});
-    await database.write(["posts"], {p1: {count: database.increment(2), edit: {e1: {count: database.increment(3)}}}});
-    expect(await database.read(parent)).toEqual({count: 5, timestamp: 123, edit: {e1: {count: 7, timestamp: 456}}});
-    expect(await database.read(child)).toEqual({count: 7, timestamp: 456});
+    await database.update(parent, () => ({count: 3, timestamp: 123}));
+    await database.update(child, () => ({count: 4, timestamp: 456}));
+    await database.update(["posts"], () => ({p1: {count: database.increment(2), edit: {e1: {count: database.increment(3)}}}}));
+    expect(await database.read(parent)).toEqual({count: 5, edit: {e1: {count: 7}}});
+    expect(await database.read(child)).toEqual({count: 7});
 });
 it("preserves explicit grandchildren and removes omitted branches", async () => {
     const database = new LocalDatabase({storageKey: "grandchildren"});
     const first = [...child, "details", {detail_id: "d1"}];
     const second = [...child, "details", {detail_id: "d2"}];
     await seed(database);
-    await database.write(first, {text: "old"});
-    await database.write(second, {text: "omitted"});
-    await database.write(parent, {edit: {e1: {details: {d1: {text: "new"}}}}});
+    await database.update(first, () => ({text: "old"}));
+    await database.update(second, () => ({text: "omitted"}));
+    await database.update(parent, () => ({edit: {e1: {details: {d1: {text: "new"}}}}}));
     expect(await database.read(first)).toEqual(created({text: "new"}));
     expect(await database.read(second)).toBeUndefined();
     expect(await database.read(sibling)).toBeUndefined();

@@ -29,13 +29,13 @@ it("resolves named segment values and normalizes slashes", () => {
 it("ignores numeric dynamic levels in Firebase paths, including level zero", async () => {
     const dynamic = ["mutual", {friendship: "m123", _: 0}, {active: "a456", _: 1}];
     expect(resolvePath(dynamic)).toBe("mutual/m123/a456");
-    await database.write(dynamic, {nested: {value: 1}});
-    expect(fixture.sdk.set.mock.calls[0][0].path).toBe("mutual/m123/a456");
+    await database.update(dynamic, () => ({nested: {value: 1}}));
+    expect(fixture.sdk.transaction.mock.calls[0][0].path).toBe("mutual/m123/a456");
     const single = ["mutual", {friendship: "m123", _: true}];
     expect(resolvePath(single)).toBe(resolvePath(["mutual", {friendship: "m123", _: 0}]));
     expect(resolvePath(single)).toBe("mutual/m123");
-    await database.write(single, {value: 2});
-    expect(fixture.sdk.set.mock.calls[1][0].path).toBe("mutual/m123");
+    await database.update(single, () => ({value: 2}));
+    expect(fixture.sdk.transaction.mock.calls[1][0].path).toBe("mutual/m123");
     expect(() => resolvePath(["mutual", {friendship: "m123", _type: 0}])).toThrow();
 });
 
@@ -43,8 +43,8 @@ it.each([false, -1, "0", null, undefined, 1.5, Number.MAX_SAFE_INTEGER + 1, {lev
     "ignores Firebase path metadata _ = %j without validating it", async metadata => {
         const path = ["mutual", {friendship: "m123", _: metadata}];
         expect(resolvePath(path)).toBe("mutual/m123");
-        await database.write(path, {value: 1});
-        expect(fixture.sdk.set.mock.calls[0][0].path).toBe("mutual/m123");
+        await database.update(path, () => ({value: 1}));
+        expect(fixture.sdk.transaction.mock.calls[0][0].path).toBe("mutual/m123");
     }
 );
 
@@ -52,16 +52,16 @@ it("uses named segments in reads, writes, updates, deletes and draft creation", 
     fixture.sdk.once.mockResolvedValue(fixture.snapshot("a@example.com"));
     expect(await database.read(path)).toBe("a@example.com");
     expect(fixture.sdk.once.mock.calls[0][0].path).toBe("users_public/u123/email");
-    await database.write(path, "b@example.com");
+    await database.update(path, () => "b@example.com");
     await database.update(["users_public", {user_id: "u123"}], {email: "c@example.com"});
     await database.delete(path);
-    expect(fixture.sdk.set.mock.calls.map(([ref, value]) => [ref.path, value])).toEqual([
-        ["users_public/u123/email", "b@example.com"], ["users_public/u123/email", null]
+    expect(fixture.sdk.transaction.mock.calls.map(([ref]) => ref.path)).toEqual([
+        "users_public/u123/email"
     ]);
     expect(fixture.sdk.update.mock.calls[0][0].path).toBe("users_public/u123");
-    const draft = database.create(["users_public", {user_id: "u123"}, "posts"]);
+    const draft = database.create(["users_public", {user_id: "u123"}, "posts", "id"]);
     await draft.save({text: "Post"});
-    expect(fixture.sdk.set.mock.calls.at(-1)[0].path).toBe("users_public/u123/posts/generated-1");
+    expect(fixture.sdk.transaction.mock.calls.at(-1)[0].path).toBe("users_public/u123/posts/generated-1");
 });
 
 it("resolves named paths in batch updates", async () => {
@@ -107,13 +107,13 @@ it("distinguishes paths with named segments from cursor compositions", async () 
     expect(composed.path).toBeUndefined();
 });
 
-it("uses an empty array as the root path for reads and cursors", async () => {
+it("rejects empty read paths while retaining root cursors", async () => {
     fixture.sdk.once.mockResolvedValue(fixture.snapshot({a: 1}));
-    expect(await database.read([])).toEqual({a: 1});
+    await expect(database.read([])).rejects.toMatchObject({code: "database/invalid-argument"});
     const cursor = database.cursor([]);
     expect(cursor.path).toBe("");
     expect(await cursor.next()).toEqual([{key: "a", value: 1}]);
-    expect(fixture.sdk.once.mock.calls.map(([ref]) => ref.path)).toEqual(["", ""]);
+    expect(fixture.sdk.once.mock.calls.map(([ref]) => ref.path)).toEqual([""]);
 });
 
 it.each([{}, {uid: "u123", tenant: "t1"}, {uid: 123}, {uid: null}, {uid: undefined},
@@ -122,7 +122,7 @@ it.each([{}, {uid: "u123", tenant: "t1"}, {uid: 123}, {uid: null}, {uid: undefin
         const invalid = ["users_public", segment];
         expect(() => resolvePath(invalid)).toThrow();
         await expect(database.read(invalid)).rejects.toMatchObject({code: "database/invalid-argument"});
-        await expect(database.write(invalid, 1)).rejects.toMatchObject({code: "database/invalid-argument"});
+        await expect(database.update(invalid, () => 1)).rejects.toMatchObject({code: "database/invalid-argument"});
         await expect(database.delete(invalid)).rejects.toMatchObject({code: "database/invalid-argument"});
         await expect(database.update(invalid, {a: 1})).rejects.toMatchObject({code: "database/invalid-argument"});
         expect(() => database.create(invalid)).toThrow();
@@ -153,7 +153,7 @@ it("preserves orderBy segments and resolves them only in Firebase", async () => 
     await database.read(path, {orderBy, equalTo: "Alice"});
     expect(fixture.sdk.once.mock.calls[1][0].query).toEqual({orderByChild: ["profile/name"], equalTo: ["Alice"]});
     const listener = database.addEventListener(path, {orderBy, onChildAdd: vi.fn()});
-    expect(fixture.sdk.listeners[0].ref.query).toEqual({orderByChild: ["profile/name"], limitToLast: [1]});
+    expect(fixture.sdk.listeners.find(item => item.type === "child_added").ref.query).toEqual({orderByKey: []});
     listener.remove();
 });
 
@@ -170,6 +170,6 @@ it.each([{orderBy: ""}, {orderBy: []}])("orders root values in Firebase: %j", as
     await database.read("records", {orderBy, equalTo: 3});
     expect(fixture.sdk.once.mock.calls[1][0].query).toEqual({orderByValue: [], equalTo: [3]});
     const listener = database.addEventListener("records", {orderBy, onChildAdd: vi.fn()});
-    expect(fixture.sdk.listeners[0].ref.query).toEqual({orderByValue: [], limitToLast: [1]});
+    expect(fixture.sdk.listeners.find(item => item.type === "child_added").ref.query).toEqual({orderByKey: []});
     listener.remove();
 });

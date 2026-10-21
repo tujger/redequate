@@ -18,14 +18,22 @@ it("exports the same order enum through the base and source entrypoints", async 
     expect(database.TIMESTAMP).toBe(fixture.firebase.database.ServerValue.TIMESTAMP);
     expect(database.increment(-2)).toEqual({".sv": {increment: -2}});
 });
-it.each(["users/a", ["users", "a"], "", []])("normalizes read/write/delete path %j", async path => {
+it.each(["users/a", ["users", "a"]])("normalizes read/update/delete path %j", async path => {
     const effective = path instanceof Array ? path.join("/") : path;
     sdk.once.mockResolvedValue(fixture.snapshot({name: "A"}));
     expect(await database.read(path)).toEqual({name: "A"});
     expect(sdk.once.mock.calls[0][0].path).toBe(effective);
-    await expect(database.write(path, false)).resolves.toBeUndefined();
+    await expect(database.update(path, () => false)).resolves.toBe(false);
     await expect(database.delete(path)).resolves.toBeUndefined();
-    expect(sdk.set.mock.calls.map(([ref, value]) => [ref.path, value])).toEqual([[effective, false], [effective, null]]);
+    expect(sdk.transaction.mock.calls[0][0].path).toBe(effective);
+    expect(sdk.set.mock.calls.map(([ref, value]) => [ref.path, value])).toEqual([[effective, null]]);
+});
+it.each(["", []])("rejects root reads without changing root update/delete paths %j", async path => {
+    await expect(database.read(path)).rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(database.read(path, {onError: vi.fn()}))
+        .rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(database.update(path, () => false)).resolves.toBe(false);
+    await expect(database.delete(path)).resolves.toBeUndefined();
 });
 it("returns undefined for an absent node and preserves false/zero values", async () => {
     expect(await database.read("missing")).toBeUndefined();
@@ -34,15 +42,15 @@ it("returns undefined for an absent node and preserves false/zero values", async
         expect(await database.read("value")).toBe(value);
     }
 });
-it("reads matching values and selects the last ordered value only without equalTo", async () => {
+it("reads all ordered values and applies equality", async () => {
     await database.read("records", {orderBy: "score"});
-    expect(sdk.once.mock.calls.at(-1)[0].query).toEqual({orderByChild: ["score"], limitToLast: [1]});
+    expect(sdk.once.mock.calls.at(-1)[0].query).toEqual({orderByChild: ["score"]});
     await database.read("records", {orderBy: "flag", equalTo: false});
     expect(sdk.once.mock.calls.at(-1)[0].query).toEqual({orderByChild: ["flag"], equalTo: [false]});
 });
-it("rejects undefined writes without contacting Firebase", async () => {
-    await expect(database.write("records/a", undefined)).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(sdk.set).not.toHaveBeenCalled();
+it("deletes on undefined callback results", async () => {
+    expect(await database.update("records/a", () => undefined)).toBeNull();
+    expect(sdk.transaction).toHaveBeenCalledOnce();
 });
 it("updates fields at a path and supports root-relative object/Map batches", async () => {
     await database.update(["records", "a"], {name: "new", obsolete: null});
@@ -56,35 +64,33 @@ it("updates fields at a path and supports root-relative object/Map batches", asy
     }
     expect(sdk.update).toHaveBeenCalledTimes(3);
 });
-it("prepares a draft without writing and saves by generated key without reading or transacting", async () => {
-    const draft = database.create(["records"]);
+it("prepares a draft without writing and creates transactionally", async () => {
+    const draft = database.create(["records", "record_id"]);
     expect(draft.temporaryKey).toBe("generated-1");
     expect(sdk.set).not.toHaveBeenCalled();
     expect(await draft.save({name: "A"})).toBe(draft.temporaryKey);
-    expect(sdk.set.mock.calls.map(([ref, value]) => [ref.path, value])).toEqual([
-        ["records/generated-1", {name: "A"}]
-    ]);
-    expect(sdk.once).not.toHaveBeenCalled();
-    expect(sdk.transaction).not.toHaveBeenCalled();
+    expect(sdk.transaction.mock.calls[0][0].path).toBe("records/generated-1");
+    expect(sdk.values.get("records/generated-1")).toEqual({name: "A"});
 });
 it.each([undefined, null, "value", 1, false, []])("rejects invalid draft value %j", async value => {
-    await expect(database.create("records").save(value)).rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(database.create(["records", "record_id"]).save(value)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(sdk.transaction).not.toHaveBeenCalled();
     expect(sdk.set).not.toHaveBeenCalled();
 });
 it("allows retry after a rejected draft save", async () => {
-    const draft = database.create("records");
-    sdk.set.mockRejectedValueOnce(new Error("offline"));
+    const draft = database.create(["records", "record_id"]);
+    sdk.transaction.mockRejectedValueOnce(new Error("offline"));
     await expect(draft.save({name: "A"})).rejects.toThrow("offline");
     expect(await draft.save({name: "A"})).toBe(draft.temporaryKey);
 });
 it("throws by default and reports effective operation errors once with context", async () => {
     const error = new Error("offline"), onError = vi.fn(), override = vi.fn();
-    sdk.set.mockRejectedValue(error);
-    await expect(database.write("records/a", 1)).rejects.toBe(error);
+    sdk.transaction.mockRejectedValue(error);
+    await expect(database.update("records/a", () => 1)).rejects.toBe(error);
     const handled = new FirebaseDatabase({firebase: fixture.firebase, onError});
-    await expect(handled.write("records/a", 2)).resolves.toBeUndefined();
-    expect(onError).toHaveBeenCalledExactlyOnceWith(error, "write", {path: "records/a", value: 2});
+    await expect(handled.update("records/a", () => 2)).resolves.toBeUndefined();
+    expect(onError).toHaveBeenCalledExactlyOnceWith(error, "update", {path: "records/a", changes: expect.any(Function)});
+    sdk.set.mockRejectedValue(error);
     await handled.delete("records/a", {onError: override});
     expect(override).toHaveBeenCalledExactlyOnceWith(error, "delete", {path: "records/a"});
     expect(onError).toHaveBeenCalledTimes(1);
@@ -96,9 +102,9 @@ it("throws by default and reports effective operation errors once with context",
 });
 it("reports factory, draft and error-handler failures without recursive handling", async () => {
     const onError = vi.fn();
-    const draft = database.create("records", {onError});
+    const draft = database.create(["records", "record_id"], {onError});
     await draft.save(undefined);
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "create.save", {path: "records", value: undefined});
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "create.save", {path: ["records", "record_id"], value: undefined});
     const failure = new Error("handler failed");
     sdk.once.mockRejectedValue(new Error("read failed"));
     const handler = vi.fn(() => { throw failure; });

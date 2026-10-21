@@ -24,11 +24,11 @@ it("runs Firebase updates as transactions and returns the final snapshot, includ
     expect(fixture.sdk.transaction.mock.calls[0].slice(2)).toEqual([undefined, false]);
     expect(fixture.sdk.update).not.toHaveBeenCalled();
     fixture.sdk.transaction.mockImplementation(async (ref, update) => {
-        expect(update(4)).toBeUndefined();
-        return {committed: false, snapshot: fixture.snapshot(4)};
+        expect(update(4)).toBeNull();
+        return {committed: true, snapshot: fixture.snapshot(null)};
     });
     fixture.sdk.once.mockResolvedValue(fixture.snapshot(4));
-    expect(await database.update(path, () => undefined)).toBe(4);
+    expect(await database.update(path, () => undefined)).toBeNull();
 });
 
 it("rejects Firebase async callbacks and reports callback errors through the operation boundary", async () => {
@@ -52,7 +52,9 @@ it("updates Local scalar fields atomically across concurrent calls and returns t
         (index % 2 ? database : other).update(path, value => (value ?? 0) + 1)));
     expect(results).toEqual(Array.from({length: 20}, (_, index) => index + 1));
     expect(await database.read(path)).toBe(20);
-    expect(await database.update(path, () => undefined)).toBe(20);
+    expect(await database.update(path, () => undefined)).toBeNull();
+    expect(await database.read(path)).toBeUndefined();
+    await database.update(path, () => 20);
     expect(await database.update(path, () => null)).toBeNull();
     expect(await database.read(path)).toBeUndefined();
 });
@@ -60,12 +62,13 @@ it("updates Local scalar fields atomically across concurrent calls and returns t
 it("replaces Local records, preserves falsy values and rolls back callback failures", async () => {
     const database = new LocalDatabase({storageKey: "records"});
     const record = ["posts", {post_id: "p1"}];
-    await database.write(record, {obsolete: true, count: 1});
-    expect(await database.update(record, value => ({count: value.count + 1}))).toEqual({count: 2, timestamp: expect.any(Number)});
+    await database.update(record, () => ({obsolete: true, count: 1}));
+    expect(await database.update(record, value => ({count: value.count + 1}))).toEqual({count: 2});
     expect(await database.read(record)).not.toHaveProperty("obsolete");
     const before = await database.read(record);
-    expect(await database.update(record, value => { value.count = 99; })).toEqual(before);
-    expect(await database.read(record)).toEqual(before);
+    expect(await database.update(record, value => { value.count = 99; })).toBeNull();
+    expect(await database.read(record)).toBeUndefined();
+    await database.update(record, () => before);
     await expect(database.update(record, () => { throw new Error("failed"); })).rejects.toThrow("failed");
     await expect(database.update(record, async () => ({count: 99}))).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await database.read(record)).toEqual(before);
@@ -78,8 +81,8 @@ it("replaces Local collection subtrees atomically and removes descendant records
     const database = new LocalDatabase({storageKey: "subtrees"});
     const record = ["posts", {post_id: "p1"}];
     const child = [...record, "edit", {edit_id: "e1"}];
-    await database.write(record, {text: "old"});
-    await database.write(child, {uid: "u1"});
+    await database.update(record, () => ({text: "old"}));
+    await database.update(child, () => ({uid: "u1"}));
     const callback = vi.fn(value => ({text: value.text + "!"}));
     expect(await database.update(record, callback)).toMatchObject({text: "old!"});
     expect(callback.mock.calls[0][0]).toMatchObject({edit: {e1: {uid: "u1"}}});

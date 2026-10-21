@@ -11,14 +11,16 @@ it("normalizes value/child events and removes the exact registered callbacks", (
     const onChange = vi.fn(), onChildAdd = vi.fn(), onChildChange = vi.fn(), onChildRemove = vi.fn();
     const listener = database.addEventListener(["records"], {onChange, onChildAdd, onChildChange, onChildRemove, orderBy: "score"});
     const registrations = [...fixture.sdk.listeners];
-    expect(registrations.find(item => item.type === "child_added").ref.query).toEqual({orderByChild: ["score"], limitToLast: [1]});
-    fixture.emit("value", null);
-    expect(onChange).toHaveBeenLastCalledWith(undefined);
+    expect(registrations.map(item => item.type)).toEqual(["value", "child_added", "child_changed", "child_removed"]);
+    expect(registrations.find(item => item.type === "child_added").ref.query).toEqual({orderByKey: []});
     fixture.emit("value", {a: 1});
     expect(onChange).toHaveBeenLastCalledWith({a: 1});
+    fixture.emit("child_added", {score: 2}, "b");
+    expect(onChildAdd).toHaveBeenCalledExactlyOnceWith({key: "b", value: {score: 2}});
     for (const [type, callback] of [["child_added", onChildAdd], ["child_changed", onChildChange], ["child_removed", onChildRemove]]) {
         fixture.emit(type, {score: 2}, "a");
-        expect(callback).toHaveBeenCalledExactlyOnceWith({key: "a", value: {score: 2}});
+        if (type === "child_added") expect(callback).toHaveBeenCalledOnce();
+        else expect(callback).toHaveBeenCalledExactlyOnceWith({key: "a", value: {score: 2}});
     }
     listener.remove();
     expect(fixture.sdk.listeners).toHaveLength(0);
@@ -29,7 +31,7 @@ it("keeps independent listeners and reports callback/SDK cancellation errors", (
     const first = vi.fn(), second = vi.fn(), onError = vi.fn();
     const a = database.addEventListener("records", {onChildAdd: first});
     const b = database.addEventListener("records", {onChildAdd: second});
-    a.remove();fixture.emit("child_added", 1, "a");
+    a.remove();fixture.emit("value", null);fixture.emit("child_added", 1, "a");
     expect(first).not.toHaveBeenCalled();expect(second).toHaveBeenCalledOnce();b.remove();
     const error = new Error("callback");
     const listener = database.addEventListener("records", {onChildChange: () => { throw error; }, onError});
@@ -47,4 +49,65 @@ it("rejects nonfunction handlers and cleans up partial registration failures", (
     expect(database.addEventListener("records", {onChange: vi.fn(), onChildAdd: vi.fn(), onError})).toBeUndefined();
     expect(fixture.sdk.listeners).toHaveLength(0);
     expect(onError).toHaveBeenCalledExactlyOnceWith(error, "addEventListener", {path: "records", orderBy: undefined});
+});
+
+it("buffers events until the initial boundary and applies Firebase numeric key order", () => {
+    const added = vi.fn();
+    const listener = database.addEventListener("records", {onChildAdd: added});
+    fixture.emit("child_added", 1, "2");
+    fixture.emit("child_added", 2, "11");
+    expect(added).not.toHaveBeenCalled();
+    fixture.emit("value", {"2": 1, "10": 1});
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "11", value: 2});
+    fixture.emit("child_added", 3, "9");
+    fixture.emit("child_added", 4, "10");
+    fixture.emit("child_added", 5, "12");
+    expect(added).toHaveBeenCalledTimes(2);
+    expect(added).toHaveBeenLastCalledWith({key: "12", value: 5});
+    fixture.emit("child_removed", 1, "10");
+    fixture.emit("child_added", 6, "9");
+    expect(added).toHaveBeenCalledTimes(2);
+    listener.remove();
+    fixture.emit("child_added", 7, "13");
+    expect(added).toHaveBeenCalledTimes(2);
+});
+
+it("uses numeric ordering for signed and padded child keys", () => {
+    const added = vi.fn();
+    database.addEventListener("records", {onChildAdd: added});
+    fixture.emit("value", {"-2": true, "2": true});
+    fixture.emit("child_added", true, "02");
+    fixture.emit("child_added", true, "-1");
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "02", value: true});
+});
+
+it("emits additions from an initially empty collection and drops buffered events on removal", () => {
+    const added = vi.fn();
+    const listener = database.addEventListener("records", {onChildAdd: added});
+    fixture.emit("value", null);
+    fixture.emit("child_added", 1, "a");
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "a", value: 1});
+    listener.remove();
+    const pending = vi.fn();
+    database.addEventListener("records", {onChildAdd: pending}).remove();
+    fixture.emit("value", null);
+    expect(pending).not.toHaveBeenCalled();
+});
+
+it("treats a write included in the first value snapshot as baseline even if its child event was buffered", () => {
+    const added = vi.fn();
+    database.addEventListener("records", {onChildAdd: added});
+    fixture.emit("child_added", 1, "a");
+    fixture.emit("value", {a: 1});
+    expect(added).not.toHaveBeenCalled();
+    fixture.emit("child_added", 2, "b");
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "b", value: 2});
+});
+
+it("buffers a child delivered before the first value callback when absent from that snapshot", () => {
+    const added = vi.fn();
+    database.addEventListener("records", {onChildAdd: added});
+    fixture.emit("child_added", 2, "b");
+    fixture.emit("value", {a: 1});
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "b", value: 2});
 });

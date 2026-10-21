@@ -33,7 +33,7 @@ async function subscribe(cursor, listener) {
 }
 
 it("reads/writes/deletes real nodes and applies partial and mu ltipath updates", async () => {
-    await database.write([path, "record"], {name: "A", retained: true});
+    await database.update([path, "record"], () => ({name: "A", retained: true}));
     await database.update([path, "record"], {name: "B"});
     expect(await database.read([path, "record"])).toEqual({name: "B", retained: true});
     await database.update({[`${path}/record/name`]: "C", [`${path}/other`]: 0});
@@ -42,13 +42,13 @@ it("reads/writes/deletes real nodes and applies partial and mu ltipath updates",
     await database.delete([path, "record"]);await database.delete([path, "record"]);
     expect(await database.read([path, "record"])).toBeUndefined();
 });
-it("saves by generated key and allows overwrites when rules allow them", async () => {
-    const draft = database.create([path]);
+it("saves by generated key and rejects duplicate creation", async () => {
+    const draft = database.create([path, "id"]);
     expect(await database.read([path, draft.temporaryKey])).toBeUndefined();
     expect(await draft.save({name: "created"})).toBe(draft.temporaryKey);
-    expect(await draft.save({name: "overwritten"})).toBe(draft.temporaryKey);
-    expect(await database.read([path, draft.temporaryKey])).toEqual({name: "overwritten"});
-    const retry = database.create(path);
+    await expect(draft.save({name: "overwritten"})).rejects.toMatchObject({code: "database/conflict"});
+    expect(await database.read([path, draft.temporaryKey])).toEqual({name: "created"});
+    const retry = database.create([path, "id"]);
     await expect(retry.save(undefined)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await retry.save({timestamp: database.TIMESTAMP, count: database.increment(2)})).toBe(retry.temporaryKey);
     expect(await database.read([path, retry.temporaryKey])).toMatchObject({timestamp: expect.any(Number), count: 2});
@@ -106,7 +106,7 @@ it("delivers subscription changes after the baseline and updates count before ca
     await cursor.next(10);
     const subscription = await subscribe(cursor, event => events.push({...event, count: cursor.count}));
     expect(events).toEqual([]);
-    await database.write([path, "b"], {score: 2});
+    await database.update([path, "b"], () => ({score: 2}));
     await vi.waitFor(() => expect(events).toHaveLength(1));
     await database.update([path, "b"], {score: 3});
     await vi.waitFor(() => expect(events).toHaveLength(2));
@@ -118,17 +118,17 @@ it("delivers subscription changes after the baseline and updates count before ca
         {type: "remove", entry: {key: "a", value: {score: 1}}, count: 1},
     ]);
     expect(subscription).toMatchObject({active: true, added: 1, changed: 1, removed: 1, subscribed: expect.any(Date)});
-    subscription.unsubscribe();await database.write([path, "c"], {score: 4});
+    subscription.unsubscribe();await database.update([path, "c"], () => ({score: 4}));
     expect(events).toHaveLength(3);expect(subscription.active).toBe(false);
 });
 it("normalizes listener events and stops them on remove", async () => {
     const onChange = vi.fn(), onChildAdd = vi.fn(), onChildChange = vi.fn(), onChildRemove = vi.fn();
     const listener = database.addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove});subscriptions.push(listener);
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith(undefined));
-    await database.write([path, "a"], {n: 1});await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledWith({key: "a", value: {n: 1}}));
+    await database.update([path, "a"], () => ({n: 1}));await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledWith({key: "a", value: {n: 1}}));
     await database.update([path, "a"], {n: 2});await vi.waitFor(() => expect(onChildChange).toHaveBeenCalledWith({key: "a", value: {n: 2}}));
     await database.delete([path, "a"]);await vi.waitFor(() => expect(onChildRemove).toHaveBeenCalledWith({key: "a", value: {n: 2}}));
-    listener.remove();const calls = onChange.mock.calls.length;await database.write([path, "b"], 3);expect(onChange).toHaveBeenCalledTimes(calls);
+    listener.remove();const calls = onChange.mock.calls.length;await database.update([path, "b"], () => 3);expect(onChange).toHaveBeenCalledTimes(calls);
 });
 it("passes permission errors to onError with operation context", async () => {
     const onError = vi.fn();
@@ -150,7 +150,7 @@ it.each(["asc", "desc"])("keeps live updates independent of an in-flight %s page
     const page = cursor.next(2);
     await waiting;
     try {
-        await database.write([path, "c"], {score: 3});
+        await database.update([path, "c"], () => ({score: 3}));
         await vi.waitFor(() => expect(events).toEqual([{type: "add", entry: {key: "c", value: {score: 3}}}]));
     } finally {
         resume();
@@ -167,9 +167,9 @@ it("atomically increments through update callbacks and returns committed values"
         database.update([path, "counter"], value => (value ?? 0) + 1)));
     expect(results.slice().sort((a, b) => a - b)).toEqual(Array.from({length: 12}, (_, index) => index + 1));
     expect(await database.read([path, "counter"])).toBe(12);
-    expect(await database.update([path, "counter"], () => undefined)).toBe(12);
+    expect(await database.update([path, "counter"], () => undefined)).toBeNull();
     await expect(database.update([path, "counter"], async () => 99)).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read([path, "counter"])).toBe(12);
+    expect(await database.read([path, "counter"])).toBeUndefined();
     expect(await database.update([path, "counter"], () => null)).toBeNull();
     expect(await database.read([path, "counter"])).toBeUndefined();
 });
@@ -184,17 +184,15 @@ it("notifies when an ordered field appears and disappears in a real subscription
     await seed({existing: {nested: {score: 0}}, missing: {text: "missing"}});
     const notify = vi.fn();
     await subscribe(database.cursor(path, {orderBy: ["nested", "score"]}), notify);
-    await database.write([path, "missing", "nested", "score"], false);
+    await database.update([path, "missing", "nested", "score"], () => false);
     await vi.waitFor(() => expect(notify).toHaveBeenCalledWith({type: "add", entry: {key: "missing", value: {text: "missing", nested: {score: false}}}}));
     await database.delete([path, "existing", "nested", "score"]);
     await vi.waitFor(() => expect(notify).toHaveBeenCalledWith({type: "remove", entry: {key: "existing", value: {nested: {score: 0}}}}));
 });
 
-it("creates without read permission and leaves overwrite prevention to Firebase rules", async () => {
-    const draft = database.create(["database_write_only"]);
-    expect(await draft.save({name: "created"})).toBe(draft.temporaryKey);
-    await expect(database.read(["database_write_only", draft.temporaryKey])).rejects.toMatchObject({code: "PERMISSION_DENIED"});
-    await expect(draft.save({name: "overwritten"})).rejects.toMatchObject({code: "PERMISSION_DENIED"});
+it("requires read permission for transactional creation", async () => {
+    const draft = database.create(["database_write_only", "id"]);
+    await expect(draft.save({name: "created"})).rejects.toMatchObject({code: "PERMISSION_DENIED"});
 });
 it("looks up a record by an exact key range regardless of the record value", async () => {
     await seed({before: {text: "before"}, target: {text: "found"}, targetSuffix: {text: "other"}});

@@ -5,17 +5,17 @@ import {getAllRecords, getRecordsByType, parseDatabasePath} from "../../local/he
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
-const created = value => ({...value, timestamp: expect.any(Number)});
+const created = value => value;
 
 it.each(["posts", "replies"])("shares %s records, fields and deletes across named and string roots", async collection => {
     const database = new LocalDatabase({storageKey: "aliases"});
     const string = [collection, {post_id: "p1"}];
     const named = [{type: collection}, {post_id: "p1"}];
-    await database.write(named, {text: "created", count: 0});
+    await database.update(named, () => ({text: "created", count: 0}));
     expect(await database.read(string)).toEqual(created({text: "created", count: 0}));
     await database.update(string, {text: "updated"});
     expect(await database.read(named)).toEqual(created({text: "updated", count: 0}));
-    await database.write([...named, "text"], "field");
+    await database.update([...named, "text"], () => "field");
     expect(await database.read([...string, "text"])).toBe("field");
     expect(await database.update([...named, "count"], value => value + 1)).toBe(1);
     expect(await database.update([...string, "count"], value => value + 1)).toBe(2);
@@ -23,26 +23,26 @@ it.each(["posts", "replies"])("shares %s records, fields and deletes across name
     expect(await database.read([...named, "text"])).toBeUndefined();
     await database.delete(named);
     expect(await database.read(string)).toBeUndefined();
-    await database.write(string, {text: "reverse"});
+    await database.update(string, () => ({text: "reverse"}));
     expect(await database.read(named)).toEqual(created({text: "reverse"}));
     await database.delete(string);
     expect(await database.read(named)).toBeUndefined();
 });
 
 it("keeps the posts draft identity and nested draft levels unchanged", async () => {
-    const database = new LocalDatabase({storageKey: "drafts"});
+    const database = new LocalDatabase({storageKey: "meta"});
     const path = Object.freeze([Object.freeze({type: "posts"})]);
-    const draft = database.create(path);
+    const draft = database.create([...path, "post_id"]);
     const key = await draft.save({text: "post"});
     const post = ["posts", {post_id: key}];
     expect(await database.read(post)).toEqual(created({text: "post"}));
-    const edit = database.create([{name: "posts"}, {post_id: key}, "edit"]);
+    const edit = database.create([{name: "posts"}, {post_id: key}, "edit", "id"]);
     const editKey = await edit.save({uid: "u1"});
-    expect(await database.read([...post, "edit", {id: editKey, _: 0}])).toEqual(created({uid: "u1"}));
+    expect(await database.read([...post, "edit", {id: editKey}])).toEqual(created({uid: "u1"}));
     expect(await database.readSubtree([{type: "posts"}, {post_id: key}])).toMatchObject({
         edit: {[editKey]: {uid: "u1"}}
     });
-    const reply = database.create([{type: "replies"}]);
+    const reply = database.create([{type: "replies"}, "post_id"]);
     const replyKey = await reply.save({text: "reply"});
     expect(await database.read(["replies", {post_id: replyKey}])).toEqual(created({text: "reply"}));
     expect(path).toEqual([{type: "posts"}]);
@@ -78,7 +78,7 @@ it("notifies listeners for writes through either root form", async () => {
         database.addEventListener([{name: "posts"}], {onChildAdd: collection})];
     try {
         await vi.waitFor(() => expect(second).toHaveBeenCalledOnce());
-        await database.write(named, {text: "first"});
+        await database.update(named, () => ({text: "first"}));
         expect(first).toHaveBeenLastCalledWith(created({text: "first"}));
         expect(second).toHaveBeenLastCalledWith(created({text: "first"}));
         expect(collection).toHaveBeenLastCalledWith({key: "p1", value: created({text: "first"})});
@@ -90,14 +90,14 @@ it("notifies listeners for writes through either root form", async () => {
     } finally { listeners.forEach(listener => listener.remove()); }
 });
 
-it.each(["users_public", "mutual", "extra"])("restricts object roots but keeps the string collection %s valid", async name => {
+it.each(["follow", "watch", "_posts"])("rejects obsolete root %s", async name => {
     const database = new LocalDatabase({storageKey: "validation"});
     const named = [{type: name}, {id: "r1"}];
-    await expect(database.write(named, {name})).rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(database.update(named, () => ({name}))).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(() => database.create([{type: name}])).toThrow();
     expect(() => database.addEventListener(named, {})).toThrow();
-    await database.write([name, {id: "r1"}], {name});
-    expect(await database.read([name, {id: "r1"}])).toEqual(created({name}));
+    await expect(database.update([name, {id: "r1"}], () => ({name})))
+        .rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
 it.each([[], [{}], [{type: ""}], [{type: "posts", other: "replies"}], [{type: "posts"}, ""]])(

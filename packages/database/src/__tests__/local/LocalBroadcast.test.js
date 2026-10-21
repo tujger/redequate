@@ -26,8 +26,8 @@ class MockBroadcastChannel {
     }
 }
 
-const record = id => ["records", {id, _: true}];
-const created = value => ({...value, timestamp: expect.any(Number)});
+const record = id => ["meta", {id, _: true}];
+const created = value => value;
 const context = async () => {
     vi.resetModules();
     return (await import("../../local")).default;
@@ -53,12 +53,12 @@ it("shares one channel between local instances and refreshes another context onc
     const LocalB = await context();
     const remote = new LocalB({storageKey: "shared"});
     const one = vi.fn(), two = vi.fn(), other = vi.fn();
-    const handles = [first.addEventListener(["records"], {onChange: one}),
-        second.addEventListener(["records"], {onChange: two}),
-        remote.addEventListener(["records"], {onChange: other})];
+    const handles = [first.addEventListener(["meta"], {onChange: one}),
+        second.addEventListener(["meta"], {onChange: two}),
+        remote.addEventListener(["meta"], {onChange: other})];
     await vi.waitFor(() => expect(other).toHaveBeenCalledOnce());
     expect(MockBroadcastChannel.channels.size).toBe(2);
-    await first.write(record("a"), {name: "private value"});
+    await first.update(record("a"), () => ({name: "private value"}));
     await vi.waitFor(() => expect(other).toHaveBeenCalledTimes(2));
     expect(one).toHaveBeenCalledTimes(2);
     expect(two).toHaveBeenCalledTimes(2);
@@ -71,6 +71,25 @@ it("shares one channel between local instances and refreshes another context onc
     expect(MockBroadcastChannel.channels.size).toBe(0);
 });
 
+it("applies the same initial key boundary to cross-context child additions", async () => {
+    const LocalA = await context();
+    const writer = new LocalA({storageKey: "child-broadcast"});
+    await writer.update(record("10"), () => ({name: "existing"}));
+    const LocalB = await context();
+    const remote = new LocalB({storageKey: "child-broadcast"});
+    const added = vi.fn();
+    const ready = vi.fn();
+    const handle = remote.addEventListener(["meta"], {onChange: ready, onChildAdd: added});
+    await vi.waitFor(() => expect(ready).toHaveBeenCalledOnce());
+    expect(added).not.toHaveBeenCalled();
+    await writer.update(record("9"), () => ({name: "older"}));
+    await vi.waitFor(() => expect(ready).toHaveBeenCalledTimes(2));
+    expect(added).not.toHaveBeenCalled();
+    await writer.update(record("11"), () => ({name: "newer"}));
+    await vi.waitFor(() => expect(added).toHaveBeenCalledExactlyOnceWith({key: "11", value: created({name: "newer"})}));
+    handle.remove();
+});
+
 it("filters unrelated paths and keeps storage keys isolated", async () => {
     const LocalA = await context();
     const writer = new LocalA({storageKey: "alpha"});
@@ -80,10 +99,10 @@ it("filters unrelated paths and keeps storage keys isolated", async () => {
     const exact = vi.fn(), other = vi.fn(), wrongKey = vi.fn();
     const handles = [remote.addEventListener(record("a"), {onChange: exact}),
         remote.addEventListener(record("b"), {onChange: other}),
-        isolated.addEventListener(["records"], {onChange: wrongKey})];
+        isolated.addEventListener(["meta"], {onChange: wrongKey})];
     await vi.waitFor(() => expect(wrongKey).toHaveBeenCalledOnce());
     const open = vi.spyOn(indexedDB, "open");
-    await writer.write(record("a"), {name: "first"});
+    await writer.update(record("a"), () => ({name: "first"}));
     await vi.waitFor(() => expect(exact).toHaveBeenCalledTimes(2));
     expect(other).toHaveBeenCalledOnce();
     expect(wrongKey).toHaveBeenCalledOnce();
@@ -99,7 +118,7 @@ it("sends one batch notice after commit and none after abort", async () => {
     const LocalB = await context();
     const remote = new LocalB({storageKey: "batch"});
     const onChange = vi.fn();
-    const handle = remote.addEventListener(["records"], {onChange});
+    const handle = remote.addEventListener(["meta"], {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
     await writer.update(new Map([[record("a"), {score: 1}], [record("b"), {score: 2}]]));
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(2));
@@ -116,9 +135,9 @@ it("works without BroadcastChannel", async () => {
     const LocalDatabase = await context();
     const database = new LocalDatabase({storageKey: "offline"});
     const onChange = vi.fn();
-    const handle = database.addEventListener(["records"], {onChange});
+    const handle = database.addEventListener(["meta"], {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
-    await database.write(record("a"), {score: 1});
+    await database.update(record("a"), () => ({score: 1}));
     expect(onChange).toHaveBeenCalledTimes(2);
     handle.remove();
 });
@@ -131,9 +150,9 @@ it("normalizes named collection roots across separate contexts", async () => {
     const listener = reader.addEventListener([{type: "posts"}, {post_id: "p1"}], {onChange});
     try {
         await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
-        await writer.write(["posts", {post_id: "p1"}], {text: "string root"});
+        await writer.update(["posts", {post_id: "p1"}], () => ({text: "string root"}));
         await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(created({text: "string root"})));
-        await writer.write([{name: "posts"}, {post_id: "p1"}], {text: "named root"});
+        await writer.update([{name: "posts"}, {post_id: "p1"}], () => ({text: "named root"}));
         await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(created({text: "named root"})));
         expect(await reader.read(["posts", {post_id: "p1"}])).toEqual(created({text: "named root"}));
     } finally { listener.remove(); }
