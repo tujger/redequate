@@ -1733,11 +1733,10 @@ of Firebase. Every first argument accepts a string path or string[] joined with
 slashes; elements may include nested paths. Empty string/array denotes the root.
 Provider implementations own path normalization and validation.
 
-create(collectionPath) synchronously returns a draft with a readonly temporaryKey,
-without writing data. The final segment names the generated key field or supplies
-an explicit ID as a named segment. save accepts a record or a synchronous function
-of the final key. Both providers reject occupied keys atomically; failed writes
-may be retried. The unified CRUD decision below supersedes earlier write behavior.
+create(collectionPath, recordOrCallback) asynchronously creates an absent record and
+returns its permanent key. The final segment names the generated key field or
+supplies an explicit ID as a named segment. The synchronous callback receives
+the permanent key before insertion. Both providers reject occupied keys atomically.
 read(recordPath) returns plain JSON-compatible data or undefined for absence.
 update(recordPath, changes) updates supplied top-level fields,
 preserves unspecified fields, replaces nested values in full, and removes fields
@@ -1754,11 +1753,7 @@ next returns up to n surviving entries. Firebase traversal, handle and selection
 options are implemented; see the cursor decision below.
 
 Reason: keep callers independent of Firebase ref/child and snapshot objects while
-identifying drafts before writing without requiring providers to allocate permanent
-keys in advance. An optional value that switches create between preparation and writing
-was rejected because accidental undefined could silently skip a write.
-The draft exposes an explicit save method rather than attaching metadata to a
-callable function, keeping its identifier and operation explicit.
+returning a usable permanent key only after the write commits.
 The earlier for await...of API was replaced with an explicit cursor to support
 explicit position and record operations. Provider references remain
 internal, and path arguments stay composable. Provider-specific query and subscription contracts
@@ -1774,11 +1769,10 @@ Comments retain behavioral guarantees that TypeScript cannot express.
 The web build, ESM/CommonJS exports, provider inheritance and base stub failures
 are verified on Node 24.21.0; existing Vitest/Vite transforms resolve the TS source.
 Type checking and declaration generation remain outside this conversion.
-Firebase prepares a push reference without writing and uses a transaction to
-create its record only when absent. Its permanent key equals temporaryKey;
+Firebase generates a push reference and uses a transaction to
+create its record only when absent;
 transactions require read as well as write access to the target node.
-Local implementation, Dispatcher integration and consumer migration remain
-separate work.
+Local implementation, Dispatcher integration and Redequate consumer migration are implemented.
 
 
 ### Database operation error handling
@@ -1791,9 +1785,9 @@ without Firebase references or snapshots. A normally returning handler makes the
 failed operation return undefined; its return value is ignored. Handler exceptions
 propagate without being reported again. Handlers are synchronous.
 
-Firebase applies this to direct methods, draft.save, cursor.next, listener
+Firebase applies this to direct methods, create, cursor.next, listener
 removal, subscription errors and user listener callbacks. Deferred operations use
-the options supplied at creation. Batch update accepts options as its second
+the options supplied at invocation. Batch update accepts options as its second
 argument. Synchronous factories remain synchronous. TIMESTAMP uses the constructor
 handler; increment accepts operation options.
 
@@ -2131,7 +2125,7 @@ Source-file conversion, consumer builds and publication are not part of this ste
 
 Decision: Dispatcher installs its console.error wrapper at effect startup, before
 database resolution. A closure supplies the resolved Database provider later;
-create(["errors"]).save stores the error string, provider TIMESTAMP and current
+create(["errors", "error_id"], value) stores the error string, provider TIMESTAMP and current
 user ID. Until the database is available, logging prints the original error and
 a notice that it was not saved. Provider failures go directly to the previous
 console handler, avoiding recursive logging. Cleanup restores that handler only
@@ -2790,17 +2784,15 @@ rebroadcasting. Firebase paths and persisted record formats are unchanged.
 LocalDatabase resolves its own timestamp and increment markers at write time,
 including nested values and draft saves. These markers do not use Firebase's
 server-value format. Increment uses zero when the previous value is not numeric;
-timestamp resolves to epoch milliseconds. A new object record receives a plain
-`timestamp` field in its value unless the caller supplied that field. Existing
-records keep their creation timestamp through whole-record replacements and
-field or batch updates. Existing records without a timestamp are not backfilled;
-primitive values and nested fields do not receive one. Deleting and recreating
-a record starts a new creation time.
+the `TIMESTAMP` marker resolves to epoch milliseconds. LocalDatabase never adds
+a `timestamp` field implicitly. Caller-supplied timestamps and markers remain
+explicit values. Whole-record replacements retain only fields supplied by the caller;
+merge updates preserve existing fields. Records without an explicit timestamp
+are not backfilled, including collection writes and draft saves.
 
-New IndexedDB databases use the original records schema without `_updatedAt`
-or its index. Connections open without an explicit version so existing version 2
-databases remain accessible. Legacy version 2 indexes remain in those databases,
-but LocalDatabase no longer uses them and removes `_updatedAt` from rows it writes.
+New IndexedDB databases use schema version 1 without `_updatedAt` or its index.
+Existing version 2 or 3 databases require caller deletion before opening the
+version 1 schema. LocalDatabase removes `_updatedAt` from rows it writes.
 
 Local batch update accepts Map DatabasePath keys and root-relative string keys.
 String keys address a record by its existing path values, reject ambiguous
@@ -2970,11 +2962,25 @@ Android formats are unchanged. No IndexedDB version bump or migration is added.
 
 ### Unified database CRUD contract (supersedes earlier create/write and undefined decisions)
 
-`create([collection, keyField])` prepares a draft with a generated `temporaryKey` and makes no write until `save`. `create([collection, {[keyField]: id}])` prepares a draft for that ID. `save(record)` and `save(key => record)` return the final key after an atomic create-if-absent operation; the callback is synchronous, and a duplicate key fails without overwriting data. Firebase uses a transaction, so creation requires read and write permission at the target path. Local uses an IndexedDB readwrite transaction. Failed saves can be retried.
+`create([collection, keyField], record)` allocates and writes in one operation,
+returning the permanent key. `create([collection, {[keyField]: id}], record)`
+creates with that ID. A synchronous callback may compute the record from the
+permanent key. A duplicate key fails without overwriting data. Firebase uses a
+transaction, so creation requires read and write permission at the target path.
+Local uses an IndexedDB readwrite transaction; failed writes roll back allocation.
+The public create signature accepts `DatabasePath`; create-specific path shape
+is checked at runtime, without a separate create path type or options argument.
+The named updater type was removed; update callback signatures appear directly
+at their use sites. Create keys use `string` directly in the callback and return
+types, without a named key type. `DatabaseErrorHandler`, `DatabaseQueryValue`,
+`DatabaseCursorPosition`, `DatabaseCursorEvent`, and `DatabaseGroupEntry` remain
+public types.
 
 `update(path, object)` keeps the existing partial merge and missing-record behavior. `update(path, current => value)` replaces the complete value atomically. The callback may run more than once under Firebase contention, must be synchronous, and both null and undefined delete. Batch updates retain their existing path/value semantics; callbacks are only supported on the single-path overload. `delete(path)` remains explicit. `write` is removed from the public database API. Web callers use callback update for replacement and object update for merge. Firebase and Local path mapping, and the stored data format used by Android, remain unchanged.
 
-`read(path, options?)` addresses the exact path in both backends. A trailing string is always literal: `["meta", "settings"]` reads `meta/settings`, and `["posts", "post_id"]` reads literal `posts/post_id`. Use `["posts"]` for the collection, `["posts", {post_id: "p1"}]` for a record, and append a string to read a field. Nested collection paths and query options follow the same rule. Local assembles collection children from their stored identities, including collections with different identity field names; callers do not provide a key field for reads.
+Superseded by **Read identity-field contract restored** below: the previous
+literal trailing-string read rule contradicted the agreed provider-neutral path
+model. It must not guide new call sites or tests.
 
 `read([])` rejects with `database/invalid-argument`; root listing is outside the read contract. Query options filter immediate children of the exact path, including record paths. Without `orderBy`, `equalTo` compares complete child values, while `start` and `end` are inclusive key bounds. `orderBy: ""` explicitly orders by child values; a non-empty `orderBy` compares that child field. `equalTo` cannot be combined with `start` or `end`, and `order` accepts only `asc` or `desc`. Reads return ordinary values or objects without a traversal-order guarantee; use the Cursor API for ordered iteration. Firebase's integer-key ordering is used for key bounds in both backends.
 
@@ -3067,3 +3073,87 @@ The provider-neutral behavioral contract and shared Firebase/Local scenarios are
 in `packages/database/src/common/CONTRACT.md`. Emulator-only cases are kept in
 the integration suite and must run before treating its unresolved Firebase
 edge cases as verified.
+
+### Local generated keys and timestamp ranges
+
+Decision (supersedes the version-1 Local schema and date-key notes above): Local
+opens schema version **2**. It upgrades version-1 databases in place, adding one
+out-of-line, auto-increment allocator object store per physical root and the
+top-level timestamp cursor indexes. The allocator and record store participate
+in one readwrite transaction for generated creates. IndexedDB assigns a numeric
+key during `create`; the callback receives its decimal string synchronously before
+the record is written, and an abort rolls back both the record and key generator.
+All logical collections beneath one root share that sequence. Supplied keys
+remain valid, and Firebase retains its own push-key behavior. `create` resolves with the permanent key after commit.
+
+Local `startDate` and `endDate` now compare the record's explicit `timestamp`
+field in milliseconds. Missing or invalid timestamps do not match. The field's
+index supports timestamp ordering and date ranges where the scoped cursor index
+is available; other orderings filter candidates while retaining their own
+ordering and pagination rules. Firebase continues using push-key date bounds.
+Version-2 databases with an incompatible schema and databases newer than version
+2 are rejected.
+
+
+### Final Database/Cursor parity and native Local allocation
+
+Decision (supersedes the schema-v2 allocator/migration decision above): Local
+opens IndexedDB at version **1**, with exactly the active physical path roots.
+Each root has native `autoIncrement` on the internal `_rowId` primary key and a
+unique compound `[_collection, _key]` logical identity index. No allocator stores,
+backfill, migration, or automatic deletion are provided. Existing incompatible
+v1/v2 databases require explicit removal. Numeric generated IDs and synchronous
+create callbacks remain transactional; insertion failure rolls back allocation.
+Supplied numeric IDs advance the native generator when their slot is free;
+logical identities sharing a supplied ID retain distinct physical rows.
+
+Both atomic cursors can revisit entries moved beyond their captured sort tuple;
+handlers execute before public composition deduplication. Local no longer hides
+those handler revisits. Objects and arrays have equal ordering rank and tie by
+Firebase child key. Firebase SDK rejects object query endpoints, so object-boundary
+continuation uses original-query tuple filtering. Scalar Local index pages retain
+native cursor transactions and point handler writes via the unique identity index.
+Null equality remains explicit; missing/null ordered fields are excluded by cursors
+but included by null-equality reads. Local listener removal is idempotent.
+
+Additional compound indexes are based on current web call sites: mutual/request
+`uid_id`, private chat lookup, users' visit/email verification, tag id/label/hidden,
+extra id/id_uid, and error uid. Existing chat, alert, recipient and activity indexes
+are retained. Tests compare indexed queries with nested comparator fallback and
+observe both IDBObjectStore.getAll and IDBIndex.getAll. Unsupported/deep queries
+continue to use fallback. Firebase URLs and Android data formats do not change.
+Date ranges retain Firebase push-key time versus Local explicit timestamp semantics.
+
+Firebase Emulator runs with local Node 24.21.0 and Java 17 outside the sandbox;
+sandbox loopback binding returns EPERM. The shared fixture uses the permitted
+`database_test` path. Subscription handles are independent but expose their owning
+cursor ID. Existing Chat implementation is preserved: its 11 baseline unit test
+failures require a separate, narrowly scoped fix. No prop-types dependency is added.
+
+
+### Read identity-field contract restored
+
+Decision: in `read` array paths of at least two segments, a final string is the
+identity field, never a literal branch. Firebase removes it and queries its parent;
+Local collects records with that identity field (fixed or dynamic), keyed by its
+values, including descendants. Thus `["users_public", "user_id"]` reads users,
+and `["users_public", {user_id: uid}]` selects one user and its subtree.
+A concrete branch/field uses a named segment, e.g. `["meta", {settings: "settings"}]`
+or `["users_public", {user_id: uid}, {email: "email"}]`. Local resolves these against
+existing literal/embedded storage without migration. Strings remain exact raw
+paths; single-root arrays continue to read the collection.
+
+This is a read-specific parser. create/update/delete/cursor/listener paths and
+orderBy normalization retain their own semantics. PostData.fetchExtras deliberately
+keeps `["extra", "extra_id"]`: Firebase must query `/extra`, whose id_uid index
+already exists in both consumers' local rules, never `/extra/extra_id`.
+Local does not silently merge conflicting child identities when assembling a
+collection. Named selectors match the corresponding dynamic identity as well.
+
+Framework scalar reads and The Whisky Talks Contacts/Groups/Profile read paths
+use explicit named segments. ChatMeta changes are restricted to four read path
+arguments; ChatList, subscriptions and pagination are not rewritten. Firebase
+URLs for correctly expressed reads and Android wire formats remain unchanged.
+No prop-types or new schema/store/index migration is introduced by this correction.
+The shared emulator/Local contract covers identity collection reads, queries,
+record subtrees, concrete fields and the exact extras regression.
