@@ -51,6 +51,8 @@ export default (
         //     .transaction(initial => {
         //     })
     } else {
-        return database.read(["_counters", ...path]);
+        const last = path.at(-1);
+        const readPath = typeof last === "string" ? [...path.slice(0, -1), {[last]: last}] : path;
+        return database.read(["_counters", ...readPath]);
     }
 }
