@@ -56,7 +56,7 @@ export function ChatMeta(database) {
         fetch: async (id) => {
             _id = _id || id;
             if (!_meta) {
-                const value = await database.read(["chats", {chat_id: _id}, "!meta"])
+                const value = await database.read(["chats", {chat_id: _id}, {"!meta": "!meta"}])
                 if (value !== undefined) {
                     _persisted = true;
                     _meta = value;
@@ -102,7 +102,7 @@ export function ChatMeta(database) {
         },
         fetchFor: async (currentUid, oppositeUid) => {
             let chats = [];
-            const value = await database.read(["chats", {chat_id: oppositeUid}, "!meta"]);
+            const value = await database.read(["chats", {chat_id: oppositeUid}, {"!meta": "!meta"}]);
             if (value !== undefined) {
                 chats.push({key: oppositeUid, meta: value, persisted: true});
             }
@@ -113,7 +113,7 @@ export function ChatMeta(database) {
                 }).next(10);
                 for (let i = chats.length - 1; i >= 0; i--) {
                     let chat = chats[i];
-                    chat.meta = await database.read(["chats", {chat_id: chat.key}, "!meta"]);
+                    chat.meta = await database.read(["chats", {chat_id: chat.key}, {"!meta": "!meta"}]);
                     chat.redirect = true;
                     if (chat.meta && chat.meta.members) {
                         let remove = false;
@@ -149,7 +149,7 @@ export function ChatMeta(database) {
                 }
             }
             if (!chats.length) {
-                const value = await database.read(["users_public", {user_id: oppositeUid}, UserData.NAME]);
+                const value = await database.read(["users_public", {user_id: oppositeUid}, {[UserData.NAME]: UserData.NAME}]);
                 if (value !== undefined) {
                     await database.create(["chats", "chat_id"], key => ({
                         key,
