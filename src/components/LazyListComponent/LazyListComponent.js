@@ -27,7 +27,7 @@ export default (
         try {
             const itemProps = await itemTransform(item);
             if(!itemProps) return null;
-            return <ItemComponent {...itemProps} key={item.key}/>;
+            return <ItemComponent {...itemProps} id={item.id ?? item.key} key={item.key}/>;
         } catch (error) {
             if (session.current === current) {
                 console.error(error);
