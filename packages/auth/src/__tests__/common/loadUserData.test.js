@@ -5,7 +5,7 @@ import loadUserData from "../../common/loadUserData";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
-const created = value => ({...value, timestamp: expect.any(Number)});
+const created = value => value;
 
 it("loads private devices into the user profile through LocalDatabase", async () => {
     const database = new LocalDatabase({storageKey: "private-profile"});
