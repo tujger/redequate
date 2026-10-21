@@ -22,14 +22,14 @@ const storedRows = async (storageKey, name) => {
     } finally { database.close(); }
 };
 
-it.each(["posts", "replies"])("publishes and fetches %s through PostData using the internal identity", async type => {
+it.each(["posts", "replies"])("publishes and fetches %s through PostData in posts", async type => {
     const database = new LocalDatabase({storageKey: "post-data"});
     const post = await PostData({database, type}).create({uid: "u1", text: "created"});
     await post.publish()();
     const fetched = await PostData({database, type}).fetch(post.id);
     expect(fetched.text).toBe("created");
     expect(fetched.created).toEqual(expect.any(Number));
-    const rows = await storedRows("post-data", LOCAL_COLLECTIONS[type].store);
+    const rows = await storedRows("post-data", LOCAL_COLLECTIONS.posts.store);
     expect(rows).toHaveLength(1);
     expect(rows[0]._key).toBe(parseDatabasePath([{type}, {post_id: post.id}]).key);
 });
