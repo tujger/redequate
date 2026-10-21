@@ -1,3 +1,4 @@
+import compareValues from "../common/compareValues";
 import {fail} from "../../../common";
 import {DatabaseCursor} from "../common/DatabaseCursor";
 import compareKeys from "../common/compareKeys";
@@ -8,13 +9,6 @@ import {LOCAL_COLLECTIONS} from "./constants";
 import {canUseIndex, readIndexedPage, recordPath as indexedRecordPath, scopeKey} from "./cursorIndex";
 
 const invalid = message => fail("database/invalid-argument", message);
-const rank = value => value === null
-    ? 0
-    : typeof value === "boolean"
-        ? 1
-        : typeof value === "number" ? 2 : typeof value === "string" ? 3 : 4;
-const compareValue = (left, right) => rank(left) - rank(right) ||
-    (left < right ? -1 : left > right ? 1 : 0);
 const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const children = value => value !== null && typeof value === "object" ? Object.entries(value) : [];
 
@@ -28,7 +22,6 @@ export default class LocalCursor extends DatabaseCursor {
     #startTime;
     #endTime;
     #scan;
-    #seen = new Set();
     #header = [];
     #indexed;
     #nativeScan;
@@ -89,7 +82,7 @@ export default class LocalCursor extends DatabaseCursor {
         const byKey = this.#field === undefined && !this.#byValue;
         return (byKey
             ? compareKeys(left.sort, right.sort)
-            : compareValue(left.sort, right.sort) || compareKeys(left.key, right.key)) *
+            : compareValues(left.sort, right.sort) || compareKeys(left.key, right.key)) *
             (this.order === "desc" ? -1 : 1);
     }
 
@@ -99,7 +92,7 @@ export default class LocalCursor extends DatabaseCursor {
             .filter(({key, value: item, sort}) => {
                 if (!this.#inDateRange(item)) return false;
                 if (!this.#hasField(item)) return false;
-                const compare = byKey ? compareKeys : compareValue;
+                const compare = byKey ? compareKeys : compareValues;
                 return (this.equalTo === undefined || Object.is(sort, this.equalTo)) &&
                     (this.#start === undefined || compare(sort, this.#start) >= 0) &&
                     (this.#end === undefined || compare(sort, this.#end) <= 0);
@@ -110,7 +103,8 @@ export default class LocalCursor extends DatabaseCursor {
         this.#header.push(...await super.next(n));
         if (this.position.finished) return [];
         const collection = this.#path[0];
-        const indexedField = ["created", "timestamp", "to", "name", "email", "_sort_name", "type", "uid", "id"].includes(this.#field)
+        const indexedField = ["created", "timestamp", "to", "name", "email", "_sort_name", "type", "uid", "id",
+            "uid_id", "private", "visit", "emailVerified", "hidden", "label", "id_uid"].includes(this.#field)
             ? this.#field
             : this.#field === undefined && !this.#byValue
                 ? "key"
@@ -128,11 +122,11 @@ export default class LocalCursor extends DatabaseCursor {
         let exhausted = false;
         while (result.length < n) {
             if (this.#indexed) {
-                let start = this.equalTo ?? this.#start;
-                let end = this.equalTo ?? this.#end;
+                let start = this.equalTo !== undefined ? this.equalTo : this.#start;
+                let end = this.equalTo !== undefined ? this.equalTo : this.#end;
                 if (indexedField === "timestamp") {
-                    if (this.#startTime !== undefined && (start === undefined || typeof start === "number" && start < this.#startTime)) start = this.#startTime;
-                    if (this.#endTime !== undefined && (end === undefined || typeof end === "number" && end > this.#endTime)) end = this.#endTime;
+                    if (this.#startTime !== undefined && (start === undefined || (typeof start === "number" && start < this.#startTime))) start = this.#startTime;
+                    if (this.#endTime !== undefined && (end === undefined || (typeof end === "number" && end > this.#endTime))) end = this.#endTime;
                 }
                 const page = await readIndexedPage(this.#storageKey, collection, indexedField,
                     {
@@ -152,11 +146,9 @@ export default class LocalCursor extends DatabaseCursor {
             while (candidates.length && result.length < n) {
                 const candidate = candidates.shift();
                 if (this.#scan && this.#compare(candidate, this.#scan) <= 0) continue;
-                if (this.#seen.has(candidate.key)) continue;
                 const {key, value} = candidate;
                 if (!this.#hasField(value) || !this.#inDateRange(value)) {
                     this.#scan = {key, sort: candidate.sort};
-                    this.#seen.add(key);
                     continue;
                 }
                 let entry = {key, value};
@@ -187,7 +179,6 @@ export default class LocalCursor extends DatabaseCursor {
                     }
                 }
                 this.#scan = {key, sort: candidate.sort};
-                this.#seen.add(key);
                 if (entry) result.push(entry);
             }
             if (!this.#indexed || exhausted) break;
@@ -199,7 +190,7 @@ export default class LocalCursor extends DatabaseCursor {
             finished: this.#indexed
                 ? exhausted && !candidates.length
                 : result.length < n && !candidates.some(candidate =>
-                    !this.#seen.has(candidate.key) && this.#compare(candidate, this.#scan) > 0)
+                    this.#compare(candidate, this.#scan) > 0)
         });
         this._count += page.length;
         return page;

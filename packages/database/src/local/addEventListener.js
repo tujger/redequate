@@ -27,9 +27,12 @@ const pathKeys = path => {
         if (Object.hasOwn(segment, "_") && (!Number.isSafeInteger(level) || level < 0)) {
             invalid("Invalid dynamic path level.");
         }
-        return {key: segment[names[0]], token: Object.hasOwn(segment, "_")
-            ? ["dynamic", level, names[0], segment[names[0]]]
-            : ["fixed", names[0], segment[names[0]]]};
+        return {
+            key: segment[names[0]],
+            token: Object.hasOwn(segment, "_")
+                ? ["dynamic", level, names[0], segment[names[0]]]
+                : ["fixed", names[0], segment[names[0]]]
+        };
     });
 };
 
@@ -38,16 +41,16 @@ const related = (left, right) => {
     if (left[0].key !== right[0].key) return false;
     const conditions = keys => new Map(keys.slice(1).filter(({token}) => token && token[0] !== "literal")
         .map(({key, token}) => [JSON.stringify(token.slice(0, -1)), key]));
-    const first = conditions(left), second = conditions(right);
+    const first = conditions(left); const second = conditions(right);
     return [...first].every(([name, value]) => !second.has(name) || second.get(name) === value);
 };
 
 const channelName = storageKey => `redequate:local:${storageKey}:changes`;
 const receive = (storageKey, event) => {
     const paths = event.data?.paths;
-    if (!Array.isArray(paths) || !paths.length || !paths.every(path => Array.isArray(path)
-        && path.length && path.every(segment => segment && typeof segment.key === "string"
-            && (segment.token === undefined || Array.isArray(segment.token))))) return;
+    if (!Array.isArray(paths) || !paths.length || !paths.every(path => Array.isArray(path) &&
+        path.length && path.every(segment => segment && typeof segment.key === "string" &&
+            (segment.token === undefined || Array.isArray(segment.token))))) return;
     enqueue(storageKey, async () => {
         for (const listener of listeners.get(storageKey) ?? []) {
             if (paths.some(path => related(listener.keys, path))) await refresh(listener);
@@ -75,8 +78,7 @@ const publish = (storageKey, paths) => {
             temporary = true;
         }
         channel.postMessage({paths});
-    } catch (_) { /* A notification failure must not turn a committed write into a failed write. */ }
-    finally { if (temporary) channel?.close(); }
+    } catch (_) { /* A notification failure must not turn a committed write into a failed write. */ } finally { if (temporary) channel?.close(); }
 };
 
 const enqueue = (storageKey, operation) => {
@@ -107,7 +109,8 @@ const snapshot = async (storageKey, keys, path) => {
         const path = keys.slice(1).map(({token}) => token);
         const shared = Math.min(path.length, segments.length);
         if (!path.slice(0, shared).every((token, index) => token === undefined
-            ? keys[index + 1].key === segments[index].at(-1) : equal(token, segments[index]))) continue;
+            ? keys[index + 1].key === segments[index].at(-1)
+            : equal(token, segments[index]))) continue;
         const address = [row._collection, ...segments.map(segment => segment.at(-1))];
         setValue(root, address, row.value);
     }
@@ -128,7 +131,7 @@ const deliver = (listener, value) => {
     const {callbacks, initial, previous} = listener;
     listener.previous = structuredClone(value);
     listener.initial = false;
-    const before = children(previous), after = children(value);
+    const before = children(previous); const after = children(value);
     if (initial) listener.initialKey = maximumKey(value);
     if (!initial) {
         for (const key of Object.keys(before)) {
@@ -185,8 +188,10 @@ export default function addEventListener(storageKey, path, callbacks, read) {
     if (callbacks.orderBy !== undefined) {
         validatePath(callbacks.orderBy);
         const path = typeof callbacks.orderBy === "string"
-            ? callbacks.orderBy === "" ? [] : [callbacks.orderBy] : callbacks.orderBy;
-        const orderBy = path.map(segment => typeof segment === "string" ? segment
+            ? callbacks.orderBy === "" ? [] : [callbacks.orderBy]
+            : callbacks.orderBy;
+        const orderBy = path.map(segment => typeof segment === "string"
+            ? segment
             : segment[Object.getOwnPropertyNames(segment).find(name => name !== "_")]);
         callbacks = {...callbacks, orderBy};
     }
@@ -196,14 +201,17 @@ export default function addEventListener(storageKey, path, callbacks, read) {
     listeners.get(storageKey).add(listener);
     openChannel(storageKey);
     enqueue(storageKey, () => refresh(listener)).catch(() => {});
-    return {remove: () => {
-        listener.active = false;
-        const subscribers = listeners.get(storageKey);
-        subscribers.delete(listener);
-        if (!subscribers.size) {
-            listeners.delete(storageKey);
-            channels.get(storageKey)?.close();
-            channels.delete(storageKey);
+    return {
+        remove: () => {
+            if (!listener.active) return;
+            listener.active = false;
+            const subscribers = listeners.get(storageKey);
+            subscribers.delete(listener);
+            if (!subscribers.size) {
+                listeners.delete(storageKey);
+                channels.get(storageKey)?.close();
+                channels.delete(storageKey);
+            }
         }
-    }};
+    };
 }

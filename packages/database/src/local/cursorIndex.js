@@ -30,7 +30,11 @@ const tokenKey = (row, token) => {
 };
 
 export const scopeKey = path => JSON.stringify(path.segments ?? JSON.parse(path.key));
-const fieldIndexName = field => field === "_sort_name" ? "_sortNameKey" : `_${field}Key`;
+const fieldSuffix = field => field.split("_").filter(Boolean).map(part => part[0].toUpperCase() + part.slice(1)).join("");
+const fieldIndexName = field => {
+    const suffix = fieldSuffix(field);
+    return `_${suffix[0].toLowerCase()}${suffix.slice(1)}Key`;
+};
 
 export const indexRow = row => {
     const tokens = JSON.parse(row._key);
@@ -45,25 +49,25 @@ export const indexRow = row => {
     for (const field of ["created", "timestamp"]) {
         if (Object.hasOwn(row.value ?? {}, field)) {
             const value = orderedValue(row.value[field]);
-            if (value) row[`_cursor${field[0].toUpperCase()}${field.slice(1)}`] = value;
-            else row[`_cursorUnsupported${field[0].toUpperCase()}${field.slice(1)}`] = 1;
+            if (value) row[`_cursor${fieldSuffix(field)}`] = value;
+            else row[`_cursorUnsupported${fieldSuffix(field)}`] = 1;
         }
     }
-    if (tokens.length === 2 && ["mutual", "mutualrequests"].includes(row._collection)) {
-        for (const field of ["id", "uid"]) {
+    if (tokens.length === 2 && ["mutual", "mutualrequests", "_chats"].includes(row._collection)) {
+        for (const field of row._collection === "_chats" ? ["private"] : ["id", "uid", "uid_id"]) {
             if (row.value?.[field] === undefined) continue;
             const value = orderedValue(row.value[field]);
-            if (value) row[`_scopeIndex${field[0].toUpperCase()}${field.slice(1)}`] = value;
+            if (value) row[`_scopeIndex${fieldSuffix(field)}`] = value;
             else row._scopeUnsupportedField = 1;
         }
     }
     if (tokens.length === 1 && row.value && typeof row.value === "object") {
-        for (const field of ["to", "name", "email", "_sort_name", "type", "uid"]) {
+        for (const field of ["to", "name", "email", "_sort_name", "type", "uid", "visit", "emailVerified", "id", "hidden", "label", "id_uid"]) {
             if (row.value[field] !== undefined) {
                 const value = orderedValue(row.value[field]);
                 const property = field === "_sort_name"
                     ? "_indexSortName"
-                    : `_index${field[0].toUpperCase()}${field.slice(1)}`;
+                    : `_index${fieldSuffix(field)}`;
                 if (value) row[property] = value;
                 else row._cursorUnsupportedField = 1;
             }
@@ -91,9 +95,12 @@ export async function readIndexedPage(storageKey, collection, field, options, af
                     ? "_scopeKey"
                     : field === "created"
                         ? "_scopeCreated"
-                        : field === "timestamp" ? "_scopeTimestamp" : `_scope${field[0].toUpperCase()}${field.slice(1)}`
-                : field === "key" ? "_cursorKey" : field === "created" ? "_cursorCreated"
-                    : field === "timestamp" ? "_cursorTimestamp" : fieldIndexName(field));
+                        : field === "timestamp" ? "_scopeTimestamp" : `_scope${fieldSuffix(field)}`
+                : field === "key"
+                    ? "_cursorKey"
+                    : field === "created"
+                        ? "_cursorCreated"
+                        : field === "timestamp" ? "_cursorTimestamp" : fieldIndexName(field));
             const start = field !== "key"
                 ? orderedValue(options.start)
                 : options.start === undefined
@@ -166,9 +173,12 @@ export async function canUseIndex(storageKey, collection, field, scope) {
             const scoped = scope !== undefined;
             const keyIndex = scoped ? "_scopeKey" : "_cursorKey";
             const fieldIndex = scoped
-                ? `_scope${field[0].toUpperCase()}${field.slice(1)}`
-                : field === "created" ? "_cursorCreated" : field === "timestamp"
-                    ? "_cursorTimestamp" : fieldIndexName(field);
+                ? `_scope${fieldSuffix(field)}`
+                : field === "created"
+                    ? "_cursorCreated"
+                    : field === "timestamp"
+                        ? "_cursorTimestamp"
+                        : fieldIndexName(field);
             if (!store.indexNames.contains(keyIndex) ||
                 (field !== "key" && !store.indexNames.contains(fieldIndex))) {
                 resolve(false);
@@ -180,8 +190,9 @@ export async function canUseIndex(storageKey, collection, field, scope) {
                     nested = event.target.result !== undefined;
                 };
             if (field === "created" || field === "timestamp") {
-                store.index(scoped ? `_scopeUnsupported${field[0].toUpperCase()}${field.slice(1)}`
-                    : `_cursorUnsupported${field[0].toUpperCase()}${field.slice(1)}`)
+                store.index(scoped
+                    ? `_scopeUnsupported${fieldSuffix(field)}`
+                    : `_cursorUnsupported${fieldSuffix(field)}`)
                     .getKey([scoped ? scope : collection, 1]).onsuccess = event => { unsupported = event.target.result !== undefined; };
             } else if (field !== "key") {
                 store.index(scoped ? "_scopeUnsupportedField" : "_cursorUnsupportedField")

@@ -6,7 +6,7 @@ import {applyReadOptions, readQueryOptions} from "../common/applyReadOptions";
 import parseCreatePath from "../common/parseCreatePath";
 import addEventListener, {mutate} from "./addEventListener";
 import LocalCursor from "./cursor";
-import {addGeneratedRecord, addRecord, deleteRecord, getRecord, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecord, updateRecords, createRecordPath} from "./helpers";
+import {addGeneratedRecord, addRecord, deleteRecord, readValue, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecord, updateRecords, createRecordPath} from "./helpers";
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -75,10 +75,7 @@ export default class LocalDatabase extends DatabaseBase {
         }
         return this.run(async () => {
             readQueryOptions(options);
-            const readPath = typeof path === "string" && path.includes("/")
-                ? path.split("/").filter(Boolean)
-                : path;
-            const value = await getRecord(this.storageKey, readPath);
+            const value = await readValue(this.storageKey, path);
             return (options.orderBy !== undefined || options.equalTo !== undefined ||
                 options.start !== undefined || options.end !== undefined || options.order !== undefined)
                 ? applyReadOptions(value, options)
