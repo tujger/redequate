@@ -34,6 +34,7 @@ export class UserData extends UserDataCommon {
             if (!state.public) throw new Error("[UserData] public section is not ready");
             state.public._sort_name = state.sortName;
             for (const x in state.public) {
+                if (x === "updated") continue;
                 if (state.public[x] !== undefined) {
                     if (state.public[x] !== undefined && (state.public[x] || "").constructor.name === "String") {
                         state.public[x] = (state.public[x] || "").trim();
@@ -58,7 +59,7 @@ export class UserData extends UserDataCommon {
             }
         }
 
-        if (!state.public.updated) {
+        if (!includePublic && !state.public.updated) {
             updates.set(["users_public", {user_id: state.id}, "updated"], this.#database.TIMESTAMP);
         }
         return updates;
@@ -271,7 +272,7 @@ export class UserData extends UserDataCommon {
             database.read(["users_public", {user_id: state.id}, "email"])
                 .then(async value => {
                     if (value === undefined) return;
-                    await database.write(["users_public", {user_id: state.id}, "visit"], database.TIMESTAMP);
+                    await database.update(["users_public", {user_id: state.id}, "visit"], () => database.TIMESTAMP);
                     this.#lastVisitUpdate = now;
                 })
                 .catch(console.error);
@@ -305,7 +306,7 @@ export function watchUserChanged({auth, database, getUserData, onUserChanged}) {
             const changed = userData.verified && (
                 currentUserData.role === UserRole.USER_NOT_VERIFIED ||
                 currentUserData.public.emailVerified !== userData.verified
-            ) || await database.read(["users_public", {user_id: userData.id}, "updated"]) > currentUserData.public.updated;
+            ) || (await database.read(["users_public", {user_id: userData.id}, "updated"])) > currentUserData.public.updated;
             if (!changed) return;
 
             console.warn("[UserData] changed", currentUserData.id, userData.toJSON());
