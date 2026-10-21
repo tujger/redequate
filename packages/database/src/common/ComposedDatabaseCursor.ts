@@ -2,33 +2,31 @@ import {fail} from "../../../common";
 import resolvePath from "./resolvePath";
 import {DatabaseCursor} from "./DatabaseCursor";
 import type {
-    DatabasePath, DatabaseCursorSource, DatabaseEntry, DatabaseGroupEntry,
-    DatabaseCursorEvent, DatabaseCursorOptions, DatabaseCursorSubscription,
-    DatabaseErrorContext, DatabaseOptions
+    DatabasePath, DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent,
+    DatabaseCursorOptions, DatabaseCursorSubscription, DatabaseOptions
 } from "./DatabaseTypes";
 
-type CursorInput = DatabaseCursorSource | DatabaseCursor | null | undefined;
-type CursorEntry = DatabaseEntry | DatabaseGroupEntry;
+type CursorInput = (DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined;
 type CursorPath = DatabasePath | CursorInput[];
 type Source = {
     cursor: DatabaseCursor;
-    entries: CursorEntry[];
+    entries: (DatabaseEntry | DatabaseGroupEntry)[];
     offset: number;
     headers: DatabaseGroupEntry[];
 };
-type NextProps = {n: number; byGroup: boolean; entries: CursorEntry[]};
+type NextProps = {n: number; byGroup: boolean; entries: (DatabaseEntry | DatabaseGroupEntry)[]};
 type SourceProps = NextProps & {source: Source};
 
 type CreateCursor = (path: DatabasePath, options: DatabaseCursorOptions) => DatabaseCursor | undefined;
 
 interface CursorRun {
     <T>(operation: () => Promise<T>, options: DatabaseOptions | undefined, reason: string,
-        context: DatabaseErrorContext): Promise<T | undefined>;
+        context: Record<string, unknown>): Promise<T | undefined>;
     <T>(operation: () => T, options: DatabaseOptions | undefined, reason: string,
-        context: DatabaseErrorContext): T | undefined;
+        context: Record<string, unknown>): T | undefined;
 }
 
-const isRecord = (entry: CursorEntry): entry is DatabaseEntry => "value" in entry;
+const isRecord = (entry: DatabaseEntry | DatabaseGroupEntry): entry is DatabaseEntry => "value" in entry;
 
 const headerParents = new WeakMap<DatabaseGroupEntry, DatabaseGroupEntry>();
 
@@ -36,7 +34,7 @@ function isSourceAvailable(source: Source): boolean {
     return source.offset < source.entries.length || !source.cursor.position.finished;
 }
 
-function validateBatch(batch: CursorEntry[], limit: number, finished: boolean): true {
+function validateBatch(batch: (DatabaseEntry | DatabaseGroupEntry)[], limit: number, finished: boolean): true {
     if (!(batch instanceof Array) || batch.length > limit || (!batch.length && !finished)) {
         fail("database/invalid-argument", "Cursor next(n) must return an entry array within its page size, or undefined; an empty result must be finished.");
     }
@@ -74,7 +72,7 @@ function appendUniqueEntry(props: SourceProps & {
     return {...props, source, entries, seen, origins};
 }
 
-function formPage(props: NextProps & {header: CursorEntry[]; heading: DatabaseGroupEntry | undefined}) {
+function formPage(props: NextProps & {header: (DatabaseEntry | DatabaseGroupEntry)[]; heading: DatabaseGroupEntry | undefined}) {
     const {n, byGroup, entries, header, heading} = props;
     const result = entries.splice(0, byGroup ? entries.length : n);
     if (result.length) result.unshift(...header.splice(0));
@@ -107,12 +105,12 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
     readonly #sources: Source[];
     readonly #run: CursorRun;
     // The caller's original argument is needed for validation error contexts.
-    readonly #context: DatabaseErrorContext;
+    readonly #context: Record<string, unknown>;
     readonly #seen = new Map<string, Set<string>>();
     // Entry objects stay plain; nested compositions retain their original leaf cursor.
     readonly #origins = new WeakMap<DatabaseEntry, DatabaseCursor>();
-    #header: CursorEntry[] = [];
-    #pending: CursorEntry[] = [];
+    #header: (DatabaseEntry | DatabaseGroupEntry)[] = [];
+    #pending: (DatabaseEntry | DatabaseGroupEntry)[] = [];
     #turn = 0;
 
     static #hasGroup(cursor: DatabaseCursor): boolean {
@@ -129,7 +127,7 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         this.#sources = sources;
     }
 
-    async next(n = 1): Promise<CursorEntry[] | undefined> {
+    async next(n = 1): Promise<(DatabaseEntry | DatabaseGroupEntry)[] | undefined> {
         let props = await this.#prepareNext(n);
         if (!props) return undefined;
         try {
@@ -212,7 +210,7 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         return {...props, source, entries};
     }
 
-    #commitNext(props: NextProps & {result: CursorEntry[]}): CursorEntry[] {
+    #commitNext(props: NextProps & {result: (DatabaseEntry | DatabaseGroupEntry)[]}): (DatabaseEntry | DatabaseGroupEntry)[] {
         const {byGroup, entries, result} = props;
         if (byGroup) this.#turn = 0;
         this.#pending = entries;

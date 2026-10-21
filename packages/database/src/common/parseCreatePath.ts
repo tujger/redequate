@@ -1,8 +1,8 @@
 import {fail} from "../../../common";
 import validatePath from "./validatePath";
-import type {DatabaseCreatePath, DatabasePathSegment} from "./DatabaseTypes";
+import type {DatabasePath, DatabasePathSegment} from "./DatabaseTypes";
 
-export default function parseCreatePath(path: DatabaseCreatePath): {parentPath: DatabasePathSegment[]; fieldName: string; key?: string} {
+export default function parseCreatePath(path: DatabasePath): {parentPath: DatabasePathSegment[]; fieldName: string; key?: string} {
     validatePath(path);
     if (!Array.isArray(path) || path.length < 2 || path.at(-1) === "_") {
         fail("database/invalid-argument", "create requires a collection path followed by a key field name.");

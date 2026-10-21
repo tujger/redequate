@@ -21,7 +21,7 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
 - Paths are strings or arrays of nonempty string segments and named segments
   with exactly one nonempty string value. `resolvePath` joins the segment values
   with `/` and ignores `_`. Firebase uses that resulting address. Local uses
-  `path[0]` as a physical version-1 object store; named segments retain their
+  `path[0]` as a physical version-2 object store; named segments retain their
   field name and optional dynamic level as part of Local identity. A literal
   string after a named segment can address a field. A trailing string without
   a named parent addresses a literal path, rather than selecting a record by
@@ -32,10 +32,17 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   a nonempty `orderBy` selects the nested field; `equalTo` without `orderBy`
   selects child values; otherwise range bounds select child keys. `order` is
   `asc` or `desc` and `equalTo` excludes `start`/`end`.
-- `create` returns a draft without writing. `save` creates only when absent;
-  its synchronous callback receives the final key. `update(path, object)` is
+- `create(path, valueOrCallback)` creates only when absent and returns
+  the permanent string key; its synchronous callback receives that string. Its path
+  uses `DatabasePath`, with a collection path followed by a key field name or
+  a named string ID segment; create validates that shape at runtime. There is
+  no create options argument. The
+  database's `onError` handler can suppress a create failure by returning normally,
+  in which case create resolves to `undefined`. `update(path, object)` is
   a shallow merge, with null deleting fields; `update(path, callback)` atomically
-  replaces and returns the final value, with null or undefined deleting. Batch
+  replaces and returns the final value, with null or undefined deleting. Its
+  callback signature is `(value: DatabaseValue) => DatabaseValue | undefined`;
+  no separate updater type is exported. Batch
   paths are root relative. `delete` succeeds for absent paths. Operation errors
   go to the call's `onError` or the database default; a normally returning
   handler suppresses the error and leaves an undefined result. Listeners and
@@ -44,10 +51,15 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   caller's value shape through create, update, and collection writes. A caller
   supplied `timestamp`, including a `TIMESTAMP` marker, remains explicit data;
   queries with `orderBy: "timestamp"` still use that field, not the key.
-- Without a supplied key, Firebase `create` uses Realtime Database `push()` and
-  Local `create` uses `firebase-key`'s `key()` to generate a Firebase-compatible
-  20-character push key. A supplied key is used unchanged, including non-push
-  keys. The synchronous create callback receives the draft's final key.
+- Without a supplied key, Firebase `create` uses Realtime Database `push()`.
+  Local allocates a permanent numeric string
+  during `create` from the auto-increment allocator belonging to the physical
+  `path[0]` store. All logical collections in that store share this sequence.
+  Allocation and record insertion commit in one IndexedDB transaction; failed
+  creates roll both back. A supplied key is used unchanged. The synchronous
+  create callback receives the final key after allocation and before insertion.
+  Local does not add a timestamp field.
+  Firebase generated keys remain 20-character push keys.
   `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
   key's encoded client-side generation time **when the key is known to be a
   push key**. This is not the server commit time. The library does not verify
@@ -81,9 +93,11 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   bounds and object tie behavior remain unverified end to end.
 - `start`, `end`, and `equalTo` are inclusive SDK query bounds. `start: "Al"`
   without `end` expands to an inclusive `"Al\uf8ff"` end in **cursor** queries.
-  Explicit `end` remains exact. `startDate` and `endDate` generate timestamp
-  key limits; the end includes the full millisecond. These key limits also
-  filter field/value queries before `handle`. Date bounds are not part of
+  Explicit `end` remains exact. Firebase `startDate` and `endDate` generate
+  timestamp key limits. Local date bounds inclusively compare the record's
+  explicit finite numeric `timestamp` field (or a Date value) in milliseconds;
+  records without a valid timestamp are excluded. They also filter field/value
+  queries before `handle`. Date bounds are not part of
   `read` options. Bounds permit null, booleans, finite numbers and strings at
   the common cursor API; the Firebase SDK may reject a bound incompatible
   with key ordering, so callers should use string key bounds.

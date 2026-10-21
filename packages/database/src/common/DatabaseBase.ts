@@ -1,26 +1,24 @@
 import {notImplemented} from '../../../common'
 import {DatabaseCursor} from "./DatabaseCursor";
 import type {
-    DatabasePath, DatabaseCreatePath, DatabaseValue, DatabaseRecord, DatabaseDraft,
-    DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler, DatabaseOptions,
-    DatabaseListenerOptions, DatabaseReadOptions, DatabaseCursorOptions, DatabaseCursorSource,
-    DatabaseUpdates, DatabaseUpdater
+    DatabasePath, DatabaseValue, DatabaseOptions,
+    DatabaseErrorHandler,
+    DatabaseListenerOptions, DatabaseReadOptions, DatabaseCursorOptions
 } from "./DatabaseTypes";
 
 export {DatabaseCursor};
 export {DatabaseOrder} from "./DatabaseOrder";
 export type {
-    DatabaseNamedPathSegment, DatabasePathSegment, DatabasePath, DatabaseCreatePath, DatabaseFieldPath,
-    DatabaseValue, DatabaseRecord, DatabaseEntry, DatabaseGroupEntry,
-    DatabaseDraft, DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler,
-    DatabaseOptions, DatabaseListenerOptions, DatabaseQueryValue, DatabaseReadOptions,
-    DatabaseCursorPosition, DatabaseCursorEvent, DatabaseCursorSubscription, DatabaseCursorOptions,
-    DatabaseCursorSource, DatabaseUpdates, DatabaseUpdater
+    DatabasePathSegment, DatabasePath, DatabaseValue, DatabaseEntry,
+    DatabaseErrorHandler, DatabaseQueryValue,
+    DatabaseGroupEntry, DatabaseCursorPosition, DatabaseCursorEvent,
+    DatabaseOptions, DatabaseListenerOptions, DatabaseReadOptions,
+    DatabaseCursorSubscription, DatabaseCursorOptions
 } from "./DatabaseTypes";
 
 /**
  * onError may suppress a failure by returning normally; the operation then returns undefined.
- * Drafts, cursors and listeners retain their options. Writes resolve after storage confirms them.
+ * Cursors and listeners retain their options. Writes resolve after storage confirms them.
  */
 export default class DatabaseBase {
     onError: DatabaseErrorHandler;
@@ -35,19 +33,19 @@ export default class DatabaseBase {
     }
 
     protected handleError(error: unknown, options: DatabaseOptions | undefined,
-                          reason: string, context: DatabaseErrorContext): void {
+                          reason: string, context: Record<string, unknown>): void {
         const onError = options?.onError ?? this.onError;
         onError(error, reason, context);
     }
 
     protected run<T>(operation: () => Promise<T>, options: DatabaseOptions | undefined,
-                     reason: string, context: DatabaseErrorContext): Promise<T | undefined>;
+                     reason: string, context: Record<string, unknown>): Promise<T | undefined>;
 
     protected run<T>(operation: () => T, options: DatabaseOptions | undefined,
-                     reason: string, context: DatabaseErrorContext): T | undefined;
+                     reason: string, context: Record<string, unknown>): T | undefined;
 
     protected run<T>(operation: () => T | Promise<T>, options: DatabaseOptions | undefined,
-                     reason: string, context: DatabaseErrorContext): T | Promise<T | undefined> | undefined {
+                     reason: string, context: Record<string, unknown>): T | Promise<T | undefined> | undefined {
         let result;
         try {
             result = operation();
@@ -65,7 +63,7 @@ export default class DatabaseBase {
     }
 
     addEventListener(path: DatabasePath, options: DatabaseListenerOptions = {},
-                     subscribe: (callbacks: DatabaseListenerOptions) => DatabaseListener = () => notImplemented("addEventListener")): DatabaseListener | undefined {
+                     subscribe: (callbacks: DatabaseListenerOptions) => {remove(): void} = () => notImplemented("addEventListener")): {remove(): void} | undefined {
         let callbackFailure: { error: unknown } | undefined;
         const report: DatabaseErrorHandler = (error, reason, context) => {
             try {
@@ -111,8 +109,8 @@ export default class DatabaseBase {
         }, registrationOptions, "addEventListener", {path});
     }
 
-    /** Last segment names the generated key field or supplies its ID. No write until draft.save(). */
-    create(path: DatabaseCreatePath, options: DatabaseOptions = {}): DatabaseDraft | undefined {
+    /** Atomically creates an absent record and returns its permanent key. The callback receives that key synchronously before insertion. */
+    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((key: string) => DatabaseValue)): Promise<string | undefined> {
         return notImplemented('create')
     }
 
@@ -126,10 +124,10 @@ export default class DatabaseBase {
      * Batch paths are root-relative. A synchronous callback replaces atomically,
      * returns the final value, and deletes on null or undefined; it requires read/write access.
      */
-    update(path: DatabasePath, callback: DatabaseUpdater, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
-    update(path: DatabasePath, changes: DatabaseRecord, options?: DatabaseOptions): Promise<void>;
-    update(updates: DatabaseUpdates, options?: DatabaseOptions): Promise<void>;
-    async update(path: DatabasePath | DatabaseUpdates, changes?: DatabaseRecord | DatabaseUpdater | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
+    update(path: DatabasePath, callback: (value: DatabaseValue) => DatabaseValue | undefined, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
+    update(path: DatabasePath, changes: Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
+    update(updates: Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
+    async update(path: DatabasePath | Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, changes?: Record<string, DatabaseValue> | ((value: DatabaseValue) => DatabaseValue | undefined) | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
         return notImplemented('update')
     }
 
@@ -144,7 +142,7 @@ export default class DatabaseBase {
      * Compositions deduplicate by source path + key (or cursor ID + key without a path)
      * and run each source's handle once, before buffering.
      */
-    cursor(path: DatabasePath | (DatabaseCursorSource | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
+    cursor(path: DatabasePath | ((DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
         return new DatabaseCursor(options, typeof path === "string" || path instanceof Array
             && (path.length === 0 || typeof path[0] === "string") ? path as DatabasePath : undefined);
     }

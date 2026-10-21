@@ -2,8 +2,8 @@ import validatePath from "./validatePath";
 import {DatabaseOrder} from "./DatabaseOrder";
 import {fail, identifier} from "../../../common";
 import type {
-    DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent,
-    DatabaseCursorPosition, DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath, DatabaseFieldPath
+    DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent, DatabaseCursorPosition,
+    DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath
 } from "./DatabaseTypes";
 
 /** Base for cursors consumed sequentially, exclusively by their owner or composition. */
@@ -60,7 +60,7 @@ export class DatabaseCursor {
     get path(): DatabasePath | undefined { return this.#path; }
     get group(): string | undefined { return this.#options.group; }
     get order(): DatabaseOrder { return this.#options.order!; }
-    get orderBy(): DatabaseFieldPath | undefined { return this.#options.orderBy; }
+    get orderBy(): DatabasePath | undefined { return this.#options.orderBy; }
     get start() { return this.#options.start; }
     get end() { return this.#options.end; }
     get equalTo() { return this.#options.equalTo; }
