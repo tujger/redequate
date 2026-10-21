@@ -1,6 +1,7 @@
 import validatePath from "../common/validatePath";
+import compareKeys from "../common/compareKeys";
 import {fail} from "../../../common";
-import {getAllRecords} from "./helpers";
+import {getAllRecords, resolveCollectionPath, subtreeValue} from "./helpers";
 
 const listeners = new Map();
 const queues = new Map();
@@ -8,14 +9,13 @@ const channels = new Map();
 const invalid = message => fail("database/invalid-argument", message);
 
 const pathKeys = path => {
-    validatePath(path);
+    if (Array.isArray(path) && !path.length) return [];
     if (typeof path === "string") {
         const parts = path.split("/");
         validatePath(parts);
         path = parts.map((key, index) => index ? {key, wildcard: true} : key);
-    }
-    if (!Array.isArray(path) || !path.length || typeof path[0] !== "string" || !path[0]) {
-        invalid("Local listener path must start with a collection name.");
+    } else {
+        path = resolveCollectionPath(path);
     }
     return path.map(segment => {
         if (segment?.wildcard === true && typeof segment.key === "string" && segment.key) {
@@ -34,9 +34,12 @@ const pathKeys = path => {
 };
 
 const related = (left, right) => {
-    const shared = Math.min(left.length, right.length);
-    return left.slice(0, shared).every(({key, token}, index) => key === right[index].key
-        && (token === undefined || right[index].token === undefined || equal(token, right[index].token)));
+    if (!left.length || !right.length) return true;
+    if (left[0].key !== right[0].key) return false;
+    const conditions = keys => new Map(keys.slice(1).filter(({token}) => token && token[0] !== "literal")
+        .map(({key, token}) => [JSON.stringify(token.slice(0, -1)), key]));
+    const first = conditions(left), second = conditions(right);
+    return [...first].every(([name, value]) => !second.has(name) || second.get(name) === value);
 };
 
 const channelName = storageKey => `redequate:local:${storageKey}:changes`;
@@ -93,8 +96,9 @@ const setValue = (root, keys, value) => {
     Object.defineProperty(node, keys.at(-1), {value, enumerable: true, configurable: true, writable: true});
 };
 
-const snapshot = async (storageKey, keys) => {
+const snapshot = async (storageKey, keys, path) => {
     const rows = await getAllRecords(storageKey);
+    if (Array.isArray(path)) return subtreeValue(rows, path);
     const root = {};
     rows.sort((a, b) => JSON.parse(a._key).length - JSON.parse(b._key).length);
     for (const row of rows) {
@@ -117,27 +121,7 @@ const snapshot = async (storageKey, keys) => {
 
 const children = value => value !== null && typeof value === "object" ? value : {};
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-const childValue = (value, path) => path.reduce((node, key) => node?.[key], value) ?? null;
-const rank = value => value === null ? 0 : typeof value === "boolean" ? 1
-    : typeof value === "number" ? 2 : typeof value === "string" ? 3 : 4;
-const compareKeys = (a, b) => {
-    const integer = key => /^(0|[1-9]\d*)$/.test(key) && Number(key) <= 2147483647;
-    if (integer(a) && integer(b)) return Number(a) - Number(b);
-    if (integer(a)) return -1;
-    if (integer(b)) return 1;
-    return a < b ? -1 : a > b ? 1 : 0;
-};
-const orderedLast = (value, orderBy) => {
-    const entries = Object.entries(children(value));
-    const ordered = entries.sort(([aKey, a], [bKey, b]) => {
-        if (!orderBy) return compareKeys(aKey, bKey);
-        const aValue = childValue(a, orderBy), bValue = childValue(b, orderBy);
-        if (rank(aValue) !== rank(bValue)) return rank(aValue) - rank(bValue);
-        if (aValue === bValue || rank(aValue) === 4) return compareKeys(aKey, bKey);
-        return aValue < bValue ? -1 : 1;
-    });
-    return ordered.at(-1)?.[0];
-};
+const maximumKey = value => Object.keys(children(value)).sort(compareKeys).at(-1);
 
 const deliver = (listener, value) => {
     if (!listener.active) return;
@@ -145,14 +129,18 @@ const deliver = (listener, value) => {
     listener.previous = structuredClone(value);
     listener.initial = false;
     const before = children(previous), after = children(value);
+    if (initial) listener.initialKey = maximumKey(value);
     if (!initial) {
         for (const key of Object.keys(before)) {
             if (!Object.hasOwn(after, key)) callbacks.onChildRemove?.({key, value: before[key]});
         }
     }
-    const last = orderedLast(value, callbacks.orderBy);
-    if (last !== undefined && (initial || last !== orderedLast(previous, callbacks.orderBy))) {
-        callbacks.onChildAdd?.({key: last, value: after[last]});
+    if (!initial) {
+        for (const key of Object.keys(after).sort(compareKeys)) {
+            if (!Object.hasOwn(before, key) && (listener.initialKey === undefined || compareKeys(key, listener.initialKey) > 0)) {
+                callbacks.onChildAdd?.({key, value: after[key]});
+            }
+        }
     }
     if (!initial) {
         for (const key of Object.keys(after)) {
@@ -168,7 +156,9 @@ const refresh = async listener => {
     if (!listener.active) return;
     let value;
     try {
-        value = await snapshot(listener.storageKey, listener.keys);
+        value = listener.read
+            ? await listener.read()
+            : await snapshot(listener.storageKey, listener.keys, listener.path);
     } catch (error) {
         try { listener.callbacks.onError(error); } catch (_) { /* Already reported by DatabaseBase. */ }
         return;
@@ -186,7 +176,7 @@ export const mutate = (storageKey, paths, operation) => enqueue(storageKey, asyn
     return result;
 });
 
-export default function addEventListener(storageKey, path, callbacks) {
+export default function addEventListener(storageKey, path, callbacks, read) {
     for (const [name, handler] of Object.entries(callbacks)) {
         if (name.startsWith("on") && handler !== undefined && !(handler instanceof Function)) {
             invalid(`${name} must be a function or undefined.`);
@@ -201,7 +191,7 @@ export default function addEventListener(storageKey, path, callbacks) {
         callbacks = {...callbacks, orderBy};
     }
     const keys = pathKeys(path);
-    const listener = {storageKey, keys, callbacks, active: true, initial: true, previous: undefined};
+    const listener = {storageKey, keys, path, callbacks, read, active: true, initial: true, previous: undefined};
     if (!listeners.has(storageKey)) listeners.set(storageKey, new Set());
     listeners.get(storageKey).add(listener);
     openChannel(storageKey);
