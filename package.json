@@ -95,6 +95,8 @@
         "@rollup/plugin-url": "^8.0.2",
         "@svgr/rollup": "^8.1.0",
         "@testing-library/dom": "10.4.1",
+        "@typescript-eslint/eslint-plugin": "^8.72.0",
+        "@typescript-eslint/parser": "^8.72.0",
         "@uppy/core": "^6.2.0",
         "@uppy/dashboard": "^6.0.1",
         "@uppy/webcam": "^6.0.1",
@@ -130,6 +132,7 @@
         "rollup-plugin-delete": "^3.0.2",
         "rollup-plugin-peer-deps-external": "^2.2.4",
         "rollup-plugin-postcss": "^4.0.2",
+        "typescript": "^5.9.3",
         "vite": "8.3.3",
         "vitest": "5.0.3"
     },
