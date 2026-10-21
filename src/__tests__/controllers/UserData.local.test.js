@@ -17,7 +17,7 @@ it("saves profile fields under their query names and reads the complete profile"
     await profile.save();
     expect(await database.read(user)).toMatchObject({name: "User", email: "a@b.com", updated: expect.any(Number)});
     expect(await database.read(email)).toBe("a@b.com");
-    expect(await database.read([...user, "email"])).toBe("a@b.com");
+    expect(await database.read([...user, {"email": "email"}])).toBe("a@b.com");
     const phone = ["users_private", {user_id: "u1"}, {device_id: "phone"}];
     expect(await database.read([...phone, {locale: "locale"}])).toBe("en");
     expect(await database.read(["users_private", {user_id: "u1"}])).toEqual({phone: created({locale: "en", enabled: true})});

@@ -14,7 +14,7 @@ it("retains composite counter addresses for reads and listeners", async () => {
     const onchange = vi.fn();
 
     expect(await counterControl({database, path: ["post-1", "like"]})).toBe(3);
-    expect(database.read).toHaveBeenCalledWith(["_counters", "post-1", "like"]);
+    expect(database.read).toHaveBeenCalledWith(["_counters", "post-1", {like: "like"}]);
     const unsubscribe = counterControl({database, path: "user-1/mutual/friend", onchange});
     expect(database.addEventListener).toHaveBeenCalledWith(
         ["_counters", "user-1/mutual/friend"], {onChange: expect.any(Function)}

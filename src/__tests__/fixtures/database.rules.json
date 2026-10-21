@@ -20,6 +20,11 @@
         ".write": "!data.exists()"
       }
     },
+    "extra": {
+      ".read": true,
+      ".write": true,
+      ".indexOn": ["id_uid"]
+    },
     "database_test": {
       ".read": true,
       ".write": true,
