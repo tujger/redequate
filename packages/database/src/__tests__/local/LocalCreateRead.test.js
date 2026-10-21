@@ -1,36 +1,31 @@
 import {IDBFactory} from "fake-indexeddb";
 import {vi} from "vitest";
 import LocalDatabase from "../../local";
-import {key as pushKey, milliseconds} from "firebase-key";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
-it("persists push-keyed records without an injected timestamp and keeps explicit values and keys", async () => {
+it("persists generated numeric keys without an injected timestamp and keeps explicit values and keys", async () => {
     const storageKey = "push-key-persistence";
     const database = new LocalDatabase({storageKey});
     const first = database.create(["posts", "post_id"]);
     const second = database.create(["posts", "post_id"]);
-    expect(first.temporaryKey).toMatch(/^[-0-9A-Z_a-z]{20}$/);
-    expect(second.temporaryKey).toMatch(/^[-0-9A-Z_a-z]{20}$/);
-    expect(milliseconds(first.temporaryKey)).toBeLessThanOrEqual(milliseconds(second.temporaryKey));
-    expect(Math.abs(milliseconds(first.temporaryKey) - Date.now())).toBeLessThan(60_000);
-    expect(await first.save({text: "first"})).toBe(first.temporaryKey);
-    await second.save({text: "second", timestamp: 42});
+    expect(first.temporaryKey).not.toBe(second.temporaryKey);
+    const firstKey = await first.save({text: "first"});
+    const secondKey = await second.save({text: "second", timestamp: 42});
+    expect([firstKey, secondKey]).toEqual(["1", "2"]);
     const manual = database.create(["posts", {post_id: "manual"}]);
     await manual.save({text: "manual"});
     const reopened = new LocalDatabase({storageKey});
-    expect(await reopened.read(["posts", {post_id: first.temporaryKey}])).toEqual({text: "first"});
-    expect(await reopened.read(["posts", {post_id: second.temporaryKey}])).toEqual({text: "second", timestamp: 42});
+    expect(await reopened.read(["posts", {post_id: firstKey}])).toEqual({text: "first"});
+    expect(await reopened.read(["posts", {post_id: secondKey}])).toEqual({text: "second", timestamp: 42});
     expect(await reopened.read(["posts", {post_id: "manual"}])).toEqual({text: "manual"});
-    await reopened.update(["posts", {post_id: first.temporaryKey}], {text: "edited"});
-    expect(await database.read(["posts", {post_id: first.temporaryKey}])).toEqual({text: "edited"});
-    await reopened.update(["posts", {post_id: second.temporaryKey}], {text: "edited"});
-    expect(await database.read(["posts", {post_id: second.temporaryKey}])).toEqual({text: "edited", timestamp: 42});
+    await reopened.update(["posts", {post_id: firstKey}], {text: "edited"});
+    expect(await database.read(["posts", {post_id: firstKey}])).toEqual({text: "edited"});
+    await reopened.update(["posts", {post_id: secondKey}], {text: "edited"});
+    expect(await database.read(["posts", {post_id: secondKey}])).toEqual({text: "edited", timestamp: 42});
     const cursor = reopened.cursor("posts");
-    expect((await cursor.next(10)).map(({key}) => key)).toEqual([first.temporaryKey, second.temporaryKey, "manual"]);
-    expect(milliseconds(pushKey(42, "min"))).toBe(42);
-    expect(milliseconds(pushKey(new Date(42), "max"))).toBe(42);
+    expect((await cursor.next(10)).map(({key}) => key)).toEqual([firstKey, secondKey, "manual"]);
 });
 
 it("creates under the supplied identity field and reads collections and records", async () => {

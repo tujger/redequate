@@ -23,7 +23,8 @@ it("stores different dynamic types in one object store with explicit indexes", a
     ]);
     const database = await openDatabase("test");
     try {
-        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS).sort());
+        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS)
+            .flatMap(name => [name, `${name}__keys`]).sort());
         const store = database.transaction("mutual").objectStore("mutual");
         expect(store.keyPath).toEqual(["_collection", "_key"]);
         expect([...store.indexNames]).toEqual(Object.keys(indexesForStore("mutual")).sort());

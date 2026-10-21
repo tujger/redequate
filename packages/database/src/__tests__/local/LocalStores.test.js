@@ -20,23 +20,27 @@ const storedRows = async (storageKey, name) => {
     } finally { database.close(); }
 };
 
-it("creates only active physical stores and indexes at schema version one", async () => {
+it("creates physical stores, indexes and per-store allocators at schema version two", async () => {
     const open = vi.spyOn(indexedDB, "open");
     const database = await openDatabase("schema");
     try {
-        expect(open).toHaveBeenCalledExactlyOnceWith("redequate:local:schema", 1);
-        expect(database.version).toBe(1);
-        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS).sort());
+        expect(open).toHaveBeenCalledExactlyOnceWith("redequate:local:schema", 2);
+        expect(database.version).toBe(2);
+        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS)
+            .flatMap(name => [name, `${name}__keys`]).sort());
         for (const obsolete of ["records", "follow", "watch", "followstamps", "watchstamps",
             "_developers", "_game_scores", "_genres", "_main_counters", "_posts",
             "_platforms", "_publishers", "_stat"]) {
             expect(database.objectStoreNames.contains(obsolete)).toBe(false);
         }
-        for (const name of database.objectStoreNames) {
+        for (const name of Object.keys(LOCAL_COLLECTIONS)) {
             const store = database.transaction(name).objectStore(name);
             expect(store.keyPath).toEqual(STORE_SCHEMA.keyPath);
             expect([...store.indexNames]).toEqual(Object.keys(indexesForStore(name)).sort());
             for (const [index, keyPath] of Object.entries(indexesForStore(name))) expect(store.index(index).keyPath).toEqual(keyPath);
+            const allocator = database.transaction(`${name}__keys`).objectStore(`${name}__keys`);
+            expect(allocator.autoIncrement).toBe(true);
+            expect(allocator.keyPath).toBeNull();
         }
     } finally { database.close(); }
 });
@@ -114,7 +118,7 @@ it("reads type indexes and notifies collection listeners from the dedicated stor
     } finally { handles.forEach(handle => handle.remove()); }
 });
 
-it.each([2, 3])("requires deleting an existing version-%i database before opening v1", async version => {
+it.each([2, 3])("rejects an incompatible version-%i database", async version => {
     const name = `legacy-${version}`;
     const request = indexedDB.open(`redequate:local:${name}`, version);
     request.onupgradeneeded = () => {

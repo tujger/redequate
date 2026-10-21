@@ -8,8 +8,9 @@ it("prepares drafts, uses final keys in callbacks, and rejects duplicate IDs", a
     const database = new LocalDatabase({storageKey: "crud-create"});
     const generated = database.create(["posts", "post_id"]);
     expect(await database.read(["posts", "post_id"])).toBeUndefined();
-    expect(await generated.save(key => ({key}))).toBe(generated.temporaryKey);
-    expect(await database.read(["posts", {post_id: generated.temporaryKey}])).toMatchObject({key: generated.temporaryKey});
+    const generatedKey = await generated.save(key => ({key}));
+    expect(generatedKey).toBe("1");
+    expect(await database.read(["posts", {post_id: generatedKey}])).toMatchObject({key: generatedKey});
     const known = database.create(["posts", {post_id: "p1"}]);
     expect(known.temporaryKey).toBe("p1");
     expect(await known.save(key => ({key}))).toBe("p1");

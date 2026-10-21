@@ -16,13 +16,14 @@ it("creates a draft and persists it only when saved", async () => {
     const draft = database.create(["mutual", "id"]);
     expect(draft.temporaryKey).toEqual(expect.any(String));
     expect(await database.read(["mutual", {id: draft.temporaryKey}])).toBeUndefined();
-    await expect(draft.save({name: "created"})).resolves.toBe(draft.temporaryKey);
-    expect(await database.read(["mutual", {id: draft.temporaryKey}])).toEqual(created({name: "created"}));
+    const key = await draft.save({name: "created"});
+    expect(key).toBe("1");
+    expect(await database.read(["mutual", {id: key}])).toEqual(created({name: "created"}));
     await expect(draft.save({name: "duplicate"})).rejects.toMatchObject({name: "ConstraintError"});
 
     const child = database.create([...friendship, "id"]);
-    await child.save({name: "child"});
-    expect(await database.read([...friendship, {id: child.temporaryKey, _: 1}])).toEqual(created({name: "child"}));
+    const childKey = await child.save({name: "child"});
+    expect(await database.read([...friendship, {id: childKey, _: 1}])).toEqual(created({name: "child"}));
 });
 
 it("creates posts under the post_id identity used by post reads", async () => {
@@ -258,8 +259,8 @@ it("resolves local timestamp and increment markers against prior values", async 
         await database.update(friendship, {count: database.increment(4), nested: {count: database.increment(2)}});
         expect(await database.read(friendship)).toEqual({timestamp: 1234, count: 5, nested: {count: 5}});
         const draft = database.create(["meta", "id"]);
-        await draft.save({timestamp: database.TIMESTAMP, count: database.increment(1)});
-        expect(await database.read(["meta", {id: draft.temporaryKey}])).toEqual({timestamp: 1234, count: 1});
+        const key = await draft.save({timestamp: database.TIMESTAMP, count: database.increment(1)});
+        expect(await database.read(["meta", {id: key}])).toEqual({timestamp: 1234, count: 1});
         await database.update(friendship, () => ({ordinary: {".sv": "unknown"}}));
         expect(await database.read(friendship)).toEqual({ordinary: {".sv": "unknown"}});
         expect(() => database.increment(Infinity)).toThrow();
@@ -341,13 +342,13 @@ it("applies Map and string batch paths atomically and rejects overlapping paths"
     expect(await database.read(["mutual", {id: "failed", _: true}])).toBeUndefined();
 });
 
-it("does not upgrade an existing version-one database", async () => {
+it("upgrades an existing version-one database with allocator stores", async () => {
     const request = indexedDB.open("redequate:local:existing-v1", 1);
     request.onupgradeneeded = () => request.result.createObjectStore("meta", {keyPath: ["_collection", "_key"]});
     const old = await new Promise(resolve => { request.onsuccess = () => resolve(request.result); });
     old.close();
     const connection = await openDatabase("existing-v1");
-    expect(connection.version).toBe(1);
-    expect([...connection.objectStoreNames]).toEqual(["meta"]);
+    expect(connection.version).toBe(2);
+    expect(connection.objectStoreNames.contains("meta__keys")).toBe(true);
     connection.close();
 });

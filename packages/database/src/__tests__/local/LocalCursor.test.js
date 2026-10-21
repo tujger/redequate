@@ -1,6 +1,5 @@
 import {vi} from "vitest";
 import {IDBFactory, IDBIndex, IDBObjectStore} from "fake-indexeddb";
-import {key as dateKey} from "firebase-key";
 import LocalDatabase from "../../local";
 import {openDatabase} from "../../local/helpers";
 
@@ -35,15 +34,16 @@ it.each(["asc", "desc"])("pages equal values exactly once in %s order, including
     expect(await cursor.next()).toEqual([]);
 });
 
-it("sorts Firebase integer keys and applies inclusive key, prefix and date boundaries", async () => {
+it("sorts integer keys and applies inclusive key, prefix and timestamp boundaries", async () => {
     const db = new LocalDatabase({storageKey: "keys"});
     await seed(db, {10: 10, 2: 2, "02": 2, alpha: 1, alphabet: 1, beta: 1});
     expect((await readAll(db.cursor("meta"))).map(entry => entry.key)).toEqual(["2", "02", "10", "alpha", "alphabet", "beta"]);
     expect((await readAll(db.cursor("meta", {order: "desc", start: "alpha"}))).map(entry => entry.key))
         .toEqual(["alphabet", "alpha"]);
     expect((await readAll(db.cursor("meta", {start: "2", end: "10"}))).map(entry => entry.key)).toEqual(["2", "02", "10"]);
-    const before = dateKey(1000, "min"); const inside = dateKey(2000, "min"); const after = dateKey(3000, "min");
-    await seed(db, {[before]: {score: 1}, [inside]: {score: 2}, [after]: {score: 3}});
+    const before = "before", inside = "inside", after = "after";
+    await seed(db, {[before]: {score: 1, timestamp: 1000}, [inside]: {score: 2, timestamp: 2000},
+        [after]: {score: 3, timestamp: 3000}});
     expect((await readAll(db.cursor("meta", {orderBy: "score", startDate: new Date(2000), endDate: new Date(2000)})))
         .map(entry => entry.key)).toEqual([inside]);
 });
@@ -231,7 +231,7 @@ it("falls back for nested records and fields without a native Firebase-compatibl
     expect(await readAll(db.cursor("meta", {start: "z", end: "a"}))).toEqual([]);
 });
 
-it.each([2, 3])("rejects an existing version-%i database until it is deleted", async version => {
+it.each([3, 4])("rejects an existing version-%i database until it is deleted", async version => {
     const request = indexedDB.open(`redequate:local:old-${version}`, version);
     request.onupgradeneeded = () => request.result.createObjectStore("meta", {keyPath: ["_collection", "_key"]});
     const old = await new Promise(resolve => { request.onsuccess = () => resolve(request.result); });

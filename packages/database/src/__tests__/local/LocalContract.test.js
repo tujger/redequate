@@ -11,6 +11,7 @@ databaseContract(() => {
     const record = key => [path, {id: key, _: true}];
     return {
         db,
+        local: true,
         path,
         record,
         createdRecord: key => [path, {id: key}],

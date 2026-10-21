@@ -19,33 +19,33 @@ export function databaseContract(makeProvider) {
         return result.map(entry => entry.key);
     };
 
-    it("creates push-keyed records without an implicit timestamp and preserves supplied keys and fields", async () => {
+    it("creates records without an implicit timestamp and preserves supplied keys and fields", async () => {
         const first = provider.db.create([provider.path, "id"]);
-        expect(first.temporaryKey).toMatch(/^[-0-9A-Z_a-z]{20}$/);
-        const generatedAt = milliseconds(first.temporaryKey);
-        expect(Number.isSafeInteger(generatedAt)).toBe(true);
+        if (provider.local) expect(first.temporaryKey).toEqual(expect.any(String));
+        else expect(first.temporaryKey).toMatch(/^[-0-9A-Z_a-z]{20}$/);
         const value = {label: "first"};
-        expect(await first.save(key => {
-            expect(key).toBe(first.temporaryKey);
+        const firstKey = await first.save(key => {
+            expect(key).toEqual(provider.local ? expect.stringMatching(/^\d+$/) : first.temporaryKey);
             return value;
-        })).toBe(first.temporaryKey);
-        expect(await provider.db.read((provider.createdRecord ?? provider.record)(first.temporaryKey))).toEqual(value);
+        });
+        expect(await provider.db.read((provider.createdRecord ?? provider.record)(firstKey))).toEqual(value);
 
         const second = provider.db.create([provider.path, "id"]);
-        expect(await second.save({label: "second", timestamp: 123})).toBe(second.temporaryKey);
-        expect(milliseconds(second.temporaryKey)).toBeGreaterThanOrEqual(generatedAt);
-        expect(await provider.db.read((provider.createdRecord ?? provider.record)(second.temporaryKey)))
+        const secondKey = await second.save({label: "second", timestamp: 123});
+        if (provider.local) expect(Number(secondKey)).toBeGreaterThan(Number(firstKey));
+        else expect(milliseconds(secondKey)).toBeGreaterThanOrEqual(milliseconds(firstKey));
+        expect(await provider.db.read((provider.createdRecord ?? provider.record)(secondKey)))
             .toEqual({label: "second", timestamp: 123});
-        await provider.db.update((provider.createdRecord ?? provider.record)(second.temporaryKey), {label: "updated"});
-        expect(await provider.db.read((provider.createdRecord ?? provider.record)(second.temporaryKey)))
+        await provider.db.update((provider.createdRecord ?? provider.record)(secondKey), {label: "updated"});
+        expect(await provider.db.read((provider.createdRecord ?? provider.record)(secondKey)))
             .toEqual({label: "updated", timestamp: 123});
 
         const supplied = provider.db.create([provider.path, {id: "manual"}]);
         expect(supplied.temporaryKey).toBe("manual");
         expect(await supplied.save({label: "manual"})).toBe("manual");
         expect(await provider.db.read((provider.createdRecord ?? provider.record)("manual"))).toEqual({label: "manual"});
-        expect(await keys()).toEqual([first.temporaryKey, second.temporaryKey, "manual"]);
-        expect(await keys({orderBy: "timestamp"})).toEqual([second.temporaryKey]);
+        expect(await keys()).toEqual([firstKey, secondKey, "manual"]);
+        expect(await keys({orderBy: "timestamp"})).toEqual([secondKey]);
     });
 
     it("uses firebase-key's supported timestamp bounds without asserting a reversible random key", () => {
