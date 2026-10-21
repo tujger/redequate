@@ -54,7 +54,7 @@ export default ({daemon, fetchAlertContent}) => {
     const handleClearConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allClear: false});
-        database.write(["alerts", {user_id: currentUserData.id}], null)
+        database.delete(["alerts", {user_id: currentUserData.id}])
             .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))

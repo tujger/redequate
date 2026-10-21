@@ -23,7 +23,7 @@ export default ({data, skeleton, label, fetchAlertContent}) => {
 
     const handleClick = () => {
         dispatch(ProgressView.SHOW);
-        database.delete(["alerts", {user_id: currentUserData.id}, {alert_id: data.key}, "new"])
+        database.delete(["alerts", {user_id: currentUserData.id}, {id: data.key}, "new"])
             .then(() => {
                 try {
                     delete data.value.new;

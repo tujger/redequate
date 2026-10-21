@@ -33,15 +33,8 @@ export default ({fetchAlertContent}) => {
             }
         }).catch(notifySnackbar);
 
-        let lastKey = null;
         const listener = database.addEventListener(["alerts", {user_id: currentUserData.id}], {
             onChildAdd({key, value}) {
-                if (!lastKey) {
-                    lastKey = key;
-                    return;
-                }
-                if (lastKey && lastKey > key) return;
-                lastKey = key;
                 const match = matchPath(window.location.pathname, {
                     exact: true,
                     path: pages.alerts._route,
