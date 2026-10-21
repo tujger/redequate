@@ -277,19 +277,19 @@ export default ({uploadable}) => {
             return {};
         }
         const fetchBlockedNames = async props => {
-            const blockedNames = (await database.read(["meta", "blockedNames"])) || "";
+            const blockedNames = (await database.read(["meta", {"blockedNames": "blockedNames"}])) || "";
             return {...props, blockedNames};
         }
         const fetchMaintenance = async props => {
-            const meta = await database.read(["meta", "maintenance"]);
+            const meta = await database.read(["meta", {"maintenance": "maintenance"}]);
             return {...props, maintenance: Boolean(meta), ...(meta || {})};
         }
         const fetchSettings = async props => {
-            const settings = (await database.read(["meta", "settings"])) || {};
+            const settings = (await database.read(["meta", {"settings": "settings"}])) || {};
             return {...props, ...settings};
         }
         const fetchSupport = async props => {
-            const supportId = await database.read(["meta", "support"]);
+            const supportId = await database.read(["meta", {"support": "support"}]);
             if (supportId) {
                 return new UserData(database).fetch(supportId)
                     .then(userData => ({
