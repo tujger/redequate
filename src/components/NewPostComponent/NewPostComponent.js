@@ -183,12 +183,12 @@ const NewPostComponent = props => {
                     timestamp: database.TIMESTAMP,
                     uid: currentUserData.id,
                 };
-                const editKey = await database.create([{type}, {post_id: editPostData.id}, "edit"]).save(editValue);
+                const editKey = await database.create(["posts", {post_id: editPostData.id}, "edit", "edit_id"]).save(editValue);
                 edit[editKey] = editValue;
 
                 const updates = new Map();
-                updates.set([{type}, {post_id: editPostData.id}, "images"], images);
-                updates.set([{type}, {post_id: editPostData.id}, "text"], text);
+                updates.set(["posts", {post_id: editPostData.id}, "images"], images);
+                updates.set(["posts", {post_id: editPostData.id}, "text"], text);
                 return database.update(updates)
                     .then(() => {
                         updateActivity({
@@ -204,7 +204,7 @@ const NewPostComponent = props => {
                         return editPostData.id;
                     });
             } else {
-                return database.create([{type}]).save(data);
+                return database.create(["posts", "post_id"]).save(data);
             }
         }
         const publishComplete = async key => {
