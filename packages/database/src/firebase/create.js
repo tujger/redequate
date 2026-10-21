@@ -2,19 +2,15 @@ import {fail} from "../../../common";
 import resolvePath from "../common/resolvePath";
 import parseCreatePath from "../common/parseCreatePath";
 
-export default function createRecord(firebase, path, options, run) {
+export default function createRecord(firebase, path, value, run) {
     return run(() => {
         const {parentPath, key} = parseCreatePath(path);
         const effectivePath = resolvePath(parentPath);
-        const ref = key === undefined ? firebase.database().ref(effectivePath).push()
+        const ref = key === undefined
+            ? firebase.database().ref(effectivePath).push()
             : firebase.database().ref(`${effectivePath}/${key}`);
-        return {
-            async save(value) {
-                return run(() => saveRecord(ref, value), options, "create.save", {path, value});
-            },
-            temporaryKey: ref.key
-        };
-    }, options, "create", {path});
+        return saveRecord(ref, value);
+    }, undefined, "create", {path, value});
 }
 
 async function saveRecord(ref, value) {

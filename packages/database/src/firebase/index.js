@@ -22,19 +22,21 @@ export default class FirebaseDatabase extends DatabaseBase {
             callbacks => addEventListener(this.#firebase, path, callbacks));
     }
 
-    create(path, options = {}) {
-        return createRecord(this.#firebase, path, options, this.run.bind(this));
+    async create(path, value) {
+        return createRecord(this.#firebase, path, value, this.run.bind(this));
     }
 
     cursor(path, options = {}) {
         const run = this.run.bind(this);
-        const pathIsDatabasePath = typeof path === "string" || path instanceof Array
-            && (path.length === 0 || typeof path[0] === "string");
+        const pathIsDatabasePath = typeof path === "string" ||
+            (path instanceof Array && (path.length === 0 || typeof path[0] === "string"));
         const queries = path instanceof Array && !pathIsDatabasePath
-            ? path : [{path}];
+            ? path
+            : [{path}];
         // Leave invalid options intact for the composition's constructor to validate.
         const effective = options === null || typeof options !== "object" || options instanceof Array
-            ? options : {...options, onError: options.onError ?? this.onError};
+            ? options
+            : {...options, onError: options.onError ?? this.onError};
         return composeCursor(queries, effective,
             (path, options) => new FirebaseCursor(this.#firebase, path,
                 {...options, onError: options?.onError ?? this.onError}), run, path,
@@ -46,7 +48,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async read(path, options = {}) {
-        if (path === "" || Array.isArray(path) && !path.length) {
+        if (path === "" || (Array.isArray(path) && !path.length)) {
             fail("database/invalid-argument", "read requires a non-empty path.");
         }
         return this.run(() => read(this.#firebase, path, options), options, "read",
