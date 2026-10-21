@@ -231,7 +231,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         publish: () => async () => {
             if (!_id) {
                 _id = await database.create(["posts", "post_id"], _body._publishData());
-                _created = await database.read(["posts", {post_id: _id}, "created"]);
+                _created = await database.read(["posts", {post_id: _id}, {"created": "created"}]);
             }
             cacheDatas.put(_id, _body);
             return _body;
