@@ -75,7 +75,7 @@ export default (props) => {
             if (level === 0) throw {expanded: true, a: 5};
         }
         const fetchExistingRepliesIfComment = async () => {
-            return database.cursor([type], cursorOptions).next(10);
+            return database.cursor(["posts"], cursorOptions).next(10);
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {
@@ -170,7 +170,7 @@ export default (props) => {
             <div className={cardStyles.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
-                    cursor={database.cursor([type], cursorOptions)}
+                    cursor={database.cursor(["posts"], cursorOptions)}
                     itemTransform={postItemTransform({
                         auth,
                         allowedExtras,

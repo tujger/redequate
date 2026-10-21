@@ -164,7 +164,7 @@ export default (props) => {
         if (items) return;
         let isMount = true;
         const fetchReplies = async () => {
-            return database.cursor([type], {
+            return database.cursor(["posts"], {
                 equalTo: postId,
                 order: DatabaseOrder.DESC,
                 orderBy: ["to"]

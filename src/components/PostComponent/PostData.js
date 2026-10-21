@@ -135,7 +135,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         delete: () => {
             cacheDatas.remove(_id);
             // UNKNOWN: type is configurable; its record key has no single confirmed wildcard name.
-            return database.delete([{type}, {post_id: _id}]);
+            return database.delete(["posts", {post_id: _id}]);
         },
         editOf: type => {
             if (!_edit) return null;
@@ -165,7 +165,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 resolve(_body);
                 return;
             }
-            database.read([{type}, {post_id: _id}]).then(async data => {
+            database.read(["posts", {post_id: _id}]).then(async data => {
                 if (data !== undefined) {
                     data.replyTo = data.to;
                     await _body.create(data);
@@ -197,7 +197,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             }
             // eslint-disable-next-line camelcase
             const id_uid = `${_id}_${uid}`;
-            database.read(["extra"], {
+            database.read(["extra", "extra_id"], {
                 equalTo: id_uid,
                 orderBy: "id_uid",
             }).then(value => {
@@ -214,7 +214,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
             if (!_replyTo) return _id;
             let id = _replyTo, next = null, parentKey = null, rootKey = null, commentKey = null;
             while (id) {
-                const value = await database.read([{type}, {post_id: id}])
+                const value = await database.read(["posts", {post_id: id}])
                 if (value !== undefined) {
                     next = value;
                     parentKey = parentKey || id;
@@ -230,18 +230,18 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         publish: () => async () => {
             if (!_id) {
-                _id = await database.create([{type}]).save(_body._publishData());
-                _created = await database.read([{type}, {post_id: _id}, "created"]);
+                _id = await database.create(["posts", "post_id"]).save(_body._publishData());
+                _created = await database.read(["posts", {post_id: _id}, "created"]);
             }
             cacheDatas.put(_id, _body);
             return _body;
         },
         putExtra: async ({type, uid}) => {
             // if (!_extras) throw new Error("'postData.fetchExtras(uid)' before put.");
-            if (allowedExtras.indexOf(type) < 0) throw new Error(`Extra of type '${type}' is not allowed.`);
-            if (!uid) throw new Error(`'uid' is not defined for '${type}'.`);
+            if (allowedExtras.indexOf(type) < 0) throw new Error(`Extra of type 'posts' is not allowed.`);
+            if (!uid) throw new Error(`'uid' is not defined for 'posts'.`);
             if (!_extras) await _body.fetchExtras(uid);
-            if (_extras[type]) throw new Error(`'${type}' is already defined for ${_id}/${uid}.`);
+            if (_extras[type]) throw new Error(`'posts' is already defined for ${_id}/${uid}.`);
 
             if (type === "like" && _extras.dislike) {
                 await _body.removeExtra({type: "dislike", uid});
@@ -261,7 +261,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 uid,
                 uid_id,
             };
-            const key = await database.create(["extra"]).save(value);
+            const key = await database.create(["extra", "extra_id"]).save(value);
             _extras[type] = {key, value}
             _counters = _counters || {};
             _counters[type] = (_counters[type] || 0) + 1;
