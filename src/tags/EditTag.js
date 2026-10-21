@@ -159,9 +159,9 @@ export default ({allowOwner = true}) => {
         }
         const publishTag = async key => {
             if (key) {
-                await database.write(["tag", {tag_id: key}], tag);
+                await database.update(["tag", {tag_id: key}], () => tag);
             } else {
-                key = await database.create(["tag"]).save(tag);
+                key = await database.create(["tag", "tag_id"]).save(tag);
             }
             return key;
         }
@@ -352,7 +352,7 @@ export default ({allowOwner = true}) => {
         } else if (id) {
             database.read(["tag", {tag_id: id}])
                 .then(value => {
-                    if (value === undefined) throw Error(t("Tag.{{id}} is not found.", {id: id}));
+                    if (value === undefined) throw Error(t("Tag.{{id}} is not found.", {id}));
                     return value;
                 })
                 .then(tag => {
