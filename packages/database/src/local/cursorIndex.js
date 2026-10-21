@@ -72,11 +72,9 @@ export const indexRow = row => {
     return row;
 };
 
-export const keyInRange = (key, start, end, startDate, endDate) =>
+export const keyInRange = (key, start, end) =>
     (start === undefined || compareKeys(key, start) >= 0) &&
-    (end === undefined || compareKeys(key, end) <= 0) &&
-    (startDate === undefined || compareKeys(key, startDate) >= 0) &&
-    (endDate === undefined || compareKeys(key, endDate) <= 0);
+    (end === undefined || compareKeys(key, end) <= 0);
 
 /** A short read-only transaction per page; the returned index key is the resume token. */
 export async function readIndexedPage(storageKey, collection, field, options, after, size) {
@@ -94,7 +92,8 @@ export async function readIndexedPage(storageKey, collection, field, options, af
                     : field === "created"
                         ? "_scopeCreated"
                         : field === "timestamp" ? "_scopeTimestamp" : `_scope${field[0].toUpperCase()}${field.slice(1)}`
-                : field === "key" ? "_cursorKey" : field === "created" ? "_cursorCreated" : fieldIndexName(field));
+                : field === "key" ? "_cursorKey" : field === "created" ? "_cursorCreated"
+                    : field === "timestamp" ? "_cursorTimestamp" : fieldIndexName(field));
             const start = field !== "key"
                 ? orderedValue(options.start)
                 : options.start === undefined
@@ -138,7 +137,7 @@ export async function readIndexedPage(storageKey, collection, field, options, af
                 const tokens = JSON.parse(cursor.value._key);
                 const key = scoped ? tokenKey(cursor.value, tokens[1]) : childKey(cursor.value);
                 if (keyInRange(key, field !== "key" ? undefined : options.start,
-                    field !== "key" ? undefined : options.end, options.startKey, options.endKey)) {
+                    field !== "key" ? undefined : options.end)) {
                     rows.push({
                         key,
                         value: cursor.value.value,
@@ -168,7 +167,8 @@ export async function canUseIndex(storageKey, collection, field, scope) {
             const keyIndex = scoped ? "_scopeKey" : "_cursorKey";
             const fieldIndex = scoped
                 ? `_scope${field[0].toUpperCase()}${field.slice(1)}`
-                : field === "created" ? "_cursorCreated" : fieldIndexName(field);
+                : field === "created" ? "_cursorCreated" : field === "timestamp"
+                    ? "_cursorTimestamp" : fieldIndexName(field);
             if (!store.indexNames.contains(keyIndex) ||
                 (field !== "key" && !store.indexNames.contains(fieldIndex))) {
                 resolve(false);
@@ -179,8 +179,9 @@ export async function canUseIndex(storageKey, collection, field, scope) {
                 .getKey([scoped ? scope : collection, 1]).onsuccess = event => {
                     nested = event.target.result !== undefined;
                 };
-            if (field === "created" || (scoped && field === "timestamp")) {
-                store.index(scoped ? `_scopeUnsupported${field[0].toUpperCase()}${field.slice(1)}` : "_cursorUnsupportedCreated")
+            if (field === "created" || field === "timestamp") {
+                store.index(scoped ? `_scopeUnsupported${field[0].toUpperCase()}${field.slice(1)}`
+                    : `_cursorUnsupported${field[0].toUpperCase()}${field.slice(1)}`)
                     .getKey([scoped ? scope : collection, 1]).onsuccess = event => { unsupported = event.target.result !== undefined; };
             } else if (field !== "key") {
                 store.index(scoped ? "_scopeUnsupportedField" : "_cursorUnsupportedField")

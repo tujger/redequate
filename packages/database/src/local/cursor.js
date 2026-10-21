@@ -1,4 +1,3 @@
-import {key as dateKey} from "firebase-key";
 import {fail} from "../../../common";
 import {DatabaseCursor} from "../common/DatabaseCursor";
 import compareKeys from "../common/compareKeys";
@@ -26,8 +25,8 @@ export default class LocalCursor extends DatabaseCursor {
     #byValue;
     #start;
     #end;
-    #startKey;
-    #endKey;
+    #startTime;
+    #endTime;
     #scan;
     #seen = new Set();
     #header = [];
@@ -44,11 +43,12 @@ export default class LocalCursor extends DatabaseCursor {
         this.#end = this.end === undefined && typeof this.start === "string"
             ? `${this.start}\uf8ff`
             : this.end;
-        this.#startKey = this.startDate === undefined ? undefined : dateKey(this.startDate, "min");
-        this.#endKey = this.endDate === undefined ? undefined : dateKey(this.endDate, "max");
+        const dateValue = value => value instanceof Date ? value.getTime() : value;
+        this.#startTime = this.startDate === undefined ? undefined : dateValue(this.startDate);
+        this.#endTime = this.endDate === undefined ? undefined : dateValue(this.endDate);
+        if ([this.#startTime, this.#endTime].some(value => value !== undefined &&
+            (typeof value !== "number" || !Number.isFinite(value)))) invalid("Date bounds must be valid dates.");
         if (this.#field === undefined && !this.#byValue) {
-            this.#start ??= this.#startKey;
-            this.#end ??= this.#endKey;
             if ((this.#start !== undefined && typeof this.#start !== "string") ||
                 (this.#end !== undefined && typeof this.#end !== "string")) invalid("Key range bounds must be strings.");
         }
@@ -77,6 +77,14 @@ export default class LocalCursor extends DatabaseCursor {
             : undefined, value) != null;
     }
 
+    #inDateRange(value) {
+        if (this.#startTime === undefined && this.#endTime === undefined) return true;
+        const timestamp = value?.timestamp instanceof Date ? value.timestamp.getTime() : value?.timestamp;
+        return typeof timestamp === "number" && Number.isFinite(timestamp) &&
+            (this.#startTime === undefined || timestamp >= this.#startTime) &&
+            (this.#endTime === undefined || timestamp <= this.#endTime);
+    }
+
     #compare(left, right) {
         const byKey = this.#field === undefined && !this.#byValue;
         return (byKey
@@ -89,8 +97,7 @@ export default class LocalCursor extends DatabaseCursor {
         const byKey = this.#field === undefined && !this.#byValue;
         return children(value).map(([key, item]) => ({key, value: item, sort: this.#sortValue(key, item)}))
             .filter(({key, value: item, sort}) => {
-                if ((this.#startKey !== undefined && compareKeys(key, this.#startKey) < 0) ||
-                    (this.#endKey !== undefined && compareKeys(key, this.#endKey) > 0)) return false;
+                if (!this.#inDateRange(item)) return false;
                 if (!this.#hasField(item)) return false;
                 const compare = byKey ? compareKeys : compareValue;
                 return (this.equalTo === undefined || Object.is(sort, this.equalTo)) &&
@@ -103,8 +110,7 @@ export default class LocalCursor extends DatabaseCursor {
         this.#header.push(...await super.next(n));
         if (this.position.finished) return [];
         const collection = this.#path[0];
-        const indexedField = ["created", "timestamp", "to", "name", "email", "_sort_name", "type", "uid", "id"].includes(this.#field) &&
-            this.#startKey === undefined && this.#endKey === undefined
+        const indexedField = ["created", "timestamp", "to", "name", "email", "_sort_name", "type", "uid", "id"].includes(this.#field)
             ? this.#field
             : this.#field === undefined && !this.#byValue
                 ? "key"
@@ -122,34 +128,33 @@ export default class LocalCursor extends DatabaseCursor {
         let exhausted = false;
         while (result.length < n) {
             if (this.#indexed) {
-                const start = indexedField === "key" && this.#startKey !== undefined &&
-                    (this.#start === undefined || compareKeys(this.#startKey, this.#start) > 0)
-                    ? this.#startKey
-                    : this.equalTo ?? this.#start;
-                const end = indexedField === "key" && this.#endKey !== undefined &&
-                    (this.#end === undefined || compareKeys(this.#endKey, this.#end) < 0)
-                    ? this.#endKey
-                    : this.equalTo ?? this.#end;
+                let start = this.equalTo ?? this.#start;
+                let end = this.equalTo ?? this.#end;
+                if (indexedField === "timestamp") {
+                    if (this.#startTime !== undefined && (start === undefined || typeof start === "number" && start < this.#startTime)) start = this.#startTime;
+                    if (this.#endTime !== undefined && (end === undefined || typeof end === "number" && end > this.#endTime)) end = this.#endTime;
+                }
                 const page = await readIndexedPage(this.#storageKey, collection, indexedField,
                     {
                         order: this.order,
                         start,
                         end,
-                        startKey: this.#startKey,
-                        endKey: this.#endKey,
                         scope
                     }, this.#nativeScan, n - result.length);
                 candidates.push(...page.rows.map(row => ({...row, sort: this.#sortValue(row.key, row.value)})));
                 exhausted = page.exhausted;
                 if (page.last) this.#nativeScan = page.last;
             }
-            if (!candidates.length) break;
+            if (!candidates.length) {
+                if (this.#indexed && !exhausted) continue;
+                break;
+            }
             while (candidates.length && result.length < n) {
                 const candidate = candidates.shift();
                 if (this.#scan && this.#compare(candidate, this.#scan) <= 0) continue;
                 if (this.#seen.has(candidate.key)) continue;
                 const {key, value} = candidate;
-                if (!this.#hasField(value)) {
+                if (!this.#hasField(value) || !this.#inDateRange(value)) {
                     this.#scan = {key, sort: candidate.sort};
                     this.#seen.add(key);
                     continue;

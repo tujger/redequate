@@ -12,6 +12,9 @@ const storeName = collection => {
     return collection;
 };
 const storeNames = () => Object.keys(LOCAL_COLLECTIONS);
+const allocatorName = collection => `${collection}__keys`;
+const numericKey = key => typeof key === "string" && /^[1-9]\d*$/.test(key) && Number.isSafeInteger(Number(key))
+    ? Number(key) : undefined;
 const invalidPath = message => fail("database/invalid-argument", message);
 export const TIMESTAMP = Symbol("LocalDatabase.TIMESTAMP");
 const increments = new WeakMap();
@@ -141,6 +144,20 @@ const openVersionedDatabase = (storageKey, version) => new Promise((resolve, rej
             const store = request.result.objectStoreNames.contains(name)
                 ? request.transaction.objectStore(name)
                 : request.result.createObjectStore(name, {keyPath: STORE_SCHEMA.keyPath});
+            if (!request.result.objectStoreNames.contains(allocatorName(name))) {
+                request.result.createObjectStore(allocatorName(name), {autoIncrement: true});
+                // Existing version-one rows may already use numeric identities.
+                let maximum = 0;
+                const scan = store.openCursor();
+                scan.onsuccess = () => {
+                    const cursor = scan.result;
+                    if (cursor) {
+                        const tokens = JSON.parse(cursor.value._key);
+                        maximum = Math.max(maximum, numericKey(tokens.at(-1)?.at(-1)) ?? 0);
+                        cursor.continue();
+                    } else if (maximum) request.transaction.objectStore(allocatorName(name)).put(null, maximum);
+                };
+            }
             for (const [index, keyPath] of Object.entries(indexesForStore(name))) {
                 if (!store.indexNames.contains(index)) store.createIndex(index, keyPath);
             }
@@ -159,13 +176,19 @@ const openVersionedDatabase = (storageKey, version) => new Promise((resolve, rej
     };
 });
 
-// Existing v2/v3 databases must be deleted by the caller before opening v1.
+// Upgrade existing version-one databases to add transactional key allocators.
 export const openDatabase = async storageKey => {
     try {
-        return await openVersionedDatabase(storageKey, 1);
+        const database = await openVersionedDatabase(storageKey, 2);
+        if (storeNames().some(name => !database.objectStoreNames.contains(name)
+            || !database.objectStoreNames.contains(allocatorName(name)))) {
+            database.close();
+            throw Object.assign(new Error("Existing Local database has an incompatible schema."), {name: "VersionError"});
+        }
+        return database;
     } catch (error) {
         if (error?.name !== "VersionError") throw error;
-        const message = `Delete the existing redequate:local:${storageKey} IndexedDB database before opening schema version 1.`;
+        const message = `Delete the existing redequate:local:${storageKey} IndexedDB database before opening schema version 2.`;
         throw Object.assign(new Error(message, {cause: error}), {name: "VersionError"});
     }
 };
@@ -217,7 +240,7 @@ const queryRow = row => {
 
 const readStores = (transaction, receive) => {
     const rows = [];
-    const names = [...transaction.objectStoreNames];
+    const names = [...transaction.objectStoreNames].filter(name => !name.endsWith("__keys"));
     let pending = names.length;
     for (const name of names) {
         const request = transaction.objectStore(name).getAll();
@@ -302,18 +325,54 @@ const resolveStoredPath = (rows, path) => {
 export const getRecord = async (storageKey, path) => getSubtree(storageKey, path);
 export const addRecord = async (storageKey, rawPath, value) => {
     const path = interpretPath(rawPath);
-    if (value === undefined) invalidPath("Undefined values cannot be stored.");
-    return transact(storageKey, "readwrite", [storeName(path.collection)], (transaction, _setResult, abortWith) => {
+    return transact(storageKey, "readwrite", [storeName(path.collection), allocatorName(path.collection)], (transaction, _setResult, abortWith) => {
         readStores(transaction, rows => {
             try {
                 if (subtreeValue(rows, rawPath) !== undefined) {
                     throw new DOMException("Record already exists.", "ConstraintError");
                 }
+                const resolvedValue = value instanceof Function ? value() : value;
+                if (resolvedValue === undefined) invalidPath("Undefined values cannot be stored.");
                 const changed = new Map();
-                replaceTree(rows, changed, resolveStoredPath(rows, path), value, Date.now());
+                replaceTree(rows, changed, resolveStoredPath(rows, path), resolvedValue, Date.now());
+                const last = path.segments.at(-1);
+                const numeric = numericKey(last?.at(-1));
+                if (numeric !== undefined) transaction.objectStore(allocatorName(path.collection)).put(null, numeric);
                 persistChanges(transaction, changed);
             } catch (error) { abortWith(error); }
         });
+    });
+};
+/** Allocate and insert in one transaction so an aborted write also rolls back the key generator. */
+export const addGeneratedRecord = async (storageKey, createPath, makeValue) => {
+    const {parentPath} = parseCreatePath(createPath);
+    const collection = resolveCollectionPath(parentPath)[0];
+    const name = storeName(collection);
+    return transact(storageKey, "readwrite", [name, allocatorName(name)], (transaction, setResult, abortWith) => {
+        const allocate = () => {
+            const request = transaction.objectStore(allocatorName(name)).add(null);
+            request.onsuccess = () => {
+                const key = String(request.result);
+                const rawPath = createRecordPath(createPath, key);
+                const path = interpretPath(rawPath);
+                readStores(transaction, rows => {
+                    try {
+                        if (rows.some(row => JSON.parse(row._key).some(token => token.at(-1) === key)) ||
+                            subtreeValue(rows, rawPath) !== undefined) {
+                            allocate();
+                            return;
+                        }
+                        const value = makeValue(key);
+                        if (!isRecord(value)) invalidPath("value must be a record object.");
+                        const changed = new Map();
+                        replaceTree(rows, changed, resolveStoredPath(rows, path), value, Date.now());
+                        persistChanges(transaction, changed);
+                        setResult(key);
+                    } catch (error) { abortWith(error); }
+                });
+            };
+        };
+        allocate();
     });
 };
 export const putRecord = async (storageKey, path, value) => {

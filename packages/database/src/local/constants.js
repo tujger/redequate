@@ -1,6 +1,6 @@
-// Every path root is a physical store in a new version-one database.
+// Every path root is a physical store in a version-two database.
 export const LOCAL_COLLECTIONS = Object.freeze(Object.fromEntries([
-    "posts", "chats", "_chats", "alerts", "users_public", "users_private",
+    "posts", "replies", "chats", "_chats", "alerts", "users_public", "users_private",
     "roles", "tag", "_tag", "extra", "mutual", "mutualrequests",
     "mutualstamps", "activity", "_activity", "errors", "meta", "_counters"
 ].map(store => [store, Object.freeze({store, ...(["posts", "replies"].includes(store) ? {idField: "post_id"} : {})})])));
@@ -13,8 +13,10 @@ export const STORE_SCHEMA = Object.freeze({
         _key0_key1: ["_collection", "_key0", "_key1"],
         _cursorKey: ["_collection", "_cursorKey", "_key"],
         _cursorCreated: ["_collection", "_cursorCreated", "_cursorKey", "_key"],
+        _cursorTimestamp: ["_collection", "_cursorTimestamp", "_cursorKey", "_key"],
         _cursorNested: ["_collection", "_cursorNested"],
         _cursorUnsupportedCreated: ["_collection", "_cursorUnsupportedCreated"],
+        _cursorUnsupportedTimestamp: ["_collection", "_cursorUnsupportedTimestamp"],
         _cursorUnsupportedField: ["_collection", "_cursorUnsupportedField"],
         _scopeKey: ["_scope", "_cursorKey", "_key"],
         _scopeCreated: ["_scope", "_cursorCreated", "_cursorKey", "_key"],
@@ -37,12 +39,13 @@ export const STORE_SCHEMA = Object.freeze({
 const scoped = new Set(["chats", "_chats", "alerts", "mutual", "mutualrequests", "mutualstamps", "_tag"]);
 const fields = {
     posts: ["_toKey"],
+    replies: ["_toKey"],
     users_public: ["_nameKey", "_emailKey", "_sortNameKey"],
     tag: ["_sortNameKey", "_uidKey"],
     activity: ["_typeKey", "_uidKey"]
 };
-const common = ["_key0", "_key1", "_key0_key1", "_cursorKey", "_cursorCreated",
-    "_cursorNested", "_cursorUnsupportedCreated", "_cursorUnsupportedField"];
+const common = ["_key0", "_key1", "_key0_key1", "_cursorKey", "_cursorCreated", "_cursorTimestamp",
+    "_cursorNested", "_cursorUnsupportedCreated", "_cursorUnsupportedTimestamp", "_cursorUnsupportedField"];
 export const indexesForStore = name => Object.fromEntries([
     ...common,
     ...(scoped.has(name) ? ["_scopeKey", "_scopeDeep"] : []),
