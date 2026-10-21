@@ -1,9 +1,5 @@
 import resolvePath from "../common/resolvePath";
 
-export default async function deleteRecord(firebase, path, {} = {}) {
-    const effectivePath = resolvePath(path);
-
-    let ref = firebase.database().ref(effectivePath);
-    await ref.set(null);
-    return;
+export default function deleteRecord(firebase, path) {
+    return firebase.database().ref(resolvePath(path)).set(null);
 }

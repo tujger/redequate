@@ -6,8 +6,8 @@ import {composeCursor} from "../common/ComposedDatabaseCursor";
 import deleteRecord from "./delete";
 import read from "./read";
 import update from "./update";
-import write from "./write";
 import resolvePath from "../common/resolvePath";
+import {fail} from "../../../common";
 
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;
@@ -46,12 +46,11 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async read(path, options = {}) {
+        if (path === "" || Array.isArray(path) && !path.length) {
+            fail("database/invalid-argument", "read requires a non-empty path.");
+        }
         return this.run(() => read(this.#firebase, path, options), options, "read",
             {path, equalTo: options?.equalTo, orderBy: options?.orderBy});
-    }
-
-    async write(path, value, options = {}) {
-        return this.run(() => write(this.#firebase, path, value), options, "write", {path, value});
     }
 
     async update(path, changes, options = {}) {
