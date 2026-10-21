@@ -1,7 +1,7 @@
 import {notImplemented} from '../../../common'
 import {DatabaseCursor} from "./DatabaseCursor";
 import type {
-    DatabasePath, DatabaseValue, DatabaseRecord, DatabaseDraft,
+    DatabasePath, DatabaseCreatePath, DatabaseValue, DatabaseRecord, DatabaseDraft,
     DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler, DatabaseOptions,
     DatabaseListenerOptions, DatabaseReadOptions, DatabaseCursorOptions, DatabaseCursorSource,
     DatabaseUpdates, DatabaseUpdater
@@ -10,7 +10,7 @@ import type {
 export {DatabaseCursor};
 export {DatabaseOrder} from "./DatabaseOrder";
 export type {
-    DatabaseNamedPathSegment, DatabasePathSegment, DatabasePath, DatabaseFieldPath,
+    DatabaseNamedPathSegment, DatabasePathSegment, DatabasePath, DatabaseCreatePath, DatabaseFieldPath,
     DatabaseValue, DatabaseRecord, DatabaseEntry, DatabaseGroupEntry,
     DatabaseDraft, DatabaseListener, DatabaseErrorContext, DatabaseErrorHandler,
     DatabaseOptions, DatabaseListenerOptions, DatabaseQueryValue, DatabaseReadOptions,
@@ -111,23 +111,20 @@ export default class DatabaseBase {
         }, registrationOptions, "addEventListener", {path});
     }
 
-    /** No write until draft.save(). */
-    create(path: DatabasePath, options: DatabaseOptions = {}): DatabaseDraft | undefined {
+    /** Last segment names the generated key field or supplies its ID. No write until draft.save(). */
+    create(path: DatabaseCreatePath, options: DatabaseOptions = {}): DatabaseDraft | undefined {
         return notImplemented('create')
     }
 
-    /** Collections return records keyed by child ID; absent paths return undefined. */
-    async read(path: DatabasePath, {
-        equalTo = undefined,
-        orderBy = undefined
-    }: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
+    /** Reads the exact non-empty path; query options apply to its immediate children. */
+    async read(path: DatabasePath, options: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
         return notImplemented('read')
     }
 
     /**
      * Shallow merge: nested values are replaced; null deletes. Non-null values may create records.
-     * Batch paths are root-relative. Callback replaces atomically and returns the final value;
-     * requires read/write access.
+     * Batch paths are root-relative. A synchronous callback replaces atomically,
+     * returns the final value, and deletes on null or undefined; it requires read/write access.
      */
     update(path: DatabasePath, callback: DatabaseUpdater, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
     update(path: DatabasePath, changes: DatabaseRecord, options?: DatabaseOptions): Promise<void>;
@@ -150,11 +147,6 @@ export default class DatabaseBase {
     cursor(path: DatabasePath | (DatabaseCursorSource | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
         return new DatabaseCursor(options, typeof path === "string" || path instanceof Array
             && (path.length === 0 || typeof path[0] === "string") ? path as DatabasePath : undefined);
-    }
-
-    /** Full replacement. Null deletes; undefined rejects. */
-    async write(path: DatabasePath, value: DatabaseValue, {}: DatabaseOptions = {}): Promise<void> {
-        return notImplemented('write')
     }
 
     get TIMESTAMP(): DatabaseValue | undefined {

@@ -9,8 +9,10 @@ export type DatabaseNamedPathSegment = {
     _?: number | true;
 };
 export type DatabasePathSegment = string | DatabaseNamedPathSegment;
-/** '' and [] mean root. Cursor path arrays start with a string. */
+/** Reads require a non-empty path; cursors may use '' or [] for root. */
 export type DatabasePath = string | DatabasePathSegment[];
+/** Parent collection path followed by the generated key's field name. */
+export type DatabaseCreatePath = [DatabasePathSegment, ...(DatabasePathSegment)[], string | DatabaseNamedPathSegment];
 /** '' and [] select the whole value. */
 export type DatabaseFieldPath = DatabasePath;
 
@@ -31,11 +33,11 @@ export interface DatabaseGroupEntry {
 }
 
 export interface DatabaseDraft {
-    /** May differ from the permanent key. */
+    /** Final key: a Firebase-compatible push key unless the caller supplied one. */
     readonly temporaryKey: string;
 
-    /** Null/undefined reject; failures allow retry. Firebase overwrite protection depends on rules. */
-    save(value: DatabaseRecord): Promise<string | undefined>;
+    /** Saves only if the key is absent. The callback receives the final key synchronously. No timestamp field is added. */
+    save(value: DatabaseRecord | ((key: string) => DatabaseRecord)): Promise<string | undefined>;
 }
 
 export interface DatabaseListener {
@@ -51,6 +53,7 @@ export interface DatabaseOptions extends Record<string, unknown> {
 
 export interface DatabaseListenerOptions extends DatabaseOptions {
     onChange?: (value: DatabaseValue | undefined) => void;
+    /** Only children whose keys sort strictly after the initial maximum key; no initial replay. */
     onChildAdd?: (entry: DatabaseEntry) => void;
     onChildChange?: (entry: DatabaseEntry) => void;
     onChildRemove?: (entry: DatabaseEntry) => void;
@@ -62,6 +65,11 @@ export type DatabaseQueryValue = null | boolean | number | string;
 export interface DatabaseReadOptions extends DatabaseOptions {
     equalTo?: DatabaseQueryValue;
     orderBy?: DatabaseFieldPath;
+    /** Defaults to ascending order. */
+    order?: DatabaseOrder;
+    /** Inclusive query bounds. */
+    start?: DatabaseQueryValue;
+    end?: DatabaseQueryValue;
 }
 
 /** Initial position: index -1, key undefined, finished false. */
@@ -90,7 +98,7 @@ export interface DatabaseCursorSubscription {
 export interface DatabaseCursorOptions extends DatabaseOptions {
     /** Headings count as entries, in addition to the requested page size. */
     group?: string;
-    /** Defaults to value order with equalTo, key order otherwise. Missing ordered fields are skipped. */
+    /** Defaults to value order with equalTo, key order otherwise. Missing or null ordered fields are skipped. */
     orderBy?: DatabaseFieldPath;
     /** Exact match; excludes start/end, but allows date bounds. */
     equalTo?: DatabaseQueryValue;
@@ -115,7 +123,7 @@ export interface DatabaseCursorSource extends DatabaseCursorOptions {
     path: DatabasePath;
 }
 
-/** Synchronous replacement; undefined aborts, null deletes. May run repeatedly. */
+/** Synchronous replacement; null or undefined deletes. May run repeatedly. */
 export type DatabaseUpdater = (value: DatabaseValue) => DatabaseValue | undefined;
 
 export type DatabaseUpdates = Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;
