@@ -41,7 +41,7 @@ export default ({data, skeleton, label, onUserClick}) => {
             key: data.key
         })
             .then(({result}) => notifySnackbar(result))
-            .then(() => database.delete(["errors", {id: data.key, _: true}]))
+            .then(() => database.delete(["errors", {error_id: data.key}]))
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
@@ -49,7 +49,7 @@ export default ({data, skeleton, label, onUserClick}) => {
 
     const handleRemove = () => {
         dispatch(ProgressView.SHOW);
-        database.delete(["errors", {id: data.key, _: true}])
+        database.delete(["errors", {error_id: data.key}])
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
