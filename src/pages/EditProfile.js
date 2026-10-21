@@ -86,7 +86,7 @@ function EditProfile(props) {
             }
         }
         const checkIfNameIsBlocked = async () => {
-            const blockedNames = (await database.read(["meta", {"blockedNames": "blockedNames"}]) || "").split(/[\s\r\n]+/)
+            const blockedNames = (await database.read(["meta", {blockedNames: "blockedNames"}]) || "").split(/[\s\r\n]+/)
                 .map(item => normalizeSortName(item));
             if (blockedNames.indexOf(normalizeSortName(state.name)) >= 0) {
                 throw Error("This user user name is reserved for distilleries. If you are a distillery, please contact us using Contacts page.")
@@ -113,7 +113,7 @@ function EditProfile(props) {
             }
         }
         const checkIfProfileExists = async () => {
-            const exists = await database.read(["users_public", {user_id: userData.id}, {"email": "email"}]);
+            const exists = await database.read(["users_public", {user_id: userData.id}, {email: "email"}]);
             if (!exists) {
                 await logoutUser({auth, onLogout: () => setCurrentUserData(null)});
                 refreshAll(store);
