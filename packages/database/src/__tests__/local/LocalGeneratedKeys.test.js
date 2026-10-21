@@ -39,13 +39,14 @@ it("passes the permanent key synchronously to create callback and rolls back all
 });
 
 it("serializes concurrent creates and reports callback errors through onError", async () => {
-    const db = new LocalDatabase({storageKey: "concurrent"});
+    const onError = vi.fn();
+    const db = new LocalDatabase({storageKey: "concurrent", onError});
     const keys = await Promise.all(Array.from({length: 12}, (_, index) =>
         db.create(["meta", "id"], key => ({index, key}))));
     expect(keys).toEqual(Array.from({length: 12}, (_, index) => String(index + 1)));
     for (const key of keys) expect(await db.read(["meta", {id: key}])).toMatchObject({key});
-    const error = new Error("callback failed"), onError = vi.fn();
-    expect(await db.create(["meta", "id"], () => { throw error; }, {onError})).toBeUndefined();
+    const error = new Error("callback failed");
+    expect(await db.create(["meta", "id"], () => { throw error; })).toBeUndefined();
     expect(onError).toHaveBeenCalledExactlyOnceWith(error, "create", {
         path: ["meta", "id"], value: expect.any(Function)
     });

@@ -115,6 +115,13 @@ it("rejects empty read paths while retaining root cursors", async () => {
     expect(fixture.sdk.once.mock.calls.map(([ref]) => ref.path)).toEqual([""]);
 });
 
+it.each(["users_public", [], ["users_public"], ["users_public", "_"]])(
+    "validates create-specific path shape at runtime: %j", async invalid => {
+        await expect(database.create(invalid, {})).rejects.toMatchObject({code: "database/invalid-argument"});
+        expect(fixture.sdk.refs).toHaveLength(0);
+    }
+);
+
 it.each([{}, {uid: "u123", tenant: "t1"}, {uid: 123}, {uid: null}, {uid: undefined},
     {"": "u123"}, [], new Date(), null, 123, Object.assign({uid: "u123"}, {[Symbol("extra")]: "value"})])(
     "rejects invalid named segments %j before accessing Firebase", async segment => {

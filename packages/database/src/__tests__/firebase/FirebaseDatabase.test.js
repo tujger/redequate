@@ -100,7 +100,8 @@ it("throws by default and reports effective operation errors once with context",
 });
 it("reports create and error-handler failures without recursive handling", async () => {
     const onError = vi.fn();
-    await database.create(["records", "record_id"], undefined, {onError});
+    const handled = new FirebaseDatabase({firebase: fixture.firebase, onError});
+    await expect(handled.create(["records", "record_id"], undefined)).resolves.toBeUndefined();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "create", {path: ["records", "record_id"], value: undefined});
     const failure = new Error("handler failed");
     sdk.once.mockRejectedValue(new Error("read failed"));
