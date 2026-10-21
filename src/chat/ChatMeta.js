@@ -151,7 +151,7 @@ export function ChatMeta(database) {
             if (!chats.length) {
                 const value = await database.read(["users_public", {user_id: oppositeUid}, UserData.NAME]);
                 if (value !== undefined) {
-                    const key = await database.create(["chats"]).save({})
+                    const key = await database.create(["chats", "chat_id"]).save({})
                     chats.push({
                         key,
                         value: {private: oppositeUid},
@@ -228,7 +228,7 @@ export function ChatMeta(database) {
                 }
             }
 
-            await database.write(["chats", {chat_id: _id}, "!meta", "timestamp"], database.TIMESTAMP);
+            await database.update(["chats", {chat_id: _id}, "!meta", "timestamp"], () => database.TIMESTAMP);
 
             const updatesIndex = new Map();
             await _body.forEachUid(async uid => {
@@ -242,6 +242,8 @@ export function ChatMeta(database) {
         unwatch: () => {
             _watchRef?.remove();
             _visitRef?.remove();
+            _watchRef = null;
+            _visitRef = null;
         },
         unwatchOnline: () => {
             _onlineRef?.remove();
@@ -251,7 +253,7 @@ export function ChatMeta(database) {
             if (!_persisted) return;
             if (_activeUids.indexOf(uid) >= 0) return;
             console.log(`[ChatMeta] update visit for ${_id}`);
-            return database.write(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], database.TIMESTAMP);
+            return database.update(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], () => database.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = ({value}) => {
