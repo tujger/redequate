@@ -2,9 +2,8 @@
 
 This describes the public behavior implemented by `DatabaseBase`, `FirebaseDatabase`,
 `LocalDatabase`, and their cursors. The Firebase adapter is the reference for
-query and event behavior. "SDK checked" below means the installed Firebase
-Realtime Database SDK's key and node comparators were inspected; it does **not**
-mean an emulator observation. Run the shared scenarios against both providers:
+query and event behavior. The shared scenarios are exercised against the real
+Auth/Realtime Database emulators and Local IndexedDB. Run both providers:
 
 ```sh
 npx vitest run --config src/__tests__/vitest.config.mjs packages/database/src/__tests__/local/LocalContract.test.js
@@ -21,17 +20,32 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
 - Paths are strings or arrays of nonempty string segments and named segments
   with exactly one nonempty string value. `resolvePath` joins the segment values
   with `/` and ignores `_`. Firebase uses that resulting address. Local uses
-  `path[0]` as a physical version-2 object store; named segments retain their
-  field name and optional dynamic level as part of Local identity. A literal
-  string after a named segment can address a field. A trailing string without
-  a named parent addresses a literal path, rather than selecting a record by
-  its named identity. Root reads (`''`, `[]`) are invalid; root cursors are valid.
-- `read` returns the value at the exact path or `undefined` when absent. Query
-  options apply to immediate children. Object property enumeration order from
-  `read` is not a cursor order guarantee. `orderBy: ''` selects child values;
-  a nonempty `orderBy` selects the nested field; `equalTo` without `orderBy`
-  selects child values; otherwise range bounds select child keys. `order` is
-  `asc` or `desc` and `equalTo` excludes `start`/`end`.
+  `path[0]` as a physical version-1 object store; named segments retain their
+  field name and optional dynamic level as part of Local identity. Root reads
+  (`''`, `[]`) are invalid; root cursors are valid.
+- Array `read` paths have an operation-specific grammar: a trailing string in
+  an array of two or more segments is the collection's identity field. Firebase
+  drops that segment before addressing the database; Local selects children with
+  that named identity (fixed or dynamic) and assembles them by its values.
+  `read(["users_public", "user_id"])` therefore reads Firebase `/users_public`
+  and the Local user_id collection. Local does not include unrelated identity
+  fields from the same physical store. Nested collections use the same rule.
+- A trailing named segment selects a record and its descendants:
+  `read(["users_public", {user_id: uid}])` addresses Firebase `/users_public/<uid>`.
+  Concrete fields/branches use named segments too: `read(["meta", {settings:
+  "settings"}])` addresses `/meta/settings`, and `read(["users_public", {user_id:
+  uid}, {email: "email"}])` reads the scalar email. Local accepts existing literal
+  branches and embedded fields through this explicit syntax, without rewriting
+  stored rows. Named selection also matches the corresponding dynamic identity.
+- A one-element array reads its root collection. String paths remain literal,
+  including their final segment. This read grammar does not change create,
+  update, delete, cursor, listener, or orderBy path normalization.
+- `read` returns plain values or `undefined` when absent. Query options apply to
+  immediate children of the resulting address, after removing the identity-field
+  marker. Property enumeration from `read` is not a cursor order guarantee.
+  `orderBy: ''` selects child values; a nonempty `orderBy` selects the nested
+  field; `equalTo` without `orderBy` selects child values; otherwise range bounds
+  select child keys. `order` is `asc` or `desc`; `equalTo` excludes `start`/`end`.
 - `create(path, valueOrCallback)` creates only when absent and returns
   the permanent string key; its synchronous callback receives that string. Its path
   uses `DatabasePath`, with a collection path followed by a key field name or
@@ -53,11 +67,15 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   queries with `orderBy: "timestamp"` still use that field, not the key.
 - Without a supplied key, Firebase `create` uses Realtime Database `push()`.
   Local allocates a permanent numeric string
-  during `create` from the auto-increment allocator belonging to the physical
+  during `create` from the native auto-increment primary key of the physical
   `path[0]` store. All logical collections in that store share this sequence.
   Allocation and record insertion commit in one IndexedDB transaction; failed
   creates roll both back. A supplied key is used unchanged. The synchronous
   create callback receives the final key after allocation and before insertion.
+  The internal numeric `_rowId` and unique `[_collection, _key]` identity index
+  are not exposed through the value API. No allocator stores or migrations exist.
+  Incompatible existing databases must be deleted explicitly; opening never
+  upgrades or automatically deletes them. Generated IDs need not be contiguous.
   Local does not add a timestamp field.
   Firebase generated keys remain 20-character push keys.
   `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
@@ -75,8 +93,9 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   children for which a nonempty ordered field does not exist. That includes
   a null field, since Realtime Database treats a null write as deletion. Local
   cursor applies the same membership rule even if a stored record contains
-  an explicit null. This is verified by Local shared tests; the corresponding
-  Firebase emulator cases still need to run.
+  an explicit null. This is verified by both providers. This cursor membership
+  rule differs from `read`: a null-equality field read includes children with an
+  absent/null field, as confirmed by the shared emulator scenario.
 - The SDK key comparator recognizes signed 32-bit integer-looking keys,
   including leading zeros, and places them before other keys. It compares
   integer values first, then key length for equal values; noninteger keys use
@@ -88,9 +107,14 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   `"2"`, `"02"`, and `"10"` end to end.
 - For field and value queries, the SDK compares absent/null nodes, booleans,
   numbers, strings, then objects; equal sort values break ties by child key.
-  `DESC` reverses the complete `(value, key)` order. The shared scenarios
-  cover absent/null, boolean, number, and string fields; object-valued query
-  bounds and object tie behavior remain unverified end to end.
+  Arrays and objects have the same rank and tie by child key, regardless of
+  their contents. `DESC` reverses the complete `(value, key)` order. Shared
+  scenarios verify mixed types, nested fields and object/array ties in both
+  directions, including single-entry pages. Object-valued public query bounds
+  are rejected. Firebase also rejects an object continuation bound, so its
+  cursor uses the original query plus tuple filtering after an object boundary;
+  this exceptional path materializes the query. Local likewise uses its comparator
+  fallback for object/array sorting. Scalar indexed Local pages remain native.
 - `start`, `end`, and `equalTo` are inclusive SDK query bounds. `start: "Al"`
   without `end` expands to an inclusive `"Al\uf8ff"` end in **cursor** queries.
   Explicit `end` remains exact. Firebase `startDate` and `endDate` generate
@@ -99,8 +123,9 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   records without a valid timestamp are excluded. They also filter field/value
   queries before `handle`. Date bounds are not part of
   `read` options. Bounds permit null, booleans, finite numbers and strings at
-  the common cursor API; the Firebase SDK may reject a bound incompatible
-  with key ordering, so callers should use string key bounds.
+  the common cursor API; key-order bounds must be strings. Null, boolean and
+  numeric key bounds are rejected by both providers. `equalTo: null` remains an
+  explicit equality condition and is never treated as an unspecified bound.
 - `next(n)` requires a positive safe integer and returns up to `n` data
   entries, plus an optional one-time group heading. Handlers run sequentially
   on copies of candidate entries. Returning undefined makes no write and
@@ -115,11 +140,13 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   page. Later calls return `[]`.
 - Pages are separate reads, not a transaction. A deleted boundary is included
   in the page already returned and does not block continuation. An unvisited
-  child moved before the continuation can be missed. Local retains processed
-  keys to avoid replay after movement; Firebase resumes using the SDK's
-  ordered `(value, key)` bound and has no equivalent seen-key set. Duplicate
-  behavior after an already processed child moves later is unresolved pending
-  an emulator test. Do not rely on a snapshot-stable traversal during writes.
+  child moved before the continuation can be missed. Both atomic provider cursors
+  resume by the captured `(value, key)` tuple and can revisit a processed child
+  moved later. Its handler then runs again. The public composition deduplicates
+  returned entries by source path and key, after source handlers run. These
+  behaviors are verified independently on atomic and public cursors in ASC/DESC.
+  A handler that keeps moving an entry later on every visit can prevent exhaustion;
+  traversal during writes is not snapshot-stable.
 - A source list composes fresh cursors round-robin. Source options override
   outer options, including explicit undefined. It skips null sources, dedupes
   by resolved source path and child key (or cursor ID and key for pathless
@@ -135,25 +162,38 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   that key. Child changes and removals are not limited by that boundary.
   Events already present in the initial value snapshot are baseline even if
   their child events arrived during registration. This is not a lossless
-  call-time handoff. `remove()` detaches the independent listener.
+  call-time handoff. `remove()` idempotently detaches the independent listener.
 - `cursor.subscribe` makes an independent child-event subscription on the
   cursor query. Initial query children form a silent baseline; subsequent
   membership transitions produce `{type: 'add'|'change'|'remove', entry}`.
   The Firebase adapter tracks ordered-field appearance/disappearance as add
   or remove. Subscriptions update `count` before calling listeners. Each
-  subscription has its own `id`, time, active state and event counters;
+  subscription is an independent handle with its own time, active state and
+  event counters; its `id` identifies the owning cursor and is shared by
+  subscriptions of that cursor;
   `unsubscribe()` is idempotent. Live events do not advance `position` or
   cancel an in-flight `next` page.
 
-## Verification limits
+## Verification and limits
 
-The Firebase emulator could not start in the current restricted environment:
-binding its loopback ports returned `EPERM`. The Firebase integration cases
-therefore remain **unrun here**. The installed SDK source and adapter code
-support the comparator and query descriptions, while the current Firebase
-unit tests use a mock SDK and do not prove server behavior. In particular,
-the shared create/key scenario remains unrun against the emulator. Emulator
-validation also remains required for explicit null fields, object-valued
-ordering/bounds, writes racing the first listener snapshot, cursor replay after
-sort-key mutation, and query behavior for null or nonstring key bounds. Where
-these are unresolved, this contract does not promise an outcome.
+The emulator suites run locally with Node 24.21.0 and Java 17. The normal shell's
+Node 20 fails while loading Firebase CLI's ESM dependency. Sandbox loopback
+binding fails with `EPERM`; an approved execution outside the sandbox successfully
+runs the emulators on 127.0.0.1:9099 and :9000 (hub/logging: 4400/4500).
+The contract fixture uses the permitted `database_test` path. Firebase integration
+failures are reported as failures, never skipped or treated as successful checks.
+
+Shared tests cover keys, mixed and nested ordering, inclusive/prefix/equality
+bounds, page size and traversal state, deletion/movement, handler writes and
+failures, listener baselines, membership events and independent subscriptions.
+Local tests additionally compare active indexed queries with equivalent nested
+fallback queries and assert no object-store or index `getAll()` on fast pages.
+
+There is no promised stable relative order for distinct integer spellings of the
+same numeric value and length (for example `-0` and `00`): the SDK comparator
+considers them equal. This rare tie is not covered by emulator regression tests.
+Listener installation is not a lossless call-time handoff; writes already in the
+first snapshot belong to its baseline. Cross-tab notification tests use simulated
+BroadcastChannels; real browser multi-tab and Android end-to-end checks are
+separate from the automated suites. Date-bound semantics intentionally differ
+between Firebase push keys and Local explicit timestamps, as described above.

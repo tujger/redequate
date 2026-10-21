@@ -1,4 +1,4 @@
-import {notImplemented} from '../../../common'
+import {notImplemented} from "../../../common"
 import {DatabaseCursor} from "./DatabaseCursor";
 import type {
     DatabasePath, DatabaseValue, DatabaseOptions,
@@ -33,7 +33,7 @@ export default class DatabaseBase {
     }
 
     protected handleError(error: unknown, options: DatabaseOptions | undefined,
-                          reason: string, context: Record<string, unknown>): void {
+        reason: string, context: Record<string, unknown>): void {
         const onError = options?.onError ?? this.onError;
         onError(error, reason, context);
     }
@@ -45,7 +45,7 @@ export default class DatabaseBase {
                      reason: string, context: Record<string, unknown>): T | undefined;
 
     protected run<T>(operation: () => T | Promise<T>, options: DatabaseOptions | undefined,
-                     reason: string, context: Record<string, unknown>): T | Promise<T | undefined> | undefined {
+        reason: string, context: Record<string, unknown>): T | Promise<T | undefined> | undefined {
         let result;
         try {
             result = operation();
@@ -63,7 +63,7 @@ export default class DatabaseBase {
     }
 
     addEventListener(path: DatabasePath, options: DatabaseListenerOptions = {},
-                     subscribe: (callbacks: DatabaseListenerOptions) => {remove(): void} = () => notImplemented("addEventListener")): {remove(): void} | undefined {
+        subscribe: (callbacks: DatabaseListenerOptions) => {remove(): void} = () => notImplemented("addEventListener")): {remove(): void} | undefined {
         let callbackFailure: { error: unknown } | undefined;
         const report: DatabaseErrorHandler = (error, reason, context) => {
             try {
@@ -111,12 +111,17 @@ export default class DatabaseBase {
 
     /** Atomically creates an absent record and returns its permanent key. The callback receives that key synchronously before insertion. */
     async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((key: string) => DatabaseValue)): Promise<string | undefined> {
-        return notImplemented('create')
+        return notImplemented("create")
     }
 
-    /** Reads the exact non-empty path; query options apply to its immediate children. */
+    /**
+     * Reads a non-empty path. The final string of an array names the collection
+     * identity field (omitted from the Firebase address). Use named segments for
+     * concrete records/fields, e.g. {email: "email"}; string paths stay literal.
+     * Query options apply to children of the resolved address.
+     */
     async read(path: DatabasePath, options: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
-        return notImplemented('read')
+        return notImplemented("read")
     }
 
     /**
@@ -128,12 +133,12 @@ export default class DatabaseBase {
     update(path: DatabasePath, changes: Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
     update(updates: Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
     async update(path: DatabasePath | Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, changes?: Record<string, DatabaseValue> | ((value: DatabaseValue) => DatabaseValue | undefined) | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
-        return notImplemented('update')
+        return notImplemented("update")
     }
 
     /** Absent records also succeed. */
-    async delete(path: DatabasePath, {}: DatabaseOptions = {}): Promise<void> {
-        return notImplemented('delete')
+    async delete(path: DatabasePath, options: DatabaseOptions = {}): Promise<void> {
+        return notImplemented("delete")
     }
 
     /**
@@ -143,15 +148,17 @@ export default class DatabaseBase {
      * and run each source's handle once, before buffering.
      */
     cursor(path: DatabasePath | ((DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
-        return new DatabaseCursor(options, typeof path === "string" || path instanceof Array
-            && (path.length === 0 || typeof path[0] === "string") ? path as DatabasePath : undefined);
+        return new DatabaseCursor(options, typeof path === "string" || (path instanceof Array &&
+            (path.length === 0 || typeof path[0] === "string"))
+            ? path as DatabasePath
+            : undefined);
     }
 
     get TIMESTAMP(): DatabaseValue | undefined {
-        return notImplemented('timestamp')
+        return notImplemented("timestamp")
     }
 
     increment(delta: number): DatabaseValue | undefined {
-        return notImplemented('increment')
+        return notImplemented("increment")
     }
 }

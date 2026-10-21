@@ -46,13 +46,16 @@ export class DatabaseCursor {
             fail("database/invalid-argument", "equalTo cannot be combined with start or end.");
         }
         for (const value of [equalTo, start, end]) {
-            if (value !== undefined && value !== null && typeof value !== "boolean" && typeof value !== "string"
-                && !(typeof value === "number" && Number.isFinite(value))) {
+            if (value !== undefined && value !== null && typeof value !== "boolean" && typeof value !== "string" &&
+                !(typeof value === "number" && Number.isFinite(value))) {
                 fail("database/invalid-argument", "Query bounds must be null, booleans, finite numbers or strings.");
             }
         }
-        this.#options = Object.freeze({...cursorOptions, order,
-            orderBy: orderBy instanceof Array ? [...orderBy] : orderBy});
+        this.#options = Object.freeze({
+            ...cursorOptions,
+            order,
+            orderBy: orderBy instanceof Array ? [...orderBy] : orderBy
+        });
         this.#path = path instanceof Array ? [...path] : path;
     }
 

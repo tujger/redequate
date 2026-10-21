@@ -56,7 +56,8 @@ function appendUniqueEntry(props: SourceProps & {
     seen: Map<string, Set<string>>; origins: WeakMap<DatabaseEntry, DatabaseCursor>;
 }) {
     const {source, entries, entry, origin, seen, origins} = props;
-    const identity = origin.path === undefined ? `id:${origin.id}`
+    const identity = origin.path === undefined
+        ? `id:${origin.id}`
         : `path:${resolvePath(origin.path)}`;
     let keys = seen.get(identity);
     if (!keys) {
@@ -92,8 +93,10 @@ function unsubscribeSources(subscriptions: {subscription: DatabaseCursorSubscrip
     for (const {subscription, cursor} of subscriptions) {
         try {
             if (cursor instanceof ComposedDatabaseCursor) subscription.unsubscribe();
-            else run(() => subscription.unsubscribe(), {onError: cursor.onError ?? onError},
-                "cursor.unsubscribe", {path: cursor.path});
+            else {
+                run(() => subscription.unsubscribe(), {onError: cursor.onError ?? onError},
+                    "cursor.unsubscribe", {path: cursor.path});
+            }
         } catch (error) {
             failure ??= {error};
         }
@@ -114,14 +117,16 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
     #turn = 0;
 
     static #hasGroup(cursor: DatabaseCursor): boolean {
-        return cursor.group !== undefined || cursor instanceof ComposedDatabaseCursor
-            && cursor.#sources.some(source => ComposedDatabaseCursor.#hasGroup(source.cursor));
+        return cursor.group !== undefined || (cursor instanceof ComposedDatabaseCursor &&
+            cursor.#sources.some(source => ComposedDatabaseCursor.#hasGroup(source.cursor)));
     }
 
     constructor(sources: Source[], options: DatabaseCursorOptions, run: CursorRun, path: CursorPath,
         cursorPath?: () => DatabasePath) {
-        super(options, cursorPath?.() ?? (typeof path === "string" || path instanceof Array
-            && (path.length === 0 || typeof path[0] === "string") ? path as DatabasePath : undefined));
+        super(options, cursorPath?.() ?? (typeof path === "string" || (path instanceof Array &&
+            (path.length === 0 || typeof path[0] === "string"))
+            ? path as DatabasePath
+            : undefined));
         this.#context = {path};
         this.#run = run;
         this.#sources = sources;
@@ -157,7 +162,8 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
 
     async #collectEntries(props: NextProps): Promise<NextProps | undefined> {
         const {n, byGroup} = props;
-        while (byGroup ? this.#turn < this.#sources.length
+        while (byGroup
+            ? this.#turn < this.#sources.length
             : props.entries.length < n && this.#sources.some(isSourceAvailable)) {
             const source = this.#sources[this.#turn];
             if (isSourceAvailable(source)) {
@@ -183,7 +189,7 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         const valid = this.#run(() => validateBatch(batch,
             ComposedDatabaseCursor.#hasGroup(source.cursor) ? Infinity : n,
             source.cursor.position.finished), {onError: this.onError},
-            "cursor.next", {path: source.cursor.path, n});
+        "cursor.next", {path: source.cursor.path, n});
         if (!valid) return undefined;
         source.entries = batch;
         source.offset = 0;
@@ -193,7 +199,7 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
     #consumeSource(props: SourceProps): SourceProps {
         const {source, byGroup} = props;
         let {entries} = props;
-        do {
+        for (let repeat = true; repeat; repeat = byGroup) {
             if (source.offset === source.entries.length) break;
             const entry = source.entries[source.offset++];
             if (!isRecord(entry)) {
@@ -202,11 +208,18 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
                 continue;
             }
             const origin = source.cursor instanceof ComposedDatabaseCursor
-                ? source.cursor.#origins.get(entry)! : source.cursor;
-            const appended = appendUniqueEntry({...props, entries, entry, origin,
-                seen: this.#seen, origins: this.#origins});
+                ? source.cursor.#origins.get(entry)!
+                : source.cursor;
+            const appended = appendUniqueEntry({
+                ...props,
+                entries,
+                entry,
+                origin,
+                seen: this.#seen,
+                origins: this.#origins
+            });
             entries = appended.entries;
-        } while (byGroup);
+        }
         return {...props, source, entries};
     }
 
@@ -267,10 +280,12 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
                             callbackFailure = {error};
                             throw error;
                         }
-                    }), {onError: (error, reason, context) => {
-                        if (callbackFailure && Object.is(callbackFailure.error, error)) throw error;
-                        onError(error, reason, context);
-                    }}, "cursor.subscribe", context);
+                    }), {
+                        onError: (error, reason, context) => {
+                            if (callbackFailure && Object.is(callbackFailure.error, error)) throw error;
+                            onError(error, reason, context);
+                        }
+                    }, "cursor.subscribe", context);
                 if (subscription === undefined) {
                     subscribed.unsubscribe();
                     return undefined;
@@ -298,16 +313,17 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
                         fail("database/invalid-argument", "Composition requires distinct cursor instances.");
                     }
                     cursors.add(description);
-                } else if (typeof description !== "object" || description instanceof Array
-                    || !(typeof description.path === "string" || description.path instanceof Array
-                        && (description.path.length === 0 || typeof description.path[0] === "string"))) {
+                } else if (typeof description !== "object" || description instanceof Array ||
+                    !(typeof description.path === "string" || (description.path instanceof Array &&
+                        (description.path.length === 0 || typeof description.path[0] === "string")))) {
                     fail("database/invalid-argument", "Each cursor source must be a DatabaseCursor or an object with a path.");
                 }
             }
             return composition;
         }, options, "cursor", {path});
         if (composition === undefined) return undefined;
-        const {group, ...shared} = options;
+        const shared = {...options};
+        delete shared.group;
         for (const description of queries) {
             if (description == null) continue;
             let cursor: DatabaseCursor | undefined;

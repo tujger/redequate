@@ -8,7 +8,10 @@ export type DatabasePathSegment = string | {
     [key: string]: string | number | true | undefined;
     _?: number | true;
 };
-/** Reads require a non-empty path; cursors may use '' or [] for root. */
+/**
+ * Reads require a non-empty path. Their trailing array string names an identity
+ * field; concrete branches use named segments. Cursors may use '' or [] for root.
+ */
 export type DatabasePath = string | DatabasePathSegment[];
 export type DatabaseValue = null | boolean | number | string | DatabaseValue[] | {[key: string]: DatabaseValue};
 export type DatabaseQueryValue = null | boolean | number | string;
@@ -60,6 +63,7 @@ export interface DatabaseCursorEvent {
 }
 
 export interface DatabaseCursorSubscription {
+    /** Owning cursor ID; independent subscriptions of one cursor share it. */
     readonly id: string;
     readonly subscribed: Date;
     readonly active: boolean;
@@ -84,6 +88,7 @@ export interface DatabaseCursorOptions extends DatabaseReadOptions {
     /**
      * Runs sequentially on deep copies. Undefined leaves storage and the read value
      * unchanged; null deletes; any other result replaces the value and is reread.
+     * A record moved beyond the continuation can be handled again before composition deduplication.
      */
     handle?: (entry: DatabaseEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
 }
