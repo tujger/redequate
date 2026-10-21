@@ -93,11 +93,9 @@ function Users(props) {
         case "all":
         default:
             cursor = database.cursor([
-                {path: ["users_public"], orderBy: ["_sort_name"]},
-                {path: ["users_public"], orderBy: [UserData.EMAIL]},
-            ], {
-                start: normalizeSortName(filter)
-            });
+                {path: ["users_public"], orderBy: ["_sort_name"], start: normalizeSortName(filter)},
+                ...(filter ? [{path: ["users_public"], orderBy: [UserData.EMAIL], start: filter}] : []),
+            ]);
             break;
     }
 
