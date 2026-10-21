@@ -151,13 +151,12 @@ export function ChatMeta(database) {
             if (!chats.length) {
                 const value = await database.read(["users_public", {user_id: oppositeUid}, UserData.NAME]);
                 if (value !== undefined) {
-                    const key = await database.create(["chats", "chat_id"]).save({})
-                    chats.push({
+                    await database.create(["chats", "chat_id"], key => ({
                         key,
                         value: {private: oppositeUid},
                         redirect: true,
                         meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
-                    });
+                    }));
                 }
             }
             if (!chats.length) {

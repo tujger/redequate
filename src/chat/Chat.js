@@ -43,7 +43,7 @@ export default (props) => {
     const handleSend = (value) => {
         dispatch(ProgressView.SHOW);
         const uid = currentUserData.id;
-        database.create(["chats", {chat_id: chatMeta.id}, "message_id"]).save({
+        database.create(["chats", {chat_id: chatMeta.id}, "message_id"], {
             created: database.TIMESTAMP,
             text: value,
             uid,
