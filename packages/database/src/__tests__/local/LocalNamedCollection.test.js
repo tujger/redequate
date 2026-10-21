@@ -16,11 +16,11 @@ it.each(["posts", "replies"])("shares %s records, fields and deletes across name
     await database.update(string, {text: "updated"});
     expect(await database.read(named)).toEqual(created({text: "updated", count: 0}));
     await database.update([...named, "text"], () => "field");
-    expect(await database.read([...string, {"text": "text"}])).toBe("field");
+    expect(await database.read([...string, {text: "text"}])).toBe("field");
     expect(await database.update([...named, "count"], value => value + 1)).toBe(1);
     expect(await database.update([...string, "count"], value => value + 1)).toBe(2);
     await database.delete([...string, "text"]);
-    expect(await database.read([...named, {"text": "text"}])).toBeUndefined();
+    expect(await database.read([...named, {text: "text"}])).toBeUndefined();
     await database.delete(named);
     expect(await database.read(string)).toBeUndefined();
     await database.update(string, () => ({text: "reverse"}));
@@ -50,7 +50,7 @@ it("uses named collections in batch replacements and type queries without storin
     const record = [{name: "replies"}, {kind: "r1", _: 0}];
     await database.update(new Map([[record, {text: "reply", nested: {enabled: true}}]]));
     await database.update(new Map([[[{type: "replies"}, {kind: "r1", _: 0}, "text"], "updated"]]));
-    expect(await database.read(["replies", {kind: "r1", _: 0}, {"text": "text"}])).toBe("updated");
+    expect(await database.read(["replies", {kind: "r1", _: 0}, {text: "text"}])).toBe("updated");
     for (const query of ["kind", {_key0: "kind"}]) {
         expect(await getRecordsByType("batch", [{type: "replies"}, query])).toEqual([
             {id: "r1", value: created({text: "updated", nested: {enabled: true}})}

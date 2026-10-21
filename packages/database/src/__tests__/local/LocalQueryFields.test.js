@@ -15,14 +15,14 @@ it("uses the same field for literal, named, batch and transactional updates", as
     await database.update(email, () => "first");
     await database.update(new Map([[[...user, "email"], "second"]]));
     expect(await database.update(email, value => value + "!")).toBe("second!");
-    expect(await database.read([...user, {"email": "email"}])).toBe("second!");
+    expect(await database.read([...user, {email: "email"}])).toBe("second!");
     await expect(database.update(new Map([[email, "one"], [[...user, "email"], "two"]])))
         .rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await database.read(email)).toBe("second!");
     expect(await database.update([...user, "email"], () => undefined)).toBeNull();
     await database.update(email, () => "second!");
     expect(await database.update(email, () => null)).toBeNull();
-    expect(await database.read([...user, {"email": "email"}])).toBeUndefined();
+    expect(await database.read([...user, {email: "email"}])).toBeUndefined();
 });
 
 it("matches fixed conditions independently of their order and serialized location", async () => {
@@ -95,11 +95,11 @@ it("reads legacy named field rows without rewriting them and replaces them throu
             transaction.onabort = () => reject(transaction.error);
         });
     } finally { connection.close(); }
-    expect(await database.read([...user, {"email": "email"}])).toBe("old@b.com");
+    expect(await database.read([...user, {email: "email"}])).toBe("old@b.com");
     expect(await database.read(email)).toBe("old@b.com");
     expect((await getAllRecords("legacy-field"))[0]._key).toBe(key);
     await database.update(email, () => "new@b.com");
-    expect(await database.read([...user, {"email": "email"}])).toBe("new@b.com");
+    expect(await database.read([...user, {email: "email"}])).toBe("new@b.com");
     const rows = await getAllRecords("legacy-field");
     expect(rows).toHaveLength(1);
     expect(rows[0]).not.toHaveProperty("_conditions");

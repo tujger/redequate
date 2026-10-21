@@ -35,12 +35,12 @@ async function subscribe(cursor, listener) {
 it("reads/writes/deletes real nodes and applies partial and mu ltipath updates", async () => {
     await database.update([path, "record"], () => ({name: "A", retained: true}));
     await database.update([path, "record"], {name: "B"});
-    expect(await database.read([path, {"record": "record"}])).toEqual({name: "B", retained: true});
+    expect(await database.read([path, {record: "record"}])).toEqual({name: "B", retained: true});
     await database.update({[`${path}/record/name`]: "C", [`${path}/other`]: 0});
     await database.update(new Map([[[path, "record", "retained"], null], [[path, "created", "enabled"], false]]));
     expect(await database.read(path)).toEqual({record: {name: "C"}, other: 0, created: {enabled: false}});
     await database.delete([path, "record"]); await database.delete([path, "record"]);
-    expect(await database.read([path, {"record": "record"}])).toBeUndefined();
+    expect(await database.read([path, {record: "record"}])).toBeUndefined();
 });
 it("saves by generated key and rejects duplicate creation", async () => {
     const key = await database.create([path, "id"], {name: "created"});
@@ -92,7 +92,7 @@ it("isolates handler mutations, deletes, replaces and resolves server timestamp 
         }
     });
     expect(await readAll(cursor, 2)).toEqual([{key: "a", value: {n: 1}}, {key: "c", value: {n: 30, timestamp: expect.any(Number)}}]);
-    expect(await database.read([path, {"a": "a"}])).toEqual({n: 1}); expect(await database.read([path, {"b": "b"}])).toBeUndefined(); expect(cursor.count).toBe(2);
+    expect(await database.read([path, {a: "a"}])).toEqual({n: 1}); expect(await database.read([path, {b: "b"}])).toBeUndefined(); expect(cursor.count).toBe(2);
 });
 it("deduplicates overlapping paths after each source handles its own records", async () => {
     await seed({a: {score: 1}, b: {score: 2}, c: {score: 3}}); const handle = vi.fn();
@@ -168,12 +168,12 @@ it("atomically increments through update callbacks and returns committed values"
     const results = await Promise.all(Array.from({length: 12}, () =>
         database.update([path, "counter"], value => (value ?? 0) + 1)));
     expect(results.slice().sort((a, b) => a - b)).toEqual(Array.from({length: 12}, (_, index) => index + 1));
-    expect(await database.read([path, {"counter": "counter"}])).toBe(12);
+    expect(await database.read([path, {counter: "counter"}])).toBe(12);
     expect(await database.update([path, "counter"], () => undefined)).toBeNull();
     await expect(database.update([path, "counter"], async () => 99)).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read([path, {"counter": "counter"}])).toBeUndefined();
+    expect(await database.read([path, {counter: "counter"}])).toBeUndefined();
     expect(await database.update([path, "counter"], () => null)).toBeNull();
-    expect(await database.read([path, {"counter": "counter"}])).toBeUndefined();
+    expect(await database.read([path, {counter: "counter"}])).toBeUndefined();
 });
 it.each(["asc", "desc"])("skips absent ordered fields across real %s page boundaries", async order => {
     await seed({a: {}, b: {text: "missing"}, c: {nested: {score: false}}, d: {nested: {score: 0}}, e: {nested: {score: ""}}});

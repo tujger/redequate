@@ -250,7 +250,7 @@ it("updates profile and password through Auth", async () => {
     const restored = (await run(auth.signInWithEmailAndPassword(user.email, "final-password")));
     expect(restored).toMatchObject({name: "Tester", image: "https://example.test/photo"});
     await run(auth.updateProfile({public: {name: null, image: null}}));
-    expect(await database.read(["users_public", {user_id: user.id}, {"name": "name"}])).toBeUndefined();
+    expect(await database.read(["users_public", {user_id: user.id}, {name: "name"}])).toBeUndefined();
     expect(await run(auth.resolveCurrentUser())).toMatchObject({public: {name: null, image: null}});
 });
 it("keeps user data free of Auth operations and rejects invalid profile fields", async () => {

@@ -15,16 +15,16 @@ it("reads exact fields and nested collections without suffix guesses", async () 
     await database.update([...comments, {comment_id: "b"}], () => ({created: 200, owner_id: "v"}));
     await database.update(["posts", {other_id: "x"}], () => ({created: 300}));
     expect(Object.keys(await database.read(["posts"])).sort()).toEqual(["p", "x"]);
-    expect(await database.read(["posts", {"post_id": "post_id"}])).toBeUndefined();
-    expect(await database.read(["posts", {"other_id": "other_id"}])).toBeUndefined();
-    expect(await database.read([...post, {"owner_id": "owner_id"}])).toEqual({id: "u", roles: ["a"]});
-    expect(await database.read([...post, {"id": "id"}])).toEqual(["one", "two"]);
-    expect(await database.read([...post, {"post_id": "post_id"}])).toBe(false);
+    expect(await database.read(["posts", {post_id: "post_id"}])).toBeUndefined();
+    expect(await database.read(["posts", {other_id: "other_id"}])).toBeUndefined();
+    expect(await database.read([...post, {owner_id: "owner_id"}])).toEqual({id: "u", roles: ["a"]});
+    expect(await database.read([...post, {id: "id"}])).toEqual(["one", "two"]);
+    expect(await database.read([...post, {post_id: "post_id"}])).toBe(false);
     expect(Object.keys(await database.read([...post, {comments: "comments"}])).sort()).toEqual(["a", "b"]);
     expect(Object.keys(await database.read([...post, {comments: "comments"}],
         {orderBy: "created", order: "desc", start: 100, end: 200})).sort()).toEqual(["a", "b"]);
-    expect(await database.read([...comments, {"comment_id": "comment_id"}])).toBeUndefined();
-    expect(await database.read([...comments, {comment_id: "b"}, {"owner_id": "owner_id"}])).toBe("v");
+    expect(await database.read([...comments, {comment_id: "comment_id"}])).toBeUndefined();
+    expect(await database.read([...comments, {comment_id: "b"}, {owner_id: "owner_id"}])).toBe("v");
     expect(await database.read([...comments, {comment_id: "missing"}])).toBeUndefined();
 });
 
@@ -50,13 +50,13 @@ it("queries values and numeric keys at nested and record paths", async () => {
     await database.update(post, () => ({states: {a: "active", b: "idle", c: "active"},
         scores: {"2": "a", "10": "b", "02": "c", z: "d"},
         first: {created: "active"}, second: {created: "idle"}}));
-    expect(await database.read([...post, {"states": "states"}], {equalTo: "active"}))
+    expect(await database.read([...post, {states: "states"}], {equalTo: "active"}))
         .toEqual({a: "active", c: "active"});
-    expect(await database.read([...post, {"states": "states"}], {orderBy: "", equalTo: "active"}))
+    expect(await database.read([...post, {states: "states"}], {orderBy: "", equalTo: "active"}))
         .toEqual({a: "active", c: "active"});
-    expect(await database.read([...post, {"scores": "scores"}], {start: "2", end: "10"}))
+    expect(await database.read([...post, {scores: "scores"}], {start: "2", end: "10"}))
         .toEqual({"2": "a", "10": "b", "02": "c"});
-    expect(await database.read([...post, {"scores": "scores"}], {start: "02", end: "z", order: "desc"}))
+    expect(await database.read([...post, {scores: "scores"}], {start: "02", end: "z", order: "desc"}))
         .toEqual({"02": "c", "10": "b", z: "d"});
     expect(await database.read(post, {orderBy: "created", equalTo: "active"}))
         .toEqual({first: {created: "active"}});
@@ -69,7 +69,7 @@ it("reads a literal child beside records with named identities", async () => {
     const database = new LocalDatabase({storageKey: "literal-post-child"});
     await database.update(["posts", {post_id: "p1"}], () => ({created: 100}));
     await database.update(["posts", "post_id"], () => ({marker: "literal"}));
-    expect(await database.read(["posts", {"post_id": "post_id"}])).toEqual({marker: "literal"});
+    expect(await database.read(["posts", {post_id: "post_id"}])).toEqual({marker: "literal"});
     expect(await database.read(["posts", {post_id: "p1"}])).toMatchObject({created: 100});
     expect(await database.read(["posts"])).toMatchObject({post_id: {marker: "literal"}, p1: {created: 100}});
 });
@@ -79,8 +79,8 @@ it("keeps array paths exact for settings and reports read errors", async () => {
     const database = new LocalDatabase({storageKey: "literal-settings", onError});
     await database.update(["meta", "settings"], () => ({theme: "dark"}));
     expect(await database.read("meta/settings")).toEqual({theme: "dark"});
-    expect(await database.read(["meta", {"settings": "settings"}])).toEqual({theme: "dark"});
-    expect(await database.read(["meta", {"settings": "settings"}], {order: "backward"})).toBeUndefined();
+    expect(await database.read(["meta", {settings: "settings"}])).toEqual({theme: "dark"});
+    expect(await database.read(["meta", {settings: "settings"}], {order: "backward"})).toBeUndefined();
     expect(onError).toHaveBeenCalledOnce();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}),
         "read", expect.objectContaining({path: ["meta", {settings: "settings"}]}));
@@ -92,8 +92,10 @@ it("selects only the requested identity field, including dynamic identities and 
     await database.update(["users_public", {user_id: "dynamic", _: 0}], () => ({name: "Dynamic"}));
     await database.update(["users_public", {user_id: "dynamic", _: 0}, "devices", {device_id: "phone"}], () => ({locale: "en"}));
     await database.create(["users_public", {other_id: "other"}], {name: "Other identity"});
-    expect(await database.read(["users_public", "user_id"])).toEqual({fixed: {name: "Fixed"},
-        dynamic: {name: "Dynamic", devices: {phone: {locale: "en"}}}});
+    expect(await database.read(["users_public", "user_id"])).toEqual({
+        fixed: {name: "Fixed"},
+        dynamic: {name: "Dynamic", devices: {phone: {locale: "en"}}}
+    });
     expect(await database.read(["users_public", {user_id: "dynamic"}])).toEqual({name: "Dynamic", devices: {phone: {locale: "en"}}});
     expect(await database.read(["users_public", {user_id: "dynamic"}, {name: "name"}])).toBe("Dynamic");
     expect(await database.read(["users_public", "other_id"])).toEqual({other: {name: "Other identity"}});

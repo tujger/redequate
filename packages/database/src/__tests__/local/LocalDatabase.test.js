@@ -82,17 +82,17 @@ it("preserves nested collections and named record paths in a collection subtree"
     expect(await database.readSubtree([...theme, "options"])).toEqual({
         dark: created({enabled: true}), light: created({enabled: false})
     });
-    expect(await database.read([...theme, {"options": "options"}])).toEqual({
+    expect(await database.read([...theme, {options: "options"}])).toEqual({
         dark: created({enabled: true}), light: created({enabled: false})
     });
     expect(await database.read(theme)).toEqual(created({
         label: "Theme",
         options: {dark: created({enabled: true}), light: created({enabled: false})}
     }));
-    expect(await database.read([...theme, {"label": "label"}])).toBe("Theme");
+    expect(await database.read([...theme, {label: "label"}])).toBe("Theme");
     await database.update([...theme, "options"], () => ({default: "dark"}));
     const options = {default: "dark"};
-    expect(await database.read([...theme, {"options": "options"}])).toEqual(options);
+    expect(await database.read([...theme, {options: "options"}])).toEqual(options);
     expect(await database.readSubtree([...theme, "options"])).toEqual(options);
 });
 
@@ -179,7 +179,7 @@ it("creates a missing parent for a field write and leaves no record for absent n
     await database.update([...friendship, "name"], () => "created");
     expect(await database.read(friendship)).toEqual(created({name: "created"}));
     await database.delete([...friendship, "name"]);
-    expect(await database.read([...friendship, {"name": "name"}])).toBeUndefined();
+    expect(await database.read([...friendship, {name: "name"}])).toBeUndefined();
     expect(await database.read(friendship)).toBeUndefined();
 });
 
@@ -207,12 +207,12 @@ it("reads, writes, updates and deletes records with dynamic levels", async () =>
 
 it("reads and changes top-level fields while preserving the record", async () => {
     const database = new LocalDatabase({storageKey: "fields"});
-    expect(await database.read([...friendship, {"name": "name"}])).toBeUndefined();
+    expect(await database.read([...friendship, {name: "name"}])).toBeUndefined();
     await database.delete([...friendship, "name"]);
     await database.delete([...friendship, "name"]);
     await database.update(friendship, () => ({name: "first", nested: {kept: true}}));
     await database.update([...numericFriendship, "name"], () => "second");
-    expect(await database.read([...friendship, {"name": "name"}])).toBe("second");
+    expect(await database.read([...friendship, {name: "name"}])).toBe("second");
     await database.update([...friendship, "active"], () => false);
     await database.delete([...friendship, "nested"]);
     expect(await database.read(friendship)).toEqual(created({name: "second", active: false}));
@@ -333,13 +333,13 @@ it("applies Map and string batch paths atomically and rejects overlapping paths"
     expect(await database.read(friendship)).toEqual(created({count: 5, added: expect.any(Number)}));
     await expect(database.update(new Map([[[...friendship, "count"], 9], ["mutual/m123/count", 10]])))
         .rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read([...friendship, {"count": "count"}])).toBe(5);
+    expect(await database.read([...friendship, {count: "count"}])).toBe(5);
     await expect(database.update(new Map([[[...friendship, "count"], 9], ["mutual/m123/bad", undefined]])))
         .rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read([...friendship, {"count": "count"}])).toBe(5);
+    expect(await database.read([...friendship, {count: "count"}])).toBe(5);
     await expect(database.update(new Map([[[...friendship, "count"], 9],
         ["mutual/new/bad", () => "cannot clone"]]))).rejects.toBeInstanceOf(Error);
-    expect(await database.read([...friendship, {"count": "count"}])).toBe(5);
+    expect(await database.read([...friendship, {count: "count"}])).toBe(5);
     const fresh = ["mutual", {friendship: "fresh", _: true}];
     await database.update(new Map([["mutual/fresh/name", "first"], [[...fresh, "count"], 1]]));
     expect(await database.read(fresh)).toEqual(created({name: "first", count: 1}));

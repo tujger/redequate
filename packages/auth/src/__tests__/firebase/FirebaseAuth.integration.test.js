@@ -14,8 +14,8 @@ it("registers and restores users through the Firebase Auth adapter", async () =>
         public: {name: "Adapter User", image: "https://example.test/photo"},
         private: {device: {locale: "en"}}
     });
-    expect(await database.read(["users_public", {user_id: user.id}, {"name": "name"}])).toBe("Adapter User");
-    expect(await database.read(["users_private", {user_id: user.id}, {device_id: "device"}, {"locale": "locale"}])).toBe("en");
+    expect(await database.read(["users_public", {user_id: user.id}, {name: "name"}])).toBe("Adapter User");
+    expect(await database.read(["users_private", {user_id: user.id}, {device_id: "device"}, {locale: "locale"}])).toBe("en");
     expect(sdkAuth.currentUser.displayName).toBeNull();
     expect(await auth.resolveCurrentUser()).toMatchObject({name: "Adapter User", private: {device: {locale: "en"}}});
     await auth.updatePassword("new-password");

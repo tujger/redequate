@@ -63,8 +63,8 @@ it("uses one transaction to write records, posts and replies and aggregates thei
     }
     expect((await storedRows("batch-stores", "users_public")).map(row => row._collection)).toEqual(["users_public"]);
     await database.update({"posts/p1/text": "updated", "replies/p1/text": "updated"});
-    expect(await database.read([...record("posts"), {"text": "text"}])).toBe("updated");
-    expect(await database.read([...record("replies"), {"text": "text"}])).toBe("updated");
+    expect(await database.read([...record("posts"), {text: "text"}])).toBe("updated");
+    expect(await database.read([...record("replies"), {text: "text"}])).toBe("updated");
 });
 
 it("rolls back all stores and sends no notification if a queued write fails", async () => {
@@ -111,7 +111,7 @@ it("reads type indexes and notifies collection listeners from the dedicated stor
             {id: "r", value: {text: "reply"}}
         ]);
         await database.update([{type: "replies"}, {kind: "r", _: 0}, "text"], () => "changed");
-        expect(await database.read(["replies", {kind: "r", _: 0}, {"text": "text"}])).toBe("changed");
+        expect(await database.read(["replies", {kind: "r", _: 0}, {text: "text"}])).toBe("changed");
     } finally { handles.forEach(handle => handle.remove()); }
 });
 

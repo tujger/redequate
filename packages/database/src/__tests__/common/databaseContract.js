@@ -353,5 +353,4 @@ export function databaseContract(makeProvider) {
             .toEqual({[matching]: {id_uid: "post_user", type: "like"}});
         expect(await provider.db.read(["extra", {extra_id: "extra_id"}])).toBeUndefined();
     });
-
 }
