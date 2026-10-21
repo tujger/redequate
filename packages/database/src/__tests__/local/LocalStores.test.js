@@ -20,14 +20,14 @@ const storedRows = async (storageKey, name) => {
     } finally { database.close(); }
 };
 
-it("creates physical stores, indexes and per-store allocators at schema version two", async () => {
+it("creates only physical roots with native autoIncrement and unique path indexes at version one", async () => {
     const open = vi.spyOn(indexedDB, "open");
     const database = await openDatabase("schema");
     try {
-        expect(open).toHaveBeenCalledExactlyOnceWith("redequate:local:schema", 2);
-        expect(database.version).toBe(2);
+        expect(open).toHaveBeenCalledExactlyOnceWith("redequate:local:schema", 1);
+        expect(database.version).toBe(1);
         expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS)
-            .flatMap(name => [name, `${name}__keys`]).sort());
+            .sort());
         for (const obsolete of ["records", "follow", "watch", "followstamps", "watchstamps",
             "_developers", "_game_scores", "_genres", "_main_counters", "_posts",
             "_platforms", "_publishers", "_stat"]) {
@@ -38,14 +38,11 @@ it("creates physical stores, indexes and per-store allocators at schema version 
             expect(store.keyPath).toEqual(STORE_SCHEMA.keyPath);
             expect([...store.indexNames]).toEqual(Object.keys(indexesForStore(name)).sort());
             for (const [index, keyPath] of Object.entries(indexesForStore(name))) expect(store.index(index).keyPath).toEqual(keyPath);
-            const allocator = database.transaction(`${name}__keys`).objectStore(`${name}__keys`);
-            expect(allocator.autoIncrement).toBe(true);
-            expect(allocator.keyPath).toBeNull();
+            expect(store.autoIncrement).toBe(true);
+            expect(store.index("_identity").unique).toBe(true);
         }
     } finally { database.close(); }
 });
-
-
 
 it("uses one transaction to write records, posts and replies and aggregates their rows", async () => {
     const database = new LocalDatabase({storageKey: "batch-stores"});
@@ -66,8 +63,8 @@ it("uses one transaction to write records, posts and replies and aggregates thei
     }
     expect((await storedRows("batch-stores", "users_public")).map(row => row._collection)).toEqual(["users_public"]);
     await database.update({"posts/p1/text": "updated", "replies/p1/text": "updated"});
-    expect(await database.read([...record("posts"), "text"])).toBe("updated");
-    expect(await database.read([...record("replies"), "text"])).toBe("updated");
+    expect(await database.read([...record("posts"), {"text": "text"}])).toBe("updated");
+    expect(await database.read([...record("replies"), {"text": "text"}])).toBe("updated");
 });
 
 it("rolls back all stores and sends no notification if a queued write fails", async () => {
@@ -99,7 +96,7 @@ it("rolls back all stores and sends no notification if a queued write fails", as
 
 it("reads type indexes and notifies collection listeners from the dedicated stores", async () => {
     const database = new LocalDatabase({storageKey: "indexed"});
-    const postChanged = vi.fn(), replyChanged = vi.fn();
+    const postChanged = vi.fn(); const replyChanged = vi.fn();
     const handles = [database.addEventListener([{type: "posts"}], {onChange: postChanged}),
         database.addEventListener(["replies"], {onChange: replyChanged})];
     try {
@@ -114,7 +111,7 @@ it("reads type indexes and notifies collection listeners from the dedicated stor
             {id: "r", value: {text: "reply"}}
         ]);
         await database.update([{type: "replies"}, {kind: "r", _: 0}, "text"], () => "changed");
-        expect(await database.read(["replies", {kind: "r", _: 0}, "text"])).toBe("changed");
+        expect(await database.read(["replies", {kind: "r", _: 0}, {"text": "text"}])).toBe("changed");
     } finally { handles.forEach(handle => handle.remove()); }
 });
 
@@ -124,7 +121,7 @@ it.each([2, 3])("rejects an incompatible version-%i database", async version => 
     request.onupgradeneeded = () => {
         request.result.createObjectStore("records", {keyPath: STORE_SCHEMA.keyPath});
     };
-    const old = await new Promise(resolve => {request.onsuccess = () => resolve(request.result);});
+    const old = await new Promise(resolve => { request.onsuccess = () => resolve(request.result); });
     old.close();
     await expect(openDatabase(name)).rejects.toMatchObject({name: "VersionError"});
 });

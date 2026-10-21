@@ -71,7 +71,7 @@ it("skips a numeric identity written outside create", async () => {
     expect(await db.read(["meta", {id: "1"}])).toEqual({name: "existing"});
 });
 
-it("upgrades version-one rows without reusing their numeric identities", async () => {
+it("rejects an incompatible version-one database without migrating it", async () => {
     const request = globalThis.indexedDB.open("redequate:local:upgrade-keys", 1);
     request.onupgradeneeded = () => request.result.createObjectStore("meta", {keyPath: ["_collection", "_key"]});
     const connection = await new Promise(resolve => { request.onsuccess = () => resolve(request.result); });
@@ -83,8 +83,7 @@ it("upgrades version-one rows without reusing their numeric identities", async (
     });
     connection.close();
     const db = new LocalDatabase({storageKey: "upgrade-keys"});
-    expect(await db.create(["meta", "id"], {name: "new"})).toBe("8");
-    expect(await db.read(["meta", {id: "7"}])).toEqual({name: "old"});
+    await expect(db.create(["meta", "id"], {name: "new"})).rejects.toMatchObject({name: "VersionError"});
 });
 
 it("filters by explicit timestamp through pages, including missing timestamps", async () => {
@@ -106,4 +105,20 @@ it("filters by explicit timestamp through pages, including missing timestamps", 
         expect(keys).toEqual(expected);
         expect(cursor.position.finished).toBe(true);
     }
+});
+
+it("keeps native allocation across deletion and serializes equal supplied IDs in different paths", async () => {
+    const db = new LocalDatabase({storageKey: "native-sequence"});
+    const other = new LocalDatabase({storageKey: "native-sequence"});
+    await db.update(new Map([
+        [["meta", "first", {id: "7"}], {label: "root"}],
+        [["meta", "second", {id: "7"}], {label: "nested"}]
+    ]));
+    expect(await db.read(["meta", "first", {id: "7"}])).toEqual({label: "root"});
+    expect(await db.read(["meta", "second", {id: "7"}])).toEqual({label: "nested"});
+    const first = await db.create(["meta", "id"], {label: "generated"});
+    await db.delete(["meta", {id: first}]);
+    const second = await other.create(["meta", "id"], {label: "next"});
+    expect(Number(second)).toBeGreaterThan(Number(first));
+    expect(await other.read(["meta", {id: second}])).toEqual({label: "next"});
 });

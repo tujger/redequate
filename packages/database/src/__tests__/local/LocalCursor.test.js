@@ -41,9 +41,12 @@ it("sorts integer keys and applies inclusive key, prefix and timestamp boundarie
     expect((await readAll(db.cursor("meta", {order: "desc", start: "alpha"}))).map(entry => entry.key))
         .toEqual(["alphabet", "alpha"]);
     expect((await readAll(db.cursor("meta", {start: "2", end: "10"}))).map(entry => entry.key)).toEqual(["2", "02", "10"]);
-    const before = "before", inside = "inside", after = "after";
-    await seed(db, {[before]: {score: 1, timestamp: 1000}, [inside]: {score: 2, timestamp: 2000},
-        [after]: {score: 3, timestamp: 3000}});
+    const before = "before"; const inside = "inside"; const after = "after";
+    await seed(db, {
+        [before]: {score: 1, timestamp: 1000},
+        [inside]: {score: 2, timestamp: 2000},
+        [after]: {score: 3, timestamp: 3000}
+    });
     expect((await readAll(db.cursor("meta", {orderBy: "score", startDate: new Date(2000), endDate: new Date(2000)})))
         .map(entry => entry.key)).toEqual([inside]);
 });
@@ -163,6 +166,7 @@ it.each(["asc", "desc"])("pages indexed keys without materializing the store in 
     const db = new LocalDatabase({storageKey: `native-keys-${order}`});
     await seed(db, {10: {created: 2}, 2: {created: 1}, "02": {created: 1}, z: {created: 2}});
     const all = vi.spyOn(IDBObjectStore.prototype, "getAll");
+    const indexAll = vi.spyOn(IDBIndex.prototype, "getAll");
     const indexed = vi.spyOn(IDBIndex.prototype, "openCursor");
     const cursor = db.cursor("meta", {order});
     const first = await cursor.next(2);
@@ -175,14 +179,17 @@ it.each(["asc", "desc"])("pages indexed keys without materializing the store in 
         : ["z", "10", "02", "2"]);
     expect(indexed).toHaveBeenCalled();
     expect(all).not.toHaveBeenCalled();
+    expect(indexAll).not.toHaveBeenCalled();
     expect(await readAll(db.cursor("meta", {startDate: new Date(1000), endDate: new Date(2000)}))).toEqual([]);
     expect(all).not.toHaveBeenCalled();
+    expect(indexAll).not.toHaveBeenCalled();
 });
 
 it("uses the created index with stable ties, inclusive bounds, and a fresh transaction per page", async () => {
     const db = new LocalDatabase({storageKey: "native-created"});
     await seed(db, {a: {created: 1}, b: {created: 2}, c: {created: 2}, d: {created: 3}});
     const all = vi.spyOn(IDBObjectStore.prototype, "getAll");
+    const indexAll = vi.spyOn(IDBIndex.prototype, "getAll");
     const indexed = vi.spyOn(IDBIndex.prototype, "openCursor");
     const cursor = db.cursor("meta", {orderBy: "created", start: 2, end: 3});
     expect((await cursor.next(1)).map(entry => entry.key)).toEqual(["b"]);
@@ -195,21 +202,25 @@ it("uses the created index with stable ties, inclusive bounds, and a fresh trans
     expect((await readAll(db.cursor("meta", {orderBy: "created", equalTo: 2, order: "desc"})))
         .map(entry => entry.key)).toEqual(["c", "a"]);
     expect(all).not.toHaveBeenCalled();
+    expect(indexAll).not.toHaveBeenCalled();
 });
 
 it("writes handler replacements by exact indexed identity without reading every record", async () => {
     const db = new LocalDatabase({storageKey: "native-handle"});
     await seed(db, {a: {created: 1}, b: {created: 2}});
     const all = vi.spyOn(IDBObjectStore.prototype, "getAll");
-    const cursor = db.cursor("meta", {orderBy: "created", handle: ({value}) => ({created: value.created + 10})});
+    const indexAll = vi.spyOn(IDBIndex.prototype, "getAll");
+    const cursor = db.cursor("meta", {orderBy: "created", handle: ({value}) => ({created: value.created < 10 ? value.created + 10 : value.created})});
     expect((await readAll(cursor)).map(entry => entry.value.created)).toEqual([11, 12]);
     expect(all).not.toHaveBeenCalled();
+    expect(indexAll).not.toHaveBeenCalled();
     expect(await db.read(record("a"))).toMatchObject({created: 11});
     await db.update(["posts", {post_id: "p1"}], () => ({created: 1}));
     all.mockClear();
     expect(await readAll(db.cursor("posts", {handle: () => ({created: 3})})))
         .toEqual([{key: "p1", value: expect.objectContaining({created: 3})}]);
     expect(all).not.toHaveBeenCalled();
+    expect(indexAll).not.toHaveBeenCalled();
     expect(await db.read(["posts", {post_id: "p1"}])).toMatchObject({created: 3});
 });
 

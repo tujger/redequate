@@ -66,7 +66,7 @@ it("keeps ordinary nested JSON inline regardless of the write entry point", asyn
     await collection.update(["posts"], () => ({p1: value}));
     expect(await direct.read(parent)).toEqual(created(value));
     expect(await collection.read(parent)).toEqual(created({text: "post", details: {child: created({name: "value"})}}));
-    expect(await collection.read([...parent, "details"])).toEqual({child: created({name: "value"})});
+    expect(await collection.read([...parent, {"details": "details"}])).toEqual({child: created({name: "value"})});
 });
 it("omits unspecified timestamps and resolves increments when replacing a collection", async () => {
     const database = new LocalDatabase({storageKey: "collection-markers"});

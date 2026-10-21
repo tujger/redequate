@@ -50,7 +50,7 @@ it.each([false, -1, "0", null, undefined, 1.5, Number.MAX_SAFE_INTEGER + 1, {lev
 
 it("uses named segments in reads, writes, updates, deletes and creation", async () => {
     fixture.sdk.once.mockResolvedValue(fixture.snapshot("a@example.com"));
-    expect(await database.read(path)).toBe("a@example.com");
+    expect(await database.read([...path.slice(0, -1), {email: "email"}])).toBe("a@example.com");
     expect(fixture.sdk.once.mock.calls[0][0].path).toBe("users_public/u123/email");
     await database.update(path, () => "b@example.com");
     await database.update(["users_public", {user_id: "u123"}], {email: "c@example.com"});

@@ -73,22 +73,26 @@ it("preserves nested collections and named record paths in a collection subtree"
     await database.update([...settings, {setting_id: "locale"}], () => ({label: "Locale"}));
     await database.update(["meta", "settingsExtra", {setting_id: "errors"}], () => ({label: "Other"}));
     expect(await database.readSubtree(settings)).toEqual({
-        theme: {options: {dark: created({enabled: true}), light: created({enabled: false})},
-            ...created({label: "Theme"})},
+        theme: {
+            options: {dark: created({enabled: true}), light: created({enabled: false})},
+            ...created({label: "Theme"})
+        },
         locale: created({label: "Locale"})
     });
     expect(await database.readSubtree([...theme, "options"])).toEqual({
         dark: created({enabled: true}), light: created({enabled: false})
     });
-    expect(await database.read([...theme, "options"])).toEqual({
+    expect(await database.read([...theme, {"options": "options"}])).toEqual({
         dark: created({enabled: true}), light: created({enabled: false})
     });
-    expect(await database.read(theme)).toEqual(created({label: "Theme",
-        options: {dark: created({enabled: true}), light: created({enabled: false})}}));
-    expect(await database.read([...theme, "label"])).toBe("Theme");
+    expect(await database.read(theme)).toEqual(created({
+        label: "Theme",
+        options: {dark: created({enabled: true}), light: created({enabled: false})}
+    }));
+    expect(await database.read([...theme, {"label": "label"}])).toBe("Theme");
     await database.update([...theme, "options"], () => ({default: "dark"}));
     const options = {default: "dark"};
-    expect(await database.read([...theme, "options"])).toEqual(options);
+    expect(await database.read([...theme, {"options": "options"}])).toEqual(options);
     expect(await database.readSubtree([...theme, "options"])).toEqual(options);
 });
 
@@ -110,7 +114,9 @@ it("accepts the flat Settings.js batch payload with arrays and null removals", a
     const database = new LocalDatabase({storageKey: "settings-payload"});
     const settings = ["meta", "settings"];
     await database.update(new Map([[settings, {
-        postsAllowEdit: true, uploadsMaxSize: 100, uploadsTypes: ["audio/*", "video/*"],
+        postsAllowEdit: true,
+        uploadsMaxSize: 100,
+        uploadsTypes: ["audio/*", "video/*"],
         joinUsTitle: null
     }]]));
     expect(await database.readSubtree(settings)).toEqual({
@@ -123,8 +129,10 @@ it("accepts the flat Settings.js batch payload with arrays and null removals", a
 it("updates settings children, nested collections and null removals in one transaction", async () => {
     const database = new LocalDatabase({storageKey: "settings-update"});
     const settings = ["meta", "settings"];
-    await database.update(settings, () => ({theme: {value: "dark", options: {light: {enabled: true}}},
-        locale: {value: "en"}}));
+    await database.update(settings, () => ({
+        theme: {value: "dark", options: {light: {enabled: true}}},
+        locale: {value: "en"}
+    }));
     expect(await database.readSubtree(settings)).toEqual({
         theme: {options: {light: created({enabled: true})}, ...created({value: "dark"})},
         locale: created({value: "en"})
@@ -164,8 +172,6 @@ it("rolls back a failed collection batch without changing existing records", asy
     expect(await database.readSubtree(settings)).toEqual(before);
 });
 
-
-
 it("creates a missing parent for a field write and leaves no record for absent nulls", async () => {
     const database = new LocalDatabase({storageKey: "field-parent"});
     await database.delete([...friendship, "missing"]);
@@ -173,7 +179,7 @@ it("creates a missing parent for a field write and leaves no record for absent n
     await database.update([...friendship, "name"], () => "created");
     expect(await database.read(friendship)).toEqual(created({name: "created"}));
     await database.delete([...friendship, "name"]);
-    expect(await database.read([...friendship, "name"])).toBeUndefined();
+    expect(await database.read([...friendship, {"name": "name"}])).toBeUndefined();
     expect(await database.read(friendship)).toBeUndefined();
 });
 
@@ -188,8 +194,11 @@ it("reads, writes, updates and deletes records with dynamic levels", async () =>
 
     await database.update(nested, () => ({name: "nested"}));
     expect(await database.read(nested)).toEqual(created({name: "nested"}));
-    expect(await database.read(friendship)).toEqual(created({name: "second", nested: {kept: true},
-        members: {u456: created({name: "nested"})}}));
+    expect(await database.read(friendship)).toEqual(created({
+        name: "second",
+        nested: {kept: true},
+        members: {u456: created({name: "nested"})}
+    }));
     await database.delete(nested);
     expect(await database.read(nested)).toBeUndefined();
     await database.delete(friendship);
@@ -198,12 +207,12 @@ it("reads, writes, updates and deletes records with dynamic levels", async () =>
 
 it("reads and changes top-level fields while preserving the record", async () => {
     const database = new LocalDatabase({storageKey: "fields"});
-    expect(await database.read([...friendship, "name"])).toBeUndefined();
+    expect(await database.read([...friendship, {"name": "name"}])).toBeUndefined();
     await database.delete([...friendship, "name"]);
     await database.delete([...friendship, "name"]);
     await database.update(friendship, () => ({name: "first", nested: {kept: true}}));
     await database.update([...numericFriendship, "name"], () => "second");
-    expect(await database.read([...friendship, "name"])).toBe("second");
+    expect(await database.read([...friendship, {"name": "name"}])).toBe("second");
     await database.update([...friendship, "active"], () => false);
     await database.delete([...friendship, "nested"]);
     expect(await database.read(friendship)).toEqual(created({name: "second", active: false}));
@@ -233,8 +242,14 @@ it("reports invalid operations and IndexedDB failures through DatabaseBase", asy
     expect(await database.read(friendship)).toBeUndefined();
     await expect(database.read(friendship, {order: "backward"})).resolves.toBeUndefined();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}),
-        "read", {path: friendship, equalTo: undefined, orderBy: undefined,
-            order: "backward", start: undefined, end: undefined});
+        "read", {
+            path: friendship,
+            equalTo: undefined,
+            orderBy: undefined,
+            order: "backward",
+            start: undefined,
+            end: undefined
+        });
 
     const failure = new Error("IndexedDB unavailable");
     vi.spyOn(indexedDB, "open").mockImplementation(() => { throw failure; });
@@ -247,8 +262,11 @@ it("resolves local timestamp and increment markers against prior values", async 
     try {
         expect(database.TIMESTAMP).not.toEqual({".sv": "timestamp"});
         expect(database.increment(-2)).not.toEqual({".sv": {increment: -2}});
-        await database.update(friendship, () => ({timestamp: database.TIMESTAMP, count: database.increment(2),
-            nested: {count: database.increment(3)}}));
+        await database.update(friendship, () => ({
+            timestamp: database.TIMESTAMP,
+            count: database.increment(2),
+            nested: {count: database.increment(3)}
+        }));
         expect(await database.read(friendship)).toEqual({timestamp: 1234, count: 2, nested: {count: 3}});
         await database.update([...friendship, "count"], () => database.increment(-1));
         await database.update(friendship, {count: database.increment(4), nested: {count: database.increment(2)}});
@@ -315,20 +333,25 @@ it("applies Map and string batch paths atomically and rejects overlapping paths"
     expect(await database.read(friendship)).toEqual(created({count: 5, added: expect.any(Number)}));
     await expect(database.update(new Map([[[...friendship, "count"], 9], ["mutual/m123/count", 10]])))
         .rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read([...friendship, "count"])).toBe(5);
+    expect(await database.read([...friendship, {"count": "count"}])).toBe(5);
     await expect(database.update(new Map([[[...friendship, "count"], 9], ["mutual/m123/bad", undefined]])))
         .rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read([...friendship, "count"])).toBe(5);
+    expect(await database.read([...friendship, {"count": "count"}])).toBe(5);
     await expect(database.update(new Map([[[...friendship, "count"], 9],
         ["mutual/new/bad", () => "cannot clone"]]))).rejects.toBeInstanceOf(Error);
-    expect(await database.read([...friendship, "count"])).toBe(5);
+    expect(await database.read([...friendship, {"count": "count"}])).toBe(5);
     const fresh = ["mutual", {friendship: "fresh", _: true}];
     await database.update(new Map([["mutual/fresh/name", "first"], [[...fresh, "count"], 1]]));
     expect(await database.read(fresh)).toEqual(created({name: "first", count: 1}));
-    await database.update(new Map([["mutual/fresh/nested", {count: database.increment(2),
-        times: [database.TIMESTAMP]}], ["mutual/fresh/count", database.increment(4)]]));
-    expect(await database.read(fresh)).toEqual(created({name: "first", count: 5,
-        nested: {count: 2, times: [expect.any(Number)]}}));
+    await database.update(new Map([["mutual/fresh/nested", {
+        count: database.increment(2),
+        times: [database.TIMESTAMP]
+    }], ["mutual/fresh/count", database.increment(4)]]));
+    expect(await database.read(fresh)).toEqual(created({
+        name: "first",
+        count: 5,
+        nested: {count: 2, times: [expect.any(Number)]}
+    }));
     const before = await database.read(fresh);
     await expect(database.update(new Map([["mutual/fresh/count", database.increment(10)],
         ["mutual/failed/name", () => "cannot clone"]]))).rejects.toBeInstanceOf(Error);
@@ -336,13 +359,10 @@ it("applies Map and string batch paths atomically and rejects overlapping paths"
     expect(await database.read(["mutual", {id: "failed", _: true}])).toBeUndefined();
 });
 
-it("upgrades an existing version-one database with allocator stores", async () => {
+it("rejects an incompatible version-one database without migrating", async () => {
     const request = indexedDB.open("redequate:local:existing-v1", 1);
     request.onupgradeneeded = () => request.result.createObjectStore("meta", {keyPath: ["_collection", "_key"]});
     const old = await new Promise(resolve => { request.onsuccess = () => resolve(request.result); });
     old.close();
-    const connection = await openDatabase("existing-v1");
-    expect(connection.version).toBe(2);
-    expect(connection.objectStoreNames.contains("meta__keys")).toBe(true);
-    connection.close();
+    await expect(openDatabase("existing-v1")).rejects.toMatchObject({name: "VersionError"});
 });

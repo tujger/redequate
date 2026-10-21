@@ -1,3 +1,4 @@
+import LocalCursor from "../../local/cursor";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import {databaseContract} from "../common/databaseContract";
@@ -11,6 +12,7 @@ databaseContract(() => {
     const record = key => [path, {id: key, _: true}];
     return {
         db,
+        rawCursor: options => new LocalCursor(db.storageKey, [path], options),
         local: true,
         path,
         record,

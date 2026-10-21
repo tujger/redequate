@@ -51,12 +51,12 @@ it("updates Local scalar fields atomically across concurrent calls and returns t
     const results = await Promise.all(Array.from({length: 20}, (_, index) =>
         (index % 2 ? database : other).update(path, value => (value ?? 0) + 1)));
     expect(results).toEqual(Array.from({length: 20}, (_, index) => index + 1));
-    expect(await database.read(path)).toBe(20);
+    expect(await database.read([...path.slice(0, -1), {like: "like"}])).toBe(20);
     expect(await database.update(path, () => undefined)).toBeNull();
-    expect(await database.read(path)).toBeUndefined();
+    expect(await database.read([...path.slice(0, -1), {like: "like"}])).toBeUndefined();
     await database.update(path, () => 20);
     expect(await database.update(path, () => null)).toBeNull();
-    expect(await database.read(path)).toBeUndefined();
+    expect(await database.read([...path.slice(0, -1), {like: "like"}])).toBeUndefined();
 });
 
 it("replaces Local records, preserves falsy values and rolls back callback failures", async () => {

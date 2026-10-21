@@ -29,14 +29,14 @@ it("creates under the supplied identity field and reads collections and records"
     const path = ["posts", "post_id"];
     const key = await database.create(path, {created: 0});
     expect(await database.read(["posts"])).toMatchObject({[key]: {created: 0}});
-    expect(await database.read(path)).toBeUndefined();
+    expect(await database.read(path)).toEqual({[key]: {created: 0}});
     expect(await database.read(["posts", {post_id: key}])).toMatchObject({created: 0});
-    expect(await database.read(["posts", {post_id: key}, "created"])).toBe(0);
+    expect(await database.read(["posts", {post_id: key}, {"created": "created"}])).toBe(0);
     await database.update(["posts", {post_id: key}, "id"], () => "external");
-    expect(await database.read(["posts", {post_id: key}, "id"])).toBe("external");
+    expect(await database.read(["posts", {post_id: key}, {"id": "id"}])).toBe("external");
     for (const created of [false, "", [1, 2], {value: 3}]) {
         await database.update(["posts", {post_id: key}, "created"], () => created);
-        expect(await database.read(["posts", {post_id: key}, "created"])).toEqual(created);
+        expect(await database.read(["posts", {post_id: key}, {"created": "created"}])).toEqual(created);
     }
 });
 
@@ -44,15 +44,15 @@ it("keeps nested collection addresses and their identity fields", async () => {
     const database = new LocalDatabase({storageKey: "nested-create-read"});
     const chat = ["chats", {chat_id: "c"}];
     const message = await database.create([...chat, "message_id", "id"], {created: false});
-    expect(await database.read([...chat, "message_id"])).toMatchObject({
+    expect(await database.read([...chat, {"message_id": "message_id"}])).toMatchObject({
         [message]: {created: false}
     });
-    expect(await database.read([...chat, "message_id", {id: message}, "created"])).toBe(false);
+    expect(await database.read([...chat, "message_id", {id: message}, {"created": "created"}])).toBe(false);
 
     const post = [{type: "posts"}, {post_id: "p"}];
     const edit = await database.create([...post, "edit", "id"], {created: [1, 2]});
-    expect(await database.read([...post, "edit"])).toMatchObject({
+    expect(await database.read([...post, {"edit": "edit"}])).toMatchObject({
         [edit]: {created: [1, 2]}
     });
-    expect(await database.read([...post, "edit", {id: edit}, "created"])).toEqual([1, 2]);
+    expect(await database.read([...post, "edit", {id: edit}, {"created": "created"}])).toEqual([1, 2]);
 });

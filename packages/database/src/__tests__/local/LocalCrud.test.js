@@ -31,7 +31,7 @@ it("merges, atomically replaces and deletes values, rejects asynchronous callbac
     await expect(database.update(path, async () => ({}))).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await database.read(path)).toMatchObject({name: "B"});
     await database.update(new Map([[[...path, "name"], "C"], [[...missing, "name"], "D"]]));
-    expect(await database.read([...path, "name"])).toBe("C");
+    expect(await database.read([...path, {"name": "name"}])).toBe("C");
     expect(await database.update(path, () => undefined)).toBeNull();
     expect(await database.read(path)).toBeUndefined();
     expect(await database.update(missing, () => null)).toBeNull();

@@ -18,11 +18,11 @@ it("exports the same order enum through the base and source entrypoints", async 
     expect(database.TIMESTAMP).toBe(fixture.firebase.database.ServerValue.TIMESTAMP);
     expect(database.increment(-2)).toEqual({".sv": {increment: -2}});
 });
-it.each(["users/a", ["users", "a"]])("normalizes read/update/delete path %j", async path => {
+it.each(["users/a", ["users", "a"]])("distinguishes an array identity-field read from literal update/delete paths %j", async path => {
     const effective = path instanceof Array ? path.join("/") : path;
     sdk.once.mockResolvedValue(fixture.snapshot({name: "A"}));
     expect(await database.read(path)).toEqual({name: "A"});
-    expect(sdk.once.mock.calls[0][0].path).toBe(effective);
+    expect(sdk.once.mock.calls[0][0].path).toBe(Array.isArray(path) ? "users" : effective);
     await expect(database.update(path, () => false)).resolves.toBe(false);
     await expect(database.delete(path)).resolves.toBeUndefined();
     expect(sdk.transaction.mock.calls[0][0].path).toBe(effective);

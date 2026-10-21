@@ -35,30 +35,30 @@ async function subscribe(cursor, listener) {
 it("reads/writes/deletes real nodes and applies partial and mu ltipath updates", async () => {
     await database.update([path, "record"], () => ({name: "A", retained: true}));
     await database.update([path, "record"], {name: "B"});
-    expect(await database.read([path, "record"])).toEqual({name: "B", retained: true});
+    expect(await database.read([path, {"record": "record"}])).toEqual({name: "B", retained: true});
     await database.update({[`${path}/record/name`]: "C", [`${path}/other`]: 0});
     await database.update(new Map([[[path, "record", "retained"], null], [[path, "created", "enabled"], false]]));
     expect(await database.read(path)).toEqual({record: {name: "C"}, other: 0, created: {enabled: false}});
-    await database.delete([path, "record"]);await database.delete([path, "record"]);
-    expect(await database.read([path, "record"])).toBeUndefined();
+    await database.delete([path, "record"]); await database.delete([path, "record"]);
+    expect(await database.read([path, {"record": "record"}])).toBeUndefined();
 });
 it("saves by generated key and rejects duplicate creation", async () => {
     const key = await database.create([path, "id"], {name: "created"});
     await expect(database.create([path, {id: key}], {name: "overwritten"})).rejects.toMatchObject({code: "database/conflict"});
-    expect(await database.read([path, key])).toEqual({name: "created"});
+    expect(await database.read([path, {id: key}])).toEqual({name: "created"});
     await expect(database.create([path, "id"], undefined)).rejects.toMatchObject({code: "database/invalid-argument"});
     const retryKey = await database.create([path, "id"], {timestamp: database.TIMESTAMP, count: database.increment(2)});
-    expect(await database.read([path, retryKey])).toMatchObject({timestamp: expect.any(Number), count: 2});
+    expect(await database.read([path, {id: retryKey}])).toMatchObject({timestamp: expect.any(Number), count: 2});
 });
 it.each(["asc", "desc"])("reads all 83 equal-valued records in %s pages", async order => {
     const values = Object.fromEntries(Array.from({length: 83}, (_, index) => [`key-${String(index).padStart(3, "0")}`, {type: "Join us", index}]));
     await seed({...values, unrelated: {type: "Other", index: 100}});
     const cursor = database.cursor(path, {orderBy: "type", equalTo: "Join us", order});
     const entries = await readAll(cursor);
-    const keys = Object.keys(values);if (order === "desc") keys.reverse();
+    const keys = Object.keys(values); if (order === "desc") keys.reverse();
     expect(entries.map(entry => entry.key)).toEqual(keys);
     expect(new Set(entries.map(entry => entry.key)).size).toBe(83);
-    expect(cursor.count).toBe(83);expect(cursor.position.index).toBe(82);
+    expect(cursor.count).toBe(83); expect(cursor.position.index).toBe(82);
 });
 it.each(["asc", "desc"])("continues correctly after the %s boundary record is deleted", async order => {
     await seed({a: {type: "same"}, b: {type: "same"}, c: {type: "same"}, d: {type: "same"}, e: {type: "same"}});
@@ -76,7 +76,7 @@ it("uses prefix, explicit numeric bounds, nested ordering and value equality", a
     expect(await readAll(database.cursor(path, {equalTo: false}))).toEqual([{key: "a", value: false}, {key: "c", value: false}]);
 });
 it("combines date key bounds with ordering by a different field", async () => {
-    const before = dateKey(1000, "min"), first = dateKey(2000, "min"), second = dateKey(3000, "max"), after = dateKey(4000, "max");
+    const before = dateKey(1000, "min"); const first = dateKey(2000, "min"); const second = dateKey(3000, "max"); const after = dateKey(4000, "max");
     await seed({[before]: {score: 0}, [first]: {score: 2}, [second]: {score: 1}, [after]: {score: 3}});
     const options = {startDate: new Date(2000), endDate: new Date(3000)};
     expect((await readAll(database.cursor(path, options))).map(entry => entry.key)).toEqual([first, second]);
@@ -84,22 +84,24 @@ it("combines date key bounds with ordering by a different field", async () => {
 });
 it("isolates handler mutations, deletes, replaces and resolves server timestamp values", async () => {
     await seed({a: {n: 1}, b: {n: 2}, c: {n: 3}});
-    const cursor = database.cursor(path, {handle: async ({key, value}) => {
-        if (key === "a") { value.n = 100; return undefined; }
-        if (key === "b") return null;
-        return {n: 30, timestamp: database.TIMESTAMP};
-    }});
+    const cursor = database.cursor(path, {
+        handle: async ({key, value}) => {
+            if (key === "a") { value.n = 100; return undefined; }
+            if (key === "b") return null;
+            return {n: 30, timestamp: database.TIMESTAMP};
+        }
+    });
     expect(await readAll(cursor, 2)).toEqual([{key: "a", value: {n: 1}}, {key: "c", value: {n: 30, timestamp: expect.any(Number)}}]);
-    expect(await database.read([path, "a"])).toEqual({n: 1});expect(await database.read([path, "b"])).toBeUndefined();expect(cursor.count).toBe(2);
+    expect(await database.read([path, {"a": "a"}])).toEqual({n: 1}); expect(await database.read([path, {"b": "b"}])).toBeUndefined(); expect(cursor.count).toBe(2);
 });
 it("deduplicates overlapping paths after each source handles its own records", async () => {
-    await seed({a: {score: 1}, b: {score: 2}, c: {score: 3}});const handle = vi.fn();
+    await seed({a: {score: 1}, b: {score: 2}, c: {score: 3}}); const handle = vi.fn();
     const cursor = database.cursor([{path, start: 1, end: 2}, {path, start: 2, end: 3}], {orderBy: "score", handle});
     const entries = await readAll(cursor, 2);
-    expect(entries.map(entry => entry.key).sort()).toEqual(["a", "b", "c"]);expect(cursor.count).toBe(3);expect(handle).toHaveBeenCalledTimes(4);
+    expect(entries.map(entry => entry.key).sort()).toEqual(["a", "b", "c"]); expect(cursor.count).toBe(3); expect(handle).toHaveBeenCalledTimes(4);
 });
 it("delivers subscription changes after the baseline and updates count before callbacks", async () => {
-    await seed({a: {score: 1}});const cursor = database.cursor(path), events = [];
+    await seed({a: {score: 1}}); const cursor = database.cursor(path); const events = [];
     await cursor.next(10);
     const subscription = await subscribe(cursor, event => events.push({...event, count: cursor.count}));
     expect(events).toEqual([]);
@@ -115,17 +117,17 @@ it("delivers subscription changes after the baseline and updates count before ca
         {type: "remove", entry: {key: "a", value: {score: 1}}, count: 1},
     ]);
     expect(subscription).toMatchObject({active: true, added: 1, changed: 1, removed: 1, subscribed: expect.any(Date)});
-    subscription.unsubscribe();await database.update([path, "c"], () => ({score: 4}));
-    expect(events).toHaveLength(3);expect(subscription.active).toBe(false);
+    subscription.unsubscribe(); await database.update([path, "c"], () => ({score: 4}));
+    expect(events).toHaveLength(3); expect(subscription.active).toBe(false);
 });
 it("normalizes listener events and stops them on remove", async () => {
-    const onChange = vi.fn(), onChildAdd = vi.fn(), onChildChange = vi.fn(), onChildRemove = vi.fn();
-    const listener = database.addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove});subscriptions.push(listener);
+    const onChange = vi.fn(); const onChildAdd = vi.fn(); const onChildChange = vi.fn(); const onChildRemove = vi.fn();
+    const listener = database.addEventListener(path, {onChange, onChildAdd, onChildChange, onChildRemove}); subscriptions.push(listener);
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith(undefined));
-    await database.update([path, "a"], () => ({n: 1}));await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledWith({key: "a", value: {n: 1}}));
-    await database.update([path, "a"], {n: 2});await vi.waitFor(() => expect(onChildChange).toHaveBeenCalledWith({key: "a", value: {n: 2}}));
-    await database.delete([path, "a"]);await vi.waitFor(() => expect(onChildRemove).toHaveBeenCalledWith({key: "a", value: {n: 2}}));
-    listener.remove();const calls = onChange.mock.calls.length;await database.update([path, "b"], () => 3);expect(onChange).toHaveBeenCalledTimes(calls);
+    await database.update([path, "a"], () => ({n: 1})); await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledWith({key: "a", value: {n: 1}}));
+    await database.update([path, "a"], {n: 2}); await vi.waitFor(() => expect(onChildChange).toHaveBeenCalledWith({key: "a", value: {n: 2}}));
+    await database.delete([path, "a"]); await vi.waitFor(() => expect(onChildRemove).toHaveBeenCalledWith({key: "a", value: {n: 2}}));
+    listener.remove(); const calls = onChange.mock.calls.length; await database.update([path, "b"], () => 3); expect(onChange).toHaveBeenCalledTimes(calls);
 });
 it("passes permission errors to onError with operation context", async () => {
     const onError = vi.fn();
@@ -139,9 +141,12 @@ it.each(["asc", "desc"])("keeps live updates independent of an in-flight %s page
     const waiting = new Promise(resolve => { entered = resolve; });
     const paused = new Promise(resolve => { resume = resolve; });
     let first = true;
-    const cursor = database.cursor(path, {order, handle: async () => {
-        if (first) { first = false;entered();await paused; }
-    }});
+    const cursor = database.cursor(path, {
+        order,
+        handle: async () => {
+            if (first) { first = false; entered(); await paused; }
+        }
+    });
     const events = [];
     const subscription = await subscribe(cursor, event => events.push(event));
     const page = cursor.next(2);
@@ -163,12 +168,12 @@ it("atomically increments through update callbacks and returns committed values"
     const results = await Promise.all(Array.from({length: 12}, () =>
         database.update([path, "counter"], value => (value ?? 0) + 1)));
     expect(results.slice().sort((a, b) => a - b)).toEqual(Array.from({length: 12}, (_, index) => index + 1));
-    expect(await database.read([path, "counter"])).toBe(12);
+    expect(await database.read([path, {"counter": "counter"}])).toBe(12);
     expect(await database.update([path, "counter"], () => undefined)).toBeNull();
     await expect(database.update([path, "counter"], async () => 99)).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read([path, "counter"])).toBeUndefined();
+    expect(await database.read([path, {"counter": "counter"}])).toBeUndefined();
     expect(await database.update([path, "counter"], () => null)).toBeNull();
-    expect(await database.read([path, "counter"])).toBeUndefined();
+    expect(await database.read([path, {"counter": "counter"}])).toBeUndefined();
 });
 it.each(["asc", "desc"])("skips absent ordered fields across real %s page boundaries", async order => {
     await seed({a: {}, b: {text: "missing"}, c: {nested: {score: false}}, d: {nested: {score: 0}}, e: {nested: {score: ""}}});
@@ -188,7 +193,7 @@ it("notifies when an ordered field appears and disappears in a real subscription
 });
 
 it("requires read permission for transactional creation", async () => {
-    await expect(database.create(["database_write_only", "id"], {name: "created"})).rejects.toMatchObject({code: "PERMISSION_DENIED"});
+    await expect(database.create(["database_write_only", "id"], {name: "created"})).rejects.toThrow("permission_denied");
 });
 it("looks up a record by an exact key range regardless of the record value", async () => {
     await seed({before: {text: "before"}, target: {text: "found"}, targetSuffix: {text: "other"}});
@@ -197,9 +202,16 @@ it("looks up a record by an exact key range regardless of the record value", asy
     ]);
 });
 it("excludes missing, negative and nonnumeric visits from the active numeric range", async () => {
-    await seed({missing: {name: "none"}, negative: {visit: -1}, zero: {visit: 0}, active: {visit: 5},
-        maximum: {visit: Number.MAX_SAFE_INTEGER}, beyond: {visit: Number.MAX_SAFE_INTEGER + 1},
-        text: {visit: "5"}, object: {visit: {value: 5}}});
+    await seed({
+        missing: {name: "none"},
+        negative: {visit: -1},
+        zero: {visit: 0},
+        active: {visit: 5},
+        maximum: {visit: Number.MAX_SAFE_INTEGER},
+        beyond: {visit: Number.MAX_SAFE_INTEGER + 1},
+        text: {visit: "5"},
+        object: {visit: {value: 5}}
+    });
     expect((await readAll(database.cursor(path, {orderBy: "visit", start: 0, end: Number.MAX_SAFE_INTEGER, order: "desc"})))
         .map(entry => entry.key)).toEqual(["maximum", "active", "zero"]);
 });
