@@ -11,24 +11,20 @@ const numericFriendship = ["mutual", {friendship: "m123", _: 0}];
 const nested = ["mutual", {friendship: "m123", _: true}, "members", {member: "u456", _: 1}];
 const created = value => value;
 
-it("creates a draft and persists it only when saved", async () => {
+it("creates records with permanent keys", async () => {
     const database = new LocalDatabase({storageKey: "meta"});
-    const draft = database.create(["mutual", "id"]);
-    expect(draft.temporaryKey).toEqual(expect.any(String));
-    expect(await database.read(["mutual", {id: draft.temporaryKey}])).toBeUndefined();
-    const key = await draft.save({name: "created"});
+    const key = await database.create(["mutual", "id"], {name: "created"});
     expect(key).toBe("1");
     expect(await database.read(["mutual", {id: key}])).toEqual(created({name: "created"}));
-    await expect(draft.save({name: "duplicate"})).rejects.toMatchObject({name: "ConstraintError"});
+    await expect(database.create(["mutual", {id: key}], {name: "duplicate"})).rejects.toMatchObject({name: "ConstraintError"});
 
-    const child = database.create([...friendship, "id"]);
-    const childKey = await child.save({name: "child"});
+    const childKey = await database.create([...friendship, "id"], {name: "child"});
     expect(await database.read([...friendship, {id: childKey, _: 1}])).toEqual(created({name: "child"}));
 });
 
 it("creates posts under the post_id identity used by post reads", async () => {
     const database = new LocalDatabase({storageKey: "posts"});
-    const key = await database.create(["posts", "post_id"]).save({text: "Post"});
+    const key = await database.create(["posts", "post_id"], {text: "Post"});
     expect(await database.read(["posts", {post_id: key}])).toEqual(created({text: "Post"}));
     expect(await database.read(["posts", {id: key, _: true}])).toBeUndefined();
 });
@@ -63,8 +59,7 @@ it("reads every record in a literal collection and keeps sibling collections iso
     expect(await database.readSubtree(settings)).toEqual(expected);
     expect(await database.read([...settings, {setting_id: "theme"}])).toEqual(created({value: "dark"}));
     expect(await database.readSubtree(["meta", "maintenance"])).toEqual({theme: created({value: "off"})});
-    const draft = database.create([...settings, "setting_id"]);
-    const generated = await draft.save({value: "generated"});
+    const generated = await database.create([...settings, "setting_id"], {value: "generated"});
     expect(await database.read([...settings, {setting_id: generated}])).toEqual(created({value: "generated"}));
 });
 
@@ -230,9 +225,9 @@ it("creates an absent record on a non-null update and ignores empty removals", a
 it("reports invalid operations and IndexedDB failures through DatabaseBase", async () => {
     const onError = vi.fn();
     const database = new LocalDatabase({storageKey: "errors", onError});
-    expect(database.create(["mutual", {friendship: "m123", _: -1}])).toBeUndefined();
+    await expect(database.create(["mutual", {friendship: "m123", _: -1}], {})).resolves.toBeUndefined();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}),
-        "create", {path: ["mutual", {friendship: "m123", _: -1}]});
+        "create", {path: ["mutual", {friendship: "m123", _: -1}], value: {}});
     await expect(database.update(friendship, () => undefined)).resolves.toBeNull();
     await expect(database.update(friendship, {invalid: undefined})).resolves.toBeUndefined();
     expect(await database.read(friendship)).toBeUndefined();
@@ -258,8 +253,7 @@ it("resolves local timestamp and increment markers against prior values", async 
         await database.update([...friendship, "count"], () => database.increment(-1));
         await database.update(friendship, {count: database.increment(4), nested: {count: database.increment(2)}});
         expect(await database.read(friendship)).toEqual({timestamp: 1234, count: 5, nested: {count: 5}});
-        const draft = database.create(["meta", "id"]);
-        const key = await draft.save({timestamp: database.TIMESTAMP, count: database.increment(1)});
+        const key = await database.create(["meta", "id"], {timestamp: database.TIMESTAMP, count: database.increment(1)});
         expect(await database.read(["meta", {id: key}])).toEqual({timestamp: 1234, count: 1});
         await database.update(friendship, () => ({ordinary: {".sv": "unknown"}}));
         expect(await database.read(friendship)).toEqual({ordinary: {".sv": "unknown"}});

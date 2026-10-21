@@ -43,15 +43,12 @@ it("reads/writes/deletes real nodes and applies partial and mu ltipath updates",
     expect(await database.read([path, "record"])).toBeUndefined();
 });
 it("saves by generated key and rejects duplicate creation", async () => {
-    const draft = database.create([path, "id"]);
-    expect(await database.read([path, draft.temporaryKey])).toBeUndefined();
-    expect(await draft.save({name: "created"})).toBe(draft.temporaryKey);
-    await expect(draft.save({name: "overwritten"})).rejects.toMatchObject({code: "database/conflict"});
-    expect(await database.read([path, draft.temporaryKey])).toEqual({name: "created"});
-    const retry = database.create([path, "id"]);
-    await expect(retry.save(undefined)).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await retry.save({timestamp: database.TIMESTAMP, count: database.increment(2)})).toBe(retry.temporaryKey);
-    expect(await database.read([path, retry.temporaryKey])).toMatchObject({timestamp: expect.any(Number), count: 2});
+    const key = await database.create([path, "id"], {name: "created"});
+    await expect(database.create([path, {id: key}], {name: "overwritten"})).rejects.toMatchObject({code: "database/conflict"});
+    expect(await database.read([path, key])).toEqual({name: "created"});
+    await expect(database.create([path, "id"], undefined)).rejects.toMatchObject({code: "database/invalid-argument"});
+    const retryKey = await database.create([path, "id"], {timestamp: database.TIMESTAMP, count: database.increment(2)});
+    expect(await database.read([path, retryKey])).toMatchObject({timestamp: expect.any(Number), count: 2});
 });
 it.each(["asc", "desc"])("reads all 83 equal-valued records in %s pages", async order => {
     const values = Object.fromEntries(Array.from({length: 83}, (_, index) => [`key-${String(index).padStart(3, "0")}`, {type: "Join us", index}]));
@@ -191,8 +188,7 @@ it("notifies when an ordered field appears and disappears in a real subscription
 });
 
 it("requires read permission for transactional creation", async () => {
-    const draft = database.create(["database_write_only", "id"]);
-    await expect(draft.save({name: "created"})).rejects.toMatchObject({code: "PERMISSION_DENIED"});
+    await expect(database.create(["database_write_only", "id"], {name: "created"})).rejects.toMatchObject({code: "PERMISSION_DENIED"});
 });
 it("looks up a record by an exact key range regardless of the record value", async () => {
     await seed({before: {text: "before"}, target: {text: "found"}, targetSuffix: {text: "other"}});

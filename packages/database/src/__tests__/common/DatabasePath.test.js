@@ -48,7 +48,7 @@ it.each([false, -1, "0", null, undefined, 1.5, Number.MAX_SAFE_INTEGER + 1, {lev
     }
 );
 
-it("uses named segments in reads, writes, updates, deletes and draft creation", async () => {
+it("uses named segments in reads, writes, updates, deletes and creation", async () => {
     fixture.sdk.once.mockResolvedValue(fixture.snapshot("a@example.com"));
     expect(await database.read(path)).toBe("a@example.com");
     expect(fixture.sdk.once.mock.calls[0][0].path).toBe("users_public/u123/email");
@@ -59,8 +59,7 @@ it("uses named segments in reads, writes, updates, deletes and draft creation", 
         "users_public/u123/email"
     ]);
     expect(fixture.sdk.update.mock.calls[0][0].path).toBe("users_public/u123");
-    const draft = database.create(["users_public", {user_id: "u123"}, "posts", "id"]);
-    await draft.save({text: "Post"});
+    await database.create(["users_public", {user_id: "u123"}, "posts", "id"], {text: "Post"});
     expect(fixture.sdk.transaction.mock.calls.at(-1)[0].path).toBe("users_public/u123/posts/generated-1");
 });
 
@@ -125,7 +124,7 @@ it.each([{}, {uid: "u123", tenant: "t1"}, {uid: 123}, {uid: null}, {uid: undefin
         await expect(database.update(invalid, () => 1)).rejects.toMatchObject({code: "database/invalid-argument"});
         await expect(database.delete(invalid)).rejects.toMatchObject({code: "database/invalid-argument"});
         await expect(database.update(invalid, {a: 1})).rejects.toMatchObject({code: "database/invalid-argument"});
-        expect(() => database.create(invalid)).toThrow();
+        await expect(database.create(invalid, {})).rejects.toMatchObject({code: "database/invalid-argument"});
         expect(() => database.addEventListener(invalid)).toThrow();
         expect(() => database.cursor(invalid)).toThrow();
         expect(fixture.sdk.refs).toHaveLength(0);

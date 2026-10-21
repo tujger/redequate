@@ -7,20 +7,20 @@ afterEach(() => vi.unstubAllGlobals());
 
 it("shares one numeric sequence across nested collections in a physical store, but isolates stores", async () => {
     const db = new LocalDatabase({storageKey: "sequences"});
-    const post = await db.create(["posts", "post_id"]).save({text: "first"});
-    const nested = await db.create(["posts", {post_id: post}, "edits", "id"]).save({text: "edit"});
-    const other = await db.create(["posts", "comments", "id"]).save({text: "comment"});
-    const reply = await db.create(["replies", "post_id"]).save({text: "reply"});
+    const post = await db.create(["posts", "post_id"], {text: "first"});
+    const nested = await db.create(["posts", {post_id: post}, "edits", "id"], {text: "edit"});
+    const other = await db.create(["posts", "comments", "id"], {text: "comment"});
+    const reply = await db.create(["replies", "post_id"], {text: "reply"});
     expect([post, nested, other, reply]).toEqual(["1", "2", "3", "1"]);
     expect(await db.read(["posts", {post_id: post}])).toMatchObject({text: "first"});
     expect(await db.read(["posts", {post_id: post}, "edits", {id: nested}])).toMatchObject({text: "edit"});
     expect(await db.read(["posts", "comments", {id: other}])).toMatchObject({text: "comment"});
 });
 
-it("passes the permanent key synchronously to save callback and rolls back allocation on failure", async () => {
+it("passes the permanent key synchronously to create callback and rolls back allocation on failure", async () => {
     const db = new LocalDatabase({storageKey: "rollback"});
     const error = new Error("callback failed");
-    await expect(db.create(["meta", "id"]).save(key => {
+    await expect(db.create(["meta", "id"], key => {
         expect(key).toBe("1");
         throw error;
     })).rejects.toBe(error);
@@ -29,21 +29,44 @@ it("passes the permanent key synchronously to save callback and rolls back alloc
         if (this.name === "meta") throw new Error("write failed");
         return put.apply(this, args);
     });
-    await expect(db.create(["meta", "id"]).save({name: "lost"})).rejects.toThrow("write failed");
+    await expect(db.create(["meta", "id"], {name: "lost"})).rejects.toThrow("write failed");
     vi.restoreAllMocks();
-    const draft = db.create(["meta", "id"]);
-    expect(draft.temporaryKey).not.toBe("1");
-    expect(await draft.save(key => ({name: key}))).toBe("1");
+    expect(await db.create(["meta", "id"], key => ({name: key}))).toBe("1");
     expect(await db.read(["meta", {id: "1"}])).toEqual({name: "1"});
-    await expect(draft.save({name: "duplicate"})).rejects.toMatchObject({name: "ConstraintError"});
-    expect(await db.create(["meta", {id: "10"}]).save({name: "supplied"})).toBe("10");
-    expect(await db.create(["meta", "id"]).save({name: "next"})).toBe("11");
+    await expect(db.create(["meta", {id: "1"}], {name: "duplicate"})).rejects.toMatchObject({name: "ConstraintError"});
+    expect(await db.create(["meta", {id: "10"}], {name: "supplied"})).toBe("10");
+    expect(await db.create(["meta", "id"], {name: "next"})).toBe("11");
+});
+
+it("serializes concurrent creates and reports callback errors through onError", async () => {
+    const db = new LocalDatabase({storageKey: "concurrent"});
+    const keys = await Promise.all(Array.from({length: 12}, (_, index) =>
+        db.create(["meta", "id"], key => ({index, key}))));
+    expect(keys).toEqual(Array.from({length: 12}, (_, index) => String(index + 1)));
+    for (const key of keys) expect(await db.read(["meta", {id: key}])).toMatchObject({key});
+    const error = new Error("callback failed"), onError = vi.fn();
+    expect(await db.create(["meta", "id"], () => { throw error; }, {onError})).toBeUndefined();
+    expect(onError).toHaveBeenCalledExactlyOnceWith(error, "create", {
+        path: ["meta", "id"], value: expect.any(Function)
+    });
+    expect(await db.create(["meta", "id"], {after: true})).toBe("13");
+});
+
+it("runs supplied-key callbacks inside the transaction and leaves duplicates untouched", async () => {
+    const db = new LocalDatabase({storageKey: "supplied-callback"});
+    const callback = vi.fn(key => ({key}));
+    expect(await db.create(["meta", {id: "manual"}], callback)).toBe("manual");
+    expect(callback).toHaveBeenCalledExactlyOnceWith("manual");
+    callback.mockClear();
+    await expect(db.create(["meta", {id: "manual"}], callback)).rejects.toMatchObject({name: "ConstraintError"});
+    expect(callback).not.toHaveBeenCalled();
+    expect(await db.read(["meta", {id: "manual"}])).toEqual({key: "manual"});
 });
 
 it("skips a numeric identity written outside create", async () => {
     const db = new LocalDatabase({storageKey: "existing-numeric"});
     await db.update(["meta", {id: "1"}], () => ({name: "existing"}));
-    expect(await db.create(["meta", "id"]).save({name: "generated"})).toBe("2");
+    expect(await db.create(["meta", "id"], {name: "generated"})).toBe("2");
     expect(await db.read(["meta", {id: "1"}])).toEqual({name: "existing"});
 });
 
@@ -59,7 +82,7 @@ it("upgrades version-one rows without reusing their numeric identities", async (
     });
     connection.close();
     const db = new LocalDatabase({storageKey: "upgrade-keys"});
-    expect(await db.create(["meta", "id"]).save({name: "new"})).toBe("8");
+    expect(await db.create(["meta", "id"], {name: "new"})).toBe("8");
     expect(await db.read(["meta", {id: "7"}])).toEqual({name: "old"});
 });
 

@@ -64,24 +64,22 @@ it("updates fields at a path and supports root-relative object/Map batches", asy
     }
     expect(sdk.update).toHaveBeenCalledTimes(3);
 });
-it("prepares a draft without writing and creates transactionally", async () => {
-    const draft = database.create(["records", "record_id"]);
-    expect(draft.temporaryKey).toBe("generated-1");
+it("creates transactionally and returns the permanent key", async () => {
+    const key = await database.create(["records", "record_id"], {name: "A"});
+    expect(key).toBe("generated-1");
     expect(sdk.set).not.toHaveBeenCalled();
-    expect(await draft.save({name: "A"})).toBe(draft.temporaryKey);
     expect(sdk.transaction.mock.calls[0][0].path).toBe("records/generated-1");
     expect(sdk.values.get("records/generated-1")).toEqual({name: "A"});
 });
-it.each([undefined, null, "value", 1, false, []])("rejects invalid draft value %j", async value => {
-    await expect(database.create(["records", "record_id"]).save(value)).rejects.toMatchObject({code: "database/invalid-argument"});
+it.each([undefined, null, "value", 1, false, []])("rejects invalid create value %j", async value => {
+    await expect(database.create(["records", "record_id"], value)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(sdk.transaction).not.toHaveBeenCalled();
     expect(sdk.set).not.toHaveBeenCalled();
 });
-it("allows retry after a rejected draft save", async () => {
-    const draft = database.create(["records", "record_id"]);
+it("allows another create after a rejected write", async () => {
     sdk.transaction.mockRejectedValueOnce(new Error("offline"));
-    await expect(draft.save({name: "A"})).rejects.toThrow("offline");
-    expect(await draft.save({name: "A"})).toBe(draft.temporaryKey);
+    await expect(database.create(["records", "record_id"], {name: "A"})).rejects.toThrow("offline");
+    expect(await database.create(["records", "record_id"], {name: "A"})).toBe("generated-2");
 });
 it("throws by default and reports effective operation errors once with context", async () => {
     const error = new Error("offline"), onError = vi.fn(), override = vi.fn();
@@ -100,11 +98,10 @@ it("throws by default and reports effective operation errors once with context",
     await handled.update(updates, {onError: override});
     expect(override).toHaveBeenCalledExactlyOnceWith(error, "update", {updates});
 });
-it("reports factory, draft and error-handler failures without recursive handling", async () => {
+it("reports create and error-handler failures without recursive handling", async () => {
     const onError = vi.fn();
-    const draft = database.create(["records", "record_id"], {onError});
-    await draft.save(undefined);
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "create.save", {path: ["records", "record_id"], value: undefined});
+    await database.create(["records", "record_id"], undefined, {onError});
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "create", {path: ["records", "record_id"], value: undefined});
     const failure = new Error("handler failed");
     sdk.once.mockRejectedValue(new Error("read failed"));
     const handler = vi.fn(() => { throw failure; });

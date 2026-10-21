@@ -73,8 +73,7 @@ it("keeps subscribers independent and stops initial or later delivery after remo
     first.addEventListener(collection, {onChange: removed}).remove();
     await vi.waitFor(() => expect(two).toHaveBeenCalledOnce());
     a.remove();a.remove();
-    const draft = first.create([...collection, "id"]);
-    await draft.save({score: 1});
+    await first.create([...collection, "id"], {score: 1});
     expect(one).toHaveBeenCalledOnce();
     expect(two).toHaveBeenCalledTimes(2);
     expect(removed).not.toHaveBeenCalled();

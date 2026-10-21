@@ -9,9 +9,8 @@ it("creates at the parent address, including nested collection paths", async () 
         [["chats", {chat_id: "c"}, "message_id", "id"], "chats/c/message_id"],
         [[{type: "posts"}, {post_id: "p"}, "edit", "id"], "posts/p/edit"]
     ]) {
-        const draft = database.create(path);
-        await draft.save({created: 0});
-        expect(sdk.transaction.mock.calls.at(-1)[0].path).toBe(`${parent}/${draft.temporaryKey}`);
+        const key = await database.create(path, {created: 0});
+        expect(sdk.transaction.mock.calls.at(-1)[0].path).toBe(`${parent}/${key}`);
     }
 });
 

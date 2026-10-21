@@ -4,19 +4,15 @@ import LocalDatabase from "../../local";
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
-it("prepares drafts, uses final keys in callbacks, and rejects duplicate IDs", async () => {
+it("creates records, uses final keys in callbacks, and rejects duplicate IDs", async () => {
     const database = new LocalDatabase({storageKey: "crud-create"});
-    const generated = database.create(["posts", "post_id"]);
-    expect(await database.read(["posts", "post_id"])).toBeUndefined();
-    const generatedKey = await generated.save(key => ({key}));
+    const generatedKey = await database.create(["posts", "post_id"], key => ({key}));
     expect(generatedKey).toBe("1");
     expect(await database.read(["posts", {post_id: generatedKey}])).toMatchObject({key: generatedKey});
-    const known = database.create(["posts", {post_id: "p1"}]);
-    expect(known.temporaryKey).toBe("p1");
-    expect(await known.save(key => ({key}))).toBe("p1");
-    await expect(database.create(["posts", {post_id: "p1"}]).save({key: "changed"})).rejects.toMatchObject({name: "ConstraintError"});
+    expect(await database.create(["posts", {post_id: "p1"}], key => ({key}))).toBe("p1");
+    await expect(database.create(["posts", {post_id: "p1"}], {key: "changed"})).rejects.toMatchObject({name: "ConstraintError"});
     expect(await database.read(["posts", {post_id: "p1"}])).toMatchObject({key: "p1"});
-    await expect(database.create(["posts", "post_id"]).save(async () => ({})))
+    await expect(database.create(["posts", "post_id"], async () => ({})))
         .rejects.toMatchObject({code: "database/invalid-argument"});
 });
 

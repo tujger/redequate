@@ -8,14 +8,10 @@ afterEach(() => vi.unstubAllGlobals());
 it("persists generated numeric keys without an injected timestamp and keeps explicit values and keys", async () => {
     const storageKey = "push-key-persistence";
     const database = new LocalDatabase({storageKey});
-    const first = database.create(["posts", "post_id"]);
-    const second = database.create(["posts", "post_id"]);
-    expect(first.temporaryKey).not.toBe(second.temporaryKey);
-    const firstKey = await first.save({text: "first"});
-    const secondKey = await second.save({text: "second", timestamp: 42});
+    const firstKey = await database.create(["posts", "post_id"], {text: "first"});
+    const secondKey = await database.create(["posts", "post_id"], {text: "second", timestamp: 42});
     expect([firstKey, secondKey]).toEqual(["1", "2"]);
-    const manual = database.create(["posts", {post_id: "manual"}]);
-    await manual.save({text: "manual"});
+    await database.create(["posts", {post_id: "manual"}], {text: "manual"});
     const reopened = new LocalDatabase({storageKey});
     expect(await reopened.read(["posts", {post_id: firstKey}])).toEqual({text: "first"});
     expect(await reopened.read(["posts", {post_id: secondKey}])).toEqual({text: "second", timestamp: 42});
@@ -31,7 +27,7 @@ it("persists generated numeric keys without an injected timestamp and keeps expl
 it("creates under the supplied identity field and reads collections and records", async () => {
     const database = new LocalDatabase({storageKey: "create-read"});
     const path = ["posts", "post_id"];
-    const key = await database.create(path).save({created: 0});
+    const key = await database.create(path, {created: 0});
     expect(await database.read(["posts"])).toMatchObject({[key]: {created: 0}});
     expect(await database.read(path)).toBeUndefined();
     expect(await database.read(["posts", {post_id: key}])).toMatchObject({created: 0});
@@ -47,14 +43,14 @@ it("creates under the supplied identity field and reads collections and records"
 it("keeps nested collection addresses and their identity fields", async () => {
     const database = new LocalDatabase({storageKey: "nested-create-read"});
     const chat = ["chats", {chat_id: "c"}];
-    const message = await database.create([...chat, "message_id", "id"]).save({created: false});
+    const message = await database.create([...chat, "message_id", "id"], {created: false});
     expect(await database.read([...chat, "message_id"])).toMatchObject({
         [message]: {created: false}
     });
     expect(await database.read([...chat, "message_id", {id: message}, "created"])).toBe(false);
 
     const post = [{type: "posts"}, {post_id: "p"}];
-    const edit = await database.create([...post, "edit", "id"]).save({created: [1, 2]});
+    const edit = await database.create([...post, "edit", "id"], {created: [1, 2]});
     expect(await database.read([...post, "edit"])).toMatchObject({
         [edit]: {created: [1, 2]}
     });

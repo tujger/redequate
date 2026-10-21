@@ -20,18 +20,17 @@ export function databaseContract(makeProvider) {
     };
 
     it("creates records without an implicit timestamp and preserves supplied keys and fields", async () => {
-        const first = provider.db.create([provider.path, "id"]);
-        if (provider.local) expect(first.temporaryKey).toEqual(expect.any(String));
-        else expect(first.temporaryKey).toMatch(/^[-0-9A-Z_a-z]{20}$/);
         const value = {label: "first"};
-        const firstKey = await first.save(key => {
-            expect(key).toEqual(provider.local ? expect.stringMatching(/^\d+$/) : first.temporaryKey);
+        let callbackKey;
+        const firstKey = await provider.db.create([provider.path, "id"], key => {
+            callbackKey = key;
+            expect(key).toEqual(provider.local ? expect.stringMatching(/^\d+$/) : expect.stringMatching(/^[-0-9A-Z_a-z]{20}$/));
             return value;
         });
+        expect(firstKey).toBe(callbackKey);
         expect(await provider.db.read((provider.createdRecord ?? provider.record)(firstKey))).toEqual(value);
 
-        const second = provider.db.create([provider.path, "id"]);
-        const secondKey = await second.save({label: "second", timestamp: 123});
+        const secondKey = await provider.db.create([provider.path, "id"], {label: "second", timestamp: 123});
         if (provider.local) expect(Number(secondKey)).toBeGreaterThan(Number(firstKey));
         else expect(milliseconds(secondKey)).toBeGreaterThanOrEqual(milliseconds(firstKey));
         expect(await provider.db.read((provider.createdRecord ?? provider.record)(secondKey)))
@@ -40,9 +39,7 @@ export function databaseContract(makeProvider) {
         expect(await provider.db.read((provider.createdRecord ?? provider.record)(secondKey)))
             .toEqual({label: "updated", timestamp: 123});
 
-        const supplied = provider.db.create([provider.path, {id: "manual"}]);
-        expect(supplied.temporaryKey).toBe("manual");
-        expect(await supplied.save({label: "manual"})).toBe("manual");
+        expect(await provider.db.create([provider.path, {id: "manual"}], {label: "manual"})).toBe("manual");
         expect(await provider.db.read((provider.createdRecord ?? provider.record)("manual"))).toEqual({label: "manual"});
         expect(await keys()).toEqual([firstKey, secondKey, "manual"]);
         expect(await keys({orderBy: "timestamp"})).toEqual([secondKey]);

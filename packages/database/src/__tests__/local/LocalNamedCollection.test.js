@@ -29,21 +29,18 @@ it.each(["posts", "replies"])("shares %s records, fields and deletes across name
     expect(await database.read(named)).toBeUndefined();
 });
 
-it("keeps the posts draft identity and nested draft levels unchanged", async () => {
+it("keeps the posts identity and nested levels unchanged", async () => {
     const database = new LocalDatabase({storageKey: "meta"});
     const path = Object.freeze([Object.freeze({type: "posts"})]);
-    const draft = database.create([...path, "post_id"]);
-    const key = await draft.save({text: "post"});
+    const key = await database.create([...path, "post_id"], {text: "post"});
     const post = ["posts", {post_id: key}];
     expect(await database.read(post)).toEqual(created({text: "post"}));
-    const edit = database.create([{name: "posts"}, {post_id: key}, "edit", "id"]);
-    const editKey = await edit.save({uid: "u1"});
+    const editKey = await database.create([{name: "posts"}, {post_id: key}, "edit", "id"], {uid: "u1"});
     expect(await database.read([...post, "edit", {id: editKey}])).toEqual(created({uid: "u1"}));
     expect(await database.readSubtree([{type: "posts"}, {post_id: key}])).toMatchObject({
         edit: {[editKey]: {uid: "u1"}}
     });
-    const reply = database.create([{type: "replies"}, "post_id"]);
-    const replyKey = await reply.save({text: "reply"});
+    const replyKey = await database.create([{type: "replies"}, "post_id"], {text: "reply"});
     expect(await database.read(["replies", {post_id: replyKey}])).toEqual(created({text: "reply"}));
     expect(path).toEqual([{type: "posts"}]);
 });
@@ -94,7 +91,7 @@ it.each(["follow", "watch", "_posts"])("rejects obsolete root %s", async name =>
     const database = new LocalDatabase({storageKey: "validation"});
     const named = [{type: name}, {id: "r1"}];
     await expect(database.update(named, () => ({name}))).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(() => database.create([{type: name}])).toThrow();
+    await expect(database.create([{type: name}], {})).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(() => database.addEventListener(named, {})).toThrow();
     await expect(database.update([name, {id: "r1"}], () => ({name})))
         .rejects.toMatchObject({code: "database/invalid-argument"});

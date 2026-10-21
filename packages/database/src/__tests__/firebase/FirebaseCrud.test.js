@@ -1,22 +1,26 @@
 import FirebaseDatabase from "../../firebase";
 import {createFirebase} from "../fixtures/firebase";
 
-it("creates drafts with generated and supplied keys, computes the value with the final key, and rejects conflicts", async () => {
+it("creates with generated and supplied keys, computes the value with the final key, and rejects conflicts", async () => {
     const {firebase, sdk} = createFirebase();
     const database = new FirebaseDatabase({firebase});
-    const generated = database.create(["posts", "post_id"]);
-    expect(generated.temporaryKey).toBe("generated-1");
-    expect(sdk.transaction).not.toHaveBeenCalled();
-    expect(await generated.save(key => ({key}))).toBe("generated-1");
+    expect(await database.create(["posts", "post_id"], key => ({key}))).toBe("generated-1");
     expect(sdk.values.get("posts/generated-1")).toEqual({key: "generated-1"});
-    const known = database.create(["posts", {post_id: "p1"}]);
-    expect(known.temporaryKey).toBe("p1");
-    expect(await known.save(key => ({key}))).toBe("p1");
-    await expect(database.create(["posts", {post_id: "p1"}]).save({key: "changed"}))
+    expect(await database.create(["posts", {post_id: "p1"}], key => ({key}))).toBe("p1");
+    await expect(database.create(["posts", {post_id: "p1"}], {key: "changed"}))
         .rejects.toMatchObject({code: "database/conflict"});
     expect(sdk.values.get("posts/p1")).toEqual({key: "p1"});
-    await expect(database.create(["posts", "post_id"]).save(async () => ({})))
+    await expect(database.create(["posts", "post_id"], async () => ({})))
         .rejects.toMatchObject({code: "database/invalid-argument"});
+});
+
+it("resolves concurrent generated creates to distinct permanent keys", async () => {
+    const {firebase, sdk} = createFirebase();
+    const database = new FirebaseDatabase({firebase});
+    const keys = await Promise.all(Array.from({length: 8}, () =>
+        database.create(["posts", "post_id"], key => ({key}))));
+    expect(new Set(keys).size).toBe(8);
+    for (const key of keys) expect(sdk.values.get(`posts/${key}`)).toEqual({key});
 });
 
 it("merges objects and atomically replaces, creates, deletes, and rolls back callbacks", async () => {
