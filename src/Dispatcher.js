@@ -213,7 +213,7 @@ export default (props) => {
         }
         const fetchMetaInfo = async props => {
             const {database} = props;
-            const settings = (await database.read(["meta", "settings"])) || {};
+            const settings = (await database.read(["meta", {"settings": "settings"}])) || {};
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
