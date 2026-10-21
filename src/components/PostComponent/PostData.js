@@ -230,7 +230,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         publish: () => async () => {
             if (!_id) {
-                _id = await database.create(["posts", "post_id"]).save(_body._publishData());
+                _id = await database.create(["posts", "post_id"], _body._publishData());
                 _created = await database.read(["posts", {post_id: _id}, "created"]);
             }
             cacheDatas.put(_id, _body);
@@ -261,7 +261,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 uid,
                 uid_id,
             };
-            const key = await database.create(["extra", "extra_id"]).save(value);
+            const key = await database.create(["extra", "extra_id"], value);
             _extras[type] = {key, value}
             _counters = _counters || {};
             _counters[type] = (_counters[type] || 0) + 1;
