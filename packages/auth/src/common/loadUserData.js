@@ -5,7 +5,7 @@ export default function loadUserData(user, database) {
     return Promise.all([
         database.read(["users_public", {user_id: user.id}]),
         database.read(["roles", {user_id: user.id}]),
-        (database.readSubtree ?? database.read).call(database, ["users_private", {user_id: user.id}])
+        database.read(["users_private", {user_id: user.id}])
     ]).then(([publicData, role, privateData]) => {
         const state = user._getState();
         if (publicData != null) state.public = {...state.public, ...publicData};
