@@ -44,7 +44,7 @@ it("uses key across account, session and profile, while keeping mail/link keys s
     expect(before.accounts[0]).toMatchObject({key: user.id, namespace: auth.storageKey, email: user.email});
     expect(before.accounts[0]).not.toHaveProperty("uid");
     expect(before.session.key).toBe(user.id);
-    expect(await database.read(["users_public", {user_id: user.id}, "email"])).toBe(user.email);
+    expect(await database.read(["users_public", {user_id: user.id}, {"email": "email"}])).toBe(user.email);
     const keys = [before.accounts[0].key, before.links[0].key, ...before.mail.map(record => record.key)];
     expect(new Set(keys).size).toBe(keys.length);
     await auth.updatePassword("changed-password");

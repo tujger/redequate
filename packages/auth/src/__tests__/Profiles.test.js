@@ -77,7 +77,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
             role: "admin", private: {device: {locale: "en", agreement: true}}
         });
         expect(await database.read(["roles", {user_id: user.id}])).toBe("admin");
-        expect(await database.read(["users_private", {user_id: user.id}, {device_id: "device"}, "locale"])).toBe("en");
+        expect(await database.read(["users_private", {user_id: user.id}, {device_id: "device"}, {"locale": "locale"}])).toBe("en");
 
         await run(auth.updateProfile({public: {name: "Changed", image: undefined}, private: {device: {locale: "fr"}}}));
         expect([...database.update.mock.calls.at(-1)[0]]).toEqual([
@@ -95,10 +95,10 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         const user = await run(auth.createUserWithEmailAndPassword("profile@example.test", "password"));
         await run(auth.updateProfile({public: {name: "A", image: "a.png"}, role: "admin", private: {a: {locale: "en", keep: true}}}));
         await run(auth.updateProfile({public: {image: null}, role: null, private: {a: {locale: null}}}));
-        expect(await database.read(["users_public", {user_id: user.id}, "name"])).toBe("A");
-        expect(await database.read(["users_public", {user_id: user.id}, "image"])).toBeUndefined();
+        expect(await database.read(["users_public", {user_id: user.id}, {"name": "name"}])).toBe("A");
+        expect(await database.read(["users_public", {user_id: user.id}, {"image": "image"}])).toBeUndefined();
         expect(await database.read(["roles", {user_id: user.id}])).toBeUndefined();
-        expect(await database.read(["users_private", {user_id: user.id}, "a"])).toEqual({keep: true});
+        expect(await database.read(["users_private", {user_id: user.id}, {"a": "a"}])).toEqual({keep: true});
         database.update.mockClear();
         await run(auth.updateProfile({public: {name: undefined}}));
         expect(database.update).not.toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         expect(completed).toBe(false);
         finish();
         const user = await pending;
-        expect(await database.read(["users_public", {user_id: user.id}, "email"])).toBe("profile@example.test");
+        expect(await database.read(["users_public", {user_id: user.id}, {"email": "email"}])).toBe("profile@example.test");
     });
 
     it("propagates update errors and validates sections before writing", async () => {
@@ -146,7 +146,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         const failure = new Error("write failed");
         database.update.mockRejectedValue(failure);
         await expect(run(auth.updateProfile({public: {name: "Unsaved"}}))).rejects.toBe(failure);
-        expect(await database.read(["users_public", {user_id: user.id}, "name"])).toBeUndefined();
+        expect(await database.read(["users_public", {user_id: user.id}, {"name": "name"}])).toBeUndefined();
     });
 
     it("requires a database for registration and a current user for updates", async () => {
