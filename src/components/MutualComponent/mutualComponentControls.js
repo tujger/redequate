@@ -53,6 +53,7 @@ export const mutualRequest = async (
         request = {...request, typeId};
         if (message) request = {...request, message};
     }
+    path.push("id");
 
     return database.create(path).save(request)
         .then(key => ({key, value: {...request, timestamp: new Date().getTime()}}));

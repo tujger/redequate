@@ -37,10 +37,7 @@ const MutualSubscribeItem = (
     const {t} = useTranslation();
     const [disabled, setDisabled] = React.useState(false);
     const [menuOpen, setMenuOpen] = React.useState(false);
-    const {key, userData = {}, value} = data;
-    const patternClass = pattern
-        ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
-        : styles.cardFlat;
+    const {id, userData = {}, value} = data;
     const isSameUser = value && value.uid === currentUserData.id;
     const isAdminUser = matchRole([UserRole.ADMIN], currentUserData);
     const menuLabel = unsubscribeLabel === undefined ? t("Mutual.Unsubscribe") : unsubscribeLabel;
@@ -107,7 +104,7 @@ const MutualSubscribeItem = (
         subtitle={<span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={[{id: key}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]}
+                        path={[{id}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />
