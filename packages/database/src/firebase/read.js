@@ -1,9 +1,10 @@
+import parseReadPath from "../common/parseReadPath";
 import resolvePath from "../common/resolvePath";
 import {applyReadOptions, readQueryOptions} from "../common/applyReadOptions";
 import {fail} from "../../../common";
 
 export default async function read(firebase, path, options = {}) {
-    const effectivePath = resolvePath(path);
+    const effectivePath = resolvePath(parseReadPath(path).path);
     if (!effectivePath) fail("database/invalid-argument", "read requires a non-empty path.");
     const {field, equalTo, start, end} = readQueryOptions(options);
 

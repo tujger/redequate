@@ -1,3 +1,5 @@
+import compareValues from "../common/compareValues";
+import compareKeys from "../common/compareKeys";
 import {DatabaseCursor} from "../common/DatabaseCursor";
 import createCursorQuery from "./createCursorQuery";
 import resolvePath from "../common/resolvePath";
@@ -76,10 +78,15 @@ const prepareCandidate = (props) => {
     const byKey = orderBy === undefined && !byValue;
     // Capture the ordered value before handle can replace or delete it.
     const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
-    const inRange = (startKey === undefined || child.key >= startKey)
-        && (endKey === undefined || child.key <= endKey);
-    return {...props, child, sortValue, entry: inRange && hasOrderedField(child, orderBy) ? {key: child.key, value: child.val()} : undefined,
-        replacement: undefined};
+    const inRange = (startKey === undefined || child.key >= startKey) &&
+        (endKey === undefined || child.key <= endKey);
+    return {
+        ...props,
+        child,
+        sortValue,
+        entry: inRange && hasOrderedField(child, orderBy) ? {key: child.key, value: child.val()} : undefined,
+        replacement: undefined
+    };
 };
 
 const hasOrderedField = (snapshot, orderBy) => !orderBy || snapshot.child(orderBy).exists();
@@ -96,7 +103,7 @@ const advanceScan = (props) => {
 function subscribeEntries(state, notify, onError) {
     const {initialQuery, startKey, endKey, orderBy} = state;
     const orderedEntries = new Map();
-    let active = true, initialized = false, failed = false, registering = true;
+    let active = true; let initialized = false; let failed = false; let registering = true;
     const report = error => {
         if (active && !failed) {
             failed = true;
@@ -107,8 +114,8 @@ function subscribeEntries(state, notify, onError) {
     };
     const callbacks = [["child_added", "add"], ["child_changed", "change"], ["child_removed", "remove"]]
         .map(([event, type]) => [event, child => {
-            if (!active || (startKey !== undefined && child.key < startKey)
-                || (endKey !== undefined && child.key > endKey)) return;
+            if (!active || (startKey !== undefined && child.key < startKey) ||
+                (endKey !== undefined && child.key > endKey)) return;
             let entry = {key: child.key, value: child.val()};
             let effectiveType = type;
             if (orderBy) {
@@ -145,13 +152,26 @@ function subscribeEntries(state, notify, onError) {
 const detachCallbacks = (query, callbacks) => {
     let failure;
     for (const [event, callback] of callbacks) {
-        try { query.off(event, callback); }
-        catch (error) { failure ??= {error}; }
+        try { query.off(event, callback); } catch (error) { failure ??= {error}; }
     }
     if (failure) throw failure.error;
 };
 
 async function readPage(props) {
+    const {state, value, key, size} = props;
+    // RTDB accepts object values in results but rejects them as query endpoints.
+    // Once the boundary is an object, use the original query and filter its tuple.
+    if (value !== null && typeof value === "object") {
+        const snapshot = await state.initialQuery.once("value");
+        const children = [];
+        snapshot.forEach(child => {
+            const sort = state.byValue ? child.val() : child.child(state.orderBy).val();
+            const comparison = compareValues(sort, value) || compareKeys(child.key, key);
+            if (state.ascending ? comparison > 0 : comparison < 0) children.push(child);
+        });
+        if (!state.ascending) children.reverse();
+        return {...props, children: children.slice(0, size)};
+    }
     props = preparePageQuery(props);
     props = await fetchPage(props);
     return extractChildren(props);
