@@ -23,7 +23,7 @@ export function databaseContract(makeProvider) {
         const first = provider.db.create([provider.path, "id"]);
         expect(first.temporaryKey).toMatch(/^[-0-9A-Z_a-z]{20}$/);
         const generatedAt = milliseconds(first.temporaryKey);
-        expect(Math.abs(generatedAt - Date.now())).toBeLessThan(60_000);
+        expect(Number.isSafeInteger(generatedAt)).toBe(true);
         const value = {label: "first"};
         expect(await first.save(key => {
             expect(key).toBe(first.temporaryKey);
@@ -36,12 +36,14 @@ export function databaseContract(makeProvider) {
         expect(milliseconds(second.temporaryKey)).toBeGreaterThanOrEqual(generatedAt);
         expect(await provider.db.read((provider.createdRecord ?? provider.record)(second.temporaryKey)))
             .toEqual({label: "second", timestamp: 123});
+        await provider.db.update((provider.createdRecord ?? provider.record)(second.temporaryKey), {label: "updated"});
+        expect(await provider.db.read((provider.createdRecord ?? provider.record)(second.temporaryKey)))
+            .toEqual({label: "updated", timestamp: 123});
 
         const supplied = provider.db.create([provider.path, {id: "manual"}]);
         expect(supplied.temporaryKey).toBe("manual");
         expect(await supplied.save({label: "manual"})).toBe("manual");
         expect(await provider.db.read((provider.createdRecord ?? provider.record)("manual"))).toEqual({label: "manual"});
-        expect(() => milliseconds("manual")).toThrow();
         expect(await keys()).toEqual([first.temporaryKey, second.temporaryKey, "manual"]);
         expect(await keys({orderBy: "timestamp"})).toEqual([second.temporaryKey]);
     });

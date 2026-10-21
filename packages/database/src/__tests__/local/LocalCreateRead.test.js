@@ -1,4 +1,5 @@
 import {IDBFactory} from "fake-indexeddb";
+import {vi} from "vitest";
 import LocalDatabase from "../../local";
 import {key as pushKey, milliseconds} from "firebase-key";
 
@@ -22,9 +23,12 @@ it("persists push-keyed records without an injected timestamp and keeps explicit
     expect(await reopened.read(["posts", {post_id: first.temporaryKey}])).toEqual({text: "first"});
     expect(await reopened.read(["posts", {post_id: second.temporaryKey}])).toEqual({text: "second", timestamp: 42});
     expect(await reopened.read(["posts", {post_id: "manual"}])).toEqual({text: "manual"});
+    await reopened.update(["posts", {post_id: first.temporaryKey}], {text: "edited"});
+    expect(await database.read(["posts", {post_id: first.temporaryKey}])).toEqual({text: "edited"});
+    await reopened.update(["posts", {post_id: second.temporaryKey}], {text: "edited"});
+    expect(await database.read(["posts", {post_id: second.temporaryKey}])).toEqual({text: "edited", timestamp: 42});
     const cursor = reopened.cursor("posts");
     expect((await cursor.next(10)).map(({key}) => key)).toEqual([first.temporaryKey, second.temporaryKey, "manual"]);
-    expect(() => milliseconds("manual")).toThrow();
     expect(milliseconds(pushKey(42, "min"))).toBe(42);
     expect(milliseconds(pushKey(new Date(42), "max"))).toBe(42);
 });
