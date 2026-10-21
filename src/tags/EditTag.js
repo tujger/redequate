@@ -161,7 +161,7 @@ export default ({allowOwner = true}) => {
             if (key) {
                 await database.update(["tag", {tag_id: key}], () => tag);
             } else {
-                key = await database.create(["tag", "tag_id"]).save(tag);
+                key = await database.create(["tag", "tag_id"], tag);
             }
             return key;
         }
