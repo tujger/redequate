@@ -1733,15 +1733,13 @@ of Firebase. Every first argument accepts a string path or string[] joined with
 slashes; elements may include nested paths. Empty string/array denotes the root.
 Provider implementations own path normalization and validation.
 
-create(collectionPath) synchronously returns a DatabaseDraft object with a readonly,
-constant temporaryKey identifying the prepared operation, without writing data.
-Calling draft.save(value) with a record returns Promise<string>, resolving to the
-permanent storage key after success; it may differ from temporaryKey.
-Missing, undefined or null data and conflicts with existing records reject.
-Failed writes may be retried; writing at an occupied key rejects.
-Exact-path writes belong to write(recordPath, value); create takes no explicit key.
-read(recordPath) returns plain JSON-compatible record data or
-null for absence. update(recordPath, changes) updates supplied top-level fields,
+create(collectionPath) synchronously returns a draft with a readonly temporaryKey,
+without writing data. The final segment names the generated key field or supplies
+an explicit ID as a named segment. save accepts a record or a synchronous function
+of the final key. Both providers reject occupied keys atomically; failed writes
+may be retried. The unified CRUD decision below supersedes earlier write behavior.
+read(recordPath) returns plain JSON-compatible data or undefined for absence.
+update(recordPath, changes) updates supplied top-level fields,
 preserves unspecified fields, replaces nested values in full, and removes fields
 assigned null. Absence does not cause rejection: non-null fields may create the
 record; empty changes or removals alone need not create it. This aligns the
@@ -2862,3 +2860,210 @@ An explicit root orderBy selects whole values: Firebase uses orderByValue and
 Pages/Local access the complete value. Omitted orderBy retains prior behavior.
 The earlier empty named-value normalization in Firebase is superseded: malformed
 segments now reject consistently before execution.
+
+### Transactional database updates and ordered-field eligibility
+
+`update(path, callback)` atomically replaces the value and returns its final value
+in Firebase and Local. The synchronous callback receives null for absent data;
+null and undefined both delete. Firebase may retry the callback, so side
+effects and asynchronous work belong outside it. Callback updates require Firebase
+read and write permissions; object merges and root-relative batches retain their
+existing contracts and do not accept callback values. Counter consumers receive
+plain values rather than Firebase TransactionResult objects. No stored path or
+Android data-format change is introduced.
+
+Cursors with a non-empty orderBy exclude entries missing that field before handle
+and continue scanning to fill pages. Subscriptions report field appearance as add
+and disappearance as remove. Root orderBy still selects whole values; Local range
+cursors remain unsupported. Web consumers using optional sort fields now receive
+only entries containing them.
+
+
+### Firebase creation permission history
+
+The prior set-based create permitted write-only paths. The unified CRUD contract
+supersedes that behavior: Firebase creation uses a transaction for atomic conflict
+rejection and therefore requires read and write permission at the target path.
+Firebase paths and Android data formats are unchanged.
+
+### Shared effective paths and Local collection aliases
+
+common/resolvePath.ts now owns the canonical slash address used by Firebase SDK
+operations and composed-cursor source identity. It resolves named segment values
+and ignores _ metadata. Composition deduplication now treats equivalent string,
+array and named paths as the same source address, superseding structural path
+serialization for custom cursors. Sources without a path still use their cursor ID.
+
+Local accepts a named first segment only when its value is posts or replies.
+The property name does not add a condition: [{type: "posts"}, ...] addresses
+exactly the same data as ["posts", ...]. Local's resolveCollectionPath retains
+this allowlist and preserves all subsequent identity metadata; CRUD, drafts,
+batches, type queries and local/cross-context notifications share that rule.
+String collection names retain their existing scope. No IndexedDB migration or
+Firebase/Android stored-path change is required; Local range cursors remain
+unsupported.
+
+### Dedicated Local stores from the collection registry
+
+local/constants.js owns LOCAL_COLLECTIONS (posts/replies, each with its own store
+and post_id identity), the fallback records store and the shared keyPath/index
+schema. Local helpers use this registry for named-root validation, generated
+identities and store routing; callers do not select storage-specific key fields.
+This supersedes storing posts and replies in the common records store. Other
+string collections and nested draft identity rules retain their existing behavior.
+
+New databases create posts, replies and records with the same compound keys and
+indexes. No explicit IndexedDB version is supplied or raised, per the user's
+instruction. Existing databases remain unchanged: legacy posts/replies rows in
+records are neither moved nor deleted, and aggregate reads exclude them. A legacy
+database without the new stores cannot serve operations targeting those stores;
+there is no automatic fallback or reset.
+
+Multi-store batches commit in one IndexedDB transaction and notify only after
+success. Subscription snapshots aggregate routed stores, including cross-context
+notifications. Firebase behavior, API paths and Android data formats are unchanged.
+
+### Local subtree replacement
+
+Local delete removes the addressed value and all separately stored descendants.
+Ordinary writes and batch replacements remove omitted descendants; object updates
+replace only supplied field subtrees. Existing named child identities are retained
+when explicitly included. New nested JSON stays inline: its shape alone does not
+establish a collection. Callback updates retain their existing replacement rules.
+
+Local batches reject overlapping normalized addresses before writing, including
+record/field ancestors and descendants. Distinct named identities remain distinct.
+These changes align Local replacement behavior with Firebase without changing
+Firebase paths, Android data formats or the IndexedDB schema/version.
+
+### Generated record identity
+
+Generic Local create uses the named field id at the next dynamic _ level.
+Frontend paths to generated tags, extras, errors, alerts and chats use id at level
+0; mutual/request records use level 1 after their dynamic type segment. This
+supersedes the collection-specific wildcard names for those generated keys.
+Posts/replies retain the registry's post_id exception. User/device identities
+remain explicit, and ordinary profile fields are string segments. Public profile
+updates include updated once, avoiding overlapping Local batch addresses.
+Firebase resolves the same segment values, so stored addresses and Android data
+formats remain unchanged. No IndexedDB version change or migration is introduced.
+
+### Local conditions and field aliases
+
+Named segments without _ now select direct row fields; Local no longer writes or
+queries an _conditions wrapper. Their order does not create a different record.
+_key remains an internal row locator and a structural trace for subtree assembly,
+not the source of truth for matching conditions. Older traces can supply missing
+selector metadata in memory without a database migration or automatic rewrite.
+Fixed conditions cannot overwrite the row's internal _collection, _key, value,
+_keyN or _valueN fields; these names remain usable inside the stored payload.
+
+At a field position, "email" and {email: "email"} address the same field.
+Payload field names have direct selector markers beside value, so UserData uses
+{[x]: x} for public/private saves. Ordinary {email: email} conditions remain valid
+without requiring the name and value to match. This supersedes the earlier
+restriction to string profile fields. Parent reads assemble separately stored
+descendants; writing/deleting a descendant clears its embedded ancestor copy.
+CRUD, batches, callback updates, type queries and subscriptions share these rules.
+Generic id levels, the posts/replies registry exception, Firebase addresses and
+Android formats are unchanged. No IndexedDB version bump or migration is added.
+
+### Unified database CRUD contract (supersedes earlier create/write and undefined decisions)
+
+`create([collection, keyField])` prepares a draft with a generated `temporaryKey` and makes no write until `save`. `create([collection, {[keyField]: id}])` prepares a draft for that ID. `save(record)` and `save(key => record)` return the final key after an atomic create-if-absent operation; the callback is synchronous, and a duplicate key fails without overwriting data. Firebase uses a transaction, so creation requires read and write permission at the target path. Local uses an IndexedDB readwrite transaction. Failed saves can be retried.
+
+`update(path, object)` keeps the existing partial merge and missing-record behavior. `update(path, current => value)` replaces the complete value atomically. The callback may run more than once under Firebase contention, must be synchronous, and both null and undefined delete. Batch updates retain their existing path/value semantics; callbacks are only supported on the single-path overload. `delete(path)` remains explicit. `write` is removed from the public database API. Web callers use callback update for replacement and object update for merge. Firebase and Local path mapping, and the stored data format used by Android, remain unchanged.
+
+`read(path, options?)` addresses the exact path in both backends. A trailing string is always literal: `["meta", "settings"]` reads `meta/settings`, and `["posts", "post_id"]` reads literal `posts/post_id`. Use `["posts"]` for the collection, `["posts", {post_id: "p1"}]` for a record, and append a string to read a field. Nested collection paths and query options follow the same rule. Local assembles collection children from their stored identities, including collections with different identity field names; callers do not provide a key field for reads.
+
+`read([])` rejects with `database/invalid-argument`; root listing is outside the read contract. Query options filter immediate children of the exact path, including record paths. Without `orderBy`, `equalTo` compares complete child values, while `start` and `end` are inclusive key bounds. `orderBy: ""` explicitly orders by child values; a non-empty `orderBy` compares that child field. `equalTo` cannot be combined with `start` or `end`, and `order` accepts only `asc` or `desc`. Reads return ordinary values or objects without a traversal-order guarantee; use the Cursor API for ordered iteration. Firebase's integer-key ordering is used for key bounds in both backends.
+
+### Firebase child addition boundary and chat message watch
+
+Firebase `addEventListener` registers the initial `value` listener before its
+unbounded `child_added` listener. It buffers child events until the first value
+callback and then emits only keys greater than the greatest key in that value
+snapshot, using Firebase key order. An event received early for a key absent
+from the snapshot is emitted if it exceeds the boundary. A write made after the
+API call but included in the first value snapshot is baseline and is not emitted,
+even if its child event was buffered. Registration order alone cannot distinguish
+that write from preexisting data, so the API does not guarantee every write after
+the call is reported. Keys inserted below the initial maximum also do not produce
+`onChildAdd` notifications.
+
+`ChatMeta.watch` obtains the latest existing message with a one-entry descending
+`created` cursor, subscribes to child additions and changes, and buffers events
+while that cursor resolves. It ignores duplicate and older message events so an
+older edit cannot lower the latest timestamp. The subscription and cursor are
+independent reads; a write included in the listener baseline is covered by the
+cursor only when its snapshot sees that write. There is no atomic cross-query
+snapshot or guarantee for an insertion below the initial maximum key. Consumers
+that require a lossless stream need a server-side sequence or another atomic
+handoff protocol.
+
+### Local database cursor
+
+LocalDatabase now uses the shared cursor composition contract and an atomic Local
+cursor. Each page reads the selected collection from IndexedDB, applies Firebase
+key ordering (including signed integer keys), field or value ordering, inclusive
+bounds, date-key filtering, and a strict continuation tuple. Keys processed by
+this cursor are retained for its lifetime to prevent replay after an edit moves
+them later in sort order. Handlers run sequentially on copies and write through
+the existing storage-key mutation queue. Subscription baselines and subsequent
+refreshes use that same queue and BroadcastChannel dispatcher; each subscription
+diffs only its query result and reports add, change, and remove transitions after
+the initial snapshot. A cursor subscription reads its collection store rather than
+all Local stores.
+
+As with Firebase, paging is not a transaction spanning calls: concurrent changes
+that move an unvisited entry before the continuation can omit that entry. Local
+collection reads still materialize their store because the current IndexedDB
+schema has no index for arbitrary `orderBy` fields. Root cursor paths assemble
+values across collection stores and consequently require a full database read.
+No stored format or external cursor API changed.
+
+#### Indexed local cursor pages
+
+Schema version 3 adds Firebase key-order and top-level `created` indexes to each
+Local store and backfills existing rows during the upgrade. Key ordering encodes
+integer keys numerically, then other keys lexically. `created` uses Firebase's
+null, boolean, number, string order and the encoded key to break ties. Each page
+uses a short read-only IndexedDB cursor transaction and resumes after the last
+index value and key. Direct child handler writes use the stored row identity.
+
+Nested rows require subtree assembly, so their collection uses the materializing
+comparator path. Arbitrary `orderBy` fields, value ordering, complex `created`
+values, and `created` queries combined with date-key bounds also use that path:
+the available indexes cannot reproduce their complete Firebase ordering. Key
+queries apply date-key bounds through the key index. A database with a newer
+schema version remains readable; it uses the comparator path if these indexes
+are absent. Subscriptions still rebuild their query result on notification.
+
+### Local IndexedDB physical roots and scoped cursor indexes
+
+Decision (supersedes the earlier `records` fallback and schema-v3 cursor notes):
+`LocalDatabase` opens `redequate:local:${storageKey}` at version **1**. The first
+path segment is always the physical object-store name. A new database creates
+only the active roots listed in `LOCAL_COLLECTIONS`; unknown roots fail path
+validation, and the obsolete follow/watch and underscored test roots have no
+stores. Existing version-2 or version-3 local databases must be deleted before
+opening this version-1 schema. There is no upgrade, backfill, or legacy row copy.
+A version-1 database created under an older schema must likewise be deleted.
+
+Rows keep the full serialized nested path as their primary identity. Indexed
+cursor projections add Firebase-compatible integer-key order and compound scope,
+field and child-key order for chat messages (`chat_id`/`created`), user chat lists
+(`user_id`/`timestamp`), alerts (`user_id`/key or `timestamp`), recipient-filtered
+posts and replies, and the top-level fields used by users, tags and activity.
+A cursor page uses a new short read-only IndexedDB transaction and resumes by
+its complete index tuple, including the serialized path to distinguish ties.
+Direct indexed child handler writes use that exact stored path. Queries whose
+structure or value order is not represented by an index retain the comparator
+path, as do subscriptions that rebuild query results after notifications.
+Firebase paths and the Android wire format are unchanged. Validate framework
+changes against the demo and production web consumers before merging.
+
+The provider-neutral behavioral contract and shared Firebase/Local scenarios are
+in `packages/database/src/common/CONTRACT.md`. Emulator-only cases are kept in
+the integration suite and must run before treating its unresolved Firebase
+edge cases as verified.
