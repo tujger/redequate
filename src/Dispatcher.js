@@ -56,15 +56,14 @@ const installConsoleError = database => {
             const message = String(args[0]);
             if (["no such file or directory", "Module not found", "memory access out of bounds"].some(filter => message.includes(filter))) return;
 
-            const draft = database?.create(["errors", "error_id"]);
-            if (!draft) {
+            if (!database) {
                 reportError("[Dispatcher] Error was not saved: database is unavailable.");
                 return;
             }
             const currentUserData = getCurrentUserData();
-            const saving = draft.save({
+            const saving = database.create(["errors", "error_id"], {
                 error: String(args[0]?.stack || message),
-                timestamp: database?.TIMESTAMP,
+                timestamp: database.TIMESTAMP,
                 uid: currentUserData?.id || "anonymous"
             });
             Promise.resolve(saving).catch(reportError);
