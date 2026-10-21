@@ -39,6 +39,7 @@ export default defineConfig(({mode}) => {
         },
         test: {
             environment: "jsdom",
+            setupFiles: ["fake-indexeddb/auto"],
             globals: true,
             include: ["src", "packages/*/src", "packages"].map(directory =>
                 `${directory}/__tests__/**/*.${integration ? "integration.test" : "test"}.js`),

@@ -109,7 +109,7 @@ async function mountLogin({ios = false, disabled = false, firstLogin = false, si
             return undefined;
         }),
         update: vi.fn(async updates => {
-            const notification = [...updates].find(([path]) => path[0] === "users_private" && path[3] === "notification")?.[1];
+            const notification = [...updates].find(([path]) => path[0] === "users_private" && (path[3] === "notification" || path[3]?.notification === "notification"))?.[1];
             events.push({type: "save", notification});
         }),
         write: vi.fn().mockResolvedValue(),
@@ -158,7 +158,7 @@ it("waits for notification setup and database acknowledgement before publication
     const context = await mountLogin();
     context.messaging.subscribe.mockReturnValue(subscription.promise);
     context.database.update.mockImplementation(async updates => {
-        if ([...updates].some(([path]) => path[3] === "notification")) await saved.promise;
+        if ([...updates].some(([path]) => (path[3] === "notification" || path[3]?.notification === "notification"))) await saved.promise;
     });
     await act(async () => {
         container.querySelector("button").click();

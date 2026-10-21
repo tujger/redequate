@@ -184,7 +184,7 @@ it.each(["initialState", "state"])("hydrates a transferred %s snapshot and then 
 });
 
 it("preserves UserData model APIs, freezes its own state and leaves private visit bookkeeping usable", async () => {
-    const database = {read: vi.fn().mockResolvedValue("user@example.test"), write: vi.fn().mockResolvedValue(), TIMESTAMP: {kind: "server-timestamp"}};
+    const database = {read: vi.fn().mockResolvedValue("user@example.test"), update: vi.fn().mockResolvedValue(), TIMESTAMP: {kind: "server-timestamp"}};
     const user = new UserData(database).create("visit-user", {name: "User", email: "user@example.test"});
     user._getState().persisted = true;
     const store = new GlobalStore(user);
@@ -195,7 +195,7 @@ it("preserves UserData model APIs, freezes its own state and leaves private visi
     expect(Object.isFrozen(user._getState())).toBe(true);
     expect(Object.isFrozen(database)).toBe(false);
     expect(user.updateVisitTimestamp(database)).toBe(user);
-    await vi.waitFor(() => expect(database.write).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(database.update).toHaveBeenCalledTimes(1));
     await Promise.resolve();
     user.updateVisitTimestamp(database);
     expect(database.read).toHaveBeenCalledTimes(1);

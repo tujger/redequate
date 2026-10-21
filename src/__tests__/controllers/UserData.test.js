@@ -65,7 +65,7 @@ it("saves a public profile through the frontend adapter using the database times
     const updates = database.update.mock.calls[0][0];
     expect(updates).toBeInstanceOf(Map);
     expect([...updates]).toEqual(expect.arrayContaining([
-        [["users_public", {user_id: "save-user"}, "name"], "Alice"],
+        [["users_public", {user_id: "save-user"}, {name: "name"}], "Alice"],
         [["users_public", {user_id: "save-user"}, "updated"], database.TIMESTAMP],
     ]));
     expect(user.persisted).toBe(true);
@@ -109,8 +109,8 @@ it("shares fetched state with getters, serialization and subsequent saves", asyn
     const updates = database.update.mock.calls[0][0];
     expect(updates).toBeInstanceOf(Map);
     expect([...updates]).toEqual(expect.arrayContaining([
-        [["users_public", {user_id: "fetched"}, "name"], "Changed"],
-        [["users_private", {user_id: "fetched"}, {device_id: "device"}, "locale"], "ru"],
+        [["users_public", {user_id: "fetched"}, {name: "name"}], "Changed"],
+        [["users_private", {user_id: "fetched"}, {device_id: "device"}, {locale: "locale"}], "ru"],
     ]));
 });
 
