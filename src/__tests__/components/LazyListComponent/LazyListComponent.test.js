@@ -147,13 +147,11 @@ it("applies live events by key and unsubscribes without restarting traversal", a
     expect(cursor.next).toHaveBeenCalledTimes(1);
 });
 
-it.each([reducer.REFRESH, reducer.RESET])("invalidates %s without mutating or resetting a stored source", type => {
+it.each([reducer.REFRESH, reducer.RESET])("leaves cursor lifecycle to the page for %s", type => {
     const reset = vi.fn();
-    const saved = Object.freeze({cursor: {reset}, revision: 2});
+    const saved = Object.freeze({cursor: {reset}});
     const state = Object.freeze({LazyListComponent_profile: saved});
-    const updated = reducer(state, {type, cache: "profile"});
+    expect(reducer(state, {type, cache: "profile"})).toBe(state);
+    expect(reducer(state, {type})).toBe(state);
     expect(reset).not.toHaveBeenCalled();
-    expect(updated.LazyListComponent_profile.revision).toBe(3);
-    expect(saved.revision).toBe(2);
-    expect(reducer(state, {type}).revision).toBe(1);
 });

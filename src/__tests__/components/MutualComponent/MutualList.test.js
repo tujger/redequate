@@ -1,16 +1,18 @@
 import {vi} from "vitest";
-import {Provider} from "react-redux";
+import {Provider, useSelector} from "react-redux";
 import {combineReducers, createStore} from "redux";
 import React, {act} from "react";
 import {lazyListComponentReducer as reducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import {render, unmount} from "../../render";
 import MutualList from "../../../components/MutualComponent/MutualList";
 import {MutualListMode} from "../../../components/MutualComponent/MutualConstants";
+import {dispatcherRoutedBodyReducer} from "../../../reducers/dispatcherRoutedBodyReducer";
+import {Layout} from "../../../controllers/General";
 
 const context = vi.hoisted(() => ({database: {cursor: vi.fn()}, props: undefined, dispatch: vi.fn()}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value})}));
 vi.mock("../../../controllers", () => ({useDatabase: () => context.database}));
-vi.mock("../../../controllers/General", () => ({cacheDatas: {}}));
+vi.mock("../../../controllers/General", () => ({cacheDatas: {}, Layout: {REFRESH: "layout_Refresh"}}));
 vi.mock("../../../controllers/UserData", () => ({UserData: class {}}));
 vi.mock("../../../components/ItemPlaceholderComponent", () => ({default: () => null}));
 vi.mock("../../../components/MutualComponent/MutualRequestItem", () => ({default: () => null}));
@@ -22,31 +24,47 @@ beforeEach(() => {
     container = document.createElement("div");
     context.database = {cursor: vi.fn(() => ({}))};
     context.dispatch.mockClear();
-    store = createStore(combineReducers({lazyListComponentReducer: reducer}));
+    store = createStore(combineReducers({lazyListComponentReducer: reducer, dispatcherRoutedBodyReducer}));
 });
 afterEach(() => unmount(container));
 
-it("keeps the cursor on parent renders and replaces it when query inputs change", () => {
+it("creates a fresh cursor on parent renders and when query inputs change", () => {
     const props = {mode: MutualListMode.SELF, mutualId: "u1", typeId: "following"};
-    render(<React.Fragment><Provider store={store}><MutualList {...props}/></Provider></React.Fragment>, container);
+    const show = current => render(<React.Fragment><Provider store={store}><MutualList {...current}/></Provider></React.Fragment>, container);
+    show(props);
     const cursor = context.props.cursor;
-    render(<Provider store={store}><MutualList {...props} itemTransform={item => item}/></Provider>, container);
-    expect(context.props.cursor).toBe(cursor);
-    expect(context.database.cursor).toHaveBeenCalledExactlyOnceWith(["mutualstamps", "_my", {user_id: "u1"}], {order: "desc"});
-    expect(context.dispatch).not.toHaveBeenCalled();
-    render(<Provider store={store}><MutualList {...props} mutualId="u2"/></Provider>, container);
+    show({...props, itemTransform: item => item});
     expect(context.props.cursor).not.toBe(cursor);
+    expect(context.database.cursor).toHaveBeenCalledTimes(2);
+    expect(context.database.cursor).toHaveBeenLastCalledWith(["mutualstamps", "_my", {user_id: "u1"}], {order: "desc"});
+    show({...props, mutualId: "u2"});
     expect(context.database.cursor).toHaveBeenLastCalledWith(["mutualstamps", "_my", {user_id: "u2"}], {order: "desc"});
 });
 
-it("replaces the cursor only for matching or global Refresh/RESET actions", () => {
-    render(<Provider store={store}><MutualList mode={MutualListMode.SELF} mutualId="u1" typeId="following"/></Provider>, container);
+it("restarts through the existing layout remount without revision state", () => {
+    const unmounted = vi.fn();
+    const Page = () => {
+        React.useEffect(() => unmounted, []);
+        return <MutualList mode={MutualListMode.SELF} mutualId="u1" typeId="following"/>;
+    };
+    const RoutedBody = () => {
+        const random = useSelector(state => state.dispatcherRoutedBodyReducer.random);
+        return <Page key={random}/>;
+    };
+    render(<React.Fragment><Provider store={store}><RoutedBody/></Provider></React.Fragment>, container);
     const cursor = context.props.cursor;
-    act(() => store.dispatch({type: reducer.REFRESH, cache: "unrelated"}));
-    expect(context.props.cursor).toBe(cursor);
-    act(() => store.dispatch({type: reducer.REFRESH, cache: `following_${MutualListMode.SELF}_u1`}));
+    expect(context.database.cursor).toHaveBeenCalledTimes(1);
+    act(() => store.dispatch({type: Layout.REFRESH}));
     expect(context.props.cursor).not.toBe(cursor);
-    const refreshed = context.props.cursor;
-    act(() => store.dispatch({type: reducer.RESET}));
-    expect(context.props.cursor).not.toBe(refreshed);
+    expect(context.database.cursor).toHaveBeenCalledTimes(2);
+    expect(unmounted).toHaveBeenCalledTimes(1);
+    expect(store.getState().lazyListComponentReducer).toEqual({});
+});
+
+it("requests page remount after changing a subscription", () => {
+    render(<React.Fragment><Provider store={store}><MutualList mode={MutualListMode.SUBSCRIBES} mutualId="u1" typeId="watching"/></Provider></React.Fragment>, container);
+    const before = store.getState().dispatcherRoutedBodyReducer.random;
+    act(() => context.props.ItemComponent({key: "m1", value: {type: "tag"}}).props.onDelete());
+    expect(store.getState().dispatcherRoutedBodyReducer.random).not.toBe(before);
+    expect(store.getState().lazyListComponentReducer).toEqual({});
 });
