@@ -176,7 +176,7 @@ export default props => {
                     subscribers,
                 }))
             },
-            path: [{id: mutualId}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]
+            path: [{id: mutualId}, "mutual", {mutual_type: `${typeId}_s`}]
         })
         return () => listener();
     }, [mutualId, typeId]);
@@ -194,14 +194,14 @@ export default props => {
                     subscribes,
                 }))
             },
-            path: [{id: mutualId}, "mutual", {typeId, _: true}]
+            path: [{id: mutualId}, "mutual", {mutual_type: typeId}]
         })
         return () => listener();
     }, [mutualId, typeId, mutualMode]);
 
     React.useEffect(() => {
         if (!hasPending) return;
-        const listener = database.addEventListener(["mutualrequests", {typeId, _: true}, {pending: hasPending.key}], {
+        const listener = database.addEventListener(["mutualrequests", {mutual_type: typeId}, {pending: hasPending.key}], {
             onChange(value) {
                 if (value === undefined)
                     setState(state => ({...state, hasPending: null, disabled: false}))

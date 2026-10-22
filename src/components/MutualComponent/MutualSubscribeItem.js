@@ -61,13 +61,13 @@ const MutualSubscribeItem = (
     const handleUnsubscribe = event => {
         event.stopPropagation?.();
         setMenuOpen(false);
-        console.log("handleUnsubscribe", key, typeId, currentUserData.id, value);
+        console.log("handleUnsubscribe", id, typeId, currentUserData.id, value);
         dispatch(ProgressView.SHOW);
         setDisabled(true);
-        cacheDatas.remove(key);
+        cacheDatas.remove(id);
         cacheDatas.remove(value.id);
-        database.delete(["mutual", {typeId, _: true}, {mutual_id: key}])
-            .then(() => onDelete({key, value}))
+        database.delete(["mutual", {mutual_type: typeId}, {mutual_id: id}])
+            .then(() => onDelete({key: id, value}))
             .catch(error => {
                 if (error && error.code === "PERMISSION_DENIED") {
                     notifySnackbar(new Error(t("Mutual.Can't unsubscribe")));
@@ -104,7 +104,7 @@ const MutualSubscribeItem = (
         subtitle={<span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={[{id}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]}
+                        path={[{id}, "mutual", {mutual_type: `${typeId}_s`}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />
@@ -145,7 +145,7 @@ const MutualSubscribeItem = (
                 {counter && <span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={[{id: key}, "mutual", {[`${typeId}_s`]: `${typeId}_s`, _: true}]}
+                        path={[{id: key}, "mutual", {mutual_type: `${typeId}_s`}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />
