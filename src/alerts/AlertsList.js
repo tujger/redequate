@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"; // eslint-disable-line no-unused-vars -- Required by the classic JSX build.
 import {useTranslation} from "react-i18next";
 import {DatabaseOrder} from "../../packages/database/src";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
@@ -11,9 +11,9 @@ export default ({fetchAlertContent}) => {
     const database = useDatabase();
     const {t} = useTranslation();
 
-    const cursor = React.useMemo(() => database.cursor(["alerts", {user_id: currentUserData.id}], {
+    const cursor = database.cursor(["alerts", {user_id: currentUserData.id}], {
         order: DatabaseOrder.DESC,
-    }), [database, currentUserData.id]);
+    });
 
     const itemTransform = data => ({data, fetchAlertContent});
 

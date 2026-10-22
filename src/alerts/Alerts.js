@@ -5,11 +5,10 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {DatabaseOrder} from "../../packages/database/src";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
 import {useDatabase} from "../controllers";
-import {MenuBadge, usePages} from "../controllers/General";
+import {MenuBadge, usePages, Layout} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
@@ -42,7 +41,7 @@ export default ({daemon, fetchAlertContent}) => {
             order: DatabaseOrder.DESC
         })
             .next(10000)
-            .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
+            .then(() => dispatch({type: Layout.REFRESH}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }
@@ -55,7 +54,7 @@ export default ({daemon, fetchAlertContent}) => {
         dispatch(ProgressView.SHOW);
         setState({...state, allClear: false});
         database.delete(["alerts", {user_id: currentUserData.id}])
-            .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
+            .then(() => dispatch({type: Layout.REFRESH}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }
@@ -64,7 +63,6 @@ export default ({daemon, fetchAlertContent}) => {
         if (daemon) return;
         dispatch({type: alertsCounterReducer.RESET});
         dispatch({type: alertsVisitReducer.UPDATE});
-        dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"});
         dispatch({type: MenuBadge.RESET, page: pages.alerts});
 
         return () => {
