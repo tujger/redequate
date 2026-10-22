@@ -83,7 +83,7 @@ export default ({allowOwner = true}) => {
         }
         const checkIfIdValid = async () => {
             const updatedId = tag.id || normalizeSortName(tag.label);
-            const existing = await database.cursor(["tag"], {
+            const existing = await database.cursor(["tag", "tag_id"], {
                 equalTo: updatedId,
                 orderBy: ["id"]
             }).next(10);
@@ -99,7 +99,7 @@ export default ({allowOwner = true}) => {
             return updatedId;
         }
         const checkIfLabelValid = async updatedId => {
-            const existing = await database.cursor(["tag"], {
+            const existing = await database.cursor(["tag", "tag_id"], {
                 equalTo: tag.label,
                 orderBy: ["label"]
             }).next(10);

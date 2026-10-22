@@ -37,7 +37,7 @@ const Tags = (props) => {
         return <MutualSubscribeItem
             {...ItemProps}
             counter={true}
-            key={item.key}
+            key={item.id}
             data={item}
             type={"tag"}
             typeId={"watching"}
@@ -59,16 +59,13 @@ const Tags = (props) => {
         {label: "Hidden", value: "hidden"},
     ];
 
-    const handleClearFilter = () => {
-        dispatch({type: tagsReducer.MODE, mode, filter: ""});
-    };
-
     let itemTransform = item => {
         return {
             key: item.key,
             value: {
                 ...item.value,
                 message: <MentionedTextComponent
+                    key={item.key}
                     maxLength={25}
                     mentions={[mentionTags, mentionUsers]}
                     text={item.value.description || null}
@@ -85,20 +82,20 @@ const Tags = (props) => {
     let cursor;
     switch (mode) {
         case "all":
-            cursor = database.cursor(["tag"], {
+            cursor = database.cursor(["tag", "tag_id"], {
                 equalTo: equals,
                 orderBy: ["_sort_name"],
                 start: filter && !equals ? normalizeSortName(filter) : undefined
             });
             break;
         case "hidden":
-            cursor = database.cursor(["tag"], {
+            cursor = database.cursor(["tag", "tag_id"], {
                 equalTo: true,
                 orderBy: ["hidden"]
             });
             break;
         case "uid":
-            cursor = database.cursor(["tag"], {
+            cursor = database.cursor(["tag", "tag_id"], {
                 equalTo: equals,
                 orderBy: ["uid"],
                 start: filter && !equals ? normalizeSortName(filter) : undefined

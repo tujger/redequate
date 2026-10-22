@@ -65,7 +65,7 @@ export default ({allowOwner = true}) => {
         database.read(["tag", {tag_id: itemId}])
             .then(value => {
                 if (value !== undefined) return {key: itemId, value};
-                return database.cursor(["tag"], {
+                return database.cursor(["tag", "tag_id"], {
                     equalTo: itemId,
                     orderBy: ["id"]
                 }).next().then(items => items[0])
@@ -192,7 +192,7 @@ export default ({allowOwner = true}) => {
                 })}
                 live
                 noItemsComponent={<PostComponent label={t("Tag.No posts found")}/>}
-                cursor={database.cursor(["_tag", {tag_id: tag.key}], {order: DatabaseOrder.DESC})}
+                cursor={database.cursor(["_tag", {tag_id: tag.key}, "post_id"], {order: DatabaseOrder.DESC})}
                 placeholder={<PostComponent skeleton={true}/>}
             />
         </div>
