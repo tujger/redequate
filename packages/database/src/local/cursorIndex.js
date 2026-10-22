@@ -206,7 +206,7 @@ export async function canUseIndex(storageKey, collection, field, scope) {
     } finally { database.close(); }
 }
 
-export const recordPath = (collection, pathKey) => [collection, ...JSON.parse(pathKey).map(token =>
+export const recordPath = (collection, pathKey, tokens = JSON.parse(pathKey)) => [collection, ...tokens.map(token =>
     token[0] === "literal"
         ? token[1]
         : token[0] === "fixed"

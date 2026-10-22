@@ -6,6 +6,7 @@ import validatePath from "../common/validatePath";
 import {fail} from "../../../common";
 import {indexesForStore, LOCAL_COLLECTIONS, STORE_SCHEMA} from "./constants";
 import {indexRow} from "./cursorIndex";
+import {identityField as identityFieldName, identityTokens} from "./identity";
 
 const collectionConfig = collection => Object.hasOwn(LOCAL_COLLECTIONS, collection) ? LOCAL_COLLECTIONS[collection] : undefined;
 const storeName = collection => {
@@ -170,9 +171,15 @@ const openVersionedDatabase = (storageKey, version) => new Promise((resolve, rej
 // There is no migration: incompatible databases must be removed explicitly.
 export const openDatabase = async storageKey => {
     try {
-        const database = await openVersionedDatabase(storageKey, 1);
+        let database;
+        try {
+            database = await openVersionedDatabase(storageKey, 1);
+        } catch (error) {
+            if (error?.name !== "VersionError") throw error;
+            database = await openVersionedDatabase(storageKey);
+        }
         const names = storeNames();
-        const incompatible = database.objectStoreNames.length !== names.length || names.some(name => {
+        const incompatible = names.some(name => {
             if (!database.objectStoreNames.contains(name)) return true;
             const store = database.transaction(name).objectStore(name);
             return store.keyPath !== STORE_SCHEMA.keyPath || !store.autoIncrement ||
@@ -187,7 +194,7 @@ export const openDatabase = async storageKey => {
         return database;
     } catch (error) {
         if (error?.name !== "VersionError") throw error;
-        const message = `Delete the existing redequate:local:${storageKey} IndexedDB database before opening schema version 1.`;
+        const message = `Existing redequate:local:${storageKey} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
         throw Object.assign(new Error(message, {cause: error}), {name: "VersionError"});
     }
 };
@@ -218,7 +225,7 @@ const transact = async (storageKey, mode, names, run) => {
 };
 
 const storedSegments = row => {
-    const segments = JSON.parse(row._key).map(token => token[0] === "fixed"
+    const segments = identityTokens(row._key).map(token => token[0] === "fixed"
         ? [token[0], token[1], Object.hasOwn(row, token[1]) ? row[token[1]] : token[2]]
         : token[0] === "dynamic" ? [token[0], token[1], token[2], row[`_value${token[1]}`] ?? token[3]] : token);
     const last = segments.at(-1);
@@ -228,7 +235,7 @@ const storedSegments = row => {
 };
 
 const queryRow = row => {
-    const tokens = JSON.parse(row._key);
+    const tokens = identityTokens(row._key);
     const dynamic = tokens.filter(token => token[0] === "dynamic");
     const last = [...dynamic].sort((a, b) => a[1] - b[1]).at(-1);
     return {
@@ -514,6 +521,30 @@ export const getSubtree = (storageKey, rawPath) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
     return transact(storageKey, "readonly", [storeName(path.collection)], (transaction, setResult) => {
         readStores(transaction, rows => setResult(subtreeValue(rows, rawPath)));
+    });
+};
+
+export const getCursorChildren = (storageKey, rawPath, identityField) => {
+    const path = parseDatabasePath(rawPath, {allowField: false});
+    const prefix = pathSegments(path);
+    return transact(storageKey, "readonly", [storeName(path.collection)], (transaction, setResult, abortWith) => {
+        readStores(transaction, rows => {
+            try {
+                const entries = rows.flatMap(row => {
+                    if (row._collection !== path.collection) return [];
+                    const suffix = relativeSegments(row, prefix);
+                    if (suffix?.length !== 1) return [];
+                    const token = suffix[0];
+                    return identityFieldName(token) === identityField
+                        ? [[token.at(-1), subtreeValue(rows, pathFromSegments(path.collection, storedSegments(row)))]]
+                        : [];
+                });
+                if (new Set(entries.map(([key]) => key)).size !== entries.length) {
+                    invalidPath("A cursor child must identify a single record.");
+                }
+                setResult(Object.fromEntries(entries));
+            } catch (error) { abortWith(error); }
+        });
     });
 };
 
@@ -897,14 +928,15 @@ export const replaceIndexedRecord = (storageKey, rawPath, pathKey, value) => {
 };
 
 /** Resolve an existing immediate child back to its stored named path. */
-export const getChildRecordPath = async (storageKey, rawPath, key) => {
+export const getChildRecordPath = async (storageKey, rawPath, key, identityField) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
     const prefix = pathSegments(path);
     const rows = await getAllRecords(storageKey);
     const matches = rows.filter(row => {
         if (row._collection !== path.collection) return false;
         const suffix = relativeSegments(row, prefix);
-        return suffix?.length === 1 && suffix[0].at(-1) === key;
+        return suffix?.length === 1 && suffix[0].at(-1) === key && (identityField === undefined ||
+            identityFieldName(suffix[0]) === identityField);
     });
     if (matches.length > 1) invalidPath("A cursor child must identify a single record.");
     return matches.length ? pathFromSegments(path.collection, storedSegments(matches[0])) : undefined;

@@ -7,6 +7,7 @@ import parseCreatePath from "../common/parseCreatePath";
 import addEventListener, {mutate} from "./addEventListener";
 import LocalCursor from "./cursor";
 import {addGeneratedRecord, addRecord, deleteRecord, readValue, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecord, updateRecords, createRecordPath} from "./helpers";
+import {applySchema} from "./schema";
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -19,6 +20,16 @@ export default class LocalDatabase extends DatabaseBase {
             fail("database/invalid-argument", "storageKey must be a non-empty string.");
         }
         this.storageKey = storageKey;
+    }
+
+    /**
+     * Apply an IndexedDB schema; this API belongs to the Local provider only.
+     * @param {Record<string, {keyPath: string | string[], autoIncrement: boolean,
+     * indexes: Record<string, {keyPath: string | string[], unique?: boolean}>}>} schema
+     * @returns {Promise<void>}
+     */
+    async applySchema(schema) {
+        return applySchema(this.storageKey, schema);
     }
 
     addEventListener(path, options = {}) {
@@ -36,7 +47,8 @@ export default class LocalDatabase extends DatabaseBase {
         return composeCursor(queries, effective,
             (sourcePath, sourceOptions) => new LocalCursor(this.storageKey, sourcePath,
                 {...sourceOptions, onError: sourceOptions?.onError ?? this.onError}),
-            this.run.bind(this), path, pathIsDatabasePath ? () => resolvePath(path) : undefined);
+            this.run.bind(this), path, pathIsDatabasePath ? () => resolvePath(Array.isArray(path) &&
+                path.length > 1 && typeof path.at(-1) === "string" ? path.slice(0, -1) : path) : undefined);
     }
 
     async create(path, value) {

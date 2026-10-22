@@ -4,9 +4,10 @@ import DatabaseCursor from "../common/DatabaseCursor";
 import compareKeys from "../common/compareKeys";
 import resolvePath from "../common/resolvePath";
 import addEventListener, {mutate} from "./addEventListener";
-import {createRecordPath, getAllRecords, getChildRecordPath, getSubtree, parseDatabasePath, replaceIndexedRecord, subtreeValue, updateRecords} from "./helpers";
+import {createRecordPath, getAllRecords, getChildRecordPath, getCursorChildren, getSubtree, parseDatabasePath, replaceIndexedRecord, subtreeValue, updateRecords} from "./helpers";
 import {LOCAL_COLLECTIONS} from "./constants";
 import {canUseIndex, readIndexedPage, recordPath as indexedRecordPath, scopeKey} from "./cursorIndex";
+import {identityField, identityTokens} from "./identity";
 
 const invalid = message => fail("database/invalid-argument", message);
 const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
@@ -15,6 +16,7 @@ const children = value => value !== null && typeof value === "object" ? Object.e
 export default class LocalCursor extends DatabaseCursor {
     #storageKey;
     #path;
+    #identityField;
     #field;
     #byValue;
     #start;
@@ -27,9 +29,14 @@ export default class LocalCursor extends DatabaseCursor {
     #nativeScan;
 
     constructor(storageKey, path, options = {}) {
-        super(options, path);
+        const identityField = Array.isArray(path) && path.length > 1 && typeof path.at(-1) === "string"
+            ? path.at(-1)
+            : undefined;
+        const resolvedPath = identityField === undefined ? path : path.slice(0, -1);
+        super(options, resolvedPath);
         this.#storageKey = storageKey;
-        this.#path = typeof path === "string" ? path.split("/").filter(Boolean) : path;
+        this.#path = typeof resolvedPath === "string" ? resolvedPath.split("/").filter(Boolean) : resolvedPath;
+        this.#identityField = identityField;
         this.#field = this.orderBy === undefined ? undefined : resolvePath(this.orderBy);
         this.#byValue = this.#field === "" || (this.#field === undefined && this.equalTo !== undefined);
         this.#start = this.start;
@@ -57,6 +64,7 @@ export default class LocalCursor extends DatabaseCursor {
     }
 
     async #read() {
+        if (this.#identityField !== undefined) return getCursorChildren(this.#storageKey, this.#path, this.#identityField);
         if (this.#path.length) return getSubtree(this.#storageKey, this.#path);
         const rows = await getAllRecords(this.#storageKey);
         return Object.fromEntries([...new Set(rows.map(row => row._collection))]
@@ -135,7 +143,11 @@ export default class LocalCursor extends DatabaseCursor {
                         end,
                         scope
                     }, this.#nativeScan, n - result.length);
-                candidates.push(...page.rows.map(row => ({...row, sort: this.#sortValue(row.key, row.value)})));
+                candidates.push(...page.rows.flatMap(row => {
+                    const tokens = this.#identityField === undefined ? undefined : identityTokens(row.pathKey);
+                    if (tokens && identityField(tokens.at(-1)) !== this.#identityField) return [];
+                    return [{...row, tokens, sort: this.#sortValue(row.key, row.value)}];
+                }));
                 exhausted = page.exhausted;
                 if (page.last) this.#nativeScan = page.last;
             }
@@ -157,10 +169,10 @@ export default class LocalCursor extends DatabaseCursor {
                     if (replacement !== undefined) {
                         const field = LOCAL_COLLECTIONS[collection]?.idField ?? "id";
                         const recordPath = this.#indexed
-                            ? indexedRecordPath(collection, candidate.pathKey)
+                            ? indexedRecordPath(collection, candidate.pathKey, candidate.tokens)
                             : this.#path.length
-                                ? await getChildRecordPath(this.#storageKey, this.#path, key) ??
-                            createRecordPath([...this.#path, field], key)
+                                ? await getChildRecordPath(this.#storageKey, this.#path, key, this.#identityField) ??
+                            createRecordPath([...this.#path, this.#identityField ?? field], key)
                                 : [key];
                         const savedValue = await mutate(this.#storageKey, [recordPath], () => this.#indexed
                             ? replaceIndexedRecord(this.#storageKey, recordPath, candidate.pathKey, replacement)

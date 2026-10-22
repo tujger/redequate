@@ -68,3 +68,12 @@ export const indexesForStore = name => Object.fromEntries([
     ...(name === "_chats" ? ["_scopePrivate", "_scopeUnsupportedField"] : []),
     ...(fields[name] ?? [])
 ].map(index => [index, STORE_SCHEMA.indexes[index]]));
+
+// JSON-compatible description of the physical version-one stores. A consumer
+// may pass this shape (or a subset of stores) to applySchema.
+export const LOCAL_SCHEMA = Object.fromEntries(Object.keys(LOCAL_COLLECTIONS).map(name => [name, {
+    keyPath: STORE_SCHEMA.keyPath,
+    autoIncrement: true,
+    indexes: Object.fromEntries(Object.entries(indexesForStore(name)).map(([index, keyPath]) =>
+        [index, {keyPath, unique: index === "_identity"}]))
+}]));
