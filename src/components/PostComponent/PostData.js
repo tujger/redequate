@@ -177,39 +177,29 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
                 }
             }).catch(reject);
         }),
-        fetchCounters: () => new Promise((resolve, reject) => {
-            if (!_id) reject(new Error("Post not submitted yet."));
-            _counters = {};
+        fetchCounters: async () => {
+            if (!_id) throw new Error("Post not submitted yet.");
             // UNKNOWN: _counters contains several key schemes; type does not identify the key field.
-            database.read(["_counters", {id: _id}]).then(value => {
-                _counters = value || {};
-                resolve(_body);
-            })
-        }),
-        fetchExtras: (uid) => new Promise((resolve, reject) => {
-            if (!_id) {
-                reject(new Error("Post not submitted yet."));
-                return;
-            }
-            if (!uid) {
-                resolve(_body);
-                return;
-            }
+            _counters = await database.read(["_counters", {id: _id}]) || {};
+            return _body;
+        },
+        fetchExtras: async (uid) => {
+            if (!_id) throw new Error("Post not submitted yet.");
+            if (!uid) return _body;
             // eslint-disable-next-line camelcase
             const id_uid = `${_id}_${uid}`;
-            database.read(["extra", "extra_id"], {
+            const value = await database.read(["extra", "extra_id"], {
                 equalTo: id_uid,
                 orderBy: "id_uid",
-            }).then(value => {
-                _extras = {};
-                Object.entries(value || {}).map(([key, val]) => {
-                    if (allowedExtras.indexOf(val.type) >= 0) {
-                        _extras[val.type] = {key, value: val};
-                    }
-                });
-                resolve(_body);
             });
-        }),
+            _extras = {};
+            Object.entries(value || {}).forEach(([key, val]) => {
+                if (allowedExtras.indexOf(val.type) >= 0) {
+                    _extras[val.type] = {key, value: val};
+                }
+            });
+            return _body;
+        },
         fetchPath: async () => {
             if (!_replyTo) return _id;
             let id = _replyTo, next = null, parentKey = null, rootKey = null, commentKey = null;

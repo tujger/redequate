@@ -21,11 +21,13 @@ export default (
         const postData = await cacheDatas.fetch(fetchItemId(item), id => {
             return PostData({allowedExtras, database, type}).fetch(id);
         });
-        await postData.fetchCounters();
-        await postData.fetchExtras(user?.id);
-        const userData = await cacheDatas.fetch(postData.uid, id => {
-            return new UserData(database).fetch(id, user?.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
-        })
+        const [, , userData] = await Promise.all([
+            postData.fetchCounters(),
+            postData.fetchExtras(user?.id),
+            cacheDatas.fetch(postData.uid, id => {
+                return new UserData(database).fetch(id, user?.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
+            }),
+        ]);
         postData._userData = userData;
         // console.log(postData)
         return postData;

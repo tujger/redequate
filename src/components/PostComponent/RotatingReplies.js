@@ -3,13 +3,12 @@ import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
 import {DatabaseOrder} from "../../../packages/database/src";
 import {useDatabase} from "../../controllers";
-import {cacheDatas, usePages} from "../../controllers/General";
+import {cacheDatas, usePages, Layout} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {UserData} from "../../controllers/UserData";
 import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../MentionedTextComponent";
 import cardStyles from "./styles/PostComponent.module.css";
 import motionStyles from "./styles/PostMotion.module.css";
@@ -27,7 +26,7 @@ export default (props) => {
     const {item, itemPrev, items} = state;
 
     const handleClick = () => {
-        dispatch({type: lazyListComponentReducer.REFRESH});
+        dispatch({type: Layout.REFRESH});
         history.push(pages.post.route + postId, {
             onlyReplies: true,
         })

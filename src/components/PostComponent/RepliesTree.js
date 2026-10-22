@@ -31,6 +31,8 @@ export default (props) => {
     const {settings = {}} = metaInfo || {};
     const {postsRotateReplies} = settings;
 
+    const cursor = cursorOptions ? database.cursor(["posts"], cursorOptions) : undefined;
+
     const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
     React.useEffect(() => {
@@ -170,7 +172,7 @@ export default (props) => {
             <div className={cardStyles.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
-                    cursor={database.cursor(["posts"], cursorOptions)}
+                    cursor={cursor}
                     itemTransform={postItemTransform({
                         auth,
                         allowedExtras,
