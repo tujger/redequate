@@ -1,11 +1,12 @@
 import validatePath from "../common/validatePath";
 import compareKeys from "../common/compareKeys";
 import {fail} from "../../../common";
-import {getAllRecords, resolveCollectionPath, subtreeValue} from "./helpers";
+import {assertCollection, getAllRecords, resolveCollectionPath, subtreeValue} from "./helpers";
 
 const listeners = new Map();
 const queues = new Map();
 const channels = new Map();
+const storageName = context => typeof context === "string" ? context : context.storageKey;
 const invalid = message => fail("database/invalid-argument", message);
 
 const pathKeys = path => {
@@ -52,7 +53,7 @@ const receive = (storageKey, event) => {
         path.length && path.every(segment => segment && typeof segment.key === "string" &&
             (segment.token === undefined || Array.isArray(segment.token))))) return;
     enqueue(storageKey, async () => {
-        for (const listener of listeners.get(storageKey) ?? []) {
+        for (const listener of listeners.get(storageName(storageKey)) ?? []) {
             if (paths.some(path => related(listener.keys, path))) await refresh(listener);
         }
     }).catch(() => {});
@@ -82,6 +83,7 @@ const publish = (storageKey, paths) => {
 };
 
 const enqueue = (storageKey, operation) => {
+    storageKey = storageName(storageKey);
     const next = (queues.get(storageKey) ?? Promise.resolve()).then(operation);
     queues.set(storageKey, next.catch(() => {}));
     return next;
@@ -172,10 +174,10 @@ const refresh = async listener => {
 export const mutate = (storageKey, paths, operation) => enqueue(storageKey, async () => {
     const result = await operation();
     const changed = paths.map(pathKeys);
-    for (const listener of listeners.get(storageKey) ?? []) {
+    for (const listener of listeners.get(storageName(storageKey)) ?? []) {
         if (changed.some(path => related(listener.keys, path))) await refresh(listener);
     }
-    publish(storageKey, changed);
+    publish(storageName(storageKey), changed);
     return result;
 });
 
@@ -196,7 +198,9 @@ export default function addEventListener(storageKey, path, callbacks, read) {
         callbacks = {...callbacks, orderBy};
     }
     const keys = pathKeys(path);
+    if (keys.length) assertCollection(storageKey, keys[0].key);
     const listener = {storageKey, keys, path, callbacks, read, active: true, initial: true, previous: undefined};
+    storageKey = storageName(storageKey);
     if (!listeners.has(storageKey)) listeners.set(storageKey, new Set());
     listeners.get(storageKey).add(listener);
     openChannel(storageKey);
