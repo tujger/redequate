@@ -5,7 +5,6 @@ import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
 import JoinUsComponent from "../components/JoinUsComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
 import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
@@ -13,7 +12,7 @@ import PostComponent from "../components/PostComponent/PostComponent";
 import postItemTransform from "../components/PostComponent/postItemTransform";
 import ProgressView from "../components/ProgressView";
 import {useAuth, useBackend, useDatabase} from "../controllers";
-import {cacheDatas, usePages, useWindowData} from "../controllers/General";
+import {cacheDatas, usePages, useWindowData, Layout} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {matchRole} from "../controllers/UserData";
@@ -40,7 +39,7 @@ export default (props) => {
 
     const handleReplyChange = ({key, ...rest}) => {
         cacheDatas.remove(id);
-        dispatch({type: lazyListComponentReducer.REFRESH});
+        dispatch({type: Layout.REFRESH});
         setState({...state, highlight: key});
     }
 
@@ -49,7 +48,6 @@ export default (props) => {
     }
 
     React.useEffect(() => {
-        dispatch({type: lazyListComponentReducer.REFRESH});
         dispatch(ProgressView.SHOW);
         cacheDatas.remove(id);
 

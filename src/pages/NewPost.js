@@ -1,7 +1,6 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory, useLocation, useParams} from "react-router-dom";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import ProgressView from "../components/ProgressView";
@@ -29,7 +28,6 @@ export default () => {
 
     const handleReplyChange = ({key}) => {
         cacheDatas.remove(id);
-        dispatch({type: lazyListComponentReducer.REFRESH});
         history.replace(pages.post.route + key);
     }
 
