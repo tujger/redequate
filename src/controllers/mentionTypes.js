@@ -30,7 +30,7 @@ export const mentionUsers = {
     className: mentionStyles.user,
     displayTransform: (id, display) => "@" + display,
     markup: "$[user:__id__:__display__]",
-    cursor: (start, database) => database.cursor(["users_public"], {
+    cursor: (start, database) => database.cursor(["users_public", "user_id"], {
         orderBy: ["_sort_name"],
         start: normalizeSortName(start),
     }),
@@ -44,7 +44,7 @@ export const mentionTags = {
     className: mentionStyles.tag,
     displayTransform: (id, display) => "#" + display,
     markup: "$[tag:__id__:__display__]",
-    cursor: (start, database) => database.cursor(["tag"], {
+    cursor: (start, database) => database.cursor(["tag", "tag_id"], {
         orderBy: ["_sort_name"],
         start: normalizeSortName(start),
     }),
