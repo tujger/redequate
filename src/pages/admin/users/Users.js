@@ -5,7 +5,6 @@ import {Link} from "react-router-dom";
 import {DatabaseOrder} from "../../../../packages/database/src";
 import FlexFabComponent from "../../../components/FlexFabComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../../../components/LoadingComponent";
 import ProgressView from "../../../components/ProgressView";
 import {cacheDatas, useDatabase, useRedirectToLogin} from "../../../controllers";
@@ -31,7 +30,6 @@ function Users(props) {
         } else if (type === "mode") {
             dispatch({type: usersReducer.MODE, mode: evt.target.value});
         }
-        dispatch({type: lazyListComponentReducer.RESET});
     }
 
     React.useEffect(() => {
@@ -96,7 +94,6 @@ function Users(props) {
                 {path: ["users_public"], orderBy: ["_sort_name"], start: normalizeSortName(filter)},
                 ...(filter ? [{path: ["users_public"], orderBy: [UserData.EMAIL], start: filter}] : []),
             ]);
-            break;
     }
 
     return <>
