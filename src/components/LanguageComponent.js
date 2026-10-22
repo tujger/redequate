@@ -3,11 +3,11 @@ import {useTranslation} from "react-i18next";
 import {connect} from "react-redux"
 import {fetchDeviceId} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/useCurrentUserData";
-import {UserData} from "../controllers/UserData";
+import useCurrentUserData from "../controllers/useCurrentUserData";
+import UserData from "../controllers/UserData";
 import {useDatabase} from "../controllers";
 import Select from "../controls/Select/Select";
-import {languageReducer} from "../reducers/languageReducer";
+import languageReducer from "../reducers/languageReducer";
 
 const mapStateToProps = ({language}) => ({
     locale: language.locale,

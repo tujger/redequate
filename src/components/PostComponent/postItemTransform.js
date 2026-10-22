@@ -1,5 +1,5 @@
 import {cacheDatas} from "../../controllers/General";
-import {UserData} from "../../controllers/UserData";
+import UserData from "../../controllers/UserData";
 import {getCurrentUserData} from "../../controllers/useCurrentUserData";
 import {MutualError} from "../MutualComponent";
 import {PostData} from "./PostData";

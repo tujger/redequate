@@ -16,7 +16,7 @@ import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
 import Select from "../../../controls/Select/Select";
 import baseStyles from "../../../themes/Base.module.css";
-import {auditReducer} from "./auditReducer";
+import auditReducer from "./auditReducer";
 import ErrorItemComponent from "./ErrorItemComponent";
 
 const Errors = props => {

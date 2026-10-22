@@ -1,14 +1,14 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
 import {useBackend, useDatabase} from "../controllers";
 import {cacheDatas, MenuBadge, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
-import {UserData} from "../controllers/UserData";
-import {ChatMeta} from "./ChatMeta";
-import {chatsCounterReducer} from "./chatsCounterReducer";
+import UserData from "../controllers/UserData";
+import ChatMeta from "./ChatMeta";
+import chatsCounterReducer from "./chatsCounterReducer";
 
 export default ({clearText = text => text}) => {
     const backend = useBackend();

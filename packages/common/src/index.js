@@ -1,4 +1,5 @@
 export * from "./UserData.js";
+export {default as UserData} from "./UserData.js";
 export {UserRole} from "./UserRole.js";
 
 export async function delay(providerName, method) {

@@ -1,6 +1,6 @@
 import parseReadPath from "../common/parseReadPath";
 import resolvePath from "../common/resolvePath";
-import {applyReadOptions, readQueryOptions} from "../common/applyReadOptions";
+import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
 import {fail} from "../../../common";
 
 export default async function read(firebase, path, options = {}) {

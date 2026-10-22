@@ -18,14 +18,16 @@ export {
     matchRole,
     needAuth,
     UserRole,
-    UserData,
+    default as UserData,
     normalizeSortName,
 } from "./UserData";
 export {default as notifySnackbar} from "./notifySnackbar";
 export * as notifyConfirm from "./notifyConfirm";
-export {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
+export {default as dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
 export {default as useScrollPosition, getScrollPosition} from "../helpers/useScrollPosition";
 export {useTextTranslation} from "./textTranslation";
 
 export * from "./useCurrentUserData";
+export {default as useCurrentUserData} from "./useCurrentUserData";
 export * from "./useRedirectToLogin";
+export {default as useRedirectToLogin} from "./useRedirectToLogin";

@@ -1,20 +1,20 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
 import {useDatabase, useRedirectToLogin} from "../controllers";
 import {cacheDatas, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
-import {UserData} from "../controllers/UserData";
+import UserData from "../controllers/UserData";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
 import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
 import ChatList from "./ChatList";
-import {ChatMeta} from "./ChatMeta";
+import ChatMeta from "./ChatMeta";
 import chatStyles from "./styles/Chat.module.css";
 
 export default (props) => {

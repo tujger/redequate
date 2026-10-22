@@ -1,6 +1,6 @@
 import {MenuBadge} from "../../controllers/General";
 
-export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
+const topMenuReducer = (state = {page: null, badge: {}}, action) => {
     let id;
     switch (action.type) {
         case MenuBadge.INCREASE:
@@ -18,3 +18,5 @@ export const topMenuReducer = (state = {page: null, badge: {}}, action) => {
     }
 };
 topMenuReducer.skipStore = true;
+
+export default topMenuReducer;

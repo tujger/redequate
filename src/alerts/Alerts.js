@@ -13,10 +13,10 @@ import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
-import {alertsCounterReducer} from "./alertsCounterReducer";
+import alertsCounterReducer from "./alertsCounterReducer";
 import AlertsDaemon from "./AlertsDaemon";
 import AlertsList from "./AlertsList";
-import {alertsVisitReducer} from "./alertsVisitReducer";
+import alertsVisitReducer from "./alertsVisitReducer";
 
 export default ({daemon, fetchAlertContent}) => {
     const currentUserData = useCurrentUserDataValue();

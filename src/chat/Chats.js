@@ -3,7 +3,7 @@ import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {DatabaseOrder} from "../../packages/database/src";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import {useDatabase, useRedirectToLogin} from "../controllers";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";

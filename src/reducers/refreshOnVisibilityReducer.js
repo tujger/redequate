@@ -1,6 +1,6 @@
 import {Layout} from "../controllers/General";
 
-export const refreshOnVisibilityReducer = (state = {key: null}, action) => {
+const refreshOnVisibilityReducer = (state = {key: null}, action) => {
     switch (action.type) {
         case Layout.REFRESH_CONTENT:
             return {...state, key: Math.random()};
@@ -9,3 +9,5 @@ export const refreshOnVisibilityReducer = (state = {key: null}, action) => {
     }
 };
 refreshOnVisibilityReducer.skipStore = true;
+
+export default refreshOnVisibilityReducer;

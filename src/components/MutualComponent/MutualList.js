@@ -5,7 +5,7 @@ import {useDispatch} from "react-redux";
 import {DatabaseOrder} from "../../../packages/database/src";
 import {useDatabase} from "../../controllers";
 import {cacheDatas, Layout} from "../../controllers/General";
-import {UserData} from "../../controllers/UserData";
+import UserData from "../../controllers/UserData";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
 import {MutualListMode} from "./MutualConstants";

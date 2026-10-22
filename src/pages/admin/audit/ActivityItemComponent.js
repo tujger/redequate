@@ -9,7 +9,7 @@ import ListItemComponent from "../../../components/ListItemComponent";
 import {useDatabase} from "../../../controllers";
 import {cacheDatas, usePages} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
-import {UserData} from "../../../controllers/UserData";
+import UserData from "../../../controllers/UserData";
 import UserName from "../../../controls/UserName/UserName";
 import activityStyles from "./styles/ActivityItemComponent.module.css";
 

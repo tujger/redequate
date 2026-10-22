@@ -1,5 +1,5 @@
 import UseAbstract from "./AppContext/UseAbstract";
-import {UserData} from "./UserData";
+import UserData from "./UserData";
 
 class CurrentUserData extends UseAbstract {
     _normalize(value) {
@@ -9,7 +9,7 @@ class CurrentUserData extends UseAbstract {
 
 const currentUserData = new CurrentUserData("currentUserData", new UserData());
 
-export const useCurrentUserData = () =>
+export default () =>
     currentUserData.useStore();
 
 export const useCurrentUserDataValue = () =>

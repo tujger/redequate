@@ -1,4 +1,4 @@
-export function WebWorker(worker) {
+export default function WebWorker(worker) {
     if (!window.Worker) {
         return () => new Promise((resolve, reject) => {
             reject(new Error("WebWorkers are not supported"));

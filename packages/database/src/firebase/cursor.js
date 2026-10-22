@@ -1,6 +1,6 @@
 import compareValues from "../common/compareValues";
 import compareKeys from "../common/compareKeys";
-import {DatabaseCursor} from "../common/DatabaseCursor";
+import DatabaseCursor from "../common/DatabaseCursor";
 import createCursorQuery from "./createCursorQuery";
 import resolvePath from "../common/resolvePath";
 

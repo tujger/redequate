@@ -22,7 +22,7 @@ import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {TextMaskPhone} from "../controllers/TextMasks";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
-import {matchRole, UserData, UserRole} from "../controllers/UserData";
+import UserData, {matchRole, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";

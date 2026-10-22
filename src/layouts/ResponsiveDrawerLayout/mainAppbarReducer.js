@@ -1,6 +1,6 @@
 import {Layout, MenuBadge} from "../../controllers/General";
 
-export const mainAppbarReducer = (state = {label: "", badge: 0}, action) => {
+const mainAppbarReducer = (state = {label: "", badge: 0}, action) => {
     switch (action.type) {
         case Layout.TITLE:
             return {...state, label: action.label};
@@ -15,3 +15,5 @@ export const mainAppbarReducer = (state = {label: "", badge: 0}, action) => {
     }
 };
 mainAppbarReducer.skipStore = true;
+
+export default mainAppbarReducer;

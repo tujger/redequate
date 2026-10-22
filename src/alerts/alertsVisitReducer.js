@@ -1,4 +1,4 @@
-export const alertsVisitReducer = (state = {timestamp: 0}, action) => {
+const alertsVisitReducer = (state = {timestamp: 0}, action) => {
     switch (action.type) {
         case alertsVisitReducer.UPDATE:
             return {...state, timestamp: new Date().getTime()};
@@ -7,3 +7,5 @@ export const alertsVisitReducer = (state = {timestamp: 0}, action) => {
     }
 };
 alertsVisitReducer.UPDATE = "alertsVisit_Update";
+
+export default alertsVisitReducer;

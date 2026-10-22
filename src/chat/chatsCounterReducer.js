@@ -1,6 +1,6 @@
 import {Layout} from "../controllers/General";
 
-export const chatsCounterReducer = (state = {counter: 0}, action) => {
+const chatsCounterReducer = (state = {counter: 0}, action) => {
     switch (action.type) {
         case chatsCounterReducer.COUNTER:
             return {...state, counter: action.counter};
@@ -12,3 +12,5 @@ export const chatsCounterReducer = (state = {counter: 0}, action) => {
 };
 chatsCounterReducer.COUNTER = "chatsCounter_Counter";
 chatsCounterReducer.skipStore = true;
+
+export default chatsCounterReducer;

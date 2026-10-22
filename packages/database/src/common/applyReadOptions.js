@@ -24,7 +24,7 @@ export function readQueryOptions(options = {}) {
     return {field, order, equalTo, start, end};
 }
 
-export function applyReadOptions(value, options = {}) {
+export default function applyReadOptions(value, options = {}) {
     const {field, order, equalTo, start, end} = readQueryOptions(options);
     if (value === undefined || value === null || typeof value !== "object") return value;
     const orderedValue = (key, item) => field === undefined

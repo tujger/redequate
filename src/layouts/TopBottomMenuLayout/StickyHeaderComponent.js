@@ -2,7 +2,7 @@ import React from "react";
 import ProgressView from "../../components/ProgressView";
 import styles from "./styles/StickyHeaderComponent.module.css";
 
-export const StickyHeaderComponent = ({content, image, menuComponent, title, titleClassName}) => {
+export default ({content, image, menuComponent, title, titleClassName}) => {
     const refContent = React.useRef(null);
     const refObserver = React.useRef(null);
     const refSticky = React.useRef(null);

@@ -5,7 +5,7 @@ import {useAuth, useBackend, useDatabase} from "../../controllers";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
-import {UserData} from "../../controllers/UserData";
+import UserData from "../../controllers/UserData";
 import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";

@@ -15,8 +15,8 @@ import {cacheDatas, fetchDeviceId, usePages, useStore, useWindowData} from "../c
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {useCurrentUserData} from "../controllers/useCurrentUserData";
-import {logoutUser, matchRole, normalizeSortName, UserData, UserRole} from "../controllers/UserData";
+import useCurrentUserData from "../controllers/useCurrentUserData";
+import UserData, {logoutUser, matchRole, normalizeSortName, UserRole} from "../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";

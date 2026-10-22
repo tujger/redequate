@@ -1,4 +1,4 @@
-export const toUserData = (user, createUserData) => {
+export default (user, createUserData) => {
     if (!user) return createUserData();
     const json = user.toJSON();
     const providerItem = json.providerData?.[0];

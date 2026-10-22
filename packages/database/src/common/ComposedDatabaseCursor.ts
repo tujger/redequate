@@ -1,6 +1,6 @@
 import {fail} from "../../../common";
 import resolvePath from "./resolvePath";
-import {DatabaseCursor} from "./DatabaseCursor";
+import DatabaseCursor from "./DatabaseCursor";
 import type {
     DatabasePath, DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent,
     DatabaseCursorOptions, DatabaseCursorSubscription, DatabaseOptions

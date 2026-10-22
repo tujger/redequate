@@ -9,7 +9,7 @@ import ProgressView from "../../../components/ProgressView";
 import {useBackend, useDatabase} from "../../../controllers";
 import {cacheDatas} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
-import {UserData} from "../../../controllers/UserData";
+import UserData from "../../../controllers/UserData";
 import Button from "../../../controls/Button/Button";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 

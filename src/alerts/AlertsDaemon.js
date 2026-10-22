@@ -5,7 +5,7 @@ import {useDatabase} from "../controllers";
 import {MenuBadge, usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
-import {alertsCounterReducer} from "./alertsCounterReducer";
+import alertsCounterReducer from "./alertsCounterReducer";
 
 export default ({fetchAlertContent}) => {
     const currentUserData = useCurrentUserDataValue();

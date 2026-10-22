@@ -1,4 +1,4 @@
-export const confirmComponentReducer = (state = {props: {}}, action) => {
+const confirmComponentReducer = (state = {props: {}}, action) => {
     switch (action.type) {
         case confirmComponentReducer.SHOW:
             return {...state, props: {...action.props, open: true}};
@@ -11,3 +11,5 @@ export const confirmComponentReducer = (state = {props: {}}, action) => {
 confirmComponentReducer.SHOW = "confirmComponent_show";
 confirmComponentReducer.HIDE = "confirmComponent_hide";
 confirmComponentReducer.skipStore = true;
+
+export default confirmComponentReducer;

@@ -16,13 +16,13 @@ import {toDateString} from "../../../controllers/DateFormat";
 import {cacheDatas, useWindowData, Layout} from "../../../controllers/General";
 import {mentionUsers} from "../../../controllers/mentionTypes";
 import notifySnackbar from "../../../controllers/notifySnackbar";
-import {UserData} from "../../../controllers/UserData";
+import UserData from "../../../controllers/UserData";
 import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
 import Select from "../../../controls/Select/Select";
 import baseStyles from "../../../themes/Base.module.css";
 import ActivityItemComponent from "./ActivityItemComponent";
-import {auditReducer} from "./auditReducer";
+import auditReducer from "./auditReducer";
 import activityStyles from "./styles/Activity.module.css";
 
 const Activity = props => {

@@ -1,6 +1,6 @@
 import {UserRole} from "./UserRole.js";
 
-export class UserData {
+export default class UserData {
     static PUBLIC = "public";
     static PRIVATE = "private";
     static ROLE = "role";

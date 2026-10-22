@@ -7,7 +7,7 @@ import type {
 } from "./DatabaseTypes";
 
 /** Base for cursors consumed sequentially, exclusively by their owner or composition. */
-export class DatabaseCursor {
+export default class DatabaseCursor {
     readonly #id: string;
     readonly #options: Readonly<DatabaseCursorOptions>;
     readonly #path?: DatabasePath;

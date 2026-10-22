@@ -3,7 +3,7 @@ import {useHistory, useLocation} from "react-router-dom";
 import {usePages} from "./General";
 import {useCurrentUserDataValue} from "./useCurrentUserData";
 
-export function useRedirectToLogin() {
+export default function useRedirectToLogin() {
     const currentUserData = useCurrentUserDataValue();
     const history = useHistory();
     const {pathname} = useLocation();

@@ -1,4 +1,4 @@
-export const lazyListComponentReducer = (state = {}, action) => {
+const lazyListComponentReducer = (state = {}, action) => {
     const cache = action.cache;
     const cacheData = action["LazyListComponent_" + cache];
     const savedCacheData = state["LazyListComponent_" + cache] || {};
@@ -28,3 +28,5 @@ lazyListComponentReducer.RESET = "LazyListComponent_reset";
 lazyListComponentReducer.UPDATE = "LazyListComponent_update";
 
 lazyListComponentReducer.skipStore = true;
+
+export default lazyListComponentReducer;

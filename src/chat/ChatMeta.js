@@ -1,4 +1,4 @@
-import {UserData} from "../controllers/UserData";
+import UserData from "../controllers/UserData";
 
 const ONLINE_TIMEOUT = 60000;
 
@@ -11,7 +11,7 @@ Meta:
     _chats/__UID__/__KEY__/private: <__OPPOSITE_UID__> if chat is private
 */
 
-export function ChatMeta(database) {
+export default function ChatMeta(database) {
     // eslint-disable-next-line one-var
     let _id, _meta, _persisted = false, _lastMessage, _timestamp, _watchRef, _visitRef, _onlineRef,
         _redirect, _activeUids = [];

@@ -1,4 +1,4 @@
-import {DatabaseCursor} from "../../packages/database/src/common/DatabaseCursor";
+import DatabaseCursor from "../../packages/database/src/common/DatabaseCursor";
 import {DatabaseOrder} from "../../packages/database/src/common/DatabaseOrder";
 import type {DatabaseCursorOptions} from "../../packages/database/src/common/DatabaseTypes";
 import {fail} from "../../packages/common";

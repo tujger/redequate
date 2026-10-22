@@ -18,7 +18,7 @@ import {cacheDatas, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
-import {matchRole, normalizeSortName, UserData, UserRole} from "../controllers/UserData";
+import UserData, {matchRole, normalizeSortName, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";

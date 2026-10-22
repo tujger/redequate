@@ -32,7 +32,7 @@ import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
 import {getCurrentUserData, useCurrentUserDataValue, useSetCurrentUserData} from "./controllers/useCurrentUserData";
-import {matchRole, needAuth, UserData, watchUserChanged} from "./controllers/UserData";
+import UserData, {matchRole, needAuth, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import Button from "./controls/Button/Button";
 import initInternationalization from "./helpers/initInternationalization";

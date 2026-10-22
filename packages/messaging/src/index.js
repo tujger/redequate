@@ -1,2 +1,2 @@
 export {default as MessagingBase} from "./MessagingBase";
-export {resolveMessaging} from "./resolveMessaging";
+export {default as resolveMessaging} from "./resolveMessaging";

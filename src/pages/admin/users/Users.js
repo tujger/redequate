@@ -9,11 +9,11 @@ import LoadingComponent from "../../../components/LoadingComponent";
 import ProgressView from "../../../components/ProgressView";
 import {cacheDatas, useDatabase, useRedirectToLogin} from "../../../controllers";
 import {usePages} from "../../../controllers/General";
-import {normalizeSortName, UserData} from "../../../controllers/UserData";
+import UserData, {normalizeSortName} from "../../../controllers/UserData";
 import baseStyles from "../../../themes/Base.module.css";
 import UserItem from "./UserItem";
 import UsersHeader from "./UsersHeader";
-import {usersReducer} from "./usersReducer";
+import usersReducer from "./usersReducer";
 
 function Users(props) {
     const {mode = "all", filter = "", invitation = true} = props;

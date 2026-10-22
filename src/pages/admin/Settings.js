@@ -20,7 +20,7 @@ import {useMetaInfo, useWindowData} from "../../controllers/General";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
-import {UserData} from "../../controllers/UserData";
+import UserData from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import Select from "../../controls/Select/Select";
 import Switch from "../../controls/Switch/Switch";

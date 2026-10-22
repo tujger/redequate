@@ -1,6 +1,6 @@
 import {getI18n} from "react-i18next";
 
-export const languageReducer = (state = {locale: null}, action) => {
+const languageReducer = (state = {locale: null}, action) => {
     switch (action.type) {
         case languageReducer.CHANGE:
             return {...state, locale: action.locale};
@@ -27,3 +27,5 @@ export const restoreLanguage = (i18n = getI18n()) => {
         console.error(e);
     }
 }
+
+export default languageReducer;

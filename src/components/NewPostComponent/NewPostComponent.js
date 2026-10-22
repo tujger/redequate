@@ -19,7 +19,7 @@ import ProgressView from "../ProgressView";
 import UploadComponent from "../UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../UploadComponent/uploadComponentControls";
 import Images from "./Images";
-import {newPostComponentReducer} from "./newPostComponentReducer";
+import newPostComponentReducer from "./newPostComponentReducer";
 import componentStyles from "./styles/NewPostComponent.module.css";
 import Toolbar from "./Toolbar";
 import Wrapper from "./Wrapper";

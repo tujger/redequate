@@ -4,7 +4,7 @@ import {useHistory} from "react-router-dom";
 import {useDatabase} from "../../controllers";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ProgressView from "../ProgressView";
-import {lazyListComponentReducer} from "./lazyListComponentReducer";
+import lazyListComponentReducer from "./lazyListComponentReducer";
 import Observer from "./Observer";
 import Scroller from "./Scroller";
 

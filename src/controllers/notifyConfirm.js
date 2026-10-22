@@ -1,5 +1,5 @@
 import {useStore} from "./General";
-import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
+import confirmComponentReducer from "../reducers/confirmComponentReducer";
 
 export const notifyConfirm = (
     {

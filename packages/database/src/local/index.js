@@ -2,7 +2,7 @@ import {fail} from "../../../common";
 import DatabaseBase from "../common/DatabaseBase";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
 import resolvePath from "../common/resolvePath";
-import {applyReadOptions, readQueryOptions} from "../common/applyReadOptions";
+import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
 import parseCreatePath from "../common/parseCreatePath";
 import addEventListener, {mutate} from "./addEventListener";
 import LocalCursor from "./cursor";

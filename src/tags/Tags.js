@@ -15,7 +15,7 @@ import {normalizeSortName} from "../controllers/UserData";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
-import {tagsReducer} from "./tagsReducer";
+import tagsReducer from "./tagsReducer";
 
 const Tags = (props) => {
     const {

@@ -23,7 +23,7 @@ import saveCurrentProfile from "../common/saveCurrentProfile";
 import loadUserData from "../common/loadUserData";
 import initialProfile from "../common/initialProfile";
 import emailOptions from "../common/emailOptions";
-import {toUserData} from "./toUserData";
+import toUserData from "./toUserData";
 
 export default class FirebaseAuth extends AuthBase {
     _auth = undefined;

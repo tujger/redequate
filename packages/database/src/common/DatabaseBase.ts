@@ -1,5 +1,5 @@
 import {notImplemented} from "../../../common"
-import {DatabaseCursor} from "./DatabaseCursor";
+import DatabaseCursor from "./DatabaseCursor";
 import type {
     DatabasePath, DatabaseValue, DatabaseOptions,
     DatabaseErrorHandler,

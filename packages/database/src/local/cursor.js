@@ -1,6 +1,6 @@
 import compareValues from "../common/compareValues";
 import {fail} from "../../../common";
-import {DatabaseCursor} from "../common/DatabaseCursor";
+import DatabaseCursor from "../common/DatabaseCursor";
 import compareKeys from "../common/compareKeys";
 import resolvePath from "../common/resolvePath";
 import addEventListener, {mutate} from "./addEventListener";

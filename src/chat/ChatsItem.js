@@ -4,14 +4,14 @@ import {useDispatch} from "react-redux";
 import {Link, useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
 import ListItemComponent from "../components/ListItemComponent";
 import {useDatabase} from "../controllers";
 import {cacheDatas, usePages} from "../controllers/General";
-import {UserData} from "../controllers/UserData";
+import UserData from "../controllers/UserData";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import UserName from "../controls/UserName/UserName";
-import {ChatMeta} from "./ChatMeta";
+import ChatMeta from "./ChatMeta";
 import chatStyles from "./styles/ChatsItem.module.css";
 
 export default props => {

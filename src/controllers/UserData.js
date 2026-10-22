@@ -7,7 +7,7 @@ export {
     currentRole, matchRole, needAuth, normalizeSortName, UserRole
 } from "../../packages/common";
 
-export class UserData extends UserDataCommon {
+export default class UserData extends UserDataCommon {
     #database;
     #lastVisitUpdate = 0;
 

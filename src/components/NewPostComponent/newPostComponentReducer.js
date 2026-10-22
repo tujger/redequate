@@ -1,4 +1,4 @@
-export const newPostComponentReducer = (state = {
+const newPostComponentReducer = (state = {
     _savedText: "",
     _savedContext: null
 }, action) => {
@@ -10,3 +10,5 @@ export const newPostComponentReducer = (state = {
     }
 };
 newPostComponentReducer.SAVE = "newPostComponent_Save";
+
+export default newPostComponentReducer;

@@ -1,4 +1,4 @@
-export const auditReducer = (state = {tabSelected: 0, errorsFilter: undefined, errorsMode: "all", activityFilter: undefined, activityFilterItem: undefined, activityMode: "all", activitySort: "asc"}, action) => {
+const auditReducer = (state = {tabSelected: 0, errorsFilter: undefined, errorsMode: "all", activityFilter: undefined, activityFilterItem: undefined, activityMode: "all", activitySort: "asc"}, action) => {
     switch (action.type) {
         case auditReducer.SAVE:
             return {...state, tabSelected: action.tabSelected};
@@ -25,3 +25,5 @@ export const updateActivity = async ({database, uid = 0, type = null, details = 
 updateActivity.SERVICE = "service";
 updateActivity.MAINTENANCE_START = "maintenance_start";
 updateActivity.MAINTENANCE_STOP = "maintenance_stop";
+
+export default auditReducer;

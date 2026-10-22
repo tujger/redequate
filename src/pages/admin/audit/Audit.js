@@ -7,7 +7,7 @@ import {useRedirectToLogin} from "../../../controllers";
 import {usePages} from "../../../controllers/General";
 import Tabs from "../../../controls/Tabs/Tabs";
 import Activity from "./Activity";
-import {auditReducer} from "./auditReducer";
+import auditReducer from "./auditReducer";
 import Errors from "./Errors";
 
 const Audit = props => {
