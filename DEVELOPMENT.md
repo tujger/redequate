@@ -3295,3 +3295,116 @@ Updated Chat tests are ESLint-clean; comparison of all changed source/test files
 adds no lint diagnostics. Existing unrelated lint diagnostics remain. No tests
 were skipped to achieve these results. Public data paths and Android contracts
 are unchanged by this test alignment.
+
+
+### stores.json drives LocalDatabase schemas (supersedes earlier physical schema descriptions)
+
+Decision: keep packages/database/src/local/stores.json unchanged and use its
+store/storeConfig/storeSchema format as the built-in schema source. Applications
+extend it with new LocalDatabase({stores: [...]}); identical definitions merge,
+conflicting base/configured or framework index definitions reject. Constructor
+collections use _id with native autoIncrement and support the existing CRUD,
+nested path, cursor and listener contracts. applySchema retains its separate
+physical-schema object format and does not register new CRUD collections.
+
+Physical records isolate address/query metadata and original values under _local;
+JSON indexes use real projected values and named record identities. Leaf identities
+are projected directly; compound indexes including the leaf can also project
+ancestor identities. Parent-only identities are not copied onto descendant rows,
+which preserves nested records under unique parent indexes. Caller fields cannot
+overwrite service metadata, and public reads preserve the original value shape.
+Required internal indexes are added during conversion, without editing the JSON.
+
+Preparation is lazy and shared per instance. New databases create the complete
+merged schema at version 1; additive changes raise the current version once and
+reproject existing logical rows when needed. Identical schemas do not raise the
+version. Upgrades and unique constraint failures are transactional; blocked or
+failed preparation can be retried. Collection configuration is instance-scoped,
+while committed notifications remain shared by physical storageKey.
+
+The previous _rowId database format requires explicit removal on the chosen dev
+origin; automatic destructive reset is deliberately absent. The default database
+name is redequate:local:redequate:database:local. The separate Local Auth store is
+unaffected. Both web consumers have story/move-database-to-module branches and
+currently instantiate the Firebase provider. No Firebase API, server data format,
+authentication or Android contract changes are introduced by this Local change.
+
+
+Validation: all 14 constructor/conversion scenarios pass, including native unique
+and compound indexes, field writes, rollback, blocked upgrades, concurrent schema
+initialization and instance isolation. The final database suites plus PostData
+have 385 passing tests and the same 9 pre-existing failures caused by tests using
+replies although stores.json does not define that store; the original commit was
+checked separately to establish this baseline. Full unit coverage was also run;
+the physical-row assertions it exposed were updated for the new _local layout.
+Core, demo and Whisky production builds pass; consumer build artifacts were
+written under /private/tmp. A smoke check of the compiled Local module passes
+custom-store CRUD and native unique enforcement. No deployment was performed.
+No demo/Whisky dev origin was open in the connected browser, so an existing
+browser database was not reset during this change.
+
+
+### Remove parallel Local collection/index configuration
+
+Decision: stores.json plus constructor stores are the only collection and field
+configuration. constants.js retains small derived schema views for existing
+internal consumers; conversion lives in storeSchema.js. Cursor metadata indexes
+are generated from merged index keyPaths using the same rules for every store.
+Cursor field projection, scoped queries and eligibility use those generated
+indexes, without store-name lists or a supported-field whitelist. Undeclared
+orderBy fields retain scan semantics. Metadata field tokens preserve distinct
+spellings such as _sort_name and sort_name, and property key ordering is distinct
+from child-key ordering.
+
+Remove the posts/post_id implicit identity exception. Explicit paths and saved
+identities remain authoritative; unspecified new children use the generic dynamic
+id. ChatMeta, Settings, demo code and the previously discussed test scenarios are
+not changed by this cleanup. Compatible databases add the generated indexes and
+recompute row query metadata in the existing atomic version upgrade mechanism.
+
+
+Validation of the cleanup: core and both web consumer builds pass. The compiled
+Local provider passes custom declared-field sorting without getAll scans,
+_sort_name versus sort_name separation, ordering by a field named key, nested
+field sorting, scoped queries and backfilling query metadata when a declared
+field is added. The Local suite has 200 passes and 13 failures: the previous
+9 replies-store failures plus 2 tests requiring the removed implicit post_id
+identity and 2 tests requiring indexed created queries without a declared created
+index. Those discussed test scenarios were left unchanged as requested.
+
+
+### Minimal physical IndexedDB layout (supersedes generated cursor metadata)
+
+Decision: retain stores.json plus constructor stores as the only native index
+configuration, with one unique _identity index on _local.path per logical store.
+Remove all generated cursor, scoped, dynamic-type and unsupported-value indexes,
+and their persisted computed fields. The built-in schema now has 86 indexes:
+68 from JSON plus 18 identity indexes, instead of 484 total.
+
+Object fields are stored once at row level. Sparse _local metadata contains the
+serialized path, names of injected identity fields and originals of overwritten
+public fields when needed. Arrays and primitives use _local.value. The physical
+store supplies the collection name; path conditions, dynamic keys and ordering
+values are reconstructed in memory. Cursor and type queries use collection scans
+with the existing comparator, pagination, handler and subscription semantics.
+Large collection queries can be slower; native paging is no longer a guarantee.
+
+Compatible _local envelope databases upgrade atomically without data deletion:
+replace _identity, compact rows preserving _id, and remove unrequested framework
+indexes whose keyPaths live under reserved _local metadata. Unrelated native
+indexes remain. A uniqueness failure rolls back rows, indexes and version. An
+unchanged compact schema does not increase the version on reopening. The older
+_rowId format still requires the previously documented explicit reset.
+
+
+Validation: compact-storage tests assert the exact 86-index base schema, sparse
+object rows, reserved-field collisions, scalar/array restoration, legacy envelope
+compaction with preserved primary keys, reopening without a version bump and
+transaction rollback on unique conflicts. Cursor tests retain their ordering,
+scoping, deletion, callback and subscription checks; implementation assertions
+requiring deleted cursor/type indexes were updated to the new storage contract.
+Previously excluded implicit-post_id and replies-store scenarios remain unchanged.
+The full unit run has 906 passes and 12 failures in those excluded scenarios.
+Core and both web consumer builds pass. The compiled Local module also verifies
+86 indexes, no duplicate object envelope, and exact restoration of public _id
+and _local fields. No browser database is deleted and no deployment is performed.
