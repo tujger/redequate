@@ -1,13 +1,13 @@
 import React from "react";
+// eslint-disable-line no-unused-vars -- Required by the classic JSX build.
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {DatabaseOrder} from "../../../packages/database/src";
 import {useDatabase} from "../../controllers";
-import {cacheDatas} from "../../controllers/General";
+import {cacheDatas, Layout} from "../../controllers/General";
 import {UserData} from "../../controllers/UserData";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {MutualListMode} from "./MutualConstants";
 import MutualRequestItem from "./MutualRequestItem";
 import MutualSubscribeItem from "./MutualSubscribeItem";
@@ -16,7 +16,6 @@ import styles from "./styles/MutualList.module.css";
 export default props => {
     const {t} = useTranslation();
     const {
-        cached = true,
         itemComponent,
         itemTransform,
         live,
@@ -38,32 +37,33 @@ export default props => {
 
     const refreshList = () => {
         console.log(`[MutualList] reset list ${mixedId}`);
-        dispatch({type: lazyListComponentReducer.REFRESH, ...(cached ? {cache: mixedId} : {})});
+        dispatch({type: Layout.REFRESH});
     }
 
-    const fetchCursor = () => {
+    let cursor;
+    if (typeId && mutualId) {
         if (mode === MutualListMode.SUBSCRIBERS) {
-            return database.cursor(["mutual", {typeId, _: true}], {
+            cursor = database.cursor(["mutual", {typeId, _: true}], {
                 equalTo: mutualId,
                 order,
                 orderBy: ["id"],
             })
         } else if (mode === MutualListMode.SELF) {
-            return database.cursor(["mutualstamps", "_my", {user_id: mutualId}], {
+            cursor = database.cursor(["mutualstamps", "_my", {user_id: mutualId}], {
                 order,
             })
         } else if (mode === MutualListMode.SUBSCRIBES) {
-            return database.cursor(["mutual", {typeId, _: true}], {
+            cursor = database.cursor(["mutual", {typeId, _: true}], {
                 equalTo: mutualId,
                 order,
                 orderBy: ["uid"],
             })
         } else if (mode === MutualListMode.STAMPS) {
-            return database.cursor(["mutualstamps", {typeId, _: true}, {user_id: mutualId}], {
+            cursor = database.cursor(["mutualstamps", {typeId, _: true}, {user_id: mutualId}], {
                 order,
             })
         } else if (mode === MutualListMode.REQUESTS) {
-            return database.cursor(["mutualrequests", {typeId, _: true}], {
+            cursor = database.cursor(["mutualrequests", {typeId, _: true}], {
                 equalTo: mutualId,
                 order,
                 orderBy: ["id"]
@@ -135,17 +135,13 @@ export default props => {
         return item => item
     }
 
-    React.useEffect(() => {
-        refreshList();
-    }, [mixedId, cached]);
-
     if (!typeId || !mutualId) {
         console.error(Error(`Some of arguments are not defined: typeId=${typeId}, mutualId=${mutualId}`));
         return noItemsComponent;
     }
 
     return <LazyListComponent
-        cursor={fetchCursor()}
+        cursor={cursor}
         ItemComponent={fetchItemComponent()}
         itemTransform={fetchItemTransform()}
         live={live}
