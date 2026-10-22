@@ -101,6 +101,7 @@ it("filters unrelated paths and keeps storage keys isolated", async () => {
         remote.addEventListener(record("b"), {onChange: other}),
         isolated.addEventListener(["meta"], {onChange: wrongKey})];
     await vi.waitFor(() => expect(wrongKey).toHaveBeenCalledOnce());
+    await writer.read(record("a")); // Prepare this instance before measuring notification reads.
     const open = vi.spyOn(indexedDB, "open");
     await writer.update(record("a"), () => ({name: "first"}));
     await vi.waitFor(() => expect(exact).toHaveBeenCalledTimes(2));

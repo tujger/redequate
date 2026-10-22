@@ -26,19 +26,19 @@ it("stores different dynamic types in one object store with explicit indexes", a
         expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS)
             .sort());
         const store = database.transaction("mutual").objectStore("mutual");
-        expect(store.keyPath).toBe("_rowId");
+        expect(store.keyPath).toBe("_id");
         expect(store.autoIncrement).toBe(true);
         expect(store.index("_identity").unique).toBe(true);
         expect([...store.indexNames]).toEqual(Object.keys(indexesForStore("mutual")).sort());
-        expect(store.index("_key0").keyPath).toEqual(["_collection", "_key0"]);
-        expect(store.index("_key1").keyPath).toEqual(["_collection", "_key1"]);
-        expect(store.index("_key0_key1").keyPath).toEqual(["_collection", "_key0", "_key1"]);
+        expect(store.index("_key0").keyPath).toEqual(["_local._collection", "_local._key0"]);
+        expect(store.index("_key1").keyPath).toEqual(["_local._collection", "_local._key1"]);
+        expect(store.index("_key0_key1").keyPath).toEqual(["_local._collection", "_local._key0", "_local._key1"]);
         const request = store.index("_identity").get(["mutual", JSON.stringify([["dynamic", 0, "friendship", "m123"]])]);
         await new Promise((resolve, reject) => {
             request.onsuccess = resolve;
             request.onerror = () => reject(request.error);
         });
-        expect(request.result).toMatchObject({
+        expect(request.result._local).toMatchObject({
             _collection: "mutual",
             _key: JSON.stringify([["dynamic", 0, "friendship", "m123"]]),
             _key0: "friendship",
@@ -103,7 +103,7 @@ it("identifies records by fixed conditions and dynamic levels regardless of segm
             ["dynamic", 1, "active", "a456"]])]);
         await Promise.all([count, record].map(request => new Promise(resolve => { request.onsuccess = resolve; })));
         expect(count.result).toBe(2);
-        expect(record.result).toMatchObject({
+        expect(record.result._local).toMatchObject({
             _key0: "friendship",
             _value0: "m123",
             _key1: "active",

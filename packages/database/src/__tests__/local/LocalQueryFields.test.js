@@ -1,6 +1,7 @@
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
+import {encodeRow} from "../../local/row";
 import {getAllRecords, getRecordsByType, openDatabase} from "../../local/helpers";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
@@ -35,7 +36,8 @@ it("matches fixed conditions independently of their order and serialized locatio
     try {
         await new Promise((resolve, reject) => {
             const transaction = connection.transaction("extra", "readwrite");
-            transaction.objectStore("extra").put({...row, email: "new@b.com"});
+            const store = transaction.objectStore("extra");
+            store.put(encodeRow({...row, email: "new@b.com"}, store));
             transaction.oncomplete = resolve;
             transaction.onabort = () => reject(transaction.error);
         });
@@ -89,8 +91,9 @@ it("reads legacy named field rows without rewriting them and replaces them throu
     try {
         await new Promise((resolve, reject) => {
             const transaction = connection.transaction("users_public", "readwrite");
-            transaction.objectStore("users_public").put({_collection: "users_public", _key: key,
-                _conditions: {user_id: "u1", email: "email"}, value: "old@b.com"});
+            const store = transaction.objectStore("users_public");
+            store.put(encodeRow({_collection: "users_public", _key: key,
+                _conditions: {user_id: "u1", email: "email"}, value: "old@b.com"}, store));
             transaction.oncomplete = resolve;
             transaction.onabort = () => reject(transaction.error);
         });
