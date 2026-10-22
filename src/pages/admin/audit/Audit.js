@@ -1,7 +1,6 @@
 import React from "react";
 import {connect, useDispatch} from "react-redux";
 import {withRouter} from "react-router-dom";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../../../components/LoadingComponent";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import {useRedirectToLogin} from "../../../controllers";
@@ -30,7 +29,6 @@ const Audit = props => {
 
     const handleChange = tabSelected => {
         dispatch({type: auditReducer.SAVE, tabSelected});
-        dispatch({type: lazyListComponentReducer.RESET});
     }
 
     const selected = children[tabSelected] || children[0];

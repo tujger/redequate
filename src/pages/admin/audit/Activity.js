@@ -8,13 +8,12 @@ import {DatabaseOrder} from "../../../../packages/database/src";
 import AvatarView from "../../../components/AvatarView";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../../../components/LoadingComponent";
 import MentionedSelectComponent from "../../../components/MentionedSelectComponent";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import {useDatabase, useRedirectToLogin} from "../../../controllers";
 import {toDateString} from "../../../controllers/DateFormat";
-import {cacheDatas, useWindowData} from "../../../controllers/General";
+import {cacheDatas, useWindowData, Layout} from "../../../controllers/General";
 import {mentionUsers} from "../../../controllers/mentionTypes";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import {UserData} from "../../../controllers/UserData";
@@ -40,7 +39,6 @@ const Activity = props => {
     const [endDate, setEndDate] = React.useState();
     const [startDateAnchor, setStartDateAnchor] = React.useState();
     const [endDateAnchor, setEndDateAnchor] = React.useState();
-    const [refresh, setRefresh] = React.useState();
     const windowData = useWindowData();
 
     const handleItemClick = activityMode => (event, activityFilterItem) => {
@@ -49,13 +47,12 @@ const Activity = props => {
     }
 
     const handleMode = evt => {
-        dispatch({type: lazyListComponentReducer.RESET});
         dispatch({type: auditReducer.ACTIVITY, activityMode: evt.target.value, activitySort});
     }
 
     const handleSortClick = evt => {
         const sort = activitySort === DatabaseOrder.ASC ? DatabaseOrder.DESC : DatabaseOrder.ASC;
-        dispatch({type: lazyListComponentReducer.RESET});
+
         dispatch({
             type: auditReducer.ACTIVITY,
             activityMode,
@@ -67,18 +64,16 @@ const Activity = props => {
 
     const handleTypeSelect = evt => {
         const activityFilterItem = evt.target.value;
-        dispatch({type: lazyListComponentReducer.RESET});
+
         dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activitySort});
     }
 
     const handleStartDate = startDate => {
-        dispatch({type: lazyListComponentReducer.RESET});
         setStartDate(startDate);
         setStartDateAnchor(null);
     };
 
     const handleEndDate = endDate => {
-        dispatch({type: lazyListComponentReducer.RESET});
         setEndDate(endDate);
         setEndDateAnchor(null);
     };
@@ -98,34 +93,36 @@ const Activity = props => {
         data, onClick: handleItemClick
     })
 
-    const cursor = React.useMemo(() => {
-        switch (activityMode) {
-            case "all":
-                return database.cursor(["activity"], {
-                    order: activitySort,
-                    endDate: endDate?.toDate(),
-                    startDate: startDate?.toDate(),
-                });
-            case "type":
-                return database.cursor(["activity"], {
-                    order: activitySort,
-                    endDate: endDate?.toDate(),
-                    orderBy: ["type"],
-                    equalTo: activityFilterItem,
-                    startDate: startDate?.toDate(),
-                });
-            case "uid":
-                return database.cursor(["activity"], {
-                    order: activitySort,
-                    endDate: endDate?.toDate(),
-                    orderBy: ["uid"],
-                    equalTo: activityFilterItem,
-                    startDate: startDate?.toDate(),
-                });
-            default:
-                return undefined;
-        }
-    }, [activityMode, activityFilterItem, activitySort, startDate, endDate, refresh]);
+    let cursor;
+    switch (activityMode) {
+        case "all":
+            cursor = database.cursor(["activity"], {
+                order: activitySort,
+                endDate: endDate?.toDate(),
+                startDate: startDate?.toDate(),
+            });
+            break;
+        case "type":
+            cursor = database.cursor(["activity"], {
+                order: activitySort,
+                endDate: endDate?.toDate(),
+                orderBy: ["type"],
+                equalTo: activityFilterItem,
+                startDate: startDate?.toDate(),
+            });
+            break;
+        case "uid":
+            cursor = database.cursor(["activity"], {
+                order: activitySort,
+                endDate: endDate?.toDate(),
+                orderBy: ["uid"],
+                equalTo: activityFilterItem,
+                startDate: startDate?.toDate(),
+            });
+            break;
+        default:
+            return undefined;
+    }
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
 
@@ -148,16 +145,13 @@ const Activity = props => {
             activityMode,
             activitySort
         });
-        dispatch({type: lazyListComponentReducer.RESET});
     };
 
     const clearStartDate = () => {
-        dispatch({type: lazyListComponentReducer.RESET});
         setStartDate(null);
     };
 
     const clearEndDate = () => {
-        dispatch({type: lazyListComponentReducer.RESET});
         setEndDate(null);
     };
 
@@ -187,7 +181,7 @@ const Activity = props => {
             </>}
             rightButton={<Button
                 icon={<RefreshIcon/>}
-                onClick={() => setRefresh(Math.random())}
+                onClick={() => dispatch({type: Layout.REFRESH})}
                 title={"Refresh activity"}
             />}
         >

@@ -6,12 +6,11 @@ import {DatabaseOrder} from "../../../../packages/database/src";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../../../components/LoadingComponent";
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import ProgressView from "../../../components/ProgressView";
 import {useDatabase, useRedirectToLogin} from "../../../controllers";
-import {cacheDatas} from "../../../controllers/General";
+import {cacheDatas, Layout} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
@@ -27,18 +26,16 @@ const Errors = props => {
     const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({});
 
-    const {deleteOpen, random} = state;
+    const {deleteOpen} = state;
 
     const handleMode = evt => {
-        dispatch({type: lazyListComponentReducer.RESET});
         dispatch({type: auditReducer.ERRORS, errorsMode: evt.target.value, errorsFilter});
     }
 
     const handleConfirmDeletion = evt => {
         dispatch(ProgressView.SHOW);
         database.delete(["errors"])
-            .then(() => dispatch({type: lazyListComponentReducer.RESET}))
-            .then(() => setState({...state, deleteOpen: false}))
+            .then(() => dispatch({type: Layout.REFRESH}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }
@@ -51,17 +48,11 @@ const Errors = props => {
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
 
-    let cursor;
-    switch (errorsMode) {
-        case "all":
-            cursor = database.cursor(["errors"], {
-                equalTo: errorsFilter || undefined,
-                order: DatabaseOrder.DESC,
-                orderBy: errorsFilter ? ["uid"] : undefined,
-            });
-            break;
-        default:
-    }
+    const cursor = database.cursor(["errors"], {
+        equalTo: errorsFilter || undefined,
+        order: DatabaseOrder.DESC,
+        orderBy: errorsFilter ? ["uid"] : undefined,
+    });
 
     const listItemTransform = async data => ({
         data,
@@ -75,7 +66,6 @@ const Errors = props => {
 
     const clearFilteredUser = () => {
         dispatch({type: auditReducer.ERRORS, errorsMode, errorsFilter: ""});
-        dispatch({type: lazyListComponentReducer.RESET});
     };
 
     return <>
@@ -88,7 +78,7 @@ const Errors = props => {
             />}
             rightButton={<Button
                 icon={<RefreshIcon/>}
-                onClick={() => setState({...state, random: Math.random()})}
+                onClick={() => dispatch({type: Layout.REFRESH})}
                 title={"Refresh errors"}
             />}
         >
