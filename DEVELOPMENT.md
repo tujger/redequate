@@ -3157,3 +3157,79 @@ URLs for correctly expressed reads and Android wire formats remain unchanged.
 No prop-types or new schema/store/index migration is introduced by this correction.
 The shared emulator/Local contract covers identity collection reads, queries,
 record subtrees, concrete fields and the exact extras regression.
+
+### Lazy list cursor lifetime and loading latency
+
+Decision: retain LazyListComponent's existing `cursor` prop. List owners create
+cursors during render without memoization, revision counters, or list caching.
+Explicit refresh uses the existing Layout.REFRESH action to remount the routed
+page tree. Mount/unmount effects and query-filter changes do not dispatch refresh
+or reset actions: navigation and ordinary renders already create fresh cursors.
+The legacy list action constants remain available, but do not reset database
+cursors or keep revision state. No createCursor factory API is introduced.
+Previously loaded rows are not retained across unmounts. Chat is not changed.
+
+LazyList rearms its observer after each successfully processed page, including a
+page whose transformations all return null. Pages still render together in cursor
+order. Post enrichment starts independent counters, extras and author reads in
+parallel after reading the post. Counter/extra read failures reject their promises
+instead of leaving a page pending indefinitely. The Whisky Talks Profile supplies
+the existing backend dependency to the post transformation's repair handler.
+
+Database/Cursor contracts, IndexedDB layout, Android formats and Chat source files
+are unchanged. No prop-types is added. Validation: 882 unit tests, 871 passed and
+11 existing Chat failures; Firebase Emulator integration 86/86 passed. Actual
+production network timings have not been measured.
+
+### October 2026 dependency refresh across the web consumers
+
+Decision: update Redequate, edeqa-pwa-react-demo and thewhiskytalks together on
+Node.js 24.21.0. Use React/React DOM 19.3.1, Firebase 13.1.0, MUI 9.5.0,
+Uppy Core 6.3.0 and Dashboard/Webcam 6.0.2, i18next 26.5.4 and react-i18next
+17.1.0. Keep the existing script that shares React and i18next instances across
+local consumer installations. Whisky retains MUI Styles, updated to 6.5.0.
+
+Tooling updates include Firebase CLI 15.34.1, cross-env 10.1.0, gh-pages 6.3.0,
+jsdom 30.1.3, postcss-nested 9.0.1, PostCSS 8.5.31, Rollup 4.64.12, Vite
+8.3.5 and Vitest 5.0.5. React Timekeeper 2.2.1 and React Image Lightbox 5.1.4
+retain their existing component integration. Their legacy peer constraints are
+handled with the established --legacy-peer-deps installation policy; this does
+not claim upstream React 19 support for those packages.
+
+Core development dependencies explicitly include the already declared peers
+AJV, AJV Keywords, Notistack, React Image Lightbox, React Linkify and React Smart
+Gallery. A reinstall with --legacy-peer-deps otherwise removes these packages
+and prevents source tests from resolving Notistack. Public peer ownership is
+unchanged.
+
+Firebase CLI 15 requires Java 21+. Install the official Temurin 21.0.12.1+1 JDK
+for macOS x64 under ~/.local/share/redequate/jdks/temurin-21, verifying the
+published SHA-256 before extraction. The emulator test launcher uses its
+Contents/Home for JAVA_HOME and PATH only in the child process when present.
+Other environments inherit their Java configuration and require Java 21+.
+System Java and other projects' Java settings are unchanged.
+
+Deferred: TypeScript stays at 5.9.3 until typescript-eslint supports TS7 without
+a second compiler API package. Babel 8 and ESLint 10 remain deferred for the
+previously recorded compatibility constraints. Router stays on major 5 (web
+consumers updated to 5.3.4); React Redux 8 and Redux 4 retain their current APIs.
+Independent server and legacy example dependencies are outside this update.
+
+Validation: all 101 source CSS files preserve ordered selectors, rules and
+declarations with postcss-nested 9; comparison ignores comments and formatting.
+ESLint across 449 files preserves its baseline diagnostics. Core unit tests
+remain 874 passed / 14 failed (888 total), Firebase integration tests 91 passed /
+1 failed (92 total), and Whisky tests 13 passed / 5 failed (18 total); every
+failing test also fails before this update. Core and both consumer production
+builds pass, including PWA service-worker and manifest generation. No deployment
+is part of this dependency refresh. Public APIs, stored records and Android
+contracts are unchanged.
+
+Browser verification covers Profile, Groups, Discover, Tags, date selection,
+Timekeeper's applied hour/minute value, and opening/closing the Uppy dashboard.
+Lightbox opening fails under the current Vite setup with `global is not defined`.
+Both the previous 5.1.1 distribution and 5.1.4 use the same `global.window`
+expression in getWindowWidth/getWindowHeight. Retain 5.1.4; reverting this update
+does not remove that source-level incompatibility. No global shim or replacement
+viewer is introduced by this dependency update. Existing React `key`-as-prop
+warnings are also outside this update.
