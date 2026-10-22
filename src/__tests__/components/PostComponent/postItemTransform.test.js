@@ -5,7 +5,7 @@ const context = vi.hoisted(() => ({post: null, fetchAuthor: vi.fn(), user: {id: 
 vi.mock("../../../controllers/General", () => ({cacheDatas: {fetch: (id, fetch) => fetch(id)}}));
 vi.mock("../../../controllers/useCurrentUserData", () => ({getCurrentUserData: () => context.user}));
 vi.mock("../../../controllers/UserData", () => ({
-    UserData: class {
+    default: class {
         static PUBLIC = "public";
         static NAME = "name";
         static IMAGE = "image";

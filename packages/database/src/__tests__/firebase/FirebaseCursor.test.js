@@ -2,7 +2,7 @@ import {vi} from "vitest";
 import {key as dateKey} from "firebase-key";
 import FirebaseDatabase from "../../firebase";
 import {composeCursor} from "../../common/ComposedDatabaseCursor";
-import {DatabaseCursor} from "../../common/DatabaseCursor";
+import DatabaseCursor from "../../common/DatabaseCursor";
 import DatabaseBase from "../../common/DatabaseBase";
 import FirebaseCursor from "../../firebase/cursor";
 import {createFirebase} from "../fixtures/firebase";

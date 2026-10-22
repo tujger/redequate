@@ -5,7 +5,7 @@ import {UserData} from "../../../common";
 
 import LocalAuth from "../local";
 import FirebaseAuth from "../firebase";
-import {resolveAuth} from "../resolveAuth";
+import resolveAuth from "../resolveAuth";
 
 vi.mock("firebase/auth", () => ({getAuth: vi.fn(app => app)}));
 beforeEach(() => installIndexedDB());

@@ -4,8 +4,8 @@ import {Provider} from "react-redux";
 import {combineReducers, createStore} from "redux";
 import {MemoryRouter} from "react-router-dom";
 import Tags from "../../tags/Tags";
-import {tagsReducer} from "../../tags/tagsReducer";
-import {lazyListComponentReducer} from "../../components/LazyListComponent/lazyListComponentReducer";
+import tagsReducer from "../../tags/tagsReducer";
+import lazyListComponentReducer from "../../components/LazyListComponent/lazyListComponentReducer";
 import {database, firebase, seedDatabase} from "../common";
 import {render, unmount} from "../render";
 

@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {DatabaseCursor} from "../../common/DatabaseCursor";
+import DatabaseCursor from "../../common/DatabaseCursor";
 import FirebaseDatabase from "../../firebase";
 import FirebaseCursor from "../../firebase/cursor";
 import {createFirebase} from "../fixtures/firebase";

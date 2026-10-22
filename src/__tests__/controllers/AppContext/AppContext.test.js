@@ -7,8 +7,8 @@ import AppContext from "../../../controllers/AppContext/AppContext";
 import {createAppState, globalAppState} from "../../../controllers/AppContext/AppState";
 import UseAbstract from "../../../controllers/AppContext/UseAbstract";
 import GlobalStore from "../../../controllers/AppContext/GlobalStore";
-import {UserData} from "../../../controllers/UserData";
-import {getCurrentUserData, useCurrentUserData} from "../../../controllers/useCurrentUserData";
+import UserData from "../../../controllers/UserData";
+import useCurrentUserData, {getCurrentUserData} from "../../../controllers/useCurrentUserData";
 import {render, unmount} from "../../render";
 
 let sequence = 0;

@@ -5,7 +5,7 @@ import {createStore} from "redux";
 import {vi} from "vitest";
 import {render, unmount} from "../../render";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer as reducer} from "../../../components/LazyListComponent/lazyListComponentReducer";
+import reducer from "../../../components/LazyListComponent/lazyListComponentReducer";
 
 vi.mock("../../../controllers/notifySnackbar", () => ({default: vi.fn()}));
 vi.mock("../../../components/ListItemComponent", () => ({default: () => null}));

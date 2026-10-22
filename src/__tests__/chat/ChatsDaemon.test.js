@@ -12,7 +12,7 @@ vi.mock("../../controllers/General", () => ({
 }));
 vi.mock("../../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => ({id: "me"})}));
 vi.mock("../../controllers/notifySnackbar", () => ({default: vi.fn()}));
-vi.mock("../../chat/ChatMeta", () => ({ChatMeta: () => ({fetch: state.fetch})}));
+vi.mock("../../chat/ChatMeta", () => ({default: () => ({fetch: state.fetch})}));
 
 import ChatsDaemon from "../../chat/ChatsDaemon";
 

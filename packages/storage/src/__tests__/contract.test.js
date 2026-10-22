@@ -7,7 +7,7 @@ import {vi} from "vitest";
 import Base from "../StorageBase";
 
 import Local from "../local";
-import {resolveStorage} from "../resolveStorage";
+import resolveStorage from "../resolveStorage";
 import {render, unmount} from "../../../../src/__tests__/render";
 
 vi.mock("firebase/storage", () => ({getStorage: vi.fn(app => app)}));

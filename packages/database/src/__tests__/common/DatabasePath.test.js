@@ -1,6 +1,6 @@
 import {vi} from "vitest";
 import DatabaseBase from "../../common/DatabaseBase";
-import {DatabaseCursor} from "../../common/DatabaseCursor";
+import DatabaseCursor from "../../common/DatabaseCursor";
 import resolvePath from "../../common/resolvePath";
 import FirebaseDatabase from "../../firebase";
 import {createFirebase} from "../fixtures/firebase";

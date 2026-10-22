@@ -2,15 +2,7 @@ import {vi} from "vitest";
 import {signInAnonymously} from "firebase/auth";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {UserRole} from "../../../packages/common/src/UserRole";
-import {
-    currentRole,
-    logoutUser,
-    matchRole,
-    needAuth,
-    normalizeSortName,
-    UserData,
-    watchUserChanged
-} from "../../controllers/UserData";
+import UserData, {currentRole, logoutUser, matchRole, needAuth, normalizeSortName, watchUserChanged} from "../../controllers/UserData";
 import {auth, database, firebase, sdkAuth, seedDatabase} from "../common";
 
 vi.mock("../../controllers/notifySnackbar", () => ({default: vi.fn()}));

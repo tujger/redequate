@@ -90,7 +90,7 @@ async function mountLogin({ios = false, disabled = false, firstLogin = false, si
         import("../../controllers/AppContext/AppState"), import("../../controllers/UserData"),
         import("../../controllers/useCurrentUserData"),
     ]);
-    const {UserData, UserRole} = userModule;
+    const {default: UserData, UserRole} = userModule;
     const {getCurrentUserData} = currentModule;
     const Login = loginModule.default;
     const AppContext = contextModule.default;

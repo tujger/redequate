@@ -6,7 +6,7 @@ import {vi} from "vitest";
 import Base from "../MessagingBase";
 
 import Local from "../local";
-import {resolveMessaging} from "../resolveMessaging";
+import resolveMessaging from "../resolveMessaging";
 import {render, unmount} from "../../../../src/__tests__/render";
 
 it("exposes abstract operations with rejected promises", async () => {

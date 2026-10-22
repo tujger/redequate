@@ -1,5 +1,5 @@
 import validatePath from "../../common/validatePath";
-import {DatabaseCursor} from "../../common/DatabaseCursor";
+import DatabaseCursor from "../../common/DatabaseCursor";
 
 it.each(["", [], "profile/name", ["profile", "name"], ["records", {id: "a"}],
     ["records", {id: "a", _: false}], ["records", {id: "a", _: {level: 2}}],

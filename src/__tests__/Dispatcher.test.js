@@ -1,7 +1,7 @@
 import React, {act} from "react";
 import {vi} from "vitest";
 import Dispatcher from "../Dispatcher";
-import {UserData} from "../controllers/UserData";
+import UserData from "../controllers/UserData";
 import loadUserData from "../../packages/auth/src/common/loadUserData";
 import {render, unmount} from "./render";
 

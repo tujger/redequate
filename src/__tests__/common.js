@@ -2,7 +2,7 @@ import compatFirebase from "firebase/compat/app";
 import {connectAuthEmulator, getAuth} from "firebase/auth";
 import "fake-indexeddb/auto";
 import Firebase from "../controllers/Firebase";
-import {UserData} from "../controllers/UserData";
+import UserData from "../controllers/UserData";
 import FirebaseDatabase from "../../packages/database/src/firebase";
 import FirebaseAuth from "../../packages/auth/src/firebase";
 

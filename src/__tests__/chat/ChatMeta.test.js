@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {ChatMeta} from "../../chat/ChatMeta";
+import ChatMeta from "../../chat/ChatMeta";
 
 vi.mock("../../controllers/Firebase", () => ({
     firebaseMessaging: {database: () => ({ref: () => ({})})}

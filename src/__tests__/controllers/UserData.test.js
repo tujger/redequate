@@ -1,8 +1,8 @@
 import {vi} from "vitest";
 import {cacheDatas} from "../../controllers/General";
-import {UserData as CommonUserData} from "../../../packages/common/src/UserData.js";
+import CommonUserData from "../../../packages/common/src/UserData.js";
 import {UserRole} from "../../../packages/common/src/UserRole";
-import {UserData} from "../../controllers/UserData";
+import UserData from "../../controllers/UserData";
 
 it.each([UserData])("formats numeric dates without a database in %s", Model => {
     vi.useFakeTimers();
