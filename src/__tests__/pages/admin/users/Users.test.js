@@ -6,7 +6,7 @@ import FirebaseDatabase from "../../../../../packages/database/src/firebase";
 import {createFirebase} from "../../../../../packages/database/src/__tests__/fixtures/firebase";
 
 const context = vi.hoisted(() => ({database: undefined, cursor: undefined}));
-vi.mock("react-redux", () => ({connect: () => component => component, useDispatch: () => () => {}}));
+vi.mock("react-redux", () => ({connect: () => component => component, useDispatch: () => () => {}, useSelector: selector => selector({})}));
 vi.mock("../../../../controllers", () => ({
     cacheDatas: {}, useDatabase: () => context.database, useRedirectToLogin: () => false
 }));

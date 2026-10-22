@@ -25,6 +25,10 @@
       ".write": true,
       ".indexOn": ["id_uid"]
     },
+    "tag": {
+      ".read": true,
+      ".indexOn": ["_sort_name", "hidden", "id", "uid"]
+    },
     "database_test": {
       ".read": true,
       ".write": true,

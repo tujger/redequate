@@ -33,3 +33,31 @@ it.each(["posts", "replies"])("publishes and fetches %s through PostData in post
     expect(rows).toHaveLength(1);
     expect(rows[0]._key).toBe(parseDatabasePath([{type}, {post_id: post.id}]).key);
 });
+
+it.each(["fetchCounters", "fetchExtras"])("rejects %s when the database read fails", async method => {
+    const error = new Error("PERMISSION_DENIED");
+    const database = {read: vi.fn().mockRejectedValue(error)};
+    const post = PostData({database});
+    post.id = "p1";
+    await expect(post[method]("u1")).rejects.toBe(error);
+    expect(database.read).toHaveBeenCalledTimes(1);
+});
+
+it.each(["fetchCounters", "fetchExtras"])("does not read without an id in %s", async method => {
+    const database = {read: vi.fn()};
+    await expect(PostData({database})[method]("u1")).rejects.toThrow("Post not submitted yet.");
+    expect(database.read).not.toHaveBeenCalled();
+});
+
+it("loads counters and extras through their exact selected/query paths", async () => {
+    const database = {read: vi.fn().mockResolvedValueOnce({like: 4}).mockResolvedValueOnce({e1: {type: "like"}, e2: {type: "unknown"}})};
+    const post = PostData({database});
+    post.id = "p1";
+    await expect(post.fetchCounters()).resolves.toBe(post);
+    await expect(post.fetchExtras("u1")).resolves.toBe(post);
+    expect(database.read.mock.calls).toEqual([
+        [["_counters", {id: "p1"}]],
+        [["extra", "extra_id"], {equalTo: "p1_u1", orderBy: "id_uid"}],
+    ]);
+    expect(post.extras).toEqual({like: {key: "e1", value: {type: "like"}}});
+});
