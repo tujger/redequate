@@ -96,14 +96,14 @@ const Activity = props => {
     let cursor;
     switch (activityMode) {
         case "all":
-            cursor = database.cursor(["activity"], {
+            cursor = database.cursor(["activity", "activity_uid"], {
                 order: activitySort,
                 endDate: endDate?.toDate(),
                 startDate: startDate?.toDate(),
             });
             break;
         case "type":
-            cursor = database.cursor(["activity"], {
+            cursor = database.cursor(["activity", "activity_uid"], {
                 order: activitySort,
                 endDate: endDate?.toDate(),
                 orderBy: ["type"],
@@ -112,7 +112,7 @@ const Activity = props => {
             });
             break;
         case "uid":
-            cursor = database.cursor(["activity"], {
+            cursor = database.cursor(["activity", "activity_uid"], {
                 order: activitySort,
                 endDate: endDate?.toDate(),
                 orderBy: ["uid"],
@@ -215,7 +215,7 @@ const Activity = props => {
                     />}
                     {activityMode === "type" && !filteredItem && <MentionedSelectComponent
                         mention={{
-                            cursor: () => database.cursor(["_activity", "types"]),
+                            cursor: () => database.cursor(["_activity", "types", "type"]),
                             transform: item => ({id: item.key, display: item.key}),
                         }}
                         onChange={handleTypeSelect}

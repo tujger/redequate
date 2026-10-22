@@ -48,7 +48,7 @@ const Errors = props => {
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
 
-    const cursor = database.cursor(["errors"], {
+    const cursor = database.cursor(["errors", "error_id"], {
         equalTo: errorsFilter || undefined,
         order: DatabaseOrder.DESC,
         orderBy: errorsFilter ? ["uid"] : undefined,
