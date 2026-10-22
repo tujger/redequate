@@ -58,7 +58,7 @@ function Users(props) {
     let cursor;
     switch (mode) {
         case "active":
-            cursor = database.cursor(["users_public"], {
+            cursor = database.cursor(["users_public", "user_id"], {
                 order: DatabaseOrder.DESC,
                 orderBy: ["visit"],
                 start: 0,
@@ -66,23 +66,23 @@ function Users(props) {
             });
             break;
         case "admins":
-            cursor = database.cursor(["roles"], {
+            cursor = database.cursor(["roles", "user_id"], {
                 equalTo: "admin"
             });
             break;
         case "disabled":
-            cursor = database.cursor(["roles"], {
+            cursor = database.cursor(["roles", "user_id"], {
                 equalTo: "disabled"
             });
             break;
         case "notVerified":
-            cursor = database.cursor(["users_public"], {
+            cursor = database.cursor(["users_public", "user_id"], {
                 equalTo: false,
                 orderBy: ["emailVerified"],
             });
             break;
         case "recent":
-            cursor = database.cursor(["users_public"], {
+            cursor = database.cursor(["users_public", "user_id"], {
                 order: DatabaseOrder.DESC,
                 orderBy: ["created"],
                 start: 0,
@@ -91,8 +91,8 @@ function Users(props) {
         case "all":
         default:
             cursor = database.cursor([
-                {path: ["users_public"], orderBy: ["_sort_name"], start: normalizeSortName(filter)},
-                ...(filter ? [{path: ["users_public"], orderBy: [UserData.EMAIL], start: filter}] : []),
+                {path: ["users_public", "user_id"], orderBy: ["_sort_name"], start: normalizeSortName(filter)},
+                ...(filter ? [{path: ["users_public", "user_id"], orderBy: [UserData.EMAIL], start: filter}] : []),
             ]);
     }
 
