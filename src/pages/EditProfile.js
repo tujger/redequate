@@ -96,7 +96,7 @@ function EditProfile(props) {
             const uniqueError = [];
             for (const field of publicFields) {
                 if (field.unique) {
-                    const values = await database.cursor(["users_public"], {
+                    const values = await database.cursor(["users_public", "user_id"], {
                         equalTo: (state[field.id] || "").trim(),
                         orderBy: ["name"]
                     }).next(10);
