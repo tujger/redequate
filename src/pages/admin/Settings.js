@@ -115,7 +115,7 @@ export default ({uploadable}) => {
             updates.set(["meta", "maintenance"], null);
         }
         database.update(updates)
-            .then(() => database.read("meta"))
+            .then(() => database.read(["meta", "maintenance"]))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
             .then(() => updateActivity({
@@ -358,7 +358,7 @@ export default ({uploadable}) => {
                         mention={{
                             ...mentionUsers,
                             trigger: "",
-                            cursor: () => database.cursor(["roles"], {
+                            cursor: () => database.cursor(["roles", "user_id"], {
                                 equalTo: "admin"
                             }),
                             transform: item => new UserData(database)
