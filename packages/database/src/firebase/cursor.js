@@ -9,9 +9,12 @@ export default class FirebaseCursor extends DatabaseCursor {
     #header = [];
 
     constructor(firebase, path, options = {}) {
-        super(options, resolvePath(path));
+        const resolvedPath = Array.isArray(path) && path.length > 1 && typeof path.at(-1) === "string"
+            ? path.slice(0, -1)
+            : path;
+        super(options, resolvePath(resolvedPath));
         this.#state = {
-            ...createCursorQuery(firebase, path, this),
+            ...createCursorQuery(firebase, resolvedPath, this),
             scanKey: undefined,
             scanValue: undefined,
             buffer: [],
