@@ -97,11 +97,12 @@ it("distinguishes paths with named segments from cursor compositions", async () 
     expect(database.cursor(dynamicPath).path).toBe("mutual/m123");
     expect(database.cursor([]).path).toBe("");
     fixture.sdk.once.mockResolvedValue(fixture.snapshot({a: 1}));
-    const cursor = database.cursor(path);
+    const cursor = database.cursor(["users_public", {user_id: "u123"}, {email: "email"}]);
     expect(cursor.path).toBe("users_public/u123/email");
     expect(await cursor.next()).toEqual([{key: "a", value: 1}]);
     expect(fixture.sdk.once.mock.calls[0][0].path).toBe("users_public/u123/email");
-    const composed = database.cursor([{path}, {path: "users_public/u123/email"}]);
+    expect(database.cursor(path).path).toBe("users_public/u123");
+    const composed = database.cursor([{path: ["users_public", {user_id: "u123"}, {email: "email"}]}, {path: "users_public/u123/email"}]);
     expect(await composed.next(10)).toEqual([{key: "a", value: 1}]);
     expect(composed.path).toBeUndefined();
 });

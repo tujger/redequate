@@ -25,6 +25,23 @@ it("starts before the first record, exposes readonly metadata and has no reset",
     expect(Reflect.set(a, "id", "other")).toBe(false);
     expect(() => { a.position.index = 2; }).toThrow();
 });
+it("treats a trailing array string as identity metadata for pages and subscriptions", async () => {
+    fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({u1: {name: "Ann"}, u2: {name: "Bob"}}));
+    const cursor = database.cursor(["users_public", "user_id"], {orderBy: "name"});
+    expect(cursor.path).toBe("users_public");
+    expect(await cursor.next(2)).toEqual([
+        {key: "u1", value: {name: "Ann"}}, {key: "u2", value: {name: "Bob"}}
+    ]);
+    expect(fixture.sdk.once.mock.calls[0][0]).toMatchObject({path: "users_public", query: {orderByChild: ["name"]}});
+    const events = [];
+    const sub = cursor.subscribe(event => events.push(event));
+    await flush();
+    fixture.emit("child_added", {name: "Cara"}, "u3");
+    expect(events).toEqual([{type: "add", entry: {key: "u3", value: {name: "Cara"}}}]);
+    sub.unsubscribe();
+    expect(database.cursor("users_public/user_id").path).toBe("users_public/user_id");
+    expect(database.cursor(["users_public", {user_id: "u1"}]).path).toBe("users_public/u1");
+});
 it.each([0, -1, 1.5, NaN, Infinity, "1"])("rejects next(%j) before querying Firebase", async n => {
     await expect(database.cursor("records").next(n)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(fixture.sdk.once).not.toHaveBeenCalled();

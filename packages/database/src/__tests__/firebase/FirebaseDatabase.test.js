@@ -18,6 +18,10 @@ it("exports the same order enum through the base and source entrypoints", async 
     expect(database.TIMESTAMP).toBe(fixture.firebase.database.ServerValue.TIMESTAMP);
     expect(database.increment(-2)).toEqual({".sv": {increment: -2}});
 });
+it("keeps the Local schema API out of the shared and Firebase providers", () => {
+    expect(new DatabaseBase()).not.toHaveProperty("applySchema");
+    expect(database).not.toHaveProperty("applySchema");
+});
 it.each(["users/a", ["users", "a"]])("distinguishes an array identity-field read from literal update/delete paths %j", async path => {
     const effective = path instanceof Array ? path.join("/") : path;
     sdk.once.mockResolvedValue(fixture.snapshot({name: "A"}));

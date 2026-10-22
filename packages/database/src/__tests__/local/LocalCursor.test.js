@@ -154,12 +154,54 @@ it("iterates root collections and observes a newly populated collection", async 
 
 it("replaces a child through its stored named identity", async () => {
     const db = new LocalDatabase({storageKey: "named-handle"});
-    const parent = ["meta", "settings"];
+    const parent = ["meta", {settings: "settings"}];
     const path = [...parent, {setting_id: "theme"}];
     await db.update(path, () => ({label: "old"}));
     const cursor = db.cursor(parent, {handle: () => ({label: "new"})});
     expect(await cursor.next()).toEqual([{key: "theme", value: expect.objectContaining({label: "new"})}]);
     expect(await db.read(path)).toMatchObject({label: "new"});
+});
+
+it("selects the named identity from stored keys for indexed pages and handler writes", async () => {
+    const db = new LocalDatabase({storageKey: "identity-index"});
+    await db.update(["users_public", {user_id: "u2"}], () => ({name: "B", user_id: "wrong"}));
+    await db.update(["users_public", {other_id: "x"}], () => ({name: "A"}));
+    await db.update(["users_public", {user_id: "u1"}], () => ({name: "A"}));
+    const indexed = vi.spyOn(IDBIndex.prototype, "openCursor");
+    const cursor = db.cursor(["users_public", "user_id"], {
+        orderBy: "name", handle: ({value}) => ({...value, changed: true})
+    });
+    expect(cursor.path).toBe("users_public");
+    expect(await readAll(cursor, 1)).toEqual([
+        {key: "u1", value: expect.objectContaining({changed: true})},
+        {key: "u2", value: expect.objectContaining({user_id: "wrong", changed: true})}
+    ]);
+    expect(indexed).toHaveBeenCalled();
+    expect(await db.read(["users_public", {other_id: "x"}])).toEqual({name: "A"});
+    expect(await db.read(["users_public", {user_id: "u2"}])).toMatchObject({changed: true});
+    expect((await readAll(db.cursor("users_public"))).map(entry => entry.key)).toEqual(["u1", "u2", "x"]);
+});
+
+it("filters named children in fallback scans and subscriptions, retaining nested values", async () => {
+    const db = new LocalDatabase({storageKey: "identity-fallback"});
+    const parent = ["meta", {settings: "settings"}];
+    await db.update([...parent, {user_id: "u2"}], () => ({profile: {name: "Bob"}}));
+    await db.update([...parent, {other_id: "x"}], () => ({profile: {name: "Amy"}}));
+    await db.update([...parent, {user_id: "u1"}], () => ({profile: {name: "Ann"}}));
+    await db.update([...parent, {user_id: "u1"}, {detail_id: "d"}], () => ({extra: true}));
+    const cursor = db.cursor([...parent, "user_id"], {orderBy: ["profile", "name"], start: "A"});
+    expect(cursor.path).toBe("meta/settings");
+    expect(await readAll(cursor)).toEqual([{key: "u1", value: {profile: {name: "Ann"}, d: {extra: true}}}]);
+    const events = [];
+    const sub = db.cursor([...parent, "user_id"]).subscribe(event => events.push(event));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await db.update([...parent, {other_id: "y"}], () => ({profile: {name: "Other"}}));
+    await db.update([...parent, {user_id: "u3"}], () => ({profile: {name: "New"}}));
+    expect(events).toEqual([{type: "add", entry: {key: "u3", value: {profile: {name: "New"}}}}]);
+    sub.unsubscribe();
+    expect((await readAll(db.cursor(parent))).map(entry => entry.key)).toEqual(["u1", "u2", "u3", "x", "y"]);
+    await db.update(["meta", "literal", {setting_id: "theme"}], () => ({label: "exact"}));
+    expect(await readAll(db.cursor("meta/literal"))).toEqual([{key: "theme", value: {label: "exact"}}]);
 });
 
 it.each(["asc", "desc"])("pages indexed keys without materializing the store in %s order", async order => {
@@ -226,7 +268,7 @@ it("writes handler replacements by exact indexed identity without reading every 
 
 it("falls back for nested records and fields without a native Firebase-compatible index", async () => {
     const db = new LocalDatabase({storageKey: "native-fallback"});
-    const parent = ["meta", "settings"];
+    const parent = ["meta", {settings: "settings"}];
     await db.update([...parent, {setting_id: "theme"}], () => ({created: 2, label: "z"}));
     await db.update([...parent, {setting_id: "locale"}], () => ({created: 1, label: "a"}));
     expect((await readAll(db.cursor(parent, {orderBy: "created"}))).map(entry => entry.key))
