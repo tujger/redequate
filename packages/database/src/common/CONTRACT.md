@@ -20,7 +20,7 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
 - Paths are strings or arrays of nonempty string segments and named segments
   with exactly one nonempty string value. `resolvePath` joins the segment values
   with `/` and ignores `_`. Firebase uses that resulting address. Local uses
-  `path[0]` as a physical version-1 object store; named segments retain their
+  `path[0]` as a configured physical object store; named segments retain their
   field name and optional dynamic level as part of Local identity. Root reads
   (`''`, `[]`) are invalid; root cursors are valid.
 - Array `read` paths have an operation-specific grammar: a trailing string in
@@ -72,41 +72,101 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   Allocation and record insertion commit in one IndexedDB transaction; failed
   creates roll both back. A supplied key is used unchanged. The synchronous
   create callback receives the final key after allocation and before insertion.
-  The internal numeric `_rowId` and unique `[_collection, _key]` identity index
-  are not exposed through the value API. No allocator stores or migrations exist.
-  Incompatible existing databases require explicit repair; normal opening never
-  upgrades or automatically deletes them. Generated IDs need not be contiguous.
+  The internal numeric `_id` and unique `_local.path` identity index
+  are not exposed through the value API. No allocator stores are created.
+  Incompatible existing databases require explicit repair; compatible schemas upgrade additively, while opening never automatically deletes data. Generated IDs need not be contiguous.
   Local does not add a timestamp field.
   Firebase generated keys remain 20-character push keys.
 
 ## Local IndexedDB schema
 
-`LOCAL_SCHEMA` in `local/constants.js` describes the 19 physical version-one
-stores as a JSON-compatible object. Each store has `keyPath`, `autoIncrement`,
-and `indexes`; each index has `keyPath` and optional `unique` (default false).
-For example:
+`local/stores.json` is the source of the built-in physical stores and indexes.
+The file keeps its `store` / `storeConfig` / `storeSchema` format. Add stores or
+indexes through the Local constructor, using the same format:
 
-```json
-{
-  "audit": {
-    "keyPath": "id",
-    "autoIncrement": false,
-    "indexes": {"byStatus": {"keyPath": "status", "unique": false}}
-  }
-}
+```js
+const database = new LocalDatabase({
+    storageKey: "my-app",
+    stores: [{
+        store: "audit",
+        storeConfig: {keyPath: "_id", autoIncrement: true},
+        storeSchema: [
+            {name: "code", keypath: "code", options: {unique: true}},
+            {name: "owner_status", keypath: ["owner", "status"]}
+        ]
+    }]
+});
+await database.create(["audit", "audit_id"], key => ({code: key, status: "open"}));
 ```
 
-`await localDatabase.applySchema(schema)` creates missing stores and indexes,
-or replaces an index whose keyPath or uniqueness changed. It bumps the IndexedDB
-version only when a change is needed. Unspecified stores, indexes, and records
-remain. Changing an existing store's `keyPath` or `autoIncrement`, or a required
-framework index, rejects with `VersionError`. A failed upgrade transaction rolls
-back; a new unique index can fail if existing rows conflict. Local connections
-close on `versionchange`; an external connection that does not close causes a
-blocked error. A racing version upgrade is rechecked and retried. `applySchema`
-belongs only to LocalDatabase; it is absent from DatabaseBase and FirebaseDatabase.
-New custom stores are physical storage;
-Local record APIs still accept only the named collections in `LOCAL_COLLECTIONS`.
+Constructor stores require `_id` with `autoIncrement: true`. Index options support
+`unique` and `multiEntry`; compound indexes cannot use `multiEntry`. Definitions
+merge by store and index name. Identical repeated definitions are allowed;
+conflicting definitions, reserved metadata keyPaths and invalid definitions reject
+before opening IndexedDB. Inputs are copied and never modified. Additional stores
+support CRUD, nested paths, cursors and subscriptions. Each instance accepts only
+its own configured collections, even when another instance sharing its storageKey
+has created additional physical stores.
+
+The converter adds only one framework index, `_identity`, with the unique keyPath
+`_local.path`. All other indexes come from stores.json and constructor stores.
+The built-in schema has 68 JSON indexes plus 18 identity indexes, for 86 total.
+There are no generated cursor, scope, dynamic-type or unsupported-value indexes.
+When an operation creates children without naming their identity field, it uses
+the generic dynamic id; explicit and existing identities remain authoritative.
+
+Physical object rows contain public fields directly, a numeric `_id` and sparse
+`_local` reconstruction metadata. `_local.path` is the serialized named path;
+the collection name comes from the physical store. `_local.added` lists injected
+address fields, and `_local.originals` holds only public fields overwritten by
+address projections or reserved storage fields. Objects are not copied into a
+second value envelope. Primitive and array values use `_local.value`. Dynamic
+levels, fixed conditions and ordering values are computed in memory when read.
+
+Only declared native indexes require identity projections. Compound indexes
+including a leaf identity may also project ancestor identities. Parent-only
+identities are not copied onto every descendant row, preserving nested records
+under unique parent indexes. Reads reconstruct the exact original public value,
+including caller-owned `_id`, `_local` and conflicting identity fields. JSON
+`unique` indexes retain native IndexedDB enforcement across each physical store;
+failed writes and upgrades roll back atomically. Native IndexedDB key eligibility
+applies (for example, boolean values are not native index keys).
+
+Cursors and dynamic-type queries read the selected collection rows and apply the
+shared path filtering, comparisons and ordering in memory. Each page reads fresh
+values and resumes from its `(sort value, child key)` boundary. Handler writes and
+subscriptions keep their existing public behavior. There is no promise of native
+indexed paging or bounded collection reads; large collection queries may be slower.
+
+Schema preparation runs before the first operation, cursor read or listener
+snapshot. Concurrent operations on an instance share preparation; failures follow
+the existing operation/subscription error handling and allow a later retry.
+A new database creates the full merged schema at version 1. A compatible existing
+schema gains missing stores/indexes in one versionchange transaction, increasing
+its current version by 1 only when changes are needed. Existing records are
+reprojected when an added compound index requires ancestor fields. The former
+_local envelope format is compacted in place; obsolete framework indexes using
+the reserved _local namespace are removed in the same transaction. Public data,
+physical primary keys and unrelated native indexes are preserved. Reopening an
+unchanged schema does not increase its version. Local connections close on
+`versionchange`; external blockers produce an error and upgrades can be retried.
+Concurrent upgrades recheck the schema before completing.
+
+`LOCAL_SCHEMA` describes the converted built-in schema. The Local-only API
+`await localDatabase.applySchema(schema)` continues to accept the physical object
+format `{storeName: {keyPath, autoIncrement, indexes: {indexName: {keyPath, unique?,
+multiEntry?}}}}`. It adds stores/indexes and may replace non-required indexes;
+unspecified stores, non-framework indexes and records remain. Required configured indexes and
+existing store keyPath/autoIncrement settings cannot be changed. Physical stores
+added only through applySchema do not become configured CRUD collections.
+DatabaseBase and FirebaseDatabase have no schema method.
+
+Databases from the previous `_rowId` storage model are incompatible and must be
+explicitly removed before this adapter opens them. There is no automatic deletion
+or data migration from that model. For the default dev configuration, close other
+connections and delete only `redequate:local:redequate:database:local` in the dev
+origin's IndexedDB storage. This does not reset the separate Local Auth database.
+
   `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
   key's encoded client-side generation time **when the key is known to be a
   push key**. This is not the server commit time. The library does not verify
@@ -131,8 +191,7 @@ Local record APIs still accept only the named collections in `LOCAL_COLLECTIONS`
   lexicographic order. Distinct equal-value integer spellings of equal length
   compare equal in the SDK comparator, so their relative order is unresolved.
   The installed SDK source confirms the comparator.
-  `compareKeys` is shared by Local key ordering and bounds, and Local's index
-  encoding uses the same integer parser. The shared emulator scenario checks
+  `compareKeys` is shared by Local key ordering and bounds. The shared emulator scenario checks
   `"2"`, `"02"`, and `"10"` end to end.
 - For field and value queries, the SDK compares absent/null nodes, booleans,
   numbers, strings, then objects; equal sort values break ties by child key.
@@ -142,8 +201,8 @@ Local record APIs still accept only the named collections in `LOCAL_COLLECTIONS`
   directions, including single-entry pages. Object-valued public query bounds
   are rejected. Firebase also rejects an object continuation bound, so its
   cursor uses the original query plus tuple filtering after an object boundary;
-  this exceptional path materializes the query. Local likewise uses its comparator
-  fallback for object/array sorting. Scalar indexed Local pages remain native.
+  this exceptional path materializes the query. Local uses the same comparator for scalar and object/array sorting after
+  reading the collection rows.
 - `start`, `end`, and `equalTo` are inclusive SDK query bounds. `start: "Al"`
   without `end` expands to an inclusive `"Al\uf8ff"` end in **cursor** queries.
   Explicit `end` remains exact. Firebase `startDate` and `endDate` generate
@@ -215,8 +274,9 @@ failures are reported as failures, never skipped or treated as successful checks
 Shared tests cover keys, mixed and nested ordering, inclusive/prefix/equality
 bounds, page size and traversal state, deletion/movement, handler writes and
 failures, listener baselines, membership events and independent subscriptions.
-Local tests additionally compare active indexed queries with equivalent nested
-fallback queries and assert no object-store or index `getAll()` on fast pages.
+Local tests additionally compare direct and nested field ordering, verify the
+minimal physical index/row layout, and exercise atomic compaction and rollback.
+There are no assertions requiring native cursor paging without collection scans.
 
 There is no promised stable relative order for distinct integer spellings of the
 same numeric value and length (for example `-0` and `00`): the SDK comparator
