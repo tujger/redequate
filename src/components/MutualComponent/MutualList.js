@@ -43,27 +43,27 @@ export default props => {
     let cursor;
     if (typeId && mutualId) {
         if (mode === MutualListMode.SUBSCRIBERS) {
-            cursor = database.cursor(["mutual", {typeId, _: true}], {
+            cursor = database.cursor(["mutual", {mutual_type: typeId}, "mutual_id"], {
                 equalTo: mutualId,
                 order,
                 orderBy: ["id"],
             })
         } else if (mode === MutualListMode.SELF) {
-            cursor = database.cursor(["mutualstamps", "_my", {user_id: mutualId}], {
+            cursor = database.cursor(["mutualstamps", "_my", {user_id: mutualId}, "mutual_id"], {
                 order,
             })
         } else if (mode === MutualListMode.SUBSCRIBES) {
-            cursor = database.cursor(["mutual", {typeId, _: true}], {
+            cursor = database.cursor(["mutual", {mutual_type: typeId}, "mutual_id"], {
                 equalTo: mutualId,
                 order,
                 orderBy: ["uid"],
             })
         } else if (mode === MutualListMode.STAMPS) {
-            cursor = database.cursor(["mutualstamps", {typeId, _: true}, {user_id: mutualId}], {
+            cursor = database.cursor(["mutualstamps", {mutual_type: typeId}, {user_id: mutualId}, "mutual_id"], {
                 order,
             })
         } else if (mode === MutualListMode.REQUESTS) {
-            cursor = database.cursor(["mutualrequests", {typeId, _: true}], {
+            cursor = database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
                 equalTo: mutualId,
                 order,
                 orderBy: ["id"]

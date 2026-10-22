@@ -29,7 +29,7 @@ export const mutualRequest = async (
     const uidId = `${currentUserData.id}_${mutualId}`;
     const idUid = `${mutualId}_${currentUserData.id}`;
 
-    const existing = await database.cursor(["mutual", {typeId, _: true}], {
+    const existing = await database.cursor(["mutual", {mutual_type: typeId}, "mutual_id"], {
         equalTo: uidId,
         orderBy: ["uid_id"]
     }).next();
@@ -47,9 +47,9 @@ export const mutualRequest = async (
         type: mutualType,
     };
     if (mutualMode === MutualMode.SIMPLEX_QUIET) {
-        path.push("mutual", {typeId, _: true});
+        path.push("mutual", {mutual_type: typeId}, "mutual_id");
     } else if (mutualMode === MutualMode.DUPLEX_APPROVE) {
-        path.push("mutualrequests", {typeId, _: true});
+        path.push("mutualrequests", {mutual_type: typeId}, "mutual_id");
         request = {...request, typeId};
         if (message) request = {...request, message};
     }
