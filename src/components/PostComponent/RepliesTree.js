@@ -31,7 +31,7 @@ export default (props) => {
     const {settings = {}} = metaInfo || {};
     const {postsRotateReplies} = settings;
 
-    const cursor = cursorOptions ? database.cursor(["posts"], cursorOptions) : undefined;
+    const cursor = cursorOptions ? database.cursor(["posts", "post_id"], cursorOptions) : undefined;
 
     const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
@@ -77,7 +77,7 @@ export default (props) => {
             if (level === 0) throw {expanded: true, a: 5};
         }
         const fetchExistingRepliesIfComment = async () => {
-            return database.cursor(["posts"], cursorOptions).next(10);
+            return database.cursor(["posts", "post_id"], cursorOptions).next(10);
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {

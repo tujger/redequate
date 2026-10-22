@@ -119,7 +119,7 @@ export default ({postData}) => {
             setState(state => ({...state, disabled: true}));
         }
         const fetchExtras = async () => {
-            return database.cursor(["extra"], {
+            return database.cursor(["extra", "extra_id"], {
                 equalTo: postData.id,
                 orderBy: ["id"]
             }).next(10000);

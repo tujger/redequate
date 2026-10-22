@@ -306,7 +306,7 @@ export const PostData = function ({allowedExtras = ["like"], database, type = "p
         },
         _updateVal: async (section, path, change, cache) => {
             // UNKNOWN: path is an opaque relative key and may contain multiple segments.
-            const recordPath = [section, {post_id: `${path}`}];
+            const recordPath = [section, {id: `${path}`}];
             path = `${section}/${path}`;
             if (cache[path] !== undefined) {
             } else {
