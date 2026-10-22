@@ -107,7 +107,7 @@ export default function ChatMeta(database) {
                 chats.push({key: oppositeUid, meta: value, persisted: true});
             }
             if (!chats.length) {
-                chats = await database.cursor(["_chats", {user_id: currentUid}], {
+                chats = await database.cursor(["_chats", {user_id: currentUid}, "chat_id"], {
                     equalTo: oppositeUid,
                     orderBy: ["private"]
                 }).next(10);
