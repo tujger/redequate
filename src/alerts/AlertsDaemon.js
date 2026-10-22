@@ -22,7 +22,7 @@ export default ({fetchAlertContent}) => {
             const value = store.getState().alertsVisit;
             lastVisit = value.timestamp;
         }
-        const cursor = database.cursor(["alerts", {user_id: currentUserData.id}], {
+        const cursor = database.cursor(["alerts", {user_id: currentUserData.id}, "alert_id"], {
             orderBy: ["timestamp"],
             start: lastVisit
         });

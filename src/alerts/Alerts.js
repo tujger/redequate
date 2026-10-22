@@ -34,7 +34,7 @@ export default ({daemon, fetchAlertContent}) => {
     const handleAllReadConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allRead: false});
-        database.cursor(["alerts", {user_id: currentUserData.id}], {
+        database.cursor(["alerts", {user_id: currentUserData.id}, "alert_id"], {
             handle({value}) {
                 return {...value, new: null};
             },
