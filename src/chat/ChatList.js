@@ -1,5 +1,5 @@
 import React from "react";
-import {DatabaseOrder} from "../../packages/database/src";
+import {DatabaseOrder} from "../../packages/database";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
 import {useDatabase} from "../controllers";
 import ChatItem from "./ChatItem";
