@@ -10,7 +10,6 @@ it("watches online state under the current chat and member", () => {
     const database = {addEventListener: vi.fn(() => ({remove}))};
     const chat = ChatMeta(database).create("chat-1", {members: {alice: 0}});
     const onChange = vi.fn();
-
     chat.watchOnline({uid: "alice", onChange});
     expect(database.addEventListener).toHaveBeenCalledExactlyOnceWith(
         ["chats", {chat_id: "chat-1"}, "!meta", "members", {user_id: "alice"}],
@@ -20,111 +19,81 @@ it("watches online state under the current chat and member", () => {
     expect(remove).toHaveBeenCalledOnce();
 });
 
-it("fetches only the latest message by created rather than key order", async () => {
-    const messages = {
-        "z-older": {created: 100, text: "older"},
-        "a-newer": {created: 200, text: "newer"}
-    };
-    const next = vi.fn(async count => Object.entries(messages)
-        .sort((a, b) => b[1].created - a[1].created)
-        .slice(0, count)
-        .map(([key, value]) => ({key, value})));
-    const database = {
-        read: vi.fn(),
-        cursor: vi.fn(() => ({next}))
-    };
+it("takes the latest message from the database's created-ordered read and skips metadata", async () => {
+    const older = {created: 100, text: "older"};
+    const newer = {created: 200, text: "newer"};
+    const database = {read: vi.fn().mockResolvedValue({"z-older": older, "a-newer": newer, "!meta": {members: {alice: 0}}})};
     const chat = ChatMeta(database).create("chat-1", {members: {alice: 0}});
-
     await chat.fetch();
-
-    expect(database.cursor).toHaveBeenCalledExactlyOnceWith(
-        ["chats", {chat_id: "chat-1"}], {orderBy: "created", order: "desc"}
+    expect(database.read).toHaveBeenCalledExactlyOnceWith(
+        ["chats", {chat_id: "chat-1"}], {orderBy: "created"}
     );
-    expect(next).toHaveBeenCalledExactlyOnceWith(1);
-    expect(database.read).not.toHaveBeenCalled();
-    expect(chat.lastMessage).toBe(messages["a-newer"]);
+    expect(chat.lastMessage).toBe(newer);
     expect(chat.timestamp).toBe(200);
 });
 
-it("handles a chat with no messages", async () => {
-    const next = vi.fn(async () => []);
-    const database = {read: vi.fn(), cursor: vi.fn(() => ({next}))};
+it.each([undefined, {"!meta": {members: {alice: 0}}}])("handles a chat with no messages: %j", async value => {
+    const database = {read: vi.fn().mockResolvedValue(value)};
     const chat = ChatMeta(database).create("chat-1", {members: {alice: 0}});
-
     await chat.fetch();
-
-    expect(next).toHaveBeenCalledExactlyOnceWith(1);
     expect(chat.lastMessage).toEqual({});
     expect(chat.timestamp).toBeUndefined();
 });
 
-it("initializes from one cursor entry, then applies newer additions and edits without timestamp regression", async () => {
-    const listeners = [];
-    const removers = [];
-    let resolveInitial;
-    const next = vi.fn(() => new Promise(resolve => { resolveInitial = resolve; }));
-    const database = {addEventListener: vi.fn((path, options) => {
-        listeners.push(options);
-        const remove = vi.fn();
-        removers.push(remove);
-        return {remove};
-    }), cursor: vi.fn(() => ({next}))};
+const watchModel = () => {
+    const subscriptions = [];
+    const database = {
+        addEventListener: vi.fn((path, handlers) => {
+            let active = true;
+            const subscription = {
+                path,
+                handlers,
+                emit: (event, value) => active && handlers[event]?.(value),
+                remove: vi.fn(() => { active = false; }),
+            };
+            subscriptions.push(subscription);
+            return subscription;
+        })
+    };
     const chat = ChatMeta(database).create("chat-1", {members: {alice: 0}});
     const changed = vi.fn();
     chat.watch(changed);
-    expect(database.cursor).toHaveBeenCalledExactlyOnceWith(
-        ["chats", {chat_id: "chat-1"}], {orderBy: "created", order: "desc"}
-    );
-    expect(next).toHaveBeenCalledExactlyOnceWith(1);
-    expect(listeners[0]).toEqual({onChildAdd: expect.any(Function), onChildChange: expect.any(Function)});
-    const first = {created: 10, text: "first"};
-    const second = {created: 20, text: "newer"};
-    listeners[0].onChildAdd({key: "b", value: second});
-    expect(changed).not.toHaveBeenCalled();
-    resolveInitial([{key: "a", value: first}]);
-    await Promise.resolve();
-    expect(changed).toHaveBeenCalledTimes(2);
-    expect(chat.lastMessage).toEqual(second);
-    listeners[0].onChildAdd({key: "b", value: second});
-    listeners[0].onChildChange({key: "a", value: {...first, text: "old edit"}});
-    expect(changed).toHaveBeenCalledTimes(2);
-    listeners[0].onChildChange({key: "b", value: {...second, text: "edited"}});
-    expect(changed).toHaveBeenCalledTimes(3);
+    return {database, subscriptions, chat, changed};
+};
+
+it("watches new messages, visits and member removal on their respective paths", () => {
+    const {database, subscriptions, chat, changed} = watchModel();
+    expect(database.addEventListener.mock.calls.map(([path]) => path)).toEqual([
+        ["chats", {chat_id: "chat-1"}], ["chats", {chat_id: "chat-1"}, "!meta", "members"],
+    ]);
+    expect(subscriptions[0].handlers).toEqual({onChildAdd: expect.any(Function), orderBy: "created"});
+    const message = {created: 20, text: "newer"};
+    subscriptions[0].emit("onChildAdd", {key: "b", value: message});
+    expect(chat.lastMessage).toBe(message);
     expect(chat.timestamp).toBe(20);
+    expect(changed).toHaveBeenLastCalledWith(message);
+    subscriptions[1].emit("onChildChange", {key: "alice", value: 25});
+    expect(changed).toHaveBeenLastCalledWith({uid: "alice", timestamp: 25, type: "visit"});
+    subscriptions[1].emit("onChildRemove", {key: "alice", value: 30});
+    expect(changed).toHaveBeenLastCalledWith({removed: true, timestamp: 30, type: "remove"});
     chat.unwatch();
-    expect(removers.every(remove => remove.mock.calls.length === 1)).toBe(true);
-    listeners[0].onChildAdd({key: "c", value: {created: 30}});
-    expect(changed).toHaveBeenCalledTimes(3);
 });
 
-it("ignores a pending cursor response after unwatch", async () => {
-    let resolveInitial;
-    const changed = vi.fn();
-    const database = {
-        addEventListener: vi.fn(() => ({remove: vi.fn()})),
-        cursor: () => ({next: () => new Promise(resolve => { resolveInitial = resolve; })})
-    };
-    const chat = ChatMeta(database).create("chat-1", {members: {alice: 0}});
-    chat.watch(changed);
+it("removes both subscriptions and receives no events after unwatch", () => {
+    const {subscriptions, chat, changed} = watchModel();
     chat.unwatch();
-    resolveInitial([{key: "a", value: {created: 10}}]);
-    await Promise.resolve();
+    chat.unwatch();
+    expect(subscriptions.every(subscription => subscription.remove.mock.calls.length === 1)).toBe(true);
+    subscriptions[0].emit("onChildAdd", {key: "late", value: {created: 30, text: "late"}});
+    subscriptions[1].emit("onChildChange", {key: "alice", value: 40});
     expect(changed).not.toHaveBeenCalled();
 });
 
-it("deduplicates an addition already returned by the initialization cursor", async () => {
-    let messageListener;
+it("does not notify twice for the same new-message delivery", () => {
+    const {subscriptions, chat, changed} = watchModel();
     const message = {created: 10, text: "same"};
-    const database = {
-        addEventListener: vi.fn((path, options) => {
-            if (options.onChildAdd) messageListener = options;
-            return {remove: vi.fn()};
-        }),
-        cursor: () => ({next: async () => [{key: "a", value: message}]})
-    };
-    const changed = vi.fn();
-    ChatMeta(database).create("chat-1", {members: {alice: 0}}).watch(changed);
-    messageListener.onChildAdd({key: "a", value: message});
-    await Promise.resolve();
+    subscriptions[0].emit("onChildAdd", {key: "a", value: message});
+    subscriptions[0].emit("onChildAdd", {key: "a", value: {...message}});
     expect(changed).toHaveBeenCalledExactlyOnceWith(message);
+    chat.unwatch();
 });

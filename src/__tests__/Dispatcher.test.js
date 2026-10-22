@@ -64,29 +64,42 @@ const start = async (resolveUser, values = {}) => {
     return database;
 };
 
-it("publishes the profile restored by auth without reading it again", async () => {
+it("refreshes the authenticated profile and publishes the restored device data", async () => {
     const database = await start(database => loadUserData(new UserData(database).create("u1", {email: "user@example.test"}), database), {
         "users_public/u1": {email: "user@example.test", name: "Fresh profile"},
         "roles/u1": "admin",
-        "users_private/u1": {device: {locale: "en"}},
+        "users_private/u1": {device: {locale: "old"}},
+        "users_private/u1/device": {locale: "en"},
     });
     expect(database.read.mock.calls.map(([path]) => path)).toEqual([
         ["users_public", {user_id: "u1"}], ["roles", {user_id: "u1"}],
         ["users_private", {user_id: "u1"}], ["meta", {settings: "settings"}],
+        ["users_public", {user_id: "u1"}], ["roles", {user_id: "u1"}],
+        ["users_private", {user_id: "u1"}, {device_id: "device"}],
     ]);
     expect(context.setUser).toHaveBeenCalledWith(expect.objectContaining({name: "Fresh profile", role: "admin", persisted: true, private: {device: {locale: "en"}}}));
 });
 
 it.each([
-    [{public: true, private: true}, [["roles", {user_id: "u1"}]]],
-    [{public: true, role: true}, [["users_private", {user_id: "u1"}, {device_id: "device"}]]],
-    [{}, [["users_public", {user_id: "u1"}], ["roles", {user_id: "u1"}], ["users_private", {user_id: "u1"}, {device_id: "device"}]]],
-])("loads only missing sections of a partial provider profile %j", async (loaded, paths) => {
+    {public: true, private: true},
+    {public: true, role: true},
+    {},
+])("refreshes provider sections regardless of previously loaded flags %j", async loaded => {
     const database = await start(() => new UserData().fromJSON({
-        id: "u1", public: {email: "user@example.test"}, private: {}, loaded,
-    }), {"users_public/u1": {email: "user@example.test"}});
-    expect(database.read.mock.calls.map(([path]) => path)).toEqual([["meta", {settings: "settings"}], ...paths]);
-    expect(context.setUser).toHaveBeenCalledWith(expect.objectContaining({id: "u1"}));
+        id: "u1", public: {email: "user@example.test", name: "Stale name"}, private: {}, loaded,
+    }), {
+        "users_public/u1": {email: "user@example.test", name: "Fresh name"},
+        "roles/u1": "admin",
+        "users_private/u1/device": {locale: "en"},
+    });
+    expect(database.read.mock.calls.map(([path]) => path)).toEqual([
+        ["meta", {settings: "settings"}],
+        ["users_public", {user_id: "u1"}], ["roles", {user_id: "u1"}],
+        ["users_private", {user_id: "u1"}, {device_id: "device"}],
+    ]);
+    expect(context.setUser).toHaveBeenCalledWith(expect.objectContaining({
+        id: "u1", name: "Fresh name", role: "admin", private: {device: {locale: "en"}},
+    }));
 });
 
 it("initializes a guest without profile reads", async () => {

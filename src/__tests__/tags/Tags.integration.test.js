@@ -39,15 +39,26 @@ const mount = (state = {mode: "all", filter: ""}, props = {}) => {
     return context.cursor;
 };
 
-it("reads the first ten sorted tags in one bounded request and continues without duplicates", async () => {
-    const ref = firebase.database().ref();
-    const once = vi.spyOn(Object.getPrototypeOf(ref.orderByKey()), "once");
+it("pages sorted tags with bounded reads, including an empty sort value but excluding missing fields", async () => {
+    const query = firebase.database().ref().orderByKey();
+    const once = vi.spyOn(Object.getPrototypeOf(query), "once");
+    const limit = vi.spyOn(Object.getPrototypeOf(query), "limitToFirst");
     const cursor = mount();
-    expect((await cursor.next(10)).map(entry => entry.key)).toEqual(Object.keys(records).slice(0, 10));
-    expect(once).toHaveBeenCalledTimes(1);
-    expect((await cursor.next(10)).map(entry => entry.key)).toEqual(["t10", "t11"]);
+    const expected = ["empty", ...Object.keys(records)];
+    const first = await cursor.next(10);
+    expect(first.map(entry => entry.key)).toEqual(expected.slice(0, 10));
+    // The initial bounded read contains one missing field; the cursor fills that gap.
     expect(once).toHaveBeenCalledTimes(2);
+    const second = await cursor.next(10);
+    const keys = [...first, ...second].map(entry => entry.key);
+    expect(keys).toEqual(expected);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(once).toHaveBeenCalledTimes(3);
+    // Inclusive continuation reads include the previous boundary, which is discarded.
+    expect(limit.mock.calls).toEqual([[10], [2], [11]]);
     expect(cursor.position.finished).toBe(true);
+    expect(await cursor.next(10)).toEqual([]);
+    expect(once).toHaveBeenCalledTimes(3);
 });
 
 it("preserves prefix search", async () => {
