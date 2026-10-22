@@ -1,9 +1,9 @@
 // Every path root is a physical store in a version-one database.
 export const LOCAL_COLLECTIONS = Object.freeze(Object.fromEntries([
-    "posts", "replies", "chats", "_chats", "alerts", "users_public", "users_private",
+    "posts", "chats", "_chats", "alerts", "users_public", "users_private",
     "roles", "tag", "_tag", "extra", "mutual", "mutualrequests",
     "mutualstamps", "activity", "_activity", "errors", "meta", "_counters"
-].map(store => [store, Object.freeze({store, ...(["posts", "replies"].includes(store) ? {idField: "post_id"} : {})})])));
+].map(store => [store, Object.freeze({store, ...(["posts"].includes(store) ? {idField: "post_id"} : {})})])));
 
 export const STORE_SCHEMA = Object.freeze({
     keyPath: "_rowId",
