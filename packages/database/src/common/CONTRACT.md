@@ -74,10 +74,39 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   create callback receives the final key after allocation and before insertion.
   The internal numeric `_rowId` and unique `[_collection, _key]` identity index
   are not exposed through the value API. No allocator stores or migrations exist.
-  Incompatible existing databases must be deleted explicitly; opening never
+  Incompatible existing databases require explicit repair; normal opening never
   upgrades or automatically deletes them. Generated IDs need not be contiguous.
   Local does not add a timestamp field.
   Firebase generated keys remain 20-character push keys.
+
+## Local IndexedDB schema
+
+`LOCAL_SCHEMA` in `local/constants.js` describes the 19 physical version-one
+stores as a JSON-compatible object. Each store has `keyPath`, `autoIncrement`,
+and `indexes`; each index has `keyPath` and optional `unique` (default false).
+For example:
+
+```json
+{
+  "audit": {
+    "keyPath": "id",
+    "autoIncrement": false,
+    "indexes": {"byStatus": {"keyPath": "status", "unique": false}}
+  }
+}
+```
+
+`await localDatabase.applySchema(schema)` creates missing stores and indexes,
+or replaces an index whose keyPath or uniqueness changed. It bumps the IndexedDB
+version only when a change is needed. Unspecified stores, indexes, and records
+remain. Changing an existing store's `keyPath` or `autoIncrement`, or a required
+framework index, rejects with `VersionError`. A failed upgrade transaction rolls
+back; a new unique index can fail if existing rows conflict. Local connections
+close on `versionchange`; an external connection that does not close causes a
+blocked error. A racing version upgrade is rechecked and retried. `applySchema`
+belongs only to LocalDatabase; it is absent from DatabaseBase and FirebaseDatabase.
+New custom stores are physical storage;
+Local record APIs still accept only the named collections in `LOCAL_COLLECTIONS`.
   `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
   key's encoded client-side generation time **when the key is known to be a
   push key**. This is not the server commit time. The library does not verify

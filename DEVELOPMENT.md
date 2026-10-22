@@ -3143,8 +3143,16 @@ or `["users_public", {user_id: uid}, {email: "email"}]`. Local resolves these ag
 existing literal/embedded storage without migration. Strings remain exact raw
 paths; single-root arrays continue to read the collection.
 
-This is a read-specific parser. create/update/delete/cursor/listener paths and
-orderBy normalization retain their own semantics. PostData.fetchExtras deliberately
+Cursor now follows the same trailing-string rule for array paths of at least two
+segments. Firebase queries the parent and uses each child snapshot key. Local
+selects immediate records with the specified stored identity field, uses their
+stored keys, and applies the same selection to indexed pages and subscriptions.
+The cursor's exposed path is the resolved parent path. String cursor paths remain
+literal, and a concrete array branch must use a named segment such as
+`["meta", {settings: "settings"}]`. **Breaking change:** an older cursor array
+such as `["meta", "settings"]` no longer visits the literal `settings` branch;
+use `"meta/settings"` or the named segment instead. create/update/delete/listener
+paths and orderBy normalization retain their own semantics. PostData.fetchExtras deliberately
 keeps `["extra", "extra_id"]`: Firebase must query `/extra`, whose id_uid index
 already exists in both consumers' local rules, never `/extra/extra_id`.
 Local does not silently merge conflicting child identities when assembling a
@@ -3233,3 +3241,57 @@ expression in getWindowWidth/getWindowHeight. Retain 5.1.4; reverting this updat
 does not remove that source-level incompatibility. No global shim or replacement
 viewer is introduced by this dependency update. Existing React `key`-as-prop
 warnings are also outside this update.
+
+## Local IndexedDB schema changes
+
+The current `story/move-database-to-module` Local adapter creates 19 physical
+collection stores at version 1. Each uses `_rowId` with auto-increment and a
+required set of indexes, described by the JSON-compatible `LOCAL_SCHEMA` in
+`packages/database/src/local/constants.js`. The record APIs continue to address
+only `LOCAL_COLLECTIONS`; `applySchema` may add physical stores for other uses.
+
+`LocalDatabase.applySchema(schema)` performs additive store and index changes in
+one IndexedDB versionchange transaction. It may replace an index, but never
+removes an unspecified store or index, changes a store keyPath or autoIncrement,
+or deletes records. Normal opens accept an upgraded version while validating
+required framework stores and indexes. The schema API belongs only to LocalDatabase
+and is absent from DatabaseBase and FirebaseDatabase. This is a new API; existing
+Local read/create/cursor
+paths and data formats remain unchanged. Cross-tab upgrades require other open
+connections to respond to `versionchange`; a noncooperating tab yields a blocked
+error and the caller can retry later. The web demo and production application
+should validate any schema they introduce before release; Android does not use
+these browser object stores.
+
+### Provider-specific schema API and test alignment
+
+Decision: keep applySchema only on LocalDatabase. DatabaseBase and FirebaseDatabase
+have no schema method; the Local method retains its schema parameter documentation
+and all existing schema migration tests. This removes the unsupported method stub
+from the provider-neutral API without changing Local schema behavior.
+
+Existing tests now follow the current Chat implementation after its specialized
+forward-cursor and scroll-anchor behavior was reverted. ChatList tests render the
+real LazyList with a Redux Provider and exercise 100-entry pages, metadata filtering,
+live cursor events, duplicate deliveries, end-of-list handling, overlapping requests
+and unmount cleanup. ChatMeta and ChatsDaemon use their current read/listener APIs;
+these tests do not claim the reverted cursor-only initialization or anchor behavior.
+Dispatcher tests retain forced profile/device refresh and guest coverage. MutualList
+expects the current explicit mutual_id identity field. Tags integration includes an
+existing empty sort field, excludes missing fields, and verifies bounded inclusive
+continuation reads and no duplicate entries. The extra continuation boundary row
+is discarded; no unlimited read is accepted by that scenario.
+
+The Whisky Talks Profile refresh table now explicitly maps tabs 1 through 4 to
+Posts, My Groups, Following and Followers. Its existing four remount regression
+cases pass without weakening their expectations. The post transform test uses the
+current named post_id path. No Chat or cursor implementation change is part of
+this test alignment.
+
+Validation on Node.js 24.21.0: all 899 unit tests across 96 core test files pass;
+all 92 Firebase integration tests across 5 files pass with the actual Emulator;
+all 18 Whisky tests across 5 files pass. Framework, demo and Whisky builds pass.
+Updated Chat tests are ESLint-clean; comparison of all changed source/test files
+adds no lint diagnostics. Existing unrelated lint diagnostics remain. No tests
+were skipped to achieve these results. Public data paths and Android contracts
+are unchanged by this test alignment.
