@@ -10,7 +10,6 @@ import {DatabaseOrder} from "../../packages/database/src";
 import FlexFabComponent from "../components/FlexFabComponent";
 import InfoComponent from "../components/InfoComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import ActionComponent from "../components/MutualComponent/ActionComponent";
@@ -62,7 +61,7 @@ export default ({allowOwner = true}) => {
     React.useEffect(() => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
-        dispatch({type: lazyListComponentReducer.RESET});
+
         database.read(["tag", {tag_id: itemId}])
             .then(value => {
                 if (value !== undefined) return {key: itemId, value};
@@ -209,7 +208,6 @@ export default ({allowOwner = true}) => {
                 return data;
             }}
             onComplete={({key}) => {
-                dispatch({type: lazyListComponentReducer.RESET});
                 history.push(pages.post.route + key);
             }}
             onError={error => {

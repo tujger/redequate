@@ -1,11 +1,10 @@
 import AddIcon from "@mui/icons-material/Add";
-import React from "react";
+import React from "react"; // eslint-disable-line no-unused-vars -- Required by the classic JSX build.
 import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -64,13 +63,6 @@ const Tags = (props) => {
         dispatch({type: tagsReducer.MODE, mode, filter: ""});
     };
 
-    React.useEffect(() => {
-        return () => {
-            dispatch({type: lazyListComponentReducer.RESET});
-        }
-        // eslint-disable-next-line
-    }, [mode, filter]);
-
     let itemTransform = item => {
         return {
             key: item.key,
@@ -113,8 +105,8 @@ const Tags = (props) => {
             });
             break;
         default:
-            break;
     }
+
     return <>
         <NavigationToolbar backButton={null}>
             <Select
