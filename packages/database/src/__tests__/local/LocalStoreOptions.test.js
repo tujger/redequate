@@ -41,7 +41,7 @@ it("converts every JSON store and index, preserving the source and isolating met
             });
         }
         expect(schema[entry.store].indexes._identity).toEqual({
-            keyPath: ["_local._collection", "_local._key"], unique: true
+            keyPath: "_local.path", unique: true
         });
     }
     schema.posts.indexes.post_id.keyPath = "changed";
@@ -84,7 +84,7 @@ it("creates the complete schema at version one and supports CRUD, nested paths a
         const store = connection.transaction("audit").objectStore("audit");
         expect(store.keyPath).toBe("_id");
         const row = await result(store.index("byOwnerStatus").get(["alice", "closed"]));
-        expect(row).toMatchObject({_id: 1, status: "closed", audit_id: "1"});
+        expect(row).toMatchObject({_id: 1, status: "closed", _local: {path: JSON.stringify([["fixed", "audit_id", "1"]])}});
     });
     await db.delete(record(key));
     expect(await db.read(record(key))).toBeUndefined();
@@ -249,4 +249,17 @@ it("supports multiEntry indexes and protects required custom indexes through app
     });
     await expect(db.applySchema({audit: {keyPath: "_id", autoIncrement: true,
         indexes: {tags: {keyPath: "other"}}}})).rejects.toMatchObject({name: "VersionError"});
+});
+
+it("indexes scalar field writes using their actual value rather than the field marker", async () => {
+    const db = new LocalDatabase({storageKey: "scalar-index"});
+    const path = ["users_public", {user_id: "u"}, {email: "email"}];
+    await db.update(path, () => "user@example.test");
+    expect(await db.read(path)).toBe("user@example.test");
+    await raw("scalar-index", async connection => {
+        const store = connection.transaction("users_public").objectStore("users_public");
+        const row = await result(store.index("email").get("user@example.test"));
+        expect(row).toMatchObject({email: "user@example.test"});
+        expect(row._local).not.toHaveProperty("value");
+    });
 });

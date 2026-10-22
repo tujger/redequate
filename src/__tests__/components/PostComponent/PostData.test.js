@@ -31,7 +31,7 @@ it.each(["posts", "replies"])("publishes and fetches %s through PostData in post
     expect(fetched.created).toEqual(expect.any(Number));
     const rows = await storedRows("post-data", LOCAL_COLLECTIONS.posts.store);
     expect(rows).toHaveLength(1);
-    expect(rows[0]._key).toBe(parseDatabasePath([{type}, {post_id: post.id}]).key);
+    expect(rows[0]._local.path).toBe(parseDatabasePath([{type}, {post_id: post.id}]).key);
 });
 
 it.each(["fetchCounters", "fetchExtras"])("rejects %s when the database read fails", async method => {

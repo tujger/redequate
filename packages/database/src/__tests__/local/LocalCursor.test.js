@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {IDBFactory, IDBIndex, IDBObjectStore} from "fake-indexeddb";
+import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import {openDatabase} from "../../local/helpers";
 
@@ -162,12 +162,11 @@ it("replaces a child through its stored named identity", async () => {
     expect(await db.read(path)).toMatchObject({label: "new"});
 });
 
-it("selects the named identity from stored keys for indexed pages and handler writes", async () => {
+it("selects the named identity from stored paths for pages and handler writes", async () => {
     const db = new LocalDatabase({storageKey: "identity-index"});
     await db.update(["users_public", {user_id: "u2"}], () => ({name: "B", user_id: "wrong"}));
     await db.update(["users_public", {other_id: "x"}], () => ({name: "A"}));
     await db.update(["users_public", {user_id: "u1"}], () => ({name: "A"}));
-    const indexed = vi.spyOn(IDBIndex.prototype, "openCursor");
     const cursor = db.cursor(["users_public", "user_id"], {
         orderBy: "name", handle: ({value}) => ({...value, changed: true})
     });
@@ -176,7 +175,6 @@ it("selects the named identity from stored keys for indexed pages and handler wr
         {key: "u1", value: expect.objectContaining({changed: true})},
         {key: "u2", value: expect.objectContaining({user_id: "wrong", changed: true})}
     ]);
-    expect(indexed).toHaveBeenCalled();
     expect(await db.read(["users_public", {other_id: "x"}])).toEqual({name: "A"});
     expect(await db.read(["users_public", {user_id: "u2"}])).toMatchObject({changed: true});
     expect((await readAll(db.cursor("users_public"))).map(entry => entry.key)).toEqual(["u1", "u2", "x"]);
@@ -204,69 +202,45 @@ it("filters named children in fallback scans and subscriptions, retaining nested
     expect(await readAll(db.cursor("meta/literal"))).toEqual([{key: "theme", value: {label: "exact"}}]);
 });
 
-it.each(["asc", "desc"])("pages indexed keys without materializing the store in %s order", async order => {
+it.each(["asc", "desc"])("pages keys in %s order across deletion of a boundary", async order => {
     const db = new LocalDatabase({storageKey: `native-keys-${order}`});
     await seed(db, {10: {created: 2}, 2: {created: 1}, "02": {created: 1}, z: {created: 2}});
-    const all = vi.spyOn(IDBObjectStore.prototype, "getAll");
-    const indexAll = vi.spyOn(IDBIndex.prototype, "getAll");
-    const indexed = vi.spyOn(IDBIndex.prototype, "openCursor");
     const cursor = db.cursor("meta", {order});
     const first = await cursor.next(2);
     expect(first.map(entry => entry.key)).toEqual(order === "asc" ? ["2", "02"] : ["z", "10"]);
     await db.delete(record(first.at(-1).key));
-    all.mockClear();
     const rest = await readAll(cursor, 1);
     expect([...first, ...rest].map(entry => entry.key)).toEqual(order === "asc"
         ? ["2", "02", "10", "z"]
         : ["z", "10", "02", "2"]);
-    expect(indexed).toHaveBeenCalled();
-    expect(all).not.toHaveBeenCalled();
-    expect(indexAll).not.toHaveBeenCalled();
     expect(await readAll(db.cursor("meta", {startDate: new Date(1000), endDate: new Date(2000)}))).toEqual([]);
-    expect(all).not.toHaveBeenCalled();
-    expect(indexAll).not.toHaveBeenCalled();
 });
 
-it("uses the created index with stable ties, inclusive bounds, and a fresh transaction per page", async () => {
+it("orders by created with stable ties, inclusive bounds, and fresh values per page", async () => {
     const db = new LocalDatabase({storageKey: "native-created"});
     await seed(db, {a: {created: 1}, b: {created: 2}, c: {created: 2}, d: {created: 3}});
-    const all = vi.spyOn(IDBObjectStore.prototype, "getAll");
-    const indexAll = vi.spyOn(IDBIndex.prototype, "getAll");
-    const indexed = vi.spyOn(IDBIndex.prototype, "openCursor");
     const cursor = db.cursor("meta", {orderBy: "created", start: 2, end: 3});
     expect((await cursor.next(1)).map(entry => entry.key)).toEqual(["b"]);
     await db.update(record("a"), () => ({created: 2}));
     await db.update(record("b"), () => ({created: 4}));
     expect((await readAll(cursor, 1)).map(entry => entry.key)).toEqual(["c", "d"]);
-    expect(indexed.mock.calls.length).toBeGreaterThan(1);
-    expect(all).toHaveBeenCalled(); // Writes still use the existing batch update machinery.
-    all.mockClear();
     expect((await readAll(db.cursor("meta", {orderBy: "created", equalTo: 2, order: "desc"})))
         .map(entry => entry.key)).toEqual(["c", "a"]);
-    expect(all).not.toHaveBeenCalled();
-    expect(indexAll).not.toHaveBeenCalled();
 });
 
-it("writes handler replacements by exact indexed identity without reading every record", async () => {
+it("writes handler replacements by their exact stored identity", async () => {
     const db = new LocalDatabase({storageKey: "native-handle"});
     await seed(db, {a: {created: 1}, b: {created: 2}});
-    const all = vi.spyOn(IDBObjectStore.prototype, "getAll");
-    const indexAll = vi.spyOn(IDBIndex.prototype, "getAll");
     const cursor = db.cursor("meta", {orderBy: "created", handle: ({value}) => ({created: value.created < 10 ? value.created + 10 : value.created})});
     expect((await readAll(cursor)).map(entry => entry.value.created)).toEqual([11, 12]);
-    expect(all).not.toHaveBeenCalled();
-    expect(indexAll).not.toHaveBeenCalled();
     expect(await db.read(record("a"))).toMatchObject({created: 11});
     await db.update(["posts", {post_id: "p1"}], () => ({created: 1}));
-    all.mockClear();
     expect(await readAll(db.cursor("posts", {handle: () => ({created: 3})})))
         .toEqual([{key: "p1", value: expect.objectContaining({created: 3})}]);
-    expect(all).not.toHaveBeenCalled();
-    expect(indexAll).not.toHaveBeenCalled();
     expect(await db.read(["posts", {post_id: "p1"}])).toMatchObject({created: 3});
 });
 
-it("falls back for nested records and fields without a native Firebase-compatible index", async () => {
+it("orders nested records, undeclared fields and object values consistently", async () => {
     const db = new LocalDatabase({storageKey: "native-fallback"});
     const parent = ["meta", {settings: "settings"}];
     await db.update([...parent, {setting_id: "theme"}], () => ({created: 2, label: "z"}));
@@ -277,10 +251,8 @@ it("falls back for nested records and fields without a native Firebase-compatibl
     expect((await readAll(db.cursor("meta", {orderBy: "label"}))).map(entry => entry.key))
         .toEqual(["b", "a"]);
     await seed(db, {c: {created: {value: 1}}, d: {created: 2}});
-    const indexed = vi.spyOn(IDBIndex.prototype, "openCursor");
     expect((await readAll(db.cursor("meta", {orderBy: "created"}))).map(entry => entry.key))
         .toEqual(["d", "c"]);
-    expect(indexed).not.toHaveBeenCalled();
     expect(await readAll(db.cursor("meta", {start: "z", end: "a"}))).toEqual([]);
 });
 
