@@ -4,74 +4,16 @@ export const lazyListComponentReducer = (state = {}, action) => {
     const savedCacheData = state["LazyListComponent_" + cache] || {};
 
     switch (action.type) {
-        case lazyListComponentReducer._ADD:
+        case lazyListComponentReducer._ADD: {
             const item = action.item;
             const {items, ascending, reverse} = savedCacheData;
             const newitems = ascending
                 ? (reverse ? [item, ...items] : [...items, item])
                 : (reverse ? [...items, item] : [item, ...items]);
             return {...state, ["LazyListComponent_" + cache]: {...savedCacheData, refresh: false, items: newitems}};
+        }
         case lazyListComponentReducer.EXIT:
             return {...state, ["LazyListComponent_" + cache]: {refresh: false}};
-        case lazyListComponentReducer.REFRESH:
-            if (cache) {
-                const cachedData = cacheData || savedCacheData;
-                if (action.pagination) {
-                    cachedData.pagination = action.pagination;
-                }
-                if (action.cursor) {
-                    cachedData.cursor = action.cursor;
-                }
-                const {pagination, items = []} = cachedData;
-                const source = cachedData.cursor || pagination;
-                if (source) {
-                    source.reset();
-                }
-                let newitems = items;
-                if (!cachedData.cursor && pagination && items.length > pagination.size) {
-                    newitems = items.slice(0, pagination.size);
-                }
-                return {
-                    ...state,
-                    ["LazyListComponent_" + cache]: {
-                        ...cachedData,
-                        random: Math.random(),
-                        refresh: true,
-                        items: newitems,
-                        loading: false,
-                        finished: false
-                    }
-                };
-            } else {
-                return {...state, random: Math.random()};
-            }
-        case lazyListComponentReducer.RESET:
-            if (cache) {
-                const cachedData = cacheData || savedCacheData;
-                if (action.pagination) {
-                    cachedData.pagination = action.pagination;
-                }
-                if (action.cursor) {
-                    cachedData.cursor = action.cursor;
-                }
-                const source = cachedData.cursor || cachedData.pagination;
-                if (source) {
-                    source.reset();
-                }
-                return {
-                    ...state,
-                    ["LazyListComponent_" + cache]: {
-                        ...cachedData,
-                        random: Math.random(),
-                        refresh: false,
-                        items: [],
-                        loading: false,
-                        finished: false
-                    }
-                };
-            } else {
-                return {...state, random: Math.random()};
-            }
         case lazyListComponentReducer.UPDATE:
             return {...state, ["LazyListComponent_" + cache]: {...cacheData, refresh: false}};
         default:

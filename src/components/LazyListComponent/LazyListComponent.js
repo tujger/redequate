@@ -22,6 +22,7 @@ export default (
     const dispatch = useDispatch();
     const [items, setItems] = React.useState([]);
     const session = React.useRef();
+    const [completedPages, setCompletedPages] = React.useState(0);
 
     const renderItem = async (current, item) => {
         try {
@@ -91,6 +92,7 @@ export default (
             if (session.current !== current) {
                 return;
             }
+            setCompletedPages(value => value + 1);
             console.log(`[Lazy] loaded ${items.length}+${newitems.filter(Boolean).length} items`);
         } catch (error) {
             if (session.current !== current) {
@@ -152,7 +154,7 @@ export default (
         {items}
         <Observer
             finished={cursor.position.finished}
-            key={`${cursor.id}:${items.length}`}
+            key={`${cursor.id}:${completedPages}`}
             loadNextPage={loadNextPage}
             placeholder={placeholder}
         />
