@@ -1,5 +1,6 @@
-import {openDatabase} from "./helpers";
-import {LOCAL_SCHEMA} from "./constants";
+import {openDatabase} from "./connection";
+import {LOCAL_SCHEMA} from "./storeSchema";
+import {decodeRow, encodeRow} from "./row";
 
 const incompatible = message => Object.assign(new Error(message), {name: "VersionError"});
 const validPath = path => {
@@ -8,12 +9,12 @@ const validPath = path => {
         path.every(part => typeof part === "string" && part.length > 0);
 };
 const plain = value => value !== null && typeof value === "object" && !Array.isArray(value) &&
-    Object.getPrototypeOf(value) === Object.prototype;
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
 const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
-const normalize = schema => {
+const normalize = (schema, requiredSchema) => {
     if (!plain(schema) || !Object.keys(schema).length) throw new TypeError("Local schema must be a non-empty object of stores.");
-    const stores = {};
+    const stores = Object.create(null);
     for (const [name, definition] of Object.entries(schema)) {
         if (!name || !plain(definition) || !validPath(definition.keyPath) ||
             typeof definition.autoIncrement !== "boolean" || !plain(definition.indexes)) {
@@ -22,19 +23,26 @@ const normalize = schema => {
         if (definition.autoIncrement && Array.isArray(definition.keyPath)) {
             throw new TypeError(`Auto-increment needs a string keyPath: ${name}`);
         }
-        const indexes = {};
+        const indexes = Object.create(null);
         for (const [index, description] of Object.entries(definition.indexes)) {
             if (!index || !plain(description) || !validPath(description.keyPath) ||
-                (description.unique !== undefined && typeof description.unique !== "boolean")) {
+                (description.unique !== undefined && typeof description.unique !== "boolean") ||
+                (description.multiEntry !== undefined && typeof description.multiEntry !== "boolean") ||
+                (description.multiEntry && Array.isArray(description.keyPath))) {
                 throw new TypeError(`Invalid Local index schema: ${name}.${index}`);
             }
-            indexes[index] = {keyPath: description.keyPath, unique: description.unique ?? false};
-            const required = LOCAL_SCHEMA[name]?.indexes[index];
+            indexes[index] = {
+                keyPath: structuredClone(description.keyPath), unique: description.unique ?? false,
+                ...(description.multiEntry ? {multiEntry: true} : {})
+            };
+            const required = Object.hasOwn(requiredSchema, name) && Object.hasOwn(requiredSchema[name].indexes, index)
+                ? requiredSchema[name].indexes[index]
+                : undefined;
             if (required && !same(indexes[index], required)) {
                 throw incompatible(`Local index ${name}.${index} is required by the framework.`);
             }
         }
-        stores[name] = {keyPath: definition.keyPath, autoIncrement: definition.autoIncrement, indexes};
+        stores[name] = {keyPath: structuredClone(definition.keyPath), autoIncrement: definition.autoIncrement, indexes};
     }
     return stores;
 };
@@ -43,7 +51,7 @@ const changesFor = (database, schema, transaction) => {
     const changes = [];
     for (const [name, definition] of Object.entries(schema)) {
         if (!database.objectStoreNames.contains(name)) {
-            changes.push([name, definition, null]);
+            changes.push([name, definition, null, []]);
             continue;
         }
         const store = transaction ? transaction.objectStore(name) : database.transaction(name).objectStore(name);
@@ -52,8 +60,18 @@ const changesFor = (database, schema, transaction) => {
         }
         const indexes = Object.entries(definition.indexes).filter(([index, spec]) =>
             !store.indexNames.contains(index) || !same(store.index(index).keyPath, spec.keyPath) ||
-            store.index(index).unique !== spec.unique);
-        if (indexes.length) changes.push([name, definition, indexes]);
+            store.index(index).unique !== spec.unique || store.index(index).multiEntry !== !!spec.multiEntry);
+        // Only old framework indexes use the reserved metadata namespace.
+        // Physical stores managed outside the configured collection schema stay additive.
+        const obsolete = Object.hasOwn(definition.indexes, "_identity")
+            ? [...store.indexNames].filter(index => {
+                if (Object.hasOwn(definition.indexes, index)) return false;
+                const paths = store.index(index).keyPath;
+                const parts = Array.isArray(paths) ? paths : [paths];
+                return parts.length > 0 && parts.every(path => path.startsWith("_local."));
+            })
+            : [];
+        if (indexes.length || obsolete.length) changes.push([name, definition, indexes, obsolete]);
     }
     return changes;
 };
@@ -67,16 +85,33 @@ const upgrade = (storageKey, version, schema) => new Promise((resolve, reject) =
             request.transaction.abort();
             return;
         }
+        const transaction = request.transaction;
+        transaction.addEventListener("abort", () => { failure ??= transaction.error; });
         try {
             // Check every store before changing anything. An abort rolls back all index work.
             const changes = changesFor(request.result, schema, request.transaction);
-            for (const [name, definition, indexes] of changes) {
+            for (const [name, definition, indexes, obsolete] of changes) {
                 const store = indexes === null
                     ? request.result.createObjectStore(name, {keyPath: definition.keyPath, autoIncrement: definition.autoIncrement})
                     : request.transaction.objectStore(name);
+                for (const index of obsolete) store.deleteIndex(index);
                 for (const [index, spec] of indexes ?? Object.entries(definition.indexes)) {
                     if (store.indexNames.contains(index)) store.deleteIndex(index);
-                    store.createIndex(index, spec.keyPath, {unique: spec.unique});
+                    store.createIndex(index, spec.keyPath, {unique: spec.unique, multiEntry: spec.multiEntry ?? false});
+                }
+                if (indexes !== null) {
+                    const cursor = store.openCursor();
+                    cursor.onsuccess = () => {
+                        if (!cursor.result) return;
+                        try {
+                            const row = decodeRow(cursor.result.value, name);
+                            if (row) cursor.result.update(encodeRow(row, store));
+                            cursor.result.continue();
+                        } catch (error) {
+                            failure = error;
+                            request.transaction.abort();
+                        }
+                    };
                 }
             }
         } catch (error) {
@@ -95,11 +130,11 @@ const upgrade = (storageKey, version, schema) => new Promise((resolve, reject) =
     };
 });
 
-/** Add stores and indexes atomically. Existing unspecified stores and indexes stay in place. */
-export const applySchema = async (storageKey, input) => {
-    const schema = normalize(input);
+/** Apply schema changes atomically, compacting obsolete framework metadata. */
+export const applySchema = async (storageKey, input, initialSchema = LOCAL_SCHEMA) => {
+    const schema = normalize(input, initialSchema);
     for (let attempt = 0; attempt < 10; attempt++) {
-        const database = await openDatabase(storageKey);
+        const database = await openDatabase(storageKey, initialSchema);
         let version;
         try {
             if (!changesFor(database, schema).length) return;
