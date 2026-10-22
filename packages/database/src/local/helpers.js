@@ -4,16 +4,17 @@ import parseCreatePath from "../common/parseCreatePath";
 import resolvePath from "../common/resolvePath";
 import validatePath from "../common/validatePath";
 import {fail} from "../../../common";
-import {indexesForStore, LOCAL_COLLECTIONS, STORE_SCHEMA} from "./constants";
-import {indexRow} from "./cursorIndex";
+import {LOCAL_SCHEMA} from "./storeSchema";
+import {decodeRow, encodeRow} from "./row";
+import {applySchema} from "./schema";
+import {openDatabase as openConnection} from "./connection";
 import {identityField as identityFieldName, identityTokens} from "./identity";
 
-const collectionConfig = collection => Object.hasOwn(LOCAL_COLLECTIONS, collection) ? LOCAL_COLLECTIONS[collection] : undefined;
 const storeName = collection => {
-    if (!collectionConfig(collection)) fail("database/invalid-argument", `Unknown Local collection: ${collection}`);
+    if (typeof collection !== "string" || !collection || collection.includes("/")) fail("database/invalid-argument", "Invalid Local collection.");
     return collection;
 };
-const storeNames = () => Object.keys(LOCAL_COLLECTIONS);
+const storeNames = context => Object.keys(context?.schema ?? LOCAL_SCHEMA);
 const numericKey = key => typeof key === "string" && /^[1-9]\d*$/.test(key) && Number.isSafeInteger(Number(key))
     ? Number(key)
     : undefined;
@@ -58,7 +59,7 @@ export const resolveCollectionPath = path => {
     let collection = path[0];
     if (typeof collection !== "string") {
         const name = Object.getOwnPropertyNames(collection).find(key => key !== "_");
-        if (!collectionConfig(collection[name])) invalidPath("Unsupported named collection segment.");
+        storeName(collection[name]);
         collection = resolvePath(path.slice(0, 1));
     }
     const result = [collection, ...path.slice(1)];
@@ -98,7 +99,7 @@ export const parseDatabasePath = (path, {allowField = true} = {}) => {
             values[`_value${level}`] = value;
             return ["dynamic", level, name, value];
         }
-        if (["_collection", "_key", "_rowId", "value"].includes(name) || /^_(?:key|value)\d+$/.test(name)) {
+        if (["_collection", "_key", "_id", "value"].includes(name) || /^_(?:key|value)\d+$/.test(name)) {
             invalidPath("A fixed condition cannot overwrite a Local storage field.");
         }
         if (Object.hasOwn(conditions, name) && conditions[name] !== value) {
@@ -144,66 +145,30 @@ const typeQuery = path => {
     return {collection, keys, conditions};
 };
 
-const openVersionedDatabase = (storageKey, version) => new Promise((resolve, reject) => {
-    const request = globalThis.indexedDB.open(`redequate:local:${storageKey}`, version);
-    let blocked = false;
-    request.onupgradeneeded = () => {
-        for (const name of storeNames()) {
-            const store = request.result.createObjectStore(name, {keyPath: STORE_SCHEMA.keyPath, autoIncrement: true});
-            for (const [index, keyPath] of Object.entries(indexesForStore(name))) {
-                store.createIndex(index, keyPath, {unique: index === "_identity"});
-            }
-        }
-    };
-    request.onerror = () => reject(request.error);
-    request.onblocked = () => {
-        blocked = true;
-        reject(new Error("Local database upgrade is blocked."));
-    };
-    request.onsuccess = () => {
-        const database = request.result;
-        database.onversionchange = () => database.close();
-        if (blocked) database.close();
-        else resolve(database);
-    };
-});
+// Contexts belong to instances. No global registry can expand another instance's collections.
+export const openDatabase = async (storageKey, initialSchema = LOCAL_SCHEMA) => {
+    if (typeof storageKey === "string") return openConnection(storageKey, initialSchema);
+    const context = storageKey;
+    if (!context.ready) {
+        context.ready = applySchema(context.storageKey, context.schema, context.schema)
+            .catch(error => { context.ready = undefined; throw error; });
+    }
+    await context.ready;
+    return openConnection(context.storageKey, context.schema);
+};
 
-// There is no migration: incompatible databases must be removed explicitly.
-export const openDatabase = async storageKey => {
-    try {
-        let database;
-        try {
-            database = await openVersionedDatabase(storageKey, 1);
-        } catch (error) {
-            if (error?.name !== "VersionError") throw error;
-            database = await openVersionedDatabase(storageKey);
-        }
-        const names = storeNames();
-        const incompatible = names.some(name => {
-            if (!database.objectStoreNames.contains(name)) return true;
-            const store = database.transaction(name).objectStore(name);
-            return store.keyPath !== STORE_SCHEMA.keyPath || !store.autoIncrement ||
-                Object.entries(indexesForStore(name)).some(([index, keyPath]) => !store.indexNames.contains(index) ||
-                    JSON.stringify(store.index(index).keyPath) !== JSON.stringify(keyPath) ||
-                    store.index(index).unique !== (index === "_identity"));
-        });
-        if (incompatible) {
-            database.close();
-            throw Object.assign(new Error("Existing Local database has an incompatible schema."), {name: "VersionError"});
-        }
-        return database;
-    } catch (error) {
-        if (error?.name !== "VersionError") throw error;
-        const message = `Existing redequate:local:${storageKey} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
-        throw Object.assign(new Error(message, {cause: error}), {name: "VersionError"});
+export const assertCollection = (context, collection) => {
+    if (!Object.hasOwn(context?.schema ?? LOCAL_SCHEMA, collection)) {
+        invalidPath(`Unknown Local collection: ${collection}`);
     }
 };
 
 const transact = async (storageKey, mode, names, run) => {
+    for (const name of names ?? []) assertCollection(storageKey, name);
     const database = await openDatabase(storageKey);
     try {
         return await new Promise((resolve, reject) => {
-            const selected = names ?? storeNames().filter(name => database.objectStoreNames.contains(name));
+            const selected = names ?? storeNames(storageKey).filter(name => database.objectStoreNames.contains(name));
             const transaction = database.transaction([...new Set(selected)], mode);
             let result;
             let abortedError;
@@ -234,35 +199,20 @@ const storedSegments = row => {
     return segments;
 };
 
-const queryRow = row => {
-    const tokens = identityTokens(row._key);
-    const dynamic = tokens.filter(token => token[0] === "dynamic");
-    const last = [...dynamic].sort((a, b) => a[1] - b[1]).at(-1);
-    return {
-        ...Object.fromEntries(tokens.filter(token => token[0] === "fixed")
-            .map(token => [token[1], token[2]])),
-        ...Object.fromEntries(dynamic.flatMap(token => [[`_key${token[1]}`, token[2]], [`_value${token[1]}`, token[3]]])),
-        ...(last ? {id: last[3]} : {}),
-        ...row
-    };
-};
-
 const readStores = (transaction, receive) => {
     const rows = [];
-    const names = [...transaction.objectStoreNames].filter(name => !name.endsWith("__keys"));
+    const names = [...transaction.objectStoreNames];
     let pending = names.length;
     for (const name of names) {
         const request = transaction.objectStore(name).getAll();
         request.onsuccess = () => {
-            rows.push(...request.result.filter(row => row._collection === name).map(queryRow));
+            rows.push(...request.result.map(row => decodeRow(row, name)).filter(row => row?._collection === name));
             if (!--pending) receive(rows);
         };
     }
 };
 
-const generatedSegment = (collection, key, prefix) => {
-    const idField = !prefix.length ? collectionConfig(collection)?.idField : undefined;
-    if (idField) return {[idField]: key};
+const generatedSegment = (key, prefix) => {
     const levels = prefix.filter(segment => segment[0] === "dynamic").map(segment => segment[1]);
     return {id: key, _: levels.length ? Math.max(...levels) + 1 : 0};
 };
@@ -282,7 +232,7 @@ export const createRecordPath = (rawPath, key) => {
 
 const keyFor = ({collection, key}) => [collection, key];
 const pathSegments = path => path.segments ?? JSON.parse(path.key);
-const reservedField = name => ["_collection", "_key", "_rowId", "value", "id"].includes(name) ||
+const reservedField = name => ["_collection", "_key", "_id", "value", "id"].includes(name) ||
     /^_(?:key|value)\d+$/.test(name);
 const stored = (path, value) => ({
     ...Object.fromEntries(isRecord(value)
@@ -457,7 +407,7 @@ export const addGeneratedRecord = async (storageKey, createPath, makeValue) => {
                         const changed = new Map();
                         replaceTree(rows, changed, resolveStoredPath(rows, path), value, Date.now());
                         const identity = JSON.stringify([collection, path.key]);
-                        changed.get(identity)._rowId = rowId;
+                        changed.get(identity)._id = rowId;
                         persistChanges(transaction, changed, abortWith);
                         setResult(key);
                     } catch (error) { abortWith(error); }
@@ -571,7 +521,7 @@ const resolveBatchPath = (rawPath, rows) => {
             id: row.id
         };
     }
-    return interpretPath([collection, generatedSegment(collection, id, []), ...(field ? [field] : [])]);
+    return interpretPath([collection, generatedSegment(id, []), ...(field ? [field] : [])]);
 };
 
 const applyCollection = (rows, changed, rawPath, value, merge, now, callback = false) => {
@@ -608,7 +558,7 @@ const applyCollection = (rows, changed, rawPath, value, merge, now, callback = f
                         : marker[0] === "fixed"
                             ? {[marker[1]]: marker[2]}
                             : {[marker[2]]: marker[3], _: marker[1]}
-                    : generatedSegment(collection, key, prefix);
+                    : generatedSegment(key, prefix);
                 const parent = prefix.map(segment => segment[0] === "literal"
                     ? segment[1]
                     : segment[0] === "fixed"
@@ -806,7 +756,7 @@ const persistChanges = (transaction, changed, abortWith) => {
         const [identity, row] = entries.shift();
         const [collection, key] = JSON.parse(identity);
         const store = transaction.objectStore(storeName(collection));
-        const request = store.index("_identity").getKey([collection, key]);
+        const request = store.index("_identity").getKey(key);
         request.onsuccess = () => {
             try {
                 if (!row) {
@@ -814,9 +764,9 @@ const persistChanges = (transaction, changed, abortWith) => {
                     else store.delete(request.result).onsuccess = next;
                     return;
                 }
-                const rowId = request.result ?? row._rowId;
+                const rowId = request.result ?? row._id;
                 const save = id => {
-                    store.put(indexRow({...row, ...(id === undefined ? {} : {_rowId: id})})).onsuccess = next;
+                    store.put(encodeRow({...row, ...(id === undefined ? {} : {_id: id})}, store)).onsuccess = next;
                 };
                 const supplied = numericKey(JSON.parse(key).at(-1)?.at(-1));
                 if (rowId === undefined && supplied !== undefined) {
@@ -867,7 +817,7 @@ export const updateRecords = (storageKey, entries, {merge = false} = {}) => {
     const names = entries.map(([path]) => storeName(Array.isArray(path)
         ? parseDatabasePath(path).collection
         : typeof path === "string" ? path.split("/")[0] : invalidPath("Invalid batch path.")));
-    return transact(storageKey, "readwrite", names.length ? names : storeNames(),
+    return transact(storageKey, "readwrite", names.length ? names : storeNames(storageKey),
         (transaction, setResult, abortWith) => applyBatch(transaction, entries, merge, abortWith));
 };
 
@@ -905,28 +855,6 @@ const replaceValue = (rows, rawPath, path, value) => {
 export const getAllRecords = storageKey => transact(storageKey, "readonly", undefined,
     (transaction, setResult) => readStores(transaction, setResult));
 
-/** Replace a direct indexed child by its exact stored identity. */
-export const replaceIndexedRecord = (storageKey, rawPath, pathKey, value) => {
-    const path = interpretPath(rawPath);
-    return transact(storageKey, "readwrite", [storeName(path.collection)], (transaction, setResult, abortWith) => {
-        const store = transaction.objectStore(storeName(path.collection));
-        const request = store.index("_identity").get([path.collection, pathKey]);
-        request.onsuccess = () => {
-            try {
-                if (value === null) {
-                    if (request.result) store.delete(request.result._rowId);
-                    setResult(undefined);
-                } else {
-                    const row = indexRow(stored({...path, key: pathKey}, recordValue(value, request.result?.value, Date.now())));
-                    if (request.result) row._rowId = request.result._rowId;
-                    store.put(row);
-                    setResult(row.value);
-                }
-            } catch (error) { abortWith(error); }
-        };
-    });
-};
-
 /** Resolve an existing immediate child back to its stored named path. */
 export const getChildRecordPath = async (storageKey, rawPath, key, identityField) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
@@ -948,16 +876,8 @@ export const getRecordsByType = async (storageKey, path) => {
     const {collection, keys, conditions} = typeQuery(path);
     return transact(storageKey, "readonly", [storeName(collection)], (transaction, setResult) => {
         const store = transaction.objectStore(storeName(collection));
-        const index = Object.hasOwn(keys, "_key0") && Object.hasOwn(keys, "_key1")
-            ? "_key0_key1"
-            : Object.hasOwn(keys, "_key0")
-                ? "_key0"
-                : Object.hasOwn(keys, "_key1") ? "_key1" : undefined;
-        const key = index === "_key0_key1"
-            ? [collection, keys._key0, keys._key1]
-            : index ? [collection, keys[index]] : undefined;
-        const request = index ? store.index(index).getAll(key) : store.getAll();
-        request.onsuccess = () => setResult(request.result.map(queryRow)
+        const request = store.getAll();
+        request.onsuccess = () => setResult(request.result.map(row => decodeRow(row, collection)).filter(Boolean)
             .filter(row => row._collection === collection &&
                 Object.entries(keys).every(([name, value]) => row[name] === value) &&
                 Object.entries(conditions).every(([name, value]) => Object.hasOwn(row, name) && row[name] === value))
