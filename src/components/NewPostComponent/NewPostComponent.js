@@ -323,7 +323,7 @@ const NewPostComponent = props => {
             const {context, _savedContext, _savedText, givenText, givenTag} = props;
             let hiddenTag;
             if (givenTag) {
-                const item = await database.cursor(["tag"], {
+                const item = await database.cursor(["tag", "tag_id"], {
                     equalTo: givenTag,
                     orderBy: ["id"]
                 }).next().then(items => items[0]);
