@@ -3,6 +3,7 @@ import type {UserData} from "../../common";
 import type DatabaseBase from "../../database/src/common/DatabaseBase";
 import type {DatabaseValue} from "../../database/src/common/DatabaseTypes";
 import saveUserData from "./common/saveUserData";
+import loadUserData from "./common/loadUserData";
 import {
     validateString, validateEmailOptions, validateProvider, validateProviderOptions,
     validateCurrentUserOptions, validateCallbacks, validateProfile, validateConstructorOptions
@@ -202,8 +203,42 @@ export default class AuthBase {
         await saveUserData(user, fields, this._requireDatabase());
     }
 
+    _loadUserData(user: UserData): UserData | Promise<UserData> {
+        return loadUserData(user, this.database, () => this._saveInitialProfile(user));
+    }
+
     async _saveInitialProfile(user: UserData, fields: AuthProfileFields = {public: user.public, private: user.private}): Promise<void> {
-        await saveUserData(user, fields, this._requireDatabase());
+        if (!user?.id) fail("auth/no-current-user", "An authenticated user is required.");
+        validateProfile(fields);
+        const database = this._requireDatabase();
+        const options = {onError: (error: unknown) => { throw error; }};
+        const permissionDenied = (error: unknown) => ["permission-denied", "database/permission-denied"]
+            .includes(String((error as {code?: string})?.code).toLowerCase().replaceAll("_", "-"));
+        let initialFields = fields;
+        try {
+            if (await database.read(["users_public", {user_id: user.id}], options) != null) return;
+            if (fields.role === undefined) {
+                const profiles = await database.cursor(["users_public", "user_id"], options)?.next(1);
+                if (!profiles) fail("auth/profile-query-failed", "Cannot determine whether profiles exist.");
+                if (!profiles.length) initialFields = {...fields, role: UserRole.ADMIN};
+            }
+        } catch (error) {
+            if (!permissionDenied(error)) throw error;
+            console.warn("[AuthBase] Initial ADMIN check denied; saving an ordinary profile.", (error as {code?: string}).code);
+        }
+        try {
+            await saveUserData(user, initialFields, database, options);
+        } catch (error) {
+            if (initialFields === fields || !permissionDenied(error)) throw error;
+            console.warn("[AuthBase] Initial ADMIN write denied; saving an ordinary profile.", (error as {code?: string}).code);
+            initialFields = fields;
+            await saveUserData(user, fields, database, options);
+        }
+        const state = user._getState?.();
+        if (state) {
+            if (initialFields.role !== undefined) state.role = initialFields.role;
+            if (initialFields.public !== undefined) state.persisted = true;
+        }
     }
 
     updateProfile(fields: AuthProfileFields): void {
