@@ -1,12 +1,16 @@
 /** Load the profile attached to an authenticated identity through the injected database. */
-export default function loadUserData(user, database) {
+export default function loadUserData(user, database, initializeProfile) {
     if (!user?.id || !database) return user;
 
     return Promise.all([
         database.read(["users_public", {user_id: user.id}]),
         database.read(["roles", {user_id: user.id}]),
         database.read(["users_private", {user_id: user.id}])
-    ]).then(([publicData, role, privateData]) => {
+    ]).then(async ([publicData, role, privateData]) => {
+        if (publicData == null && initializeProfile) {
+            await initializeProfile();
+            return loadUserData(user, database);
+        }
         const state = user._getState();
         if (publicData != null) state.public = {...state.public, ...publicData};
         if (role !== undefined) state.role = role;

@@ -1,5 +1,3 @@
-import loadUserData from "./loadUserData";
-
 export default async function observeAuthState({auth, callback, onError, subscribe, signature = () => undefined}) {
     const reportError = error => {
         try {
@@ -23,7 +21,7 @@ export default async function observeAuthState({auth, callback, onError, subscri
             return callback(loaded);
         };
         try {
-            const loaded = loadUserData(user, auth.database);
+            const loaded = auth._loadUserData(user);
             const pending = loaded && loaded.then instanceof Function ? loaded.then(deliver) : deliver(loaded);
             if (pending && pending.then instanceof Function) Promise.resolve(pending).catch(reportError);
         } catch (error) {

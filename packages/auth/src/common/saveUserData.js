@@ -10,11 +10,11 @@ const appendUpdates = (updates, path, fields) => {
 };
 
 /** Save only supplied profile fields, never authentication credentials. */
-export default async function saveUserData(user, fields, database) {
+export default async function saveUserData(user, fields, database, options) {
     const {public: publicData, role, private: privateData} = fields;
     const updates = new Map();
     if (publicData !== undefined) appendUpdates(updates, ["users_public", {user_id: user.id}], publicData);
     if (role !== undefined) updates.set(["roles", {user_id: user.id}], role);
     if (privateData !== undefined) appendUpdates(updates, ["users_private", {user_id: user.id}], privateData);
-    if (updates.size) await database.update(updates);
+    if (updates.size) await database.update(updates, options);
 }
