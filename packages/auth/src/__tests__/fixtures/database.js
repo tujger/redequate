@@ -7,9 +7,12 @@ export const createDatabase = () => {
         .flatMap(segment => (typeof segment === "string" ? segment : Object.values(segment)[0]).split("/"))
         .filter(Boolean);
     return {
-        read: vi.fn(async path => {
+        read: vi.fn(async (path, options = {}) => {
             let value = data;
             for (const part of parts(path)) value = value?.[part];
+            if (options.equalTo !== undefined && value != null) {
+                value = Object.fromEntries(Object.entries(value).filter(([, child]) => child === options.equalTo));
+            }
             return value === undefined ? undefined : structuredClone(value);
         }),
         update: vi.fn(async updates => {

@@ -108,6 +108,18 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         expect(database.update).not.toHaveBeenCalled();
     });
 
+    it("rejects demotion of the last administrator before writing any profile fields", async () => {
+        const database = createDatabase();
+        const {auth} = createAuth(Auth, database);
+        const user = await run(auth.createUserWithEmailAndPassword("profile@example.test", "password"));
+        await run(auth.updateProfile({role: "admin"}));
+        database.update.mockClear();
+        await expect(run(auth.updateProfile({role: null, public: {name: "Rejected"}})))
+            .rejects.toMatchObject({code: "auth/last-admin"});
+        expect(database.update).not.toHaveBeenCalled();
+        expect(await database.read(["roles", {user_id: user.id}])).toBe("admin");
+    });
+
     it("rejects registration when the profile cannot be saved", async () => {
         const database = createDatabase();
         const failure = new Error("profile write failed");

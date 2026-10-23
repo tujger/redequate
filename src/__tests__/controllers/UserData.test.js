@@ -115,7 +115,7 @@ it("shares fetched state with getters, serialization and subsequent saves", asyn
 });
 
 it("removes the frontend cache entry after deleting a profile", async () => {
-    const database = {delete: vi.fn().mockResolvedValue()};
+    const database = {read: vi.fn().mockResolvedValue(null), delete: vi.fn().mockResolvedValue()};
     const remove = vi.spyOn(cacheDatas, "remove").mockImplementation(() => {});
     const user = new UserData(database).create("deleted", {name: "Deleted"});
     expect(await user.delete()).toBe(user);

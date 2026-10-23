@@ -44,10 +44,10 @@ it("assigns ADMIN only to the first user of an empty local database", async () =
     const first = await register();
     expect(first.role).toBe("admin");
     expect(await database.read(["roles", {user_id: first.id}])).toBe("admin");
+    await database.update(new Map([[ ["roles", {user_id: first.id}], null ]]));
     const second = await run(auth.createUserWithEmailAndPassword("second@example.test", "password"));
     expect(second.role).not.toBe("admin");
     expect(await database.read(["roles", {user_id: second.id}])).toBeUndefined();
-    await database.update(new Map([[ ["roles", {user_id: first.id}], null ]]));
     const third = await run(auth.createUserWithEmailAndPassword("third@example.test", "password"));
     expect(third.role).not.toBe("admin");
 });
@@ -57,6 +57,14 @@ it("does not bootstrap an administrator when the database already contains users
     const user = await register();
     expect(user.role).not.toBe("admin");
     expect(await database.read(["roles", {user_id: user.id}])).toBeUndefined();
+});
+
+it("bootstraps the first simulated provider account through the same registration path", async () => {
+    const first = await run(auth.signInWithPopup("google"));
+    expect(first.role).toBe("admin");
+    expect(await database.read(["roles", {user_id: first.id}])).toBe("admin");
+    const second = await register();
+    expect(second.role).not.toBe("admin");
 });
 
 it("rolls back registration when the initial profile write fails", async () => {
