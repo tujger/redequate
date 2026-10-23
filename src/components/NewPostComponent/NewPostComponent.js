@@ -1,6 +1,7 @@
 import ImageAddIcon from "@mui/icons-material/AddPhotoAlternate";
 import ImageIcon from "@mui/icons-material/InsertPhoto";
 import React from "react";
+import {flushSync} from "react-dom";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory} from "react-router-dom";
@@ -213,7 +214,8 @@ const NewPostComponent = props => {
                 _savedText: undefined,
                 _savedContext: undefined
             });
-            setState(state => ({
+            // Release the modal's history blocker before onComplete can navigate.
+            flushSync(() => setState(state => ({
                 ...state,
                 disabled: false,
                 open: false,
@@ -221,7 +223,7 @@ const NewPostComponent = props => {
                 uppy: null,
                 images: null,
                 hiddenTag: null
-            }));
+            })));
             onComplete({key})
         }
         const finalizePublishing = async () => {
