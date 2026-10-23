@@ -202,18 +202,24 @@ success. Revision checks and conditional rollback protect the existing state
 transition; failed profile creation restores the previous auth state. Legacy
 localStorage auth data is not automatically migrated or deleted.
 
-Local registration is sequential by requirement. Do not add registration queues,
-Web Locks, or guarantees for concurrent registrations. LocalAuth alone assigns ADMIN
-to the first Local identity when `users_public` is empty; existing roles alone do not
-establish that it is the first user. Failed profile persistence must not leave
-an installed account/session behind. UserData also guards demotion, disabling,
-and deletion of the last administrator with an existing public profile. Check
-ADMIN-filtered roles, then individual candidate profiles; do not load all profiles.
+AuthBase initializes missing profiles before returning or notifying an authenticated
+model, including session restoration and redirect. Login does not initialize profiles.
+Login treats a profile already persisted by AuthBase as an ordinary existing
+profile: no first-login transformation, onLogin(false), and home navigation.
+If no public profiles exist (checked with a one-entry cursor), it attempts to save
+ADMIN with the initial profile in one batch. This applies to every Auth/Database
+combination and does not depend on retained LocalAuth accounts. Database permissions
+remain authoritative: permission denial during the emptiness check or ADMIN write
+logs a console warning and falls back to an ordinary profile; other failures
+propagate. Existing profiles are not overwritten. Database implementations contain no role policy.
 
-Firebase does not grant the first ADMIN in browser code. A trusted registration
-endpoint/trigger must atomically establish bootstrap ownership and persist the
-initial profile/role. A client read followed by a role write is insufficient.
-Retain existing security rules until that server-owned bootstrap is implemented.
+Local registration is sequential by requirement. Do not add registration queues,
+Web Locks, or guarantees for concurrent registrations. Failed profile persistence
+must not leave an installed Local account/session behind. UserData guards demotion,
+disabling, and deletion of the last administrator with an existing public profile.
+Check ADMIN-filtered roles, then individual candidate profiles; do not load all
+profiles. This client check does not establish atomic bootstrap ownership across
+concurrent clients; retain existing database security rules.
 
 ### Storage and messaging
 
