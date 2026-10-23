@@ -21,7 +21,6 @@ import AuthBase from "../AuthBase";
 import observeAuthState from "../common/observeAuthState";
 import saveCurrentProfile from "../common/saveCurrentProfile";
 import loadUserData from "../common/loadUserData";
-import initialProfile from "../common/initialProfile";
 import emailOptions from "../common/emailOptions";
 import toUserData from "./toUserData";
 
@@ -49,7 +48,7 @@ export default class FirebaseAuth extends AuthBase {
         super.createUserWithEmailAndPassword(email, password);
         const result = await createUserWithEmailAndPassword(this._auth, email, password);
         const user = toUserData(result?.user, this._createUserData);
-        await this._saveProfile(user, initialProfile(user));
+        await this._saveInitialProfile(user);
         return loadUserData(user, this.database);
     }
 
