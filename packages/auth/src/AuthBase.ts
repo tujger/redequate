@@ -1,4 +1,4 @@
-import {fail, notImplemented, UserData as DefaultUserData} from "../../common";
+import {fail, notImplemented, UserData as DefaultUserData, UserRole} from "../../common";
 import type {UserData} from "../../common";
 import type DatabaseBase from "../../database/src/common/DatabaseBase";
 import type {DatabaseValue} from "../../database/src/common/DatabaseTypes";
@@ -183,6 +183,26 @@ export default class AuthBase {
     protected async _saveProfile(user: Pick<UserData, "id">, fields: AuthProfileFields): Promise<void> {
         if (!user?.id) fail("auth/no-current-user", "An authenticated user is required.");
         validateProfile(fields);
+        if (fields.role !== undefined && fields.role !== "admin") {
+            const database = this._requireDatabase();
+            const role = await database.read(["roles", {user_id: user.id}]);
+            if (role === "admin") {
+                const roles = await database.read(["roles"], {equalTo: UserRole.ADMIN});
+                let hasAnotherAdmin = false;
+                for (const id of Object.keys(roles || {})) {
+                    if (id === user.id) continue;
+                    if (await database.read(["users_public", {user_id: id}]) != null) {
+                        hasAnotherAdmin = true;
+                        break;
+                    }
+                }
+                DefaultUserData.assertAdminRemains(role, hasAnotherAdmin);
+            }
+        }
+        await saveUserData(user, fields, this._requireDatabase());
+    }
+
+    async _saveInitialProfile(user: UserData, fields: AuthProfileFields = {public: user.public, private: user.private}): Promise<void> {
         await saveUserData(user, fields, this._requireDatabase());
     }
 

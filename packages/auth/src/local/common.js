@@ -1,6 +1,5 @@
-import {delay, fail, identifier} from "../../../common";
+import {delay, fail, identifier, UserRole} from "../../../common";
 import {readState, writeState} from "./database";
-import initialProfile from "../common/initialProfile";
 
 export const changeEvent = "redequate:local-auth-changed";
 
@@ -81,16 +80,6 @@ export function createAccount(email, provider = "password", password = null) {
     };
 }
 
-const saveNewProfile = async props => {
-    const {auth, account, createUserData, previous, lastLogin} = props;
-    const identity = toUserData({...account, lastLogin}, createUserData);
-    if (!previous.accounts.some(item => item.key === account.key)) {
-        await auth._saveProfile(identity, account.provider === "password"
-            ? initialProfile(identity) : {public: identity.public, private: identity.private});
-    }
-    return props;
-};
-
 const installSession = async props => {
     const {auth, state, account, lastLogin} = props;
     const next = {
@@ -103,8 +92,19 @@ const installSession = async props => {
 };
 
 const resolveSession = async props => {
-    const {auth, pending, previous} = props;
+    const {auth, pending, previous, account, createUserData, lastLogin} = props;
     try {
+        if (!previous.accounts.some(item => item.key === account.key)) {
+            const identity = toUserData({...account, lastLogin}, createUserData);
+            const fields = {public: identity.public, private: identity.private};
+            if (previous.accounts.length === 0) {
+                const users = await auth._requireDatabase().read(["users_public"]);
+                if (users == null || (typeof users === "object" && Object.keys(users).length === 0)) {
+                    fields.role = UserRole.ADMIN;
+                }
+            }
+            await auth._saveInitialProfile(identity, fields);
+        }
         const user = await auth.resolveCurrentUser({skipDelay: true});
         if ((await read(auth)).revision !== pending.revision) fail("auth/state-changed", "Local authentication changed during sign-in.");
         notify(auth, pending.revision);
@@ -120,7 +120,7 @@ export const login = (auth, state, account, createUserData) => {
     // Callers prepare account/link changes in memory; the persisted snapshot owns rollback.
     return read(auth).then(stored => {
         if (stored.revision !== previousRevision) fail("auth/state-changed", "Local authentication changed during sign-in.");
-        return saveNewProfile({auth, state, account, createUserData, previous: stored, lastLogin: Date.now()});
+        return {auth, state, account, createUserData, previous: stored, lastLogin: Date.now()};
     }).then(installSession).then(resolveSession);
 };
 
