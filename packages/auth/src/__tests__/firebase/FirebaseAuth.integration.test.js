@@ -1,5 +1,8 @@
+import FirebaseAuth from "../../firebase";
+import LocalDatabase from "../../../../database/src/local";
+import UserData from "../../../../../src/controllers/UserData";
 import {vi} from "vitest";
-import {auth, database, sdkAuth, emulatorRequest} from "../../../../../src/__tests__/common";
+import {auth, database, sdkAuth, emulatorRequest, firebase} from "../../../../../src/__tests__/common";
 
 it("registers and restores users through the Firebase Auth adapter", async () => {
     const user = await auth.createUserWithEmailAndPassword("adapter@example.test", "password");
@@ -61,4 +64,36 @@ it("routes verification, password reset and email-link requests to the emulator"
         window.history.replaceState(null, "", "/");
     }
     expect(sdkAuth.currentUser.emailVerified).toBe(true);
+});
+
+it("falls back to an ordinary profile when RTDB rules reject the initial ADMIN batch", async () => {
+    const update = vi.spyOn(database, "update");
+    const user = await auth.createUserWithEmailAndPassword("denied-admin@example.test", "password");
+    expect(update).toHaveBeenCalledTimes(2);
+    const batches = update.mock.calls.map(([updates]) => [...updates]);
+    expect(batches[0]).toEqual(expect.arrayContaining([[["roles", {user_id: user.id}], "admin"]]));
+    expect(batches[1].some(([path]) => path[0] === "roles")).toBe(false);
+    expect(user.role).not.toBe("admin");
+    expect(await database.read(["users_public", {user_id: user.id}])).toMatchObject({email: user.email});
+    expect(await database.read(["roles", {user_id: user.id}])).toBeUndefined();
+});
+
+it("initializes ADMIN with real FirebaseAuth and a cleared LocalDatabase while retaining the Auth account", async () => {
+    const account = await auth.createUserWithEmailAndPassword("mixed-reset@example.test", "password");
+    await auth.signOut();
+    const local = new LocalDatabase({storageKey: "auth-bootstrap-emulator-mixed"});
+    const mixed = new FirebaseAuth({firebase, database: local, UserData});
+    const user = await mixed.signInWithEmailAndPassword(account.email, "password");
+    expect(user.persisted).toBe(true);
+    expect(user.profileCreated).toBe(true);
+    expect(user.role).toBe("admin");
+    expect(await local.read(["roles", {user_id: user.id}])).toBe("admin");
+    await local.delete(["users_public", {user_id: user.id}]);
+    await local.delete(["roles", {user_id: user.id}]);
+    await mixed.signOut();
+    const returning = await mixed.signInWithEmailAndPassword(account.email, "password");
+    expect(returning.profileCreated).toBe(true);
+    expect(returning.id).toBe(account.id);
+    expect(returning.role).toBe("admin");
+    expect(await local.read(["users_public", {user_id: user.id}])).toMatchObject({email: account.email});
 });

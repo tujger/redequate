@@ -7,6 +7,10 @@ export const createDatabase = () => {
         .flatMap(segment => (typeof segment === "string" ? segment : Object.values(segment)[0]).split("/"))
         .filter(Boolean);
     return {
+        cursor: vi.fn(path => ({
+            next: vi.fn(async n => Object.entries(data[parts(path)[0]] || {}).slice(0, n)
+                .map(([key, value]) => ({key, value: structuredClone(value)})))
+        })),
         read: vi.fn(async (path, options = {}) => {
             let value = data;
             for (const part of parts(path)) value = value?.[part];

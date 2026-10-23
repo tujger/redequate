@@ -125,12 +125,11 @@ it("loads database data for the local user and skips reads after sign-out", asyn
     const user = await register();
     expect(user).toMatchObject({name: "Stored name", role: "admin", private: {device: {locale: "en"}}});
     expect(read.mock.calls.map(([path]) => path)).toEqual([
-        ["users_public"],
         ["users_public", {user_id: user.id}], ["roles", {user_id: user.id}], ["users_private", {user_id: user.id}]
     ]);
     await run(auth.signOut());
     await run(auth.resolveCurrentUser());
-    expect(read).toHaveBeenCalledTimes(4);
+    expect(read).toHaveBeenCalledTimes(3);
     const failure = new Error("database unavailable");
     read.mockRejectedValue(failure);
     await expect(run(auth.signInWithEmailAndPassword(user.email, "password"))).rejects.toBe(failure);
@@ -204,7 +203,10 @@ it("does not restore a stale session after sign-out during a pending database lo
     await register();
     let finishLoad;
     const load = new Promise(resolve => { finishLoad = resolve; });
-    const read = vi.fn(() => load);
+    const read = vi.fn(async path => {
+        await load;
+        return path[0] === "users_public" ? {email: "user@example.test"} : undefined;
+    });
     auth = createAuth({database: {read, update: vi.fn().mockResolvedValue()}});
     const signedIn = expect(auth.signInWithEmailAndPassword("user@example.test", "password"))
         .rejects.toMatchObject({code: "auth/state-changed"});
@@ -516,4 +518,20 @@ it("invalidates a pending profile after a corrupt storage event", async () => {
     finish(undefined);
     await run(Promise.resolve());
     expect(callback).not.toHaveBeenCalled();
+});
+
+it.each(["resolveCurrentUser", "signInWithPopup"])("recreates the ADMIN profile after clearing only Database via %s", async method => {
+    const first = await run(auth.signInWithPopup("google"));
+    await database.update(new Map([
+        [["users_public", {user_id: first.id}], null],
+        [["roles", {user_id: first.id}], null],
+        [["users_private", {user_id: first.id}], null]
+    ]));
+    expect((await stored()).accounts).toHaveLength(1);
+    const restored = method === "resolveCurrentUser"
+        ? await run(auth.resolveCurrentUser()) : await run(auth.signInWithPopup("google"));
+    expect(restored).toMatchObject({id: first.id, role: "admin", profileCreated: true, persisted: true});
+    expect(await database.read(["roles", {user_id: first.id}])).toBe("admin");
+    const again = await run(auth.resolveCurrentUser());
+    expect(again.profileCreated).toBe(false);
 });

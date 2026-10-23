@@ -1,6 +1,7 @@
 /* eslint react/jsx-uses-vars: "error", react/jsx-uses-react: "error" */
 import React, {act} from "react";
 import {vi} from "vitest";
+import AuthBase from "../../../packages/auth/src/AuthBase";
 import {render, unmount} from "../render";
 
 const fixture = vi.hoisted(() => ({
@@ -98,22 +99,32 @@ async function mountLogin({ios = false, disabled = false, firstLogin = false, si
     const device = {osName: "ExistingOS", locale: "ru"};
     const authUser = new UserData().create(fixture.userId, profile);
     if (firstLogin) await authUser.setPrivate(fixture.deviceId, device);
-    const auth = {signInWithEmailAndPassword: vi.fn().mockResolvedValue(authUser)};
     const events = [];
+    let hasProfile = !firstLogin;
+    let storedRole = disabled ? UserRole.DISABLED : UserRole.USER;
     const database = {
         TIMESTAMP: {".sv": "timestamp"},
+        cursor: vi.fn(() => ({next: vi.fn().mockResolvedValue([])})),
         read: vi.fn(async path => {
-            if (path[0] === "roles") return disabled ? UserRole.DISABLED : UserRole.USER;
-            if (path[0] === "users_public" && path.length === 2) return firstLogin ? undefined : structuredClone(profile);
-            if (path[0] === "users_private") return firstLogin ? undefined : structuredClone(device);
+            if (path[0] === "roles") return storedRole;
+            if (path[0] === "users_public" && path.length === 2) return hasProfile ? structuredClone(profile) : undefined;
+            if (path[0] === "users_private") return firstLogin ? undefined : structuredClone(
+                path.length === 2 ? {[fixture.deviceId]: device} : device);
             return undefined;
         }),
         update: vi.fn(async updates => {
+            for (const [path, value] of updates) {
+                if (path[0] === "users_public") hasProfile = true;
+                if (path[0] === "roles") storedRole = value;
+            }
             const notification = [...updates].find(([path]) => path[0] === "users_private" && (path[3] === "notification" || path[3]?.notification === "notification"))?.[1];
             events.push({type: "save", notification});
         }),
         write: vi.fn().mockResolvedValue(),
     };
+    const auth = new AuthBase({database});
+    auth.signInWithEmailAndPassword = vi.fn(() => auth._loadUserData(authUser));
+    vi.spyOn(auth, "_saveInitialProfile");
     const messaging = {subscribe: vi.fn().mockResolvedValue("notification-token")};
     const state = stateModule.createAppState(signedIn ? {currentUserData: authUser} : undefined);
     state.store("currentUserData").subscribe(() => events.push({type: "publish", user: getCurrentUserData(state)}));
@@ -227,4 +238,18 @@ it("does not restart authentication for an already signed-in user", async () => 
     expect(context.messaging.subscribe).not.toHaveBeenCalled();
     expect(fixture.dispatch).not.toHaveBeenCalled();
     expect(container.querySelector("[data-redirect]")).not.toBeNull();
+});
+
+it("publishes the profile initialized by AuthBase and preserves first-login navigation", async () => {
+    const context = await mountLogin({firstLogin: true});
+    await login(context);
+    expect(context.auth._saveInitialProfile).toHaveBeenCalledTimes(1);
+    const firstWrite = [...context.database.update.mock.calls[0][0]];
+    expect(firstWrite).toEqual(expect.arrayContaining([
+        [["roles", {user_id: fixture.userId}], "admin"],
+        [["users_public", {user_id: fixture.userId}, "name"], "Login User"]
+    ]));
+    expect(context.getUser().role).toBe("admin");
+    expect(context.onLogin).toHaveBeenCalledWith(true);
+    expect(fixture.history.replace).toHaveBeenCalledWith("/edit-profile", {isFirstLogin: true});
 });

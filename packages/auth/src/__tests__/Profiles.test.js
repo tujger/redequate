@@ -63,7 +63,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         const paths = database.update.mock.calls.flatMap(([updates]) => [...updates.keys()]);
         expect(paths.some(path => path.includes("password") || path.includes("token"))).toBe(false);
         expect(await database.read(["roles", {user_id: user.id}]))
-            .toBe(provider === "local" ? "admin" : undefined);
+            .toBe("admin");
 
         await run(auth.updateProfile({
             public: {name: "Stored name", image: "stored.png", extra: "retained"},

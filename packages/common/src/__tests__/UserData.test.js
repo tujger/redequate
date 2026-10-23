@@ -88,3 +88,13 @@ it("exports detached nested JSON and lets a replacement model edit it independen
     expect(user.name).toBe("Original");
     expect(user.private.device.locale).toBe("en");
 });
+
+it("round-trips the transient profileCreated flag without putting it in profile data", () => {
+    const user = new CommonUserData().create("new-profile", {email: "new@example.test"});
+    user._getState().profileCreated = true;
+    const restored = new CommonUserData().fromJSON(user.toJSON());
+    expect(restored.profileCreated).toBe(true);
+    expect(restored.public).not.toHaveProperty("profileCreated");
+    expect(restored.private).not.toHaveProperty("profileCreated");
+    expect(new CommonUserData().fromJSON({id: "legacy", public: {}, private: {}}).profileCreated).toBe(false);
+});

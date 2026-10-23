@@ -1,3 +1,4 @@
+import LocalDatabase from "../../../../database/src/local";
 import {vi} from "vitest";
 import {UserData} from "../../../../common";
 import {createDatabase} from "../fixtures/database";
@@ -51,14 +52,14 @@ const json = {
 };
 const sdkUser = (data = json) => ({...data, toJSON: () => structuredClone(data), updatePassword: vi.fn(), getIdToken: vi.fn()});
 
-it("does not claim ADMIN from the Firebase client even for an empty database", async () => {
+it("uses the shared first-profile ADMIN policy with a permitting database", async () => {
     const database = createDatabase();
     const sdk = {createUserWithEmailAndPassword: vi.fn().mockResolvedValue({user: sdkUser()})};
     const auth = new FirebaseAuth({firebase: {app: sdk}, database});
     const user = await auth.createUserWithEmailAndPassword("sdk@example.test", "password");
-    expect(user.role).not.toBe("admin");
-    expect(database.read).not.toHaveBeenCalledWith(["users_public"]);
-    expect(await database.read(["roles", {user_id: user.id}])).toBeUndefined();
+    expect(user.role).toBe("admin");
+    expect(database.cursor).toHaveBeenCalledWith(["users_public", "user_id"], expect.any(Object));
+    expect(await database.read(["roles", {user_id: user.id}])).toBe("admin");
 });
 
 it.each(["createUserWithEmailAndPassword", "signInWithEmailAndPassword", "signInWithEmailLink", "signInWithPopup", "signInWithCredential"])(
@@ -320,4 +321,54 @@ it("invalidates a pending profile when a newer provider identity is malformed", 
     await new Promise(resolve => setTimeout(resolve, 0));
     expect(callback).not.toHaveBeenCalled();
     unsubscribe();
+});
+
+it.each(["google.com", "facebook.com"])("initializes a first %s profile in real LocalDatabase through AuthBase", async providerId => {
+    const raw = sdkUser({...json, uid: `mixed-${providerId}`, providerData: [{providerId}]});
+    const sdk = {signInWithPopup: vi.fn().mockResolvedValue({user: raw})};
+    const database = new LocalDatabase({storageKey: `mixed-popup-${providerId}`});
+    const auth = new FirebaseAuth({firebase: {app: sdk}, database});
+    const user = await auth.signInWithPopup({providerId});
+    expect(user.persisted).toBe(true);
+    expect(user.profileCreated).toBe(true);
+    expect(user.role).toBe("admin");
+    expect(await database.read(["roles", {user_id: user.id}])).toBe("admin");
+});
+
+it.each(["signInWithEmailAndPassword", "signInWithCredential", "signInWithEmailLink", "resolveCurrentUser", "resolveRedirectResult"])(
+    "initializes the absent profile before returning from %s", async method => {
+        const raw = sdkUser();
+        const sdk = {currentUser: raw, [method === "resolveRedirectResult" ? "getRedirectResult" : method]: vi.fn().mockResolvedValue({user: raw})};
+        const database = new LocalDatabase({storageKey: `auth-owned-${method}`});
+        const auth = new FirebaseAuth({firebase: {app: sdk}, database});
+        const user = method === "resolveCurrentUser" || method === "resolveRedirectResult"
+            ? await auth[method]() : await auth[method]("sdk@example.test", "password");
+        expect(user).toMatchObject({id: json.uid, role: "admin", profileCreated: true, persisted: true});
+        expect(await database.read(["users_public", {user_id: user.id}])).not.toHaveProperty("profileCreated");
+        expect((await auth.resolveCurrentUser()).profileCreated).toBe(false);
+    }
+);
+
+it("waits for profile persistence before notifying Auth subscribers", async () => {
+    const raw = sdkUser();
+    const sdk = {onAuthStateChanged: vi.fn(next => { next(raw); return () => {}; })};
+    const database = createDatabase();
+    let finish;
+    const pending = new Promise(resolve => { finish = resolve; });
+    const save = database.update.getMockImplementation();
+    database.update.mockImplementation(async (...args) => { await pending; return save(...args); });
+    const auth = new FirebaseAuth({firebase: {app: sdk}, database});
+    const callback = vi.fn();
+    const unsubscribe = await auth.onAuthStateChanged(callback);
+    try {
+        await vi.waitFor(() => expect(database.update).toHaveBeenCalledTimes(1));
+        expect(callback).not.toHaveBeenCalled();
+        finish();
+        await vi.waitFor(() => expect(callback).toHaveBeenCalledWith(expect.objectContaining({
+            id: json.uid, role: "admin", profileCreated: true, persisted: true
+        })));
+    } finally {
+        finish();
+        unsubscribe();
+    }
 });
