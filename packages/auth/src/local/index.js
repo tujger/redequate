@@ -2,7 +2,6 @@ import {delay, fail, identifier} from "../../../common";
 import AuthBase from "../AuthBase";
 import observeAuthState from "../common/observeAuthState";
 import emailOptions from "../common/emailOptions";
-import loadUserData from "../common/loadUserData";
 import {
     changePassword,
     current,
@@ -56,7 +55,7 @@ export default class LocalAuth extends AuthBase {
         const {skipDelay = false} = options;
         if (!skipDelay) await delay("LocalAuth", "resolveCurrentUser");
         const state = await read(this);
-        return loadUserData(toUserData(state.accounts.find(account => account.key === state.session?.key), this._createUserData), this.database);
+        return this._loadUserData(toUserData(state.accounts.find(account => account.key === state.session?.key), this._createUserData));
     }
 
     async signOut() {
@@ -94,7 +93,7 @@ export default class LocalAuth extends AuthBase {
         if (!state.redirect) return null;
         const account = state.accounts.find(item => item.key === state.redirect);
         const previousRevision = state.revision;
-        const user = await loadUserData(toUserData(account, this._createUserData), this.database);
+        const user = await this._loadUserData(toUserData(account, this._createUserData));
         if ((await read(this)).revision !== previousRevision) {
             fail("auth/state-changed", "Local authentication changed while resolving redirect.");
         }

@@ -1,4 +1,4 @@
-import {delay, fail, identifier, UserRole} from "../../../common";
+import {delay, fail, identifier} from "../../../common";
 import {readState, writeState} from "./database";
 
 export const changeEvent = "redequate:local-auth-changed";
@@ -92,19 +92,8 @@ const installSession = async props => {
 };
 
 const resolveSession = async props => {
-    const {auth, pending, previous, account, createUserData, lastLogin} = props;
+    const {auth, pending, previous} = props;
     try {
-        if (!previous.accounts.some(item => item.key === account.key)) {
-            const identity = toUserData({...account, lastLogin}, createUserData);
-            const fields = {public: identity.public, private: identity.private};
-            if (previous.accounts.length === 0) {
-                const users = await auth._requireDatabase().read(["users_public"]);
-                if (users == null || (typeof users === "object" && Object.keys(users).length === 0)) {
-                    fields.role = UserRole.ADMIN;
-                }
-            }
-            await auth._saveInitialProfile(identity, fields);
-        }
         const user = await auth.resolveCurrentUser({skipDelay: true});
         if ((await read(auth)).revision !== pending.revision) fail("auth/state-changed", "Local authentication changed during sign-in.");
         notify(auth, pending.revision);
