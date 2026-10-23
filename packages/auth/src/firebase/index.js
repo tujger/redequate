@@ -20,7 +20,6 @@ import {
 import AuthBase from "../AuthBase";
 import observeAuthState from "../common/observeAuthState";
 import saveCurrentProfile from "../common/saveCurrentProfile";
-import loadUserData from "../common/loadUserData";
 import emailOptions from "../common/emailOptions";
 import toUserData from "./toUserData";
 
@@ -33,7 +32,7 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     _userData(user) {
-        return loadUserData(toUserData(user, this._createUserData), this.database);
+        return this._loadUserData(toUserData(user, this._createUserData));
     }
 
     _currentUser() {
@@ -48,8 +47,7 @@ export default class FirebaseAuth extends AuthBase {
         super.createUserWithEmailAndPassword(email, password);
         const result = await createUserWithEmailAndPassword(this._auth, email, password);
         const user = toUserData(result?.user, this._createUserData);
-        await this._saveInitialProfile(user);
-        return loadUserData(user, this.database);
+        return this._loadUserData(user);
     }
 
     async onAuthStateChanged(callback, onError) {
