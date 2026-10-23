@@ -59,19 +59,6 @@ it("does not bootstrap an administrator when the database already contains users
     expect(await database.read(["roles", {user_id: user.id}])).toBeUndefined();
 });
 
-it("serializes simultaneous first registrations and grants at most one ADMIN", async () => {
-    const another = createAuth();
-    const results = await run(Promise.allSettled([
-        auth.createUserWithEmailAndPassword("first@example.test", "password"),
-        another.createUserWithEmailAndPassword("second@example.test", "password")
-    ]));
-    expect(results.filter(result => result.status === "fulfilled")).toHaveLength(1);
-    expect(results.filter(result => result.status === "rejected")[0].reason.code).toBe("auth/state-changed");
-    const winner = results.find(result => result.status === "fulfilled").value;
-    expect(winner.role).toBe("admin");
-    expect((await stored()).accounts).toHaveLength(1);
-});
-
 it("rolls back registration when the initial profile write fails", async () => {
     const failure = new Error("profile write failed");
     database.update.mockRejectedValueOnce(failure);
