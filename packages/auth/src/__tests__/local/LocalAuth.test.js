@@ -530,8 +530,6 @@ it.each(["resolveCurrentUser", "signInWithPopup"])("recreates the ADMIN profile 
     expect((await stored()).accounts).toHaveLength(1);
     const restored = method === "resolveCurrentUser"
         ? await run(auth.resolveCurrentUser()) : await run(auth.signInWithPopup("google"));
-    expect(restored).toMatchObject({id: first.id, role: "admin", profileCreated: true, persisted: true});
+    expect(restored).toMatchObject({id: first.id, role: "admin", persisted: true});
     expect(await database.read(["roles", {user_id: first.id}])).toBe("admin");
-    const again = await run(auth.resolveCurrentUser());
-    expect(again.profileCreated).toBe(false);
 });

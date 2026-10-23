@@ -85,14 +85,12 @@ it("initializes ADMIN with real FirebaseAuth and a cleared LocalDatabase while r
     const mixed = new FirebaseAuth({firebase, database: local, UserData});
     const user = await mixed.signInWithEmailAndPassword(account.email, "password");
     expect(user.persisted).toBe(true);
-    expect(user.profileCreated).toBe(true);
     expect(user.role).toBe("admin");
     expect(await local.read(["roles", {user_id: user.id}])).toBe("admin");
     await local.delete(["users_public", {user_id: user.id}]);
     await local.delete(["roles", {user_id: user.id}]);
     await mixed.signOut();
     const returning = await mixed.signInWithEmailAndPassword(account.email, "password");
-    expect(returning.profileCreated).toBe(true);
     expect(returning.id).toBe(account.id);
     expect(returning.role).toBe("admin");
     expect(await local.read(["users_public", {user_id: user.id}])).toMatchObject({email: account.email});

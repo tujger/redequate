@@ -330,7 +330,6 @@ it.each(["google.com", "facebook.com"])("initializes a first %s profile in real 
     const auth = new FirebaseAuth({firebase: {app: sdk}, database});
     const user = await auth.signInWithPopup({providerId});
     expect(user.persisted).toBe(true);
-    expect(user.profileCreated).toBe(true);
     expect(user.role).toBe("admin");
     expect(await database.read(["roles", {user_id: user.id}])).toBe("admin");
 });
@@ -343,9 +342,7 @@ it.each(["signInWithEmailAndPassword", "signInWithCredential", "signInWithEmailL
         const auth = new FirebaseAuth({firebase: {app: sdk}, database});
         const user = method === "resolveCurrentUser" || method === "resolveRedirectResult"
             ? await auth[method]() : await auth[method]("sdk@example.test", "password");
-        expect(user).toMatchObject({id: json.uid, role: "admin", profileCreated: true, persisted: true});
-        expect(await database.read(["users_public", {user_id: user.id}])).not.toHaveProperty("profileCreated");
-        expect((await auth.resolveCurrentUser()).profileCreated).toBe(false);
+        expect(user).toMatchObject({id: json.uid, role: "admin", persisted: true});
     }
 );
 
@@ -365,7 +362,7 @@ it("waits for profile persistence before notifying Auth subscribers", async () =
         expect(callback).not.toHaveBeenCalled();
         finish();
         await vi.waitFor(() => expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-            id: json.uid, role: "admin", profileCreated: true, persisted: true
+            id: json.uid, role: "admin", persisted: true
         })));
     } finally {
         finish();

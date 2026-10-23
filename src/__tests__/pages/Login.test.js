@@ -129,10 +129,11 @@ async function mountLogin({ios = false, disabled = false, firstLogin = false, si
     const state = stateModule.createAppState(signedIn ? {currentUserData: authUser} : undefined);
     state.store("currentUserData").subscribe(() => events.push({type: "publish", user: getCurrentUserData(state)}));
     const onLogin = vi.fn();
+    const transformUserDataOnFirstLogin = vi.fn(user => user);
     // eslint-disable-next-line react/prop-types -- Test UI exposes the real login handler.
     const Layout = ({onRequestLogin}) => <button onClick={onRequestLogin}>Sign in</button>;
-    render(<AppContext state={state} value={{auth, database, messaging}}><Login layout={<Layout/>} onLogin={onLogin}/></AppContext>, container);
-    return {auth, database, messaging, state, events, onLogin, getUser: () => getCurrentUserData(state), UserData};
+    render(<AppContext state={state} value={{auth, database, messaging}}><Login layout={<Layout/>} onLogin={onLogin} transformUserDataOnFirstLogin={transformUserDataOnFirstLogin}/></AppContext>, container);
+    return {auth, database, messaging, state, events, onLogin, transformUserDataOnFirstLogin, getUser: () => getCurrentUserData(state), UserData};
 }
 
 async function login(context) {
@@ -223,11 +224,12 @@ it("publishes iOS users without notification setup", async () => {
     expect(context.database.update).toHaveBeenCalledTimes(1);
 });
 
-it("keeps first-login navigation after notification preparation and model publication", async () => {
+it("uses ordinary navigation for a profile already initialized by AuthBase", async () => {
     const context = await mountLogin({firstLogin: true});
     await login(context);
-    expect(context.onLogin).toHaveBeenCalledWith(true);
-    expect(fixture.history.replace).toHaveBeenCalledWith("/edit-profile", {isFirstLogin: true});
+    expect(context.onLogin).toHaveBeenCalledWith(false);
+    expect(context.transformUserDataOnFirstLogin).not.toHaveBeenCalled();
+    expect(fixture.history.replace).toHaveBeenCalledWith("/home");
     expect(context.getUser().private[fixture.deviceId].notification).toBe("notification-token");
 });
 
@@ -240,7 +242,7 @@ it("does not restart authentication for an already signed-in user", async () => 
     expect(container.querySelector("[data-redirect]")).not.toBeNull();
 });
 
-it("publishes the profile initialized by AuthBase and preserves first-login navigation", async () => {
+it("publishes the initialized ADMIN profile as an ordinary login", async () => {
     const context = await mountLogin({firstLogin: true});
     await login(context);
     expect(context.auth._saveInitialProfile).toHaveBeenCalledTimes(1);
@@ -250,6 +252,7 @@ it("publishes the profile initialized by AuthBase and preserves first-login navi
         [["users_public", {user_id: fixture.userId}, "name"], "Login User"]
     ]));
     expect(context.getUser().role).toBe("admin");
-    expect(context.onLogin).toHaveBeenCalledWith(true);
-    expect(fixture.history.replace).toHaveBeenCalledWith("/edit-profile", {isFirstLogin: true});
+    expect(context.onLogin).toHaveBeenCalledWith(false);
+    expect(context.transformUserDataOnFirstLogin).not.toHaveBeenCalled();
+    expect(fixture.history.replace).toHaveBeenCalledWith("/home");
 });
