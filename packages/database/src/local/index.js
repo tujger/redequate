@@ -45,8 +45,19 @@ export default class LocalDatabase extends DatabaseBase {
     }
 
     addEventListener(path, options = {}) {
-        return super.addEventListener(path, options,
-            callbacks => addEventListener(this.#context, path, callbacks));
+        const report = (error, reason, context) => {
+            try {
+                (options.onError ?? this.onError)(error, reason, context);
+            } catch (handlerError) {
+                console.error("LocalDatabase listener error", handlerError === error
+                    ? {path, reason, error}
+                    : {path, reason, error, handlerError});
+                return;
+            }
+            console.error("LocalDatabase listener error", {path, reason, error});
+        };
+        return super.addEventListener(path, {...options, onError: report},
+            callbacks => addEventListener(this.#context, path, callbacks)) ?? {remove() {}};
     }
 
     cursor(path, options = {}) {
@@ -99,7 +110,7 @@ export default class LocalDatabase extends DatabaseBase {
         }
         return this.run(async () => {
             readQueryOptions(options);
-            const value = await readValue(this.#context, path);
+            const value = await readValue(this.#context, path, options);
             return (options.orderBy !== undefined || options.equalTo !== undefined ||
                 options.start !== undefined || options.end !== undefined || options.order !== undefined)
                 ? applyReadOptions(value, options)

@@ -212,6 +212,63 @@ const readStores = (transaction, receive) => {
     }
 };
 
+// IndexedDB omits null, boolean and object keys. A bounded numeric/string
+// query can use an index without losing values that the Firebase comparator
+// would otherwise include. Keep the final query and ordering in the caller.
+const indexedRows = (transaction, path, identityField, options, receive) => {
+    if (!options || options.orderBy === undefined) return false;
+    const field = resolvePath(options.orderBy);
+    if (!field || field.includes("/") || field === identityField) return false;
+    const {equalTo, start, end} = options;
+    const key = value => typeof value === "string" || typeof value === "number" && Number.isFinite(value);
+    const equality = key(equalTo);
+    const bounded = key(start) && key(end) &&
+        (typeof start === typeof end || typeof start === "number" && typeof end === "string");
+    if (!equality && !bounded) return false;
+    const parent = parseDatabasePath(path, {allowField: false});
+    const scope = parent.segments;
+    if (!identityField && scope.length) return false;
+    if (scope.some(token => token[0] !== "fixed")) return false;
+    const store = transaction.objectStore(storeName(parent.collection));
+    const names = scope.map(token => token[1]);
+    const values = scope.map(token => token[2]);
+    const indexName = [...store.indexNames].find(name => {
+        if (name === "_identity") return false;
+        const parts = store.index(name).keyPath;
+        return JSON.stringify(parts) === JSON.stringify(names.length ? [...names, field] : field);
+    });
+    if (!indexName) return false;
+    const bound = value => values.length ? [...values, value] : value;
+    let range;
+    try {
+        range = equality ? IDBKeyRange.only(bound(equalTo)) : IDBKeyRange.bound(bound(start), bound(end));
+    } catch (error) {
+        if (error?.name === "DataError") return false;
+        throw error;
+    }
+    const selected = store.index(indexName).getAll(range);
+    selected.onsuccess = () => {
+        const candidates = selected.result.map(row => decodeRow(row, parent.collection)).filter(row => {
+            if (!row) return false;
+            const suffix = relativeSegments(row, scope);
+            return suffix?.length === 1 &&
+                (identityField === undefined || identityFieldName(suffix[0]) === identityField);
+        });
+        if (!candidates.length) { receive([]); return; }
+        const rows = [...candidates];
+        let remaining = candidates.length;
+        for (const row of candidates) {
+            const prefix = row._key.slice(0, -1) + ",";
+            const descendants = store.index("_identity").getAll(IDBKeyRange.bound(prefix, prefix + "\uffff"));
+            descendants.onsuccess = () => {
+                rows.push(...descendants.result.map(item => decodeRow(item, parent.collection)).filter(Boolean));
+                if (!--remaining) receive(rows);
+            };
+        }
+    };
+    return true;
+};
+
 const generatedSegment = (key, prefix) => {
     const levels = prefix.filter(segment => segment[0] === "dynamic").map(segment => segment[1]);
     return {id: key, _: levels.length ? Math.max(...levels) + 1 : 0};
@@ -306,7 +363,7 @@ const readRows = (rows, path) => {
 };
 
 // This read-only grammar does not affect writes, cursors or subscriptions.
-export const readValue = (storageKey, rawPath) => {
+export const readValue = (storageKey, rawPath, options) => {
     const {path, keyField, literal} = parseReadPath(rawPath);
     const readPath = path.map((segment, index) => {
         if (!index || typeof segment === "string" || Object.hasOwn(segment, "_")) return segment;
@@ -315,7 +372,7 @@ export const readValue = (storageKey, rawPath) => {
     });
     const parent = parseDatabasePath(readPath, {allowField: false});
     return transact(storageKey, "readonly", [storeName(parent.collection)], (transaction, setResult, abortWith) => {
-        readStores(transaction, rows => {
+        const receive = rows => {
             try {
                 if (literal) {
                     const root = subtreeValue(rows, [parent.collection]);
@@ -358,7 +415,8 @@ export const readValue = (storageKey, rawPath) => {
                 });
                 setResult(subtreeValue(selected, readPath));
             } catch (error) { abortWith(error); }
-        });
+        };
+        if (!indexedRows(transaction, readPath, keyField, options, receive)) readStores(transaction, receive);
     });
 };
 
@@ -467,18 +525,19 @@ export const subtreeValue = (records, rawPath) => {
     return result;
 };
 
-export const getSubtree = (storageKey, rawPath) => {
+export const getSubtree = (storageKey, rawPath, options) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
     return transact(storageKey, "readonly", [storeName(path.collection)], (transaction, setResult) => {
-        readStores(transaction, rows => setResult(subtreeValue(rows, rawPath)));
+        const receive = rows => setResult(subtreeValue(rows, rawPath));
+        if (!indexedRows(transaction, rawPath, undefined, options, receive)) readStores(transaction, receive);
     });
 };
 
-export const getCursorChildren = (storageKey, rawPath, identityField) => {
+export const getCursorChildren = (storageKey, rawPath, identityField, options) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
     const prefix = pathSegments(path);
     return transact(storageKey, "readonly", [storeName(path.collection)], (transaction, setResult, abortWith) => {
-        readStores(transaction, rows => {
+        const receive = rows => {
             try {
                 const entries = rows.flatMap(row => {
                     if (row._collection !== path.collection) return [];
@@ -494,7 +553,8 @@ export const getCursorChildren = (storageKey, rawPath, identityField) => {
                 }
                 setResult(Object.fromEntries(entries));
             } catch (error) { abortWith(error); }
-        });
+        };
+        if (!indexedRows(transaction, rawPath, identityField, options, receive)) readStores(transaction, receive);
     });
 };
 

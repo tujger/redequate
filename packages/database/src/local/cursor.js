@@ -59,8 +59,12 @@ export default class LocalCursor extends DatabaseCursor {
     }
 
     async #read() {
-        if (this.#identityField !== undefined) return getCursorChildren(this.#storageKey, this.#path, this.#identityField);
-        if (this.#path.length) return getSubtree(this.#storageKey, this.#path);
+        if (this.#identityField !== undefined) return getCursorChildren(this.#storageKey, this.#path, this.#identityField, {
+            orderBy: this.orderBy, equalTo: this.equalTo, start: this.start, end: this.end
+        });
+        if (this.#path.length) return getSubtree(this.#storageKey, this.#path, {
+            orderBy: this.orderBy, equalTo: this.equalTo, start: this.start, end: this.end
+        });
         const rows = await getAllRecords(this.#storageKey);
         return Object.fromEntries([...new Set(rows.map(row => row._collection))]
             .map(collection => [collection, subtreeValue(rows, [collection])]));
