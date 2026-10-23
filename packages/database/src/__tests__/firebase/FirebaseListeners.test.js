@@ -111,3 +111,24 @@ it("buffers a child delivered before the first value callback when absent from t
     fixture.emit("value", {a: 1});
     expect(added).toHaveBeenCalledExactlyOnceWith({key: "b", value: 2});
 });
+
+it("registers a discover notification listener on its own path, separate from posts", () => {
+    const added = vi.fn();
+    const removed = vi.fn();
+    const listener = database.addEventListener("discover/viewer", {
+        onChildAdd: added,
+        onChildRemove: removed
+    });
+    expect(fixture.sdk.listeners.map(({ref, type}) => [ref.path, type])).toEqual([
+        ["discover/viewer", "value"],
+        ["discover/viewer", "child_added"],
+        ["discover/viewer", "child_removed"]
+    ]);
+    fixture.emit("value", null);
+    fixture.emit("child_added", "author", "post-1");
+    expect(added).toHaveBeenCalledExactlyOnceWith({key: "post-1", value: "author"});
+    fixture.emit("child_removed", "author", "post-1");
+    expect(removed).toHaveBeenCalledExactlyOnceWith({key: "post-1", value: "author"});
+    listener.remove();
+    expect(fixture.sdk.listeners).toHaveLength(0);
+});

@@ -62,8 +62,8 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         });
         const paths = database.update.mock.calls.flatMap(([updates]) => [...updates.keys()]);
         expect(paths.some(path => path.includes("password") || path.includes("token"))).toBe(false);
-        // The default role has no stored entry; registration must not write to protected roles.
-        expect([...database.update.mock.calls[0][0]].every(([path]) => path[0] === "users_public")).toBe(true);
+        expect(await database.read(["roles", {user_id: user.id}]))
+            .toBe(provider === "local" ? "admin" : undefined);
 
         await run(auth.updateProfile({
             public: {name: "Stored name", image: "stored.png", extra: "retained"},
@@ -93,6 +93,10 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         const database = createDatabase();
         const {auth} = createAuth(Auth, database);
         const user = await run(auth.createUserWithEmailAndPassword("profile@example.test", "password"));
+        await database.update(new Map([
+            [["users_public", {user_id: "other-admin"}], {name: "Other admin"}],
+            [["roles", {user_id: "other-admin"}], "admin"]
+        ]));
         await run(auth.updateProfile({public: {name: "A", image: "a.png"}, role: "admin", private: {a: {locale: "en", keep: true}}}));
         await run(auth.updateProfile({public: {image: null}, role: null, private: {a: {locale: null}}}));
         expect(await database.read(["users_public", {user_id: user.id}, {name: "name"}])).toBe("A");

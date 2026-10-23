@@ -6,6 +6,8 @@ import {vi} from "vitest";
 import {render, unmount} from "../../render";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
 import reducer from "../../../components/LazyListComponent/lazyListComponentReducer";
+import dispatcherRoutedBodyReducer from "../../../reducers/dispatcherRoutedBodyReducer";
+import {Layout} from "../../../controllers/General";
 
 vi.mock("../../../controllers/notifySnackbar", () => ({default: vi.fn()}));
 vi.mock("../../../components/ListItemComponent", () => ({default: () => null}));
@@ -126,6 +128,46 @@ it("does not retain rows after unmount", async () => {
     expect(rows()).toEqual([]);
     await next();
     expect(rows()).toEqual(["new"]);
+});
+
+it("loads a new post only after a route or Layout.REFRESH remount when live is false", async () => {
+    const posts = [entry("old")];
+    const cursors = [];
+    const routeStore = createStore(dispatcherRoutedBodyReducer);
+    const List = () => {
+        const [cursor] = React.useState(() => {
+            const created = makeCursor([posts.map(item => ({...item}))]);
+            cursors.push(created);
+            return created;
+        });
+        return <LazyListComponent cursor={cursor} ItemComponent={Item}
+            itemTransform={transform} placeholder={<span>loading</span>} live={false}/>;
+    };
+    const Route = ({visible = true}) => {
+        const [refreshKey, setRefreshKey] = React.useState(routeStore.getState().random);
+        React.useEffect(() => routeStore.subscribe(() => setRefreshKey(routeStore.getState().random)), []);
+        return visible && <List key={refreshKey}/>;
+    };
+    const showRoute = async visible => act(async () => render(
+        <Provider store={store}><Route visible={visible}/></Provider>, container));
+
+    await showRoute(true);
+    await next();
+    posts.unshift(entry("new"));
+    await showRoute(true);
+    expect(rows()).toEqual(["old"]);
+    expect(cursors).toHaveLength(1);
+
+    await act(async () => routeStore.dispatch({type: Layout.REFRESH}));
+    await next();
+    expect(rows()).toEqual(["new", "old"]);
+    expect(cursors).toHaveLength(2);
+
+    await showRoute(false);
+    await showRoute(true);
+    await next();
+    expect(rows()).toEqual(["new", "old"]);
+    expect(cursors).toHaveLength(3);
 });
 
 it("applies live events by key and unsubscribes without restarting traversal", async () => {

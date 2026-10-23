@@ -1,10 +1,14 @@
 import {vi} from "vitest";
 import {key as dateKey} from "firebase-key";
 import {database, firebase} from "../../../../../src/__tests__/common";
+import {discoverPostScenario} from "../common/discoverPostScenario";
 
 // UNKNOWN: this generic integration fixture has no declared record-key field;
 // plain string children also verify compatibility with existing callers.
 const path = "database_test";
+it("reads a newly published root post and finds it again after returning to Discover", async () => {
+    await discoverPostScenario(database, path);
+});
 const subscriptions = [];
 afterEach(() => {
     for (const subscription of subscriptions.splice(0)) {

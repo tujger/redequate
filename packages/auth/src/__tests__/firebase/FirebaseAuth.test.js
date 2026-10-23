@@ -51,6 +51,16 @@ const json = {
 };
 const sdkUser = (data = json) => ({...data, toJSON: () => structuredClone(data), updatePassword: vi.fn(), getIdToken: vi.fn()});
 
+it("does not claim ADMIN from the Firebase client even for an empty database", async () => {
+    const database = createDatabase();
+    const sdk = {createUserWithEmailAndPassword: vi.fn().mockResolvedValue({user: sdkUser()})};
+    const auth = new FirebaseAuth({firebase: {app: sdk}, database});
+    const user = await auth.createUserWithEmailAndPassword("sdk@example.test", "password");
+    expect(user.role).not.toBe("admin");
+    expect(database.read).not.toHaveBeenCalledWith(["users_public"]);
+    expect(await database.read(["roles", {user_id: user.id}])).toBeUndefined();
+});
+
 it.each(["createUserWithEmailAndPassword", "signInWithEmailAndPassword", "signInWithEmailLink", "signInWithPopup", "signInWithCredential"])(
     "normalizes %s inside FirebaseAuth", async method => {
         const raw = sdkUser();

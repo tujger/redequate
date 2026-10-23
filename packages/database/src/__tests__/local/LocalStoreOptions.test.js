@@ -160,7 +160,11 @@ it("isolates configured collections while sharing committed notifications betwee
         await vi.waitFor(() => expect(event).toHaveBeenCalledOnce());
         expect(change).toHaveBeenLastCalledWith({a: {code: "a", status: "open"}});
         await expect(plain.read(["audit"])).rejects.toMatchObject({code: "database/invalid-argument"});
-        expect(() => plain.addEventListener(["audit"], {})).toThrow("Unknown Local collection");
+        const onError = vi.fn();
+        const invalidListener = plain.addEventListener(["audit"], {onError});
+        expect(onError).toHaveBeenCalledWith(expect.objectContaining({message: expect.stringContaining("Unknown Local collection")}),
+            "addEventListener", {path: ["audit"]});
+        expect(() => invalidListener.remove()).not.toThrow();
         expect(await plain.cursor([]).next(10)).toEqual([]);
     } finally { listener.remove(); subscription.unsubscribe(); }
 });

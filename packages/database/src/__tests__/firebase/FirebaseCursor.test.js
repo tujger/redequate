@@ -42,6 +42,17 @@ it("treats a trailing array string as identity metadata for pages and subscripti
     expect(database.cursor("users_public/user_id").path).toBe("users_public/user_id");
     expect(database.cursor(["users_public", {user_id: "u1"}]).path).toBe("users_public/u1");
 });
+it("notifies the Discover cursor for a new root post", async () => {
+    const cursor = database.cursor(["posts", "post_id"], {orderBy: ["to"], equalTo: 0, order: "desc"});
+    const events = [];
+    const subscription = cursor.subscribe(event => events.push(event));
+    await flush();
+    fixture.emit("child_added", {to: 0, text: "second"}, "second");
+    expect(fixture.sdk.listeners.find(item => item.type === "child_added").ref.query)
+        .toMatchObject({orderByChild: ["to"], equalTo: [0]});
+    expect(events).toEqual([{type: "add", entry: {key: "second", value: {to: 0, text: "second"}}}]);
+    subscription.unsubscribe();
+});
 it.each([0, -1, 1.5, NaN, Infinity, "1"])("rejects next(%j) before querying Firebase", async n => {
     await expect(database.cursor("records").next(n)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(fixture.sdk.once).not.toHaveBeenCalled();

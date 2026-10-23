@@ -40,6 +40,46 @@ afterEach(() => {
 const register = () => run(auth.createUserWithEmailAndPassword("user@example.test", "password"));
 const stored = () => read(auth);
 
+it("assigns ADMIN only to the first user of an empty local database", async () => {
+    const first = await register();
+    expect(first.role).toBe("admin");
+    expect(await database.read(["roles", {user_id: first.id}])).toBe("admin");
+    const second = await run(auth.createUserWithEmailAndPassword("second@example.test", "password"));
+    expect(second.role).not.toBe("admin");
+    expect(await database.read(["roles", {user_id: second.id}])).toBeUndefined();
+    await database.update(new Map([[ ["roles", {user_id: first.id}], null ]]));
+    const third = await run(auth.createUserWithEmailAndPassword("third@example.test", "password"));
+    expect(third.role).not.toBe("admin");
+});
+
+it("does not bootstrap an administrator when the database already contains users", async () => {
+    await database.update(new Map([[ ["users_public", {user_id: "existing"}], {name: "Existing"} ]]));
+    const user = await register();
+    expect(user.role).not.toBe("admin");
+    expect(await database.read(["roles", {user_id: user.id}])).toBeUndefined();
+});
+
+it("serializes simultaneous first registrations and grants at most one ADMIN", async () => {
+    const another = createAuth();
+    const results = await run(Promise.allSettled([
+        auth.createUserWithEmailAndPassword("first@example.test", "password"),
+        another.createUserWithEmailAndPassword("second@example.test", "password")
+    ]));
+    expect(results.filter(result => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter(result => result.status === "rejected")[0].reason.code).toBe("auth/state-changed");
+    const winner = results.find(result => result.status === "fulfilled").value;
+    expect(winner.role).toBe("admin");
+    expect((await stored()).accounts).toHaveLength(1);
+});
+
+it("rolls back registration when the initial profile write fails", async () => {
+    const failure = new Error("profile write failed");
+    database.update.mockRejectedValueOnce(failure);
+    await expect(register()).rejects.toBe(failure);
+    expect((await stored()).accounts).toHaveLength(0);
+    expect(await database.read(["roles"])).toBeUndefined();
+});
+
 it("constructs without accessing storage and validates its namespace", () => {
     const getItem = vi.spyOn(Storage.prototype, "getItem");
     expect(createAuth()).toBeInstanceOf(LocalAuth);
@@ -90,11 +130,12 @@ it("loads database data for the local user and skips reads after sign-out", asyn
     const user = await register();
     expect(user).toMatchObject({name: "Stored name", role: "admin", private: {device: {locale: "en"}}});
     expect(read.mock.calls.map(([path]) => path)).toEqual([
+        ["users_public"],
         ["users_public", {user_id: user.id}], ["roles", {user_id: user.id}], ["users_private", {user_id: user.id}]
     ]);
     await run(auth.signOut());
     await run(auth.resolveCurrentUser());
-    expect(read).toHaveBeenCalledTimes(3);
+    expect(read).toHaveBeenCalledTimes(4);
     const failure = new Error("database unavailable");
     read.mockRejectedValue(failure);
     await expect(run(auth.signInWithEmailAndPassword(user.email, "password"))).rejects.toBe(failure);

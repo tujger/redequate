@@ -2,6 +2,7 @@ import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import {openDatabase} from "../../local/helpers";
+import {discoverPostScenario} from "../common/discoverPostScenario";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
@@ -18,6 +19,25 @@ const readAll = async (cursor, size = 2) => {
     }
     return result;
 };
+
+it("reads a newly published root post and finds it again after returning to Discover", async () => {
+    await discoverPostScenario(new LocalDatabase({storageKey: "discover-publish"}));
+});
+
+it("notifies the Discover cursor only for new root posts", async () => {
+    const database = new LocalDatabase({storageKey: "discover-posts"});
+    await database.create(["posts", {post_id: "first"}], {to: 0, text: "first"});
+    const cursor = database.cursor(["posts", "post_id"], {orderBy: ["to"], equalTo: 0, order: "desc"});
+    const events = [];
+    const subscription = cursor.subscribe(event => events.push(event));
+    try {
+        await database.create(["posts", {post_id: "reply"}], {to: "first"});
+        await database.create(["posts", {post_id: "second"}], {to: 0, text: "second"});
+        await vi.waitFor(() => expect(events).toEqual([
+            {type: "add", entry: {key: "second", value: {to: 0, text: "second"}}}
+        ]));
+    } finally { subscription.unsubscribe(); }
+});
 
 it.each(["asc", "desc"])("pages equal values exactly once in %s order, including a deleted boundary", async order => {
     const db = new LocalDatabase({storageKey: `pages-${order}`});

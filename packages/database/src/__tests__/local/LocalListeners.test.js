@@ -46,6 +46,25 @@ it("delivers initial value and only keys above the initial maximum, then CRUD ev
     listener.remove();
 });
 
+it("reports an invalid feed path and returns a safe cleanup handle", () => {
+    const onError = vi.fn();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+        const database = new LocalDatabase({storageKey: "invalid-feed", onError});
+        const path = "discover/user-1";
+        const handle = database.addEventListener(path, {onChildAdd: vi.fn()});
+        expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}),
+            "addEventListener", {path});
+        expect(logged).toHaveBeenCalledWith("LocalDatabase listener error", expect.objectContaining({
+            path, reason: "addEventListener", error: expect.objectContaining({code: "database/invalid-argument"})
+        }));
+        expect(() => handle.remove()).not.toThrow();
+        const defaultHandle = new LocalDatabase({storageKey: "invalid-feed-default"})
+            .addEventListener(path, {onChildAdd: vi.fn()});
+        expect(() => defaultHandle.remove()).not.toThrow();
+    } finally { logged.mockRestore(); }
+});
+
 it("watches records and fields, including creation, replacement and deletion", async () => {
     const database = new LocalDatabase({storageKey: "fields-listeners"});
     const recordValue = vi.fn(), fieldValue = vi.fn(), childChange = vi.fn(), childRemove = vi.fn();
@@ -97,7 +116,7 @@ it("keeps named record paths distinct and accepts Firebase-style string addresse
 it("reports registration, storage and callback errors through the public onError contract", async () => {
     const onError = vi.fn();
     const database = new LocalDatabase({storageKey: "errors-listeners", onError});
-    expect(database.addEventListener(collection, {onChildAdd: true})).toBeUndefined();
+    expect(database.addEventListener(collection, {onChildAdd: true})).toHaveProperty("remove");
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "addEventListener", {path: collection});
     const failure = new Error("IndexedDB unavailable");
     vi.spyOn(indexedDB, "open").mockImplementation(() => { throw failure; });
