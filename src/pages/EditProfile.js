@@ -175,13 +175,14 @@ function EditProfile(props) {
         const saveByAdmin = async () => {
             if (isAdmin) {
                 const updates = new Map();
-                updates.set(["roles", {user_id: userData.id}], (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role);
                 if (role === UserRole.USER_NOT_VERIFIED) {
                     updates.set(["users_public", {user_id: userData.id}, "emailVerified"], false);
                 } else if (role === UserRole.USER || role === UserRole.ADMIN) {
                     updates.set(["users_public", {user_id: userData.id}, "emailVerified"], true);
                 }
                 updates.set(["users_public", {user_id: userData.id}, "updated"], database.TIMESTAMP);
+                await userData.updateRole(
+                    (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role, updates);
                 if (role !== userData.role) {
                     updateActivity({
                         database,
@@ -194,7 +195,6 @@ function EditProfile(props) {
                         },
                     }).catch(console.error);
                 }
-                return database.update(updates);
             }
         }
         const refreshUserData = async () => {
