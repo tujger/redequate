@@ -14,7 +14,7 @@ export default class UserData extends UserDataCommon {
     constructor(database) {
         super();
         this.#database = database;
-        for (const method of ["delete", "fetch", "fetchPrivate", "save", "savePublic", "savePrivate", "updateVisitTimestamp"]) {
+        for (const method of ["delete", "fetch", "fetchPrivate", "save", "savePublic", "savePrivate", "updateVisitTimestamp", "updateRole"]) {
             this[method] = this[method].bind(this);
         }
     }
@@ -65,9 +65,32 @@ export default class UserData extends UserDataCommon {
         return updates;
     }
 
+    async _assertAdminRemains() {
+        const role = await this.#database.read(["roles", {user_id: this.id}]);
+        if (role !== UserRole.ADMIN) return;
+        const roles = await this.#database.read(["roles"], {equalTo: UserRole.ADMIN});
+        let hasAnotherAdmin = false;
+        for (const id of Object.keys(roles || {})) {
+            if (id === this.id) continue;
+            if (await this.#database.read(["users_public", {user_id: id}]) != null) {
+                hasAnotherAdmin = true;
+                break;
+            }
+        }
+        UserData.assertAdminRemains(role, hasAnotherAdmin);
+    }
+
+    async updateRole(role, updates = new Map()) {
+        if (role !== UserRole.ADMIN) await this._assertAdminRemains();
+        updates.set(["roles", {user_id: this.id}], role);
+        await this.#database.update(updates);
+        return this;
+    }
+
     async delete() {
         const state = this._getState();
         console.log("[UserData] delete", state.id);
+        await this._assertAdminRemains();
         await this.#database.delete(["users_public", {user_id: state.id}]);
         cacheDatas.remove(state.id);
         return this;

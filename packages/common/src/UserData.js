@@ -11,6 +11,14 @@ export default class UserData {
     static FULL = "full";
     static FORCE = "force";
 
+    static assertAdminRemains(role, hasAnotherAdmin) {
+        if (role === UserRole.ADMIN && !hasAnotherAdmin) {
+            throw Object.assign(new Error("The last active administrator cannot be removed or disabled."), {
+                code: "auth/last-admin"
+            });
+        }
+    }
+
     _state = {
         id: undefined,
         public: {},
