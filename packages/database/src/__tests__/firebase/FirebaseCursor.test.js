@@ -7,6 +7,8 @@ import DatabaseBase from "../../common/DatabaseBase";
 import FirebaseCursor from "../../firebase/cursor";
 import {createFirebase} from "../fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 let fixture, database;
 beforeEach(() => {
     fixture = createFirebase();

@@ -1,5 +1,45 @@
 import {vi} from "vitest";
 
+
+export const firebaseDatabaseMock = () => {
+    const subscribe = (type, ref, callback, onError) => {
+        const {sdk} = ref.database;
+        sdk.on(ref, type, callback, onError);
+        const listener = {ref, type, callback, onError};
+        sdk.listeners.push(listener);
+        return () => {
+            sdk.off(ref, type, callback);
+            const index = sdk.listeners.indexOf(listener);
+            if (index >= 0) sdk.listeners.splice(index, 1);
+        };
+    };
+    const constraints = Object.fromEntries([
+        "orderByKey", "orderByValue", "orderByChild", "equalTo", "startAt", "endAt", "limitToFirst", "limitToLast"
+    ].map(name => [name, (...args) => ({[name]: args})]));
+    return {
+        ...constraints,
+        getDatabase: app => app.database,
+        ref: (database, path) => database.reference(path),
+        query: (ref, ...constraints) => ref.database.reference(ref.path, Object.assign({}, ref.query, ...constraints)),
+        push: ref => ref.database.push(ref),
+        set: (ref, value) => ref.database.sdk.set(ref, value),
+        update: (ref, value) => ref.database.sdk.update(ref, value),
+        runTransaction: (ref, callback, options) => ref.database.sdk.transaction(ref, callback, options),
+        onValue: (ref, callback, onError, options) => {
+            if (options?.onlyOnce) {
+                ref.database.sdk.once(ref, "value").then(callback, onError);
+                return () => {};
+            }
+            return subscribe("value", ref, callback, onError);
+        },
+        onChildAdded: (...args) => subscribe("child_added", ...args),
+        onChildChanged: (...args) => subscribe("child_changed", ...args),
+        onChildRemoved: (...args) => subscribe("child_removed", ...args),
+        serverTimestamp: () => ({".sv": "timestamp"}),
+        increment: delta => ({".sv": {increment: delta}}),
+    };
+};
+
 // Controlled SDK responses; query semantics are verified against the emulator.
 export function createFirebase() {
     const listeners = [];
@@ -12,28 +52,13 @@ export function createFirebase() {
         on: vi.fn(), off: vi.fn(),
     };
     let sequence = 0;
+    const database = {sdk, reference};
     function reference(path = "", query = {}) {
-        const ref = {path, query, key: path.split("/").at(-1)};
-        for (const method of ["orderByKey", "orderByValue", "orderByChild", "equalTo", "startAt", "endAt", "limitToFirst", "limitToLast"]) {
-            ref[method] = vi.fn((...args) => reference(path, {...query, [method]: args}));
-        }
-        ref.once = vi.fn((...args) => sdk.once(ref, ...args));
-        ref.set = vi.fn(value => sdk.set(ref, value));
-        ref.update = vi.fn(value => sdk.update(ref, value));
-        ref.transaction = vi.fn((...args) => sdk.transaction(ref, ...args));
-        ref.push = vi.fn(() => reference(`${path}/generated-${++sequence}`));
-        ref.on = vi.fn((type, callback, onError) => {
-            sdk.on(ref, type, callback, onError);
-            listeners.push({ref, type, callback, onError});
-        });
-        ref.off = vi.fn((type, callback) => {
-            sdk.off(ref, type, callback);
-            const index = listeners.findIndex(listener => listener.ref === ref && listener.type === type && listener.callback === callback);
-            if (index >= 0) listeners.splice(index, 1);
-        });
+        const ref = {database, path, query, key: path.split("/").at(-1)};
         sdk.refs.push(ref);
         return ref;
     }
+    database.push = ref => reference(`${ref.path}/generated-${++sequence}`);
     function snapshot(value, key, path = "records") {
         return {
             key,
@@ -60,10 +85,8 @@ export function createFirebase() {
     });
     // Assign the default after reference is initialized.
     sdk.once.mockResolvedValue({exists: () => false, val: () => null, forEach: () => {}});
-    const database = () => ({ref: vi.fn(reference)});
-    database.ServerValue = {TIMESTAMP: {".sv": "timestamp"}, increment: vi.fn(delta => ({".sv": {increment: delta}}))};
     return {
-        firebase: {database}, sdk, snapshot,
+        firebase: {app: {database}}, sdk, snapshot,
         emit(type, value, key = "new") {
             for (const listener of [...listeners]) {
                 if (listener.type === type) listener.callback(snapshot(value, key));

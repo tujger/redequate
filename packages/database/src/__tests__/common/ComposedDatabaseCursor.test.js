@@ -4,6 +4,8 @@ import FirebaseDatabase from "../../firebase";
 import FirebaseCursor from "../../firebase/cursor";
 import {createFirebase} from "../fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 class RecordsCursor extends DatabaseCursor {
     constructor(entries, options = {}, path) {
         super(options, path);

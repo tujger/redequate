@@ -4,6 +4,8 @@ import {usePages} from "../../controllers/General";
 import FirebaseDatabase from "../../../packages/database/src/firebase";
 import {createFirebase} from "../../../packages/database/src/__tests__/fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../../../packages/database/src/__tests__/fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 vi.mock("../../controllers/General", () => ({usePages: vi.fn()}));
 vi.mock("../../controllers/useCurrentUserData", () => ({getCurrentUserData: () => ({roles: ["reader"]})}));
 vi.mock("../../controllers/UserData", () => ({

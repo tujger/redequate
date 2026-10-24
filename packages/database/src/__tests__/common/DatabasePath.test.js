@@ -5,6 +5,8 @@ import resolvePath from "../../common/resolvePath";
 import FirebaseDatabase from "../../firebase";
 import {createFirebase} from "../fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 const path = ["users_public", {user_id: "u123"}, "email"];
 let fixture, database;
 beforeEach(() => {

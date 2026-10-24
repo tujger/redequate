@@ -4,6 +4,8 @@ import FirebaseDatabase from "../../firebase";
 import LocalDatabase from "../../local";
 import {createFirebase} from "../fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
@@ -21,7 +23,7 @@ it("runs Firebase updates as transactions and returns the final snapshot, includ
     });
     expect(await database.update(path, callback)).toBe(4);
     expect(callback.mock.calls).toEqual([[null], [3]]);
-    expect(fixture.sdk.transaction.mock.calls[0].slice(2)).toEqual([undefined, false]);
+    expect(fixture.sdk.transaction.mock.calls[0].slice(2)).toEqual([{applyLocally: false}]);
     expect(fixture.sdk.update).not.toHaveBeenCalled();
     fixture.sdk.transaction.mockImplementation(async (ref, update) => {
         expect(update(4)).toBeNull();

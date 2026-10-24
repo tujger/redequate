@@ -1,6 +1,8 @@
 import FirebaseDatabase from "../../firebase";
 import {createFirebase} from "../fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 it("creates at the parent address, including nested collection paths", async () => {
     const {firebase, sdk} = createFirebase();
     const database = new FirebaseDatabase({firebase});

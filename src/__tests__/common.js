@@ -1,4 +1,5 @@
-import compatFirebase from "firebase/compat/app";
+import {deleteApp} from "firebase/app";
+import {connectDatabaseEmulator, getDatabase, goOffline} from "firebase/database";
 import {connectAuthEmulator, getAuth} from "firebase/auth";
 import "fake-indexeddb/auto";
 import Firebase from "../controllers/Firebase";
@@ -21,7 +22,8 @@ export const firebase = Firebase({
 });
 export const sdkAuth = getAuth(firebase.app);
 connectAuthEmulator(sdkAuth, `http://${authHost}`, {disableWarnings: true});
-firebase.database().useEmulator("127.0.0.1", 9000);
+export const sdkDatabase = getDatabase(firebase.app);
+connectDatabaseEmulator(sdkDatabase, "127.0.0.1", 9000);
 export const database = new FirebaseDatabase({firebase});
 export const auth = new FirebaseAuth({firebase, database, UserData});
 
@@ -49,6 +51,6 @@ beforeEach(async () => {
 
 afterAll(async () => {
     await auth.signOut();
-    firebase.database().goOffline();
-    await compatFirebase.app(firebase.app.name).delete();
+    goOffline(sdkDatabase);
+    await deleteApp(firebase.app);
 });

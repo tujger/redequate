@@ -1,3 +1,4 @@
+import {onValue, limitToFirst} from "firebase/database";
 import React from "react";
 import {vi} from "vitest";
 import {Provider} from "react-redux";
@@ -6,8 +7,13 @@ import {MemoryRouter} from "react-router-dom";
 import Tags from "../../tags/Tags";
 import tagsReducer from "../../tags/tagsReducer";
 import lazyListComponentReducer from "../../components/LazyListComponent/lazyListComponentReducer";
-import {database, firebase, seedDatabase} from "../common";
+import {database, seedDatabase} from "../common";
 import {render, unmount} from "../render";
+
+vi.mock("firebase/database", async importOriginal => {
+    const sdk = await importOriginal();
+    return {...sdk, onValue: vi.fn(sdk.onValue), limitToFirst: vi.fn(sdk.limitToFirst)};
+});
 
 const context = vi.hoisted(() => ({database: undefined, cursor: undefined}));
 vi.mock("../../controllers", () => ({useDatabase: () => context.database}));
@@ -40,9 +46,10 @@ const mount = (state = {mode: "all", filter: ""}, props = {}) => {
 };
 
 it("pages sorted tags with bounded reads, including an empty sort value but excluding missing fields", async () => {
-    const query = firebase.database().ref().orderByKey();
-    const once = vi.spyOn(Object.getPrototypeOf(query), "once");
-    const limit = vi.spyOn(Object.getPrototypeOf(query), "limitToFirst");
+    const once = onValue;
+    const limit = limitToFirst;
+    once.mockClear();
+    limit.mockClear();
     const cursor = mount();
     const expected = ["empty", ...Object.keys(records)];
     const first = await cursor.next(10);

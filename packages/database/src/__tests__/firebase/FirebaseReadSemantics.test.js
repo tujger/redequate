@@ -2,6 +2,8 @@ import {vi} from "vitest";
 import FirebaseDatabase from "../../firebase";
 import {createFirebase} from "../fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 let fixture, database;
 beforeEach(() => {
     fixture = createFirebase();

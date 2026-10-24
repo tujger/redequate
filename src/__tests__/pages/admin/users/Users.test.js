@@ -5,6 +5,8 @@ import Users from "../../../../pages/admin/users/Users";
 import FirebaseDatabase from "../../../../../packages/database/src/firebase";
 import {createFirebase} from "../../../../../packages/database/src/__tests__/fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../../../../../packages/database/src/__tests__/fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 const context = vi.hoisted(() => ({database: undefined, cursor: undefined}));
 vi.mock("react-redux", () => ({connect: () => component => component, useDispatch: () => () => {}, useSelector: selector => selector({})}));
 vi.mock("../../../../controllers", () => ({

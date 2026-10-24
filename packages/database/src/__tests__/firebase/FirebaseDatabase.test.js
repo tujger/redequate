@@ -4,6 +4,8 @@ import DatabaseBase from "../../common/DatabaseBase";
 import {DatabaseOrder} from "../../common/DatabaseOrder";
 import {createFirebase} from "../fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 let database, fixture, sdk;
 beforeEach(() => {
     fixture = createFirebase();
@@ -15,7 +17,7 @@ it("exports the same order enum through the base and source entrypoints", async 
     expect((await import("../../common/DatabaseBase")).DatabaseOrder).toBe(DatabaseOrder);
     expect((await import("../../index")).DatabaseOrder).toBe(DatabaseOrder);
     expect(database).toBeInstanceOf(DatabaseBase);
-    expect(database.TIMESTAMP).toBe(fixture.firebase.database.ServerValue.TIMESTAMP);
+    expect(database.TIMESTAMP).toEqual({".sv": "timestamp"});
     expect(database.increment(-2)).toEqual({".sv": {increment: -2}});
 });
 it("keeps the Local schema API out of the shared and Firebase providers", () => {

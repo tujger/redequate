@@ -1,5 +1,6 @@
+import {ref, set, remove} from "firebase/database";
 import FirebaseCursor from "../../firebase/cursor";
-import {database, firebase} from "../../../../../src/__tests__/common";
+import {database, firebase, sdkDatabase} from "../../../../../src/__tests__/common";
 import {databaseContract} from "../common/databaseContract";
 
 databaseContract(() => {
@@ -9,7 +10,7 @@ databaseContract(() => {
         rawCursor: options => new FirebaseCursor(firebase, path, options),
         path,
         record: key => [path, {id: key}],
-        put: (key, value) => firebase.database().ref(`${path}/${key}`).set(value),
-        remove: key => firebase.database().ref(`${path}/${key}`).remove()
+        put: (key, value) => set(ref(sdkDatabase, `${path}/${key}`), value),
+        remove: key => remove(ref(sdkDatabase, `${path}/${key}`))
     };
 });

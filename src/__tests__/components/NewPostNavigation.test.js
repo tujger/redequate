@@ -12,6 +12,8 @@ import LocalDatabase from "../../../packages/database/src/local";
 import FirebaseDatabase from "../../../packages/database/src/firebase";
 import {createFirebase} from "../../../packages/database/src/__tests__/fixtures/firebase";
 
+vi.mock("firebase/database", () => import("../../../packages/database/src/__tests__/fixtures/firebase").then(module => module.firebaseDatabaseMock()));
+
 const context = vi.hoisted(() => ({database: undefined, user: {id: "author"}}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value})}));
 vi.mock("../../controllers", () => ({

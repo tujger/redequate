@@ -1,9 +1,11 @@
+import {ref} from "firebase/database";
+import readSnapshot from "../../../packages/database/src/firebase/readSnapshot";
 import {vi} from "vitest";
 import {signInAnonymously} from "firebase/auth";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {UserRole} from "../../../packages/common/src/UserRole";
 import UserData, {currentRole, logoutUser, matchRole, needAuth, normalizeSortName, watchUserChanged} from "../../controllers/UserData";
-import {auth, database, firebase, sdkAuth, seedDatabase} from "../common";
+import {auth, database, sdkAuth, sdkDatabase, seedDatabase} from "../common";
 
 vi.mock("../../controllers/notifySnackbar", () => ({default: vi.fn()}));
 
@@ -41,7 +43,7 @@ test("watchUserChanged", async () => {
     const onUserChanged = vi.fn();
     const updated = Date.now() + 1000;
     await seedDatabase({users_public: {[user.id]: {...user.public, updated}}});
-    const timestamp = await firebase.database().ref(`users_public/${user.id}/updated`).once("value");
+    const timestamp = await readSnapshot(ref(sdkDatabase, `users_public/${user.id}/updated`));
     expect(timestamp.val()).toBe(updated);
     const original = auth.onAuthStateChanged.bind(auth);
     let subscription;
@@ -196,7 +198,7 @@ describe("UserData", () => {
         await seedDatabase({users_public: {[userDataUser.id]: userDataUser.public}});
         await expect(userDataUser.delete()).resolves.toEqual(userDataUser);
         await signInAnonymously(sdkAuth);
-        expect((await firebase.database().ref(`users_public/${userDataUser.id}`).once("value")).exists()).toBe(false);
+        expect((await readSnapshot(ref(sdkDatabase, `users_public/${userDataUser.id}`))).exists()).toBe(false);
     });
     it("fetch", async () => {
         userDataUser = new UserData(database).create(window.crypto.randomUUID(), {
@@ -235,7 +237,7 @@ describe("UserData", () => {
     it("savePublic", async () => {
         await expect(userDataUser.savePublic()).resolves.toEqual(userDataUser);
         await signInAnonymously(sdkAuth);
-        const saved = (await firebase.database().ref(`users_public/${userDataUser.id}`).once("value")).val();
+        const saved = (await readSnapshot(ref(sdkDatabase, `users_public/${userDataUser.id}`))).val();
         expect(saved).toMatchObject({name: "User name", _sort_name: "username_test_user_id"});
         expect(saved.updated).toEqual(expect.any(Number));
     });

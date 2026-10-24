@@ -1,6 +1,8 @@
+import {ref, set} from "firebase/database";
+import readSnapshot from "../../firebase/readSnapshot";
 import {vi} from "vitest";
 import {key as dateKey} from "firebase-key";
-import {database, firebase} from "../../../../../src/__tests__/common";
+import {database, sdkDatabase} from "../../../../../src/__tests__/common";
 import {discoverPostScenario} from "../common/discoverPostScenario";
 
 // UNKNOWN: this generic integration fixture has no declared record-key field;
@@ -16,7 +18,7 @@ afterEach(() => {
         else subscription.remove();
     }
 });
-const seed = value => firebase.database().ref(path).set(value);
+const seed = value => set(ref(sdkDatabase, path), value);
 async function readAll(cursor, size = 10) {
     const entries = [];
     while (!cursor.position.finished) {
@@ -31,7 +33,7 @@ async function subscribe(cursor, listener) {
     const subscription = cursor.subscribe(listener);
     subscriptions.push(subscription);
     // A value event is queued after the baseline child events on the same query.
-    await firebase.database().ref(path).once("value");
+    await readSnapshot(ref(sdkDatabase, path));
     await Promise.resolve();
     return subscription;
 }
