@@ -284,7 +284,7 @@ form the Firebase address; Local also uses their names and optional dynamic leve
 as identity metadata. Shared validation/normalization must not mutate caller input.
 The first Local segment selects a configured physical store, not a virtual collection.
 
-A trailing string in an array read/cursor path of at least two segments names an
+A trailing string in an array read/cursor/listener path of at least two segments names an
 identity field. It is not a literal final branch:
 
 - `["users_public", "user_id"]` reads the user collection.
@@ -292,7 +292,7 @@ identity field. It is not a literal final branch:
 - `["users_public", {user_id: uid}, {email: "email"}]` reads a concrete field.
 - String paths remain literal; a single-root array selects its collection.
 
-This operation-specific rule does not redefine create/update/delete/listener or
+This operation-specific rule does not redefine create/update/delete or
 `orderBy` grammar. Preserve `PostData.fetchExtras` targeting the extra collection
 with its identity marker; querying a literal `extra/extra_id` branch loses the
 consumer's existing `id_uid` index. Root reads reject; root cursors are valid.

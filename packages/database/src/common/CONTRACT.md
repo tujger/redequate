@@ -23,7 +23,7 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   `path[0]` as a configured physical object store; named segments retain their
   field name and optional dynamic level as part of Local identity. Root reads
   (`''`, `[]`) are invalid; root cursors are valid.
-- Array `read` paths have an operation-specific grammar: a trailing string in
+- Array `read`, `cursor` and `addEventListener` paths share a grammar: a trailing string in
   an array of two or more segments is the collection's identity field. Firebase
   drops that segment before addressing the database; Local selects children with
   that named identity (fixed or dynamic) and assembles them by its values.
@@ -38,8 +38,9 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   branches and embedded fields through this explicit syntax, without rewriting
   stored rows. Named selection also matches the corresponding dynamic identity.
 - A one-element array reads its root collection. String paths remain literal,
-  including their final segment. This read grammar does not change create,
-  update, delete, cursor, listener, or orderBy path normalization.
+  including their final segment. This grammar does not change create,
+  update, delete, or orderBy path normalization. Listener initial values use
+  the same selection as read, including Local child identity filtering.
 - `read` returns plain values or `undefined` when absent. Query options apply to
   immediate children of the resulting address, after removing the identity-field
   marker. Property enumeration from `read` is not a cursor order guarantee.
