@@ -69,7 +69,7 @@ it("watches records and fields, including creation, replacement and deletion", a
     const database = new LocalDatabase({storageKey: "fields-listeners"});
     const recordValue = vi.fn(), fieldValue = vi.fn(), childChange = vi.fn(), childRemove = vi.fn();
     const a = database.addEventListener(record("a"), {onChange: recordValue, onChildChange: childChange, onChildRemove: childRemove});
-    const b = database.addEventListener([...record("a"), "name"], {onChange: fieldValue});
+    const b = database.addEventListener([...record("a"), {name: "name"}], {onChange: fieldValue});
     await vi.waitFor(() => expect(fieldValue).toHaveBeenCalledWith(undefined));
     await database.update(record("a"), () => ({name: "first", kept: true}));
     await database.update([...record("a"), "name"], () => "second");
@@ -104,7 +104,7 @@ it("keeps named record paths distinct and accepts Firebase-style string addresse
     const named = vi.fn(), other = vi.fn(), stringPath = vi.fn();
     const a = database.addEventListener(record("a"), {onChange: named});
     const b = database.addEventListener(["meta", {other_id: "a", _: true}], {onChange: other});
-    const c = database.addEventListener("meta/a", {onChange: stringPath});
+    const c = database.addEventListener("/meta//a/", {onChange: stringPath});
     await vi.waitFor(() => expect(stringPath).toHaveBeenCalledOnce());
     await database.update(record("a"), () => ({name: "one"}));
     expect(named).toHaveBeenLastCalledWith(created({name: "one"}));
@@ -148,7 +148,7 @@ it("publishes a complete settings collection only after commit and stays silent 
     const database = new LocalDatabase({storageKey: "settings-listeners"});
     const settings = ["meta", "settings"];
     const onChange = vi.fn();
-    const listener = database.addEventListener(settings, {onChange});
+    const listener = database.addEventListener(["meta", {settings: "settings"}], {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
     await database.update(settings, () => ({theme: {value: "dark"}, locale: {value: "en"}}));
     expect(onChange).toHaveBeenCalledTimes(2);
@@ -215,4 +215,45 @@ it("emits the first child for an empty collection without an initial replay", as
     await database.update(record("a"), () => ({score: 1}));
     expect(added).toHaveBeenCalledExactlyOnceWith({key: "a", value: created({score: 1})});
     listener.remove();
+});
+
+it("selects only the requested child identity in a nested collection listener", async () => {
+    const db = new LocalDatabase({storageKey: "identity-listener"});
+    const parent = ["meta", {owner: "alice"}];
+    const left = [...parent, {left_id: "a"}];
+    const right = [...parent, {right_id: "b"}];
+    await db.update(left, () => ({n: 1}));
+    await db.update(right, () => ({n: 2}));
+    const path = [...parent, "left_id"];
+    const onChange = vi.fn();
+    const onChildChange = vi.fn();
+    const listener = db.addEventListener(path, {onChange, onChildChange});
+    try {
+        await vi.waitFor(() => expect(onChange).toHaveBeenCalledExactlyOnceWith({a: {n: 1}}));
+        expect(await db.read(path)).toEqual({a: {n: 1}});
+        await db.update(right, () => ({n: 3}));
+        expect(onChange).toHaveBeenCalledOnce();
+        await db.update(left, () => ({n: 4}));
+        expect(onChange).toHaveBeenLastCalledWith({a: {n: 4}});
+        expect(onChildChange).toHaveBeenCalledExactlyOnceWith({key: "a", value: {n: 4}});
+        await db.delete(left);
+        expect(onChange).toHaveBeenLastCalledWith(undefined);
+    } finally { listener.remove(); }
+});
+
+it("keeps an internal cursor's literal collection path when its own read callback is supplied", async () => {
+    const db = new LocalDatabase({storageKey: "cursor-listener-path"});
+    const parent = ["meta", {owner: "alice"}, "history"];
+    const cursor = db.cursor([...parent, "id"]);
+    const changed = vi.fn();
+    const subscription = cursor.subscribe(changed);
+    try {
+        await db.update([...parent, {id: "a"}], () => ({text: "new"}));
+        await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith(
+            {type: "add", entry: {key: "a", value: {text: "new"}}}
+        ));
+        subscription.unsubscribe();
+        await db.update([...parent, {id: "b"}], () => ({text: "after unsubscribe"}));
+        expect(changed).toHaveBeenCalledOnce();
+    } finally { subscription.unsubscribe(); }
 });

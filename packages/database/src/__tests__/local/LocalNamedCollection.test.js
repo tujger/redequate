@@ -7,7 +7,7 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 const created = value => value;
 
-it.each(["posts", "replies"])("shares %s records, fields and deletes across named and string roots", async collection => {
+it.each(["posts", "meta"])("shares %s records, fields and deletes across named and string roots", async collection => {
     const database = new LocalDatabase({storageKey: "aliases"});
     const string = [collection, {post_id: "p1"}];
     const named = [{type: collection}, {post_id: "p1"}];
@@ -40,30 +40,30 @@ it("keeps the posts identity and nested levels unchanged", async () => {
     expect(await database.readSubtree([{type: "posts"}, {post_id: key}])).toMatchObject({
         edit: {[editKey]: {uid: "u1"}}
     });
-    const replyKey = await database.create([{type: "replies"}, "post_id"], {text: "reply"});
-    expect(await database.read(["replies", {post_id: replyKey}])).toEqual(created({text: "reply"}));
+    const metaKey = await database.create([{type: "meta"}, "post_id"], {text: "reply"});
+    expect(await database.read(["meta", {post_id: metaKey}])).toEqual(created({text: "reply"}));
     expect(path).toEqual([{type: "posts"}]);
 });
 
 it("uses named collections in batch replacements and type queries without storing root metadata", async () => {
     const database = new LocalDatabase({storageKey: "batch"});
-    const record = [{name: "replies"}, {kind: "r1", _: 0}];
+    const record = [{name: "meta"}, {kind: "r1", _: 0}];
     await database.update(new Map([[record, {text: "reply", nested: {enabled: true}}]]));
-    await database.update(new Map([[[{type: "replies"}, {kind: "r1", _: 0}, "text"], "updated"]]));
-    expect(await database.read(["replies", {kind: "r1", _: 0}, {text: "text"}])).toBe("updated");
+    await database.update(new Map([[[{type: "meta"}, {kind: "r1", _: 0}, "text"], "updated"]]));
+    expect(await database.read(["meta", {kind: "r1", _: 0}, {text: "text"}])).toBe("updated");
     for (const query of ["kind", {_key0: "kind"}]) {
-        expect(await getRecordsByType("batch", [{type: "replies"}, query])).toEqual([
+        expect(await getRecordsByType("batch", [{type: "meta"}, query])).toEqual([
             {id: "r1", value: created({text: "updated", nested: {enabled: true}})}
         ]);
     }
     const rows = await getAllRecords("batch");
     expect(rows).toHaveLength(1);
     expect(rows[0]).not.toHaveProperty("_conditions");
-    expect(rows[0]).toMatchObject({_collection: "replies", _key0: "kind"});
-    await database.update(new Map([[[{type: "replies"}], {r1: {text: "replaced"}}]]));
-    expect(await database.read(["replies"])).toEqual({r1: created({text: "replaced"})});
-    await database.delete([{type: "replies"}]);
-    expect(await database.read(["replies"])).toBeUndefined();
+    expect(rows[0]).toMatchObject({_collection: "meta", _key0: "kind"});
+    await database.update(new Map([[[{type: "meta"}], {r1: {text: "replaced"}}]]));
+    expect(await database.read(["meta"])).toEqual({r1: created({text: "replaced"})});
+    await database.delete([{type: "meta"}]);
+    expect(await database.read(["meta"])).toBeUndefined();
 });
 
 it("notifies listeners for writes through either root form", async () => {
@@ -87,17 +87,25 @@ it("notifies listeners for writes through either root form", async () => {
     } finally { listeners.forEach(listener => listener.remove()); }
 });
 
-it.each(["follow", "watch", "_posts"])("rejects obsolete root %s", async name => {
+it.each(["follow", "watch", "_posts", "replies"])("rejects obsolete root %s", async name => {
     const database = new LocalDatabase({storageKey: "validation"});
     const named = [{type: name}, {id: "r1"}];
     await expect(database.update(named, () => ({name}))).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(database.create([{type: name}], {})).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(() => database.addEventListener(named, {})).toThrow();
+    const onError = vi.fn();
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const listener = database.addEventListener(named, {onError});
+    expect(onError).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({code: "database/invalid-argument"}),
+        "addEventListener", {path: named}
+    );
+    expect(log).toHaveBeenCalled();
+    listener.remove();
     await expect(database.update([name, {id: "r1"}], () => ({name})))
         .rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
-it.each([[], [{}], [{type: ""}], [{type: "posts", other: "replies"}], [{type: "posts"}, ""]])(
+it.each([[], [{}], [{type: ""}], [{type: "posts", other: "meta"}], [{type: "posts"}, ""]])(
     "retains invalid path rejection for %j", path => {
         expect(() => parseDatabasePath(path)).toThrow();
     }

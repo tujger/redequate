@@ -127,7 +127,7 @@ it("delivers equivalent named and literal field subscriptions after commit", asy
     const database = new LocalDatabase({storageKey: "field-listeners"});
     const named = vi.fn(), literal = vi.fn();
     const handles = [database.addEventListener(email, {onChange: named}),
-        database.addEventListener([...user, "email"], {onChange: literal})];
+        database.addEventListener("users_public/u1/email", {onChange: literal})];
     try {
         await vi.waitFor(() => expect(literal).toHaveBeenCalledOnce());
         await database.update(email, () => "a@b.com");

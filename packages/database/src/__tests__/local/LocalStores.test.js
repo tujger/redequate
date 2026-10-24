@@ -44,27 +44,28 @@ it("creates only physical roots with native autoIncrement and unique path indexe
     } finally { database.close(); }
 });
 
-it("uses one transaction to write records, posts and replies and aggregates their rows", async () => {
+it("uses one transaction to write posts, metadata and users and aggregates their rows", async () => {
     const database = new LocalDatabase({storageKey: "batch-stores"});
     const transaction = vi.spyOn(IDBDatabase.prototype, "transaction");
     await database.update(new Map([
         [record("posts"), {text: "post"}],
-        [record("replies"), {text: "reply"}],
+        [record("meta"), {text: "reply"}],
         [["users_public", {user_id: "u1"}], {name: "user"}]
     ]));
     const writes = transaction.mock.calls.filter(([, mode]) => mode === "readwrite");
     expect(writes).toHaveLength(1);
-    expect([...writes[0][0]].sort()).toEqual(["posts", "replies", "users_public"]);
-    expect((await getAllRecords("batch-stores")).map(row => row._collection).sort()).toEqual(["posts", "replies", "users_public"]);
-    for (const collection of ["posts", "replies", "users_public"]) {
+    expect([...writes[0][0]].sort()).toEqual(["meta", "posts", "users_public"]);
+    expect((await getAllRecords("batch-stores")).map(row => row._collection).sort()).toEqual(["meta", "posts", "users_public"]);
+    for (const collection of ["posts", "meta", "users_public"]) {
         const rows = await storedRows("batch-stores", LOCAL_COLLECTIONS[collection].store);
         expect(rows).toHaveLength(1);
-        expect(rows[0]._collection).toBe(collection);
+        expect(rows[0]).toMatchObject({_id: expect.any(Number), _local: {path: expect.any(String)}});
+        expect(rows[0]).not.toHaveProperty("_collection");
     }
-    expect((await storedRows("batch-stores", "users_public")).map(row => row._collection)).toEqual(["users_public"]);
-    await database.update({"posts/p1/text": "updated", "replies/p1/text": "updated"});
+    expect(await storedRows("batch-stores", "users_public")).toEqual([expect.objectContaining({name: "user"})]);
+    await database.update({"posts/p1/text": "updated", "meta/p1/text": "updated"});
     expect(await database.read([...record("posts"), {text: "text"}])).toBe("updated");
-    expect(await database.read([...record("replies"), {text: "text"}])).toBe("updated");
+    expect(await database.read([...record("meta"), {text: "text"}])).toBe("updated");
 });
 
 it("rolls back all stores and sends no notification if a queued write fails", async () => {
@@ -78,17 +79,17 @@ it("rolls back all stores and sends no notification if a queued write fails", as
         const seen = [];
         vi.spyOn(IDBObjectStore.prototype, "put").mockImplementation(function (...args) {
             seen.push(this.name);
-            if (this.name === "replies") throw new Error("write failed");
+            if (this.name === "meta") throw new Error("write failed");
             return put.apply(this, args);
         });
         await expect(database.update(new Map([
             [record("posts"), {text: "changed"}],
             [["users_public", {user_id: "u1"}], {name: "new"}],
-            [record("replies"), {text: "new"}]
+            [record("meta"), {text: "new"}]
         ]))).rejects.toThrow("write failed");
-        expect(seen).toEqual(["posts", "users_public", "replies"]);
+        expect(seen).toEqual(["posts", "users_public", "meta"]);
         expect(await database.read(record("posts"))).toMatchObject({text: "original"});
-        expect(await database.read(record("replies"))).toBeUndefined();
+        expect(await database.read(record("meta"))).toBeUndefined();
         expect(await database.read(["users_public", {user_id: "u1"}])).toBeUndefined();
         expect(onChange).toHaveBeenCalledOnce();
     } finally { listener.remove(); }
@@ -96,22 +97,22 @@ it("rolls back all stores and sends no notification if a queued write fails", as
 
 it("reads type indexes and notifies collection listeners from the dedicated stores", async () => {
     const database = new LocalDatabase({storageKey: "indexed"});
-    const postChanged = vi.fn(); const replyChanged = vi.fn();
+    const postChanged = vi.fn(); const metaChanged = vi.fn();
     const handles = [database.addEventListener([{type: "posts"}], {onChange: postChanged}),
-        database.addEventListener(["replies"], {onChange: replyChanged})];
+        database.addEventListener(["meta"], {onChange: metaChanged})];
     try {
-        await vi.waitFor(() => expect(replyChanged).toHaveBeenCalledOnce());
+        await vi.waitFor(() => expect(metaChanged).toHaveBeenCalledOnce());
         await database.update(new Map([
             [[{type: "posts"}, {kind: "p", _: 0}], {text: "post"}],
-            [["replies", {kind: "r", _: 0}], {text: "reply"}]
+            [["meta", {kind: "r", _: 0}], {text: "reply"}]
         ]));
         expect(postChanged).toHaveBeenLastCalledWith({p: {text: "post"}});
-        expect(replyChanged).toHaveBeenLastCalledWith({r: {text: "reply"}});
-        expect(await getRecordsByType("indexed", [{type: "replies"}, "kind"])).toEqual([
+        expect(metaChanged).toHaveBeenLastCalledWith({r: {text: "reply"}});
+        expect(await getRecordsByType("indexed", [{type: "meta"}, "kind"])).toEqual([
             {id: "r", value: {text: "reply"}}
         ]);
-        await database.update([{type: "replies"}, {kind: "r", _: 0}, "text"], () => "changed");
-        expect(await database.read(["replies", {kind: "r", _: 0}, {text: "text"}])).toBe("changed");
+        await database.update([{type: "meta"}, {kind: "r", _: 0}, "text"], () => "changed");
+        expect(await database.read(["meta", {kind: "r", _: 0}, {text: "text"}])).toBe("changed");
     } finally { handles.forEach(handle => handle.remove()); }
 });
 

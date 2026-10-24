@@ -276,6 +276,48 @@ export function databaseContract(makeProvider) {
             await vi.waitFor(() => expect(removed.map(entry => entry.key)).toEqual(["a"]));
         } finally { listener.remove(); listener.remove(); }
     });
+    it.each(["string", "root array", "identity array"])("matches read selection for a %s listener path", async shape => {
+        await provider.put("b", {label: "baseline"});
+        const path = shape === "string" ? provider.path
+            : shape === "root array" ? [provider.path] : [provider.path, "id"];
+        const original = structuredClone(path);
+        const onChange = vi.fn();
+        const onChildChange = vi.fn();
+        const listener = provider.db.addEventListener(path, {onChange, onChildChange});
+        try {
+            const initial = await provider.db.read(path);
+            await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(initial));
+            expect(path).toEqual(original);
+            await provider.put("b", {label: "updated"});
+            await vi.waitFor(() => expect(onChildChange).toHaveBeenCalledWith(
+                {key: "b", value: {label: "updated"}}
+            ));
+            expect(onChange).toHaveBeenLastCalledWith(await provider.db.read(path));
+            await provider.remove("b");
+            await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(undefined));
+            listener.remove();
+            const count = onChange.mock.calls.length;
+            await provider.put("c", {label: "after remove"});
+            expect(onChange).toHaveBeenCalledTimes(count);
+        } finally { listener.remove(); }
+    });
+
+    it.each(["named", "literal"])("matches read for a %s concrete field listener", async shape => {
+        await provider.put("a", {name: "first"});
+        const path = shape === "named" ? [...provider.record("a"), {name: "name"}]
+            : `${provider.path}/a/name`;
+        const onChange = vi.fn();
+        const listener = provider.db.addEventListener(path, {onChange});
+        try {
+            await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith("first"));
+            expect(await provider.db.read(path)).toBe("first");
+            await provider.put("a", {name: "second"});
+            await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith("second"));
+            await provider.remove("a");
+            await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(undefined));
+        } finally { listener.remove(); }
+    });
+
     it("keeps cursor subscriptions independent and detaches each one idempotently", async () => {
         await provider.put("a", {created: 1});
         const cursor = provider.db.cursor(provider.path, {orderBy: "created"});

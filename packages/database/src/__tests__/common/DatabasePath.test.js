@@ -82,7 +82,7 @@ it("keeps nested field names and values through Map serialization", async () => 
 
 it("attaches and removes listeners at the resolved path", () => {
     const onChange = vi.fn();
-    const listener = database.addEventListener(path, {onChange});
+    const listener = database.addEventListener([...path.slice(0, -1), {email: "email"}], {onChange});
     expect(fixture.sdk.listeners[0].ref.path).toBe("users_public/u123/email");
     fixture.emit("value", "a@example.com");
     expect(onChange).toHaveBeenCalledWith("a@example.com");

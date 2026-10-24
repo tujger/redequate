@@ -90,7 +90,7 @@ it("replaces Local collection subtrees atomically and removes descendant records
     const result = await database.update(["posts"], value => ({p2: {text: value.p1.text}}));
     expect(result).toMatchObject({p2: {text: "old!"}});
     expect(await database.read(record)).toBeUndefined();
-    expect(await database.read(["posts", {post_id: "p2"}])).toMatchObject({text: "old!"});
+    expect(await database.read(["posts", {id: "p2"}])).toMatchObject({text: "old!"});
     await expect(database.update(["posts"], () => 1)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await database.read(["posts"])).toEqual(result);
 });

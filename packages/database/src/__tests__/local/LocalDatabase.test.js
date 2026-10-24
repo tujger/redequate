@@ -151,13 +151,13 @@ it("updates settings children, nested collections and null removals in one trans
     expect(await database.readSubtree(settings)).toBeUndefined();
 });
 
-it("keeps post_id identities and creates an absent child during collection writes", async () => {
+it("preserves existing identities and gives new collection children a generic id", async () => {
     const database = new LocalDatabase({storageKey: "posts-collection"});
     const post = ["posts", {post_id: "p1"}];
     await database.update(post, () => ({text: "old"}));
     await database.update(["posts"], () => ({p1: {text: "new"}, p2: {text: "second"}}));
     expect(await database.read(post)).toEqual(created({text: "new"}));
-    expect(await database.read(["posts", {post_id: "p2"}])).toEqual(created({text: "second"}));
+    expect(await database.read(["posts", {id: "p2"}])).toEqual(created({text: "second"}));
     expect(await database.read(["posts"])).toEqual({p1: created({text: "new"}), p2: created({text: "second"})});
 });
 

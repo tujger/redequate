@@ -132,3 +132,21 @@ it("registers a discover notification listener on its own path, separate from po
     listener.remove();
     expect(fixture.sdk.listeners).toHaveLength(0);
 });
+
+it.each(["", []])("retains root subscriptions for %j", path => {
+    const listener = database.addEventListener(path, {onChange: vi.fn()});
+    expect(fixture.sdk.listeners[0].ref.path).toBe("");
+    listener.remove();
+    expect(fixture.sdk.listeners).toHaveLength(0);
+});
+
+it("uses the same address as read and cursor for an identity marker", async () => {
+    const path = Object.freeze(["users_public", "user_id"]);
+    const listener = database.addEventListener(path, {onChange: vi.fn()});
+    await database.read(path);
+    expect(fixture.sdk.listeners[0].ref.path).toBe("users_public");
+    expect(fixture.sdk.once.mock.calls[0][0].path).toBe("users_public");
+    expect(database.cursor(path).path).toBe("users_public");
+    expect(path).toEqual(["users_public", "user_id"]);
+    listener.remove();
+});

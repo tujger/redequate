@@ -10,8 +10,8 @@ it("shares one numeric sequence across nested collections in a physical store, b
     const post = await db.create(["posts", "post_id"], {text: "first"});
     const nested = await db.create(["posts", {post_id: post}, "edits", "id"], {text: "edit"});
     const other = await db.create(["posts", "comments", "id"], {text: "comment"});
-    const reply = await db.create(["replies", "post_id"], {text: "reply"});
-    expect([post, nested, other, reply]).toEqual(["1", "2", "3", "1"]);
+    const metadata = await db.create(["meta", "post_id"], {text: "reply"});
+    expect([post, nested, other, metadata]).toEqual(["1", "2", "3", "1"]);
     expect(await db.read(["posts", {post_id: post}])).toMatchObject({text: "first"});
     expect(await db.read(["posts", {post_id: post}, "edits", {id: nested}])).toMatchObject({text: "edit"});
     expect(await db.read(["posts", "comments", {id: other}])).toMatchObject({text: "comment"});

@@ -59,14 +59,14 @@ it("replaces only supplied update fields and their descendants", async () => {
     expect(await database.read(child)).toBeUndefined();
     expect(await database.read(parent)).toEqual(created({text: "new", kept: true}));
 });
-it("keeps ordinary nested JSON inline regardless of the write entry point", async () => {
+it("preserves nested JSON through record and collection writes", async () => {
     const direct = new LocalDatabase({storageKey: "direct"}), collection = new LocalDatabase({storageKey: "collection"});
     const value = {text: "post", details: {child: {name: "value"}}};
     await direct.update(parent, () => value);
     await collection.update(["posts"], () => ({p1: value}));
     expect(await direct.read(parent)).toEqual(created(value));
-    expect(await collection.read(parent)).toEqual(created({text: "post", details: {child: created({name: "value"})}}));
-    expect(await collection.read([...parent, {details: "details"}])).toEqual({child: created({name: "value"})});
+    expect(await collection.read(["posts", {id: "p1"}])).toEqual(created({text: "post", details: {child: created({name: "value"})}}));
+    expect(await collection.read(["posts", {id: "p1"}, {details: "details"}])).toEqual({child: created({name: "value"})});
 });
 it("omits unspecified timestamps and resolves increments when replacing a collection", async () => {
     const database = new LocalDatabase({storageKey: "collection-markers"});
@@ -115,7 +115,7 @@ it("allows independent fields and collections while retaining callback replaceme
     const database = new LocalDatabase({storageKey: "independent"});
     await seed(database);
     await database.update(new Map([[[...parent, "text"], "new"], [[...parent, "kept"], false],
-        [["replies", {post_id: "p1"}], {text: "reply"}]]));
+        [["meta", {post_id: "p1"}], {text: "reply"}]]));
     expect(await database.read(parent)).toEqual(created({text: "new", kept: false,
         edit: {e1: created({uid: "alice"}), e2: created({uid: "bob"})}}));
     expect(await database.read(child)).toEqual(created({uid: "alice"}));

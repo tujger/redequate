@@ -40,7 +40,7 @@ it.each([
     connection.close();
 });
 
-it.each(["posts", "replies"])("filters %s by recipient and orders by child key", async root => {
+it.each(["posts", "meta"])("filters %s by recipient and orders by child key", async root => {
     const db = new LocalDatabase({storageKey: `recipient-${root}`});
     for (const [key, to] of [["10", "u"], ["2", "u"], ["02", "u"], ["x", "other"]]) {
         await db.update([root, {post_id: key}], () => ({to}));
