@@ -15,6 +15,7 @@ import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
 import ChatList from "./ChatList";
 import ChatMeta from "./ChatMeta";
+import useChatScroll from "./useChatScroll";
 import chatStyles from "./styles/Chat.module.css";
 
 export default (props) => {
@@ -39,6 +40,7 @@ export default (props) => {
     const containerRef = React.useRef();
 
     const id = idFromProps || idFromParams;
+    useChatScroll(containerRef, chatMeta?.id);
 
     const handleSend = (value) => {
         dispatch(ProgressView.SHOW);

@@ -32,7 +32,7 @@ export default (props) => {
 
     if (skeleton) return <ItemPlaceholderComponent/>;
 
-    if (!userData || userData.id !== uid) return null;
+    if (!userData || userData.id !== uid) return <ItemPlaceholderComponent/>;
 
     return <ListItemComponent
         avatar={<AvatarView

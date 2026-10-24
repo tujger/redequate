@@ -23,7 +23,7 @@ export default ({chatKey, chatMeta, containerRef, textComponent, scrollerClassNa
         }}
         live
         noItemsComponent={<div/>}
-        page={100}
+        page={10}
         placeholder={<ChatItem skeleton/>}
         reverse
         scrollerClassName={scrollerClassName}

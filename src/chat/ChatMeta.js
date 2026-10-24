@@ -1,3 +1,4 @@
+import {DatabaseOrder} from "../../packages/database";
 import UserData from "../controllers/UserData";
 
 const ONLINE_TIMEOUT = 60000;
@@ -85,17 +86,11 @@ export default function ChatMeta(database) {
             } else {
                 _activeUids = Object.keys(_meta.members || {});
             }
-            tasks.push(new Promise((resolve, reject) => {
-                database.read(["chats", {chat_id: _id}], {orderBy: "created"})
-                    .then(value => {
-                        Object.entries(value || {}).forEach(([key, val]) => {
-                            if (key !== "!meta") {
-                                _lastMessage = val;
-                                _timestamp = val.created;
-                            }
-                        })
-                        resolve();
-                    }).catch(reject)
+            tasks.push(database.cursor(["chats", {chat_id: _id}, "message_id"], {
+                orderBy: "created", order: DatabaseOrder.DESC,
+            }).next(1).then(entries => {
+                _lastMessage = entries?.find(entry => entry.key !== "!meta")?.value;
+                _timestamp = _lastMessage?.created;
             }));
             await Promise.all(tasks);
             return _body;
