@@ -1,7 +1,8 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useMetaInfo} from "../../controllers/General";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Select from "../../controls/Select/Select";
 import SelectItem from "../../controls/Select/SelectItem";
 import ActionDelete from "./ActionDelete";
@@ -11,7 +12,7 @@ import cardStyles from "./styles/PostComponent.module.css";
 
 export default (props) => {
     const {onChange, onDelete, postData} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const metaInfo = useMetaInfo();
     const [open, setOpen] = React.useState(false);
     const [editRequest, setEditRequest] = React.useState(0);

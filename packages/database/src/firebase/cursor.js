@@ -1,0 +1,246 @@
+import {query, startAt, endAt, limitToFirst, limitToLast, set, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
+import readSnapshot from "./readSnapshot";
+import compareValues from "../common/compareValues";
+import compareKeys from "../common/compareKeys";
+import DatabaseCursor from "../common/DatabaseCursor";
+import createCursorQuery from "./createCursorQuery";
+import resolvePath from "../common/resolvePath";
+
+export default class FirebaseCursor extends DatabaseCursor {
+    #state;
+    #header = [];
+
+    constructor(firebase, path, options = {}) {
+        const resolvedPath = Array.isArray(path) && path.length > 1 && typeof path.at(-1) === "string"
+            ? path.slice(0, -1)
+            : path;
+        super(options, resolvePath(resolvedPath));
+        this.#state = {
+            ...createCursorQuery(firebase, resolvedPath, this),
+            scanKey: undefined,
+            scanValue: undefined,
+            buffer: [],
+            offset: 0,
+            exhausted: false
+        };
+    }
+
+    async next(n = 1) {
+        this.#header.push(...await super.next(n));
+        if (this.position.finished) return [];
+        const state = this.#state;
+        const {entries} = await readEntries({state, handle: this.handle, n, entries: []});
+        const result = [...this.#header.splice(0), ...entries];
+        this._position = Object.freeze({
+            index: this.position.index + result.length,
+            key: result.length ? result[result.length - 1].key : this.position.key,
+            finished: state.exhausted && state.offset === state.buffer.length
+        });
+        this._count += result.length;
+        if (this.position.finished) {
+            state.buffer = [];
+            state.offset = 0;
+        }
+        return result;
+    }
+
+    subscribe(listener) {
+        super.subscribe(listener);
+        return subscribeEntries(this.#state, event => {
+            this._started = true;
+            this._count += event.type === "add" ? 1 : event.type === "remove" ? -1 : 0;
+            return listener(event);
+        }, error => this.onError(error, "cursor.subscribe", {path: this.path}));
+    }
+}
+
+async function readEntries(props) {
+    const {state, n, entries} = props;
+    while (entries.length < n) {
+        props = await fillBuffer(props);
+        if (state.offset === state.buffer.length) break;
+        props = prepareCandidate(props);
+        props = await handleEntry(props);
+        props = advanceScan(props);
+    }
+    return {...props, state, entries};
+}
+
+const fillBuffer = async (props) => {
+    const {state, n, entries} = props;
+    if (state.offset < state.buffer.length || state.exhausted) return props;
+    const page = await readPage({...props, key: state.scanKey, value: state.scanValue, size: n - entries.length});
+    state.buffer = page.children;
+    state.offset = 0;
+    state.exhausted = page.children.length < page.size;
+    return {...props, state};
+};
+
+const prepareCandidate = (props) => {
+    const {state} = props;
+    const {byValue, orderBy, startKey, endKey} = state;
+    const child = state.buffer[state.offset];
+    const byKey = orderBy === undefined && !byValue;
+    // Capture the ordered value before handle can replace or delete it.
+    const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
+    const inRange = (startKey === undefined || child.key >= startKey) &&
+        (endKey === undefined || child.key <= endKey);
+    return {
+        ...props,
+        child,
+        sortValue,
+        entry: inRange && hasOrderedField(child, orderBy) ? {key: child.key, value: child.val()} : undefined,
+        replacement: undefined
+    };
+};
+
+const hasOrderedField = (snapshot, orderBy) => !orderBy || snapshot.child(orderBy).exists();
+
+const advanceScan = (props) => {
+    const {state, child, sortValue, entry, entries} = props;
+    state.scanKey = child.key;
+    state.scanValue = sortValue;
+    state.offset++;
+    if (entry !== undefined) entries.push(entry);
+    return {...props, state, entries};
+};
+
+function subscribeEntries(state, notify, onError) {
+    const {initialQuery, startKey, endKey, orderBy} = state;
+    const orderedEntries = new Map();
+    let active = true; let initialized = false; let failed = false; let registering = true;
+    const report = error => {
+        if (active && !failed) {
+            failed = true;
+            // Registration errors go through the composition's existing boundary.
+            if (registering) throw error;
+            onError(error);
+        }
+    };
+    const callbacks = [["child_added", "add"], ["child_changed", "change"], ["child_removed", "remove"]]
+        .map(([event, type]) => [event, child => {
+            if (!active || (startKey !== undefined && child.key < startKey) ||
+                (endKey !== undefined && child.key > endKey)) return;
+            let entry = {key: child.key, value: child.val()};
+            let effectiveType = type;
+            if (orderBy) {
+                const previous = orderedEntries.get(child.key);
+                const included = type !== "remove" && hasOrderedField(child, orderBy);
+                if (included) orderedEntries.set(child.key, entry);
+                else orderedEntries.delete(child.key);
+                if (!included && !previous) return;
+                if (!included) {
+                    effectiveType = "remove";
+                    entry = previous;
+                } else {
+                    effectiveType = previous ? "change" : "add";
+                }
+            }
+            if (initialized) return notify({type: effectiveType, entry});
+        }]);
+    const unsubscribers = [];
+    const unsubscribe = () => {
+        if (!active) return;
+        active = false;
+        detachCallbacks(unsubscribers);
+    };
+    try {
+        for (const [event, callback] of callbacks) {
+            const subscribe = {child_added: onChildAdded, child_changed: onChildChanged, child_removed: onChildRemoved}[event];
+            unsubscribers.push(subscribe(initialQuery, callback, report));
+        }
+        readSnapshot(initialQuery).then(() => { initialized = true; }, report);
+        registering = false;
+    } catch (error) {
+        unsubscribe();
+        throw error;
+    }
+    return {unsubscribe};
+}
+
+const detachCallbacks = unsubscribers => {
+    let failure;
+    for (const unsubscribe of unsubscribers) {
+        try { unsubscribe(); } catch (error) { failure ??= {error}; }
+    }
+    if (failure) throw failure.error;
+};
+
+async function readPage(props) {
+    const {state, value, key, size} = props;
+    // RTDB accepts object values in results but rejects them as query endpoints.
+    // Once the boundary is an object, use the original query and filter its tuple.
+    if (value !== null && typeof value === "object") {
+        const snapshot = await readSnapshot(state.initialQuery);
+        const children = [];
+        snapshot.forEach(child => {
+            const sort = state.byValue ? child.val() : child.child(state.orderBy).val();
+            const comparison = compareValues(sort, value) || compareKeys(child.key, key);
+            if (state.ascending ? comparison > 0 : comparison < 0) children.push(child);
+        });
+        if (!state.ascending) children.reverse();
+        return {...props, children: children.slice(0, size)};
+    }
+    props = preparePageQuery(props);
+    props = await fetchPage(props);
+    return extractChildren(props);
+}
+
+const preparePageQuery = (props) => {
+    const {state, key, value, size} = props;
+    const {initialQuery, continuationQuery, ascending, orderBy, byValue} = state;
+    const byKey = orderBy === undefined && !byValue;
+    let selection = key === undefined ? initialQuery : continuationQuery;
+    if (key !== undefined) {
+        if (ascending) {
+            selection = query(selection, byKey ? startAt(key) : startAt(value, key));
+        } else {
+            selection = query(selection, byKey ? endAt(key) : endAt(value, key));
+        }
+    }
+    const limit = key === undefined ? size : size + 1;
+    selection = query(selection, ascending ? limitToFirst(limit) : limitToLast(limit));
+    return {...props, query: selection};
+};
+
+const fetchPage = async (props) => {
+    const {query} = props;
+    return {...props, snapshot: await readSnapshot(query)};
+};
+
+const extractChildren = (props) => {
+    const {state, snapshot, key} = props;
+    const children = [];
+    snapshot.forEach(child => {
+        if (child.key !== key) children.push(child);
+    });
+    if (!state.ascending) children.reverse();
+    return {...props, children};
+};
+
+async function handleEntry(props) {
+    props = await invokeHandle(props);
+    props = await saveReplacement(props);
+    return rereadEntry(props);
+}
+
+const invokeHandle = async (props) => {
+    const {handle, entry} = props;
+    if (!handle || entry === undefined) return props;
+    // A handler may mutate its input without requesting a write.
+    return {...props, replacement: await handle(structuredClone(entry))};
+};
+
+const saveReplacement = async (props) => {
+    const {child, replacement} = props;
+    if (replacement === undefined) return props;
+    await set(child.ref, replacement);
+    return {...props, entry: undefined};
+};
+
+const rereadEntry = async (props) => {
+    const {child, replacement} = props;
+    if (replacement === undefined || replacement === null) return props;
+    const saved = await readSnapshot(child.ref);
+    return {...props, entry: saved.exists() && hasOrderedField(saved, props.state.orderBy) ? {key: child.key, value: saved.val()} : undefined};
+};

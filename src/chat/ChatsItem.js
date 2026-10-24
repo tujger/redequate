@@ -4,17 +4,20 @@ import {useDispatch} from "react-redux";
 import {Link, useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
 import ListItemComponent from "../components/ListItemComponent";
+import {useDatabase} from "../controllers";
 import {cacheDatas, usePages} from "../controllers/General";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
+import UserData from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import UserName from "../controls/UserName/UserName";
-import {ChatMeta} from "./ChatMeta";
+import ChatMeta from "./ChatMeta";
 import chatStyles from "./styles/ChatsItem.module.css";
 
 export default props => {
     const {id, skeleton, label, onClick, userComponent, textComponent} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -30,12 +33,12 @@ export default props => {
     React.useEffect(() => {
         if (skeleton || label) return;
         let isMounted = true;
-        const chatMeta = ChatMeta();
+        const chatMeta = ChatMeta(database);
         chatMeta.getOrCreateFor(currentUserData.id, id)
             .then(() => chatMeta.fetch())
             .then(() => {
                 const uid = chatMeta.uidOtherThan(currentUserData.id);
-                return cacheDatas.put(uid, UserData()).fetch(uid, [UserData.IMAGE, UserData.NAME]);
+                return cacheDatas.put(uid, new UserData(database)).fetch(uid, [UserData.IMAGE, UserData.NAME]);
             })
             .then(userData => {
                 chatMeta.watch(({removed}) => {

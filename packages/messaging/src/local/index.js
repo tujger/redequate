@@ -1,0 +1,65 @@
+import {delay, fail, identifier} from "../../../common";
+import MessagingBase from "../MessagingBase";
+import {defaultStorageKey, isMessage, messageType, sendMessage, validateStorageKey} from "./common";
+
+// Local simulation only
+export default class LocalMessaging extends MessagingBase {
+    constructor({storageKey = defaultStorageKey} = {}) {
+        super();
+        validateStorageKey(storageKey);
+        this.storageKey = storageKey;
+        window.redequateMessaging ??= {};
+        window.redequateMessaging.send ??= sendMessage;
+    }
+
+    async addMessageListener(onMessage) {
+        if (!(onMessage instanceof Function)) {
+            fail("messaging/invalid-argument", "Message listener must be a function.");
+        }
+        await delay("LocalMessaging", "addMessageListener");
+        const listener = event => {
+            if (event.origin !== window.location.origin || event.data?.type !== messageType ||
+                event.data.storageKey !== this.storageKey || !isMessage(event.data.message)) return;
+            try {
+                if (!window.localStorage.getItem(this.storageKey)) return;
+                const pending = onMessage(window.structuredClone(event.data.message));
+                if (pending && pending.then instanceof Function) {
+                    Promise.resolve(pending).catch(reportError);
+                }
+            } catch (error) {
+                reportError(error);
+            }
+        };
+        const windowListener = event => {
+            if (event.source === window) listener(event);
+        };
+        const serviceWorker = window.navigator?.serviceWorker;
+        window.addEventListener("message", windowListener);
+        serviceWorker?.addEventListener("message", listener);
+        return () => {
+            window.removeEventListener("message", windowListener);
+            serviceWorker?.removeEventListener("message", listener);
+        };
+    }
+
+    async checkIfSubscribed() {
+        return Boolean(window.localStorage.getItem(this.storageKey));
+    }
+
+    async subscribe() {
+        await delay("LocalMessaging", "subscribe");
+        let token = window.localStorage.getItem(this.storageKey);
+        if (!token) {
+            token = identifier();
+            window.localStorage.setItem(this.storageKey, token);
+        }
+        return token;
+    }
+
+    async unsubscribe() {
+        await delay("LocalMessaging", "unsubscribe");
+        window.localStorage.removeItem(this.storageKey);
+    }
+}
+
+const reportError = error => console.error("[LocalMessaging] Message handler failed", error);

@@ -4,7 +4,6 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {useStorage} from "../../packages/storage";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import MentionedSelectComponent from "../components/MentionedSelectComponent";
@@ -14,11 +13,12 @@ import {mutualRequest} from "../components/MutualComponent";
 import ProgressView from "../components/ProgressView";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
-import Pagination from "../controllers/FirebasePagination";
-import {cacheDatas, useFirebase, usePages, useWindowData} from "../controllers/General";
+import {useDatabase, useRedirectToLogin, useStorage} from "../controllers";
+import {cacheDatas, usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import UserData, {matchRole, normalizeSortName, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
@@ -27,12 +27,13 @@ import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/EditTag.module.css";
 
 export default ({allowOwner = true}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const {id} = useParams();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({});
     const storage = useStorage();
     const {t} = useTranslation();
@@ -47,7 +48,6 @@ export default ({allowOwner = true}) => {
         showTagOpen,
         deleteTagOpen,
         changeOwnerOpen,
-        newId,
         owner = ""
     } = state;
 
@@ -73,7 +73,7 @@ export default ({allowOwner = true}) => {
             setState(state => ({...state, disabled: true, changeOwnerOpen: false}));
         }
         const updateTagKey = async () => {
-            tag._key = id || newId;
+            tag._key = id;
         }
         const checkIfLabelNotEmpty = async () => {
             tag.label = (tag.label || "").trim();
@@ -83,11 +83,10 @@ export default ({allowOwner = true}) => {
         }
         const checkIfIdValid = async () => {
             const updatedId = tag.id || normalizeSortName(tag.label);
-            const existing = await new Pagination({
-                ref: "tag",
-                child: "id",
-                equals: updatedId,
-            }).next();
+            const existing = await database.cursor(["tag", "tag_id"], {
+                equalTo: updatedId,
+                orderBy: ["id"]
+            }).next(10);
             const other = existing.filter(item => item.key !== tag._key);
             if (other.length) {
                 console.error(`[EditTag] already exists '${updatedId}' from '${tag.label}' for '${tag._key}', found: ${JSON.stringify(other)}`);
@@ -100,12 +99,10 @@ export default ({allowOwner = true}) => {
             return updatedId;
         }
         const checkIfLabelValid = async updatedId => {
-            const existing = await new Pagination({
-                ref: "tag",
-                child: "label",
-                equals: tag.label,
-            }).next();
-            console.log(existing);
+            const existing = await database.cursor(["tag", "tag_id"], {
+                equalTo: tag.label,
+                orderBy: ["label"]
+            }).next(10);
             const labels = existing.filter(item => item.key !== tag._key);
             if (labels.length) {
                 console.error(`[EditTag] not available '${tag.label}' for '${updatedId}/${tag._key}, found: ${JSON.stringify(labels)}`);
@@ -133,7 +130,7 @@ export default ({allowOwner = true}) => {
             tag.image = imageSaved || image || null;
         }
         const updateTimestamp = async () => {
-            tag.timestamp = tag.timestamp || firebase.database.ServerValue.TIMESTAMP;
+            tag.timestamp = tag.timestamp || database.TIMESTAMP;
         }
         const updateUid = async () => {
             tag.uid = tag.uid !== undefined ? tag.uid : currentUserData.id;
@@ -161,12 +158,17 @@ export default ({allowOwner = true}) => {
             return key;
         }
         const publishTag = async key => {
-            await firebase.database().ref("tag").child(key).set(tag);
+            if (key) {
+                await database.update(["tag", {tag_id: key}], () => tag);
+            } else {
+                key = await database.create(["tag", "tag_id"], tag);
+            }
             return key;
         }
         const auditActivity = async key => {
             if (ownerChanged !== null) {
                 updateActivity({
+                    database,
                     uid: currentUserData.id,
                     type: "Tag owner changed",
                     details: {
@@ -187,8 +189,8 @@ export default ({allowOwner = true}) => {
         const subscribeToTag = async key => {
             if (isNew) {
                 return mutualRequest({
-                    firebase,
                     currentUserData,
+                    database,
                     mutualId: key,
                     mutualType: "tag",
                     typeId: "watching"
@@ -249,11 +251,11 @@ export default ({allowOwner = true}) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, hideTagOpen: false}));
 
-        const updates = {};
-        updates[`tag/${id}/hidden`] = true;
-        updates[`tag/${id}/_sort_name`] = null;
-        console.log("[EditTag] updates", updates)
-        firebase.database().ref().update(updates)
+        const updates = new Map();
+        updates.set(["tag", {tag_id: id}, "hidden"], true);
+        updates.set(["tag", {tag_id: id}, "_sort_name"], null);
+        console.log("[EditTag] updates", updates);
+        database.update(updates)
             .then(() => {
                 tag.hidden = true;
                 notifySnackbar({
@@ -275,14 +277,13 @@ export default ({allowOwner = true}) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, showTagOpen: false}));
 
-        const updates = {};
+        const updates = new Map();
         delete tag.hidden;
-        updates[`tag/${id}/hidden`] = null;
+        updates.set(["tag", {tag_id: id}, "hidden"], null);
         tag._sort_name = tag.id;
-        updates[`tag/${id}/_sort_name`] = tag._sort_name;
-        console.log("[EditTag] updates", updates)
-
-        firebase.database().ref().update(updates)
+        updates.set(["tag", {tag_id: id}, "_sort_name"], tag._sort_name);
+        console.log("[EditTag] updates", updates);
+        database.update(updates)
             .then(() => {
                 notifySnackbar({
                     title: t("Tag.{{label}} is visible now.", {label: tag.label}),
@@ -309,13 +310,13 @@ export default ({allowOwner = true}) => {
             setState(state => ({...state, disabled: true, deleteTagOpen: false}));
         }
         const createUpdates = async () => {
-            const updates = {};
-            updates[`tag/${id}`] = null;
+            const updates = new Map;
+            updates.set(["tag", {tag_id: id}], null);
             return updates;
         }
         const publishUpdates = async updates => {
             console.log(updates);
-            return firebase.database().ref().update(updates);
+            return database.update(updates);
         }
         const onComplete = async () => {
             // history.goBack();
@@ -345,15 +346,14 @@ export default ({allowOwner = true}) => {
     }
 
     React.useEffect(() => {
+        if (shouldRedirectToLogin) return;
         if (!id) {
-            const tagRef = firebase.database().ref("tag").push();
-            const tag = {};
-            setState(state => ({...state, tag, newId: tagRef.key}));
+            setState(state => ({...state, tag: {}}));
         } else if (id) {
-            firebase.database().ref("tag").child(id).once("value")
-                .then(snapshot => {
-                    if (snapshot.exists()) return snapshot.val();
-                    throw Error(t("Tag.{{id}} is not found.", {id: id}));
+            database.read(["tag", {tag_id: id}])
+                .then(value => {
+                    if (value === undefined) throw Error(t("Tag.{{id}} is not found.", {id}));
+                    return value;
                 })
                 .then(tag => {
                     if (isCurrentUserAdmin) {
@@ -373,18 +373,18 @@ export default ({allowOwner = true}) => {
             uploadComponentClean(uppy);
         }
         // eslint-disable-next-line
-    }, [id]);
+    }, [id, shouldRedirectToLogin]);
 
     React.useEffect(() => {
-        if (!tag || !tag.uid || tag.uid === "0") return;
-        UserData().fetch(tag.uid)
+        if (shouldRedirectToLogin || !tag || !tag.uid || tag.uid === "0") return;
+        new UserData(database).fetch(tag.uid)
             .then(userData => {
                 setState(state => ({...state, owner: `$[user:${tag.uid}:${userData.name}]`}));
             })
             .catch(notifySnackbar);
-    }, [tag])
+    }, [tag, shouldRedirectToLogin])
 
-    if (!tag) return <LoadingComponent/>;
+    if (shouldRedirectToLogin || !tag) return <LoadingComponent/>;
     return <div className={baseStyles.content}>
         <div className={styles.profile}>
             <div className={styles.profileFieldImage}>
@@ -410,7 +410,6 @@ export default ({allowOwner = true}) => {
                             />}
                             camera={false}
                             color={"primary"}
-                            firebase={firebase}
                             limits={{width: 800, height: 600, size: 200000}}
                             onsuccess={handleUploadPhotoSuccess}
                             onerror={handleUploadPhotoError}

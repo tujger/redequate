@@ -4,10 +4,9 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {usePages} from "../../controllers/General";
+import {usePages, Layout} from "../../controllers/General";
 import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData, disableClick}) => {
@@ -24,7 +23,7 @@ export default ({postData, disableClick}) => {
             icon={postData.counter("replied") ? <ChatFilledIcon/> : <ChatEmptyIcon/>}
             onClick={event => {
                 event.stopPropagation();
-                dispatch({type: lazyListComponentReducer.REFRESH});
+                dispatch({type: Layout.REFRESH});
                 history.push(pages.post.route + postData.id, {
                     onlyReplies: !!postData.counter("replied"),
                 })
@@ -36,7 +35,7 @@ export default ({postData, disableClick}) => {
         </Button>
         <CounterComponent
             counter={postData.counter("replied")}
-            path={disableClick ? `${postData.id}/replied` : undefined}
+            path={disableClick ? [{id: postData.id}, "replied"] : undefined}
             showZero
         />
     </div>

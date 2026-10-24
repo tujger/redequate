@@ -86,7 +86,7 @@ const UploadComponent = (
             fileTokens.delete(file.id);
         });
         // Prepare local previews inside Uppy's upload lifecycle. Publishing to
-        // Firebase remains the responsibility of uploadComponentPublish.
+        // storage remains the responsibility of uploadComponentPublish.
         uppy.addUploader(async fileIDs => {
             const files = fileIDs.map(id => uppy.getFile(id)).filter(Boolean);
             uppy.emit("upload-start", files);

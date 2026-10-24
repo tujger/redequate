@@ -4,14 +4,15 @@ import {Link} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import LanguageComponent from "../../components/LanguageComponent";
 import {usePages} from "../../controllers/General";
-import {currentRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {currentRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import MenuSection from "./MenuSection";
 import styles from "./styles/TopMenu.module.css";
 
 const TopMenu = props => {
     const {badge = {}, items, className} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const pages = usePages();
     const onProfilePointerDown = useRippleEffect();
 

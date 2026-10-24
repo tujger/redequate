@@ -4,12 +4,13 @@ import React from "react";
 import {useHistory} from "react-router-dom";
 import {delay, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import CounterComponent from "../CounterComponent";
 import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const history = useHistory();
     const pages = usePages();
     const [state, setState] = React.useState({});
@@ -18,7 +19,7 @@ export default ({postData}) => {
     const handleClickExtra = extraType => evt => {
         evt && evt.stopPropagation();
         if (disabled) return;
-        if (!currentUserData || !currentUserData.id) {
+        if (!currentUserData.id) {
             history.push(pages.login.route);
             return;
         }

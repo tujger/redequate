@@ -53,56 +53,6 @@ export const setupReceivingNotifications = (messaging, onMessage) => new Promise
             else setTimeout(() => notifySnackbar(error), 10);
             reject(error);
         });
-        /*      console.log(messaging);
-                  debugger;
-                  if(messaging.swRegistration) {
-                    reject(new Error("AAA"));
-                    let token = null;
-                    if (!hasNotifications()) {
-                      token = await messaging.getToken();
-                      localStorage.setItem("notification-token", token);
-                    }
-                  } else {
-                    if(!navigator.serviceWorker || !navigator.serviceWorker.controller) {
-                      reject(new Error("Subscribing failed: ServiceWorker is inactive"));
-                      return;
-                    }
-                    // reject(new Error("No error"));return;
-                    navigator.serviceWorker.ready.then(async registration => {
-                      console.log("Set up notifications", registration);
-                      const messaging = firebase.messaging();
-                      try {
-                        let token = null;
-                        if (!hasNotifications()) {
-                          token = await messaging.getToken();
-                          localStorage.setItem("notification-token", token);
-                        }
-                        messaging.addMessageListener(payload => {
-                          console.log("message", payload);
-                          (onMessage || notifySnackbar)({
-                            body: payload.notification.body,
-                            from: payload.from,
-                            image: payload.notification.image,
-                            title: payload.notification.title,
-                            priority: payload.priority,
-                            tag: payload.notification.tag,
-                          });
-                          //https://web-push-book.gauntface.com/chapter-05/02-display-a-notification/
-                          //https://developers.google.com/web/fundamentals/push-notifications/display-a-notification
-                          // registration.showNotification(payload.notification.title, payload.notification);
-                        });
-                        resolve(token);
-                      } catch(e) {
-                        console.error("Failed to set up notifications:", e);
-                        reject(e);
-                      }
-                    })
-                  }
-                }).catch(error => {
-                  console.error(error);
-                  (onMessage || notifySnackbar)({title: error.message});
-                  reject(error);
-                }); */
     } catch (error) {
         if (error.code === "messaging/unsupported-browser") {
             if (hasWrapperControlInterface()) {

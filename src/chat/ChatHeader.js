@@ -5,16 +5,16 @@ import {useDispatch} from "react-redux";
 import {Link, useHistory} from "react-router-dom";
 import AvatarView from "../components/AvatarView";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
-import {notifySnackbar, toDateString, useCurrentUserData, usePages} from "../controllers";
+import {notifySnackbar, toDateString, useCurrentUserDataValue, usePages} from "../controllers";
 import UserName from "../controls/UserName/UserName";
 import useRippleEffect from "../helpers/useRippleEffect";
 import chatHeaderStyles from "./styles/ChatHeader.module.css";
 
 export default ({chatMeta, className, id, userComponent, userData}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();

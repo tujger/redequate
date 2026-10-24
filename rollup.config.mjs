@@ -12,10 +12,13 @@ import postcss from 'rollup-plugin-postcss'
 import {authSourcePattern, withAuth} from './packages/auth/build.mjs'
 import {backendSourcePattern, withBackend} from './packages/backend/build.mjs'
 import {commonSourcePattern, withCommon} from './packages/common/build.mjs'
+import {databaseSourcePattern, withDatabase} from "./packages/database/build.mjs";
 import {messagingSourcePattern, withMessaging} from "./packages/messaging/build.mjs";
 import {storageSourcePattern, withStorage} from './packages/storage/build.mjs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const babelExtensions = ['.js', '.jsx', '.es6', '.es', '.mjs', '.cjs', '.ts', '.tsx'];
+const resolveExtensions = ['.mjs', '.js', '.json', '.node', '.ts', '.tsx'];
 
 const externalExports = [/^firebase(?:\/|$)/, /^@firebase(?:\/|$)/, 'react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/, /^@uppy(?:\/|$)/];
 
@@ -66,10 +69,11 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, messagingSourcePattern, storageSourcePattern],
+                    extensions: babelExtensions,
+                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, databaseSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
                 svgr(),
-                resolve(),
+                resolve({extensions: resolveExtensions}),
                 commonjs(),
                 babel(babelIosPwaPrompt),
                 json(),
@@ -82,7 +86,6 @@ export default () => {
 
                 // controllers
                 DateFormat: 'src/controllers/DateFormat.js',
-                FirebasePagination: 'src/controllers/FirebasePagination.js',
                 General: 'src/controllers/General.js',
                 lazyListComponentReducer: 'src/components/LazyListComponent/lazyListComponentReducer.js',
                 mentionTypes: 'src/controllers/mentionTypes.js',
@@ -160,6 +163,13 @@ export default () => {
                 ThemeSeason: 'src/themes/ThemeSeason/index.js',
                 ThemeDayNight: 'src/themes/ThemeDayNight/index.js',
 
+                // hooks
+                useAuth: 'src/controllers/AppContext/useAuth.js',
+                useBackend: 'src/controllers/AppContext/useBackend.js',
+                useDatabase: 'src/controllers/AppContext/useDatabase.js',
+                useMessaging: 'src/controllers/AppContext/useMessaging.js',
+                useStorage: 'src/controllers/AppContext/useStorage.js',
+
                 // internal
                 __alertsVisitReducer: 'src/alerts/alertsVisitReducer.js',
                 __alertsCounterReducer: 'src/alerts/alertsCounterReducer.js',
@@ -198,13 +208,14 @@ export default () => {
                 // Source JSX must be transpiled before CommonJS parses these modules.
                 babel({
                     babelHelpers: 'bundled',
-                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, commonSourcePattern, backendSourcePattern, messagingSourcePattern, storageSourcePattern],
+                    extensions: babelExtensions,
+                    include: ['src/**', 'packages/_common/src/**', authSourcePattern, backendSourcePattern, commonSourcePattern, databaseSourcePattern, messagingSourcePattern, storageSourcePattern],
                 }),
-                resolve(),
+                resolve({extensions: resolveExtensions}),
                 commonjs(),
                 babel(babelIosPwaPrompt),
                 json(),
             ]
         }
-    ].map(withAuth).map(withBackend).map(withCommon).map(withMessaging).map(withStorage)
+    ].map(withAuth).map(withBackend).map(withCommon).map(withDatabase).map(withMessaging).map(withStorage)
 }

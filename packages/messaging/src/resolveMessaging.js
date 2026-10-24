@@ -1,6 +1,6 @@
-import {resolvePackage} from "../../common/src/_packages";
+import {resolvePackage} from "../../common";
 
-export const resolveMessaging = async messaging => resolvePackage(messaging, "messaging", async () => {
-    const {default: LocalTestMessaging} = await import("./local-test/index.js");
-    return new LocalTestMessaging();
+export default async messaging => resolvePackage(messaging, "messaging", async () => {
+    const {default: LocalMessaging} = await import("./local/index.js");
+    return new LocalMessaging();
 });

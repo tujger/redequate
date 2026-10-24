@@ -1,12 +1,13 @@
 import React from "react";
+// eslint-disable-line no-unused-vars -- Required by the classic JSX build.
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
-import Pagination from "../../controllers/FirebasePagination";
-import {cacheDatas} from "../../controllers/General";
-import {UserData} from "../../controllers/UserData";
+import {DatabaseOrder} from "../../../packages/database/src";
+import {useDatabase} from "../../controllers";
+import {cacheDatas, Layout} from "../../controllers/General";
+import UserData from "../../controllers/UserData";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import LazyListComponent from "../LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import {MutualListMode} from "./MutualConstants";
 import MutualRequestItem from "./MutualRequestItem";
 import MutualSubscribeItem from "./MutualSubscribeItem";
@@ -15,7 +16,6 @@ import styles from "./styles/MutualList.module.css";
 export default props => {
     const {t} = useTranslation();
     const {
-        cached = true,
         itemComponent,
         itemTransform,
         live,
@@ -24,56 +24,50 @@ export default props => {
         noItemsComponent = <ItemPlaceholderComponent label={t("Mutual.Items not found.")} pattern={"flat"}/>,
         onChanged = () => {
         },
-        order = "desc",
-        pageTransform = items => items,
+        order = DatabaseOrder.DESC,
         pattern,
         placeholder = <ItemPlaceholderComponent skeleton={true} pattern={"flat"}/>,
         typeId,
         unsubscribeLabel,
         ItemProps,
     } = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const mixedId = typeId + "_" + mode + "_" + mutualId;
 
     const refreshList = () => {
         console.log(`[MutualList] reset list ${mixedId}`);
-        dispatch({type: lazyListComponentReducer.REFRESH, ...(cached ? {cache: mixedId} : {})});
+        dispatch({type: Layout.REFRESH});
     }
 
-    const fetchPagination = () => {
+    let cursor;
+    if (typeId && mutualId) {
         if (mode === MutualListMode.SUBSCRIBERS) {
-            return () => new Pagination({
-                ref: "mutual/" + typeId,
-                child: "id",
-                equals: mutualId,
+            cursor = database.cursor(["mutual", {mutual_type: typeId}, "mutual_id"], {
+                equalTo: mutualId,
                 order,
+                orderBy: ["id"],
             })
         } else if (mode === MutualListMode.SELF) {
-            return () => new Pagination({
-                ref: "mutualstamps/_my/" + mutualId,
-                // child: "uid",
-                // equals: mutualId,
+            cursor = database.cursor(["mutualstamps", "_my", {user_id: mutualId}, "mutual_id"], {
                 order,
             })
         } else if (mode === MutualListMode.SUBSCRIBES) {
-            return () => new Pagination({
-                ref: "mutual/" + typeId,
-                child: "uid",
-                equals: mutualId,
+            cursor = database.cursor(["mutual", {mutual_type: typeId}, "mutual_id"], {
+                equalTo: mutualId,
                 order,
+                orderBy: ["uid"],
             })
         } else if (mode === MutualListMode.STAMPS) {
-            return () => new Pagination({
-                ref: "mutualstamps/" + typeId + "/" + mutualId,
+            cursor = database.cursor(["mutualstamps", {mutual_type: typeId}, {user_id: mutualId}, "mutual_id"], {
                 order,
-            });
+            })
         } else if (mode === MutualListMode.REQUESTS) {
-            return () => new Pagination({
-                ref: "mutualrequests/" + typeId,
-                child: "id",
-                equals: mutualId,
+            cursor = database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+                equalTo: mutualId,
                 order,
-            });
+                orderBy: ["id"]
+            })
         }
     }
 
@@ -119,19 +113,19 @@ export default props => {
         if (itemTransform) return itemTransform;
         if (mode === MutualListMode.REQUESTS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData())
+                return cacheDatas.put(item.value.uid, new UserData(database))
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBERS) {
             return item => {
-                return cacheDatas.put(item.value.uid, UserData())
+                return cacheDatas.put(item.value.uid, new UserData(database))
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBES) {
             return item => {
-                return cacheDatas.put(item.value.id, UserData())
+                return cacheDatas.put(item.value.id, new UserData(database))
                     .fetch(item.value.id, [UserData.NAME, UserData.IMAGE])
                     .then(userData => ({...item, userData}));
             }
@@ -141,24 +135,17 @@ export default props => {
         return item => item
     }
 
-    React.useEffect(() => {
-        refreshList();
-    }, [mixedId, cached]);
-
     if (!typeId || !mutualId) {
         console.error(Error(`Some of arguments are not defined: typeId=${typeId}, mutualId=${mutualId}`));
         return noItemsComponent;
     }
 
     return <LazyListComponent
-        cache={cached ? mixedId : undefined}
-        itemComponent={fetchItemComponent()}
+        cursor={cursor}
+        ItemComponent={fetchItemComponent()}
         itemTransform={fetchItemTransform()}
         live={live}
         noItemsComponent={noItemsComponent}
-        pageTransform={pageTransform}
-        pagination={fetchPagination()}
         placeholder={placeholder}
-        ItemProps={ItemProps}
     />
 }

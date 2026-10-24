@@ -25,21 +25,26 @@
             background-color: var(--theme-color-focus);
         }
     }
+}
 
-    & [class*="__suggestions__list"],
+.suggestions {
     & ul[role="listbox"] {
         background-color: var(--theme-color-paper);
         box-shadow: var(--theme-dialog-shadow);
         box-sizing: border-box;
-        color: var(--menu-color);
+        color: var(--menu-color, var(--theme-color-text));
         max-height: calc(100vh - var(--theme-spacing) * 2);
         max-width: calc(100vw - var(--theme-spacing) * 2);
         min-width: calc(var(--theme-spacing) * 18);
         overflow: auto;
         padding: var(--theme-spacing) 0;
-        position: fixed;
-        z-index: 1301;
     }
+}
+
+.group {
+    background-color: #ddd;
+    pointer-events: none;
+    user-select: none;
 }
 
 .suggestion {

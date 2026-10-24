@@ -1,10 +1,9 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {cacheDatas, usePages} from "../../controllers/General";
+import {cacheDatas, usePages, Layout} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import PostCard from "./PostCard";
 import RepliesTree from "./RepliesTree";
 
@@ -46,7 +45,7 @@ const PostComponent = (props) => {
     const handleDelete = () => {
         cacheDatas.remove(postData.id);
         if (isReply) {
-            dispatch({type: lazyListComponentReducer.REFRESH});
+            dispatch({type: Layout.REFRESH});
         } else {
             onDelete(postData);
         }

@@ -4,17 +4,17 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useLocation, withRouter} from "react-router-dom";
-import {useAuth} from "../../packages/auth";
-import {useMessaging} from "../../packages/messaging";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import PasswordField from "../components/PasswordField";
 import ProgressView from "../components/ProgressView";
+import {useAuth, useDatabase, useMessaging} from "../controllers";
 import {fetchDeviceId, usePages, useStore} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import useCurrentUserData from "../controllers/useCurrentUserData";
+import UserData, {logoutUser, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import FacebookLogo from "../images/facebook-logo.svg";
@@ -33,7 +33,8 @@ function Login(props) {
         transformUserDataOnFirstLogin,
     } = props;
     const auth = useAuth();
-    const currentUserData = useCurrentUserData();
+    const [currentUserData, setCurrentUserData] = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const location = useLocation();
@@ -54,11 +55,10 @@ function Login(props) {
     const errorCallback = error => {
         notifySnackbar(error);
         dispatch(ProgressView.HIDE);
-        dispatch({type: "currentUserData", userData: null});
         setState(state => ({...state, requesting: false}));
         // refreshAll(store);
         window.localStorage.removeItem(pages.login.route);
-        return logoutUser({auth, store});
+        return logoutUser({auth, onLogout: () => setCurrentUserData(null)});
     };
 
     const finallyCallback = () => {
@@ -68,10 +68,9 @@ function Login(props) {
     const requestLoginGoogle = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser({auth, store})
+        logoutUser({auth, onLogout: () => setCurrentUserData(null)})
             .then(() => {
                 const provider = "google.com";
-                dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState(state => ({...state, requesting: true}));
                     return auth.signInWithPopup(provider)
@@ -88,10 +87,9 @@ function Login(props) {
     const requestLoginFacebook = () => {
         dispatch(ProgressView.SHOW);
         window.localStorage.removeItem(pages.login.route);
-        logoutUser({auth, store})
+        logoutUser({auth, onLogout: () => setCurrentUserData(null)})
             .then(() => {
                 const provider = "facebook.com";
-                dispatch({type: "currentUserData", userData: null});
                 if (popup) {
                     setState(state => ({...state, requesting: true}));
                     return auth.signInWithPopup(provider)
@@ -107,7 +105,7 @@ function Login(props) {
 
     const requestLoginToken = (token) => {
         dispatch(ProgressView.SHOW);
-        logoutUser({auth, store})
+        logoutUser({auth, onLogout: () => setCurrentUserData(null)})
             .then(() => {
                 setState(state => ({...state, requesting: true}));
                 return auth.signInWithCredential(token)
@@ -160,7 +158,7 @@ function Login(props) {
         const fetchPublicAndPrivateData = async props => {
             const {deviceId} = props;
             // eslint-disable-next-line react/prop-types -- userData is an Auth model passed between pipeline steps.
-            const userData = new UserData().fromJSON(props.userData.toJSON());
+            const userData = new UserData(database).fromJSON(props.userData.toJSON());
             await userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
                 .then(() => userData.fetchPrivate(deviceId, true));
             return {...props, userData};
@@ -208,20 +206,14 @@ function Login(props) {
             if (isFirstLogin) {
                 await userData.savePublic();
             } else {
-                userData.updateVisitTimestamp();
+                userData.updateVisitTimestamp(database);
             }
-            return props;
-        }
-        const updateCurrentUserData = async props => {
-            const {userData} = props;
-            useCurrentUserData(userData);
-            dispatch({type: "currentUserData", userData});
-            refreshAll(store);
             return props;
         }
         const checkIfUserDisabled = async props => {
             const {userData} = props;
             if (userData.role === UserRole.DISABLED) {
+                await updateCurrentUserData(props);
                 history.push(pages.profile.route);
                 throw "user-disabled";
             }
@@ -246,8 +238,14 @@ function Login(props) {
             }
             return props;
         }
+        const updateCurrentUserData = async props => {
+            const {userData} = props;
+            setCurrentUserData(userData);
+            refreshAll(store);
+            return props;
+        }
         const doIfFirstLogin = async props => {
-            console.log(props)
+            console.log("[Login]", "logged in", props);
             const {isFirstLogin} = props;
             if (onLogin && onLogin(isFirstLogin)) return;
             if (isFirstLogin) history.replace(pages.editprofile.route, {isFirstLogin});
@@ -270,9 +268,9 @@ function Login(props) {
             .then(updatePrivateData)
             .then(transformUserDataIfNeeded)
             .then(publishUserData)
-            .then(updateCurrentUserData)
             .then(checkIfUserDisabled)
             .then(setupNotifications)
+            .then(updateCurrentUserData)
             .then(doIfFirstLogin)
             .catch(catchEvent)
             .catch(notifySnackbar)
@@ -302,15 +300,8 @@ function Login(props) {
         history.goBack();
     }
 
-    if (currentUserData && currentUserData.id) {
-        if (location.pathname === pages.login.route) {
-            return <Redirect to={pages.profile.route}/>
-        } else {
-            return <Redirect to={location.pathname}/>
-        }
-    }
-
     React.useEffect(() => {
+        if (currentUserData.id) return;
         if (location.state && location.state.loginWith) {
             if (location.state.loginWith === "google") {
                 requestLoginGoogle();
@@ -332,6 +323,14 @@ function Login(props) {
             setState(state => ({...state, requesting: false}));
         }
     }, [location.state && location.state.loginWith])
+
+    if (currentUserData.id) {
+        if (location.pathname === pages.login.route) {
+            return <Redirect to={pages.profile.route}/>
+        } else {
+            return <Redirect to={location.pathname}/>
+        }
+    }
 
     if (requesting) return <LoadingComponent/>
 

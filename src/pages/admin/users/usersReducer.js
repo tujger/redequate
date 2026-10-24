@@ -1,4 +1,4 @@
-export const usersReducer = (state = {filter: "", mode: "all"}, action) => {
+const usersReducer = (state = {filter: "", mode: "all"}, action) => {
     switch (action.type) {
         case usersReducer.MODE:
             return {...state, filter: action.filter, mode: action.mode};
@@ -7,3 +7,5 @@ export const usersReducer = (state = {filter: "", mode: "all"}, action) => {
     }
 };
 usersReducer.MODE = "users_Mode";
+
+export default usersReducer;

@@ -1,10 +1,8 @@
-import {tokenizeText} from "../MentionedTextComponent";
 import {cacheDatas} from "../../controllers/General";
-import {firebaseMessaging as firebase} from "../../controllers/Firebase";
+import {tokenizeText} from "../MentionedTextComponent";
 
-export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
+export const PostData = function ({allowedExtras = ["like"], database, type = "posts"}) {
     let _id, _uid, _text, _images, _tokens, _created, _extras, _counters, _replyTo, _root, _targetTag, _edit;
-    const refRoot = firebase.database().ref();
 
     const _body = {
         get asString() {
@@ -102,20 +100,18 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
                     const toks = tokenizeText(matches[1]);
                     _targetTag = toks[0];
                     if (_targetTag && _targetTag.type === "tag" && _targetTag.value) {
-                        _targetTag = await firebase.database().ref("tag").child(_targetTag.value).once("value")
-                            .then(snapshot => {
-                                if (snapshot.exists()) {
-                                    const val = snapshot.val();
-                                    if (!val || val.hidden) {
-                                        _targetTag = undefined;
-                                    } else {
-                                        _targetTag.value = (val || {}).label || _targetTag.value;
-                                    }
-                                } else {
+                        _targetTag = await database.read(["tag", {tag_id: _targetTag.value}]).then(value => {
+                            if (value !== undefined) {
+                                if (!value || value.hidden) {
                                     _targetTag = undefined;
+                                } else {
+                                    _targetTag.value = (value || {}).label || _targetTag.value;
                                 }
-                                return _targetTag;
-                            });
+                            } else {
+                                _targetTag = undefined;
+                            }
+                            return _targetTag;
+                        })
                     }
                 }
             } catch (e) {
@@ -138,7 +134,8 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
         },
         delete: () => {
             cacheDatas.remove(_id);
-            return _body._refPosts.child(_id).set(null);
+            // UNKNOWN: type is configurable; its record key has no single confirmed wildcard name.
+            return database.delete(["posts", {post_id: _id}]);
         },
         editOf: type => {
             if (!_edit) return null;
@@ -168,10 +165,8 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
                 resolve(_body);
                 return;
             }
-            _body._refPosts.child(_id).once("value").then(async snapshot => {
-                if (snapshot.exists()) {
-                    _body._lastSnapshot = snapshot;
-                    const data = snapshot.val();
+            database.read(["posts", {post_id: _id}]).then(async data => {
+                if (data !== undefined) {
                     data.replyTo = data.to;
                     await _body.create(data);
                     _created = data.created;
@@ -180,47 +175,38 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
                 } else {
                     reject(new Error(`Post not found: ${_id}`))
                 }
-            }).catch(reject)
+            }).catch(reject);
         }),
-        fetchCounters: () => new Promise((resolve, reject) => {
-            if (!_id) reject(new Error("Post not submitted yet."));
-            _counters = {};
-            refRoot.child("_counters").child(_id).once("value").then(snapshot => {
-                _counters = snapshot.val() || {};
-                resolve(_body);
-            })
-        }),
-        fetchExtras: (uid) => new Promise((resolve, reject) => {
-            if (!_id) {
-                reject(new Error("Post not submitted yet."));
-                return;
-            }
-            if (!uid) {
-                resolve(_body);
-                return;
-            }
+        fetchCounters: async () => {
+            if (!_id) throw new Error("Post not submitted yet.");
+            // UNKNOWN: _counters contains several key schemes; type does not identify the key field.
+            _counters = await database.read(["_counters", {id: _id}]) || {};
+            return _body;
+        },
+        fetchExtras: async (uid) => {
+            if (!_id) throw new Error("Post not submitted yet.");
+            if (!uid) return _body;
             // eslint-disable-next-line camelcase
             const id_uid = `${_id}_${uid}`;
-            _body._refExtra.orderByChild("id_uid").equalTo(id_uid).once("value").then(snapshot => {
-                _extras = {};
-                snapshot.forEach(child => {
-                    if (child.exists()) {
-                        const val = child.val();
-                        if (allowedExtras.indexOf(val.type) >= 0) {
-                            _extras[val.type] = {key: child.key, value: val};
-                        }
-                    }
-                });
-                resolve(_body);
-            })
-        }),
+            const value = await database.read(["extra", "extra_id"], {
+                equalTo: id_uid,
+                orderBy: "id_uid",
+            });
+            _extras = {};
+            Object.entries(value || {}).forEach(([key, val]) => {
+                if (allowedExtras.indexOf(val.type) >= 0) {
+                    _extras[val.type] = {key, value: val};
+                }
+            });
+            return _body;
+        },
         fetchPath: async () => {
             if (!_replyTo) return _id;
             let id = _replyTo, next = null, parentKey = null, rootKey = null, commentKey = null;
             while (id) {
-                const snapshot = await firebase.database().ref("posts").child(id).once("value");
-                if (snapshot.exists()) {
-                    next = snapshot.val();
+                const value = await database.read(["posts", {post_id: id}])
+                if (value !== undefined) {
+                    next = value;
                     parentKey = parentKey || id;
                     commentKey = rootKey || id;
                     rootKey = id;
@@ -234,19 +220,18 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
         },
         publish: () => async () => {
             if (!_id) {
-                const pub = await _body._refPosts.push(_body._publishData());
-                _id = pub.key;
-                _created = (await pub.child("created").once("value")).val();
+                _id = await database.create(["posts", "post_id"], _body._publishData());
+                _created = await database.read(["posts", {post_id: _id}, {created: "created"}]);
             }
             cacheDatas.put(_id, _body);
             return _body;
         },
         putExtra: async ({type, uid}) => {
             // if (!_extras) throw new Error("'postData.fetchExtras(uid)' before put.");
-            if (allowedExtras.indexOf(type) < 0) throw new Error(`Extra of type '${type}' is not allowed.`);
-            if (!uid) throw new Error(`'uid' is not defined for '${type}'.`);
+            if (allowedExtras.indexOf(type) < 0) throw new Error(`Extra of type 'posts' is not allowed.`);
+            if (!uid) throw new Error(`'uid' is not defined for 'posts'.`);
             if (!_extras) await _body.fetchExtras(uid);
-            if (_extras[type]) throw new Error(`'${type}' is already defined for ${_id}/${uid}.`);
+            if (_extras[type]) throw new Error(`'posts' is already defined for ${_id}/${uid}.`);
 
             if (type === "like" && _extras.dislike) {
                 await _body.removeExtra({type: "dislike", uid});
@@ -261,14 +246,13 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
             const value = {
                 id: _id,
                 id_uid,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                timestamp: database.TIMESTAMP,
                 type,
                 uid,
                 uid_id,
             };
-
-            const snapshot = await _body._refExtra.push(value);
-            _extras[type] = {key: snapshot.key, value}
+            const key = await database.create(["extra", "extra_id"], value);
+            _extras[type] = {key, value}
             _counters = _counters || {};
             _counters[type] = (_counters[type] || 0) + 1;
             return _extras[type];
@@ -278,7 +262,7 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
             if (!uid) throw new Error("'uid' is not defined.");
 
             const extra = _extras[type];
-            await _body._refExtra.child(extra.key).set(null);
+            await database.delete(["extra", {extra_id: extra.key}]);
             delete _extras[type];
             _counters = _counters || {};
             _counters[type] = (_counters[type] || 1) - 1;
@@ -311,24 +295,22 @@ export const PostData = function ({type = "posts", allowedExtras = ["like"]}) {
         },
         _publishData: () => {
             const value = {
-                created: _created || firebase.database.ServerValue.TIMESTAMP,
+                created: _created || database.TIMESTAMP,
                 text: _text,
                 uid: _uid,
                 images: _images || null,
-                to: _replyTo || null,
+                to: _replyTo || 0,
                 root: _root || null
             };
             return value;
         },
-        _refRoot: refRoot,
-        _refPosts: refRoot.child(type),
-        _refExtra: refRoot.child("extra"),
         _updateVal: async (section, path, change, cache) => {
+            // UNKNOWN: path is an opaque relative key and may contain multiple segments.
+            const recordPath = [section, {id: `${path}`}];
             path = `${section}/${path}`;
             if (cache[path] !== undefined) {
             } else {
-                const count = await _body._refRoot.child(path).once("value");
-                cache[path] = count.val() || 0;
+                cache[path] = (await database.read(recordPath)) || 0;
             }
             cache[path] = cache[path] + change;
             return cache[path];

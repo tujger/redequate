@@ -1,20 +1,21 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import Pagination from "../../controllers/FirebasePagination";
-import {cacheDatas, usePages} from "../../controllers/General";
+import {DatabaseOrder} from "../../../packages/database/src";
+import {useDatabase} from "../../controllers";
+import {cacheDatas, usePages, Layout} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {UserData} from "../../controllers/UserData";
+import UserData from "../../controllers/UserData";
 import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
-import {lazyListComponentReducer} from "../LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../MentionedTextComponent";
 import cardStyles from "./styles/PostComponent.module.css";
 import motionStyles from "./styles/PostMotion.module.css";
 
 export default (props) => {
     const {items: givenItems, mentions, postId, type} = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -25,7 +26,7 @@ export default (props) => {
     const {item, itemPrev, items} = state;
 
     const handleClick = () => {
-        dispatch({type: lazyListComponentReducer.REFRESH});
+        dispatch({type: Layout.REFRESH});
         history.push(pages.post.route + postId, {
             onlyReplies: true,
         })
@@ -78,7 +79,7 @@ export default (props) => {
         const fetchUserData = async props => {
             const {postData} = props;
             const userData = await cacheDatas.fetch(postData.uid, id => {
-                return UserData().fetch(id, [UserData.NAME, UserData.IMAGE]);
+                return new UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]);
             });
             return {...props, userData};
         }
@@ -162,12 +163,11 @@ export default (props) => {
         if (items) return;
         let isMount = true;
         const fetchReplies = async () => {
-            return Pagination({
-                ref: type,
-                equals: postId,
-                child: "to",
-                order: "desc",
-            }).next()
+            return database.cursor(["posts", "post_id"], {
+                equalTo: postId,
+                order: DatabaseOrder.DESC,
+                orderBy: ["to"]
+            }).next(10)
         }
         const updateState = async items => {
             isMount && setState(state => ({...state, items}));

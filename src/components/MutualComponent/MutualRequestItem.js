@@ -2,7 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useBackend} from "../../../packages/backend";
+import {useBackend} from "../../controllers";
 import {toDateString} from "../../controllers/DateFormat";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";

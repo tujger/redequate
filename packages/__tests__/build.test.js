@@ -17,7 +17,7 @@ it.each([["auth", withAuth], ["messaging", withMessaging], ["storage", withStora
     };
     const result = extend(config);
     expect(result.input.main).toBe("original");
-    for (const entry of ["index", "firebase", "local-test"]) {
+    for (const entry of ["index", "firebase", "local"]) {
         expect(result.input[`${area}/${entry}`]).toContain(`/packages/${area}/src/`);
         expect(result.output[0].entryFileNames({name: `${area}/${entry}`})).toBe("[name].mjs");
         expect(result.output[1].entryFileNames({name: `${area}/${entry}`})).toBe("[name].cjs");
@@ -25,7 +25,7 @@ it.each([["auth", withAuth], ["messaging", withMessaging], ["storage", withStora
     expect(result.output[0].entryFileNames({name: "main"})).toBe("main.es.js");
     expect(result.output[1].entryFileNames({name: "main"})).toBe("[name].js");
     const local = {moduleIds: [source + "index.js", "\0rollupPluginBabelHelpers.js"]};
-    const shared = {moduleIds: [fileURLToPath(new URL("../_common/src/_packages.js", import.meta.url))]};
+    const shared = {moduleIds: [fileURLToPath(new URL("../_common/src/index.js", import.meta.url))]};
     const web = {moduleIds: ["/src/Dispatcher.js"]};
     expect(result.output[0].chunkFileNames(local)).toBe("chunks/[name]-[hash].mjs");
     expect(result.output[0].chunkFileNames(shared)).toBe("core.es.js");

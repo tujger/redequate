@@ -1,82 +1,67 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import Pagination from "../controllers/FirebasePagination";
-import {MenuBadge, useFirebase, usePages, useStore} from "../controllers/General";
+import {useDatabase} from "../controllers";
+import {MenuBadge, usePages, useStore} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/UserData";
-import {alertsCounterReducer} from "./alertsCounterReducer";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import alertsCounterReducer from "./alertsCounterReducer";
 
-const AlertsDaemon = ({fetchAlertContent}) => {
-    const currentUserData = useCurrentUserData();
+export default ({fetchAlertContent}) => {
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
 
     React.useEffect(() => {
+        if (!currentUserData.id) return;
         let lastVisit = 0;
         if (store.getState() && store.getState().alertsVisit) {
             const value = store.getState().alertsVisit;
             lastVisit = value.timestamp;
         }
-        const alertsPagination = new Pagination({
-            ref: "alerts/" + currentUserData.id,
-            child: "timestamp",
-            start: lastVisit,
-            size: 10000,
-            timeout: 180000,
-            update: () => {
-            }
+        const cursor = database.cursor(["alerts", {user_id: currentUserData.id}, "alert_id"], {
+            orderBy: ["timestamp"],
+            start: lastVisit
         });
-        alertsPagination.next().then(() => {
-            if (alertsPagination.countTotal) {
-                dispatch({type: alertsCounterReducer.VALUE, value: alertsPagination.countTotal});
+        cursor.next(10000).then(() => {
+            if (cursor.count) {
+                dispatch({type: alertsCounterReducer.VALUE, value: cursor.count});
                 dispatch({type: MenuBadge.INCREASE, page: pages.alerts});
             }
         }).catch(notifySnackbar);
 
-        const daemonNew = firebase.database().ref("alerts").child(currentUserData.id).limitToLast(1);
-        let lastKey = null;
-        const alertsListener = (snapshot) => {
-            if (!lastKey) {
-                lastKey = snapshot.key;
-                return;
+        const listener = database.addEventListener(["alerts", {user_id: currentUserData.id}, "alert_id"], {
+            onChildAdd({key, value}) {
+                const match = matchPath(window.location.pathname, {
+                    exact: true,
+                    path: pages.alerts._route,
+                    strict: true
+                });
+                if (match) {
+                    return;
+                }
+                fetchAlertContent({database, pages}, value).then(({title, text}) => {
+                    notifySnackbar({
+                        id: pages.alerts.route,
+                        onClick: () => history.push(pages.alerts.route),
+                        title: <>
+                            {title}: {text}
+                        </>,
+                    })
+                }).catch(console.error);
+                dispatch({type: MenuBadge.INCREASE, page: pages.alerts});
+                dispatch({type: alertsCounterReducer.INCREASE});
             }
-            if (lastKey && lastKey > snapshot.key) return;
-            lastKey = snapshot.key;
-            const match = matchPath(window.location.pathname, {
-                exact: true,
-                path: pages.alerts._route,
-                strict: true
-            });
-            if (match) {
-                return;
-            }
-            const alert = snapshot.val();
-            fetchAlertContent({firebase, pages}, alert).then(({title, text}) => {
-                notifySnackbar({
-                    id: pages.alerts.route,
-                    onClick: () => history.push(pages.alerts.route),
-                    title: <>
-                        {title}: {text}
-                    </>,
-                })
-            }).catch(console.error);
-            dispatch({type: MenuBadge.INCREASE, page: pages.alerts});
-            dispatch({type: alertsCounterReducer.INCREASE});
-        }
-        daemonNew.on("child_added", alertsListener);
+        })
+        console.log("[AlertsDaemon] installed");
         return () => {
-            daemonNew && daemonNew.off("child_added", alertsListener);
+            listener.remove();
             dispatch({type: MenuBadge.RESET, page: pages.alerts});
         }
-        // eslint-disable-next-line
-    }, []);
+    }, [currentUserData.id]);
 
-    console.log("[AlertsDaemon] installed")
     return null;
 }
-
-export default AlertsDaemon;

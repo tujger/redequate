@@ -4,14 +4,15 @@ import {Link, useHistory, useLocation} from "react-router-dom";
 import AvatarView from "../../components/AvatarView";
 import ProgressView from "../../components/ProgressView";
 import {usePages} from "../../controllers/General";
-import {currentRole, matchRole, needAuth, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {currentRole, matchRole, needAuth, UserRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import useRippleEffect from "../../helpers/useRippleEffect";
 import styles from "./styles/Titlebar.module.css";
 
 export default (props) => {
     const {className} = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const history = useHistory();
     const location = useLocation();
     const pages = usePages();

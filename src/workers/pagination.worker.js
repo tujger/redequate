@@ -1,8 +1,6 @@
 /* eslint-disable */
-import {useFirebase} from "../controllers";
 
 export const pagination = () => {
-    const firebase = useFirebase();
     // performance test
     const fib = (x) => {
         if (x <= 0) return 0;

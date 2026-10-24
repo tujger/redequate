@@ -102,6 +102,10 @@
     display: flex;
 }
 
+.avatar {
+    text-decoration: none;
+}
+
 .date {
     align-items: center;
     color: var(--theme-color-secondary);

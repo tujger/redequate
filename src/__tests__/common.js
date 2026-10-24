@@ -1,9 +1,11 @@
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
-import "firebase/compat/database";
+import {deleteApp} from "firebase/app";
+import {connectDatabaseEmulator, getDatabase, goOffline} from "firebase/database";
+import {connectAuthEmulator, getAuth} from "firebase/auth";
+import "fake-indexeddb/auto";
+import Firebase from "../controllers/Firebase";
+import UserData from "../controllers/UserData";
+import FirebaseDatabase from "../../packages/database/src/firebase";
 import FirebaseAuth from "../../packages/auth/src/firebase";
-import {createStore} from "redux";
-import {currentUserData, useCurrentUserData} from "../controllers/UserData";
 
 export const projectId = process.env.GCLOUD_PROJECT;
 export const databaseNamespace = `${projectId}-default-rtdb`;
@@ -12,20 +14,18 @@ const databaseHost = process.env.FIREBASE_DATABASE_EMULATOR_HOST;
 if (!projectId?.startsWith("demo-") || authHost !== "127.0.0.1:9099" || databaseHost !== "127.0.0.1:9000") {
     throw new Error("Run integration tests with npm run test:integration; local emulators are required");
 }
-firebase.initializeApp({
+export const firebase = Firebase({
     apiKey: "emulator-only-key",
     authDomain: "localhost",
     projectId,
     databaseURL: `https://${databaseNamespace}.firebaseio.com`,
 });
-firebase.auth().useEmulator(`http://${authHost}`, {disableWarnings: true});
-firebase.database().useEmulator("127.0.0.1", 9000);
-export {firebase};
-export const auth = new FirebaseAuth({firebase});
-export const store = createStore((state, action) => ({
-    ...state,
-    ...currentUserData(state, action),
-}), {userData: null});
+export const sdkAuth = getAuth(firebase.app);
+connectAuthEmulator(sdkAuth, `http://${authHost}`, {disableWarnings: true});
+export const sdkDatabase = getDatabase(firebase.app);
+connectDatabaseEmulator(sdkDatabase, "127.0.0.1", 9000);
+export const database = new FirebaseDatabase({firebase});
+export const auth = new FirebaseAuth({firebase, database, UserData});
 
 export async function emulatorRequest(path, options = {}) {
     const response = await fetch(`http://${authHost}/emulator/v1/projects/${projectId}/${path}`, options);
@@ -43,15 +43,14 @@ export async function seedDatabase(value) {
 }
 
 beforeEach(async () => {
-    await firebase.auth().signOut();
-    useCurrentUserData(null);
+    await auth.signOut();
     await emulatorRequest("accounts", {method: "DELETE"});
     await seedDatabase(null);
     window.localStorage.clear();
 });
 
 afterAll(async () => {
-    await firebase.auth().signOut();
-    firebase.database().goOffline();
-    await firebase.app().delete();
+    await auth.signOut();
+    goOffline(sdkDatabase);
+    await deleteApp(firebase.app);
 });

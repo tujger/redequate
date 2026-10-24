@@ -1,280 +1,163 @@
 import React from "react";
-import {connect, useDispatch} from "react-redux";
-import {useHistory} from "react-router-dom";
+import {useDispatch} from "react-redux";
+import {DatabaseOrder} from "../../../packages/database/src";
 import notifySnackbar from "../../controllers/notifySnackbar";
+import ListItemComponent from "../ListItemComponent";
 import ProgressView from "../ProgressView";
-import {lazyListComponentReducer} from "./lazyListComponentReducer";
 import Observer from "./Observer";
-import Scroller from "./Scroller";
 
-function LazyListComponent(
+const itemTransformDefault = async item => ({children: JSON.stringify(item)});
+
+export default (
     {
-        autoRefresh = true,
-        cache = false,
-        containerRef,
         disableProgress,
-        itemComponent = (item) => <div key={item.key}>
-            {item.key} - {JSON.stringify(item.value)}
-        </div>,
-        itemTransform = item => item,
+        itemTransform = itemTransformDefault,
+        ItemComponent = ListItemComponent,
         live = false,
         noItemsComponent,
-        pageTransform = items => items,
-        pagination: sourcePagination,
+        cursor,
+        page = 10,
         placeholder,
-        placeholders = 1,
-        random,
-        reverse = false,
-        scrollerClassName,
-        ItemProps = {},
-        ["LazyListComponent_" + cache]: cacheData = {},
-    }) {
+    }) => {
     const dispatch = useDispatch();
-    const history = useHistory();
-    const [state, setState] = React.useState({});
-    const {
-        finished: cachedFinished = false,
-        items: cachedItems = [],
-        loading: cachedLoading = true,
-        pagination: cachedPagination = sourcePagination instanceof Function ? sourcePagination() : sourcePagination,
-        refresh
-    } = cacheData;
-    const {
-        finished = cache !== undefined ? cachedFinished : false,
-        items = cache !== undefined ? cachedItems : [],
-        loading = cache !== undefined ? cachedLoading : true,
-        pagination = cachedPagination
-    } = state;
+    const [items, setItems] = React.useState([]);
+    const session = React.useRef();
+    const [completedPages, setCompletedPages] = React.useState(0);
 
-    const ascending = pagination.order === "asc";
-    const scrollHeight = (value) => {
-        if (value !== undefined) {
-            window.scrollTo(0, value);
-            return;
-            // ((containerRef && containerRef.current) || window).scrollTo(0, value);
+    const renderItem = async (current, item) => {
+        try {
+            const itemProps = await itemTransform(item);
+            if(!itemProps) return null;
+            return <ItemComponent {...itemProps} id={item.id ?? item.key} key={item.key}/>;
+        } catch (error) {
+            if (session.current === current) {
+                console.error(error);
+            }
         }
-        if (containerRef && containerRef.current) return containerRef.current.scrollHeight;
-        return window.screenHeight;
-    }
+    };
 
-    const loadNextPage = () => {
-        if (finished) {
-            return;
+    const add = async (current, entries, prepend = false) => {
+        const newitems = await Promise.all(entries.map(item => renderItem(current, item)));
+        if (session.current !== current) {
+            return [];
         }
-        if (!disableProgress) dispatch(ProgressView.SHOW);
-
-        let before = null;
-        if (reverse) {
-            before = scrollHeight();
-        }
-
-        return pagination.next()
-            .then(async newitems => {
-                newitems = newitems.map(async (item, index) => {
-                    let transformed;
-                    try {
-                        transformed = await itemTransform(item, index);
-                    } catch (error) {
-                        console.error(error);
-                    }
-                    if (transformed) {
-                        try {
-                            return itemComponent(transformed, index, ItemProps);
-                        } catch (error) {
-                            console.error(error);
-                        }
-                    }
-                });
-                return Promise.all(newitems);
-            })
-            .then(newitems => pageTransform(newitems))
-            .then(newitems => newitems.filter(item => item !== undefined))
-            .then(newitems => {
-                console.log(`[Lazy] loaded ${refresh ? 0 : items.length}+${newitems.length} items${cache ? " on " + cache : ""}`);
-                return ascending
-                    ? (reverse ? [...newitems.reverse(), ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems])
-                    : (reverse ? [...newitems, ...(refresh ? [] : items)] : [...(refresh ? [] : items), ...newitems.reverse()])
-            })
-            .then(newitems => newitems.filter(item => {
-                newitems._cmp = newitems._cmp || {};
-                if (newitems._cmp[item.key]) return false;
-                newitems._cmp[item.key] = true;
+        setItems(items => {
+            if (session.current !== current) {
+                return items;
+            }
+            const seen = new Set(items.map(item => item.key));
+            const added = newitems.filter(item => {
+                if (!item || seen.has(item.key)) {
+                    return false;
+                }
+                seen.add(item.key);
                 return true;
-            }))
-            .then(items => ({
-                ascending,
-                finished: pagination.finished,
-                random: Math.random(),
-                items,
-                loading: false,
-                pagination,
-                refresh: null,
-                reverse
-            }))
-            .catch(error => {
-                notifySnackbar({
-                    buttonLabel: "Refresh",
-                    error: error,
-                    onButtonClick: () => {
-                        import("../../controllers/Firebase")
-                            .then(({forceFirebaseReinit}) => {
-                                forceFirebaseReinit();
-                                window.location.reload()
-                            })
-                            .catch(notifySnackbar);
-                    },
-                });
-                return {
-                    finished: true,
-                    items: [],
-                    loading: false,
-                    pagination,
-                    reverse
-                }
-            })
-            .then(update => {
-                if (cache) {
-                    dispatch({
-                        type: lazyListComponentReducer.UPDATE,
-                        cache: cache,
-                        ["LazyListComponent_" + cache]: update
-                    });
-                } else {
-                    setState(state => ({
-                        ...state,
-                        ...update,
-                    }))
-                }
-            })
-            .finally(() => {
-                if (reverse) {
-                    setTimeout(() => {
-                        const after = scrollHeight();
-                        scrollHeight(after - before);
-                    }, 0)
-                }
-                if (!disableProgress) dispatch(ProgressView.HIDE);
             });
+            return prepend ? [...added, ...items] : [...items, ...added];
+        });
+        return newitems;
+    };
+
+    const remove = (current, entry) => {
+        setItems(items => session.current === current
+            ? items.filter(item => item.key !== String(entry.key)) : items);
+    };
+
+    const change = async (current, entry) => {
+        const item = await renderItem(current, entry);
+        if (!item) {
+            return;
+        }
+        setItems(items => session.current === current
+            ? items.map(previous => previous.key === item.key ? item : previous) : items);
+    };
+
+    const loadNextPage = async () => {
+        const current = session.current;
+        if (!current || current.cursor !== cursor || current.loading || cursor.position?.finished) {
+            return;
+        }
+        current.loading = true;
+        current.progress = !disableProgress;
+        if (current.progress) {
+            dispatch(ProgressView.SHOW);
+        }
+
+        try {
+            const entries = await cursor.next(page);
+            if (session.current !== current || entries === undefined) {
+                return;
+            }
+            const newitems = await add(current, entries);
+            if (session.current !== current) {
+                return;
+            }
+            setCompletedPages(value => value + 1);
+            console.log(`[Lazy] loaded ${items.length}+${newitems.filter(Boolean).length} items`);
+        } catch (error) {
+            if (session.current !== current) {
+                return;
+            }
+            notifySnackbar({
+                buttonLabel: "Refresh",
+                error,
+                onButtonClick: () => window.location.reload(),
+            });
+            setItems(previous => session.current === current ? [] : previous);
+        } finally {
+            current.loading = false;
+            if (session.current === current && current.progress) {
+                current.progress = false;
+                dispatch(ProgressView.HIDE);
+            }
+        }
     };
 
     React.useEffect(() => {
-        let isMounted = true;
-        const liveAddRef = live ? pagination.ref.limitToLast(1) : null;
-        const liveRemoveRef = live ? pagination.ref : null;
-
-        let lastKey = null;
-        const liveAddListener = async snapshot => {
-            if (!isMounted) return;
-            if (!lastKey && !cachedPagination.finished) {
-                lastKey = snapshot.key;
-                return;
-            }
-            if (lastKey && lastKey > snapshot.key) return;
-            lastKey = snapshot.key;
-            const item = {key: snapshot.key, value: snapshot.val()};
-            let transformed = await itemTransform(item, snapshot.key);
-            if (transformed) {
-                transformed = itemComponent(transformed, snapshot.key, ItemProps);
-            }
-            if (cache) {
-                dispatch({
-                    type: lazyListComponentReducer._ADD,
-                    cache: cache,
-                    item: transformed
-                });
-            } else {
-                isMounted && setState(state => ({
-                    ...state,
-                    items: ascending
-                        ? (reverse ? [transformed, ...state.items] : [...state.items, transformed])
-                        : (reverse ? [...state.items, transformed] : [transformed, ...state.items])
-                }))
-            }
-        }
-
-        const liveRemoveListener = async snapshot => {
-            if (!isMounted) return;
-            if (cache) dispatch({type: lazyListComponentReducer.RESET, cache});
-            else dispatch({type: lazyListComponentReducer.RESET});
-        }
-
-        if (live) {
-            liveAddRef.on("child_added", liveAddListener);
-            liveRemoveRef.on("child_removed", liveRemoveListener);
-        }
+        const current = {cursor, loading: false, progress: false};
+        session.current = current;
         return () => {
-            liveAddRef && liveAddRef.off("child_added", liveAddListener);
-            liveRemoveRef && liveRemoveRef.off("child_removed", liveRemoveListener);
-            if (!disableProgress) dispatch(ProgressView.HIDE);
-            if (!cache) pagination.reset();
-            isMounted = false;
-        }
-    }, [pagination.term, cachedPagination.term]);
+            setItems([]);
+            if (session.current === current) {
+                session.current = undefined;
+            }
+            if (current.progress) {
+                current.progress = false;
+                dispatch(ProgressView.HIDE);
+            }
+        };
+    }, [cursor]);
 
     React.useEffect(() => {
-        if (items.length) {
-            console.log(`[Lazy] cached ${items.length} items${cache ? " on " + cache : ""}`);
+        if (!live) return;
+        const current = session.current;
+        const handle = async (...args) => {
+            const [{type, entry}] = args;
+            if (type === "add") {
+                const prepend = cursor.order === DatabaseOrder.DESC;
+                if (prepend || cursor.position.finished) {
+                    return add(current, [entry], prepend);
+                }
+            } else if (type === "change") {
+                return change(current, entry);
+            } else if (type === "remove") {
+                return remove(current, entry);
+            }
         }
-        if (cache) return;
-        cachedPagination.reset();
-        const update = {
-            finished: false,
-            items: [],
-            loading: true,
-            pagination: cachedPagination,
-            reverse
+        const subscribed = cursor.subscribe(handle);
+        return () => {
+            subscribed.unsubscribe();
         }
-        setState(state => ({
-            ...state,
-            ...update,
-        }))
-    }, [random, pagination.term, cachedPagination.term, reverse])
-
-    React.useEffect(() => {
-        if (!cache || !autoRefresh) return;
-        if (history.action === "POP") {
-            history.action = "PUSH";
-            return;
-        }
-        console.log(`[Lazy] refresh ${cache}`);
-        if (!reverse) scrollHeight(0);
-        dispatch({type: lazyListComponentReducer.REFRESH, ...(cache ? {cache} : {})});
-    }, [cache, autoRefresh, reverse]);
-
-    React.useEffect(() => {
-        if (!refresh) return;
-        loadNextPage();
-    }, [cache, refresh]);
-
-    if (reverse === true && !containerRef) {
-        console.warn("[Lazy] 'containerRef' must be defined due to 'reverse'=true")
-    }
+    }, [cursor, live, itemTransform, ItemComponent]);
 
     return <>
-        {reverse && <Observer
-            finished={finished}
-            active={!refresh}
-            key={items.length}
-            loadNextPage={loadNextPage}
-            placeholder={placeholder}
-            placeholders={placeholders}
-        />}
         {items}
-        {!reverse && <Observer
-            active={!refresh}
-            finished={finished}
-            key={items.length}
+        <Observer
+            finished={cursor.position.finished}
+            key={`${cursor.id}:${completedPages}`}
             loadNextPage={loadNextPage}
             placeholder={placeholder}
-            placeholders={placeholders}
-        />}
-        <Scroller live={live && !ascending && reverse} className={scrollerClassName}/>
-        {finished && !items.length && noItemsComponent}
+        />
+        {cursor.position.finished && !items.length && noItemsComponent}
     </>
 }
-
-const mapStateToProps = ({lazyListComponentReducer, refreshOnVisibilityReducer}) => {
-    return {...lazyListComponentReducer, ...refreshOnVisibilityReducer};
-}
-
-export default connect(mapStateToProps)(LazyListComponent);

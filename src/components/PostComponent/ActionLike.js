@@ -7,18 +7,20 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import counter from "../../controllers/counterControl";
-import Pagination from "../../controllers/FirebasePagination";
+import {useDatabase} from "../../controllers";
+import counterControl from "../../controllers/counterControl";
 import {delay, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import CounterComponent from "../CounterComponent";
 import ProgressView from "../ProgressView";
 import actionStyles from "./styles/PostActions.module.css";
 
 export default ({postData}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -33,7 +35,7 @@ export default ({postData}) => {
             setState(state => ({...state, disabled: true}));
         }
         const checkIfUserRegistered = async () => {
-            if (!currentUserData || !currentUserData.id) {
+            if (!currentUserData.id) {
                 history.push(pages.login.route);
                 throw "user not registered";
             }
@@ -93,12 +95,10 @@ export default ({postData}) => {
             // setState(state => ({...state, disabled: true}));
         }
         const publishCounter = async () => {
-            return counter({path: [postData.id, "like"], increment});
+            return counterControl({database, path: [{id: postData.id}, "like"], increment});
         }
-        const updateCounter = async result => {
-            const json = result.toJSON();
-            const value = (json && json.snapshot) || 0;
-            postData.counter("like", value);
+        const updateCounter = async value => {
+            postData.counter("like", value ?? 0);
         }
         const finalizeChanging = async () => {
             dispatch(ProgressView.HIDE);
@@ -119,21 +119,19 @@ export default ({postData}) => {
             setState(state => ({...state, disabled: true}));
         }
         const fetchExtras = async () => {
-            return Pagination({
-                ref: "extra",
-                child: "id",
-                equals: postData.id,
-                size: 10000
-            }).next();
+            return database.cursor(["extra", "extra_id"], {
+                equalTo: postData.id,
+                orderBy: ["id"]
+            }).next(10000);
         }
         const filterLikes = async extras => {
             if (!extras) return 0;
             const likes = extras.filter(extra => extra && extra.value && extra.value.type === "like");
             return likes.length;
         }
-        const publishCounter = async counter => {
-            await counter({path: [postData.id, "like"], value: counter});
-            return counter;
+        const publishCounter = async count => {
+            await counterControl({database, path: [{id: postData.id}, "like"], value: count});
+            return count;
         }
         const updateCounter = async counter => {
             postData.counter("like", counter);

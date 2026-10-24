@@ -1,8 +1,0 @@
-import {useContext} from "react";
-import {_AppContext} from "../../common/AppContext";
-
-export default () => {
-    const auth = useContext(_AppContext)?.auth;
-    if (!auth) throw new Error("useAuth requires a Dispatcher Auth provider");
-    return auth;
-};

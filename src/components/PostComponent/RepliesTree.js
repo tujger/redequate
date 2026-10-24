@@ -1,10 +1,11 @@
 import React from "react";
 import {useHistory} from "react-router-dom";
-import {useBackend} from "../../../packages/backend";
-import Pagination from "../../controllers/FirebasePagination";
+import {DatabaseOrder} from "../../../packages/database/src";
+import {useAuth, useBackend, useDatabase} from "../../controllers";
 import {useMetaInfo, usePages, useWindowData} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import UserData from "../../controllers/UserData";
 import UserName from "../../controls/UserName/UserName";
 import AvatarView from "../AvatarView";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
@@ -17,26 +18,29 @@ import replyStyles from "./styles/PostReplies.module.css";
 export default (props) => {
     const {PostComponent, ...replyProps} = props;
     const {allowedExtras, level, postId, type, expand, onChange, expanded: givenExpanded} = replyProps;
+    const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
     const [state, setState] = React.useState({});
     const windowData = useWindowData();
-    const {expanded, replies, userReplied, paginationOptions, rotating} = state;
+    const {expanded, replies, userReplied, cursorOptions, rotating} = state;
     const {settings = {}} = metaInfo || {};
     const {postsRotateReplies} = settings;
+
+    const cursor = cursorOptions ? database.cursor(["posts", "post_id"], cursorOptions) : undefined;
 
     const MAX_INDENTING_LEVELS = windowData.isNarrow() ? 2 : 10;
 
     React.useEffect(() => {
         let isMounted = true;
-        const paginationOptions = {
-            ref: type,
-            equals: postId,
-            child: "to",
-            order: "desc",
+        const cursorOptions = {
+            equalTo: postId,
+            order: DatabaseOrder.DESC,
+            orderBy: ["to"],
         };
 
         const prepareChecking = async () => {
@@ -57,9 +61,9 @@ export default (props) => {
             if (expand && level === 0) {
                 throw {
                     expanded: true,
-                    paginationOptions: {
-                        ref: type,
-                        equals: expand,
+                    cursorOptions: {
+                        start: expand,
+                        end: expand,
                     },
                     a: 2
                 };
@@ -73,12 +77,11 @@ export default (props) => {
             if (level === 0) throw {expanded: true, a: 5};
         }
         const fetchExistingRepliesIfComment = async () => {
-            const pagination = new Pagination(paginationOptions);
-            return pagination.next();
+            return database.cursor(["posts", "post_id"], cursorOptions).next(10);
         }
         const fetchFirstAuthorOfReplies = async replies => {
             if (replies[0]) {
-                return UserData()
+                return new UserData(database)
                     .fetch(replies[0].value.uid, [UserData.NAME, UserData.IMAGE])
                     .then(userReplied => {
                         throw {replies, userReplied};
@@ -90,9 +93,8 @@ export default (props) => {
             throw {replies, userReplied};
         }
         const updateState = async props => {
-            // console.error(postId, {paginationOptions, ...props})
             if (props instanceof Error) throw props;
-            isMounted && setState(state => ({...state, paginationOptions, ...props}))
+            isMounted && setState(state => ({...state, cursorOptions, ...props}))
         }
         const finalizeChecking = async () => {
         }
@@ -115,7 +117,7 @@ export default (props) => {
         }
     }, [givenExpanded]);
 
-    if (!paginationOptions) return null;
+    if (!cursorOptions) return null;
     if (postsRotateReplies === "outside" && rotating && replies && replies.length) {
         return <div className={replyStyles.replyRow}>
             <div className={replyStyles.replyIndent}/>
@@ -164,19 +166,22 @@ export default (props) => {
                 />
             </div>
         </div>}
-        <div className={[replyStyles.replyRow, level > 1 ? replyStyles.sectionReply : replyStyles.sectionComment].join(" ")}>
+        <div
+            className={[replyStyles.replyRow, level > 1 ? replyStyles.sectionReply : replyStyles.sectionComment].join(" ")}>
             {level > 0 && level < MAX_INDENTING_LEVELS && <div className={replyStyles.replyIndent}/>}
             <div className={cardStyles.replyContent}>
                 <LazyListComponent
                     disableProgress={true}
-                    pagination={() => new Pagination(paginationOptions)}
+                    cursor={cursor}
                     itemTransform={postItemTransform({
+                        auth,
                         allowedExtras,
                         backend,
                         currentUserData,
+                        database,
                         type,
                     })}
-                    itemComponent={item => <PostComponent
+                    ItemComponent={item => <PostComponent
                         {...replyProps}
                         collapsible={false}
                         disableClick
@@ -194,5 +199,4 @@ export default (props) => {
             </div>
         </div>
     </>
-    // }, [newReply, deletePost, postData, postData.counter("replied"), postData.counter("like")])
 }

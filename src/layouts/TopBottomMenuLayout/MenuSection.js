@@ -1,7 +1,8 @@
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import React from "react";
 import {Link, useHistory} from "react-router-dom";
-import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import Menu from "../../controls/Menu/Menu";
 import menuStyles from "../../controls/Menu/Menu.module.css";
@@ -60,7 +61,7 @@ const MenuSelector = ({item, onActivate, onHover, open, userData}) => {
 
 export default ({badge = {}, items, className, endIcon}) => {
     const [first, ...menu] = items;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const history = useHistory();
     const [open, setOpen] = React.useState(false);
     const sectionRef = React.useRef(null);
@@ -116,8 +117,8 @@ export default ({badge = {}, items, className, endIcon}) => {
         }}
         onMouseEnter={() => hasMenu && window.innerWidth > 599 && setOpen(true)}
         onMouseLeave={event => {
-            if (!sectionRef.current?.contains(event.relatedTarget)
-                && !menuRef.current?.contains(event.relatedTarget)) closeMenu();
+            if (!sectionRef.current?.contains?.(event.relatedTarget)
+                && !menuRef.current?.contains?.(event.relatedTarget)) closeMenu();
         }}
         ref={sectionRef}
     >

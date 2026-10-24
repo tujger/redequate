@@ -1,22 +1,21 @@
 import {combineReducers, createStore} from "redux";
-import {alertsCounterReducer} from "../alerts/alertsCounterReducer";
-import {alertsVisitReducer} from "../alerts/alertsVisitReducer";
-import {chatsCounterReducer} from "../chat/chatsCounterReducer";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import {newPostComponentReducer} from "../components/NewPostComponent/newPostComponentReducer";
+import alertsCounterReducer from "../alerts/alertsCounterReducer";
+import alertsVisitReducer from "../alerts/alertsVisitReducer";
+import chatsCounterReducer from "../chat/chatsCounterReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
+import newPostComponentReducer from "../components/NewPostComponent/newPostComponentReducer";
 import ProgressView, {progressViewReducer} from "../components/ProgressView";
 import {snackbarReducer} from "../components/Snackbar";
-import {mainAppbarReducer} from "../layouts/ResponsiveDrawerLayout/mainAppbarReducer";
-import {topMenuReducer} from "../layouts/TopBottomMenuLayout/topMenuReducer";
-import {auditReducer} from "../pages/admin/audit/auditReducer";
-import {usersReducer} from "../pages/admin/users/usersReducer";
-import {confirmComponentReducer} from "../reducers/confirmComponentReducer";
-import {dispatcherRoutedBodyReducer} from "../reducers/dispatcherRoutedBodyReducer";
-import {languageReducer} from "../reducers/languageReducer";
-import {refreshOnVisibilityReducer} from "../reducers/refreshOnVisibilityReducer";
-import {tagsReducer} from "../tags/tagsReducer";
+import mainAppbarReducer from "../layouts/ResponsiveDrawerLayout/mainAppbarReducer";
+import topMenuReducer from "../layouts/TopBottomMenuLayout/topMenuReducer";
+import auditReducer from "../pages/admin/audit/auditReducer";
+import usersReducer from "../pages/admin/users/usersReducer";
+import confirmComponentReducer from "../reducers/confirmComponentReducer";
+import dispatcherRoutedBodyReducer from "../reducers/dispatcherRoutedBodyReducer";
+import languageReducer from "../reducers/languageReducer";
+import refreshOnVisibilityReducer from "../reducers/refreshOnVisibilityReducer";
+import tagsReducer from "../tags/tagsReducer";
 import {cacheDatas, Layout, MenuBadge} from "./General";
-import {currentUserData} from "./UserData";
 
 export default (name, reducers) => {
     const initialStore = JSON.parse(window.localStorage.getItem(name));
@@ -26,7 +25,6 @@ export default (name, reducers) => {
         audit: auditReducer,
         chatsCounter: chatsCounterReducer,
         confirmComponentReducer,
-        currentUserData,
         dispatcherRoutedBodyReducer,
         language: languageReducer,
         lazyListComponentReducer,

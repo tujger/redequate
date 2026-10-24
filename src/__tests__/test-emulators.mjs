@@ -1,6 +1,6 @@
-import {copyFileSync, mkdtempSync, writeFileSync} from "node:fs";
-import {tmpdir} from "node:os";
-import {join} from "node:path";
+import {copyFileSync, existsSync, mkdtempSync, writeFileSync} from "node:fs";
+import {homedir, tmpdir} from "node:os";
+import {delimiter, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {spawn} from "node:child_process";
 
@@ -20,6 +20,11 @@ writeFileSync(config, JSON.stringify({
     },
 }));
 const env = {...process.env};
+const javaHome = join(homedir(), ".local/share/redequate/jdks/temurin-21/Contents/Home");
+if (process.platform === "darwin" && existsSync(join(javaHome, "bin/java"))) {
+    env.JAVA_HOME = javaHome;
+    env.PATH = `${join(javaHome, "bin")}${delimiter}${env.PATH || ""}`;
+}
 delete env.GOOGLE_APPLICATION_CREDENTIALS;
 delete env.FIREBASE_CONFIG;
 delete env.FIREBASE_TOKEN;

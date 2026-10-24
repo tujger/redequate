@@ -1,10 +1,20 @@
 import {vi} from "vitest";
 import FirebaseMessaging from "../firebase";
+import * as modularMessaging from "firebase/messaging";
+vi.mock("firebase/messaging", () => ({
+    getMessaging: vi.fn(app => app),
+    isSupported: vi.fn(),
+    getToken: vi.fn((sdk, options) => sdk.getToken(options)),
+    deleteToken: vi.fn(sdk => sdk.deleteToken()),
+    onMessage: vi.fn((sdk, callback) => sdk.onMessage(callback)),
+}));
 let firebase, sdk, messaging;
 beforeEach(() => {
     window.localStorage.clear();
     sdk = {getToken: vi.fn().mockResolvedValue("token"), deleteToken: vi.fn().mockResolvedValue(true), onMessage: vi.fn()};
-    firebase = {messaging: Object.assign(vi.fn(() => sdk), {isSupported: vi.fn(() => true)})};
+    vi.clearAllMocks();
+    modularMessaging.isSupported.mockResolvedValue(true);
+    firebase = {app: sdk};
     vi.stubGlobal("Notification", {requestPermission: vi.fn().mockResolvedValue("granted")});
     messaging = new FirebaseMessaging({firebase});
 });
@@ -12,7 +22,7 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); window.localStora
 it("checks saved state without creating SDK instances, prompting or writing", async () => {
     const write = vi.spyOn(Storage.prototype, "setItem");
     expect(await messaging.checkIfSubscribed()).toBe(false);
-    expect(firebase.messaging).not.toHaveBeenCalled();
+    expect(modularMessaging.getMessaging).not.toHaveBeenCalled();
     expect(window.Notification.requestPermission).not.toHaveBeenCalled();
     expect(write).not.toHaveBeenCalled();
 });
@@ -40,11 +50,11 @@ it.each(["denied", "default"])("does not request a token when permission is %s",
     expect(await messaging.checkIfSubscribed()).toBe(false);
 });
 it("checks support before constructing Messaging", async () => {
-    firebase.messaging.isSupported.mockReturnValue(false);
+    modularMessaging.isSupported.mockReturnValue(false);
     for (const operation of [() => messaging.subscribe(), () => messaging.unsubscribe(), () => messaging.addMessageListener(() => {})]) {
         await expect(operation()).rejects.toMatchObject({code: "messaging/unsupported-browser"});
     }
-    expect(firebase.messaging).not.toHaveBeenCalled();
+    expect(modularMessaging.getMessaging).not.toHaveBeenCalled();
 });
 it("normalizes foreground messages and returns the SDK disposer", async () => {
     const stop = vi.fn(); let notify;
@@ -78,11 +88,11 @@ it("reports validation errors with complete codes and messages before using the 
     } catch (error) {
         expect(error).toMatchObject({code: "messaging/invalid-argument", message: "storageKey must be a non-empty string."});
     }
-    expect(firebase.messaging).not.toHaveBeenCalled();
-    expect(firebase.messaging.isSupported).not.toHaveBeenCalled();
+    expect(modularMessaging.getMessaging).not.toHaveBeenCalled();
+    expect(modularMessaging.isSupported).not.toHaveBeenCalled();
     expect(window.Notification.requestPermission).not.toHaveBeenCalled();
-    firebase.messaging.isSupported.mockReturnValue(false);
+    modularMessaging.isSupported.mockReturnValue(false);
     await expect(messaging.subscribe()).rejects.toMatchObject({code: "messaging/unsupported-browser", message: "This browser doesn't support Firebase Messaging"});
-    expect(firebase.messaging).not.toHaveBeenCalled();
+    expect(modularMessaging.getMessaging).not.toHaveBeenCalled();
     expect(window.Notification.requestPermission).not.toHaveBeenCalled();
 });

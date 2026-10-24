@@ -15,11 +15,12 @@ import LoadingComponent from "../../components/LoadingComponent";
 import MentionedSelectComponent from "../../components/MentionedSelectComponent";
 import {tokenizeText} from "../../components/MentionedTextComponent";
 import ProgressView from "../../components/ProgressView";
-import Pagination from "../../controllers/FirebasePagination";
-import {useFirebase, useMetaInfo, useWindowData} from "../../controllers/General";
+import {useDatabase, useRedirectToLogin} from "../../controllers";
+import {useMetaInfo, useWindowData} from "../../controllers/General";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import UserData from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import Select from "../../controls/Select/Select";
 import Switch from "../../controls/Switch/Switch";
@@ -30,12 +31,12 @@ import {updateActivity} from "./audit/auditReducer";
 import styles from "./styles/Settings.module.css";
 
 export default ({uploadable}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const {maintenance: maintenanceGiven} = useMetaInfo();
-    const {t} = useTranslation();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({
         error: null,
         details: {},
@@ -43,13 +44,16 @@ export default ({uploadable}) => {
         message: "Sorry, site is under technical maintenance now. Please come back later.",
         tab: 0,
     });
+    const {t} = useTranslation();
     const windowData = useWindowData();
+
     const isNarrow = windowData.isNarrow();
 
     const {
         disabled,
         blockedNames,
         dynamicLinksUrlPrefix,
+        firebaseApiKey,
         geoapifyApiKey,
         joinUsCancel,
         joinUsConfirm,
@@ -99,23 +103,24 @@ export default ({uploadable}) => {
     }
 
     const switchMaintenance = (value) => {
-        const updates = {};
+        const updates = new Map();
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, maintenanceOpen: false}));
         if (value) {
-            updates["meta/maintenance"] = {
+            updates.set(["meta", "maintenance"], {
                 message: message || "",
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                timestamp: database.TIMESTAMP,
                 person: {name: currentUserData.public.name, email: currentUserData.public.email}
-            }
+            })
         } else {
-            updates["meta/maintenance"] = null;
+            updates.set(["meta", "maintenance"], null);
         }
-        firebase.database().ref().update(updates)
-            .then(() => firebase.database().ref("meta").once("value", snapshot => snapshot.val()))
+        database.update(updates)
+            .then(() => database.read(["meta", "maintenance"]))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
             .then(() => updateActivity({
+                database,
                 uid: currentUserData.id,
                 type: "Maintenance",
                 details: {
@@ -158,7 +163,7 @@ export default ({uploadable}) => {
     };
 
     const handleSave = evt => {
-        const updates = {};
+        const updates = new Map();
         const settings = {}
         const prepareSaving = async () => {
             dispatch(ProgressView.SHOW);
@@ -173,19 +178,22 @@ export default ({uploadable}) => {
         }
         const addSupport = async token => {
             if (token.type === "user") {
-                updates.support = token.id || null;
+                updates.set(["meta", "support"], token.id || null);
                 return;
             }
             throw Error(`Incorrect token: ${JSON.stringify(token)}`);
         }
         const addBlockedNames = async () => {
-            updates.blockedNames = blockedNames || null;
+            updates.set(["meta", "blockedNames"], blockedNames || null);
         }
         const addPreferenceDynamicLinksUrlPrefix = async () => {
             settings.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix || null;
         }
         const addPreferenceTranslateLimit = async () => {
             settings.translateLimit = +translateLimit || null;
+        }
+        const addPreferenceFirebaseApiKey = async () => {
+            settings.firebaseApiKey = firebaseApiKey || null;
         }
         const addPreferenceGeoapifyApiKey = async () => {
             settings.geoapifyApiKey = geoapifyApiKey || null;
@@ -216,13 +224,14 @@ export default ({uploadable}) => {
             settings.uploadsQuality = uploadsAllow ? +uploadsQuality || 75 : null;
         }
         const publish = async () => {
-            updates.settings = settings;
-            console.log(updates)
-            return firebase.database().ref().child("meta").update(updates);
+            updates.set(["meta", "settings"], settings);
+            console.log(updates);
+            return database.update(updates);
         }
         const updateServiceActivity = async () => {
             if (Object.keys(details).length > 0) {
                 updateActivity({
+                    database,
                     uid: currentUserData.id,
                     type: "Settings updated",
                     details
@@ -243,6 +252,7 @@ export default ({uploadable}) => {
             .then(addSupport)
             .then(addPreferenceDynamicLinksUrlPrefix)
             .then(addPreferenceTranslateLimit)
+            .then(addPreferenceFirebaseApiKey)
             .then(addPreferenceGeoapifyApiKey)
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
@@ -265,35 +275,28 @@ export default ({uploadable}) => {
         {icon: <AllIcon/>, label: "All options", value: -1},
     ];
     React.useEffect(() => {
+        if (shouldRedirectToLogin) return;
         const prepareFetching = async () => {
             dispatch(ProgressView.SHOW);
             setState(state => ({...state, disabled: true}));
             return {};
         }
         const fetchBlockedNames = async props => {
-            const ref = firebase.database().ref("meta/blockedNames");
-            const snapshot = await ref.once("value");
-            const blockedNames = snapshot.val() || "";
+            const blockedNames = (await database.read(["meta", {blockedNames: "blockedNames"}])) || "";
             return {...props, blockedNames};
         }
         const fetchMaintenance = async props => {
-            const ref = firebase.database().ref("meta/maintenance");
-            const snapshot = await ref.once("value");
-            const meta = snapshot.val();
+            const meta = await database.read(["meta", {maintenance: "maintenance"}]);
             return {...props, maintenance: Boolean(meta), ...(meta || {})};
         }
         const fetchSettings = async props => {
-            const ref = firebase.database().ref("meta/settings");
-            const snapshot = await ref.once("value");
-            const settings = snapshot.val() || {};
+            const settings = (await database.read(["meta", {settings: "settings"}])) || {};
             return {...props, ...settings};
         }
         const fetchSupport = async props => {
-            const ref = firebase.database().ref("meta/support");
-            const snapshot = await ref.once("value");
-            const supportId = snapshot.val();
+            const supportId = await database.read(["meta", {support: "support"}]);
             if (supportId) {
-                return UserData(firebase).fetch(supportId)
+                return new UserData(database).fetch(supportId)
                     .then(userData => ({
                         ...props,
                         support: `$[user:${supportId}:${userData.name}]`
@@ -307,7 +310,6 @@ export default ({uploadable}) => {
             }
         }
         const updateState = async props => {
-            console.log(props)
             setState(state => ({...state, ...props}));
         }
         const finalizeFetching = async () => {
@@ -323,9 +325,9 @@ export default ({uploadable}) => {
             .then(updateState)
             .catch(notifySnackbar)
             .finally(finalizeFetching);
-    }, [])
+    }, [shouldRedirectToLogin])
 
-    if (loaded === undefined) return <LoadingComponent/>;
+    if (shouldRedirectToLogin || loaded === undefined) return <LoadingComponent/>;
     const selectedTab = tabItems.find(item => item.value === tab);
     return <div className={baseStyles.content}>
         <Tabs
@@ -361,17 +363,15 @@ export default ({uploadable}) => {
                         mention={{
                             ...mentionUsers,
                             trigger: "",
-                            displayTransform: (id, display) => display,
-                            pagination: () => new Pagination({
-                                ref: firebase.database().ref("roles"),
-                                value: true,
-                                equals: "admin",
-                                size: 1000,
-                                transform: item => UserData(firebase)
-                                    .fetch(item.key)
-                                    .then(value => ({key: item.key, value}))
-                                    .catch(notifySnackbar)
-                            })
+                            cursor: () => database.cursor(["roles", "user_id"], {
+                                equalTo: "admin"
+                            }),
+                            transform: item => new UserData(database)
+                                .fetch(item.key)
+                                .then(item => {
+                                    return {id: item.id, display: item.name};
+                                })
+                                .catch(notifySnackbar),
                         }}
                         onChange={(evt, value) => {
                             handleChange("support")({target: {value}})
@@ -403,6 +403,11 @@ export default ({uploadable}) => {
                     onChange={handleChange("translateLimit")}
                     type={"number"}
                     value={translateLimit || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={t("Settings.Firebase API key")}
+                    onChange={handleChange("firebaseApiKey")}
+                    value={firebaseApiKey || ""}/>
                 <Option
                     disabled={disabled}
                     label={t("Settings.Geoapify API key")}

@@ -2,21 +2,12 @@
 
 ## Code style
 
-- Do not add wrapping parentheses `()` around JSX components in `return` statements or JSX markup unless necessary.
 - Do not replace or remove Material UI icons during component conversions; keep their imports and usage unchanged.
-- Use the minimum nesting needed to express selector relationships.
-- Keep independent component classes at the top level.
-- Use nesting for pseudo-classes, modifiers, global descendants, and selectors that require a parent relationship.
-- Keep all at-rules, including `@media`, at the top level.
-- Do not introduce wrapper nesting solely for visual grouping.
+- Always structure CSS by selector ownership: keep shared properties in the owning class; nest pseudo-classes, attribute selectors, modifiers, global descendants, and other dependent selectors under that class; keep independent component classes at the top level.
 - Use CSS Module classes directly in the component. Remove `classes` from component props when external styling overrides are not needed.
 - Prefer CSS custom properties for dynamic visual values when a modifier class would only carry a variable value.
-- Use `useRippleEffect` for interactive controls that behave like buttons or navigation actions when visible Material UI-like press feedback is appropriate.
 - Do not add ripple effects to passive containers, layout wrappers, loading placeholders, or components whose child already owns the interaction.
 - When planning a component conversion, explicitly identify interactive elements that need ripple feedback and state whether ripple is required, unnecessary, or blocked by a child component API.
-- Always structure CSS by selector ownership: keep shared properties in the owning class, nest pseudo-classes, attribute selectors, and dependent descendants under that class, keep independent component classes at the top level, and keep all at-rules at the top level.
-- Always use `&` for nested CSS selectors, including pseudo-classes, modifiers, and dependent descendants; keep independent component classes at the top level.
-- Prefer the minimum nesting depth possible; avoid adding a nesting level when the same selector relationship can be expressed directly.
 
 ## Project role
 
@@ -55,8 +46,6 @@ build-system, and rendering changes can be isolated and validated independently.
 
 ## Development workflow
 
-Do not add or update tests unless the user explicitly requests it.
-
 Development normally happens in `story/*` or `bugfix/*` branches.
 
 Do not assume `master` represents the current development state.
@@ -66,8 +55,7 @@ When evaluating or implementing a significant framework change:
 1. Check whether the same migration has corresponding branches or changes in
    `edeqa-pwa-react-demo` and `thewhiskytalks`.
 2. Consider compatibility with both applications.
-3. Keep framework changes separate from unrelated application changes where practical.
-4. Prefer incremental migrations that can be tested in real consumers before merging.
+3. Prefer incremental migrations that can be tested in real consumers before merging.
 
 The framework, demo application, and production application should be treated as a validation chain:
 
@@ -77,38 +65,5 @@ The framework, demo application, and production application should be treated as
 
 `DEVELOPMENT.md` is the persistent architectural memory for this project.
 
-Read it before making significant architectural changes.
-
-Update it when a development session produces:
-
-- an architectural decision;
-- a significant newly discovered constraint;
-- a compatibility issue affecting consumers;
-- a change to the project roadmap or migration order;
-- an unresolved blocker that should survive the current development session;
-- a decision to reject an otherwise plausible implementation approach.
-
-Do not add:
-
-- routine code changes;
-- information already obvious from Git history;
-- temporary debugging observations;
-- completed low-level TODOs;
-- descriptions of individual commits.
-
-For decisions, record:
-
-- the decision;
-- the reason;
-- important consequences;
-- rejected alternatives when they matter;
-- affected consumers when applicable;
-- current status.
-
-Keep entries concise.
-
 Cross-repository architectural decisions belong primarily in
 `redequate/DEVELOPMENT.md`.
-
-Consumer repositories should record only decisions specific to that application
-unless a cross-repository decision has not yet been recorded here.

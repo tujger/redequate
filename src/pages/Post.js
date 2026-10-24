@@ -3,28 +3,30 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {useBackend} from "../../packages/backend";
 import FlexFabComponent from "../components/FlexFabComponent";
 import JoinUsComponent from "../components/JoinUsComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
 import NewPostComponent from "../components/NewPostComponent/NewPostComponent";
 import PostComponent from "../components/PostComponent/PostComponent";
 import postItemTransform from "../components/PostComponent/postItemTransform";
 import ProgressView from "../components/ProgressView";
-import {cacheDatas, usePages, useWindowData} from "../controllers/General";
+import {useAuth, useBackend, useDatabase} from "../controllers";
+import {cacheDatas, usePages, useWindowData, Layout} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, useCurrentUserData} from "../controllers/UserData";
+import {matchRole} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Post.module.css";
 
 export default (props) => {
+    const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
-    const history = useHistory();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
+    const history = useHistory();
     const {id, comment, reply} = useParams();
     const [state, setState] = React.useState({highlight: reply});
     const {t} = useTranslation();
@@ -37,7 +39,7 @@ export default (props) => {
 
     const handleReplyChange = ({key, ...rest}) => {
         cacheDatas.remove(id);
-        dispatch({type: lazyListComponentReducer.REFRESH});
+        dispatch({type: Layout.REFRESH});
         setState({...state, highlight: key});
     }
 
@@ -46,7 +48,6 @@ export default (props) => {
     }
 
     React.useEffect(() => {
-        dispatch({type: lazyListComponentReducer.REFRESH});
         dispatch(ProgressView.SHOW);
         cacheDatas.remove(id);
 
@@ -54,6 +55,7 @@ export default (props) => {
             allowedExtras,
             backend,
             currentUserData,
+            database,
             onItemError: error => {
                 throw error;
             },
@@ -70,7 +72,7 @@ export default (props) => {
             })
             .finally(() => dispatch(ProgressView.HIDE))
         // eslint-disable-next-line
-    }, [id, postData && postData.id, comment, reply]);
+    }, [id, postData && postData.id, comment, reply, currentUserData]);
 
     if (!postData) return <LoadingComponent/>;
 

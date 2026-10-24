@@ -1,0 +1,255 @@
+[
+    {
+        "store": "_counters",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "id", "keypath": "id"},
+            {"name": "gid", "keypath": "gid"},
+            {"name": "uid", "keypath": "uid"},
+            {"name": "total", "keypath": "total"},
+            {"name": "followers", "keypath": "followers"},
+            {"name": "follows", "keypath": "follows"},
+            {"name": "watches", "keypath": "watches"},
+            {"name": "watchers", "keypath": "watchers"}
+        ]
+    },
+    {
+        "store": "_activity",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+        ]
+    },
+    {
+        "store": "activity",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "activity_uid", "keypath": "activity_uid", "options": {"unique": true}},
+            {"name": "type", "keypath": "type"},
+            {"name": "uid", "keypath": "uid"}
+        ]
+    },
+    {
+        "store": "alerts",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "user_id", "keypath": "user_id"},
+            {"name": "user_id_alert_id", "keypath": ["user_id", "alert_id"], "options": {"unique": true}},
+            {"name": "user_id_timestamp", "keypath": ["user_id", "timestamp"]}
+        ]
+    },
+    {
+        "store": "_chats",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "user_id", "keypath": "user_id"},
+            {
+                "name": "user_id_chat_id",
+                "keypath": ["user_id", "chat_id"],
+                "options": {"unique": true}
+            },
+            {"name": "user_id_timestamp", "keypath": ["user_id", "timestamp"]},
+            {"name": "user_id_private", "keypath": ["user_id", "private"]}
+        ]
+    },
+    {
+        "store": "chats",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "chat_id", "keypath": "chat_id"},
+            {
+                "name": "chat_id_message_id",
+                "keypath": ["chat_id", "message_id"],
+                "options": {"unique": true}
+            },
+            {"name": "chat_id_created", "keypath": ["chat_id", "created"]},
+            {"name": "chat_id_uid", "keypath": ["chat_id", "uid"]}
+        ]
+    },
+    {
+        "store": "errors",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "error_id", "keypath": "error_id", "options": {"unique": true}},
+            {"name": "uid", "keypath": "uid"}
+        ]
+    },
+    {
+        "store": "extra",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "extra_id", "keypath": "extra_id", "options": {"unique": true}},
+            {"name": "like", "keypath": "like"},
+            {"name": "dislike", "keypath": "dislike"},
+            {"name": "gid", "keypath": "gid"},
+            {"name": "id_uid", "keypath": "id_uid"},
+            {"name": "uid", "keypath": "uid"},
+            {"name": "id", "keypath": "id"}
+        ]
+    },
+    {
+        "store": "meta",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+        ]
+    },
+    {
+        "store": "mutual",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "mutual_type", "keypath": "mutual_type"},
+            {
+                "name": "mutual_type_mutual_id",
+                "keypath": ["mutual_type", "mutual_id"],
+                "options": {"unique": true}
+            },
+            {"name": "mutual_type_id", "keypath": ["mutual_type", "id"]},
+            {"name": "mutual_type_uid", "keypath": ["mutual_type", "uid"]},
+            {"name": "mutual_type_id_uid", "keypath": ["mutual_type", "id_uid"]},
+            {"name": "mutual_type_uid_id", "keypath": ["mutual_type", "uid_id"]}
+        ]
+    },
+    {
+        "store": "mutualrequests",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "mutual_type", "keypath": "mutual_type"},
+            {
+                "name": "mutual_type_mutual_id",
+                "keypath": ["mutual_type", "mutual_id"],
+                "options": {"unique": true}
+            },
+            {"name": "mutual_type_id", "keypath": ["mutual_type", "id"]},
+            {"name": "mutual_type_uid", "keypath": ["mutual_type", "uid"]},
+            {"name": "mutual_type_id_uid", "keypath": ["mutual_type", "id_uid"]},
+            {"name": "mutual_type_uid_id", "keypath": ["mutual_type", "uid_id"]}
+        ]
+    },
+    {
+        "store": "mutualstamps",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "_my", "keypath": "_my"},
+            {"name": "mutual_type", "keypath": "mutual_type"},
+            {
+                "name": "mutual_type_user_id",
+                "keypath": ["mutual_type", "user_id"]
+            },
+            {
+                "name": "mutual_type_user_id_mutual_id",
+                "keypath": ["mutual_type", "user_id", "mutual_id"],
+                "options": {"unique": true}
+            }
+        ]
+    },
+    {
+        "store": "posts",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "post_id", "keypath": "post_id", "options": {"unique": true}},
+            {"name": "uid", "keypath": "uid"},
+            {"name": "to", "keypath": "to"}
+        ]
+    },
+    {
+        "store": "roles",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "user_id", "keypath": "user_id", "options": {"unique": true}}
+        ]
+    },
+    {
+        "store": "_tag",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "tag_id", "keypath": "tag_id", "options": {"unique": true}},
+            {"name": "score", "keypath": "score"}
+        ]
+    },
+    {
+        "store": "tag",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "tag_id", "keypath": "tag_id", "options": {"unique": true}},
+            {"name": "_sort_name", "keypath": "_sort_name"},
+            {"name": "hidden", "keypath": "hidden"},
+            {"name": "id", "keypath": "id"},
+            {"name": "label", "keypath": "label"},
+            {"name": "uid", "keypath": "uid"}
+        ]
+    },
+    {
+        "store": "users_private",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "user_id", "keypath": "user_id", "options": {"unique": true}}
+        ]
+    },
+    {
+        "store": "users_public",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "user_id", "keypath": "user_id", "options": {"unique": true}},
+            {"name": "_sort_name", "keypath": "_sort_name"},
+            {"name": "email", "keypath": "email"},
+            {"name": "emailVerified", "keypath": "emailVerified"},
+            {"name": "name", "keypath": "name"},
+            {"name": "created", "keypath": "created"},
+            {"name": "lastLogin", "keypath": "lastLogin"},
+            {"name": "visit", "keypath": "visit"}
+        ]
+    }
+]

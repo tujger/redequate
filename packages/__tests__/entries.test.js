@@ -6,11 +6,10 @@ it.each(["auth", "messaging", "storage"])("keeps %s entrypoints consistent and h
     const root = await import(`../${area}/index.js`);
     const source = await import(`../${area}/src/index.js`);
     const name = area[0].toUpperCase() + area.slice(1);
-    expect(Object.keys(root).sort()).toEqual([`${name}Base`, `use${name}`].sort());
-    expect(Object.keys(source).sort()).toEqual([`${name}Base`, `use${name}`, `resolve${name}`].sort());
+    expect(Object.keys(root).sort()).toEqual([`${name}Base`]);
+    expect(Object.keys(source).sort()).toEqual([`${name}Base`, `resolve${name}`].sort());
     expect(root[`${name}Base`]).toBe(source[`${name}Base`]);
-    expect(root[`use${name}`]).toBe(source[`use${name}`]);
-    expect(root[`use${name}`]).toBe((await import(`../${area}/src/use${name}.js`)).default);
+    expect(source).not.toHaveProperty(`use${name}`);
     expect(get).not.toHaveBeenCalled();
     expect(set).not.toHaveBeenCalled();
 });

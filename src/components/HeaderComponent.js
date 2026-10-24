@@ -1,5 +1,5 @@
 import React from "react";
-import {StickyHeaderComponent} from "../layouts/TopBottomMenuLayout/StickyHeaderComponent"
+import StickyHeaderComponent from "../layouts/TopBottomMenuLayout/StickyHeaderComponent";
 import MainHeader from "../layouts/ResponsiveDrawerLayout/MainHeader";
 
 const HeaderComponent = (

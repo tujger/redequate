@@ -3,11 +3,11 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory} from "react-router-dom";
-import {useAuth} from "../../packages/auth";
 import ProgressView from "../components/ProgressView";
+import {useAuth} from "../controllers";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
@@ -15,7 +15,7 @@ import styles from "./styles/RestorePassword.module.css";
 
 const RestorePassword = () => {
     const auth = useAuth();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const dispatch = useDispatch();
     const history = useHistory();
     const [state, setState] = React.useState({
@@ -42,7 +42,7 @@ const RestorePassword = () => {
             });
     };
 
-    if (currentUserData && currentUserData.id) {
+    if (currentUserData.id) {
         return <Redirect to={pages.profile.route}/>
     }
 

@@ -1,23 +1,21 @@
 import AddIcon from "@mui/icons-material/Add";
-import React from "react";
-import {useTranslation} from "react-i18next";
+import React from "react"; // eslint-disable-line no-unused-vars -- Required by the classic JSX build.
 import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
 import FlexFabComponent from "../components/FlexFabComponent";
 import ItemPlaceholderComponent from "../components/ItemPlaceholderComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import MutualSubscribeItem from "../components/MutualComponent/MutualSubscribeItem";
 import NavigationToolbar from "../components/NavigationToolbar";
-import Pagination from "../controllers/FirebasePagination";
+import {useDatabase} from "../controllers";
 import {usePages} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import {normalizeSortName} from "../controllers/UserData";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
-import {tagsReducer} from "./tagsReducer";
+import tagsReducer from "./tagsReducer";
 
 const Tags = (props) => {
     const {
@@ -29,9 +27,9 @@ const Tags = (props) => {
         noItemsCoponent = <ItemPlaceholderComponent skeleton={true} pattern={"flat"} label={"No tags found"}/>,
         ItemProps = {counter: true}
     } = props;
+    const database = useDatabase();
     const dispatch = useDispatch();
     const pages = usePages();
-    const {t} = useTranslation();
 
     const mode = forceMode || inheritMode;
 
@@ -39,7 +37,7 @@ const Tags = (props) => {
         return <MutualSubscribeItem
             {...ItemProps}
             counter={true}
-            key={item.key}
+            key={item.id}
             data={item}
             type={"tag"}
             typeId={"watching"}
@@ -61,24 +59,13 @@ const Tags = (props) => {
         {label: "Hidden", value: "hidden"},
     ];
 
-    const handleClearFilter = () => {
-        dispatch({type: tagsReducer.MODE, mode, filter: ""});
-    };
-
-    React.useEffect(() => {
-        return () => {
-            dispatch({type: lazyListComponentReducer.RESET});
-        }
-        // eslint-disable-next-line
-    }, [mode, filter]);
-
-    let paginationOptions;
     let itemTransform = item => {
         return {
             key: item.key,
             value: {
                 ...item.value,
                 message: <MentionedTextComponent
+                    key={item.key}
                     maxLength={25}
                     mentions={[mentionTags, mentionUsers]}
                     text={item.value.description || null}
@@ -92,39 +79,31 @@ const Tags = (props) => {
             }
         }
     };
+    let cursor;
     switch (mode) {
         case "all":
-            paginationOptions = {
-                ref: "tag",
-                child: "_sort_name",
-                equals: equals,
-            };
-            if (filter && !equals) {
-                paginationOptions.start = normalizeSortName(filter);
-                paginationOptions.end = normalizeSortName(filter) + "\uf8ff";
-            }
+            cursor = database.cursor(["tag", "tag_id"], {
+                equalTo: equals,
+                orderBy: ["_sort_name"],
+                start: filter && !equals ? normalizeSortName(filter) : undefined
+            });
             break;
         case "hidden":
-            paginationOptions = {
-                ref: "tag",
-                child: "hidden",
-                equals: true,
-            }
+            cursor = database.cursor(["tag", "tag_id"], {
+                equalTo: true,
+                orderBy: ["hidden"]
+            });
             break;
         case "uid":
-            paginationOptions = {
-                ref: "tag",
-                child: "uid",
-                equals: equals,
-            }
-            if (filter && !equals) {
-                paginationOptions.start = normalizeSortName(filter);
-                paginationOptions.end = normalizeSortName(filter) + "\uf8ff";
-            }
+            cursor = database.cursor(["tag", "tag_id"], {
+                equalTo: equals,
+                orderBy: ["uid"],
+                start: filter && !equals ? normalizeSortName(filter) : undefined
+            });
             break;
         default:
-            break;
     }
+
     return <>
         <NavigationToolbar backButton={null}>
             <Select
@@ -141,14 +120,11 @@ const Tags = (props) => {
         </NavigationToolbar>
         <div className={baseStyles.content}>
             <LazyListComponent
-                itemComponent={itemComponent}
+                cursor={cursor}
+                ItemComponent={itemComponent}
                 itemTransform={itemTransform}
-                pagination={() => new Pagination(paginationOptions)}
                 noItemsComponent={noItemsCoponent}
                 placeholder={<ItemPlaceholderComponent skeleton={true} pattern={"flat"}/>}
-                ItemProps={{
-                    counter: true
-                }}
             />
         </div>
         <Link

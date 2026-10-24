@@ -3,25 +3,25 @@ import AllReadIcon from "@mui/icons-material/ClearAll";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
+import {DatabaseOrder} from "../../packages/database/src";
 import ConfirmComponent from "../components/ConfirmComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
-import Pagination from "../controllers/FirebasePagination";
-import {MenuBadge, useFirebase, usePages} from "../controllers/General";
+import {useDatabase} from "../controllers";
+import {MenuBadge, usePages, Layout} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";
-import {alertsCounterReducer} from "./alertsCounterReducer";
+import baseStyles from "../themes/Base.module.css";
+import alertsCounterReducer from "./alertsCounterReducer";
 import AlertsDaemon from "./AlertsDaemon";
 import AlertsList from "./AlertsList";
-import {alertsVisitReducer} from "./alertsVisitReducer";
-import baseStyles from "../themes/Base.module.css";
+import alertsVisitReducer from "./alertsVisitReducer";
 
-const Alerts = ({daemon, fetchAlertContent}) => {
-    const currentUserData = useCurrentUserData();
+export default ({daemon, fetchAlertContent}) => {
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const pages = usePages();
     const [state, setState] = React.useState({});
     const {allRead, allClear} = state;
@@ -34,20 +34,14 @@ const Alerts = ({daemon, fetchAlertContent}) => {
     const handleAllReadConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allRead: false});
-        new Pagination({
-            ref: "alerts/" + currentUserData.id,
-            order: "desc",
-            size: 10000,
-            timeout: 180000,
-            update: (key, data) => {
-                const newdata = JSON.parse(JSON.stringify(data));
-                if (newdata) {
-                    delete newdata.new;
-                }
-                return newdata;
-            }
-        }).next()
-            .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
+        database.cursor(["alerts", {user_id: currentUserData.id}, "alert_id"], {
+            handle({value}) {
+                return {...value, new: null};
+            },
+            order: DatabaseOrder.DESC
+        })
+            .next(10000)
+            .then(() => dispatch({type: Layout.REFRESH}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }
@@ -59,8 +53,8 @@ const Alerts = ({daemon, fetchAlertContent}) => {
     const handleClearConfirm = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, allClear: false});
-        firebase.database().ref("alerts").child(currentUserData.id).set(null)
-            .then(() => dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"}))
+        database.delete(["alerts", {user_id: currentUserData.id}])
+            .then(() => dispatch({type: Layout.REFRESH}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE))
     }
@@ -69,7 +63,6 @@ const Alerts = ({daemon, fetchAlertContent}) => {
         if (daemon) return;
         dispatch({type: alertsCounterReducer.RESET});
         dispatch({type: alertsVisitReducer.UPDATE});
-        dispatch({type: lazyListComponentReducer.RESET, cache: "alerts"});
         dispatch({type: MenuBadge.RESET, page: pages.alerts});
 
         return () => {
@@ -122,5 +115,3 @@ const Alerts = ({daemon, fetchAlertContent}) => {
         />}
     </>
 };
-
-export default Alerts;

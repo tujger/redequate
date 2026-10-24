@@ -1,13 +1,11 @@
-import {firebaseMessaging} from "./Firebase";
-
-export default () => {
+export default ({firebaseApiKey}) => {
     const isAvailable = async () => {
         return true;
     }
 
     const detectLanguage = (text) => new Promise((resolve, reject) => {
         try {
-            window.fetch("https://translation.googleapis.com/language/translate/v2/detect?key=" + firebaseMessaging.config.apiKey, {
+            window.fetch("https://translation.googleapis.com/language/translate/v2/detect?key=" + firebaseApiKey, {
                 method: "POST",
                 body: JSON.stringify({
                     q: text,
@@ -27,7 +25,13 @@ export default () => {
         }
     })
 
-    const translateTo = ({source = "auto", target, text, withApi = true, withoutApi = true}) => new Promise((resolve, reject) => {
+    const translateTo = ({
+                             source = "auto",
+                             target,
+                             text,
+                             withApi = true,
+                             withoutApi = true
+                         }) => new Promise((resolve, reject) => {
 
         const checkIfSourceEqualsTarget = async props => {
             const {source, target} = props;
@@ -66,7 +70,7 @@ export default () => {
         const requestTranslationWithAPI = async props => {
             if (!withApi) return props;
             const {source, target, text} = props;
-            const result = await window.fetch("https://translation.googleapis.com/language/translate/v2?key=" + firebaseMessaging.config.apiKey, {
+            const result = await window.fetch("https://translation.googleapis.com/language/translate/v2?key=" + firebaseApiKey, {
                 method: "POST",
                 body: JSON.stringify({
                     q: text,

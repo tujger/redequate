@@ -20,6 +20,7 @@
         "test core": "npm test",
         "test:watch core": "vitest --watch --config src/__tests__/vitest.config.mjs",
         "build core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs",
+        "build server": "rollup -c packages/server/build.mjs",
         "core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs -w",
         "start core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs -w",
         "prepare core": "npm run build core",
@@ -32,9 +33,9 @@
         "test:integration:watch": "node src/__tests__/test-emulators.mjs --watch"
     },
     "dependencies": {
-        "@mui/icons-material": "^9.4.0",
+        "@mui/icons-material": "^9.5.0",
         "axios": "^1.20.0",
-        "firebase": "^13.0.0",
+        "firebase": "^13.1.0",
         "firebase-key": "^2.0.2",
         "i18next-browser-languagedetector": "^8.2.1",
         "react-add-to-calendar-hoc": "^1.0.10",
@@ -45,32 +46,32 @@
         "react-mentions": "^4.4.10",
         "react-text-mask": "^5.5.0",
         "text-mask-addons": "^3.8.0",
-        "uuid": "^14.0.2"
+        "uuid": "^14.0.3"
     },
     "peerDependencies": {
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
-        "@mui/material": "^9.4.0",
-        "@uppy/core": "^6.2.0",
-        "@uppy/dashboard": "^6.0.1",
-        "@uppy/webcam": "^6.0.1",
+        "@mui/material": "^9.5.0",
+        "@uppy/core": "^6.3.0",
+        "@uppy/dashboard": "^6.0.2",
+        "@uppy/webcam": "^6.0.2",
         "@use-gesture/react": "^10.3.1",
         "ajv": "^8.20.0",
         "ajv-keywords": "^5.1.0",
         "device-uuid": "^3.0.6",
-        "i18next": "^26.4.2",
+        "i18next": "^26.5.4",
         "moment": "^2.31.0",
         "notistack": "^3.0.2",
         "react": "^18.3.1 || ^19.0.0",
         "react-datepicker": "^9.1.0",
         "react-dom": "^18.3.1 || ^19.0.0",
-        "react-i18next": "^17.0.16",
-        "react-image-lightbox": "^5.1.1",
+        "react-i18next": "^17.1.0",
+        "react-image-lightbox": "^5.1.4",
         "react-linkify": "^1.0.0-alpha",
         "react-redux": "^8.1.3",
         "react-router-dom": "^5.2.0",
         "react-smart-gallery": "^0.2.0",
-        "react-timekeeper": "^2.1.1",
+        "react-timekeeper": "^2.2.1",
         "redux": "^4.2.1"
     },
     "devDependencies": {
@@ -81,55 +82,65 @@
         "@babel/plugin-transform-optional-chaining": "^7.29.7",
         "@babel/preset-env": "^7.29.7",
         "@babel/preset-react": "^7.29.7",
+        "@babel/preset-typescript": "^7.29.7",
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
         "@eslint/eslintrc": "3.3.7",
-        "@mui/icons-material": "^9.4.0",
-        "@mui/material": "^9.4.0",
+        "@mui/icons-material": "^9.5.0",
+        "@mui/material": "^9.5.0",
         "@rollup/plugin-babel": "^7.1.0",
         "@rollup/plugin-commonjs": "^29.0.3",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@rollup/plugin-url": "^8.0.2",
         "@svgr/rollup": "^8.1.0",
-        "@testing-library/dom": "10.4.1",
-        "@uppy/core": "^6.2.0",
-        "@uppy/dashboard": "^6.0.1",
-        "@uppy/webcam": "^6.0.1",
+        "@testing-library/dom": "10.4.2",
+        "@typescript-eslint/eslint-plugin": "^8.72.0",
+        "@typescript-eslint/parser": "^8.72.0",
+        "@uppy/core": "^6.3.0",
+        "@uppy/dashboard": "^6.0.2",
+        "@uppy/webcam": "^6.0.2",
         "@use-gesture/react": "^10.3.1",
-        "cross-env": "^7.0.2",
+        "ajv": "^8.20.0",
+        "ajv-keywords": "^5.1.0",
+        "cross-env": "^10.1.0",
         "device-uuid": "^3.0.6",
         "eslint": "^9.39.5",
         "eslint-config-standard": "17.1.0",
         "eslint-config-standard-react": "13.0.0",
         "eslint-plugin-import": "^2.32.0",
-        "eslint-plugin-n": "^18.4.1",
+        "eslint-plugin-n": "^18.5.0",
         "eslint-plugin-promise": "^7.3.0",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^7.1.1",
-        "fake-indexeddb": "^6.2.5",
-        "firebase-tools": "13.4.0",
-        "gh-pages": "^1.2.0",
+        "fake-indexeddb": "^6.2.6",
+        "firebase-tools": "15.34.1",
+        "gh-pages": "^6.3.0",
         "globals": "^17.13.0",
-        "i18next": "^26.4.2",
-        "jsdom": "27.0.1",
+        "i18next": "^26.5.4",
+        "jsdom": "30.1.3",
         "moment": "^2.31.0",
-        "postcss": "^8.5.29",
-        "postcss-nested": "^8.0.1",
-        "react": "^19.3.0",
+        "notistack": "^3.0.2",
+        "postcss": "^8.5.31",
+        "postcss-nested": "^9.0.1",
+        "react": "^19.3.1",
         "react-datepicker": "^9.1.0",
-        "react-dom": "^19.3.0",
-        "react-i18next": "^17.0.16",
+        "react-dom": "^19.3.1",
+        "react-i18next": "^17.1.0",
+        "react-image-lightbox": "^5.1.4",
+        "react-linkify": "^1.0.0-alpha",
         "react-redux": "^8.1.3",
         "react-router-dom": "5.3.4",
-        "react-timekeeper": "2.1.1",
+        "react-smart-gallery": "^0.2.0",
+        "react-timekeeper": "2.2.1",
         "redux": "^4.2.1",
-        "rollup": "^4.64.2",
+        "rollup": "^4.64.12",
         "rollup-plugin-delete": "^3.0.2",
         "rollup-plugin-peer-deps-external": "^2.2.4",
         "rollup-plugin-postcss": "^4.0.2",
-        "vite": "8.3.3",
-        "vitest": "5.0.3"
+        "typescript": "^5.9.3",
+        "vite": "8.3.5",
+        "vitest": "5.0.5"
     },
     "files": [
         "core"
@@ -147,25 +158,41 @@
             "import": "./core/auth/firebase.mjs",
             "require": "./core/auth/firebase.cjs"
         },
-        "./auth/local-test": {
-            "import": "./core/auth/local-test.mjs",
-            "require": "./core/auth/local-test.cjs"
+        "./auth/local": {
+            "import": "./core/auth/local.mjs",
+            "require": "./core/auth/local.cjs"
         },
         "./backend": {
             "import": "./core/backend/index.mjs",
             "require": "./core/backend/index.cjs"
         },
+        "./backend/common": {
+            "import": "./core/backend/common.mjs",
+            "require": "./core/backend/common.cjs"
+        },
         "./backend/firebase-client": {
             "import": "./core/backend/firebase-client.mjs",
             "require": "./core/backend/firebase-client.cjs"
         },
-        "./backend/local-test-client": {
-            "import": "./core/backend/local-test-client.mjs",
-            "require": "./core/backend/local-test-client.cjs"
+        "./backend/local-client": {
+            "import": "./core/backend/local-client.mjs",
+            "require": "./core/backend/local-client.cjs"
         },
         "./common": {
             "import": "./core/common/index.mjs",
             "require": "./core/common/index.cjs"
+        },
+        "./database": {
+            "import": "./core/database/index.mjs",
+            "require": "./core/database/index.cjs"
+        },
+        "./database/firebase": {
+            "import": "./core/database/firebase.mjs",
+            "require": "./core/database/firebase.cjs"
+        },
+        "./database/local": {
+            "import": "./core/database/local.mjs",
+            "require": "./core/database/local.cjs"
         },
         "./messaging": {
             "import": "./core/messaging/index.mjs",
@@ -179,9 +206,9 @@
             "import": "./core/messaging/firebase-worker.mjs",
             "require": "./core/messaging/firebase-worker.cjs"
         },
-        "./messaging/local-test": {
-            "import": "./core/messaging/local-test.mjs",
-            "require": "./core/messaging/local-test.cjs"
+        "./messaging/local": {
+            "import": "./core/messaging/local.mjs",
+            "require": "./core/messaging/local.cjs"
         },
         "./storage": {
             "import": "./core/storage/index.mjs",
@@ -191,9 +218,9 @@
             "import": "./core/storage/firebase.mjs",
             "require": "./core/storage/firebase.cjs"
         },
-        "./storage/local-test": {
-            "import": "./core/storage/local-test.mjs",
-            "require": "./core/storage/local-test.cjs"
+        "./storage/local": {
+            "import": "./core/storage/local.mjs",
+            "require": "./core/storage/local.cjs"
         },
         "./_common": null,
         "./_common/*": null,

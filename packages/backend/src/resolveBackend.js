@@ -1,6 +1,6 @@
-import {resolvePackage} from "../../common/src/_packages";
+import {resolvePackage} from "../../common";
 
-export const resolveBackend = async backend => resolvePackage(backend, "backend", async () => {
-    const {default: LocalTestBackendClient} = await import("./local-test-client");
-    return new LocalTestBackendClient();
+export default async backend => resolvePackage(backend, "backend", async () => {
+    const {default: LocalBackendClient} = await import("./local-client");
+    return new LocalBackendClient();
 });

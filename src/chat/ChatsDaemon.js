@@ -1,38 +1,32 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {matchPath, useHistory} from "react-router-dom";
-import {useBackend} from "../../packages/backend";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
-import Pagination from "../controllers/FirebasePagination";
-import {cacheDatas, MenuBadge, useFirebase, usePages} from "../controllers/General";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
+import {useBackend, useDatabase} from "../controllers";
+import {cacheDatas, MenuBadge, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
-import {ChatMeta} from "./ChatMeta";
-import {chatsCounterReducer} from "./chatsCounterReducer";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import UserData from "../controllers/UserData";
+import ChatMeta from "./ChatMeta";
+import chatsCounterReducer from "./chatsCounterReducer";
 
 export default ({clearText = text => text}) => {
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
 
     React.useEffect(() => {
-        const daemonNew = firebase.database().ref("_chats").child(currentUserData.id);
+        if (!currentUserData.id) return;
         const metas = {};
         const chatsWithNewMessages = [];
-        const pagination = new Pagination({
-            child: "timestamp",
-            order: "desc",
-            ref: daemonNew,
-            size: 10000,
-        });
         const newMessage = (data, chatId) => {
             if (data.uid === currentUserData.id) return;
             console.log(`[ChatsDaemon] new message: ${JSON.stringify(data)}`)
             // if (!document.hasFocus()) return;
-            const userData = cacheDatas.put(data.uid, UserData());
+            const userData = cacheDatas.put(data.uid, new UserData(database));
             userData.fetch(data.uid, [UserData.NAME])
                 .then(() => notifySnackbar({
                     id: pages.chat.route + chatId,
@@ -43,7 +37,7 @@ export default ({clearText = text => text}) => {
                     </React.Fragment>
                 }))
         }
-        const installListenerIfNeeded = (id, live) => ChatMeta().fetch(id)
+        const installListenerIfNeeded = (id, live) => ChatMeta(database).fetch(id)
             .then(meta => {
                 if (meta.lastMessage.uid === currentUserData.id) return;
                 if (meta.lastVisit(currentUserData.id) > meta.timestamp) return;
@@ -86,21 +80,22 @@ export default ({clearText = text => text}) => {
                     .catch(console.error);
             });
 
-        daemonNew.on("child_added", snapshot => {
-            return installListenerIfNeeded(snapshot.key);
-        });
-        daemonNew.on("child_changed", snapshot => {
-            return installListenerIfNeeded(snapshot.key, true);
+        const listener = database.addEventListener(["_chats", {user_id: currentUserData.id}, "message_id"], {
+            onChildAdd({key, value}) {
+                return installListenerIfNeeded(key);
+            },
+            onChildChange({key, value}) {
+                return installListenerIfNeeded(key, true);
+            }
         });
 
+        console.log("[ChatsDaemon] installed");
         return () => {
-            daemonNew && daemonNew.off();
-            pagination.reset();
+            listener.remove();
             for (let id in metas) {
                 id && metas[id] && metas[id].unwatch();
             }
         }
-    }, []);
-    console.log("[ChatsDaemon] installed")
+    }, [currentUserData.id]);
     return null;
 }

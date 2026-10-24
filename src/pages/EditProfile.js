@@ -5,20 +5,18 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
-import {useAuth} from "../../packages/auth";
-import {useMessaging} from "../../packages/messaging";
-import {useStorage} from "../../packages/storage";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
 import UploadComponent from "../components/UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../components/UploadComponent/uploadComponentControls";
-import Pagination from "../controllers/FirebasePagination";
-import {cacheDatas, fetchDeviceId, useFirebase, usePages, useStore, useWindowData} from "../controllers/General";
+import {useAuth, useDatabase, useMessaging, useRedirectToLogin, useStorage} from "../controllers";
+import {cacheDatas, fetchDeviceId, usePages, useStore, useWindowData} from "../controllers/General";
 import {setupReceivingNotifications} from "../controllers/Notifications";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {refreshAll} from "../controllers/Store";
-import {logoutUser, matchRole, normalizeSortName, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import useCurrentUserData from "../controllers/useCurrentUserData";
+import UserData, {logoutUser, matchRole, normalizeSortName, UserRole} from "../controllers/UserData";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
@@ -29,9 +27,10 @@ import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import styles from "./styles/EditProfile.module.css";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
 
 function EditProfile(props) {
-    let {
+    const {
         adminFields: adminFieldsGiven = adminFields,
         allowDelete = true,
         notifications = true,
@@ -39,26 +38,24 @@ function EditProfile(props) {
         uploadable = true,
     } = props;
     const auth = useAuth();
-    const currentUserData = useCurrentUserData();
+    const [currentUserData, setCurrentUserData] = useCurrentUserData();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const messaging = useMessaging();
     const pages = usePages();
     const {id} = useParams();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({
-        error: null,
         disabled: false,
     });
     const storage = useStorage();
     const store = useStore();
     const {t} = useTranslation();
-
     const windowData = useWindowData();
+
     const {state: givenState = {}} = history.location;
     const {tosuccessroute, isFirstLogin} = givenState;
-
-    // data = givenData || data || userData;// || new UserData(firebase).fromJSON(JSON.parse(window.localStorage.getItem(history.location.pathname)));
 
     const {
         image,
@@ -89,8 +86,7 @@ function EditProfile(props) {
             }
         }
         const checkIfNameIsBlocked = async () => {
-            const snapshot = await firebase.database().ref("meta/blockedNames").once("value");
-            const blockedNames = (snapshot.val() || "").split(/[\s\r\n]+/)
+            const blockedNames = (await database.read(["meta", {blockedNames: "blockedNames"}]) || "").split(/[\s\r\n]+/)
                 .map(item => normalizeSortName(item));
             if (blockedNames.indexOf(normalizeSortName(state.name)) >= 0) {
                 throw Error("This user user name is reserved for distilleries. If you are a distillery, please contact us using Contacts page.")
@@ -100,12 +96,10 @@ function EditProfile(props) {
             const uniqueError = [];
             for (const field of publicFields) {
                 if (field.unique) {
-                    const values = await new Pagination({
-                        ref: "users_public",
-                        child: "name",
-                        equals: (state[field.id] !== undefined && (state[field.id] || "").constructor.name === "String")
-                            ? (state[field.id] || "").trim() : state[field.id]
-                    }).next();
+                    const values = await database.cursor(["users_public", "user_id"], {
+                        equalTo: (state[field.id] || "").trim(),
+                        orderBy: ["name"]
+                    }).next(10);
                     for (const value of (values || [])) {
                         if (value.key && value.key !== userData.id) {
                             uniqueError.push(field.id);
@@ -119,9 +113,9 @@ function EditProfile(props) {
             }
         }
         const checkIfProfileExists = async () => {
-            const exists = await firebase.database().ref("users_public").child(userData.id).child("email").once("value").then(snapshot => snapshot.exists());
+            const exists = await database.read(["users_public", {user_id: userData.id}, {email: "email"}]);
             if (!exists) {
-                await logoutUser({auth, store});
+                await logoutUser({auth, onLogout: () => setCurrentUserData(null)});
                 refreshAll(store);
                 history.replace(pages.home.route);
                 throw Error(t("User.Profile is not found, forcing log out"));
@@ -174,23 +168,24 @@ function EditProfile(props) {
         const updateFieldsInAuth = async () => {
             if (isSameUser(userData, currentUserData)) {
                 auth.updateProfile({
-                    displayName: userData.name,
-                    photoURL: userData.image
+                    public: {name: userData.name, image: userData.image}
                 }).catch(console.error)
             }
         }
         const saveByAdmin = async () => {
             if (isAdmin) {
-                const updates = {};
-                updates[`roles/${userData.id}`] = (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role;
+                const updates = new Map();
                 if (role === UserRole.USER_NOT_VERIFIED) {
-                    updates[`users_public/${userData.id}/emailVerified`] = false;
+                    updates.set(["users_public", {user_id: userData.id}, "emailVerified"], false);
                 } else if (role === UserRole.USER || role === UserRole.ADMIN) {
-                    updates[`users_public/${userData.id}/emailVerified`] = true;
+                    updates.set(["users_public", {user_id: userData.id}, "emailVerified"], true);
                 }
-                updates[`users_public/${userData.id}/updated`] = firebase.database.ServerValue.TIMESTAMP;
+                updates.set(["users_public", {user_id: userData.id}, "updated"], database.TIMESTAMP);
+                await userData.updateRole(
+                    (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role, updates);
                 if (role !== userData.role) {
                     updateActivity({
+                        database,
                         uid: currentUserData.id,
                         type: "User role change",
                         details: {
@@ -200,7 +195,6 @@ function EditProfile(props) {
                         },
                     }).catch(console.error);
                 }
-                return firebase.database().ref().update(updates);
             }
         }
         const refreshUserData = async () => {
@@ -208,7 +202,7 @@ function EditProfile(props) {
         }
         const updateCurrentUserData = async () => {
             if (currentUserData.id === userData.id) {
-                dispatch({type: "currentUserData", userData});
+                setCurrentUserData(userData);
             }
         }
         const onSaveComplete = async () => {
@@ -274,7 +268,7 @@ function EditProfile(props) {
         const onDeleteComplete = async () => {
             notifySnackbar(t("User.User deleted"));
             if (isSameUser(userData, currentUserData)) {
-                logoutUser({auth, store});
+                await logoutUser({auth, onLogout: () => setCurrentUserData(null)});
                 history.replace(pages.home.route);
             } else {
                 history.goBack();
@@ -283,6 +277,7 @@ function EditProfile(props) {
         }
         const publishActivity = async () => {
             updateActivity({
+                database,
                 uid: currentUserData.id,
                 type: "User delete",
                 details: userData.toJSON(),
@@ -342,23 +337,22 @@ function EditProfile(props) {
     };
 
     const isAdmin = matchRole([UserRole.ADMIN], currentUserData);
-    // const isEditAllowed = !disabled && (isSameUser(userData, currentUserData) && matchRole([Role.ADMIN, Role.USER], currentUserData));
-    const isSameUser = (userData, currentUserData) => userData && currentUserData && userData.id === currentUserData.id;
     const isDeleteAllowed = isAdmin || (allowDelete && isSameUser(userData, currentUserData));
     const isNotificationsAvailable = !iOS && isSameUser(userData, currentUserData) && notifications && matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
     const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
 
     React.useEffect(() => {
+        if (shouldRedirectToLogin) return;
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         let userData;
         if (!id || id === ":id") {
-            userData = currentUserData;
+            userData = new UserData(database).fromJSON(currentUserData.toJSON());
         } else {
-            userData = cacheDatas.put(id, UserData().create(id));
+            userData = cacheDatas.put(id, new UserData(database).create(id));
         }
         userData.fetch([UserData.PUBLIC, UserData.ROLE])
-            .then(() => isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))
+            .then(() => isMounted && isSameUser(userData, currentUserData) && userData.fetchPrivate(fetchDeviceId()))
             .then(() => isMounted && setState(state => ({
                 ...state,
                 userData,
@@ -366,17 +360,22 @@ function EditProfile(props) {
                 role: userData.role
             })))
             .catch(error => {
+                if (!isMounted) return;
                 notifySnackbar(error);
                 history.goBack();
             })
-            .finally(() => dispatch(ProgressView.HIDE))
+            .finally(() => isMounted && dispatch(ProgressView.HIDE))
         return () => {
-            uploadComponentClean(uppy);
             isMounted = false;
+            dispatch(ProgressView.HIDE);
         }
-    }, [id])
+    }, [id, currentUserData, database, dispatch, history, shouldRedirectToLogin])
 
-    if (!userData) return <LoadingComponent/>
+    React.useEffect(() => () => {
+        uploadComponentClean(uppy);
+    }, [uppy]);
+
+    if (shouldRedirectToLogin || !userData) return <LoadingComponent/>
     if (userData.id !== currentUserData.id && !matchRole([UserRole.ADMIN], currentUserData)) {
         return <Redirect to={pages.editprofile.route}/>
     }
@@ -406,7 +405,6 @@ function EditProfile(props) {
                             />}
                             camera={false}
                             color={"primary"}
-                            firebase={firebase}
                             limits={{width: 300, height: 300}}
                             onsuccess={handleUploadPhotoSuccess}
                             onerror={handleUploadPhotoError}

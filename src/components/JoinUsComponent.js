@@ -1,8 +1,9 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../controllers";
 import {useMetaInfo, usePages} from "../controllers/General";
-import {useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import {getScrollPosition} from "../helpers/useScrollPosition";
 import {updateActivity} from "../pages/admin/audit/auditReducer";
 import ConfirmComponent from "./ConfirmComponent";
@@ -25,7 +26,8 @@ const loadGoogleIdentity = () => {
 };
 
 const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const history = useHistory();
     const metaInfo = useMetaInfo();
     const pages = usePages();
@@ -47,6 +49,7 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
         setState(state => ({...state, allowed: false, show: false}));
         updateActivity({
+            database,
             type: t("JoinUs.Join us"),
             details: {
                 action: "rejected",
@@ -59,6 +62,7 @@ const JoinUsComponent = ({oneTap = true, joinUs = true}) => {
         window.sessionStorage.setItem("join_us_requested", new Date().getTime());
         setState(state => ({...state, allowed: false, show: false}));
         updateActivity({
+            database,
             type: t("JoinUs.Join us"),
             details: {
                 action: "accepted",

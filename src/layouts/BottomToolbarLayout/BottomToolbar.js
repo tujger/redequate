@@ -1,6 +1,7 @@
 import React from "react";
 import {Link, matchPath, useHistory, useLocation} from "react-router-dom";
-import {matchRole, useCurrentUserData} from "../../controllers/UserData";
+import {matchRole} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import Button from "../../controls/Button/Button";
 import Menu from "../../controls/Menu/Menu";
 import menuStyles from "../../controls/Menu/Menu.module.css";
@@ -25,7 +26,7 @@ const MenuLink = ({item, onClose, selected, userData}) => {
 };
 
 export default ({items, className}) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
     const history = useHistory();
     const location = useLocation();
     const [openIndex, setOpenIndex] = React.useState(null);

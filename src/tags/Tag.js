@@ -6,11 +6,10 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {useBackend} from "../../packages/backend";
+import {DatabaseOrder} from "../../packages/database/src";
 import FlexFabComponent from "../components/FlexFabComponent";
 import InfoComponent from "../components/InfoComponent";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import MentionedTextComponent from "../components/MentionedTextComponent";
 import ActionComponent from "../components/MutualComponent/ActionComponent";
@@ -21,20 +20,22 @@ import PostComponent from "../components/PostComponent/PostComponent";
 import postItemTransform from "../components/PostComponent/postItemTransform";
 import ProgressView from "../components/ProgressView";
 import ShareComponent from "../components/ShareComponent";
-import Pagination from "../controllers/FirebasePagination";
-import {useFirebase, usePages, useWindowData} from "../controllers/General";
+import {useAuth, useBackend, useDatabase} from "../controllers";
+import {usePages, useWindowData} from "../controllers/General";
 import {mentionTags, mentionUsers} from "../controllers/mentionTypes";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Tag.module.css";
 
 export default ({allowOwner = true}) => {
+    const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages()
     const {id: itemId} = useParams();
@@ -43,7 +44,6 @@ export default ({allowOwner = true}) => {
     const {t} = useTranslation();
     const windowData = useWindowData();
 
-    const db = firebase.database();
     const {tag} = state;
 
     const isCurrentUserAdmin = matchRole([UserRole.ADMIN], currentUserData);
@@ -61,15 +61,13 @@ export default ({allowOwner = true}) => {
     React.useEffect(() => {
         let isMounted = true;
         dispatch(ProgressView.SHOW);
-        dispatch({type: lazyListComponentReducer.RESET});
-        firebase.database().ref("tag").child(itemId).once("value")
-            .then(snapshot => {
-                if (snapshot.exists()) return {key: snapshot.key, value: snapshot.val()};
-                return Pagination({
-                    ref: "tag",
-                    child: "id",
-                    equals: itemId,
-                    size: 1
+
+        database.read(["tag", {tag_id: itemId}])
+            .then(value => {
+                if (value !== undefined) return {key: itemId, value};
+                return database.cursor(["tag", "tag_id"], {
+                    equalTo: itemId,
+                    orderBy: ["id"]
                 }).next().then(items => items[0])
             })
             .then(tag => {
@@ -170,14 +168,16 @@ export default ({allowOwner = true}) => {
         </div>
         <div className={baseStyles.content}>
             <LazyListComponent
-                itemComponent={item => <PostComponent
+                ItemComponent={item => <PostComponent
                     key={item.id}
                     mentions={[mentionUsers, mentionTags]}
                     postData={item}
                     userData={item._userData}
                 />}
                 itemTransform={postItemTransform({
+                    auth,
                     backend,
+                    database,
                     fetchItemId: item => item.key,
                     onItemError: (error, options) => {
                         console.log(error, options);
@@ -192,10 +192,7 @@ export default ({allowOwner = true}) => {
                 })}
                 live
                 noItemsComponent={<PostComponent label={t("Tag.No posts found")}/>}
-                pagination={() => new Pagination({
-                    ref: db.ref("_tag").child(tag.key),
-                    order: "desc",
-                })}
+                cursor={database.cursor(["_tag", {tag_id: tag.key}, "post_id"], {order: DatabaseOrder.DESC})}
                 placeholder={<PostComponent skeleton={true}/>}
             />
         </div>
@@ -211,7 +208,6 @@ export default ({allowOwner = true}) => {
                 return data;
             }}
             onComplete={({key}) => {
-                dispatch({type: lazyListComponentReducer.RESET});
                 history.push(pages.post.route + key);
             }}
             onError={error => {

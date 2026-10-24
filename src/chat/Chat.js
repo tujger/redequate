@@ -1,21 +1,24 @@
 import React from "react";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {lazyListComponentReducer} from "../components/LazyListComponent/lazyListComponentReducer";
+import lazyListComponentReducer from "../components/LazyListComponent/lazyListComponentReducer";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
-import {cacheDatas, useFirebase, usePages} from "../controllers/General";
+import {useDatabase, useRedirectToLogin} from "../controllers";
+import {cacheDatas, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {useCurrentUserData, UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import UserData from "../controllers/UserData";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
 import ChatHeader from "./ChatHeader";
 import ChatInputBox from "./ChatInputBox";
 import ChatList from "./ChatList";
-import {ChatMeta} from "./ChatMeta";
+import ChatMeta from "./ChatMeta";
+import useChatScroll from "./useChatScroll";
 import chatStyles from "./styles/Chat.module.css";
 
-const Chat = (props) => {
+export default (props) => {
     const {
         id: idFromProps,
         inputComponent = <TextField
@@ -24,25 +27,26 @@ const Chat = (props) => {
         textComponent = text => <div>{text}</div>,
         userComponent = userData => userData.name,
     } = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const {id: idFromParams} = useParams();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({});
     const {userData, chatMeta} = state;
     const inputRef = React.useRef();
     const containerRef = React.useRef();
 
     const id = idFromProps || idFromParams;
-    const db = firebase.database();
+    useChatScroll(containerRef, chatMeta?.id);
 
     const handleSend = (value) => {
         dispatch(ProgressView.SHOW);
         const uid = currentUserData.id;
-        db.ref("chats").child(chatMeta.id).push({
-            created: firebase.database.ServerValue.TIMESTAMP,
+        database.create(["chats", {chat_id: chatMeta.id}, "message_id"], {
+            created: database.TIMESTAMP,
             text: value,
             uid,
         })
@@ -54,11 +58,11 @@ const Chat = (props) => {
     }
 
     React.useEffect(() => {
-        if (!id) return;
+        if (shouldRedirectToLogin || !id) return;
         let isMounted = true;
         dispatch(ProgressView.SHOW);
         dispatch({type: lazyListComponentReducer.RESET, cache: "chats"});
-        const chatMeta = ChatMeta();
+        const chatMeta = ChatMeta(database);
         chatMeta.getOrCreateFor(currentUserData.id, id, history.location.state && history.location.state.meta)
             // .then(console.log)
             .catch(error => {
@@ -73,7 +77,7 @@ const Chat = (props) => {
                 }
             })
             .then(() => chatMeta.fetch())
-            .then(() => cacheDatas.put(chatMeta.uidOtherThan(currentUserData.id), UserData()))
+            .then(() => cacheDatas.put(chatMeta.uidOtherThan(currentUserData.id), new UserData(database)))
             .then(userData => userData.fetch(chatMeta.uidOtherThan(currentUserData.id), [UserData.IMAGE, UserData.NAME]))
             .then(userData => isMounted && setState(state => ({...state, chatMeta, userData})))
             .then(() => chatMeta.updateVisit(currentUserData.id))
@@ -88,9 +92,9 @@ const Chat = (props) => {
             chatMeta.updateVisit(currentUserData.id);
         }
         // eslint-disable-next-line
-    }, [id]);
+    }, [id, currentUserData.id, shouldRedirectToLogin]);
 
-    if (!id) return <LoadingComponent/>
+    if (shouldRedirectToLogin || !id) return <LoadingComponent/>
     if (!chatMeta || !userData) return <LoadingComponent/>
     return <>
         {idFromParams && <ChatHeader
@@ -100,7 +104,7 @@ const Chat = (props) => {
             userData={userData}
         />}
         <div
-            className={baseStyles.content}
+            className={[baseStyles.content, chatStyles.chat].join(" ")}
             ref={containerRef}
         >
             <ChatList
@@ -126,5 +130,3 @@ const Chat = (props) => {
         </>}
     </>
 };
-
-export default Chat;

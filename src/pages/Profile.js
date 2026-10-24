@@ -10,8 +10,6 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {useAuth} from "../../packages/auth";
-import {useBackend} from "../../packages/backend";
 import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -19,10 +17,12 @@ import PlacesTextField from "../components/PlacesTextField";
 import ProfileComponentOrigin from "../components/ProfileComponent";
 import ProgressView from "../components/ProgressView";
 import SystemAlert from "../components/SystemAlert";
+import {useAuth, useBackend, useDatabase, useRedirectToLogin} from "../controllers";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {TextMaskPhone} from "../controllers/TextMasks";
-import {matchRole, UserRole, useCurrentUserData, UserData} from "../controllers/UserData";
+import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
+import UserData, {matchRole, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import Select from "../controls/Select/Select";
 import TextField from "../controls/TextField/TextField";
@@ -92,7 +92,7 @@ export const adminFields = [
     },
 ]
 
-const Profile = (
+export default (
     {
         publicFields: publicFieldsApplied = publicFields,
         privateFields,
@@ -101,11 +101,13 @@ const Profile = (
     }) => {
     const auth = useAuth();
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
     const {id} = useParams();
+    const shouldRedirectToLogin = useRedirectToLogin();
     const [state, setState] = React.useState({disabled: false});
     const {t} = useTranslation();
 
@@ -129,29 +131,25 @@ const Profile = (
     const isEditAllowed = (isSameUser && matchRole([UserRole.USER], userData)) || isCurrentUserAdmin;
 
     React.useEffect(() => {
+        if (shouldRedirectToLogin) return;
         let isMounted = true;
-        if (!currentUserData) {
-            history.goBack();
-            return;
-        }
         if (!id) {
-            setState({...state, userData: currentUserData});
+            setState(state => ({...state, userData: new UserData(database).fromJSON(currentUserData.toJSON())}));
             return;
         }
-        new UserData().fetch(id, [UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
-            .then(userData => isMounted && setState({...state, userData}))
+        new UserData(database).fetch(id, [UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
+            .then(userData => isMounted && setState(state => ({...state, userData})))
             .catch(error => {
-                // notifySnackbar
+                if (!isMounted) return;
                 history.goBack();
                 console.error(error);
             });
         return () => {
             isMounted = false;
         }
-        // eslint-disable-next-line
-    }, [id]);
+    }, [id, currentUserData, database, history, shouldRedirectToLogin]);
 
-    if (!userData) return <LoadingComponent/>;
+    if (shouldRedirectToLogin || !userData) return <LoadingComponent/>;
     return <>
         <NavigationToolbar
             mediumButton={isCurrentUserAdmin && <Button
@@ -210,5 +208,3 @@ const Profile = (
             />}
     </>;
 };
-
-export default Profile;

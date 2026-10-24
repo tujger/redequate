@@ -10,12 +10,13 @@ export * from "./tags";
 export * from "./workers";
 export * from "./components/MutualComponent";
 
+export {default as DatabaseCursor} from "../packages/database/src/common/DatabaseCursor";
+
 export {default as Dispatcher} from "./Dispatcher";
-export {WebWorker} from "./workers/WebWorker";
+export {default as WebWorker} from "./workers/WebWorker";
 
 import packagejson from "../package.json";
 
 export const version = packagejson.version;
 
 export {default} from "./Dispatcher";
-export {useBackend} from "../packages/backend";

@@ -1,6 +1,6 @@
-import {resolvePackage} from "../../common/src/_packages";
+import {resolvePackage} from "../../common";
 
-export const resolveAuth = async auth => resolvePackage(auth, "auth", async () => {
-    const {default: LocalTestAuth} = await import("./local-test/index.js");
-    return new LocalTestAuth();
+export default async (auth, options = {}) => resolvePackage(auth, "auth", async () => {
+    const {default: LocalAuth} = await import("./local");
+    return new LocalAuth(options);
 });

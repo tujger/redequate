@@ -1,5 +1,6 @@
 import {cacheDatas} from "../../controllers/General";
-import {useCurrentUserData, UserData} from "../../controllers/UserData";
+import UserData from "../../controllers/UserData";
+import {getCurrentUserData} from "../../controllers/useCurrentUserData";
 import {MutualError} from "../MutualComponent";
 import {PostData} from "./PostData";
 
@@ -7,23 +8,26 @@ export default (
     {
         allowedExtras,
         backend,
-        fetchItemId = item => item.key,
         currentUserData,
+        database,
+        fetchItemId = item => item.key,
         onItemError,
         type,
         typeId,
     }) => async item => {
 
-    currentUserData = currentUserData || useCurrentUserData();
+    const user = currentUserData || getCurrentUserData();
     try {
         const postData = await cacheDatas.fetch(fetchItemId(item), id => {
-            return PostData({type, allowedExtras}).fetch(id);
+            return PostData({allowedExtras, database, type}).fetch(id);
         });
-        await postData.fetchCounters();
-        await postData.fetchExtras(currentUserData.id);
-        const userData = await cacheDatas.fetch(postData.uid, id => {
-            return UserData().fetch(id, currentUserData.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
-        })
+        const [, , userData] = await Promise.all([
+            postData.fetchCounters(),
+            postData.fetchExtras(user?.id),
+            cacheDatas.fetch(postData.uid, id => {
+                return new UserData(database).fetch(id, user?.id ? [UserData.PUBLIC] : [UserData.NAME, UserData.IMAGE]);
+            }),
+        ]);
         postData._userData = userData;
         // console.log(postData)
         return postData;
@@ -32,14 +36,14 @@ export default (
         let code = null;
         if (error && error.message && error.message.indexOf("Post not found") >= 0) code = MutualError.NOT_FOUND;
         if (onItemError) {
-            return onItemError(error, {code, id: item.key, uid: currentUserData.id});
+            return onItemError(error, {code, id: item.key, uid: user?.id});
         } else {
             if (code === MutualError.NOT_FOUND) {
-                backend.request("fixPost", currentUserData && currentUserData.id
+                backend.request("fixPost", user && user?.id
                     ? {
                         code,
                         id: item.key,
-                        uid: currentUserData.id
+                        uid: user?.id
                     } : {
                         code,
                         id: item.key,

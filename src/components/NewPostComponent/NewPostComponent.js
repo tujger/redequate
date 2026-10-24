@@ -1,16 +1,16 @@
 import ImageAddIcon from "@mui/icons-material/AddPhotoAlternate";
 import ImageIcon from "@mui/icons-material/InsertPhoto";
 import React from "react";
+import {flushSync} from "react-dom";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useAuth} from "../../../packages/auth";
-import {useStorage} from "../../../packages/storage";
-import Pagination from "../../controllers/FirebasePagination";
-import {useFirebase, usePages, useWindowData} from "../../controllers/General";
+import {useAuth, useDatabase, useStorage} from "../../controllers";
+import {usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, normalizeSortName, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, normalizeSortName, UserRole} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import LoadingComponent from "../LoadingComponent";
@@ -20,7 +20,7 @@ import ProgressView from "../ProgressView";
 import UploadComponent from "../UploadComponent/UploadComponent";
 import {uploadComponentClean, uploadComponentPublish} from "../UploadComponent/uploadComponentControls";
 import Images from "./Images";
-import {newPostComponentReducer} from "./newPostComponentReducer";
+import newPostComponentReducer from "./newPostComponentReducer";
 import componentStyles from "./styles/NewPostComponent.module.css";
 import Toolbar from "./Toolbar";
 import Wrapper from "./Wrapper";
@@ -53,8 +53,8 @@ const NewPostComponent = props => {
         UploadProps = {}
     } = props;
     const auth = useAuth();
-    const currentUserData = useCurrentUserData();
-    const firebase = useFirebase();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const history = useHistory();
     const pages = usePages();
     const isSendingRef = React.useRef(false);
@@ -67,7 +67,7 @@ const NewPostComponent = props => {
 
     const handleOpen = evt => {
         evt && evt.stopPropagation();
-        if (!currentUserData || !currentUserData.id) {
+        if (!currentUserData.id) {
             history.push(pages.login.route);
             return;
         }
@@ -169,7 +169,7 @@ const NewPostComponent = props => {
             return {text, images};
         }
         const buildData = async ({text, images}) => ({
-            created: firebase.database.ServerValue.TIMESTAMP,
+            created: database.TIMESTAMP,
             images: images || null,
             to: replyTo || 0,
             text: text || null,
@@ -179,15 +179,21 @@ const NewPostComponent = props => {
             if (editPostData) {
                 const {images, text} = data;
                 const {edit = {}} = editPostData;
-                const newEdit = firebase.database().ref().child(type).push();
-                edit[newEdit.key] = {
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+
+                const editValue = {
+                    timestamp: database.TIMESTAMP,
                     uid: currentUserData.id,
                 };
-                const updates = {images, text, edit};
-                return firebase.database().ref().child(type).child(editPostData.id).update(updates)
+                const editKey = await database.create(["posts", {post_id: editPostData.id}, "edit", "edit_id"], editValue);
+                edit[editKey] = editValue;
+
+                const updates = new Map();
+                updates.set(["posts", {post_id: editPostData.id}, "images"], images);
+                updates.set(["posts", {post_id: editPostData.id}, "text"], text);
+                return database.update(updates)
                     .then(() => {
                         updateActivity({
+                            database,
                             uid: currentUserData.id,
                             type: "Post edit",
                             details: {
@@ -196,19 +202,20 @@ const NewPostComponent = props => {
                                 uid: editPostData.uid,
                             }
                         })
-                        return {key: editPostData.id};
+                        return editPostData.id;
                     });
             } else {
-                return firebase.database().ref().child(type).push(data);
+                return database.create(["posts", "post_id"], data);
             }
         }
-        const publishComplete = async snapshot => {
+        const publishComplete = async key => {
             dispatch({
                 type: newPostComponentReducer.SAVE,
                 _savedText: undefined,
                 _savedContext: undefined
             });
-            setState(state => ({
+            // Release the modal's history blocker before onComplete can navigate.
+            flushSync(() => setState(state => ({
                 ...state,
                 disabled: false,
                 open: false,
@@ -216,8 +223,8 @@ const NewPostComponent = props => {
                 uppy: null,
                 images: null,
                 hiddenTag: null
-            }));
-            onComplete({key: snapshot.key})
+            })));
+            onComplete({key})
         }
         const finalizePublishing = async () => {
             isSendingRef.current = false;
@@ -318,10 +325,9 @@ const NewPostComponent = props => {
             const {context, _savedContext, _savedText, givenText, givenTag} = props;
             let hiddenTag;
             if (givenTag) {
-                const item = await Pagination({
-                    ref: "tag",
-                    child: "id",
-                    equals: givenTag
+                const item = await database.cursor(["tag", "tag_id"], {
+                    equalTo: givenTag,
+                    orderBy: ["id"]
                 }).next().then(items => items[0]);
                 if (item) {
                     hiddenTag = String.fromCharCode(1) + `$[tag:${givenTag}:${item.key}]` + String.fromCharCode(2);
@@ -434,7 +440,6 @@ const NewPostComponent = props => {
     const uploadComponent = ready && <UploadComponent
         button={uploadButton}
         camera={camera}
-        firebase={firebase}
         imageDescriptors={imageDescriptors}
         multi={true}
         onsuccess={handleUploadPhotoSuccess}
@@ -470,7 +475,6 @@ const NewPostComponent = props => {
                         className={componentStyles.messageBox}
                         color={"secondary"}
                         disabled={disabled}
-                        firebase={firebase}
                         mentionsParams={mentions}
                         multiline={true}
                         onChange={handleChange}

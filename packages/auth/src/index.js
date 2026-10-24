@@ -1,3 +1,2 @@
-export {default as useAuth} from "./useAuth";
 export {default as AuthBase} from "./AuthBase";
-export {resolveAuth} from "./resolveAuth";
+export {default as resolveAuth} from "./resolveAuth";

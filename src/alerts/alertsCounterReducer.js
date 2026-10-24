@@ -1,6 +1,6 @@
 import {Layout} from "../controllers/General";
 
-export const alertsCounterReducer = (state = {counter: 0}, action) => {
+const alertsCounterReducer = (state = {counter: 0}, action) => {
     switch (action.type) {
         case Layout.REFRESH:
             return {...state, random: Math.random()};
@@ -23,3 +23,5 @@ alertsCounterReducer.INCREASE = "alertsCounter_Increase";
 alertsCounterReducer.RESET = "alertsCounter_Reset";
 alertsCounterReducer.VALUE = "alertsCounter_Value";
 alertsCounterReducer.skipStore = true;
+
+export default alertsCounterReducer;

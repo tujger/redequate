@@ -2,16 +2,17 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {useDatabase} from "../../controllers";
 import {toDateString} from "../../controllers/DateFormat";
-import {cacheDatas, useFirebase, usePages} from "../../controllers/General";
+import {cacheDatas, usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
 import Select from "../../controls/Select/Select";
 import AvatarView from "../AvatarView";
 import CounterComponent from "../CounterComponent";
 import ItemPlaceholderComponent from "../ItemPlaceholderComponent";
 import ListItemComponent from "../ListItemComponent";
-import ListSwipeableItemComponent from "../ListSwipeableItemComponent";
 import ProgressView from "../ProgressView";
 import styles from "./styles/MutualItem.module.css";
 
@@ -28,18 +29,15 @@ const MutualSubscribeItem = (
         typeId,
         unsubscribeLabel,
     }) => {
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const history = useHistory();
     const pages = usePages();
     const {t} = useTranslation();
     const [disabled, setDisabled] = React.useState(false);
     const [menuOpen, setMenuOpen] = React.useState(false);
-    const {key, userData = {}, value} = data;
-    const patternClass = pattern
-        ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
-        : styles.cardFlat;
+    const {id, userData = {}, value} = data;
     const isSameUser = value && value.uid === currentUserData.id;
     const isAdminUser = matchRole([UserRole.ADMIN], currentUserData);
     const menuLabel = unsubscribeLabel === undefined ? t("Mutual.Unsubscribe") : unsubscribeLabel;
@@ -63,13 +61,13 @@ const MutualSubscribeItem = (
     const handleUnsubscribe = event => {
         event.stopPropagation?.();
         setMenuOpen(false);
-        console.log("handleUnsubscribe", key, typeId, currentUserData.id, value);
+        console.log("handleUnsubscribe", id, typeId, currentUserData.id, value);
         dispatch(ProgressView.SHOW);
         setDisabled(true);
-        cacheDatas.remove(key);
+        cacheDatas.remove(id);
         cacheDatas.remove(value.id);
-        firebase.database().ref("mutual").child(typeId).child(key).set(null)
-            .then(() => onDelete({key, value}))
+        database.delete(["mutual", {mutual_type: typeId}, {mutual_id: id}])
+            .then(() => onDelete({key: id, value}))
             .catch(error => {
                 if (error && error.code === "PERMISSION_DENIED") {
                     notifySnackbar(new Error(t("Mutual.Can't unsubscribe")));
@@ -106,7 +104,7 @@ const MutualSubscribeItem = (
         subtitle={<span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={`${key}/mutual/${typeId}_s`}
+                        path={[{id}, "mutual", {mutual_type: `${typeId}_s`}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />
@@ -147,7 +145,7 @@ const MutualSubscribeItem = (
                 {counter && <span className={styles.counter}>
                     <CounterComponent
                         live
-                        path={`${key}/mutual/${typeId}_s`}
+                        path={[{id: key}, "mutual", {mutual_type: `${typeId}_s`}]}
                         prefix={"- "}
                         suffix={" follower(s)"}
                     />

@@ -6,30 +6,23 @@ import {useTranslation} from "react-i18next";
 import PWAPrompt from "react-ios-pwa-prompt";
 import {connect, Provider, useDispatch} from "react-redux";
 import {BrowserRouter, matchPath, Route, Switch, useHistory} from "react-router-dom";
-import {_AppContext} from "../packages/common/AppContext";
 import {resolveAuth} from "../packages/auth/src";
 import {resolveBackend} from "../packages/backend/src";
+import {resolveDatabase} from "../packages/database/src";
 import {resolveMessaging} from "../packages/messaging/src";
 import {resolveStorage} from "../packages/storage/src";
 import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
-import Firebase from "./controllers/Firebase";
-import {
-    cacheDatas,
-    fetchDeviceId,
-    Layout,
-    useFirebase,
-    useMetaInfo,
-    usePages,
-    useStore,
-    useWindowData
-} from "./controllers/General";
+import {useDatabase} from "./controllers";
+import AppContext from "./controllers/AppContext/AppContext";
+import {cacheDatas, fetchDeviceId, Layout, useMetaInfo, usePages, useStore, useWindowData} from "./controllers/General";
 import {setupReceivingNotifications} from "./controllers/Notifications";
 import notifySnackbar from "./controllers/notifySnackbar";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
 import Store, {refreshAll} from "./controllers/Store";
 import textTranslation, {useTextTranslation} from "./controllers/textTranslation";
-import {matchRole, needAuth, useCurrentUserData, UserData, watchUserChanged} from "./controllers/UserData";
+import {getCurrentUserData, useCurrentUserDataValue, useSetCurrentUserData} from "./controllers/useCurrentUserData";
+import UserData, {matchRole, needAuth, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import Button from "./controls/Button/Button";
 import initInternationalization from "./helpers/initInternationalization";
@@ -43,40 +36,43 @@ const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayo
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-const origin = console.error;
-console.error = function (...args) {
-    origin.call(this, ...args);
-    // return;
-    try {
-        if (!args.length || args.length > 1) return;
-        if (args[0].toString().indexOf("no such file or directory") > 1) {
-            return;
+const installConsoleError = database => {
+    const origin = console.error;
+    const reportError = error => origin.call(console, error);
+    const handler = function (...args) {
+        origin.call(console, ...args);
+        try {
+            if (args.length !== 1) return;
+            const message = String(args[0]);
+            if (["no such file or directory", "Module not found", "memory access out of bounds"].some(filter => message.includes(filter))) return;
+
+            if (!database) {
+                reportError("[Dispatcher] Error was not saved: database is unavailable.");
+                return;
+            }
+            const currentUserData = getCurrentUserData();
+            const saving = database.create(["errors", "error_id"], {
+                error: String(args[0]?.stack || message),
+                timestamp: database.TIMESTAMP,
+                uid: currentUserData?.id || "anonymous"
+            });
+            Promise.resolve(saving).catch(reportError);
+        } catch (error) {
+            reportError(error);
         }
-        if (args[0].toString().indexOf("Module not found") > 1) {
-            return;
-        }
-        if (args[0].toString().indexOf("memory access out of bounds") > 1) {
-            return;
-        }
-        const firebase = useFirebase();
-        const currentUserData = useCurrentUserData();
-        if (!firebase || !firebase.database) return;
-        firebase.database().ref("errors").push({
-            error: args[0].stack || args[0],
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            uid: currentUserData.id || "anonymous"
-        });
-    } catch (error) {
-        origin.call(this, error);
-    }
-}
+    };
+    console.error = handler;
+    return () => {
+        if (console.error === handler) console.error = origin;
+    };
+};
 
 export default (props) => {
     const {
         auth: authGiven,
         backend: backendGiven,
-        firebase: firebaseGiven = undefined,
-        firebaseConfig = undefined,
+        database: databaseGiven,
+        firebase = undefined,
         locales,
         messaging: messagingGiven,
         pages: pagesGiven,
@@ -89,8 +85,10 @@ export default (props) => {
     const [state, setState] = React.useState({store: null});
     const widthRef = React.useRef(width);
     const previousWidth = React.useRef(width);
-    const {firebase} = state;
+    const setCurrentUserData = useSetCurrentUserData();
     widthRef.current = width;
+
+    const metaInfo = useMetaInfo();
 
     React.useEffect(() => {
         if (previousWidth.current !== width) {
@@ -100,19 +98,31 @@ export default (props) => {
     }, [width, state.store]);
 
     React.useEffect(() => {
-        let maintenanceRef, metaRef, unlisten;
+        let maintenanceRef, metaListener;
+        let consoleHandler;
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
         }
         const initFirebase = async props => {
-            const firebase = firebaseGiven || Firebase(firebaseConfig);
-            console.log("[Dispatcher]", "firebase resolved", {firebase});
+            if(firebase) {
+                console.log("[Dispatcher]", "firebase provided", {firebase});
+            }
             return {...props, firebase};
+        }
+        const initDatabase = async props => {
+            try {
+                const database = await resolveDatabase(databaseGiven);
+                consoleHandler = installConsoleError(database);
+                console.log("[Dispatcher]", "database resolved", {database});
+                return {...props, consoleHandler, database};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
         }
         const initAuth = async props => {
             try {
-                const auth = await resolveAuth(authGiven);
+                const auth = await resolveAuth(authGiven, {database: props.database, UserData});
                 console.log("[Dispatcher]", "auth resolved", {auth});
                 return {...props, auth};
             } catch (error) {
@@ -149,17 +159,12 @@ export default (props) => {
         const initStore = async props => {
             return {...props, store: Store(title, reducers)};
         }
-        const restoreFirebaseAuth = async props => {
+        const restoreAuth = async props => {
             try {
-                const authUser = await new Promise(async (resolve, reject) => {
-                    unlisten = await props.auth.onAuthStateChanged(resolve, reject);
-                });
+                const authUser = await props.auth.resolveCurrentUser();
                 return {...props, authUser};
             } catch (error) {
                 throw {...props, fatal: error};
-            } finally {
-                unlisten && unlisten();
-                unlisten = null;
             }
         }
         const initWindowData = async props => {
@@ -173,8 +178,14 @@ export default (props) => {
             return {...props, windowData};
         }
         const initTextTranslation = async props => {
-            const textTranslationInstance = textTranslation({firebase});
-            return {...props, textTranslation: textTranslationInstance};
+            const {firebase} = props;
+            if(firebase) {
+                const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
+
+                const textTranslationInstance = textTranslation({firebaseApiKey});
+                return {...props, textTranslation: textTranslationInstance};
+            }
+            return props;
         }
         const fetchDeviceId_ = async props => {
             return {...props, deviceId: fetchDeviceId()};
@@ -198,23 +209,19 @@ export default (props) => {
             return props;
         }
         const fetchMetaInfo = async props => {
-            const {firebase} = props;
-            const snapshot = await firebase.database().ref("meta/settings").once("value");
-            const settings = snapshot.val() || {};
+            const {database} = props;
+            const settings = (await database.read(["meta", {settings: "settings"}])) || {};
             return {...props, metaInfo: {settings}};
         }
         const fetchCurrentUserData = async props => {
-            const {authUser, deviceId, store} = props;
-            if (!authUser) {
-                store.dispatch({type: "currentUserData", userData: null});
+            const {authUser, database, deviceId} = props;
+            if (!authUser?.id) {
+                setCurrentUserData(authUser);
                 return props;
             }
             try {
-                const savedUserData = store.getState().currentUserData?.userData;
-                const userData = savedUserData?.id === authUser.id
-                    ? new UserData().fromJSON(savedUserData)
-                    // eslint-disable-next-line react/prop-types -- authUser is an Auth model passed between pipeline steps.
-                    : new UserData().fromJSON(authUser.toJSON());
+                // eslint-disable-next-line react/prop-types -- authUser is a provider model.
+                const userData = new UserData(database).fromJSON(authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
                 return {...props, userData};
@@ -223,11 +230,11 @@ export default (props) => {
             }
         }
         const fetchCurrentUserLastVisit = async props => {
-            const {store, userData} = props;
+            const {userData} = props;
             if (userData) {
                 userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
                 cacheDatas.put(userData.id, userData);
-                store.dispatch({type: "currentUserData", userData});
+                setCurrentUserData(userData);
             }
             return props;
         }
@@ -238,7 +245,7 @@ export default (props) => {
                 const pvt = userData.private[deviceId];
                 i18n.changeLanguage(pvt.locale);
             } else {
-                restoreLanguage(store, i18n);
+                restoreLanguage(i18n);
             }
             return props;
         }
@@ -259,8 +266,9 @@ export default (props) => {
             return props;
         }
         const installWrapperControl_ = async props => {
+            const {firebase} = props;
             (async () => {
-                installWrapperControl(props._firebase);
+                installWrapperControl(firebase);
             })().catch(notifySnackbar);
             return props;
         }
@@ -274,39 +282,49 @@ export default (props) => {
         }
         const installUserChangeWatcher = async props => {
             (async () => {
-                const {auth, firebase, store} = props;
+                const {auth, database, store} = props;
                 setInterval(() => {
-                    watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
+                    watchUserChanged({
+                        auth,
+                        database,
+                        getUserData: getCurrentUserData,
+                        onUserChanged: setCurrentUserData
+                    }).then(() => refreshAll(store));
                 }, 30000)
-                watchUserChanged({auth, firebase, store}).then(() => refreshAll(store));
+                watchUserChanged({
+                    auth,
+                    database,
+                    getUserData: getCurrentUserData,
+                    onUserChanged: setCurrentUserData
+                }).then(() => refreshAll(store));
             })().catch(console.error);
             return props;
         }
         const installMetaWatcher = async props => {
             (async () => {
-                const {firebase, store, t} = props;
+                const {database, store, t} = props;
                 let initial = true;
-                metaRef = firebase.database().ref("meta");
-                metaRef.on("value", snapshot => {
-                    const meta = snapshot.val() || {};
-                    const {maintenance, settings} = meta;
-                    if (initial) {
-                        initial = false;
-                    } else {
-                        console.warn("[Dispatcher] meta changed", meta);
-                        setState(state => ({...state, metaInfo: {settings}}));
-                        refreshAll(store);
-                        notifySnackbar(t("Reloaded due to settings changed"));
-                    }
-                    setState(state => {
-                        const metaInfo = state.metaInfo || {};
-                        if (JSON.stringify(maintenance || null) !== JSON.stringify(metaInfo.maintenance || null)) {
-                            console.warn("[Dispatcher] maintenance changed to", maintenance || "none");
-                            return {...state, metaInfo: {...metaInfo, maintenance}};
+                metaListener = database.addEventListener(["meta"], {
+                    onChange(meta) {
+                        const {maintenance, settings} = meta || {};
+                        if (initial) {
+                            initial = false;
+                        } else {
+                            console.warn("[Dispatcher] meta changed", meta);
+                            setState(state => ({...state, metaInfo: {settings}}));
+                            refreshAll(store);
+                            notifySnackbar(t("Reloaded due to settings changed"));
                         }
-                        return state;
-                    })
-                });
+                        setState(state => {
+                            const metaInfo = state.metaInfo || {};
+                            if (JSON.stringify(maintenance || null) !== JSON.stringify(metaInfo.maintenance || null)) {
+                                console.warn("[Dispatcher] maintenance changed to", maintenance || "none");
+                                return {...state, metaInfo: {...metaInfo, maintenance}};
+                            }
+                            return state;
+                        })
+                    }
+                })
             })().catch(console.error);
             return props;
         }
@@ -356,12 +374,13 @@ export default (props) => {
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
             .then(initFirebase)
+            .then(initDatabase)
             .then(initAuth)
             .then(initBackend)
             .then(initMessaging)
             .then(initStorage)
             .then(initStore)
-            .then(restoreFirebaseAuth)
+            .then(restoreAuth)
             .then(initWindowData)
             .then(initTextTranslation)
             .then(fetchDeviceId_)
@@ -383,15 +402,17 @@ export default (props) => {
 
         return () => {
             maintenanceRef && maintenanceRef.off();
-            metaRef && metaRef.off();
-            unlisten && unlisten();
+            metaListener?.remove();
+            consoleHandler?.();
         }
         // eslint-disable-next-line
-    }, []);
+    }, [metaInfo]);
 
     if (state.fatal) return <DispatcherInitializationError error={state.fatal} theme={props.theme}/>;
 
-    if (!firebase) return <LoadingComponent/>;
+    if (!state.auth) {
+        return <LoadingComponent/>;
+    }
 
     return <DispatcherInitialized
         {...props}
@@ -415,7 +436,7 @@ const DispatcherInitialized = (props) => {
         backend,
         buildPages,
         copyright,
-        firebase,
+        database,
         store,
         menu: givenMenu,
         messaging,
@@ -428,7 +449,6 @@ const DispatcherInitialized = (props) => {
     } = props;
     const {t} = useTranslation();
 
-    useFirebase(firebase);
     useMetaInfo(metaInfo);
     useStore(store);
     useTextTranslation(textTranslation);
@@ -436,7 +456,9 @@ const DispatcherInitialized = (props) => {
     const pages = usePages(buildPages ? buildPages() : {});
     const menu = givenMenu(pages);
 
-    return <_AppContext value={{auth, backend, messaging, storage}}>
+    console.log("[Context]", {auth, backend, database, messaging, storage});
+
+    return <AppContext value={{auth, backend, database, messaging, storage}}>
         <Provider store={store}>
             <>
                 {theme}
@@ -453,7 +475,7 @@ const DispatcherInitialized = (props) => {
                 <PWAPrompt promptOnVisit={3} timesToShow={3}/>
             </>
         </Provider>
-    </_AppContext>
+    </AppContext>
 }
 
 const mapStateToProps = ({dispatcherRoutedBodyReducer}) => ({random: dispatcherRoutedBodyReducer.random});
@@ -471,7 +493,8 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
         random,
         iosLayout = true
     } = props;
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -483,7 +506,9 @@ const DispatcherRoutedBody = connect(mapStateToProps)((props) => {
         const updateTitle = (location) => {
             console.log("[Dispatcher]", JSON.stringify(location));
             try {
-                if (currentUserData && currentUserData.id) currentUserData.updateVisitTimestamp();
+                if (currentUserData.id) {
+                    currentUserData.updateVisitTimestamp(database);
+                }
             } catch (error) {
                 console.error(error);
             }

@@ -1,5 +1,4 @@
 import React from "react";
-import {firebaseMessaging} from "../controllers/Firebase";
 import {useMetaInfo} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {hasWrapperControlInterface, wrapperControlCall} from "../controllers/WrapperControl";
@@ -20,9 +19,10 @@ export default ({title, text, url, component = <div/>}) => {
 export function share({title = "Share", text = "Share", url = ""}) {
     const metaInfo = useMetaInfo();
     const shortifyUrl = async () => {
-        const domainUriPrefix = metaInfo && metaInfo.settings && metaInfo.settings.dynamicLinksUrlPrefix;
-        if (domainUriPrefix) {
-            return window.fetch("https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + (firebaseMessaging.config.apiKey), {
+        const domainUriPrefix = metaInfo?.settings?.dynamicLinksUrlPrefix;
+        const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
+        if (domainUriPrefix && firebaseApiKey) {
+            return window.fetch("https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=" + firebaseApiKey, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

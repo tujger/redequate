@@ -24,3 +24,4 @@ yarn-error.log*
 firebase-debug.log*
 database-debug.log*
 .firebase/
+/packages/server/dist/

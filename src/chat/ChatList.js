@@ -1,33 +1,31 @@
 import React from "react";
+import {DatabaseOrder} from "../../packages/database";
 import LazyListComponent from "../components/LazyListComponent/LazyListComponent";
+import {useDatabase} from "../controllers";
 import ChatItem from "./ChatItem";
-import Pagination from "../controllers/FirebasePagination";
 
-const ChatList = ({chatKey, chatMeta, containerRef, textComponent, scrollerClassName}) => {
+export default ({chatKey, chatMeta, containerRef, textComponent, scrollerClassName}) => {
+    const database = useDatabase();
+
     return <LazyListComponent
         containerRef={containerRef}
-        disableProgress={true}
-        itemComponent={item => <ChatItem
+        cursor={database.cursor(["chats", {chat_id: chatKey}, "message_id"], {order: DatabaseOrder.DESC})}
+        disableProgress
+        ItemComponent={item => <ChatItem
             chatMeta={chatMeta}
             data={item.value}
-            key={item.key}
+            key={item.id}
             textComponent={textComponent}
         />}
         itemTransform={item => {
             if (item.key === "!meta") return null;
-            return item
+            return {id: item.key, ...item}
         }}
         live
         noItemsComponent={<div/>}
-        pagination={() => new Pagination({
-            order: "desc",
-            ref: "chats/" + chatKey,
-            size: 100,
-        })}
+        page={10}
         placeholder={<ChatItem skeleton/>}
         reverse
         scrollerClassName={scrollerClassName}
     />
 }
-
-export default ChatList;

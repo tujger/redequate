@@ -1,21 +1,14 @@
-import {UserData} from "../../../common";
-import {fail} from "../../../common/src/_packages";
-
-export const toUserData = user => {
-    if (!user) return null;
+export default (user, createUserData) => {
+    if (!user) return createUserData();
     const json = user.toJSON();
-    if (!json.uid) {
-        fail("auth/invalid-user-data", "Auth user has no identifier.")
-    }
     const providerItem = json.providerData?.[0];
     const provider = providerItem?.providerId || "anonymous";
     const timestamp = value => {
         const number = Number(value);
         return value !== null && value !== undefined && value !== "" && Number.isFinite(number) ? number : null;
     };
-    return new UserData().fromJSON({
+    return createUserData({
         id: json.uid,
-        role: null,
         public: {
             name: json.displayName ?? null,
             email: json.email || providerItem?.email || null,
@@ -25,8 +18,5 @@ export const toUserData = user => {
             created: timestamp(json.createdAt) ?? Date.now(),
             lastLogin: timestamp(json.lastLoginAt),
         },
-        private: {},
-        requested: Date.now(),
-        loaded: {public: true, name: true, email: true, image: true},
     });
 };

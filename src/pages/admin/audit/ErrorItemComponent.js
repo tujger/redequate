@@ -1,22 +1,22 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import React from "react";
 import {useDispatch} from "react-redux";
-import {useBackend} from "../../../../packages/backend";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
 import ItemPlaceholderComponent from "../../../components/ItemPlaceholderComponent";
 import ListItemComponent from "../../../components/ListItemComponent";
 import ProgressView from "../../../components/ProgressView";
-import {cacheDatas, useFirebase} from "../../../controllers/General";
+import {useBackend, useDatabase} from "../../../controllers";
+import {cacheDatas} from "../../../controllers/General";
 import notifySnackbar from "../../../controllers/notifySnackbar";
-import {UserData} from "../../../controllers/UserData";
+import UserData from "../../../controllers/UserData";
 import Button from "../../../controls/Button/Button";
 import errorStyles from "./styles/ErrorItemComponent.module.css";
 
 export default ({data, skeleton, label, onUserClick}) => {
     const backend = useBackend();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase()
     const [state, setState] = React.useState({});
 
     const {alert, userData, removed} = state;
@@ -41,7 +41,7 @@ export default ({data, skeleton, label, onUserClick}) => {
             key: data.key
         })
             .then(({result}) => notifySnackbar(result))
-            .then(() => firebase.database().ref("errors").child(data.key).set(null))
+            .then(() => database.delete(["errors", {error_id: data.key}]))
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
@@ -49,7 +49,7 @@ export default ({data, skeleton, label, onUserClick}) => {
 
     const handleRemove = () => {
         dispatch(ProgressView.SHOW);
-        firebase.database().ref("errors").child(data.key).set(null)
+        database.delete(["errors", {error_id: data.key}])
             .then(() => setState({...state, removed: true}))
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
@@ -58,13 +58,13 @@ export default ({data, skeleton, label, onUserClick}) => {
     React.useEffect(() => {
         if (!data || !data.value || !data.value.uid) return;
         let isMounted = true;
-        const userData = cacheDatas.put(data.value.uid, UserData());
-        userData.fetch(data.value.uid, [UserData.NAME, UserData.IMAGE])
-            .then(() => isMounted && setState(state => ({...state, userData})))
+
+        cacheDatas.fetch(data.value.uid, id => new UserData(database).fetch(id, [UserData.NAME, UserData.IMAGE]))
+            .then(userData => isMounted && setState(state => ({...state, userData})))
             .catch(error => {
                 if (!isMounted) return;
-                console.log(error, userData)
-                userData.public.name = userData.public.name || (data.value.uid === "anonymous" ? "Anonymous" : "User deleted");
+                const userData = new UserData(database);
+                userData.public.name = data.value.uid === "anonymous" ? "Anonymous" : "User deleted";
                 if (data.value.uid !== "anonymous") console.log("[Error] user deleted", data.value.uid);
                 setState(state => ({...state, userData}))
             });

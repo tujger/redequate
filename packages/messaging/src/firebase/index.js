@@ -1,5 +1,5 @@
 import {deleteToken, getMessaging, getToken, isSupported, onMessage as onFirebaseMessage} from "firebase/messaging";
-import {fail} from "../../../common/src/_packages";
+import {fail} from "../../../common";
 import MessagingBase from "../MessagingBase";
 
 export default class FirebaseMessaging extends MessagingBase {
@@ -7,7 +7,7 @@ export default class FirebaseMessaging extends MessagingBase {
     _registration = undefined;
     _tokenInitialized = false;
 
-    constructor({firebase, storageKey = "notification-token", serviceWorkerURL, serviceWorkerType = "classic"}) {
+    constructor({firebase, storageKey = "notification-token", serviceWorkerURL, serviceWorkerType = "module"}) {
         super();
         if (typeof storageKey !== "string" || !storageKey.trim()) {
             fail("messaging/invalid-argument", "storageKey must be a non-empty string.");
@@ -25,7 +25,7 @@ export default class FirebaseMessaging extends MessagingBase {
     }
 
     async addMessageListener(onMessage) {
-        if (typeof onMessage !== "function") {
+        if (!(onMessage instanceof Function)) {
             fail("messaging/invalid-argument", "Message listener must be a function.");
         }
         return onFirebaseMessage(await resolveFirebaseMessaging(this._firebase), payload => {

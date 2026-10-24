@@ -1,27 +1,16 @@
 import React from "react";
 import {InView} from "react-intersection-observer";
 
-export default ({active = true, finished, loadNextPage, placeholder, placeholders}) => {
-    const [state = active, setState] = React.useState();
-
+export default ({active = true, finished, loadNextPage, placeholder, placeholders = 1}) => {
     if (finished) return null;
-    return <>
-        {state && <InView
-            children={null}
-            onChange={(inView) => {
-                if (inView) {
-                    loadNextPage();
-                    setState(false);
-                }
-            }}
-            style={{width: "100%"}}
-        />}
-        {(() => {
-            const a = [];
-            for (let i = 0; i < placeholders; i++) {
-                a.push(i)
-            }
-            return a;
-        })().map((item, index) => <placeholder.type {...placeholder.props} key={index}/>)}
-    </>
-}
+    return <InView
+        skip={!active}
+        triggerOnce
+        onChange={inView => {
+            if (inView) loadNextPage();
+        }}
+        style={{width: "100%"}}
+    >
+        {Array.from({length: placeholders}, (_, index) => React.cloneElement(placeholder, {key: index}))}
+    </InView>;
+};

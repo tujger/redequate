@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import {delay, fail, notImplemented, identifier, resolvePackage} from "../_packages";
+import {delay, fail, identifier, notImplemented, resolvePackage} from "../index";
 
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 it("keeps full error codes and abstract method names", () => {
@@ -12,11 +12,11 @@ it.each([0, 100, 101, 2000])("delays %i ms and logs only above 100", async milli
     vi.spyOn(Math, "random").mockReturnValue((milliseconds + 0.1) / 2001);
     const log = vi.spyOn(console, "debug").mockImplementation(() => {});
     const before = Date.now();
-    const pending = delay("LocalTestStorage", "upload");
+    const pending = delay("LocalStorage", "upload");
     await vi.runAllTimersAsync();
     await pending;
     expect(Date.now() - before).toBe(milliseconds);
-    if (milliseconds > 100) expect(log).toHaveBeenCalledWith(`[LocalTestStorage] upload: ${milliseconds} ms`);
+    if (milliseconds > 100) expect(log).toHaveBeenCalledWith(`[LocalStorage] upload: ${milliseconds} ms`);
     else expect(log).not.toHaveBeenCalled();
 });
 it("uses browser UUID generation", () => {

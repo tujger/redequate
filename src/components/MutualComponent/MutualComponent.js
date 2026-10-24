@@ -1,12 +1,11 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
-import {useBackend} from "../../../packages/backend";
+import {useBackend, useDatabase} from "../../controllers";
 import counterControl from "../../controllers/counterControl";
-import Pagination from "../../controllers/FirebasePagination";
-import {useFirebase} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {matchRole, UserRole, useCurrentUserData} from "../../controllers/UserData";
+import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole, UserRole} from "../../controllers/UserData";
 import TextField from "../../controls/TextField/TextField";
 import ConfirmComponent from "../ConfirmComponent";
 import InfoComponent from "../InfoComponent";
@@ -41,9 +40,9 @@ export default props => {
         unsubscribeComponent = <ActionComponent label={unsubscribeLabel}/>,
     } = props;
     const backend = useBackend();
-    const currentUserData = useCurrentUserData();
+    const currentUserData = useCurrentUserDataValue();
+    const database = useDatabase();
     const dispatch = useDispatch();
-    const firebase = useFirebase();
     const [state, setState] = React.useState({});
     const {
         disabled = true,
@@ -65,7 +64,7 @@ export default props => {
     const pushRequest = () => {
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: true});
-        mutualRequest({currentUserData, message, mutualId, mutualMode, mutualType, typeId})
+        mutualRequest({currentUserData, database, message, mutualId, mutualMode, mutualType, typeId})
             .then(hasPending => {
                 if (mutualMode === MutualMode.DUPLEX_APPROVE) {
                     setState(state => ({
@@ -98,12 +97,12 @@ export default props => {
         }
         dispatch(ProgressView.SHOW);
         setState({...state, disabled: true, pending: false});
-        new Pagination({
-            ref: "mutual/" + typeId,
-            child: "uid_id",
-            equals: uidId,
-            update: () => null
-        }).next()
+
+        database.cursor(["mutual", {mutual_type: typeId}, "mutual_id"], {
+            equalTo: uidId,
+            handle: () => null,
+            orderBy: ["uid_id"],
+        }).next(10)
             .catch(notifySnackbar)
             .finally(() => dispatch(ProgressView.HIDE));
     }
@@ -130,20 +129,10 @@ export default props => {
 
     React.useEffect(() => {
         let isMounted = true;
-        const pendingPagination = new Pagination({
-            ref: "mutualrequests/" + typeId,
-            child: "uid_id",
-            equals: uidId,
-            size: 1,
-        });
-        const subscribePagination = new Pagination({
-            ref: "mutual/" + typeId,
-            child: "uid_id",
-            equals: uidId,
-            size: 1,
-        });
-        pendingPagination.next()
-            .then(items => items[0])
+        database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+            equalTo: uidId,
+            orderBy: ["uid_id"]
+        }).next().then(items => items[0])
             .then(hasPending => {
                 if (hasPending && isMounted) {
                     setState(state => ({
@@ -155,7 +144,10 @@ export default props => {
                     throw "done";
                 }
             })
-            .then(() => subscribePagination.next())
+            .then(() => database.cursor(["mutual", {mutual_type: typeId}, "mutual_id"], {
+                equalTo: uidId,
+                orderBy: ["uid_id"]
+            }).next())
             .then(items => items[0])
             .then(subscribed => {
                 isMounted && setState(state => ({
@@ -175,6 +167,7 @@ export default props => {
     // noinspection DuplicatedCode
     React.useEffect(() => {
         const listener = counterControl({
+            database,
             onchange: subscribers => {
                 setState(state => ({
                     ...state,
@@ -183,7 +176,7 @@ export default props => {
                     subscribers,
                 }))
             },
-            path: `${mutualId}/mutual/${typeId}_s`
+            path: [{id: mutualId}, "mutual", {mutual_type: `${typeId}_s`}]
         })
         return () => listener();
     }, [mutualId, typeId]);
@@ -192,6 +185,7 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         const listener = counterControl({
+            database,
             onchange: subscribes => {
                 setState(state => ({
                     ...state,
@@ -200,30 +194,30 @@ export default props => {
                     subscribes,
                 }))
             },
-            path: `${mutualId}/mutual/${typeId}`
+            path: [{id: mutualId}, "mutual", {mutual_type: typeId}]
         })
         return () => listener();
     }, [mutualId, typeId, mutualMode]);
 
     React.useEffect(() => {
         if (!hasPending) return;
-        const pendingRef = firebase.database().ref("mutualrequests").child(typeId).child(hasPending.key)
-        const listener = snapshot => {
-            if (!snapshot.exists()) {
-                setState(state => ({...state, hasPending: null, disabled: false}))
+        const listener = database.addEventListener(["mutualrequests", {mutual_type: typeId}, {mutual_id: hasPending.key}], {
+            onChange(value) {
+                if (value === undefined)
+                    setState(state => ({...state, hasPending: null, disabled: false}))
             }
-        }
-        pendingRef.on("value", listener)
-        return () => pendingRef.off("value", listener);
+        })
+        return () => listener.remove();
     }, [hasPending, typeId])
 
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         const listener = counterControl({
+            database,
             onchange: requestsCounter => {
                 setState(state => ({...state, requestsCounter}))
             },
-            path: [currentUserData.id, "mutualrequests", typeId]
+            path: [{id: currentUserData.id}, "mutualrequests", {typeId, _:true}]
         });
         return () => listener();
     }, [mutualId, typeId, mutualMode, isSameUser, currentUserData.id])
@@ -231,11 +225,10 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         let isMutualRequestsCheckMount = true;
-        new Pagination({
-            ref: "mutualrequests/" + typeId,
-            child: "uid_id",
-            equals: idUid,
-        }).next()
+        database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+            equalTo: idUid,
+            orderBy: ["uid_id"]
+        }).next(10)
             .then(items => items && items[0])
             .then(hasRequest => {
                 if (hasRequest && isMutualRequestsCheckMount) {

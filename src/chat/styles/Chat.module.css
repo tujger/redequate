@@ -1,3 +1,9 @@
+.chat {
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-anchor: none;
+}
+
 .indent {
     margin-top: calc(var(--theme-spacing) * 10);
 }

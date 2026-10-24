@@ -1,15 +1,21 @@
+import {installIndexedDB, flushIndexedDB} from "./fixtures/indexedDB";
 import {vi} from "vitest";
 import FirebaseAuth from "../firebase";
-import LocalTestAuth from "../local-test";
+
+import {writeState} from "../local/database";
+import LocalAuth from "../local";
+
+vi.mock("firebase/auth", () => ({getAuth: vi.fn(app => app)}));
 
 beforeEach(() => {
+    installIndexedDB();
     window.localStorage.clear();
     vi.spyOn(Date, "now").mockReturnValue(123456);
     vi.spyOn(Math, "random").mockReturnValue(0);
 });
 afterEach(() => window.localStorage.clear());
 
-const restore = (provider, uid = "json-user") => {
+const restore = async (provider, uid = "json-user") => {
     const account = {
         uid,
         email: "json@example.test",
@@ -24,21 +30,19 @@ const restore = (provider, uid = "json-user") => {
     if (provider === "firebase") {
         const data = {...account, createdAt: "1234", lastLoginAt: "5678", providerData: [{providerId: "password"}]};
         const user = {...data, toJSON: () => structuredClone(data), updatePassword: vi.fn()};
-        return new FirebaseAuth({firebase: {auth: () => ({currentUser: user})}}).resolveCurrentUser();
+        return new FirebaseAuth({firebase: {app: {currentUser: user, authStateReady: vi.fn().mockResolvedValue()}}}).resolveCurrentUser();
     }
-    const auth = new LocalTestAuth();
-    window.localStorage.setItem(auth.storageKey, JSON.stringify({
-        version: 1,
-        accounts: [account],
-        session: {uid, token: "hidden"},
-        redirect: null,
-        links: [],
-        mail: []
-    }));
+    const auth = new LocalAuth();
+    await writeState(auth, {
+        revision: null,
+        accounts: [{key: uid, namespace: auth.storageKey, email: account.email, name: account.displayName,
+            image: account.photoURL, emailVerified: true, created: 1234, lastLogin: 5678, provider: "password", password: "hidden"}],
+        session: {key: uid, token: "hidden"}, redirect: null, links: [], mail: []
+    });
     return auth.resolveCurrentUser();
 };
 
-it.each(["firebase", "local-test"])("restores normalized UserData through %s", async provider => {
+it.each(["firebase", "local"])("restores normalized UserData through %s", async provider => {
     const user = await restore(provider);
     expect(user).toMatchObject({id: "json-user", _userData: true, verified: true});
     const json = user.toJSON();
@@ -64,6 +68,6 @@ it.each(["firebase", "local-test"])("restores normalized UserData through %s", a
     expect(user).not.toHaveProperty("uid");
     expect(user).not.toHaveProperty("user");
 });
-it.each(["firebase", "local-test"])("rejects malformed %s user records with Error", async provider => {
+it.each(["firebase", "local"])("rejects malformed %s user records with Error", async provider => {
     await expect(restore(provider, "")).rejects.toThrow(Error);
 });
