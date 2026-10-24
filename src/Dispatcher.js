@@ -15,17 +15,7 @@ import LoadingComponent from "./components/LoadingComponent";
 import SystemAlert from "./components/SystemAlert";
 import {useDatabase} from "./controllers";
 import AppContext from "./controllers/AppContext/AppContext";
-import Firebase from "./controllers/Firebase";
-import {
-    cacheDatas,
-    fetchDeviceId,
-    Layout,
-    useFirebase,
-    useMetaInfo,
-    usePages,
-    useStore,
-    useWindowData
-} from "./controllers/General";
+import {cacheDatas, fetchDeviceId, Layout, useMetaInfo, usePages, useStore, useWindowData} from "./controllers/General";
 import {setupReceivingNotifications} from "./controllers/Notifications";
 import notifySnackbar from "./controllers/notifySnackbar";
 import {checkForUpdate} from "./controllers/ServiceWorkerControl";
@@ -82,8 +72,7 @@ export default (props) => {
         auth: authGiven,
         backend: backendGiven,
         database: databaseGiven,
-        firebase: firebaseGiven = undefined,
-        firebaseConfig = undefined,
+        firebase = undefined,
         locales,
         messaging: messagingGiven,
         pages: pagesGiven,
@@ -96,7 +85,6 @@ export default (props) => {
     const [state, setState] = React.useState({store: null});
     const widthRef = React.useRef(width);
     const previousWidth = React.useRef(width);
-    const {firebase} = state;
     const setCurrentUserData = useSetCurrentUserData();
     widthRef.current = width;
 
@@ -115,8 +103,9 @@ export default (props) => {
             return props;
         }
         const initFirebase = async props => {
-            const firebase = firebaseGiven || Firebase(firebaseConfig);
-            console.log("[Dispatcher]", "firebase resolved", {firebase});
+            if(firebase) {
+                console.log("[Dispatcher]", "firebase provided", {firebase});
+            }
             return {...props, firebase};
         }
         const initDatabase = async props => {
@@ -187,8 +176,12 @@ export default (props) => {
             return {...props, windowData};
         }
         const initTextTranslation = async props => {
-            const textTranslationInstance = textTranslation({firebase});
-            return {...props, textTranslation: textTranslationInstance};
+            const {firebase} = props;
+            if(firebase) {
+                const textTranslationInstance = textTranslation({firebase});
+                return {...props, textTranslation: textTranslationInstance};
+            }
+            return props;
         }
         const fetchDeviceId_ = async props => {
             return {...props, deviceId: fetchDeviceId()};
@@ -269,8 +262,9 @@ export default (props) => {
             return props;
         }
         const installWrapperControl_ = async props => {
+            const {firebase} = props;
             (async () => {
-                installWrapperControl(props._firebase);
+                installWrapperControl(firebase);
             })().catch(notifySnackbar);
             return props;
         }
@@ -304,7 +298,7 @@ export default (props) => {
         }
         const installMetaWatcher = async props => {
             (async () => {
-                const {database, firebase, store, t} = props;
+                const {database, store, t} = props;
                 let initial = true;
                 metaListener = database.addEventListener(["meta"], {
                     onChange(meta) {
@@ -412,7 +406,9 @@ export default (props) => {
 
     if (state.fatal) return <DispatcherInitializationError error={state.fatal} theme={props.theme}/>;
 
-    if (!firebase) return <LoadingComponent/>;
+    if (!state.auth) {
+        return <LoadingComponent/>;
+    }
 
     return <DispatcherInitialized
         {...props}
@@ -437,7 +433,6 @@ const DispatcherInitialized = (props) => {
         buildPages,
         copyright,
         database,
-        firebase,
         store,
         menu: givenMenu,
         messaging,
@@ -450,7 +445,6 @@ const DispatcherInitialized = (props) => {
     } = props;
     const {t} = useTranslation();
 
-    useFirebase(firebase);
     useMetaInfo(metaInfo);
     useStore(store);
     useTextTranslation(textTranslation);
