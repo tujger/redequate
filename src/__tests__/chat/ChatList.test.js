@@ -76,7 +76,7 @@ function setup(entries = [], deferred = false) {
 afterEach(() => { state.intersect = null; });
 
 it("pages messages by descending key and omits metadata from the rendered list", async () => {
-    const rows = Array.from({length: 120}, (_, i) => row(`m${String(119 - i).padStart(3, "0")}`));
+    const rows = Array.from({length: 12}, (_, i) => row(`m${String(11 - i).padStart(3, "0")}`));
     const model = setup([...rows, row("!meta", "metadata")]);
     try {
         model.mount();
@@ -85,11 +85,12 @@ it("pages messages by descending key and omits metadata from the rendered list",
         expect(model.database.cursor).toHaveBeenCalledExactlyOnceWith(
             ["chats", {chat_id: "one"}, "message_id"], {order: "desc"}
         );
-        expect(model.cursor.next).toHaveBeenCalledExactlyOnceWith(100);
-        expect(model.messages()).toEqual(rows.slice(0, 100).map(entry => entry.key));
+        expect(model.cursor.next).toHaveBeenCalledExactlyOnceWith(10);
+        expect(model.messages()).toEqual(rows.slice(0, 10).map(entry => entry.key));
         await model.load();
         expect(model.messages()).toEqual(rows.map(entry => entry.key));
-        expect(model.cursor.next.mock.calls).toEqual([[100], [100]]);
+        expect(model.cursor.next.mock.calls).toEqual([[10], [10]]);
+        expect(model.cursor.subscribe).toHaveBeenCalledOnce();
         expect(model.cursor.position.finished).toBe(true);
         expect(model.container.textContent).not.toContain("metadata");
     } finally { model.cleanup(); }

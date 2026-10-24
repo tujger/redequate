@@ -19,21 +19,23 @@ it("watches online state under the current chat and member", () => {
     expect(remove).toHaveBeenCalledOnce();
 });
 
-it("takes the latest message from the database's created-ordered read and skips metadata", async () => {
-    const older = {created: 100, text: "older"};
+it("fetches only the latest message ordered by created", async () => {
     const newer = {created: 200, text: "newer"};
-    const database = {read: vi.fn().mockResolvedValue({"z-older": older, "a-newer": newer, "!meta": {members: {alice: 0}}})};
+    const next = vi.fn().mockResolvedValue([{key: "a-newer", value: newer}]);
+    const database = {read: vi.fn(), cursor: vi.fn(() => ({next}))};
     const chat = ChatMeta(database).create("chat-1", {members: {alice: 0}});
     await chat.fetch();
-    expect(database.read).toHaveBeenCalledExactlyOnceWith(
-        ["chats", {chat_id: "chat-1"}], {orderBy: "created"}
+    expect(database.read).not.toHaveBeenCalled();
+    expect(database.cursor).toHaveBeenCalledExactlyOnceWith(
+        ["chats", {chat_id: "chat-1"}, "message_id"], {orderBy: "created", order: "desc"}
     );
+    expect(next).toHaveBeenCalledExactlyOnceWith(1);
     expect(chat.lastMessage).toBe(newer);
     expect(chat.timestamp).toBe(200);
 });
 
-it.each([undefined, {"!meta": {members: {alice: 0}}}])("handles a chat with no messages: %j", async value => {
-    const database = {read: vi.fn().mockResolvedValue(value)};
+it("handles a chat with no messages", async () => {
+    const database = {cursor: vi.fn(() => ({next: vi.fn().mockResolvedValue([])}))};
     const chat = ChatMeta(database).create("chat-1", {members: {alice: 0}});
     await chat.fetch();
     expect(chat.lastMessage).toEqual({});
