@@ -111,7 +111,7 @@ export default (
 
     React.useEffect(() => {
         if (!translateLimit) return;
-        if (!textTranslation.isAvailable()) return;
+        if (!textTranslation?.isAvailable()) return;
         setState(state => ({...state, show: true}));
     }, [])
 

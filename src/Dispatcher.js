@@ -104,12 +104,6 @@ export default (props) => {
             document.cookie = "g_state=''";
             return props;
         }
-        const initFirebase = async props => {
-            if(firebase) {
-                console.log("[Dispatcher]", "firebase provided", {firebase});
-            }
-            return {...props, firebase};
-        }
         const initDatabase = async props => {
             try {
                 const database = await resolveDatabase(databaseGiven);
@@ -178,10 +172,8 @@ export default (props) => {
             return {...props, windowData};
         }
         const initTextTranslation = async props => {
-            const {firebase} = props;
-            if(firebase) {
-                const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
-
+            const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
+            if (firebaseApiKey) {
                 const textTranslationInstance = textTranslation({firebaseApiKey});
                 return {...props, textTranslation: textTranslationInstance};
             }
@@ -266,7 +258,6 @@ export default (props) => {
             return props;
         }
         const installWrapperControl_ = async props => {
-            const {firebase} = props;
             (async () => {
                 installWrapperControl(firebase);
             })().catch(notifySnackbar);
@@ -373,7 +364,6 @@ export default (props) => {
 
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
-            .then(initFirebase)
             .then(initDatabase)
             .then(initAuth)
             .then(initBackend)
