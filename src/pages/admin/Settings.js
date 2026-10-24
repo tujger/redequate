@@ -53,6 +53,7 @@ export default ({uploadable}) => {
         disabled,
         blockedNames,
         dynamicLinksUrlPrefix,
+        firebaseApiKey,
         geoapifyApiKey,
         joinUsCancel,
         joinUsConfirm,
@@ -191,6 +192,9 @@ export default ({uploadable}) => {
         const addPreferenceTranslateLimit = async () => {
             settings.translateLimit = +translateLimit || null;
         }
+        const addPreferenceFirebaseApiKey = async () => {
+            settings.firebaseApiKey = firebaseApiKey || null;
+        }
         const addPreferenceGeoapifyApiKey = async () => {
             settings.geoapifyApiKey = geoapifyApiKey || null;
         }
@@ -248,6 +252,7 @@ export default ({uploadable}) => {
             .then(addSupport)
             .then(addPreferenceDynamicLinksUrlPrefix)
             .then(addPreferenceTranslateLimit)
+            .then(addPreferenceFirebaseApiKey)
             .then(addPreferenceGeoapifyApiKey)
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
@@ -398,6 +403,11 @@ export default ({uploadable}) => {
                     onChange={handleChange("translateLimit")}
                     type={"number"}
                     value={translateLimit || ""}/>
+                <Option
+                    disabled={disabled}
+                    label={t("Settings.Firebase API key")}
+                    onChange={handleChange("firebaseApiKey")}
+                    value={firebaseApiKey || ""}/>
                 <Option
                     disabled={disabled}
                     label={t("Settings.Geoapify API key")}

@@ -12,9 +12,10 @@ export default (
         throw Error("Path is not defined");
     }
     path = path instanceof Array ? path : [path];
+    const last = path.at(-1);
+    const readPath = typeof last === "string" ? [...path.slice(0, -1), {[last]: last}] : path;
     if (onchange) {
-        // UNKNOWN: callers supply either a post key or a composite counter address.
-        const listener = database.addEventListener(["_counters", ...path], {
+        const listener = database.addEventListener(["_counters", ...readPath], {
             onChange(value) {
                 onchange(value);
             }
@@ -49,8 +50,6 @@ export default (
         //     .transaction(initial => {
         //     })
     } else {
-        const last = path.at(-1);
-        const readPath = typeof last === "string" ? [...path.slice(0, -1), {[last]: last}] : path;
         return database.read(["_counters", ...readPath]);
     }
 }

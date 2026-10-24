@@ -88,6 +88,8 @@ export default (props) => {
     const setCurrentUserData = useSetCurrentUserData();
     widthRef.current = width;
 
+    const metaInfo = useMetaInfo();
+
     React.useEffect(() => {
         if (previousWidth.current !== width) {
             previousWidth.current = width;
@@ -178,7 +180,9 @@ export default (props) => {
         const initTextTranslation = async props => {
             const {firebase} = props;
             if(firebase) {
-                const textTranslationInstance = textTranslation({firebase});
+                const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
+
+                const textTranslationInstance = textTranslation({firebaseApiKey});
                 return {...props, textTranslation: textTranslationInstance};
             }
             return props;
@@ -402,7 +406,7 @@ export default (props) => {
             consoleHandler?.();
         }
         // eslint-disable-next-line
-    }, []);
+    }, [metaInfo]);
 
     if (state.fatal) return <DispatcherInitializationError error={state.fatal} theme={props.theme}/>;
 
