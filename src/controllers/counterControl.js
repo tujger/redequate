@@ -46,9 +46,6 @@ export default (
                 return result;
             }
         });
-        // return firebaseMessaging.database().ref("_counters").child(path)
-        //     .transaction(initial => {
-        //     })
     } else {
         return database.read(["_counters", ...readPath]);
     }

@@ -1,3 +1,4 @@
+import {getDatabase, goOffline, goOnline} from "firebase/database";
 import {v4 as Uuid} from "uuid";
 import {forceFirebaseReinit} from "./Firebase";
 
@@ -13,9 +14,10 @@ export const installWrapperControl = (firebase) => {
                 // eslint-disable-next-line no-unused-vars
                 const {id, method, args, timestamp, error, status, response = null} = json;
                 if (id === "_on_resume") {
-                    console.log("[WC] off => on firebase.database triggered");
-                    firebase.database().goOffline();
-                    firebase.database().goOnline();
+                    console.log("[WC] off => on Firebase Database triggered");
+                    const database = getDatabase(firebase.app);
+                    goOffline(database);
+                    goOnline(database);
                     return;
                 } else if (id === "_on_refresh") {
                     console.log("[WC] reinit firebase and refresh");
