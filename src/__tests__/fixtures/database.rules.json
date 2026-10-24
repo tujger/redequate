@@ -38,6 +38,10 @@
         "score",
         "nested/name"
       ]
+    },
+    "_counters": {
+      ".read": true,
+      ".write": true
     }
   }
 }
