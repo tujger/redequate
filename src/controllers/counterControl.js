@@ -1,5 +1,3 @@
-import {firebaseMessaging} from "./Firebase";
-
 export default (
     {
         database,

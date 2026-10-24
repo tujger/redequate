@@ -86,7 +86,6 @@ export default () => {
 
                 // controllers
                 DateFormat: 'src/controllers/DateFormat.js',
-                FirebasePagination: 'src/controllers/FirebasePagination.js',
                 General: 'src/controllers/General.js',
                 lazyListComponentReducer: 'src/components/LazyListComponent/lazyListComponentReducer.js',
                 mentionTypes: 'src/controllers/mentionTypes.js',
