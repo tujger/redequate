@@ -1,10 +1,6 @@
 import {vi} from "vitest";
 import ChatMeta from "../../chat/ChatMeta";
 
-vi.mock("../../controllers/Firebase", () => ({
-    firebaseMessaging: {database: () => ({ref: () => ({})})}
-}));
-
 it("watches online state under the current chat and member", () => {
     const remove = vi.fn();
     const database = {addEventListener: vi.fn(() => ({remove}))};
@@ -66,7 +62,7 @@ const watchModel = () => {
 it("watches new messages, visits and member removal on their respective paths", () => {
     const {database, subscriptions, chat, changed} = watchModel();
     expect(database.addEventListener.mock.calls.map(([path]) => path)).toEqual([
-        ["chats", {chat_id: "chat-1"}], ["chats", {chat_id: "chat-1"}, "!meta", "members"],
+        ["chats", {chat_id: "chat-1"}, "message_id"], ["chats", {chat_id: "chat-1"}, "!meta", {members: "members"}],
     ]);
     expect(subscriptions[0].handlers).toEqual({onChildAdd: expect.any(Function), orderBy: "created"});
     const message = {created: 20, text: "newer"};

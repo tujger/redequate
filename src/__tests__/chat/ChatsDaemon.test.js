@@ -29,7 +29,7 @@ it("watches added and changed chat indexes and removes its subscription", async 
     try {
         render(React.createElement(ChatsDaemon), container);
         expect(state.database.addEventListener).toHaveBeenCalledExactlyOnceWith(
-            ["_chats", {user_id: "me"}],
+            ["_chats", {user_id: "me"}, "message_id"],
             {onChildAdd: expect.any(Function), onChildChange: expect.any(Function)}
         );
         expect(state.fetch).not.toHaveBeenCalled();

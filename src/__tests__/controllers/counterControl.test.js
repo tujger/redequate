@@ -3,7 +3,6 @@ import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../../packages/database/src/local";
 import counterControl from "../../controllers/counterControl";
 
-vi.mock("../../controllers/Firebase", () => ({firebaseMessaging: {database: () => ({})}}));
 
 it("retains composite counter addresses for reads and listeners", async () => {
     const remove = vi.fn();
@@ -17,7 +16,7 @@ it("retains composite counter addresses for reads and listeners", async () => {
     expect(database.read).toHaveBeenCalledWith(["_counters", "post-1", {like: "like"}]);
     const unsubscribe = counterControl({database, path: "user-1/mutual/friend", onchange});
     expect(database.addEventListener).toHaveBeenCalledWith(
-        ["_counters", "user-1/mutual/friend"], {onChange: expect.any(Function)}
+        ["_counters", {"user-1/mutual/friend": "user-1/mutual/friend"}], {onChange: expect.any(Function)}
     );
     unsubscribe();
     expect(remove).toHaveBeenCalledOnce();
@@ -32,4 +31,18 @@ describe("Local database updates", () => {
         expect(await counterControl({database, path: [{post_id: "p1"}, "like"], increment: 1})).toBe(1);
         expect(await counterControl({database, path: [{post_id: "p1"}, "like"], increment: -1})).toBeNull();
     });
+    it("keeps live scalar counters on their literal field path", async () => {
+        const database = new LocalDatabase({storageKey: "live-likes"});
+        const path = [{post_id: "p1"}, "like"];
+        const onchange = vi.fn();
+        const remove = counterControl({database, path, onchange});
+        try {
+            await vi.waitFor(() => expect(onchange).toHaveBeenCalledWith(undefined));
+            await counterControl({database, path, increment: 1});
+            expect(onchange).toHaveBeenLastCalledWith(1);
+            expect(await counterControl({database, path})).toBe(1);
+            expect(path).toEqual([{post_id: "p1"}, "like"]);
+        } finally { remove(); }
+    });
+
 });

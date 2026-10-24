@@ -11,12 +11,10 @@ vi.mock("react-ios-pwa-prompt", () => ({default: () => null}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value}), getI18n: () => undefined}));
 vi.mock("../controllers", () => ({useDatabase: vi.fn()}));
 vi.mock("../controllers/AppContext/AppContext", () => ({default: () => React.createElement("div", null, "Initialized")}));
-vi.mock("../controllers/Firebase", () => ({default: vi.fn()}));
 vi.mock("../controllers/General", () => ({
     cacheDatas: {put: vi.fn()},
     fetchDeviceId: () => "device",
     Layout: {},
-    useFirebase: vi.fn(),
     useMetaInfo: vi.fn(),
     useStore: vi.fn(),
     useWindowData: vi.fn(),
