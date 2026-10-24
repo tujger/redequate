@@ -1,3 +1,4 @@
+import {getDatabase, ref, query, orderByKey, onValue, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
 import {fail} from "../../../common";
 import resolvePath from "../common/resolvePath";
 import parseReadPath from "../common/parseReadPath";
@@ -23,9 +24,10 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
     const effectivePath = resolvePath(listenerPath);
     orderBy = orderBy === undefined ? undefined : resolvePath(orderBy);
 
-    const ref = firebase.database().ref(effectivePath);
+    const reference = ref(getDatabase(firebase.app), effectivePath);
 
-    let refChildAdd, refChildRemove, initialKey, initialized = !onChildAdd, active = true;
+    let initialKey, initialized = !onChildAdd, active = true;
+    const unsubscribers = [];
     const pending = [];
 
     const valueListener = snapshot => {
@@ -52,27 +54,22 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
     const remove = () => {
         active = false;
         pending.length = 0;
-        refChildAdd?.off("child_added", childAddListener);
-        refChildRemove?.off("child_removed", childRemoveListener);
-        if (onChange || onChildAdd) ref.off("value", valueListener);
-        if (onChildChange) ref.off("child_changed", childChangeListener);
+        for (const unsubscribe of unsubscribers.splice(0)) unsubscribe();
     };
     const cancel = error => { remove();onError?.(error); };
 
     try {
         if (onChange || onChildAdd) {
-            ref.on("value", valueListener, cancel);
+            unsubscribers.push(onValue(reference, valueListener, cancel));
         }
         if (onChildAdd) {
-            refChildAdd = ref.orderByKey();
-            refChildAdd.on("child_added", childAddListener, cancel);
+            unsubscribers.push(onChildAdded(query(reference, orderByKey()), childAddListener, cancel));
         }
         if (onChildChange) {
-            ref.on("child_changed", childChangeListener, cancel);
+            unsubscribers.push(onChildChanged(reference, childChangeListener, cancel));
         }
         if (onChildRemove) {
-            refChildRemove = ref.orderByKey();
-            refChildRemove.on("child_removed", childRemoveListener, cancel);
+            unsubscribers.push(onChildRemoved(query(reference, orderByKey()), childRemoveListener, cancel));
         }
     } catch (error) {
         remove();

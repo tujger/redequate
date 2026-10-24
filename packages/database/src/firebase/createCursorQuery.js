@@ -1,10 +1,11 @@
+import {getDatabase, ref, query, orderByChild, orderByValue, orderByKey, equalTo, startAt, endAt} from "firebase/database";
 import {key} from "firebase-key";
 import {DatabaseOrder} from "../common/DatabaseOrder";
 import resolvePath from "../common/resolvePath";
 
 export default function createCursorQuery(firebase, path, {
     orderBy,
-    equalTo,
+    equalTo: equals,
     start,
     end,
     startDate,
@@ -17,7 +18,7 @@ export default function createCursorQuery(firebase, path, {
     if (typeof start === "string" && end === undefined) {
         end = start + "\uf8ff";
     }
-    if (orderBy === undefined && equalTo === undefined) {
+    if (orderBy === undefined && equals === undefined) {
         // Explicit key bounds remain in the query; date bounds also filter the scan.
         if (start === undefined) {
             start = startKey;
@@ -26,34 +27,34 @@ export default function createCursorQuery(firebase, path, {
             end = endKey;
         }
     }
-    const ref = firebase.database().ref(resolvePath(path));
-    const byValue = orderBy === "" || orderBy === undefined && equalTo !== undefined;
+    const reference = ref(getDatabase(firebase.app), resolvePath(path));
+    const byValue = orderBy === "" || orderBy === undefined && equals !== undefined;
     let baseQuery;
     if (orderBy !== undefined && orderBy !== "") {
-        baseQuery = ref.orderByChild(orderBy);
+        baseQuery = query(reference, orderByChild(orderBy));
     } else if (byValue) {
-        baseQuery = ref.orderByValue();
+        baseQuery = query(reference, orderByValue());
     } else {
-        baseQuery = ref.orderByKey();
+        baseQuery = query(reference, orderByKey());
     }
     const ascending = order === DatabaseOrder.ASC;
     let initialQuery = baseQuery;
     let continuationQuery = baseQuery;
-    if (equalTo !== undefined) {
-        initialQuery = baseQuery.equalTo(equalTo);
-        continuationQuery = ascending ? baseQuery.endAt(equalTo) : baseQuery.startAt(equalTo);
+    if (equals !== undefined) {
+        initialQuery = query(baseQuery, equalTo(equals));
+        continuationQuery = ascending ? query(baseQuery, endAt(equals)) : query(baseQuery, startAt(equals));
     } else {
         if (start !== undefined) {
-            initialQuery = initialQuery.startAt(start);
+            initialQuery = query(initialQuery, startAt(start));
         }
         if (end !== undefined) {
-            initialQuery = initialQuery.endAt(end);
+            initialQuery = query(initialQuery, endAt(end));
         }
         if (ascending && end !== undefined) {
-            continuationQuery = continuationQuery.endAt(end);
+            continuationQuery = query(continuationQuery, endAt(end));
         }
         if (!ascending && start !== undefined) {
-            continuationQuery = continuationQuery.startAt(start);
+            continuationQuery = query(continuationQuery, startAt(start));
         }
     }
     return {initialQuery, continuationQuery, ascending, orderBy, byValue, startKey, endKey};
