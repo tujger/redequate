@@ -33,7 +33,7 @@ export default ({fetchAlertContent}) => {
             }
         }).catch(notifySnackbar);
 
-        const listener = database.addEventListener(["alerts", {user_id: currentUserData.id}], {
+        const listener = database.addEventListener(["alerts", {user_id: currentUserData.id}, "alert_id"], {
             onChildAdd({key, value}) {
                 const match = matchPath(window.location.pathname, {
                     exact: true,

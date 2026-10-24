@@ -266,11 +266,11 @@ export default function ChatMeta(database) {
                 _persisted = false;
                 onChange({removed: true, timestamp: value, type: "remove"});
             }
-            _watchRef = database.addEventListener(["chats", {chat_id: _id}], {
+            _watchRef = database.addEventListener(["chats", {chat_id: _id}, "message_id"], {
                 onChildAdd: watchListener,
                 orderBy: "created"
             });
-            _visitRef = database.addEventListener(["chats", {chat_id: _id}, "!meta", "members"], {
+            _visitRef = database.addEventListener(["chats", {chat_id: _id}, "!meta", {members: "members"}], {
                 onChildChange: visitListener,
                 onChildRemove: removeListener
             })
