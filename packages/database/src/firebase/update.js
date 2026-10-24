@@ -1,3 +1,5 @@
+import {getDatabase, ref, runTransaction, update as updateFields} from "firebase/database";
+import readSnapshot from "./readSnapshot";
 import {fail} from "../../../common";
 import applyUpdate from "../common/applyUpdate";
 import resolvePath from "../common/resolvePath";
@@ -7,12 +9,12 @@ export default async function update(firebase, path, changes) {
         fail("database/invalid-argument", "changes must be provided when path is a string or array.");
     }
     if (changes instanceof Function) {
-        const ref = firebase.database().ref(resolvePath(path));
-        const result = await ref.transaction(value => {
+        const reference = ref(getDatabase(firebase.app), resolvePath(path));
+        const result = await runTransaction(reference, value => {
             const next = applyUpdate(changes, value);
             return next == null ? null : next;
-        }, undefined, false);
-        return result.committed ? result.snapshot.val() : (await ref.once("value")).val();
+        }, {applyLocally: false});
+        return result.committed ? result.snapshot.val() : (await readSnapshot(reference)).val();
     }
     const updates = {};
     if (path instanceof Map) {
@@ -26,7 +28,7 @@ export default async function update(firebase, path, changes) {
             updates[resolvePath(p)] = path[p];
         }
     } else {
-        return firebase.database().ref(resolvePath(path)).update(changes);
+        return updateFields(ref(getDatabase(firebase.app), resolvePath(path)), changes);
     }
-    return firebase.database().ref().update(updates);
+    return updateFields(ref(getDatabase(firebase.app)), updates);
 }
