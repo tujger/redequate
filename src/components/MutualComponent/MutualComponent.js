@@ -201,7 +201,7 @@ export default props => {
 
     React.useEffect(() => {
         if (!hasPending) return;
-        const listener = database.addEventListener(["mutualrequests", {mutual_type: typeId}, {pending: hasPending.key}], {
+        const listener = database.addEventListener(["mutualrequests", {mutual_type: typeId}, {mutual_id: hasPending.key}], {
             onChange(value) {
                 if (value === undefined)
                     setState(state => ({...state, hasPending: null, disabled: false}))
