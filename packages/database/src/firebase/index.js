@@ -1,3 +1,4 @@
+import {serverTimestamp, increment} from "firebase/database";
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
@@ -63,10 +64,10 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     get TIMESTAMP() {
-        return this.#firebase.database.ServerValue.TIMESTAMP;
+        return serverTimestamp();
     }
 
     increment(delta) {
-        return this.#firebase.database.ServerValue.increment(delta);
+        return increment(delta);
     }
 }

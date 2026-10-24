@@ -1,3 +1,5 @@
+import {query, startAt, endAt, limitToFirst, limitToLast, set, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
+import readSnapshot from "./readSnapshot";
 import compareValues from "../common/compareValues";
 import compareKeys from "../common/compareKeys";
 import DatabaseCursor from "../common/DatabaseCursor";
@@ -136,14 +138,18 @@ function subscribeEntries(state, notify, onError) {
             }
             if (initialized) return notify({type: effectiveType, entry});
         }]);
+    const unsubscribers = [];
     const unsubscribe = () => {
         if (!active) return;
         active = false;
-        detachCallbacks(initialQuery, callbacks);
+        detachCallbacks(unsubscribers);
     };
     try {
-        for (const [event, callback] of callbacks) initialQuery.on(event, callback, report);
-        initialQuery.once("value").then(() => { initialized = true; }, report);
+        for (const [event, callback] of callbacks) {
+            const subscribe = {child_added: onChildAdded, child_changed: onChildChanged, child_removed: onChildRemoved}[event];
+            unsubscribers.push(subscribe(initialQuery, callback, report));
+        }
+        readSnapshot(initialQuery).then(() => { initialized = true; }, report);
         registering = false;
     } catch (error) {
         unsubscribe();
@@ -152,10 +158,10 @@ function subscribeEntries(state, notify, onError) {
     return {unsubscribe};
 }
 
-const detachCallbacks = (query, callbacks) => {
+const detachCallbacks = unsubscribers => {
     let failure;
-    for (const [event, callback] of callbacks) {
-        try { query.off(event, callback); } catch (error) { failure ??= {error}; }
+    for (const unsubscribe of unsubscribers) {
+        try { unsubscribe(); } catch (error) { failure ??= {error}; }
     }
     if (failure) throw failure.error;
 };
@@ -165,7 +171,7 @@ async function readPage(props) {
     // RTDB accepts object values in results but rejects them as query endpoints.
     // Once the boundary is an object, use the original query and filter its tuple.
     if (value !== null && typeof value === "object") {
-        const snapshot = await state.initialQuery.once("value");
+        const snapshot = await readSnapshot(state.initialQuery);
         const children = [];
         snapshot.forEach(child => {
             const sort = state.byValue ? child.val() : child.child(state.orderBy).val();
@@ -184,22 +190,22 @@ const preparePageQuery = (props) => {
     const {state, key, value, size} = props;
     const {initialQuery, continuationQuery, ascending, orderBy, byValue} = state;
     const byKey = orderBy === undefined && !byValue;
-    let query = key === undefined ? initialQuery : continuationQuery;
+    let selection = key === undefined ? initialQuery : continuationQuery;
     if (key !== undefined) {
         if (ascending) {
-            query = byKey ? query.startAt(key) : query.startAt(value, key);
+            selection = query(selection, byKey ? startAt(key) : startAt(value, key));
         } else {
-            query = byKey ? query.endAt(key) : query.endAt(value, key);
+            selection = query(selection, byKey ? endAt(key) : endAt(value, key));
         }
     }
     const limit = key === undefined ? size : size + 1;
-    query = ascending ? query.limitToFirst(limit) : query.limitToLast(limit);
-    return {...props, query};
+    selection = query(selection, ascending ? limitToFirst(limit) : limitToLast(limit));
+    return {...props, query: selection};
 };
 
 const fetchPage = async (props) => {
     const {query} = props;
-    return {...props, snapshot: await query.once("value")};
+    return {...props, snapshot: await readSnapshot(query)};
 };
 
 const extractChildren = (props) => {
@@ -228,13 +234,13 @@ const invokeHandle = async (props) => {
 const saveReplacement = async (props) => {
     const {child, replacement} = props;
     if (replacement === undefined) return props;
-    await child.ref.set(replacement);
+    await set(child.ref, replacement);
     return {...props, entry: undefined};
 };
 
 const rereadEntry = async (props) => {
     const {child, replacement} = props;
     if (replacement === undefined || replacement === null) return props;
-    const saved = await child.ref.once("value");
+    const saved = await readSnapshot(child.ref);
     return {...props, entry: saved.exists() && hasOrderedField(saved, props.state.orderBy) ? {key: child.key, value: saved.val()} : undefined};
 };
