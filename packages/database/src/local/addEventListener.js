@@ -1,7 +1,9 @@
 import validatePath from "../common/validatePath";
 import compareKeys from "../common/compareKeys";
+import parseReadPath from "../common/parseReadPath";
+import resolvePath from "../common/resolvePath";
 import {fail} from "../../../common";
-import {assertCollection, getAllRecords, resolveCollectionPath, subtreeValue} from "./helpers";
+import {assertCollection, getAllRecords, readValue, resolveCollectionPath, subtreeValue} from "./helpers";
 
 const listeners = new Map();
 const queues = new Map();
@@ -196,6 +198,12 @@ export default function addEventListener(storageKey, path, callbacks, read) {
             ? segment
             : segment[Object.getOwnPropertyNames(segment).find(name => name !== "_")]);
         callbacks = {...callbacks, orderBy};
+    }
+    if (read === undefined) {
+        const rawPath = path;
+        if (Array.isArray(path) && path.length) path = parseReadPath(path).path;
+        else if (typeof path === "string") path = resolvePath(path);
+        if (path?.length) read = readValue.bind(null, storageKey, rawPath);
     }
     const keys = pathKeys(path);
     if (keys.length) assertCollection(storageKey, keys[0].key);

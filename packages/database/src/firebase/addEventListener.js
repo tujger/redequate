@@ -1,5 +1,6 @@
 import {fail} from "../../../common";
 import resolvePath from "../common/resolvePath";
+import parseReadPath from "../common/parseReadPath";
 import compareKeys from "../common/compareKeys";
 
 /**
@@ -18,7 +19,8 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
             fail("database/invalid-argument", `${name} must be a function or undefined.`);
         }
     }
-    const effectivePath = resolvePath(path);
+    const listenerPath = Array.isArray(path) && path.length ? parseReadPath(path).path : path;
+    const effectivePath = resolvePath(listenerPath);
     orderBy = orderBy === undefined ? undefined : resolvePath(orderBy);
 
     const ref = firebase.database().ref(effectivePath);
