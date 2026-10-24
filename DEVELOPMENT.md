@@ -269,6 +269,16 @@ and Android compatibility when modernizing SDKs or Gen2 deployment configuration
 Use the injected Firebase database facade; importing a package must not initialize
 an SDK. Detailed server packaging belongs in its README.
 
+### Firebase Web SDK
+
+Firebase Web initialization and the Firebase Database provider use the modular SDK;
+do not restore `firebase/compat` imports or namespaced database calls. The shared
+Firebase handle retains `app` and `config`; providers receive that handle.
+One-shot RTDB snapshots use `onValue` with `onlyOnce: true` to retain the previous
+cache/event behavior. Subscriptions retain their own SDK unsubscribe functions.
+Android wrapper resume reconnects `getDatabase(firebase.app)` through modular
+`goOffline`/`goOnline`; refresh deletes and reinitializes the app before reloading.
+
 ## 5. Database and cursor architecture
 
 The behavioral source of truth is the existing

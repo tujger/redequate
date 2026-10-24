@@ -108,7 +108,7 @@ cloud Firebase projects or production data.
 
 Vitest uses jsdom, JSX in `.js`, CSS Modules and React `act`/`createRoot`.
 Firebase integration config explicitly resolves browser Auth internals because
-mixing browser compat with Node Auth exports breaks popup resolver initialization
+mixing browser and Node Auth exports breaks popup resolver initialization
 in jsdom. This resolution is test-only; application Vite configs are unchanged.
 
 Consumer applications own their tests, Firebase rules and local linking commands.
