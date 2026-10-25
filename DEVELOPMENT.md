@@ -82,18 +82,37 @@ configuration combines them. Runtime modules live under `packages/*/src`.
 
 Keep browser and server packaging independent. The main package contains UI,
 common, database, and client services. The maintained private
-[server package](packages/server/README.md) owns its manifest, runtime dependencies,
-lockfile, and ESM/CommonJS build. Its root exports common plus `DatabaseCursor`;
-it also exposes database and server Backend subpaths. Browser builds reject server
-sources, and server builds reject client/UI sources.
+[server package](packages/server/README.md) owns its package metadata and ESM/CommonJS build. Runtime dependencies belong
+to Backend manifests; consumer lockfiles pin installed versions. It exposes only
+explicit common, database and server Backend subpaths; there is no root entry.
+Import `DatabaseCursor` from `redequate-server/database`. Browser builds reject Node server
+sources, and Node server builds reject browser and UI sources. Local Server is a
+browser worker shipped in `redequate`, outside `redequate-server`.
 
-Functions install the generated server archive under the `redequate` dependency
-name. The shared preparation script takes an explicit Functions directory,
-builds/packs the archive, and refreshes installed dependency integrity. Preparation
+Functions install the generated server archive under the `redequate-server` dependency
+name; consumers must use that name for server imports. This affects both
+The Whisky Talks and demo Functions. The shared preparation script takes an
+explicit Functions directory, builds/packs the archive, and refreshes installed dependency integrity. Preparation
 needs the framework checkout and its build toolchain; the uploaded archive must
 install independently in Cloud Build. Server runtime support is defined by its
 own manifest. Do not restore the retired standalone common package or duplicate
 preparation logic in each consumer.
+
+Node Server Backends own manifests and independent build commands using the root
+toolchain. `packages/server` assembles isolated outputs and merges Backend runtime
+dependencies into `dist/package.json`, rejecting conflicting versions. Pack the
+standalone `dist` directory (`npm run pack`), not the source manifest. The Node
+archive excludes the client Firebase database adapter and its SDK dependencies.
+Watch mode tracks imported sources and runtime manifests. Subpackage manifests contain only type, dependencies and build/watch commands;
+these modules are not standalone npm packages and need no separate installs or
+lockfiles. Functions import the Firebase backend through
+`redequate-server/backend/firebase-server`; source directory names are internal.
+Firebase `database.create` accepts `{path, value}` with an object value and returns
+a string key. Its grouped callable deploys as `database-create`; the Firebase client
+maps that name. REST conditional PUT with the caller's ID token keeps Security
+Rules authoritative, including anonymous access and validation. Like SDK
+transactions, it requires read/write permission. Consumers initialize the default
+Admin app; importing server entry points does not initialize Firebase.
 
 TypeScript migration is incremental. Babel strips TS/TSX types; existing JS and
 extensionless imports remain supported. Source contracts do not imply mandatory
@@ -258,10 +277,20 @@ client unwraps the callable SDK envelope once. `useBackend` from the framework
 root and backend subpath shares the same Dispatcher context within a module format.
 Do not leak SDK result wrappers into UI or change existing callable response shapes.
 
-Local Backend accepts custom handlers over built-in simulated actions and journals
-completed requests in IndexedDB. Journal failures must not replace a handler result
-or error. Only history persists across reload; handler configuration does not.
-Local mail is simulated, and notifications use the local foreground transport.
+LocalBackendClient owns its worker lifecycle internally: constructor and pageshow
+call private start, pagehide calls private stop. Readiness and startup errors remain
+private; Dispatcher and consumers do not manage the worker. Start/stop are idempotent;
+each start has its own identity so stopped imports cannot launch a stale worker.
+resolveBackend reuses its automatically created LocalBackendClient across Dispatcher
+initializations, while explicitly provided backends are returned as supplied.
+The ESM launcher is exported as `redequate/backend/local-server`; ESM and CommonJS
+clients import it dynamically. The launcher and worker have an isolated browser
+build, included in the main build and available through a separate build/watch.
+Importing the package does not start a worker. Requests currently reject with
+`backend/not-implemented`; dispatch and database handlers are the next step.
+The worker must use LocalDatabase with the application's same storageKey and
+stores, preserving its IndexedDB layout and BroadcastChannel notifications.
+No separate local role policy or independent database copy is intended.
 
 Functions common/database imports come from the server archive without browser
 initialization. Preserve deployed RTDB paths, trigger scope, callable envelopes,
@@ -331,8 +360,9 @@ retain the effective policy, including deferred callbacks and cleanup failures.
 
 ### Cursor ownership and subscriptions
 
-DatabaseCursor is a runtime class shared by root/database exports within each
-package format. Custom cursors must extend that constructor and call base methods;
+DatabaseCursor is a runtime class shared by root/database exports of `redequate`
+within each format; `redequate-server` exposes it only through `/database`.
+Custom cursors must extend that constructor and call base methods;
 structural lookalikes are unsupported. Do not mix constructors from separate
 installations or ESM/CommonJS formats: their `instanceof` identities differ.
 

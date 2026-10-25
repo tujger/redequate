@@ -30,7 +30,8 @@
         "test": "npm run test:unit && npm run test:integration",
         "test:unit": "vitest run --config src/__tests__/vitest.config.mjs",
         "test:integration": "node src/__tests__/test-emulators.mjs",
-        "test:integration:watch": "node src/__tests__/test-emulators.mjs --watch"
+        "test:integration:watch": "node src/__tests__/test-emulators.mjs --watch",
+        "build local-server": "rollup -c packages/backend/src/local-server/build.mjs"
     },
     "dependencies": {
         "@mui/icons-material": "^9.5.0",
@@ -228,6 +229,9 @@
         "./core/chunks/*": null,
         "./core/*.js": "./core/*.js",
         "./core/*": "./core/*.js",
-        "./package.json": "./package.json"
+        "./package.json": "./package.json",
+        "./backend/local-server": {
+            "import": "./core/backend/local-server.mjs"
+        }
     }
 }
