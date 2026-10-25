@@ -1,58 +1,74 @@
 # Redequate Server for Functions
 
-This private package builds common, database and server backend sources into an independent
-`redequate-server` archive for Node.js 22+. The main `redequate` package contains
-common, database and client modules; server backend modules are available only from this archive.
+`redequate-server` is a private Node.js 22+ package with ESM and CommonJS exports.
+Install its archive as `redequate-server@file:vendor/redequate-server.tgz`.
 
-Install the root development dependencies, then run `npm run "build server"` at
-the repository root, or `npm run build` in this directory. Output is written to
-`packages/server/dist`. Running `npm pack --pack-destination /path/to/vendor`
-here also builds the package through its prepack hook.
+## Build and dependencies
 
-Install the archive under the `redequate` dependency name to retain existing
-Functions imports. Both ESM `import` and CommonJS `require` support:
+Install development dependencies at the Redequate root. In `packages/server`,
+run `npm run build` for the aggregate build or `npm run watch` for rebuilds when
+imported sources or dependency manifests change.
 
-- `redequate` — common exports plus `DatabaseCursor`
-- `redequate/common`
-- `redequate/database`
-- `redequate/database/firebase`
-- `redequate/database/local`
-- `redequate/backend/common`
-- `redequate/backend/common-server`
-- `redequate/backend/firebase-server`
-- `redequate/backend/local-server`
+The same commands in `packages/backend/src/{common,firebase}-server` build
+only that Backend, using the root toolchain. Each Backend has an isolated output
+under `packages/server/dist/backend`; shared outputs are cleaned separately.
 
-The root entry preserves common exports and adds DatabaseCursor from database/common.
-The same constructor is re-exported by /database within each module format.
-Client auth, messaging, storage and UI entry points are not exported.
-The browser build rejects server sources; this build rejects client and UI
-sources. Node builtins and declared runtime dependencies, including their
-subpaths, remain external to the bundle and are installed by npm.
+Backend manifests are the source of runtime dependencies. The build merges them
+into `dist/package.json`, rejects conflicting versions, and leaves dependencies
+external. Consumer lockfiles pin installed versions; the server has no lockfile.
+Nested manifests contain only module type, runtime dependencies and build/watch
+commands. They do not define independently installed or published npm packages,
+and require no separate installs or lockfiles.
+Browser builds reject Node Backend sources; server builds reject browser and UI sources.
+Local Server is a browser worker shipped by `redequate`, outside this Node archive.
 
-Database uses the existing injected Firebase facade; importing it does not initialize
-an SDK or require browser globals. firebase-key is an external runtime dependency.
-Public .d.ts files are not generated. DatabaseCursor subclasses must use this
-package's constructor; copies from another package or module format have different
-instanceof identity.
+Supported entry points:
 
-`firebase-admin` is installed as a runtime dependency for Firebase server code;
-it is not embedded in the bundle. The backend entries are currently empty.
-Common imports do not initialize Firebase. The build tools come from the
-repository root and are not shipped to Functions.
+- `redequate-server/common`
+- `redequate-server/database`, `/database/local`
+- `redequate-server/backend/common`, `/backend/common-server`
+- `redequate-server/backend/firebase-server`
 
-Both The Whisky Talks and the demo use the shared preparation script:
+Use explicit subpaths; the package has no root entry point. `DatabaseCursor` is
+exported by `/database`. Constructors from different packages or formats have
+distinct `instanceof` identities.
+Public declaration files are not generated.
+
+## Firebase database.create
+
+Initialize the default Firebase Admin app in the consuming Functions application,
+then export the callable group:
+
+```js
+export {database} from "redequate-server/backend/firebase-server";
+```
+
+Importing the entry point does not initialize Firebase. The callable uses the
+consumer's configured database; `FIREBASE_DATABASE_EMULATOR_HOST` selects the emulator.
+
+The Firebase Backend client maps `request("database.create", {path, value})` to
+`database-create`. The path follows the database create contract: a collection
+followed by a key field name, or a named explicit key. `value` is a record object;
+callbacks are unsupported. Success returns the permanent string key without
+adding fields to the record.
+
+The handler allocates a push key when necessary and creates through REST with
+`If-Match: null_etag`. It forwards the caller's ID token; unauthenticated calls
+use `auth=null`. Security Rules check the write atomically, including validation.
+Conditional create requires read and write permission, like SDK transactions.
+Existing records are preserved. Errors use `permission-denied`, `already-exists`,
+`invalid-argument`, or sanitized callable errors for other failures.
+Only Firebase create is implemented; update is not exported.
+
+## Prepare the Functions archive
 
 ```sh
 node /path/to/redequate/packages/server/prepare-redequate-server.mjs /path/to/application/functions
 ```
 
-The required Functions directory argument is resolved relative to the current
-working directory. The Redequate checkout is resolved from the script itself.
-Use Node.js 24.12+ and install the root development dependencies for preparation.
-The script builds this package, packs it as `vendor/redequate-server.tgz`, and
-reinstalls it under the `redequate` name to refresh lockfile integrity.
-Both applications expose `npm run prepare-redequate-server` from `functions/`
-and run it before lint during Firebase predeploy. Their npm command expects
-Redequate to be checked out next to the application repository.
-The uploaded archive and its declared dependencies are sufficient for installation
-without the sibling Redequate checkout.
+Preparation requires Node.js 24.12+, the framework checkout, and root build tools.
+It builds, packs `vendor/redequate-server.tgz`, and installs it as `redequate-server`,
+refreshing lockfile integrity. The uploaded archive and its runtime dependencies
+install without a sibling checkout. Run `npm run pack` in `packages/server` to
+build and pack the standalone `dist` directory directly. Pack `dist`, which contains
+the generated runtime manifest, rather than the source package directory.

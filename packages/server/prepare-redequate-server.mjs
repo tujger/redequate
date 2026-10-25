@@ -25,7 +25,7 @@ const npm = (args, options) => process.env.npm_execpath
 try {
   npm(['run', 'build server'], { cwd: frameworkDir, stdio: 'inherit' })
   const output = npm(['pack', '--json', '--ignore-scripts', '--pack-destination', temporaryDir], {
-    cwd: serverDir,
+    cwd: join(serverDir, 'dist'),
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit']
   })
@@ -35,7 +35,7 @@ try {
   copyFileSync(join(temporaryDir, packed.filename), `${archive}.tmp`)
   renameSync(`${archive}.tmp`, archive)
   // Explicitly reinstall the tarball so a changed archive refreshes lockfile integrity.
-  npm(['install', 'redequate@file:vendor/redequate-server.tgz', '--ignore-scripts', '--no-audit', '--no-fund'], {
+  npm(['install', 'redequate-server@file:vendor/redequate-server.tgz', '--ignore-scripts', '--no-audit', '--no-fund'], {
     cwd: functionsDir,
     stdio: 'inherit'
   })
