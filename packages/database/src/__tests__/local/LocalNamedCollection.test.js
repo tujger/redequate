@@ -1,7 +1,7 @@
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
-import {getAllRecords, getRecordsByType, parseDatabasePath} from "../../local/helpers";
+import {getAllRecords, getRecordsByType, parseDatabasePath} from "../../../../backend/src/local/database/helpers";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());

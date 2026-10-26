@@ -1,8 +1,8 @@
 import {afterEach, beforeEach, expect, it, vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
-import stores from "../../local/stores.json";
-import {convertStores, LOCAL_SCHEMA} from "../../local/constants";
+import stores from "../../../../backend/src/local/database/stores.json";
+import {convertStores, LOCAL_SCHEMA} from "../../../../backend/src/local/database/constants";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());

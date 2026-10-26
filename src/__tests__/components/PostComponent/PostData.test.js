@@ -1,8 +1,8 @@
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../../../packages/database/src/local";
-import {openDatabase, parseDatabasePath} from "../../../../packages/database/src/local/helpers";
-import {LOCAL_COLLECTIONS} from "../../../../packages/database/src/local/constants";
+import {openDatabase, parseDatabasePath} from "../../../../packages/backend/src/local/database/helpers";
+import {LOCAL_COLLECTIONS} from "../../../../packages/backend/src/local/database/constants";
 import {PostData} from "../../../components/PostComponent/PostData";
 
 vi.mock("../../../controllers/General", () => ({cacheDatas: {put: (key, value) => value, remove: () => {}}}));
