@@ -10,8 +10,8 @@ vi.mock("../../../components/MentionedTextComponent", () => ({tokenizeText: text
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
-const storedRows = async (storageKey, name) => {
-    const database = await openDatabase(storageKey);
+const storedRows = async (storageId, name) => {
+    const database = await openDatabase(storageId);
     try {
         return await new Promise((resolve, reject) => {
             const transaction = database.transaction(name);
@@ -23,7 +23,7 @@ const storedRows = async (storageKey, name) => {
 };
 
 it.each(["posts", "replies"])("publishes and fetches %s through PostData in posts", async type => {
-    const database = new LocalDatabase({storageKey: "post-data"});
+    const database = new LocalDatabase({storageId: "post-data"});
     const post = await PostData({database, type}).create({uid: "u1", text: "created"});
     await post.publish()();
     const fetched = await PostData({database, type}).fetch(post.id);

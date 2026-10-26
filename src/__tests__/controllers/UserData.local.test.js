@@ -11,7 +11,7 @@ const email = [...user, {email: "email"}];
 const created = value => value;
 
 it("saves profile fields under their query names and reads the complete profile", async () => {
-    const database = new LocalDatabase({storageKey: "profile-fields"});
+    const database = new LocalDatabase({storageId: "profile-fields"});
     const profile = new UserData(database).create("u1", {name: " User ", email: "a@b.com", updated: 1});
     await profile.setPrivate("phone", {locale: "en", enabled: true});
     await profile.save();

@@ -58,7 +58,7 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
         return Promise.resolve(fixture.snapshot(value));
     });
     context.database = provider === "local"
-        ? new LocalDatabase({storageKey: `post-navigation-${crypto.randomUUID()}`})
+        ? new LocalDatabase({storageId: `post-navigation-${crypto.randomUUID()}`})
         : new FirebaseDatabase({firebase: fixture.firebase});
     const database = context.database;
     context.backend = {request: vi.fn((name, {path, value}) => database.create(path, value))};

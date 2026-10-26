@@ -6,6 +6,6 @@ import {counterScenarios} from "./counterScenarios";
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 describe("Local counter audit", () => counterScenarios(() => [
-    new LocalDatabase({storageKey: "counter-audit"}),
-    new LocalDatabase({storageKey: "counter-audit"}),
+    new LocalDatabase({storageId: "counter-audit"}),
+    new LocalDatabase({storageId: "counter-audit"}),
 ], {local: true}));
