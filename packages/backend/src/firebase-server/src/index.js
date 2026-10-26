@@ -1,16 +1,14 @@
-import create from "./databaseCreate.js";
-import update from "./databaseUpdate.js";
-
-
 import {initializeApp} from "firebase-admin/app";
-import {getDatabase} from "firebase-admin/database";
 import {getAuth} from "firebase-admin/auth";
-import {getStorage} from "firebase-admin/storage";
 import {getMessaging} from "firebase-admin/messaging";
+import {getStorage} from "firebase-admin/storage";
+import create from "./database/create";
+import deleteRecord from "./database/delete";
+import update from "./database/update";
 
 const app = initializeApp();
 
-export const database = {create, update};
+export const database = {create, update, delete: deleteRecord};
 // export const projectUrl = "https://" + app.options.projectId + ".web.app";
 // export const projectTitle = "The Whisky Talks";
 // export const storageBucket = app.options.storageBucket;
