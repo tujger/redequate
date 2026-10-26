@@ -98,6 +98,16 @@ install independently in Cloud Build. Server runtime support is defined by its
 own manifest. Do not restore the retired standalone common package or duplicate
 preparation logic in each consumer.
 
+Local Functions development can attach `packages/server/watch-redequate-server.mjs`
+to a prepared Functions directory. Rollup builds into a watcher-owned temporary
+directory; only successful complete cycles replace the installed package. Touching
+the consumer entry point then triggers Functions reload, since Firebase ignores
+`node_modules`. Each target has one watcher, owned by its development launcher or
+an explicitly started command. Source edits do not repack or alter lockfiles;
+changed runtime dependency requirements require preparation and a watcher restart.
+The Whisky Talks enables this for developer emulator starts; isolated test runs
+retain one-shot preparation. Archive deployment remains the shared consumer path.
+
 Node Server Backends own manifests and independent build commands using the root
 toolchain. `packages/server` assembles isolated outputs and merges Backend runtime
 dependencies into `dist/package.json`, rejecting conflicting versions. Pack the
@@ -108,11 +118,33 @@ these modules are not standalone npm packages and need no separate installs or
 lockfiles. Functions import the Firebase backend through
 `redequate-server/backend/firebase-server`; source directory names are internal.
 Firebase `database.create` accepts `(path, value)` with an object value and returns
-a string key. Its grouped callable deploys as `database-create`; the Firebase client
+a string key. FirebaseDatabase routes create through its injected Backend or a
+default FirebaseBackendClient using the same Firebase app. Synchronous value
+callbacks run on the client with a supplied or locally allocated push key; the
+request carries the resulting object and an explicit key path, never the callback.
+The adapter maps callable `already-exists` failures to `database/conflict`.
+Its grouped callable deploys as `database-create`; the Firebase client
 maps that name. REST conditional PUT with the caller's ID token keeps Security
 Rules authoritative, including anonymous access and validation. Like SDK
 transactions, it requires read/write permission. Consumers initialize the default
 Admin app; importing server entry points does not initialize Firebase.
+
+Firebase `database.update` routes all writes through the same Backend as create.
+Its ordinary `(path, changes)` request performs a Rules-authorized REST PATCH;
+object/Map batches become one root-relative PATCH. Callback updates execute on the
+client, using `(path, null, {mode: "read"})` to obtain `{value, etag}` and
+`(path, value, {mode: "replace", etag})` for a conditional PUT. Responses report
+`{committed: true, value}` or `{committed: false, value, etag}` on conflicts.
+Callbacks may rerun against current data, with up to 25 write attempts and bounded
+jittered backoff. Undefined callback results delete; confirmed server values are
+returned. The protocol preserves Security Rules and requires read/write access
+for callbacks; it never serializes functions or bypasses Rules through Admin writes.
+
+Firebase `database.delete` follows the same injected/default Backend routing.
+Its single path argument is the direct callable payload, and `database-delete`
+performs an unconditional Rules-authorized REST DELETE with the caller's ID token.
+It needs write permission only, supports root and absent paths, and returns null
+to the transport while the database adapter resolves to undefined.
 
 TypeScript migration is incremental. Babel strips TS/TSX types; existing JS and
 extensionless imports remain supported. Source contracts do not imply mandatory

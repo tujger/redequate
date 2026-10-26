@@ -58,7 +58,37 @@ use `auth=null`. Security Rules check the write atomically, including validation
 Conditional create requires read and write permission, like SDK transactions.
 Existing records are preserved. Errors use `permission-denied`, `already-exists`,
 `invalid-argument`, or sanitized callable errors for other failures.
-Only Firebase create is implemented; update is not exported.
+
+## Firebase database.update
+
+The `database` callable group also exports `update` as `database-update`.
+`request("database.update", path, changes)` performs a shallow PATCH, including
+multi-location keys; batches use the root path. The client adapter returns
+`undefined` once that write is confirmed.
+
+Synchronous update callbacks execute in the client adapter. It obtains a snapshot
+with `request("database.update", path, null, {mode: "read"})`, returning
+`{value, etag}`, then sends the callback result using
+`request("database.update", path, value, {mode: "replace", etag})`.
+Conditional PUT returns `{committed: true, value}` with resolved server values.
+A conflicting write returns `{committed: false, value, etag}` for another callback
+attempt, up to 25 attempts with bounded jittered backoff. Null/undefined callback
+results delete the value. Callback exceptions and Promise results prevent writes.
+
+All reads and writes forward the caller's ID token to preserve Security Rules.
+Patch needs write access; callback updates need both read and write access.
+The public `database.update` overloads and error handlers are unchanged.
+
+## Firebase database.delete
+
+`request("database.delete", path)` invokes `database-delete`. The single path is
+sent directly as the callable payload, without an argument-array wrapper.
+The Firebase database adapter resolves its path and routes deletion through its
+injected Backend or the default FirebaseBackendClient. REST DELETE forwards the
+caller's ID token so Security Rules authorize the write; read access is not needed.
+Deletion is unconditional and also succeeds for absent data when Rules allow it.
+Root paths are supported. The callable returns `null`; the client adapter returns
+`undefined` after confirmation and preserves the existing `onError` handling.
 
 ## Prepare the Functions archive
 
