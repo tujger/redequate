@@ -1,22 +1,24 @@
-import {getDatabase, ref, push, runTransaction} from "firebase/database";
+import {getDatabase, ref, push} from "firebase/database";
 import {fail} from "../../../common";
+import FirebaseBackendClient from "../../../backend/src/firebase-client";
 import resolvePath from "../common/resolvePath";
 import parseCreatePath from "../common/parseCreatePath";
 
-export default function createRecord(firebase, path, value, run) {
-    return run(() => {
-        const {parentPath, key} = parseCreatePath(path);
-        const effectivePath = resolvePath(parentPath);
-        const database = getDatabase(firebase.app);
-        const reference = key === undefined
-            ? push(ref(database, effectivePath))
-            : ref(database, `${effectivePath}/${key}`);
-        return saveRecord(reference, value);
-    }, undefined, "create", {path, value});
+export default function createRecord(firebase, backend, path, value, run) {
+    return run(() => saveRecord(prepareRecord({firebase, backend, path, value})),
+        undefined, "create", {path, value});
 }
 
-async function saveRecord(ref, value) {
-    if (value instanceof Function) value = value(ref.key);
+const prepareRecord = props => {
+    const {firebase, path} = props;
+    let {value} = props;
+    const {parentPath, fieldName, key} = parseCreatePath(path);
+    let effectivePath = path;
+    if (value instanceof Function) {
+        const recordKey = key ?? push(ref(getDatabase(firebase.app), resolvePath(parentPath))).key;
+        value = value(recordKey);
+        effectivePath = [...parentPath, {[fieldName]: recordKey}];
+    }
     if (value?.then instanceof Function) {
         Promise.resolve(value).catch(() => {});
         fail("database/invalid-argument", "create callback must be synchronous.");
@@ -24,17 +26,18 @@ async function saveRecord(ref, value) {
     if (value === null || typeof value !== "object" || value instanceof Array) {
         fail("database/invalid-argument", "value must be a record object.");
     }
-    let conflict = false;
-    const result = await runTransaction(ref, current => {
-        if (current !== null && current !== undefined) {
-            conflict = true;
-            return undefined;
+    return {...props, path: effectivePath, value};
+};
+
+async function saveRecord(props) {
+    const {firebase, backend, path, value} = props;
+    try {
+        const client = backend ?? new FirebaseBackendClient({firebase});
+        return await client.request("database.create", path, value);
+    } catch (error) {
+        if (error.code === "functions/already-exists") {
+            fail("database/conflict", "Record already exists.");
         }
-        return value;
-    }, {applyLocally: false});
-    if (!result.committed) {
-        if (conflict) fail("database/conflict", "Record already exists.");
-        fail("database/conflict", "Record creation was not committed.");
+        throw error;
     }
-    return ref.key;
 }

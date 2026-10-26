@@ -12,9 +12,11 @@ import {fail} from "../../../common";
 
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;
+    #backend;
 
-    constructor({firebase, onError}) {
+    constructor({backend, firebase, onError}) {
         super({onError});
+        this.#backend = backend;
         this.#firebase = firebase;
     }
 
@@ -24,7 +26,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async create(path, value) {
-        return createRecord(this.#firebase, path, value, this.run.bind(this));
+        return createRecord(this.#firebase, this.#backend, path, value, this.run.bind(this));
     }
 
     cursor(path, options = {}) {
