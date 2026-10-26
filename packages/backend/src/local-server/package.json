@@ -1,7 +1,0 @@
-{
-    "type": "module",
-    "scripts": {
-        "build": "npm --prefix ../../../.. run \"build local-server\" --",
-        "watch": "npm run build -- --watch"
-    }
-}
