@@ -8,7 +8,7 @@ const entries = {
     "backend/index": fileURLToPath(new URL("./src/index.js", import.meta.url)),
     "backend/common": fileURLToPath(new URL("./src/common/index.js", import.meta.url)),
     "backend/firebase-client": fileURLToPath(new URL("./src/firebase-client/index.js", import.meta.url)),
-    "backend/local-client": fileURLToPath(new URL("./src/local-client/index.js", import.meta.url)),
+    "backend/local": fileURLToPath(new URL("./src/local/index.js", import.meta.url)),
 };
 
 const withBackendPackage = withPackage(entries, sourceDirectory);

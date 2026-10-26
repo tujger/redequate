@@ -6,7 +6,7 @@ const defaultKey = {};
 const resolveLocalBackend = database => {
     const key = database ?? defaultKey;
     if (!localBackends.has(key)) {
-        const backend = import("./local-client").then(({default: LocalBackendClient}) =>
+        const backend = import("./local").then(({default: LocalBackendClient}) =>
             new LocalBackendClient({database})).catch(error => {
             localBackends.delete(key);
             throw error;
