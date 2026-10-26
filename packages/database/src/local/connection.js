@@ -1,8 +1,8 @@
 import {LOCAL_SCHEMA} from "./storeSchema";
 import {IDENTITY_INDEX} from "./row";
 
-const openVersionedDatabase = (storageKey, version, schema) => new Promise((resolve, reject) => {
-    const request = globalThis.indexedDB.open(`redequate:local:${storageKey}`, version);
+const openVersionedDatabase = (storageId, version, schema) => new Promise((resolve, reject) => {
+    const request = globalThis.indexedDB.open(`redequate:local:${storageId}`, version);
     let blocked = false;
     request.onupgradeneeded = () => {
         if (blocked) { request.transaction.abort(); return; }
@@ -27,14 +27,14 @@ const openVersionedDatabase = (storageKey, version, schema) => new Promise((reso
 });
 
 // Opening validates the storage model. JSON additions are handled by applySchema.
-export const openDatabase = async (storageKey, initialSchema = LOCAL_SCHEMA) => {
+export const openDatabase = async (storageId, initialSchema = LOCAL_SCHEMA) => {
     let database;
     try {
         try {
-            database = await openVersionedDatabase(storageKey, 1, initialSchema);
+            database = await openVersionedDatabase(storageId, 1, initialSchema);
         } catch (error) {
             if (error?.name !== "VersionError") throw error;
-            database = await openVersionedDatabase(storageKey, undefined, initialSchema);
+            database = await openVersionedDatabase(storageId, undefined, initialSchema);
         }
         const incompatible = !Object.keys(LOCAL_SCHEMA).some(name => database.objectStoreNames.contains(name)) ||
             Object.entries(LOCAL_SCHEMA).some(([name, definition]) => {
@@ -53,7 +53,7 @@ export const openDatabase = async (storageKey, initialSchema = LOCAL_SCHEMA) => 
     } catch (error) {
         database?.close();
         if (error?.name !== "VersionError") throw error;
-        const message = `Existing redequate:local:${storageKey} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
+        const message = `Existing redequate:local:${storageId} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
         throw Object.assign(new Error(message, {cause: error}), {name: "VersionError"});
     }
 };

@@ -76,8 +76,8 @@ const changesFor = (database, schema, transaction) => {
     return changes;
 };
 
-const upgrade = (storageKey, version, schema) => new Promise((resolve, reject) => {
-    const request = globalThis.indexedDB.open(`redequate:local:${storageKey}`, version);
+const upgrade = (storageId, version, schema) => new Promise((resolve, reject) => {
+    const request = globalThis.indexedDB.open(`redequate:local:${storageId}`, version);
     let failure;
     let blocked = false;
     request.onupgradeneeded = () => {
@@ -131,17 +131,17 @@ const upgrade = (storageKey, version, schema) => new Promise((resolve, reject) =
 });
 
 /** Apply schema changes atomically, compacting obsolete framework metadata. */
-export const applySchema = async (storageKey, input, initialSchema = LOCAL_SCHEMA) => {
+export const applySchema = async (storageId, input, initialSchema = LOCAL_SCHEMA) => {
     const schema = normalize(input, initialSchema);
     for (let attempt = 0; attempt < 10; attempt++) {
-        const database = await openDatabase(storageKey, initialSchema);
+        const database = await openDatabase(storageId, initialSchema);
         let version;
         try {
             if (!changesFor(database, schema).length) return;
             version = database.version;
         } finally { database.close(); }
         try {
-            await upgrade(storageKey, version + 1, schema);
+            await upgrade(storageId, version + 1, schema);
         } catch (error) {
             // Another tab may have upgraded between inspection and versionchange.
             if (error?.name !== "VersionError" || attempt === 9) throw error;

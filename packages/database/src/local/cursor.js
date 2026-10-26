@@ -11,7 +11,7 @@ const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const children = value => value !== null && typeof value === "object" ? Object.entries(value) : [];
 
 export default class LocalCursor extends DatabaseCursor {
-    #storageKey;
+    #storageId;
     #path;
     #identityField;
     #field;
@@ -23,13 +23,13 @@ export default class LocalCursor extends DatabaseCursor {
     #scan;
     #header = [];
 
-    constructor(storageKey, path, options = {}) {
+    constructor(storageId, path, options = {}) {
         const identityField = Array.isArray(path) && path.length > 1 && typeof path.at(-1) === "string"
             ? path.at(-1)
             : undefined;
         const resolvedPath = identityField === undefined ? path : path.slice(0, -1);
         super(options, resolvedPath);
-        this.#storageKey = storageKey;
+        this.#storageId = storageId;
         this.#path = typeof resolvedPath === "string" ? resolvedPath.split("/").filter(Boolean) : resolvedPath;
         this.#identityField = identityField;
         this.#field = this.orderBy === undefined ? undefined : resolvePath(this.orderBy);
@@ -59,13 +59,13 @@ export default class LocalCursor extends DatabaseCursor {
     }
 
     async #read() {
-        if (this.#identityField !== undefined) return getCursorChildren(this.#storageKey, this.#path, this.#identityField, {
+        if (this.#identityField !== undefined) return getCursorChildren(this.#storageId, this.#path, this.#identityField, {
             orderBy: this.orderBy, equalTo: this.equalTo, start: this.start, end: this.end
         });
-        if (this.#path.length) return getSubtree(this.#storageKey, this.#path, {
+        if (this.#path.length) return getSubtree(this.#storageId, this.#path, {
             orderBy: this.orderBy, equalTo: this.equalTo, start: this.start, end: this.end
         });
-        const rows = await getAllRecords(this.#storageKey);
+        const rows = await getAllRecords(this.#storageId);
         return Object.fromEntries([...new Set(rows.map(row => row._collection))]
             .map(collection => [collection, subtreeValue(rows, [collection])]));
     }
@@ -124,15 +124,15 @@ export default class LocalCursor extends DatabaseCursor {
                 const replacement = await this.handle(structuredClone(entry));
                 if (replacement !== undefined) {
                     const recordPath = this.#path.length
-                        ? await getChildRecordPath(this.#storageKey, this.#path, key, this.#identityField) ??
+                        ? await getChildRecordPath(this.#storageId, this.#path, key, this.#identityField) ??
                             createRecordPath([...this.#path, this.#identityField ?? "id"], key)
                         : [key];
-                    await mutate(this.#storageKey, [recordPath], () =>
-                        updateRecords(this.#storageKey, [[recordPath, replacement]]));
+                    await mutate(this.#storageId, [recordPath], () =>
+                        updateRecords(this.#storageId, [[recordPath, replacement]]));
                     if (replacement === null) entry = undefined;
                     else {
                         const saved = this.#path.length
-                            ? await getSubtree(this.#storageKey, recordPath)
+                            ? await getSubtree(this.#storageId, recordPath)
                             : (await this.#read())[key];
                         entry = saved === undefined || !this.#hasField(saved)
                             ? undefined
@@ -178,7 +178,7 @@ export default class LocalCursor extends DatabaseCursor {
             cursor._count += event.type === "add" ? 1 : event.type === "remove" ? -1 : 0;
             listener(event);
         };
-        const registration = addEventListener(this.#storageKey, this.#path, {
+        const registration = addEventListener(this.#storageId, this.#path, {
             onChange: value => {
                 const current = new Map(this.#entries(value).map(({key, value}) => [key, value]));
                 if (previous !== undefined) {

@@ -1,4 +1,5 @@
 import {fail} from "../../../common";
+import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import DatabaseBase from "../common/DatabaseBase";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
 import resolvePath from "../common/resolvePath";
@@ -17,19 +18,19 @@ export default class LocalDatabase extends DatabaseBase {
     #context;
     /**
      * @param {object} [options]
-     * @param {string} [options.storageKey]
+     * @param {string} [options.storageId]
      * @param {Array<{store: string, storeConfig: {keyPath: "_id", autoIncrement: true},
      * storeSchema: Array<{name: string, keypath: string | string[],
      * options?: {unique?: boolean, multiEntry?: boolean}}>}>} [options.stores]
      */
     constructor(options = {}) {
         super(options);
-        const {storageKey = "redequate:database:local"} = options;
-        if (typeof storageKey !== "string" || !storageKey.trim()) {
-            fail("database/invalid-argument", "storageKey must be a non-empty string.");
+        const {storageId = LOCAL_DATABASE_NAME} = options;
+        if (typeof storageId !== "string" || !storageId.trim()) {
+            fail("database/invalid-argument", "storageId must be a non-empty string.");
         }
-        this.storageKey = storageKey;
-        this.#context = {storageKey, schema: convertStores(options.stores)};
+        this.storageId = storageId;
+        this.#context = {storageId, schema: convertStores(options.stores)};
     }
 
     /**
@@ -41,7 +42,7 @@ export default class LocalDatabase extends DatabaseBase {
     async applySchema(schema) {
         const connection = await openDatabase(this.#context);
         connection.close();
-        return applySchema(this.storageKey, schema, this.#context.schema);
+        return applySchema(this.storageId, schema, this.#context.schema);
     }
 
     addEventListener(path, options = {}) {

@@ -8,7 +8,7 @@ import {assertCollection, getAllRecords, readValue, resolveCollectionPath, subtr
 const listeners = new Map();
 const queues = new Map();
 const channels = new Map();
-const storageName = context => typeof context === "string" ? context : context.storageKey;
+const storageName = context => typeof context === "string" ? context : context.storageId;
 const invalid = message => fail("database/invalid-argument", message);
 
 const pathKeys = path => {
@@ -48,46 +48,46 @@ const related = (left, right) => {
     return [...first].every(([name, value]) => !second.has(name) || second.get(name) === value);
 };
 
-const channelName = storageKey => `redequate:local:${storageKey}:changes`;
-const receive = (storageKey, event) => {
+const channelName = storageId => `redequate:local:${storageId}:changes`;
+const receive = (storageId, event) => {
     const paths = event.data?.paths;
     if (!Array.isArray(paths) || !paths.length || !paths.every(path => Array.isArray(path) &&
         path.length && path.every(segment => segment && typeof segment.key === "string" &&
             (segment.token === undefined || Array.isArray(segment.token))))) return;
-    enqueue(storageKey, async () => {
-        for (const listener of listeners.get(storageName(storageKey)) ?? []) {
+    enqueue(storageId, async () => {
+        for (const listener of listeners.get(storageName(storageId)) ?? []) {
             if (paths.some(path => related(listener.keys, path))) await refresh(listener);
         }
     }).catch(() => {});
 };
 
-const openChannel = storageKey => {
-    if (channels.has(storageKey) || typeof globalThis.BroadcastChannel !== "function") return;
+const openChannel = storageId => {
+    if (channels.has(storageId) || typeof globalThis.BroadcastChannel !== "function") return;
     try {
-        const channel = new globalThis.BroadcastChannel(channelName(storageKey));
-        channel.onmessage = event => receive(storageKey, event);
-        channels.set(storageKey, channel);
+        const channel = new globalThis.BroadcastChannel(channelName(storageId));
+        channel.onmessage = event => receive(storageId, event);
+        channels.set(storageId, channel);
     } catch (_) { /* BroadcastChannel is optional (for example in SSR). */ }
 };
 
-const publish = (storageKey, paths) => {
+const publish = (storageId, paths) => {
     if (!paths.length || typeof globalThis.BroadcastChannel !== "function") return;
-    if (listeners.has(storageKey)) openChannel(storageKey);
-    let channel = channels.get(storageKey);
+    if (listeners.has(storageId)) openChannel(storageId);
+    let channel = channels.get(storageId);
     let temporary = false;
     try {
         if (!channel) {
-            channel = new globalThis.BroadcastChannel(channelName(storageKey));
+            channel = new globalThis.BroadcastChannel(channelName(storageId));
             temporary = true;
         }
         channel.postMessage({paths});
     } catch (_) { /* A notification failure must not turn a committed write into a failed write. */ } finally { if (temporary) channel?.close(); }
 };
 
-const enqueue = (storageKey, operation) => {
-    storageKey = storageName(storageKey);
-    const next = (queues.get(storageKey) ?? Promise.resolve()).then(operation);
-    queues.set(storageKey, next.catch(() => {}));
+const enqueue = (storageId, operation) => {
+    storageId = storageName(storageId);
+    const next = (queues.get(storageId) ?? Promise.resolve()).then(operation);
+    queues.set(storageId, next.catch(() => {}));
     return next;
 };
 
@@ -102,8 +102,8 @@ const setValue = (root, keys, value) => {
     Object.defineProperty(node, keys.at(-1), {value, enumerable: true, configurable: true, writable: true});
 };
 
-const snapshot = async (storageKey, keys, path) => {
-    const rows = await getAllRecords(storageKey);
+const snapshot = async (storageId, keys, path) => {
+    const rows = await getAllRecords(storageId);
     if (Array.isArray(path)) return subtreeValue(rows, path);
     const root = {};
     rows.sort((a, b) => JSON.parse(a._key).length - JSON.parse(b._key).length);
@@ -165,7 +165,7 @@ const refresh = async listener => {
     try {
         value = listener.read
             ? await listener.read()
-            : await snapshot(listener.storageKey, listener.keys, listener.path);
+            : await snapshot(listener.storageId, listener.keys, listener.path);
     } catch (error) {
         try { listener.callbacks.onError(error); } catch (_) { /* Already reported by DatabaseBase. */ }
         return;
@@ -173,17 +173,17 @@ const refresh = async listener => {
     try { deliver(listener, value); } catch (_) { /* Callback wrapper already reported the error. */ }
 };
 
-export const mutate = (storageKey, paths, operation) => enqueue(storageKey, async () => {
+export const mutate = (storageId, paths, operation) => enqueue(storageId, async () => {
     const result = await operation();
     const changed = paths.map(pathKeys);
-    for (const listener of listeners.get(storageName(storageKey)) ?? []) {
+    for (const listener of listeners.get(storageName(storageId)) ?? []) {
         if (changed.some(path => related(listener.keys, path))) await refresh(listener);
     }
-    publish(storageName(storageKey), changed);
+    publish(storageName(storageId), changed);
     return result;
 });
 
-export default function addEventListener(storageKey, path, callbacks, read) {
+export default function addEventListener(storageId, path, callbacks, read) {
     for (const [name, handler] of Object.entries(callbacks)) {
         if (name.startsWith("on") && handler !== undefined && !(handler instanceof Function)) {
             invalid(`${name} must be a function or undefined.`);
@@ -203,26 +203,26 @@ export default function addEventListener(storageKey, path, callbacks, read) {
         const rawPath = path;
         if (Array.isArray(path) && path.length) path = parseReadPath(path).path;
         else if (typeof path === "string") path = resolvePath(path);
-        if (path?.length) read = readValue.bind(null, storageKey, rawPath);
+        if (path?.length) read = readValue.bind(null, storageId, rawPath);
     }
     const keys = pathKeys(path);
-    if (keys.length) assertCollection(storageKey, keys[0].key);
-    const listener = {storageKey, keys, path, callbacks, read, active: true, initial: true, previous: undefined};
-    storageKey = storageName(storageKey);
-    if (!listeners.has(storageKey)) listeners.set(storageKey, new Set());
-    listeners.get(storageKey).add(listener);
-    openChannel(storageKey);
-    enqueue(storageKey, () => refresh(listener)).catch(() => {});
+    if (keys.length) assertCollection(storageId, keys[0].key);
+    const listener = {storageId, keys, path, callbacks, read, active: true, initial: true, previous: undefined};
+    storageId = storageName(storageId);
+    if (!listeners.has(storageId)) listeners.set(storageId, new Set());
+    listeners.get(storageId).add(listener);
+    openChannel(storageId);
+    enqueue(storageId, () => refresh(listener)).catch(() => {});
     return {
         remove: () => {
             if (!listener.active) return;
             listener.active = false;
-            const subscribers = listeners.get(storageKey);
+            const subscribers = listeners.get(storageId);
             subscribers.delete(listener);
             if (!subscribers.size) {
-                listeners.delete(storageKey);
-                channels.get(storageKey)?.close();
-                channels.delete(storageKey);
+                listeners.delete(storageId);
+                channels.get(storageId)?.close();
+                channels.delete(storageId);
             }
         }
     };

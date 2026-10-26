@@ -146,15 +146,15 @@ const typeQuery = path => {
 };
 
 // Contexts belong to instances. No global registry can expand another instance's collections.
-export const openDatabase = async (storageKey, initialSchema = LOCAL_SCHEMA) => {
-    if (typeof storageKey === "string") return openConnection(storageKey, initialSchema);
-    const context = storageKey;
+export const openDatabase = async (storageId, initialSchema = LOCAL_SCHEMA) => {
+    if (typeof storageId === "string") return openConnection(storageId, initialSchema);
+    const context = storageId;
     if (!context.ready) {
-        context.ready = applySchema(context.storageKey, context.schema, context.schema)
+        context.ready = applySchema(context.storageId, context.schema, context.schema)
             .catch(error => { context.ready = undefined; throw error; });
     }
     await context.ready;
-    return openConnection(context.storageKey, context.schema);
+    return openConnection(context.storageId, context.schema);
 };
 
 export const assertCollection = (context, collection) => {
@@ -163,12 +163,12 @@ export const assertCollection = (context, collection) => {
     }
 };
 
-const transact = async (storageKey, mode, names, run) => {
-    for (const name of names ?? []) assertCollection(storageKey, name);
-    const database = await openDatabase(storageKey);
+const transact = async (storageId, mode, names, run) => {
+    for (const name of names ?? []) assertCollection(storageId, name);
+    const database = await openDatabase(storageId);
     try {
         return await new Promise((resolve, reject) => {
-            const selected = names ?? storeNames(storageKey).filter(name => database.objectStoreNames.contains(name));
+            const selected = names ?? storeNames(storageId).filter(name => database.objectStoreNames.contains(name));
             const transaction = database.transaction([...new Set(selected)], mode);
             let result;
             let abortedError;
@@ -345,7 +345,7 @@ const resolveStoredPath = (rows, path) => {
     return {...actual, key: unique[0]._key, field: path.field, kind: path.kind};
 };
 
-export const getRecord = async (storageKey, path) => getSubtree(storageKey, path);
+export const getRecord = async (storageId, path) => getSubtree(storageId, path);
 // Adapt named read conditions to dynamic identities without changing stored rows.
 const readRows = (rows, path) => {
     const conditions = parseDatabasePath(path, {allowField: false}).segments.filter(token => token[0] === "fixed");
@@ -363,7 +363,7 @@ const readRows = (rows, path) => {
 };
 
 // This read-only grammar does not affect writes, cursors or subscriptions.
-export const readValue = (storageKey, rawPath, options) => {
+export const readValue = (storageId, rawPath, options) => {
     const {path, keyField, literal} = parseReadPath(rawPath);
     const readPath = path.map((segment, index) => {
         if (!index || typeof segment === "string" || Object.hasOwn(segment, "_")) return segment;
@@ -371,7 +371,7 @@ export const readValue = (storageKey, rawPath, options) => {
         return segment[name] === name ? name : segment;
     });
     const parent = parseDatabasePath(readPath, {allowField: false});
-    return transact(storageKey, "readonly", [storeName(parent.collection)], (transaction, setResult, abortWith) => {
+    return transact(storageId, "readonly", [storeName(parent.collection)], (transaction, setResult, abortWith) => {
         const receive = rows => {
             try {
                 if (literal) {
@@ -420,9 +420,9 @@ export const readValue = (storageKey, rawPath, options) => {
     });
 };
 
-export const addRecord = async (storageKey, rawPath, value) => {
+export const addRecord = async (storageId, rawPath, value) => {
     const path = interpretPath(rawPath);
-    return transact(storageKey, "readwrite", [storeName(path.collection)], (transaction, _setResult, abortWith) => {
+    return transact(storageId, "readwrite", [storeName(path.collection)], (transaction, _setResult, abortWith) => {
         readStores(transaction, rows => {
             try {
                 if (subtreeValue(rows, rawPath) !== undefined) {
@@ -438,11 +438,11 @@ export const addRecord = async (storageKey, rawPath, value) => {
     });
 };
 /** Allocate and insert in one transaction so an aborted write also rolls back the key generator. */
-export const addGeneratedRecord = async (storageKey, createPath, makeValue) => {
+export const addGeneratedRecord = async (storageId, createPath, makeValue) => {
     const {parentPath} = parseCreatePath(createPath);
     const collection = resolveCollectionPath(parentPath)[0];
     const name = storeName(collection);
-    return transact(storageKey, "readwrite", [name], (transaction, setResult, abortWith) => {
+    return transact(storageId, "readwrite", [name], (transaction, setResult, abortWith) => {
         const store = transaction.objectStore(name);
         const allocate = () => {
             // The placeholder exists only inside this transaction and has no query indexes.
@@ -476,13 +476,13 @@ export const addGeneratedRecord = async (storageKey, createPath, makeValue) => {
     });
 };
 
-export const putRecord = async (storageKey, path, value) => {
+export const putRecord = async (storageId, path, value) => {
     interpretPath(path);
-    return updateRecords(storageKey, [[path, value]]);
+    return updateRecords(storageId, [[path, value]]);
 };
-export const deleteRecord = async (storageKey, path) => {
+export const deleteRecord = async (storageId, path) => {
     interpretPath(path);
-    return updateRecords(storageKey, [[path, null]]);
+    return updateRecords(storageId, [[path, null]]);
 };
 
 export const subtreeValue = (records, rawPath) => {
@@ -525,18 +525,18 @@ export const subtreeValue = (records, rawPath) => {
     return result;
 };
 
-export const getSubtree = (storageKey, rawPath, options) => {
+export const getSubtree = (storageId, rawPath, options) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
-    return transact(storageKey, "readonly", [storeName(path.collection)], (transaction, setResult) => {
+    return transact(storageId, "readonly", [storeName(path.collection)], (transaction, setResult) => {
         const receive = rows => setResult(subtreeValue(rows, rawPath));
         if (!indexedRows(transaction, rawPath, undefined, options, receive)) readStores(transaction, receive);
     });
 };
 
-export const getCursorChildren = (storageKey, rawPath, identityField, options) => {
+export const getCursorChildren = (storageId, rawPath, identityField, options) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
     const prefix = pathSegments(path);
-    return transact(storageKey, "readonly", [storeName(path.collection)], (transaction, setResult, abortWith) => {
+    return transact(storageId, "readonly", [storeName(path.collection)], (transaction, setResult, abortWith) => {
         const receive = rows => {
             try {
                 const entries = rows.flatMap(row => {
@@ -873,17 +873,17 @@ const applyBatch = (transaction, entries, merge, abortWith) => {
     });
 };
 
-export const updateRecords = (storageKey, entries, {merge = false} = {}) => {
+export const updateRecords = (storageId, entries, {merge = false} = {}) => {
     const names = entries.map(([path]) => storeName(Array.isArray(path)
         ? parseDatabasePath(path).collection
         : typeof path === "string" ? path.split("/")[0] : invalidPath("Invalid batch path.")));
-    return transact(storageKey, "readwrite", names.length ? names : storeNames(storageKey),
+    return transact(storageId, "readwrite", names.length ? names : storeNames(storageId),
         (transaction, setResult, abortWith) => applyBatch(transaction, entries, merge, abortWith));
 };
 
-export const updateRecord = (storageKey, rawPath, callback) => {
+export const updateRecord = (storageId, rawPath, callback) => {
     const path = parseDatabasePath(rawPath);
-    return transact(storageKey, "readwrite", [storeName(path.collection)], (transaction, setResult, abortWith) => {
+    return transact(storageId, "readwrite", [storeName(path.collection)], (transaction, setResult, abortWith) => {
         readStores(transaction, rows => {
             try {
                 const current = subtreeValue(rows, rawPath) ?? null;
@@ -912,14 +912,14 @@ const replaceValue = (rows, rawPath, path, value) => {
     return changed;
 };
 
-export const getAllRecords = storageKey => transact(storageKey, "readonly", undefined,
+export const getAllRecords = storageId => transact(storageId, "readonly", undefined,
     (transaction, setResult) => readStores(transaction, setResult));
 
 /** Resolve an existing immediate child back to its stored named path. */
-export const getChildRecordPath = async (storageKey, rawPath, key, identityField) => {
+export const getChildRecordPath = async (storageId, rawPath, key, identityField) => {
     const path = parseDatabasePath(rawPath, {allowField: false});
     const prefix = pathSegments(path);
-    const rows = await getAllRecords(storageKey);
+    const rows = await getAllRecords(storageId);
     const matches = rows.filter(row => {
         if (row._collection !== path.collection) return false;
         const suffix = relativeSegments(row, prefix);
@@ -932,9 +932,9 @@ export const getChildRecordPath = async (storageKey, rawPath, key, identityField
 
 // Returns {id, value} entries. Dynamic segment names are indexed by their explicit level;
 // fixed named segments filter by their field names, independent of path position.
-export const getRecordsByType = async (storageKey, path) => {
+export const getRecordsByType = async (storageId, path) => {
     const {collection, keys, conditions} = typeQuery(path);
-    return transact(storageKey, "readonly", [storeName(collection)], (transaction, setResult) => {
+    return transact(storageId, "readonly", [storeName(collection)], (transaction, setResult) => {
         const store = transaction.objectStore(storeName(collection));
         const request = store.getAll();
         request.onsuccess = () => setResult(request.result.map(row => decodeRow(row, collection)).filter(Boolean)
