@@ -16,7 +16,7 @@ export const convertStores = (additional = []) => {
     if (!Array.isArray(additional)) throw new TypeError("Local stores must be an array.");
     const result = Object.create(null);
     for (const entry of [...stores, ...additional]) {
-        if (!plain(entry) || typeof entry.store !== "string" || !entry.store || entry.store.includes("/") ||
+        if (!plain(entry) || typeof entry.store !== "string" || !entry.store || entry.store.startsWith("$") || entry.store.includes("/") ||
             !plain(entry.storeConfig) || entry.storeConfig.keyPath !== "_id" ||
             entry.storeConfig.autoIncrement !== true || !Array.isArray(entry.storeSchema)) {
             throw new TypeError("Local stores require a name, keyPath _id, autoIncrement true and storeSchema array.");

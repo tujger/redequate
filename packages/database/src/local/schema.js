@@ -16,7 +16,7 @@ const normalize = (schema, requiredSchema) => {
     if (!plain(schema) || !Object.keys(schema).length) throw new TypeError("Local schema must be a non-empty object of stores.");
     const stores = Object.create(null);
     for (const [name, definition] of Object.entries(schema)) {
-        if (!name || !plain(definition) || !validPath(definition.keyPath) ||
+        if (name.startsWith("$") || !name || !plain(definition) || !validPath(definition.keyPath) ||
             typeof definition.autoIncrement !== "boolean" || !plain(definition.indexes)) {
             throw new TypeError(`Invalid Local store schema: ${name}`);
         }
@@ -77,7 +77,7 @@ const changesFor = (database, schema, transaction) => {
 };
 
 const upgrade = (storageId, version, schema) => new Promise((resolve, reject) => {
-    const request = globalThis.indexedDB.open(`redequate:local:${storageId}`, version);
+    const request = globalThis.indexedDB.open(storageId, version);
     let failure;
     let blocked = false;
     request.onupgradeneeded = () => {

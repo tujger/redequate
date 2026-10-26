@@ -2,7 +2,7 @@ import {LOCAL_SCHEMA} from "./storeSchema";
 import {IDENTITY_INDEX} from "./row";
 
 const openVersionedDatabase = (storageId, version, schema) => new Promise((resolve, reject) => {
-    const request = globalThis.indexedDB.open(`redequate:local:${storageId}`, version);
+    const request = globalThis.indexedDB.open(storageId, version);
     let blocked = false;
     request.onupgradeneeded = () => {
         if (blocked) { request.transaction.abort(); return; }
@@ -30,13 +30,10 @@ const openVersionedDatabase = (storageId, version, schema) => new Promise((resol
 export const openDatabase = async (storageId, initialSchema = LOCAL_SCHEMA) => {
     let database;
     try {
-        try {
-            database = await openVersionedDatabase(storageId, 1, initialSchema);
-        } catch (error) {
-            if (error?.name !== "VersionError") throw error;
-            database = await openVersionedDatabase(storageId, undefined, initialSchema);
-        }
-        const incompatible = !Object.keys(LOCAL_SCHEMA).some(name => database.objectStoreNames.contains(name)) ||
+        database = await openVersionedDatabase(storageId, undefined, initialSchema);
+        const hasKnownStore = [...database.objectStoreNames].some(name =>
+            name.startsWith("$") || Object.hasOwn(initialSchema, name));
+        const incompatible = (database.objectStoreNames.length > 0 && !hasKnownStore) ||
             Object.entries(LOCAL_SCHEMA).some(([name, definition]) => {
                 if (!database.objectStoreNames.contains(name)) return false;
                 const store = database.transaction(name).objectStore(name);
@@ -53,7 +50,7 @@ export const openDatabase = async (storageId, initialSchema = LOCAL_SCHEMA) => {
     } catch (error) {
         database?.close();
         if (error?.name !== "VersionError") throw error;
-        const message = `Existing redequate:local:${storageId} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
+        const message = `Existing ${storageId} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
         throw Object.assign(new Error(message, {cause: error}), {name: "VersionError"});
     }
 };
