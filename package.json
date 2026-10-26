@@ -174,9 +174,9 @@
             "import": "./core/backend/firebase-client.mjs",
             "require": "./core/backend/firebase-client.cjs"
         },
-        "./backend/local-client": {
-            "import": "./core/backend/local-client.mjs",
-            "require": "./core/backend/local-client.cjs"
+        "./backend/local": {
+            "import": "./core/backend/local.mjs",
+            "require": "./core/backend/local.cjs"
         },
         "./common": {
             "import": "./core/common/index.mjs",
