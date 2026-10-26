@@ -81,7 +81,7 @@ it("falls back to an ordinary profile when RTDB rules reject the initial ADMIN b
 it("initializes ADMIN with real FirebaseAuth and a cleared LocalDatabase while retaining the Auth account", async () => {
     const account = await auth.createUserWithEmailAndPassword("mixed-reset@example.test", "password");
     await auth.signOut();
-    const local = new LocalDatabase({storageKey: "auth-bootstrap-emulator-mixed"});
+    const local = new LocalDatabase({storageId: "auth-bootstrap-emulator-mixed"});
     const mixed = new FirebaseAuth({firebase, database: local, UserData});
     const user = await mixed.signInWithEmailAndPassword(account.email, "password");
     expect(user.persisted).toBe(true);

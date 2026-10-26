@@ -15,11 +15,11 @@ it("creates LocalAuth by default without reading or writing storage", async () =
     const setItem = vi.spyOn(Storage.prototype, "setItem");
     const database = {read: vi.fn()};
     class CustomUserData extends UserData {}
-    const first = await resolveAuth(undefined, {database, UserData: CustomUserData, storageKey: "custom:auth"});
+    const first = await resolveAuth(undefined, {database, UserData: CustomUserData, storageId: "custom:auth"});
     const second = await resolveAuth();
     expect(first).toBeInstanceOf(LocalAuth);
     expect(first.database).toBe(database);
-    expect(first.storageKey).toBe("custom:auth");
+    expect(first.storageId).toBe("custom:auth");
     expect(second).toBeInstanceOf(LocalAuth);
     expect(first).not.toBe(second);
     expect(getItem).not.toHaveBeenCalled();
@@ -52,14 +52,14 @@ it.each([LocalAuth, FirebaseAuth])("preserves the constructor configuration of a
         const initializations = getAuth.mock.calls.length;
         expect(await resolveAuth(auth)).toBe(auth);
         expect(await resolveAuth(auth, {
-            database: {read: vi.fn()}, UserData: CustomUserData, storageKey: "ignored"
+            database: {read: vi.fn()}, UserData: CustomUserData, storageId: "ignored"
         })).toBe(auth);
         expect(auth.database).toBe(originalDatabase);
         const restored = auth.resolveCurrentUser();
         await vi.runAllTimersAsync();
     await flushIndexedDB();
         expect(await restored).toBeInstanceOf(OriginalUserData);
-        expect(auth.storageKey).not.toBe("ignored");
+        expect(auth.storageId).not.toBe("ignored");
         expect(getAuth).toHaveBeenCalledTimes(initializations);
     } finally {
         vi.useRealTimers();

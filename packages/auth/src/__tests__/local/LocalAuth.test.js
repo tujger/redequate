@@ -81,7 +81,7 @@ it("constructs without accessing storage and validates its namespace", () => {
     expect(auth).not.toHaveProperty("from");
     expect(auth).not.toHaveProperty("resolveToken");
     expect(getItem).not.toHaveBeenCalled();
-    expect(() => createAuth({storageKey: ""})).toThrow();
+    expect(() => createAuth({storageId: ""})).toThrow();
 });
 it("uses the constructor model for sign-in, restoration and subscriptions", async () => {
     class CustomUserData extends UserData {}
@@ -273,7 +273,7 @@ it("signs out while preserving accounts and permits subsequent password login", 
 it("isolates keys while sharing sessions between matching namespaces", async () => {
     const user = await register();
     expect((await run(createAuth().resolveCurrentUser())).id).toBe(user.id);
-    const separate = createAuth({storageKey: "separate"});
+    const separate = createAuth({storageId: "separate"});
     expect(await run(separate.resolveCurrentUser())).toMatchObject({_userData: true, id: undefined});
     await run(separate.signOut());
     expect((await run(auth.resolveCurrentUser())).id).toBe(user.id);
@@ -312,7 +312,7 @@ it("uses stable fake providers and rejects collisions and unsupported credential
     expect((await run(auth.signInWithPopup({providerId: "google.com"}))).id).toBe(google.id);
     await expect(run(auth.signInWithCredential(""))).rejects.toMatchObject({code: "auth/invalid-credential"});
     await expect(run(auth.signInWithPopup("unknown"))).rejects.toMatchObject({code: "auth/operation-not-supported"});
-    const separate = createAuth({storageKey: "collision"});
+    const separate = createAuth({storageId: "collision"});
     await run(separate.createUserWithEmailAndPassword("google@local.example", "password"));
     await expect(run(separate.signInWithPopup("google"))).rejects.toMatchObject({code: "auth/account-exists-with-different-credential"});
 });
@@ -401,12 +401,12 @@ it("observes BroadcastChannel changes and closing a subscription", async () => {
     channel.postMessage({namespace: "other", revision: "ignored"});
     await flushIndexedDB();
     expect(callback).toHaveBeenCalledTimes(1);
-    channel.postMessage({namespace: auth.storageKey, revision: "changed"});
+    channel.postMessage({namespace: auth.storageId, revision: "changed"});
     await flushIndexedDB();
     expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({name: "Other tab"}));
     unsubscribe();
     const calls = callback.mock.calls.length;
-    channel.postMessage({namespace: auth.storageKey, revision: "later"});
+    channel.postMessage({namespace: auth.storageId, revision: "later"});
     await flushIndexedDB();
     expect(callback).toHaveBeenCalledTimes(calls);
     channel.close();
@@ -416,8 +416,8 @@ it("preserves corrupt records and reports subscription errors", async () => {
     const state = await stored();
     const onError = vi.fn();
     unsubscribes.push(await run(auth.onAuthStateChanged(vi.fn(), onError)));
-    await rawRecord("auth_accounts", {...state.accounts[0], key: user.id, email: 42});
-    window.dispatchEvent(new CustomEvent(changeEvent, {detail: auth.storageKey}));
+    await rawRecord("$auth", {kind: "accounts", key: user.id, value: {...state.accounts[0], email: 42}});
+    window.dispatchEvent(new CustomEvent(changeEvent, {detail: auth.storageId}));
     await flushIndexedDB();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "auth/invalid-storage"}));
     await expect(run(auth.resolveCurrentUser())).rejects.toMatchObject({code: "auth/invalid-storage"});
@@ -511,8 +511,8 @@ it("invalidates a pending profile after a corrupt storage event", async () => {
     const onError = vi.fn();
     unsubscribes.push(await run(observer.onAuthStateChanged(callback, onError)));
     const state = await stored();
-    await rawRecord("auth_accounts", {...state.accounts[0], email: 42});
-    window.dispatchEvent(new CustomEvent(changeEvent, {detail: auth.storageKey}));
+    await rawRecord("$auth", {kind: "accounts", key: state.accounts[0].key, value: {...state.accounts[0], email: 42}});
+    window.dispatchEvent(new CustomEvent(changeEvent, {detail: auth.storageId}));
     await flushIndexedDB();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "auth/invalid-storage"}));
     finish(undefined);

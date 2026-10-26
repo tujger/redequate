@@ -19,18 +19,17 @@ it("opens redequate:local lazily and preserves Auth store keys in the shared sch
     const auth = new LocalAuth();
     expect(open).not.toHaveBeenCalled();
     await auth.resolveCurrentUser({skipDelay: true});
-    expect(open).toHaveBeenCalledWith("redequate:local", 2);
+    expect(open).toHaveBeenCalledWith("redequate:local", undefined);
     const database = await openLocalDatabase();
     try {
-        expect([...database.objectStoreNames]).toEqual(["auth_accounts", "auth_links", "auth_mail", "auth_state", "database_records"]);
+        expect([...database.objectStoreNames]).toEqual(["$auth", "$messaging", "$storage"]);
         const transaction = database.transaction([...database.objectStoreNames]);
-        for (const name of ["auth_accounts", "auth_links", "auth_mail", "auth_state"]) {
-            expect(transaction.objectStore(name).keyPath).toBe("key");
-        }
-        expect(transaction.objectStore("database_records").keyPath).toEqual(["namespace", "key"]);
-        const index = transaction.objectStore("auth_accounts").index("email");
+        expect(transaction.objectStore("$auth").keyPath).toEqual(["kind", "key"]);
+        expect(transaction.objectStore("$messaging").keyPath).toBe("key");
+        expect(transaction.objectStore("$storage").keyPath).toBe("fullPath");
+        const index = transaction.objectStore("$auth").index("email");
         expect(index.unique).toBe(true);
-        expect(index.keyPath).toEqual(["namespace", "email"]);
+        expect(index.keyPath).toBe("accountEmail");
     } finally { database.close(); }
 });
 
@@ -41,7 +40,7 @@ it("uses key across account, session and profile, while keeping mail/link keys s
     await auth.sendSignInLinkToEmail(user.email);
     await auth.sendPasswordResetEmail(user.email);
     const before = await read(auth);
-    expect(before.accounts[0]).toMatchObject({key: user.id, namespace: auth.storageKey, email: user.email});
+    expect(before.accounts[0]).toMatchObject({key: user.id, email: user.email});
     expect(before.accounts[0]).not.toHaveProperty("uid");
     expect(before.session.key).toBe(user.id);
     expect(await database.read(["users_public", {user_id: user.id}, {email: "email"}])).toBe(user.email);
@@ -53,7 +52,7 @@ it("uses key across account, session and profile, while keeping mail/link keys s
     expect(after.mail.map(record => record.key)).toEqual(before.mail.map(record => record.key));
     const messages = vi.spyOn(BroadcastChannel.prototype, "postMessage");
     await auth.signOut();
-    expect(messages).toHaveBeenLastCalledWith({namespace: auth.storageKey, revision: expect.any(String)});
+    expect(messages).toHaveBeenLastCalledWith({namespace: auth.storageId, revision: expect.any(String)});
 });
 
 it("retains unique email constraints without merging different namespaces", async () => {
@@ -61,8 +60,8 @@ it("retains unique email constraints without merging different namespaces", asyn
     const auth = new LocalAuth({database});
     await auth.createUserWithEmailAndPassword("unique@example.test", "password");
     const account = (await read(auth)).accounts[0];
-    await expect(rawRecord("auth_accounts", {...account, key: "collision"})).rejects.toMatchObject({name: "ConstraintError"});
-    const other = new LocalAuth({database, storageKey: "other"});
+    await expect(rawRecord("$auth", {kind: "accounts", key: "collision", accountEmail: account.email, value: {...account, key: "collision"}})).rejects.toMatchObject({name: "ConstraintError"});
+    const other = new LocalAuth({database, storageId: "other"});
     const user = await other.createUserWithEmailAndPassword(account.email, "password");
     expect(user.id).not.toBe(account.key);
     expect((await read(auth)).accounts).toHaveLength(1);

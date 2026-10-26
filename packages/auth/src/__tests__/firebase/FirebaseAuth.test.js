@@ -326,7 +326,7 @@ it("invalidates a pending profile when a newer provider identity is malformed", 
 it.each(["google.com", "facebook.com"])("initializes a first %s profile in real LocalDatabase through AuthBase", async providerId => {
     const raw = sdkUser({...json, uid: `mixed-${providerId}`, providerData: [{providerId}]});
     const sdk = {signInWithPopup: vi.fn().mockResolvedValue({user: raw})};
-    const database = new LocalDatabase({storageKey: `mixed-popup-${providerId}`});
+    const database = new LocalDatabase({storageId: `mixed-popup-${providerId}`});
     const auth = new FirebaseAuth({firebase: {app: sdk}, database});
     const user = await auth.signInWithPopup({providerId});
     expect(user.persisted).toBe(true);
@@ -338,7 +338,7 @@ it.each(["signInWithEmailAndPassword", "signInWithCredential", "signInWithEmailL
     "initializes the absent profile before returning from %s", async method => {
         const raw = sdkUser();
         const sdk = {currentUser: raw, [method === "resolveRedirectResult" ? "getRedirectResult" : method]: vi.fn().mockResolvedValue({user: raw})};
-        const database = new LocalDatabase({storageKey: `auth-owned-${method}`});
+        const database = new LocalDatabase({storageId: `auth-owned-${method}`});
         const auth = new FirebaseAuth({firebase: {app: sdk}, database});
         const user = method === "resolveCurrentUser" || method === "resolveRedirectResult"
             ? await auth[method]() : await auth[method]("sdk@example.test", "password");

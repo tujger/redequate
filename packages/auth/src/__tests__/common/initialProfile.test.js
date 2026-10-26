@@ -102,14 +102,14 @@ it("propagates failure of the ordinary-profile fallback", async () => {
 it("does not swallow provider errors through a permissive global database handler", async () => {
     const failure = new Error("IndexedDB failed");
     const onError = vi.fn();
-    const database = new LocalDatabase({storageKey: "bootstrap-strict-errors", onError});
+    const database = new LocalDatabase({storageId: "bootstrap-strict-errors", onError});
     vi.spyOn(database, "update").mockImplementation(async (_, options) => options.onError(failure));
     await expect(new AuthBase({database})._saveInitialProfile(identity("one"))).rejects.toBe(failure);
     expect(onError).not.toHaveBeenCalled();
 });
 
 it("initializes a cleared real LocalDatabase despite a retained authentication identity", async () => {
-    const database = new LocalDatabase({storageKey: "bootstrap-reset-test"});
+    const database = new LocalDatabase({storageId: "bootstrap-reset-test"});
     const auth = new AuthBase({database});
     const first = identity("retained-account");
     await auth._saveInitialProfile(first);

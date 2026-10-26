@@ -35,7 +35,7 @@ const restore = async (provider, uid = "json-user") => {
     const auth = new LocalAuth();
     await writeState(auth, {
         revision: null,
-        accounts: [{key: uid, namespace: auth.storageKey, email: account.email, name: account.displayName,
+        accounts: [{key: uid, email: account.email, name: account.displayName,
             image: account.photoURL, emailVerified: true, created: 1234, lastLogin: 5678, provider: "password", password: "hidden"}],
         session: {key: uid, token: "hidden"}, redirect: null, links: [], mail: []
     });

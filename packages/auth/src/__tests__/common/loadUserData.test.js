@@ -8,7 +8,7 @@ afterEach(() => vi.unstubAllGlobals());
 const created = value => value;
 
 it("loads private devices into the user profile through LocalDatabase", async () => {
-    const database = new LocalDatabase({storageKey: "private-profile"});
+    const database = new LocalDatabase({storageId: "private-profile"});
     await database.update(new Map([
         [["users_private", {user_id: "u1"}, {device_id: "phone"}, "locale"], "en"],
         [["users_private", {user_id: "u1"}, {device_id: "phone"}, "enabled"], true]

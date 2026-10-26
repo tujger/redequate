@@ -66,7 +66,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s argument v
         expect(sdk.authStateReady).not.toHaveBeenCalled();
     });
 
-    it.each([null, [], {database: null}, {database: []}, {UserData: {}}, {UserData: () => {}}, {storageKey: 42}])(
+    it.each([null, [], {database: null}, {database: []}, {UserData: {}}, {UserData: () => {}}, {storageId: 42}])(
         "rejects invalid constructor configuration %j before SDK setup", options => {
             expect(() => new Auth(options)).toThrow(expect.objectContaining({code: "auth/invalid-argument"}));
             expect(getAuth).not.toHaveBeenCalled();
