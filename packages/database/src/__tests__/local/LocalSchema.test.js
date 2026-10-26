@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, expect, it, vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
+import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import LocalDatabase from "../../local";
 import {openDatabase} from "../../local/helpers";
 import {LOCAL_SCHEMA} from "../../local/constants";
@@ -14,14 +15,42 @@ const rawOpen = (name, version) => new Promise((resolve, reject) => {
     request.onerror = () => reject(request.error);
 });
 
-it("exposes a serializable description of the physical version-one stores", async () => {
+it("exposes a serializable application schema and preserves an unknown provider store", async () => {
+    const providerSchema = {$customProvider: {
+        keyPath: "id", autoIncrement: false,
+        indexes: {byCategory: {keyPath: "category", unique: true}}
+    }};
+    const provider = await openLocalDatabase("description", providerSchema);
+    try {
+        await new Promise((resolve, reject) => {
+            const transaction = provider.transaction("$customProvider", "readwrite");
+            transaction.objectStore("$customProvider").put({id: "token", category: "saved"});
+            transaction.oncomplete = resolve;
+            transaction.onabort = () => reject(transaction.error);
+        });
+    } finally { provider.close(); }
     const db = new LocalDatabase({storageId: "description"});
     expect(JSON.parse(JSON.stringify(LOCAL_SCHEMA))).toEqual(LOCAL_SCHEMA);
     await db.applySchema(LOCAL_SCHEMA);
+    await expect(db.applySchema(providerSchema)).rejects.toThrow(TypeError);
+    expect(() => new LocalDatabase({stores: [{
+        store: "$customProvider", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: []
+    }]})).toThrow(TypeError);
     const connection = await openDatabase("description");
-    expect(connection.version).toBe(1);
-    expect([...connection.objectStoreNames].sort()).toEqual(Object.keys(LOCAL_SCHEMA).sort());
-    connection.close();
+    try {
+        expect(connection.version).toBe(2);
+        expect([...connection.objectStoreNames].sort()).toEqual(["$customProvider", ...Object.keys(LOCAL_SCHEMA)].sort());
+        const store = connection.transaction("$customProvider").objectStore("$customProvider");
+        expect(store.keyPath).toBe("id");
+        expect([...store.indexNames]).toEqual(["byCategory"]);
+        expect(store.index("byCategory").keyPath).toBe("category");
+        expect(store.index("byCategory").unique).toBe(true);
+        expect(await new Promise((resolve, reject) => {
+            const request = store.get("token");
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        })).toEqual({id: "token", category: "saved"});
+    } finally { connection.close(); }
 });
 
 it("adds a store, updates its indexes, preserves rows, and repeats without a version bump", async () => {

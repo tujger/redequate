@@ -520,17 +520,17 @@ LocalAuth is intended exclusively for testing, not production. It simulates
 all current Auth operations using browser IndexedDB, without importing Firebase.
 The previous `redequate/auth/memory` subpath has been removed.
 
-`new LocalAuth({storageKey: "my-app:local-auth"})` selects a storage namespace;
-the default is `redequate:auth:local`. Accounts and sessions survive reloads.
-Instances using the same key share state, including auth-state notifications in
-the same window and across tabs. Different keys isolate accounts and sessions.
+`new LocalAuth({storageId: "my-app"})` selects an IndexedDB database;
+the default is `redequate:local`. Accounts and sessions survive reloads.
+Instances using the same ID share state, including auth-state notifications in
+the same window and across tabs. Different IDs isolate accounts and sessions.
 Construction does not access storage. Unavailable storage, invalid stored data
 and failed writes reject operations with an `auth/*` error code; invalid data
-is never silently replaced. Records live in `redequate:local`, in the
-`auth_accounts`, `auth_state`, `auth_links`, and `auth_mail` stores. Every record
-uses a string `key`; account keys also identify UserData and profile records.
-Clear these stores to reset the simulation. Old localStorage data is untouched
-and is not migrated. Storage and Backend keep their own databases.
+is never silently replaced. Auth records live in the reserved `$auth` store, with
+categories distinguished by type and key. Account keys also identify UserData and
+profile records. LocalStorage uses `$storage`, LocalMessaging uses `$messaging`;
+providers with the same storageId share one database. Old stores and databases
+are untouched and are not automatically migrated.
 Pass the application's database in the constructor to load the signed-in user's
 `users_public`, `roles`, and `users_private` records. FirebaseAuth accepts the same
 `database` option alongside `firebase`. Registration and profile updates require
@@ -564,7 +564,7 @@ change its password. `sendSignInLinkToEmail()` records a pending email;
 `checkSignInWithEmailLink()` checks for any pending request, without inspecting a
 URL. `signInWithEmailLink(email)` consumes that request, creates an account if
 needed and signs in with verified email. These operations send no real email.
-The `auth_mail` records contain operation type, email, creation time and optional
+The mail records in `$auth` contain operation type, email, creation time and optional
 `url` and `handleCodeInApp` settings.
 
 Google and Facebook sign-in use stable fake accounts at
@@ -694,13 +694,34 @@ them in its simulated mail. Email-link requests default to the current origin's
 undefined values retain them. SDK validation still applies to supplied values.
 Implementations own their constructor configuration.
 
+### Provider storage identifiers
+
+Providers that previously accepted a storage key now accept `storageId`, without
+an alias for the old option. It defaults to the existing `LOCAL_DATABASE_NAME`
+(`redequate:local`) only when omitted or undefined. Explicit IDs must be non-empty
+strings and are used as supplied. LocalDatabase opens that physical database name;
+LocalAuth, LocalStorage and LocalMessaging share it when configured with the same ID.
+Store names beginning with `$` belong to providers, including future providers;
+application collection reads and schemas cannot target them. Each provider owns its local/stores.json and supplies it when accessing storage.
+Opening and schema upgrades support any initialization order. Only the provider's
+own stores are created; opening without a schema creates none. Database keeps its
+existing stores.json format and does not initialize the service stores.
+
+LocalMessaging persists `{key: "token", token}` in `$messaging`, preserving atomic
+subscription creation and checking the saved subscription before delivering messages.
+Its message envelope uses storageId. FirebaseMessaging uses the localStorage key
+`<storageId>:notification-token`. These provider keys use storageId as a prefix;
+other framework and SDK storage keys are unchanged. Old localStorage tokens are
+neither read as a fallback nor migrated or deleted. Existing application data in
+previous physical database names is also left untouched.
+
 ### Local backend
 
 `LocalBackendClient` from `redequate/backend/local-client` accepts `{storageId}`
 and creates its own LocalDatabase with that identifier. Configure the application's
 LocalDatabase and LocalBackendClient with the same storageId to share IndexedDB.
 Both default to `redequate:local`; LocalDatabase accepts only `storageId`, with no
-`storageKey` alias. The physical IndexedDB name keeps the `redequate:local:` prefix.
+`storageId` alias. The physical IndexedDB name keeps the `redequate:local:` prefix.
 Changing the default does not migrate data; explicitly set the former identifier
 `redequate:database:local` to access the previous default database.
 

@@ -165,7 +165,7 @@ DatabaseBase and FirebaseDatabase have no schema method.
 Databases from the previous `_rowId` storage model are incompatible and must be
 explicitly removed before this adapter opens them. There is no automatic deletion
 or data migration from that model. For the default dev configuration, close other
-connections and delete only `redequate:local:redequate:local` in the dev
+connections and delete only `redequate:local` in the dev
 origin's IndexedDB storage. This does not reset the separate Local Auth database.
 
   `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
@@ -287,3 +287,9 @@ first snapshot belong to its baseline. Cross-tab notification tests use simulate
 BroadcastChannels; real browser multi-tab and Android end-to-end checks are
 separate from the automated suites. Date-bound semantics intentionally differ
 between Firebase push keys and Local explicit timestamps, as described above.
+
+The Local physical database name is storageId (default redequate:local). Auth,
+Storage and Messaging share it through reserved stores `$auth`, `$storage` and
+`$messaging`. The `$` prefix is reserved for provider-owned stores, including future providers.
+Application schemas and collection access cannot target provider stores.
+Former physical database names are not migrated or deleted automatically.

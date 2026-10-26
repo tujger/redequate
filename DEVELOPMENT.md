@@ -272,6 +272,29 @@ Check ADMIN-filtered roles, then individual candidate profiles; do not load all
 profiles. This client check does not establish atomic bootstrap ownership across
 concurrent clients; retain existing database security rules.
 
+### Provider storage configuration
+
+Provider options/properties use storageId; the common default is LOCAL_DATABASE_NAME
+(`redequate:local`). Missing or undefined selects the default; explicit invalid IDs
+reject. The ID names the physical IndexedDB shared by local Database/Auth/Storage/
+Messaging. Service stores are `$auth` (typed records, unique account email, atomic
+revision checks), `$storage` (fullPath key, unique URL), and `$messaging` (token key).
+All store names beginning with `$` are reserved for providers and excluded from
+application collections/schema changes. Database recognizes that prefix without
+knowing individual providers or their legacy store names. Existing modules
+retain their locations. Each provider owns its local/stores.json: Auth, Messaging
+and Storage pass their schema to common/openLocalDatabase only on storage access.
+Common knows no provider schemas and imports no database/local modules. Without a
+schema it opens the database without creating stores. Database keeps its existing
+local/stores.json format and application collection/index/row-migration logic;
+it neither creates nor alters other providers' stores. Initialization order and
+concurrent schema additions must preserve all existing stores. There is no automatic migration or deletion.
+
+LocalMessaging token persistence uses IndexedDB; FirebaseMessaging keeps localStorage
+with key `<storageId>:notification-token`. Its saved token is removed only after SDK
+success. Non-provider framework keys and SDK internals are outside this change.
+Backend methods, dependencies and CRUD routing remain unchanged.
+
 ### Storage and messaging
 
 Storage exposes upload, URL/metadata resolution, and deletion. Upload receives
@@ -317,12 +340,12 @@ existing payload shape for legacy callables. `database.create` accepts exactly
 `(path, value)` through a two-element array and rejects the old object envelope.
 
 LocalDatabase and LocalBackendClient use `storageId`, defaulting to `redequate:local`.
-The former LocalDatabase `storageKey` option/property is removed without an alias.
+The former LocalDatabase `storageId` option/property is removed without an alias.
 LocalBackendClient creates its own LocalDatabase for that ID; it receives no database
 instance. Dispatcher supplies the resolved database's storageId to resolveBackend;
 automatic backends are cached by normalized storageId. Explicit backends remain as
 supplied. Applications pass one storageId to both constructors. Auth, Storage and
-Messaging retain their separate storageKey settings.
+Messaging retain their separate storageId settings.
 
 The IndexedDB `redequate:local:` name prefix and change-channel format are preserved.
 The default ID change selects a new physical database; no automatic data migration
