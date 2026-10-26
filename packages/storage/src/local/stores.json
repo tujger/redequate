@@ -1,0 +1,12 @@
+{
+    "$storage": {
+        "keyPath": "fullPath",
+        "autoIncrement": false,
+        "indexes": {
+            "url": {
+                "keyPath": "url",
+                "unique": true
+            }
+        }
+    }
+}
