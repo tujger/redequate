@@ -1,3 +1,4 @@
+import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import {delay, fail, identifier} from "../../../common";
 import AuthBase from "../AuthBase";
 import observeAuthState from "../common/observeAuthState";
@@ -24,11 +25,11 @@ import updateProfile from "./updateProfile";
 export default class LocalAuth extends AuthBase {
     constructor(options = {}) {
         super(options);
-        const {storageKey = "redequate:auth:local"} = options;
-        if (!storageKey.trim()) {
-            fail("auth/invalid-argument", "storageKey must be a non-empty string.");
+        const {storageId = LOCAL_DATABASE_NAME} = options;
+        if (!storageId.trim()) {
+            fail("auth/invalid-argument", "storageId must be a non-empty string.");
         }
-        this.storageKey = storageKey;
+        this.storageId = storageId;
     }
 
     async createUserWithEmailAndPassword(email, password) {

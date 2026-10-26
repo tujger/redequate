@@ -1,15 +1,16 @@
+import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import {delay, fail, identifier} from "../../../common";
 import StorageBase from "../StorageBase";
 import {fileOperation, toDataURL} from "./common";
 
 // Local simulation only: IndexedDB is used for store blobs
 export default class LocalStorage extends StorageBase {
-    constructor({storageKey = "redequate:storage:local"} = {}) {
+    constructor({storageId = LOCAL_DATABASE_NAME} = {}) {
         super();
-        if (typeof storageKey !== "string" || !storageKey.trim()) {
-            fail("storage/invalid-argument", "storageKey must be a non-empty string.");
+        if (typeof storageId !== "string" || !storageId.trim()) {
+            fail("storage/invalid-argument", "storageId must be a non-empty string.");
         }
-        this._storageKey = storageKey;
+        this.storageId = storageId;
     }
 
     async upload({auth, blob, metadata = {}, name, onProgress} = {}) {

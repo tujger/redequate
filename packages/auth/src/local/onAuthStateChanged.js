@@ -16,11 +16,11 @@ export default async function onAuthStateChanged(auth, callback, onError, create
         }
     };
     const localChange = event => {
-        if (event.detail === auth.storageKey) notify();
+        if (event.detail === auth.storageId) notify();
     };
     const channel = globalThis.BroadcastChannel ? new globalThis.BroadcastChannel(channelName) : null;
     if (channel) channel.onmessage = event => {
-        if (event.data?.namespace === auth.storageKey) notify();
+        if (event.data?.namespace === auth.storageId) notify();
     };
     window.addEventListener(changeEvent, localChange);
     await notify();

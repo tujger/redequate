@@ -34,8 +34,8 @@ export const read = async auth => {
 };
 
 export const notify = (auth, revision) => {
-    const message = {namespace: auth.storageKey, revision};
-    window.dispatchEvent(new CustomEvent(changeEvent, {detail: auth.storageKey}));
+    const message = {namespace: auth.storageId, revision};
+    window.dispatchEvent(new CustomEvent(changeEvent, {detail: auth.storageId}));
     if (globalThis.BroadcastChannel) {
         const channel = new globalThis.BroadcastChannel(channelName);
         try { channel.postMessage(message); } finally { channel.close(); }
