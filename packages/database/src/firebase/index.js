@@ -48,7 +48,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async delete(path, options = {}) {
-        return this.run(() => deleteRecord(this.#firebase, path), options, "delete", {path});
+        return this.run(() => deleteRecord(this.#firebase, this.#backend, path), options, "delete", {path});
     }
 
     async read(path, options = {}) {
