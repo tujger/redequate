@@ -23,8 +23,7 @@ it("stores different dynamic types with JSON indexes and one unique path index",
     ]);
     const database = await openDatabase("test");
     try {
-        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS)
-            .sort());
+        expect([...database.objectStoreNames]).toEqual(["$auth", "$messaging", "$storage", ...Object.keys(LOCAL_COLLECTIONS)].sort());
         const store = database.transaction("mutual").objectStore("mutual");
         expect(store.keyPath).toBe("_id");
         expect(store.autoIncrement).toBe(true);
@@ -161,8 +160,8 @@ it("isolates storage keys in separate IndexedDB databases", async () => {
     const one = await openDatabase("one");
     const two = await openDatabase("two");
     try {
-        expect(one.name).toBe("redequate:local:one");
-        expect(two.name).toBe("redequate:local:two");
+        expect(one.name).toBe("one");
+        expect(two.name).toBe("two");
     } finally { one.close(); two.close(); }
     await deleteRecord("one", friendship);
     expect(await getRecordsByType("one", ["mutual", "friendship"])).toEqual([]);

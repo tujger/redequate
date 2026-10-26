@@ -16,8 +16,8 @@ const audit = definition("audit", [
     {name: "byCode", keypath: "code", options: {unique: true}}
 ]);
 const record = id => ["audit", {audit_id: id}];
-const raw = (storageKey, run) => new Promise((resolve, reject) => {
-    const request = indexedDB.open(`redequate:local:${storageKey}`);
+const raw = (storageId, run) => new Promise((resolve, reject) => {
+    const request = indexedDB.open(`${storageId}`);
     request.onerror = () => reject(request.error);
     request.onsuccess = async () => {
         try { resolve(await run(request.result)); } catch (error) { reject(error); }
@@ -70,7 +70,7 @@ it("merges additions without mutating them and rejects conflicting or invalid de
 });
 
 it("creates the complete schema at version one and supports CRUD, nested paths and cursors", async () => {
-    const db = new LocalDatabase({storageKey: "custom", stores: [audit]});
+    const db = new LocalDatabase({storageId: "custom", stores: [audit]});
     const key = await db.create(["audit", "audit_id"], key => ({code: key, status: "open", owner: "alice"}));
     expect(key).toBe("1");
     await db.update(record(key), {status: "closed"});
@@ -91,7 +91,7 @@ it("creates the complete schema at version one and supports CRUD, nested paths a
 });
 
 it("preserves caller fields that collide with metadata and refreshes native indexes on replacement", async () => {
-    const db = new LocalDatabase({storageKey: "payload", stores: [audit]});
+    const db = new LocalDatabase({storageId: "payload", stores: [audit]});
     const value = {_id: "public", _local: {public: true}, _key: "public", value: "public", status: "old", code: "x"};
     await db.update(record("a"), () => value);
     expect(await db.read(record("a"))).toEqual(value);
@@ -105,7 +105,7 @@ it("preserves caller fields that collide with metadata and refreshes native inde
 });
 
 it("enforces unique JSON indexes and rolls back cross-store writes and generated IDs", async () => {
-    const db = new LocalDatabase({storageKey: "unique", stores: [audit]});
+    const db = new LocalDatabase({storageId: "unique", stores: [audit]});
     await db.create(record("a"), {code: "same"});
     await expect(db.create(["audit", "audit_id"], {code: "same"})).rejects.toMatchObject({name: "ConstraintError"});
     await expect(db.update(new Map([
@@ -113,31 +113,31 @@ it("enforces unique JSON indexes and rolls back cross-store writes and generated
     ]))).rejects.toMatchObject({name: "ConstraintError"});
     expect(await db.read(["meta", {id: "safe"}])).toBeUndefined();
     expect(await db.create(["audit", "audit_id"], {code: "different"})).toBe("2");
-    const users = new LocalDatabase({storageKey: "base-unique"});
+    const users = new LocalDatabase({storageId: "base-unique"});
     await users.update(["users_public", {user_id: "u"}], () => ({name: "first"}));
     await expect(users.update(["users_public", {user_id: "u", _: true}], () => ({name: "second"})))
         .rejects.toMatchObject({name: "ConstraintError"});
 });
 
 it("adds constructor stores and indexes in one version bump, preserves rows, and does not bump twice", async () => {
-    const before = new LocalDatabase({storageKey: "versions"});
+    const before = new LocalDatabase({storageId: "versions"});
     await before.update(["meta", {id: "a"}], () => ({status: "open"}));
     const additions = [audit, definition("meta", [{name: "byStatus", keypath: "status"}])];
-    const upgraded = new LocalDatabase({storageKey: "versions", stores: additions});
+    const upgraded = new LocalDatabase({storageId: "versions", stores: additions});
     await Promise.all([upgraded.read(["meta", {id: "a"}]), upgraded.read(["audit"])]);
     await raw("versions", async connection => {
         expect(connection.version).toBe(2);
         expect(await result(connection.transaction("meta").objectStore("meta").index("byStatus").getKey("open"))).toBe(1);
     });
-    const reopened = new LocalDatabase({storageKey: "versions", stores: additions});
+    const reopened = new LocalDatabase({storageId: "versions", stores: additions});
     expect(await reopened.read(["meta", {id: "a"}])).toEqual({status: "open"});
     await raw("versions", connection => expect(connection.version).toBe(2));
 });
 
 it("backfills address fields when adding a compound index to existing child rows", async () => {
-    const first = new LocalDatabase({storageKey: "compound-upgrade", stores: [definition()]});
+    const first = new LocalDatabase({storageId: "compound-upgrade", stores: [definition()]});
     await first.update(["audit", {owner: "alice"}, {audit_id: "a"}], () => ({status: "open"}));
-    const second = new LocalDatabase({storageKey: "compound-upgrade", stores: [definition("audit", [
+    const second = new LocalDatabase({storageId: "compound-upgrade", stores: [definition("audit", [
         {name: "ownerId", keypath: ["owner", "audit_id"], options: {unique: true}}
     ])]});
     await second.read(["audit"]);
@@ -148,9 +148,9 @@ it("backfills address fields when adding a compound index to existing child rows
 });
 
 it("isolates configured collections while sharing committed notifications between instances", async () => {
-    const writer = new LocalDatabase({storageKey: "events", stores: [audit]});
-    const reader = new LocalDatabase({storageKey: "events", stores: [audit]});
-    const plain = new LocalDatabase({storageKey: "events"});
+    const writer = new LocalDatabase({storageId: "events", stores: [audit]});
+    const reader = new LocalDatabase({storageId: "events", stores: [audit]});
+    const plain = new LocalDatabase({storageId: "events"});
     const change = vi.fn(), event = vi.fn();
     const listener = reader.addEventListener(["audit"], {onChange: change});
     const subscription = reader.cursor(["audit", "audit_id"]).subscribe(event);
@@ -170,8 +170,8 @@ it("isolates configured collections while sharing committed notifications betwee
 });
 
 it("converges when instances initialize different additions concurrently", async () => {
-    const first = new LocalDatabase({storageKey: "parallel", stores: [audit]});
-    const second = new LocalDatabase({storageKey: "parallel", stores: [definition("other")]});
+    const first = new LocalDatabase({storageId: "parallel", stores: [audit]});
+    const second = new LocalDatabase({storageId: "parallel", stores: [definition("other")]});
     await Promise.all([first.create(record("a"), {code: "a"}), second.create(["other", "id"], {text: "other"})]);
     await raw("parallel", connection => {
         expect(connection.objectStoreNames.contains("audit")).toBe(true);
@@ -182,11 +182,11 @@ it("converges when instances initialize different additions concurrently", async
 });
 
 it("rolls back a constructor upgrade on duplicate values and reports the initialization failure", async () => {
-    const original = new LocalDatabase({storageKey: "failed-upgrade", stores: [definition()]});
+    const original = new LocalDatabase({storageId: "failed-upgrade", stores: [definition()]});
     await original.create(record("a"), {status: "same"});
     await original.create(record("b"), {status: "same"});
     const onError = vi.fn();
-    const upgraded = new LocalDatabase({storageKey: "failed-upgrade", onError, stores: [definition("audit", [
+    const upgraded = new LocalDatabase({storageId: "failed-upgrade", onError, stores: [definition("audit", [
         {name: "statusUnique", keypath: "status", options: {unique: true}}
     ])]});
     expect(await upgraded.read(["audit"])).toBeUndefined();
@@ -203,15 +203,15 @@ it("rolls back a constructor upgrade on duplicate values and reports the initial
 });
 
 it("upgrades missing JSON indexes in a compatible base schema", async () => {
-    const db = new LocalDatabase({storageKey: "base-upgrade"});
+    const db = new LocalDatabase({storageId: "base-upgrade"});
     await db.create(["posts", {post_id: "p1"}], {text: "kept"});
     await new Promise((resolve, reject) => {
-        const request = indexedDB.open("redequate:local:base-upgrade", 2);
+        const request = indexedDB.open("base-upgrade", 2);
         request.onupgradeneeded = () => request.transaction.objectStore("posts").deleteIndex("post_id");
         request.onsuccess = () => { request.result.close(); resolve(); };
         request.onerror = () => reject(request.error);
     });
-    const reopened = new LocalDatabase({storageKey: "base-upgrade"});
+    const reopened = new LocalDatabase({storageId: "base-upgrade"});
     expect(await reopened.read(["posts", {post_id: "p1"}])).toEqual({text: "kept"});
     await raw("base-upgrade", async connection => {
         expect(connection.version).toBe(3);
@@ -220,7 +220,7 @@ it("upgrades missing JSON indexes in a compatible base schema", async () => {
 });
 
 it("reports blocked constructor upgrades to listeners and permits a later retry", async () => {
-    const initial = new LocalDatabase({storageKey: "blocked-options"});
+    const initial = new LocalDatabase({storageId: "blocked-options"});
     await initial.read(["meta"]);
     const blocker = await raw("blocked-options", connection => {
         // Open an independent connection that deliberately ignores versionchange.
@@ -230,7 +230,7 @@ it("reports blocked constructor upgrades to listeners and permits a later retry"
             request.onerror = () => reject(request.error);
         });
     });
-    const upgraded = new LocalDatabase({storageKey: "blocked-options", stores: [audit]});
+    const upgraded = new LocalDatabase({storageId: "blocked-options", stores: [audit]});
     const onError = vi.fn();
     const handle = upgraded.addEventListener(["audit"], {onError});
     try {
@@ -242,7 +242,7 @@ it("reports blocked constructor upgrades to listeners and permits a later retry"
 });
 
 it("supports multiEntry indexes and protects required custom indexes through applySchema", async () => {
-    const db = new LocalDatabase({storageKey: "multi", stores: [definition("audit", [
+    const db = new LocalDatabase({storageId: "multi", stores: [definition("audit", [
         {name: "tags", keypath: "tags", options: {multiEntry: true}}
     ])]});
     await db.create(record("a"), {tags: ["one", "two"]});
@@ -256,7 +256,7 @@ it("supports multiEntry indexes and protects required custom indexes through app
 });
 
 it("indexes scalar field writes using their actual value rather than the field marker", async () => {
-    const db = new LocalDatabase({storageKey: "scalar-index"});
+    const db = new LocalDatabase({storageId: "scalar-index"});
     const path = ["users_public", {user_id: "u"}, {email: "email"}];
     await db.update(path, () => "user@example.test");
     expect(await db.read(path)).toBe("user@example.test");

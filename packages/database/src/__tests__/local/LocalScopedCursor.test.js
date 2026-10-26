@@ -20,7 +20,7 @@ it.each([
     ["_chats", "user_id", "chat_id", "timestamp"],
     ["alerts", "user_id", "id", "timestamp"]
 ])("pages %s by scoped %s in both directions", async (root, parentField, childField, field) => {
-    const db = new LocalDatabase({storageKey: `scope-${root}`});
+    const db = new LocalDatabase({storageId: `scope-${root}`});
     const parent = [root, {[parentField]: "owner"}];
     for (const [key, value] of [["10", 2], ["2", 1], ["02", 1], ["z", 3]]) {
         await db.update([...parent, {[childField]: key}], () => ({[field]: value}));
@@ -41,7 +41,7 @@ it.each([
 });
 
 it.each(["posts", "meta"])("filters %s by recipient and orders by child key", async root => {
-    const db = new LocalDatabase({storageKey: `recipient-${root}`});
+    const db = new LocalDatabase({storageId: `recipient-${root}`});
     for (const [key, to] of [["10", "u"], ["2", "u"], ["02", "u"], ["x", "other"]]) {
         await db.update([root, {post_id: key}], () => ({to}));
     }
@@ -50,7 +50,7 @@ it.each(["posts", "meta"])("filters %s by recipient and orders by child key", as
 });
 
 it("resumes scoped key pages after deletion and writes handlers by the exact nested identity", async () => {
-    const db = new LocalDatabase({storageKey: "scoped-handler"});
+    const db = new LocalDatabase({storageId: "scoped-handler"});
     const path = ["alerts", {user_id: "u1"}];
     for (const key of ["2", "02", "10", "z"]) {
         await db.update([...path, {id: key}], () => ({message: key}));
@@ -70,7 +70,7 @@ it("resumes scoped key pages after deletion and writes handlers by the exact nes
 });
 
 it.each(["mutual", "mutualrequests"])("filters %s within a dynamic type scope", async root => {
-    const db = new LocalDatabase({storageKey: `mutual-scope-${root}`});
+    const db = new LocalDatabase({storageId: `mutual-scope-${root}`});
     const parent = [root, {typeId: "watching", _: true}];
     await db.update([...parent, {mutual_id: "a", _: 1}], () => ({id: "u1", uid: "u2"}));
     await db.update([...parent, {mutual_id: "b", _: 1}], () => ({id: "u2", uid: "u1"}));
@@ -87,7 +87,7 @@ it.each([
     ["tag", "id"], ["tag", "label"], ["tag", "hidden"], ["tag", "uid"], ["tag", "_sort_name"],
     ["activity", "type"], ["activity", "uid"], ["errors", "uid"], ["extra", "id"], ["extra", "id_uid"]
 ])("matches direct and nested field ordering for active %s/%s queries", async (root, field) => {
-    const db = new LocalDatabase({storageKey: `active-${root}-${field}`});
+    const db = new LocalDatabase({storageId: `active-${root}-${field}`});
     const path = [root];
     for (const [key, value] of [["missing", undefined], ["null", null], ["2", false], ["02", false],
         ["10", true], ["n", 2], ["s", "2"]]) {
@@ -106,7 +106,7 @@ it.each([
 
 it.each([["mutual", "uid_id"], ["mutualrequests", "uid_id"], ["_chats", "private"]])(
     "filters active scoped %s/%s queries", async (root, field) => {
-        const db = new LocalDatabase({storageKey: `active-scoped-${root}`});
+        const db = new LocalDatabase({storageId: `active-scoped-${root}`});
         const path = [root, {owner: "u"}];
         for (const key of ["2", "02", "10"]) {
             await db.update([...path, {record_id: key}], () => ({[field]: "match"}));
@@ -116,7 +116,7 @@ it.each([["mutual", "uid_id"], ["mutualrequests", "uid_id"], ["_chats", "private
     });
 
 it("continues when a sort value changes from a scalar to an object", async () => {
-    const db = new LocalDatabase({storageKey: "index-to-fallback"});
+    const db = new LocalDatabase({storageId: "index-to-fallback"});
     const record = id => ["meta", {id}];
     for (const [id, created] of [["a", 1], ["b", 2], ["c", 3]]) await db.update(record(id), () => ({created}));
     const cursor = db.cursor(["meta"], {orderBy: "created"});

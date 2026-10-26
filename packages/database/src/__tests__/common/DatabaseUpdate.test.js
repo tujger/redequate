@@ -48,8 +48,8 @@ it("rejects Firebase async callbacks and reports callback errors through the ope
 });
 
 it("updates Local scalar fields atomically across concurrent calls and returns the committed value", async () => {
-    const database = new LocalDatabase({storageKey: "update"});
-    const other = new LocalDatabase({storageKey: "update"});
+    const database = new LocalDatabase({storageId: "update"});
+    const other = new LocalDatabase({storageId: "update"});
     const results = await Promise.all(Array.from({length: 20}, (_, index) =>
         (index % 2 ? database : other).update(path, value => (value ?? 0) + 1)));
     expect(results).toEqual(Array.from({length: 20}, (_, index) => index + 1));
@@ -62,7 +62,7 @@ it("updates Local scalar fields atomically across concurrent calls and returns t
 });
 
 it("replaces Local records, preserves falsy values and rolls back callback failures", async () => {
-    const database = new LocalDatabase({storageKey: "records"});
+    const database = new LocalDatabase({storageId: "records"});
     const record = ["posts", {post_id: "p1"}];
     await database.update(record, () => ({obsolete: true, count: 1}));
     expect(await database.update(record, value => ({count: value.count + 1}))).toEqual({count: 2});
@@ -80,7 +80,7 @@ it("replaces Local records, preserves falsy values and rolls back callback failu
 });
 
 it("replaces Local collection subtrees atomically and removes descendant records", async () => {
-    const database = new LocalDatabase({storageKey: "subtrees"});
+    const database = new LocalDatabase({storageId: "subtrees"});
     const record = ["posts", {post_id: "p1"}];
     const child = [...record, "edit", {edit_id: "e1"}];
     await database.update(record, () => ({text: "old"}));

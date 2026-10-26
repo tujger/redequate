@@ -32,12 +32,12 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-it("delivers one matching change across contexts without echo or storageKey leakage", async () => {
+it("delivers one matching change across contexts without echo or storageId leakage", async () => {
     const LocalA = await context();
-    const writer = new LocalA({storageKey: "shared"});
+    const writer = new LocalA({storageId: "shared"});
     const LocalB = await context();
-    const reader = new LocalB({storageKey: "shared"});
-    const isolated = new LocalB({storageKey: "errors"});
+    const reader = new LocalB({storageId: "shared"});
+    const isolated = new LocalB({storageId: "errors"});
     const events = []; const wrong = vi.fn();
     const one = reader.cursor("meta", {orderBy: "score", start: 2}).subscribe(event => events.push(event));
     const two = isolated.cursor("meta").subscribe(wrong);

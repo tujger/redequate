@@ -9,23 +9,23 @@ afterEach(() => vi.unstubAllGlobals());
 
 const schema = {audit: {keyPath: "id", autoIncrement: false, indexes: {byStatus: {keyPath: "status"}}}};
 const rawOpen = (name, version) => new Promise((resolve, reject) => {
-    const request = indexedDB.open(`redequate:local:${name}`, version);
+    const request = indexedDB.open(`${name}`, version);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
 });
 
 it("exposes a serializable description of the physical version-one stores", async () => {
-    const db = new LocalDatabase({storageKey: "description"});
+    const db = new LocalDatabase({storageId: "description"});
     expect(JSON.parse(JSON.stringify(LOCAL_SCHEMA))).toEqual(LOCAL_SCHEMA);
     await db.applySchema(LOCAL_SCHEMA);
     const connection = await openDatabase("description");
     expect(connection.version).toBe(1);
-    expect([...connection.objectStoreNames].sort()).toEqual(Object.keys(LOCAL_SCHEMA).sort());
+    expect([...connection.objectStoreNames].sort()).toEqual(["$auth", "$messaging", "$storage", ...Object.keys(LOCAL_SCHEMA)].sort());
     connection.close();
 });
 
 it("adds a store, updates its indexes, preserves rows, and repeats without a version bump", async () => {
-    const db = new LocalDatabase({storageKey: "migration"});
+    const db = new LocalDatabase({storageId: "migration"});
     await db.update(["meta", {id: "before", _: true}], () => ({value: 1}));
     await db.applySchema(schema);
     let connection = await openDatabase("migration");
@@ -67,7 +67,7 @@ it("adds a store, updates its indexes, preserves rows, and repeats without a ver
 });
 
 it("rejects incompatible store changes without altering data or version", async () => {
-    const db = new LocalDatabase({storageKey: "incompatible"});
+    const db = new LocalDatabase({storageId: "incompatible"});
     await db.update(["meta", {id: "safe", _: true}], () => ({value: 7}));
     await expect(db.applySchema({meta: {keyPath: "other", autoIncrement: false, indexes: {}}}))
         .rejects.toMatchObject({name: "VersionError"});
@@ -86,7 +86,7 @@ it("rejects incompatible store changes without altering data or version", async 
 });
 
 it("rolls back a unique index that conflicts with existing rows", async () => {
-    const db = new LocalDatabase({storageKey: "unique-rollback"});
+    const db = new LocalDatabase({storageId: "unique-rollback"});
     await db.applySchema(schema);
     const connection = await openDatabase("unique-rollback");
     await new Promise((resolve, reject) => {
@@ -114,7 +114,7 @@ it("rolls back a unique index that conflicts with existing rows", async () => {
 });
 
 it("closes Local connections on versionchange and reports an external blocker", async () => {
-    const db = new LocalDatabase({storageKey: "connections"});
+    const db = new LocalDatabase({storageId: "connections"});
     const local = await openDatabase("connections");
     await db.applySchema(schema);
     expect(() => local.transaction("meta")).toThrow();
@@ -142,8 +142,8 @@ it("closes Local connections on versionchange and reports an external blocker", 
 });
 
 it("converges when two callers add different stores at the same time", async () => {
-    const first = new LocalDatabase({storageKey: "race"});
-    const second = new LocalDatabase({storageKey: "race"});
+    const first = new LocalDatabase({storageId: "race"});
+    const second = new LocalDatabase({storageId: "race"});
     await Promise.all([
         first.applySchema(schema),
         second.applySchema({auditOther: {keyPath: "id", autoIncrement: false, indexes: {}}})

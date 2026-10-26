@@ -6,7 +6,7 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 it("shares one numeric sequence across nested collections in a physical store, but isolates stores", async () => {
-    const db = new LocalDatabase({storageKey: "sequences"});
+    const db = new LocalDatabase({storageId: "sequences"});
     const post = await db.create(["posts", "post_id"], {text: "first"});
     const nested = await db.create(["posts", {post_id: post}, "edits", "id"], {text: "edit"});
     const other = await db.create(["posts", "comments", "id"], {text: "comment"});
@@ -18,7 +18,7 @@ it("shares one numeric sequence across nested collections in a physical store, b
 });
 
 it("passes the permanent key synchronously to create callback and rolls back allocation on failure", async () => {
-    const db = new LocalDatabase({storageKey: "rollback"});
+    const db = new LocalDatabase({storageId: "rollback"});
     const error = new Error("callback failed");
     await expect(db.create(["meta", "id"], key => {
         expect(key).toBe("1");
@@ -40,7 +40,7 @@ it("passes the permanent key synchronously to create callback and rolls back all
 
 it("serializes concurrent creates and reports callback errors through onError", async () => {
     const onError = vi.fn();
-    const db = new LocalDatabase({storageKey: "concurrent", onError});
+    const db = new LocalDatabase({storageId: "concurrent", onError});
     const keys = await Promise.all(Array.from({length: 12}, (_, index) =>
         db.create(["meta", "id"], key => ({index, key}))));
     expect(keys).toEqual(Array.from({length: 12}, (_, index) => String(index + 1)));
@@ -54,7 +54,7 @@ it("serializes concurrent creates and reports callback errors through onError", 
 });
 
 it("runs supplied-key callbacks inside the transaction and leaves duplicates untouched", async () => {
-    const db = new LocalDatabase({storageKey: "supplied-callback"});
+    const db = new LocalDatabase({storageId: "supplied-callback"});
     const callback = vi.fn(key => ({key}));
     expect(await db.create(["meta", {id: "manual"}], callback)).toBe("manual");
     expect(callback).toHaveBeenCalledExactlyOnceWith("manual");
@@ -65,14 +65,14 @@ it("runs supplied-key callbacks inside the transaction and leaves duplicates unt
 });
 
 it("skips a numeric identity written outside create", async () => {
-    const db = new LocalDatabase({storageKey: "existing-numeric"});
+    const db = new LocalDatabase({storageId: "existing-numeric"});
     await db.update(["meta", {id: "1"}], () => ({name: "existing"}));
     expect(await db.create(["meta", "id"], {name: "generated"})).toBe("2");
     expect(await db.read(["meta", {id: "1"}])).toEqual({name: "existing"});
 });
 
 it("rejects an incompatible version-one database without migrating it", async () => {
-    const request = globalThis.indexedDB.open("redequate:local:upgrade-keys", 1);
+    const request = globalThis.indexedDB.open("upgrade-keys", 1);
     request.onupgradeneeded = () => request.result.createObjectStore("meta", {keyPath: ["_collection", "_key"]});
     const connection = await new Promise(resolve => { request.onsuccess = () => resolve(request.result); });
     await new Promise((resolve, reject) => {
@@ -82,12 +82,12 @@ it("rejects an incompatible version-one database without migrating it", async ()
         transaction.onabort = () => reject(transaction.error);
     });
     connection.close();
-    const db = new LocalDatabase({storageKey: "upgrade-keys"});
+    const db = new LocalDatabase({storageId: "upgrade-keys"});
     await expect(db.create(["meta", "id"], {name: "new"})).rejects.toMatchObject({name: "VersionError"});
 });
 
 it("filters by explicit timestamp through pages, including missing timestamps", async () => {
-    const db = new LocalDatabase({storageKey: "dates"});
+    const db = new LocalDatabase({storageId: "dates"});
     for (const [id, timestamp, score] of [["a", 2000, 2], ["b", undefined, 0],
         ["c", 1000, 1], ["d", 2000, 3], ["e", 3000, 4]]) {
         await db.update(["meta", {id}], () => ({score, ...(timestamp === undefined ? {} : {timestamp})}));
@@ -108,8 +108,8 @@ it("filters by explicit timestamp through pages, including missing timestamps", 
 });
 
 it("keeps native allocation across deletion and serializes equal supplied IDs in different paths", async () => {
-    const db = new LocalDatabase({storageKey: "native-sequence"});
-    const other = new LocalDatabase({storageKey: "native-sequence"});
+    const db = new LocalDatabase({storageId: "native-sequence"});
+    const other = new LocalDatabase({storageId: "native-sequence"});
     await db.update(new Map([
         [["meta", "first", {id: "7"}], {label: "root"}],
         [["meta", "second", {id: "7"}], {label: "nested"}]

@@ -8,8 +8,8 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 const record = (collection, id = "p1") => [collection, {post_id: id}];
-const storedRows = async (storageKey, name) => {
-    const database = await openDatabase(storageKey);
+const storedRows = async (storageId, name) => {
+    const database = await openDatabase(storageId);
     try {
         return await new Promise((resolve, reject) => {
             const transaction = database.transaction(name);
@@ -24,10 +24,9 @@ it("creates only physical roots with native autoIncrement and unique path indexe
     const open = vi.spyOn(indexedDB, "open");
     const database = await openDatabase("schema");
     try {
-        expect(open).toHaveBeenCalledExactlyOnceWith("redequate:local:schema", 1);
+        expect(open).toHaveBeenCalledExactlyOnceWith("schema", undefined);
         expect(database.version).toBe(1);
-        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS)
-            .sort());
+        expect([...database.objectStoreNames]).toEqual(["$auth", "$messaging", "$storage", ...Object.keys(LOCAL_COLLECTIONS)].sort());
         for (const obsolete of ["records", "follow", "watch", "followstamps", "watchstamps",
             "_developers", "_game_scores", "_genres", "_main_counters", "_posts",
             "_platforms", "_publishers", "_stat"]) {
@@ -45,7 +44,7 @@ it("creates only physical roots with native autoIncrement and unique path indexe
 });
 
 it("uses one transaction to write posts, metadata and users and aggregates their rows", async () => {
-    const database = new LocalDatabase({storageKey: "batch-stores"});
+    const database = new LocalDatabase({storageId: "batch-stores"});
     const transaction = vi.spyOn(IDBDatabase.prototype, "transaction");
     await database.update(new Map([
         [record("posts"), {text: "post"}],
@@ -69,7 +68,7 @@ it("uses one transaction to write posts, metadata and users and aggregates their
 });
 
 it("rolls back all stores and sends no notification if a queued write fails", async () => {
-    const database = new LocalDatabase({storageKey: "abort-stores"});
+    const database = new LocalDatabase({storageId: "abort-stores"});
     await database.update(record("posts"), () => ({text: "original"}));
     const onChange = vi.fn();
     const listener = database.addEventListener(record("posts"), {onChange});
@@ -96,7 +95,7 @@ it("rolls back all stores and sends no notification if a queued write fails", as
 });
 
 it("reads type indexes and notifies collection listeners from the dedicated stores", async () => {
-    const database = new LocalDatabase({storageKey: "indexed"});
+    const database = new LocalDatabase({storageId: "indexed"});
     const postChanged = vi.fn(); const metaChanged = vi.fn();
     const handles = [database.addEventListener([{type: "posts"}], {onChange: postChanged}),
         database.addEventListener(["meta"], {onChange: metaChanged})];
@@ -118,7 +117,7 @@ it("reads type indexes and notifies collection listeners from the dedicated stor
 
 it.each([2, 3])("rejects an incompatible version-%i database", async version => {
     const name = `legacy-${version}`;
-    const request = indexedDB.open(`redequate:local:${name}`, version);
+    const request = indexedDB.open(`${name}`, version);
     request.onupgradeneeded = () => {
         request.result.createObjectStore("records", {keyPath: STORE_SCHEMA.keyPath});
     };

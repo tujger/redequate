@@ -21,11 +21,11 @@ const readAll = async (cursor, size = 2) => {
 };
 
 it("reads a newly published root post and finds it again after returning to Discover", async () => {
-    await discoverPostScenario(new LocalDatabase({storageKey: "discover-publish"}));
+    await discoverPostScenario(new LocalDatabase({storageId: "discover-publish"}));
 });
 
 it("notifies the Discover cursor only for new root posts", async () => {
-    const database = new LocalDatabase({storageKey: "discover-posts"});
+    const database = new LocalDatabase({storageId: "discover-posts"});
     await database.create(["posts", {post_id: "first"}], {to: 0, text: "first"});
     const cursor = database.cursor(["posts", "post_id"], {orderBy: ["to"], equalTo: 0, order: "desc"});
     const events = [];
@@ -40,7 +40,7 @@ it("notifies the Discover cursor only for new root posts", async () => {
 });
 
 it.each(["asc", "desc"])("pages equal values exactly once in %s order, including a deleted boundary", async order => {
-    const db = new LocalDatabase({storageKey: `pages-${order}`});
+    const db = new LocalDatabase({storageId: `pages-${order}`});
     await seed(db, Object.fromEntries(Array.from({length: 17}, (_, i) => [`k${String(i).padStart(2, "0")}`, {score: 1}])));
     const cursor = db.cursor("meta", {orderBy: "score", equalTo: 1, order});
     expect(cursor.position).toEqual({index: -1, key: undefined, finished: false});
@@ -55,7 +55,7 @@ it.each(["asc", "desc"])("pages equal values exactly once in %s order, including
 });
 
 it("sorts integer keys and applies inclusive key, prefix and timestamp boundaries", async () => {
-    const db = new LocalDatabase({storageKey: "keys"});
+    const db = new LocalDatabase({storageId: "keys"});
     await seed(db, {10: 10, 2: 2, "02": 2, alpha: 1, alphabet: 1, beta: 1});
     expect((await readAll(db.cursor("meta"))).map(entry => entry.key)).toEqual(["2", "02", "10", "alpha", "alphabet", "beta"]);
     expect((await readAll(db.cursor("meta", {order: "desc", start: "alpha"}))).map(entry => entry.key))
@@ -72,7 +72,7 @@ it("sorts integer keys and applies inclusive key, prefix and timestamp boundarie
 });
 
 it("filters missing fields, supports nested ordering and value equality", async () => {
-    const db = new LocalDatabase({storageKey: "fields"});
+    const db = new LocalDatabase({storageId: "fields"});
     await seed(db, {a: {nested: {name: "Alice"}}, b: {nested: {name: "Alina"}}, c: {nested: {name: "Bob"}}, d: {other: true}});
     expect((await readAll(db.cursor("meta", {orderBy: ["nested", "name"], start: "Al"}))).map(entry => entry.key))
         .toEqual(["a", "b"]);
@@ -83,7 +83,7 @@ it("filters missing fields, supports nested ordering and value equality", async 
 });
 
 it("handles edits, deletes and replacements without returning a key twice", async () => {
-    const db = new LocalDatabase({storageKey: "handle"});
+    const db = new LocalDatabase({storageId: "handle"});
     await seed(db, {a: {n: 1}, b: {n: 2}, c: {n: 3}});
     const cursor = db.cursor("meta", {
         handle: ({key, value}) => {
@@ -101,7 +101,7 @@ it("handles edits, deletes and replacements without returning a key twice", asyn
 });
 
 it("suppresses the baseline and reports query membership transitions once", async () => {
-    const db = new LocalDatabase({storageKey: "events"});
+    const db = new LocalDatabase({storageId: "events"});
     await seed(db, {a: {score: 1}, b: {score: 2}});
     const cursor = db.cursor("meta", {orderBy: "score", start: 2});
     const events = [];
@@ -124,7 +124,7 @@ it("suppresses the baseline and reports query membership transitions once", asyn
 });
 
 it("finishes an empty collection and validates page size", async () => {
-    const db = new LocalDatabase({storageKey: "empty"});
+    const db = new LocalDatabase({storageId: "empty"});
     const cursor = db.cursor("meta", {group: "Records"});
     await expect(cursor.next(0)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await cursor.next(2)).toEqual([]);
@@ -133,7 +133,7 @@ it("finishes an empty collection and validates page size", async () => {
 });
 
 it("does not replay a processed key moved later by a concurrent edit", async () => {
-    const db = new LocalDatabase({storageKey: "concurrent"});
+    const db = new LocalDatabase({storageId: "concurrent"});
     await seed(db, {a: {score: 1}, b: {score: 2}, c: {score: 3}});
     const cursor = db.cursor("meta", {orderBy: "score"});
     expect((await cursor.next()).map(entry => entry.key)).toEqual(["a"]);
@@ -143,7 +143,7 @@ it("does not replay a processed key moved later by a concurrent edit", async () 
 });
 
 it("keeps independent subscriptions and stops delivery after unsubscribe", async () => {
-    const db = new LocalDatabase({storageKey: "independent"});
+    const db = new LocalDatabase({storageId: "independent"});
     const cursor = db.cursor("meta");
     const first = vi.fn(); const second = vi.fn();
     const a = cursor.subscribe(first); const b = cursor.subscribe(second);
@@ -161,7 +161,7 @@ it("keeps independent subscriptions and stops delivery after unsubscribe", async
 });
 
 it("iterates root collections and observes a newly populated collection", async () => {
-    const db = new LocalDatabase({storageKey: "root"});
+    const db = new LocalDatabase({storageId: "root"});
     await db.update(record("a"), () => 1);
     expect((await readAll(db.cursor([]))).map(entry => entry.key)).toEqual(["meta"]);
     const events = [];
@@ -173,7 +173,7 @@ it("iterates root collections and observes a newly populated collection", async 
 });
 
 it("replaces a child through its stored named identity", async () => {
-    const db = new LocalDatabase({storageKey: "named-handle"});
+    const db = new LocalDatabase({storageId: "named-handle"});
     const parent = ["meta", {settings: "settings"}];
     const path = [...parent, {setting_id: "theme"}];
     await db.update(path, () => ({label: "old"}));
@@ -183,7 +183,7 @@ it("replaces a child through its stored named identity", async () => {
 });
 
 it("selects the named identity from stored paths for pages and handler writes", async () => {
-    const db = new LocalDatabase({storageKey: "identity-index"});
+    const db = new LocalDatabase({storageId: "identity-index"});
     await db.update(["users_public", {user_id: "u2"}], () => ({name: "B", user_id: "wrong"}));
     await db.update(["users_public", {other_id: "x"}], () => ({name: "A"}));
     await db.update(["users_public", {user_id: "u1"}], () => ({name: "A"}));
@@ -201,7 +201,7 @@ it("selects the named identity from stored paths for pages and handler writes", 
 });
 
 it("filters named children in fallback scans and subscriptions, retaining nested values", async () => {
-    const db = new LocalDatabase({storageKey: "identity-fallback"});
+    const db = new LocalDatabase({storageId: "identity-fallback"});
     const parent = ["meta", {settings: "settings"}];
     await db.update([...parent, {user_id: "u2"}], () => ({profile: {name: "Bob"}}));
     await db.update([...parent, {other_id: "x"}], () => ({profile: {name: "Amy"}}));
@@ -223,7 +223,7 @@ it("filters named children in fallback scans and subscriptions, retaining nested
 });
 
 it.each(["asc", "desc"])("pages keys in %s order across deletion of a boundary", async order => {
-    const db = new LocalDatabase({storageKey: `native-keys-${order}`});
+    const db = new LocalDatabase({storageId: `native-keys-${order}`});
     await seed(db, {10: {created: 2}, 2: {created: 1}, "02": {created: 1}, z: {created: 2}});
     const cursor = db.cursor("meta", {order});
     const first = await cursor.next(2);
@@ -237,7 +237,7 @@ it.each(["asc", "desc"])("pages keys in %s order across deletion of a boundary",
 });
 
 it("orders by created with stable ties, inclusive bounds, and fresh values per page", async () => {
-    const db = new LocalDatabase({storageKey: "native-created"});
+    const db = new LocalDatabase({storageId: "native-created"});
     await seed(db, {a: {created: 1}, b: {created: 2}, c: {created: 2}, d: {created: 3}});
     const cursor = db.cursor("meta", {orderBy: "created", start: 2, end: 3});
     expect((await cursor.next(1)).map(entry => entry.key)).toEqual(["b"]);
@@ -249,7 +249,7 @@ it("orders by created with stable ties, inclusive bounds, and fresh values per p
 });
 
 it("writes handler replacements by their exact stored identity", async () => {
-    const db = new LocalDatabase({storageKey: "native-handle"});
+    const db = new LocalDatabase({storageId: "native-handle"});
     await seed(db, {a: {created: 1}, b: {created: 2}});
     const cursor = db.cursor("meta", {orderBy: "created", handle: ({value}) => ({created: value.created < 10 ? value.created + 10 : value.created})});
     expect((await readAll(cursor)).map(entry => entry.value.created)).toEqual([11, 12]);
@@ -261,7 +261,7 @@ it("writes handler replacements by their exact stored identity", async () => {
 });
 
 it("orders nested records, undeclared fields and object values consistently", async () => {
-    const db = new LocalDatabase({storageKey: "native-fallback"});
+    const db = new LocalDatabase({storageId: "native-fallback"});
     const parent = ["meta", {settings: "settings"}];
     await db.update([...parent, {setting_id: "theme"}], () => ({created: 2, label: "z"}));
     await db.update([...parent, {setting_id: "locale"}], () => ({created: 1, label: "a"}));
@@ -277,7 +277,7 @@ it("orders nested records, undeclared fields and object values consistently", as
 });
 
 it.each([3, 4])("rejects an existing version-%i database until it is deleted", async version => {
-    const request = indexedDB.open(`redequate:local:old-${version}`, version);
+    const request = indexedDB.open(`old-${version}`, version);
     request.onupgradeneeded = () => request.result.createObjectStore("meta", {keyPath: ["_collection", "_key"]});
     const old = await new Promise(resolve => { request.onsuccess = () => resolve(request.result); });
     old.close();

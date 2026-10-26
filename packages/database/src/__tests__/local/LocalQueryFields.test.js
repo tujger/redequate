@@ -12,7 +12,7 @@ const email = [...user, {email: "email"}];
 const created = value => value;
 
 it("uses the same field for literal, named, batch and transactional updates", async () => {
-    const database = new LocalDatabase({storageKey: "aliases"});
+    const database = new LocalDatabase({storageId: "aliases"});
     await database.update(email, () => "first");
     await database.update(new Map([[[...user, "email"], "second"]]));
     expect(await database.update(email, value => value + "!")).toBe("second!");
@@ -27,7 +27,7 @@ it("uses the same field for literal, named, batch and transactional updates", as
 });
 
 it("matches fixed conditions independently of their order and serialized location", async () => {
-    const database = new LocalDatabase({storageKey: "direct-query"});
+    const database = new LocalDatabase({storageId: "direct-query"});
     const first = ["extra", {owner: "alice"}, {email: "a@b.com"}];
     await database.update(first, () => ({active: true}));
     expect(await database.read(["extra", {email: "a@b.com"}, {owner: "alice"}])).toEqual(created({active: true}));
@@ -53,7 +53,7 @@ it("matches fixed conditions independently of their order and serialized locatio
 });
 
 it("applies direct fixed conditions to indexed type queries", async () => {
-    const database = new LocalDatabase({storageKey: "indexed-query"});
+    const database = new LocalDatabase({storageId: "indexed-query"});
     await database.update(["extra", {type: "friend", _: true}, {email: "a@b.com"}], () => ({active: true}));
     await database.update(["extra", {type: "friend", _: true}, {email: "other@b.com"}], () => ({active: false}));
     expect(await getRecordsByType("indexed-query", ["extra", {_key0: "type", email: "a@b.com"}]))
@@ -61,7 +61,7 @@ it("applies direct fixed conditions to indexed type queries", async () => {
 });
 
 it("rejects overlapping queries when the parent conditions occur later in the stored address", async () => {
-    const database = new LocalDatabase({storageKey: "query-overlap"});
+    const database = new LocalDatabase({storageId: "query-overlap"});
     const child = ["extra", {email: "a@b.com"}, {owner: "alice"}];
     await database.update(child, () => ({active: true}));
     await expect(database.update(new Map([
@@ -71,7 +71,7 @@ it("rejects overlapping queries when the parent conditions occur later in the st
 });
 
 it("retains known named children when replacing their parent query", async () => {
-    const database = new LocalDatabase({storageKey: "named-children"});
+    const database = new LocalDatabase({storageId: "named-children"});
     const parent = ["users_private", {user_id: "u1"}];
     const phone = [...parent, {device_id: "phone"}];
     const tablet = [...parent, {device_id: "tablet"}];
@@ -85,7 +85,7 @@ it("retains known named children when replacing their parent query", async () =>
 });
 
 it("reads legacy named field rows without rewriting them and replaces them through either alias", async () => {
-    const database = new LocalDatabase({storageKey: "legacy-field"});
+    const database = new LocalDatabase({storageId: "legacy-field"});
     const key = JSON.stringify([["fixed", "user_id", "u1"], ["fixed", "email", "email"]]);
     const connection = await openDatabase("legacy-field");
     try {
@@ -109,7 +109,7 @@ it("reads legacy named field rows without rewriting them and replaces them throu
 });
 
 it("does not revive an embedded value after deleting its separately stored replacement", async () => {
-    const database = new LocalDatabase({storageKey: "embedded"});
+    const database = new LocalDatabase({storageId: "embedded"});
     const post = ["posts", {post_id: "p1"}];
     const edit = [...post, "edit", {edit_id: "e1"}];
     await database.update(post, () => ({edit: {e1: {text: "old"}, e2: {text: "kept"}}}));
@@ -124,7 +124,7 @@ it("does not revive an embedded value after deleting its separately stored repla
 });
 
 it("delivers equivalent named and literal field subscriptions after commit", async () => {
-    const database = new LocalDatabase({storageKey: "field-listeners"});
+    const database = new LocalDatabase({storageId: "field-listeners"});
     const named = vi.fn(), literal = vi.fn();
     const handles = [database.addEventListener(email, {onChange: named}),
         database.addEventListener("users_public/u1/email", {onChange: literal})];

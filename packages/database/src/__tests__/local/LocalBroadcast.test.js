@@ -48,10 +48,10 @@ afterEach(() => {
 
 it("shares one channel between local instances and refreshes another context once without echo", async () => {
     const LocalA = await context();
-    const first = new LocalA({storageKey: "shared"});
-    const second = new LocalA({storageKey: "shared"});
+    const first = new LocalA({storageId: "shared"});
+    const second = new LocalA({storageId: "shared"});
     const LocalB = await context();
-    const remote = new LocalB({storageKey: "shared"});
+    const remote = new LocalB({storageId: "shared"});
     const one = vi.fn(), two = vi.fn(), other = vi.fn();
     const handles = [first.addEventListener(["meta"], {onChange: one}),
         second.addEventListener(["meta"], {onChange: two}),
@@ -73,10 +73,10 @@ it("shares one channel between local instances and refreshes another context onc
 
 it("applies the same initial key boundary to cross-context child additions", async () => {
     const LocalA = await context();
-    const writer = new LocalA({storageKey: "child-broadcast"});
+    const writer = new LocalA({storageId: "child-broadcast"});
     await writer.update(record("10"), () => ({name: "existing"}));
     const LocalB = await context();
-    const remote = new LocalB({storageKey: "child-broadcast"});
+    const remote = new LocalB({storageId: "child-broadcast"});
     const added = vi.fn();
     const ready = vi.fn();
     const handle = remote.addEventListener(["meta"], {onChange: ready, onChildAdd: added});
@@ -92,10 +92,10 @@ it("applies the same initial key boundary to cross-context child additions", asy
 
 it("filters unrelated paths and keeps storage keys isolated", async () => {
     const LocalA = await context();
-    const writer = new LocalA({storageKey: "alpha"});
+    const writer = new LocalA({storageId: "alpha"});
     const LocalB = await context();
-    const remote = new LocalB({storageKey: "alpha"});
-    const isolated = new LocalB({storageKey: "beta"});
+    const remote = new LocalB({storageId: "alpha"});
+    const isolated = new LocalB({storageId: "beta"});
     const exact = vi.fn(), other = vi.fn(), wrongKey = vi.fn();
     const handles = [remote.addEventListener(record("a"), {onChange: exact}),
         remote.addEventListener(record("b"), {onChange: other}),
@@ -115,9 +115,9 @@ it("filters unrelated paths and keeps storage keys isolated", async () => {
 
 it("sends one batch notice after commit and none after abort", async () => {
     const LocalA = await context();
-    const writer = new LocalA({storageKey: "batch"});
+    const writer = new LocalA({storageId: "batch"});
     const LocalB = await context();
-    const remote = new LocalB({storageKey: "batch"});
+    const remote = new LocalB({storageId: "batch"});
     const onChange = vi.fn();
     const handle = remote.addEventListener(["meta"], {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
@@ -134,7 +134,7 @@ it("sends one batch notice after commit and none after abort", async () => {
 it("works without BroadcastChannel", async () => {
     vi.stubGlobal("BroadcastChannel", undefined);
     const LocalDatabase = await context();
-    const database = new LocalDatabase({storageKey: "offline"});
+    const database = new LocalDatabase({storageId: "offline"});
     const onChange = vi.fn();
     const handle = database.addEventListener(["meta"], {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
@@ -145,8 +145,8 @@ it("works without BroadcastChannel", async () => {
 
 it("normalizes named collection roots across separate contexts", async () => {
     const LocalA = await context(), LocalB = await context();
-    const writer = new LocalA({storageKey: "named-root"});
-    const reader = new LocalB({storageKey: "named-root"});
+    const writer = new LocalA({storageId: "named-root"});
+    const reader = new LocalB({storageId: "named-root"});
     const onChange = vi.fn();
     const listener = reader.addEventListener([{type: "posts"}, {post_id: "p1"}], {onChange});
     try {

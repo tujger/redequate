@@ -6,13 +6,13 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 it("persists generated numeric keys without an injected timestamp and keeps explicit values and keys", async () => {
-    const storageKey = "push-key-persistence";
-    const database = new LocalDatabase({storageKey});
+    const storageId = "push-key-persistence";
+    const database = new LocalDatabase({storageId});
     const firstKey = await database.create(["posts", "post_id"], {text: "first"});
     const secondKey = await database.create(["posts", "post_id"], {text: "second", timestamp: 42});
     expect([firstKey, secondKey]).toEqual(["1", "2"]);
     await database.create(["posts", {post_id: "manual"}], {text: "manual"});
-    const reopened = new LocalDatabase({storageKey});
+    const reopened = new LocalDatabase({storageId});
     expect(await reopened.read(["posts", {post_id: firstKey}])).toEqual({text: "first"});
     expect(await reopened.read(["posts", {post_id: secondKey}])).toEqual({text: "second", timestamp: 42});
     expect(await reopened.read(["posts", {post_id: "manual"}])).toEqual({text: "manual"});
@@ -25,7 +25,7 @@ it("persists generated numeric keys without an injected timestamp and keeps expl
 });
 
 it("creates under the supplied identity field and reads collections and records", async () => {
-    const database = new LocalDatabase({storageKey: "create-read"});
+    const database = new LocalDatabase({storageId: "create-read"});
     const path = ["posts", "post_id"];
     const key = await database.create(path, {created: 0});
     expect(await database.read(["posts"])).toMatchObject({[key]: {created: 0}});
@@ -41,7 +41,7 @@ it("creates under the supplied identity field and reads collections and records"
 });
 
 it("keeps nested collection addresses and their identity fields", async () => {
-    const database = new LocalDatabase({storageKey: "nested-create-read"});
+    const database = new LocalDatabase({storageId: "nested-create-read"});
     const chat = ["chats", {chat_id: "c"}];
     const message = await database.create([...chat, "message_id", "id"], {created: false});
     expect(await database.read([...chat, {message_id: "message_id"}])).toMatchObject({
