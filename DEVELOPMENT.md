@@ -107,7 +107,7 @@ Watch mode tracks imported sources and runtime manifests. Subpackage manifests c
 these modules are not standalone npm packages and need no separate installs or
 lockfiles. Functions import the Firebase backend through
 `redequate-server/backend/firebase-server`; source directory names are internal.
-Firebase `database.create` accepts `{path, value}` with an object value and returns
+Firebase `database.create` accepts `(path, value)` with an object value and returns
 a string key. Its grouped callable deploys as `database-create`; the Firebase client
 maps that name. REST conditional PUT with the caller's ID token keeps Security
 Rules authoritative, including anonymous access and validation. Like SDK
@@ -272,10 +272,17 @@ or a system notification service. The console sender is a Local-only helper.
 
 ### Backend and Functions
 
-Backend exposes `request(name, args)` and returns application payloads. The Firebase
+Backend exposes `request(name, ...args)` and returns application payloads. The Firebase
 client unwraps the callable SDK envelope once. `useBackend` from the framework
 root and backend subpath shares the same Dispatcher context within a module format.
 Do not leak SDK result wrappers into UI or change existing callable response shapes.
+Firebase request names use dotted logical operations (for example, `database.create`).
+The Firebase client maps every dot to a hyphen for the deployed endpoint, keeping
+the original name available for future audit metadata. Existing endpoint names
+without dots remain valid; callers do not perform transport-specific mapping.
+Multiple positional arguments travel as an array; a single argument keeps its
+existing payload shape for legacy callables. `database.create` accepts exactly
+`(path, value)` through a two-element array and rejects the old object envelope.
 
 LocalBackendClient owns its worker lifecycle internally: constructor and pageshow
 call private start, pagehide calls private stop. Readiness and startup errors remain
