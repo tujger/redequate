@@ -72,3 +72,29 @@ refreshing lockfile integrity. The uploaded archive and its runtime dependencies
 install without a sibling checkout. Run `npm run pack` in `packages/server` to
 build and pack the standalone `dist` directory directly. Pack `dist`, which contains
 the generated runtime manifest, rather than the source package directory.
+
+
+## Live updates in Functions Emulator
+
+After preparing the archive once, run this alongside an existing emulator:
+
+```sh
+node /path/to/redequate/packages/server/watch-redequate-server.mjs /path/to/application/functions
+```
+
+The Whisky Talks starts this watcher automatically with `npm run start:emulator`.
+To attach it to an already running session, run
+`npm --prefix functions run watch:redequate-server` in that application.
+Only one watcher can own a Functions directory at a time.
+
+The watcher builds imported server sources and manifests in a private temporary
+output directory. After a complete successful build it replaces the installed
+`redequate-server` package, then touches the Functions entry point to request a
+reload: Firebase ignores changes under `node_modules`. Syntax errors preserve
+the last installed build; correcting them resumes synchronization. Stopping the
+watcher leaves that last build installed and removes its temporary files.
+
+Ordinary edits do not update the archive or lockfile. If runtime dependency
+requirements change, synchronization pauses: stop the watcher, run
+`prepare-redequate-server`, then start it again. Prepare the archive before deploy;
+live updates are a local development path, not a replacement for packaging.

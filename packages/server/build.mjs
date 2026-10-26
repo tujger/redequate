@@ -1,13 +1,13 @@
 import {builtinModules} from "node:module";
 import {copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
+import {resolve} from "node:path";
 import {nodeResolve} from "@rollup/plugin-node-resolve";
 import {babel} from "@rollup/plugin-babel";
 import del from "rollup-plugin-delete";
 import json from "@rollup/plugin-json";
 
 const source = path => fileURLToPath(new URL(path, import.meta.url));
-const outputDirectory = source("./dist/");
 const sharedSources = [source("../common/src/"), source("../database/src/")];
 const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
     .filter(entry => entry.isDirectory() && entry.name.endsWith("-server") && entry.name !== "local-server")
@@ -16,13 +16,12 @@ const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
         return {
             name,
             input: {index: `${directory}${existsSync(`${directory}src/index.js`) ? "src/" : ""}index.js`},
-            output: `${outputDirectory}backend/${name}/`,
             sources: [directory, ...sharedSources],
             manifest: `${directory}package.json`,
         };
     });
 
-const createDependencies = () => {
+const createDependencies = outputDirectory => {
     const manifests = [source("./package.json"), ...backends.map(backend => backend.manifest).filter(existsSync)];
     let manifest;
     return {
@@ -60,6 +59,9 @@ const createDependencies = () => {
         },
         packagePlugin: {
             name: "server-package",
+            buildStart() {
+                this.addWatchFile(source("./README.md"));
+            },
             writeBundle() {
                 writeFileSync(`${outputDirectory}package.json`, `${JSON.stringify(manifest, null, 4)}\n`);
                 copyFileSync(source("./README.md"), `${outputDirectory}README.md`);
@@ -80,9 +82,10 @@ const createBuild = ({input, output, sources, clean = [output]}, dependencies) =
         sourcemap: true,
     })),
     plugins: [
-        del({targets: clean}),
+        del({targets: clean, force: true}),
         dependencies.plugin,
         babel({
+            cwd: source("../../"),
             babelHelpers: "bundled",
             babelrc: false,
             configFile: false,
@@ -110,11 +113,13 @@ const createBuild = ({input, output, sources, clean = [output]}, dependencies) =
     },
 });
 
-export default ({configBackend}) => {
+export default ({configBackend, configOutput}) => {
+    const outputDirectory = configOutput ? `${resolve(configOutput)}/` : source("./dist/");
     if (configBackend && !backends.some(backend => backend.name === configBackend)) {
         throw new Error(`Unknown server Backend: ${configBackend}`);
     }
-    const builds = backends.filter(backend => !configBackend || backend.name === configBackend);
+    const builds = backends.filter(backend => !configBackend || backend.name === configBackend)
+        .map(backend => ({...backend, output: `${outputDirectory}backend/${backend.name}/`}));
     if (!configBackend) {
         builds.unshift({
             input: {
@@ -130,7 +135,7 @@ export default ({configBackend}) => {
                 ...backends.map(({name}) => `backend/${name}.*`)].map(path => `${outputDirectory}${path}`),
         });
     }
-    const dependencies = createDependencies();
+    const dependencies = createDependencies(outputDirectory);
     const configs = builds.map(build => createBuild(build, dependencies));
     if (!configBackend) configs.at(-1).plugins.push(dependencies.packagePlugin);
     return configs;
