@@ -2,12 +2,12 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getDatabase} from "firebase-admin/database";
 import resolvePath from "../../../../../database/src/common/resolvePath";
 
-import invalidPath from "../common/invalidPath.js";
-import getRequestToken from "../common/getRequestToken.js";
-import createDatabaseUrl from "../common/createDatabaseUrl.js";
-import sendRequest from "../common/sendRequest.js";
-import checkResponse from "../common/checkResponse.js";
-import throwDatabaseError from "../common/throwDatabaseError.js";
+import invalidPath from "../common/invalidPath";
+import getRequestToken from "../common/getRequestToken";
+import createDatabaseUrl from "../common/createDatabaseUrl";
+import sendRequest from "../common/sendRequest";
+import checkResponse from "../common/checkResponse";
+import throwDatabaseError from "../common/throwDatabaseError";
 
 const prepare = request => {
     const args = request.data;
