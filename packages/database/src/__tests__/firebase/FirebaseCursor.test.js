@@ -9,9 +9,20 @@ import {createFirebase} from "../fixtures/firebase";
 
 vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
 
-let fixture, database;
+vi.mock("firebase/functions", () => ({
+    getFunctions: app => app,
+    httpsCallable: (_functions, endpoint) => async args => {
+        expect(endpoint).toBe("database-update");
+        return {data: await backend.request("database.update", ...args)};
+    },
+}));
+
+let fixture, database, backend;
 beforeEach(() => {
     fixture = createFirebase();
+    backend = {request: vi.fn(async (_name, _path, value, options) => options.mode === "read"
+        ? {value: null, etag: "initial"}
+        : {committed: true, value})};
     database = new FirebaseDatabase({firebase: fixture.firebase});
 });
 const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
@@ -120,12 +131,84 @@ it("isolates handle mutations, awaits replacements, skips deletions and rereads 
     const cursor = database.cursor("records", {handle});
     expect(await cursor.next(10)).toEqual([{key: "a", value: {n: 1}}, {key: "c", value: {n: 30, resolved: true}}]);
     expect(handle.mock.calls.map(([{key}]) => key)).toEqual(["a", "b", "c"]);
-    expect(fixture.sdk.set.mock.calls.map(([ref, value]) => [ref.key, value])).toEqual([["b", null], ["c", {n: 30}]]);
+    expect(backend.request.mock.calls).toEqual([
+        ["database.update", "records/b", null, {mode: "read"}],
+        ["database.update", "records/b", null, {mode: "replace", etag: "initial"}],
+        ["database.update", "records/c", null, {mode: "read"}],
+        ["database.update", "records/c", {n: 30}, {mode: "replace", etag: "initial"}],
+    ]);
+    expect(fixture.sdk.set).not.toHaveBeenCalled();
     expect(cursor.count).toBe(2);expect(cursor.position.index).toBe(1);
 });
-it.each([false, 0, ""])("writes falsy handle result %j", async value => {
+it.each([false, 0, "", [1, 2]])("writes handle replacement %j", async value => {
     fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: {n: 1}})).mockResolvedValueOnce(fixture.snapshot(value));
     expect(await database.cursor("records", {handle: () => value}).next(2)).toEqual([{key: "a", value}]);
+});
+it.each(["", "groups/g1/records"])("uses the injected backend for cursor path %j", async path => {
+    const request = vi.fn(backend.request.getMockImplementation());
+    const customDatabase = new FirebaseDatabase({firebase: fixture.firebase, backend: {request}});
+    fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: {old: true}}))
+        .mockResolvedValueOnce(fixture.snapshot({saved: true}));
+    expect(await customDatabase.cursor(path, {handle: () => ({saved: true})}).next(2))
+        .toEqual([{key: "a", value: {saved: true}}]);
+    const childPath = path ? `${path}/a` : "a";
+    expect(request.mock.calls).toEqual([
+        ["database.update", childPath, null, {mode: "read"}],
+        ["database.update", childPath, {saved: true}, {mode: "replace", etag: "initial"}],
+    ]);
+    expect(backend.request).not.toHaveBeenCalled();
+    expect(fixture.sdk.set).not.toHaveBeenCalled();
+});
+it("retries an ETag conflict without invoking handle again", async () => {
+    fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: {old: true}}))
+        .mockResolvedValueOnce(fixture.snapshot({saved: true}));
+    backend.request.mockResolvedValueOnce({value: {old: true}, etag: "first"})
+        .mockResolvedValueOnce({committed: false, value: {concurrent: true}, etag: "second"});
+    const handle = vi.fn(async () => ({saved: true}));
+    expect(await database.cursor("records", {handle}).next(2)).toEqual([{key: "a", value: {saved: true}}]);
+    expect(handle).toHaveBeenCalledTimes(1);
+    expect(backend.request.mock.calls).toEqual([
+        ["database.update", "records/a", null, {mode: "read"}],
+        ["database.update", "records/a", {saved: true}, {mode: "replace", etag: "first"}],
+        ["database.update", "records/a", {saved: true}, {mode: "replace", etag: "second"}],
+    ]);
+});
+it("reports conflict exhaustion without invoking handle again", async () => {
+    vi.useFakeTimers();
+    try {
+        fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: {old: true}}));
+        backend.request.mockResolvedValue({committed: false, value: {}, etag: "conflict"})
+            .mockResolvedValueOnce({value: {}, etag: "initial"});
+        const handle = vi.fn(() => ({saved: true})), onError = vi.fn();
+        const cursor = database.cursor("records", {handle, onError});
+        const pending = cursor.next();
+        await vi.runAllTimersAsync();
+        expect(await pending).toBeUndefined();
+        expect(backend.request).toHaveBeenCalledTimes(26);
+        expect(handle).toHaveBeenCalledTimes(1);
+        expect(onError).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({code: "database/conflict"}), "cursor.next", {path: "records", n: 1});
+        expect(cursor.count).toBe(0);
+    } finally {
+        vi.useRealTimers();
+    }
+});
+it("does not write when handle returns undefined", async () => {
+    fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: {n: 1}}));
+    expect(await database.cursor("records", {handle: () => undefined}).next(2))
+        .toEqual([{key: "a", value: {n: 1}}]);
+    expect(backend.request).not.toHaveBeenCalled();
+    expect(fixture.sdk.set).not.toHaveBeenCalled();
+});
+it.each(["read", "replace"])("reports backend %s errors through cursor onError", async mode => {
+    fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: {old: true}}));
+    const error = new Error("backend failed"), onError = vi.fn();
+    if (mode === "replace") backend.request.mockResolvedValueOnce({value: {}, etag: "initial"});
+    backend.request.mockRejectedValueOnce(error);
+    const cursor = database.cursor("records", {handle: () => null, onError});
+    expect(await cursor.next()).toBeUndefined();
+    expect(onError).toHaveBeenCalledExactlyOnceWith(error, "cursor.next", {path: "records", n: 1});
+    expect(cursor.count).toBe(0);
 });
 it("retries the failed candidate and counts only batches returned successfully", async () => {
     fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: 1, b: 2}));

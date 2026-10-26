@@ -1,5 +1,6 @@
-import {query, startAt, endAt, limitToFirst, limitToLast, set, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
+import {query, startAt, endAt, limitToFirst, limitToLast, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
 import readSnapshot from "./readSnapshot";
+import update from "./update";
 import compareValues from "../common/compareValues";
 import compareKeys from "../common/compareKeys";
 import DatabaseCursor from "../common/DatabaseCursor";
@@ -10,13 +11,16 @@ export default class FirebaseCursor extends DatabaseCursor {
     #state;
     #header = [];
 
-    constructor(firebase, path, options = {}) {
+    constructor(firebase, path, options = {}, backend) {
         const resolvedPath = Array.isArray(path) && path.length > 1 && typeof path.at(-1) === "string"
             ? path.slice(0, -1)
             : path;
         super(options, resolvePath(resolvedPath));
         this.#state = {
             ...createCursorQuery(firebase, resolvedPath, this),
+            firebase,
+            backend,
+            path: this.path,
             scanKey: undefined,
             scanValue: undefined,
             buffer: [],
@@ -232,9 +236,10 @@ const invokeHandle = async (props) => {
 };
 
 const saveReplacement = async (props) => {
-    const {child, replacement} = props;
+    const {state, child, replacement} = props;
     if (replacement === undefined) return props;
-    await set(child.ref, replacement);
+    const path = state.path ? `${state.path}/${child.key}` : child.key;
+    await update(state.firebase, state.backend, path, () => replacement);
     return {...props, entry: undefined};
 };
 
