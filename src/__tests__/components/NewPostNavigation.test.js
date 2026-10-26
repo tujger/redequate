@@ -14,10 +14,10 @@ import {createFirebase} from "../../../packages/database/src/__tests__/fixtures/
 
 vi.mock("firebase/database", () => import("../../../packages/database/src/__tests__/fixtures/firebase").then(module => module.firebaseDatabaseMock()));
 
-const context = vi.hoisted(() => ({database: undefined, user: {id: "author"}}));
+const context = vi.hoisted(() => ({database: undefined, backend: undefined, user: {id: "author"}}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value})}));
 vi.mock("../../controllers", () => ({
-    useAuth: () => ({}), useDatabase: () => context.database, useStorage: () => ({})
+    useAuth: () => ({}), useBackend: () => context.backend, useDatabase: () => context.database, useStorage: () => ({})
 }));
 vi.mock("../../controllers/General", () => ({
     usePages: () => ({}), useWindowData: () => ({isNarrow: () => false})
@@ -61,6 +61,7 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
         ? new LocalDatabase({storageKey: `post-navigation-${crypto.randomUUID()}`})
         : new FirebaseDatabase({firebase: fixture.firebase});
     const database = context.database;
+    context.backend = {request: vi.fn((name, {path, value}) => database.create(path, value))};
     const history = createMemoryHistory({initialEntries: ["/discover"]});
     const complete = vi.fn(({key}) => history.push(`/post/${key}`));
     const error = vi.fn();
@@ -92,6 +93,9 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
     });
     const {key} = complete.mock.calls[0][0];
     expect(error).not.toHaveBeenCalled();
+    expect(context.backend.request).toHaveBeenCalledExactlyOnceWith("database.create", {
+        path: ["posts", "post_id"], value: expect.objectContaining({uid: "author", to: 0, text: "root post"})
+    });
     expect(await database.read(["posts", {post_id: key}])).toMatchObject({to: 0, text: "root post"});
     expect(history.location.pathname).toBe(`/post/${key}`);
     expect(container.querySelector("[data-post-page]")).not.toBeNull();
@@ -102,4 +106,30 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
         await vi.waitFor(() => expect(transform).toHaveBeenCalledTimes(1));
     });
     expect(container.querySelector("article").textContent).toBe("root post");
+});
+
+
+it("passes a server creation error to onError without completing publication", async () => {
+    const failure = Object.assign(new Error("Not allowed"), {code: "functions/permission-denied"});
+    context.database = {TIMESTAMP: 123};
+    context.backend = {request: vi.fn().mockRejectedValue(failure)};
+    const complete = vi.fn();
+    const error = vi.fn();
+    const history = createMemoryHistory({initialEntries: ["/discover"]});
+    const store = createStore((state = {}, action) => ({
+        newPostComponentReducer: reducer(state.newPostComponentReducer, action)
+    }));
+    await act(async () => render(<Provider store={store}><Router history={history}>
+        <NewPostComponent buttonComponent={<button>New post</button>}
+            onComplete={complete} onError={error} text="root post"/>
+    </Router></Provider>, container));
+    await act(async () => container.querySelector("button").click());
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    await act(async () => {
+        [...document.querySelectorAll("button")].find(node => node.textContent === "Send").click();
+        await vi.waitFor(() => expect(error).toHaveBeenCalledExactlyOnceWith(failure));
+    });
+    expect(complete).not.toHaveBeenCalled();
+    expect(history.location.pathname).toBe("/discover");
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
 });
