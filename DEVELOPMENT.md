@@ -86,8 +86,8 @@ common, database, and client services. The maintained private
 to Backend manifests; consumer lockfiles pin installed versions. It exposes only
 explicit common, database and server Backend subpaths; there is no root entry.
 Import `DatabaseCursor` from `redequate-server/database`. Browser builds reject Node server
-sources, and Node server builds reject browser and UI sources. Local Server is a
-browser worker shipped in `redequate`, outside `redequate-server`.
+sources, and Node server builds reject browser and UI sources. LocalBackendClient
+is a browser adapter shipped in `redequate`, outside `redequate-server`.
 
 Functions install the generated server archive under the `redequate-server` dependency
 name; consumers must use that name for server imports. This affects both
@@ -316,20 +316,27 @@ Multiple positional arguments travel as an array; a single argument keeps its
 existing payload shape for legacy callables. `database.create` accepts exactly
 `(path, value)` through a two-element array and rejects the old object envelope.
 
-LocalBackendClient owns its worker lifecycle internally: constructor and pageshow
-call private start, pagehide calls private stop. Readiness and startup errors remain
-private; Dispatcher and consumers do not manage the worker. Start/stop are idempotent;
-each start has its own identity so stopped imports cannot launch a stale worker.
-resolveBackend reuses its automatically created LocalBackendClient across Dispatcher
-initializations, while explicitly provided backends are returned as supplied.
-The ESM launcher is exported as `redequate/backend/local-server`; ESM and CommonJS
-clients import it dynamically. The launcher and worker have an isolated browser
-build, included in the main build and available through a separate build/watch.
-Importing the package does not start a worker. Requests currently reject with
-`backend/not-implemented`; dispatch and database handlers are the next step.
-The worker must use LocalDatabase with the application's same storageKey and
-stores, preserving its IndexedDB layout and BroadcastChannel notifications.
-No separate local role policy or independent database copy is intended.
+LocalDatabase and LocalBackendClient use `storageId`, defaulting to `redequate:local`.
+The former LocalDatabase `storageKey` option/property is removed without an alias.
+LocalBackendClient creates its own LocalDatabase for that ID; it receives no database
+instance. Dispatcher supplies the resolved database's storageId to resolveBackend;
+automatic backends are cached by normalized storageId. Explicit backends remain as
+supplied. Applications pass one storageId to both constructors. Auth, Storage and
+Messaging retain their separate storageKey settings.
+
+The IndexedDB `redequate:local:` name prefix and change-channel format are preserved.
+The default ID change selects a new physical database; no automatic data migration
+is performed. Explicit `storageId: "redequate:database:local"` opens the former default.
+Schemas remain instance-scoped; the internal backend database uses default stores.
+`request("database.create", path, value)` delegates to LocalDatabase.create and
+returns its permanent string key, preserving callbacks and timestamp/increment
+markers. Unsupported operations reject with `backend/not-implemented`.
+
+The former local-server worker and its package export/build have been removed.
+IndexedDB is already asynchronous; a separate worker added a message protocol,
+configuration transfer and marker encoding without a current CPU-bound task.
+Heavy computation may justify a worker later; backend requests currently require
+no worker lifecycle, readiness protocol or serialization.
 
 Functions common/database imports come from the server archive without browser
 initialization. Preserve deployed RTDB paths, trigger scope, callable envelopes,
@@ -439,7 +446,7 @@ Do not replace that with initial replay or a bounded listener that can miss even
 `local/stores.json` plus constructor `stores` are the only native store/index
 configuration. Identical definitions merge; conflicting definitions reject.
 Additional configured stores participate in CRUD, nested paths, cursors, and
-subscriptions. Collection visibility is instance-scoped even when storageKey is
+subscriptions. Collection visibility is instance-scoped even when storageId is
 shared. Do not restore parallel store registries or field whitelists.
 
 Physical rows use native auto-increment `_id`; the generated public key is a numeric

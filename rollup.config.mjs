@@ -11,7 +11,6 @@ import external from 'rollup-plugin-peer-deps-external'
 import postcss from 'rollup-plugin-postcss'
 import {authSourcePattern, withAuth} from './packages/auth/build.mjs'
 import {backendSourcePattern, withBackend} from './packages/backend/build.mjs'
-import localServerBuild from './packages/backend/src/local-server/build.mjs'
 import {commonSourcePattern, withCommon} from './packages/common/build.mjs'
 import {databaseSourcePattern, withDatabase} from "./packages/database/build.mjs";
 import {messagingSourcePattern, withMessaging} from "./packages/messaging/build.mjs";
@@ -21,7 +20,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 const babelExtensions = ['.js', '.jsx', '.es6', '.es', '.mjs', '.cjs', '.ts', '.tsx'];
 const resolveExtensions = ['.mjs', '.js', '.json', '.node', '.ts', '.tsx'];
 
-const externalExports = ['redequate/backend/local-server', /^firebase(?:\/|$)/, /^@firebase(?:\/|$)/, 'react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/, /^@uppy(?:\/|$)/];
+const externalExports = [/^firebase(?:\/|$)/, /^@firebase(?:\/|$)/, 'react', 'react-dom', 'react-datepicker', 'react-smart-gallery', 'react-image-lightbox', 'react-image-lightbox/style.css', 'react-datepicker/dist/react-datepicker.css', /^@mui\/icons-material(?:\/|$)/, /^@uppy(?:\/|$)/];
 
 const postCssModules = {
     include: '**/*.module.css',
@@ -218,5 +217,5 @@ export default () => {
                 json(),
             ]
         }
-    ].map(withAuth).map(withBackend).map(withCommon).map(withDatabase).map(withMessaging).map(withStorage).concat(localServerBuild)
+    ].map(withAuth).map(withBackend).map(withCommon).map(withDatabase).map(withMessaging).map(withStorage)
 }

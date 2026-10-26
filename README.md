@@ -694,12 +694,28 @@ them in its simulated mail. Email-link requests default to the current origin's
 undefined values retain them. SDK validation still applies to supplied values.
 Implementations own their constructor configuration.
 
+### Local backend
+
+`LocalBackendClient` from `redequate/backend/local-client` accepts `{storageId}`
+and creates its own LocalDatabase with that identifier. Configure the application's
+LocalDatabase and LocalBackendClient with the same storageId to share IndexedDB.
+Both default to `redequate:local`; LocalDatabase accepts only `storageId`, with no
+`storageKey` alias. The physical IndexedDB name keeps the `redequate:local:` prefix.
+Changing the default does not migrate data; explicitly set the former identifier
+`redequate:database:local` to access the previous default database.
+
+Handlers execute directly, with no worker or message serialization.
+`backend.request("database.create", path, value)` delegates to the internal
+`database.create`, including synchronous callbacks and Local timestamp/increment
+markers. Dispatcher passes the resolved database's storageId when constructing
+the default backend. Explicit backends remain as supplied.
+
 ### Independent common and server archive
 
 Functions can install the private `redequate-server` archive under the `redequate` dependency
 name to import `redequate/common`, `redequate/backend/common`,
-`redequate/backend/common-server`, `redequate/backend/firebase-server` and
-`redequate/backend/local-server` without frontend dependencies. Both ESM and
+`redequate/backend/common-server` and `redequate/backend/firebase-server`
+without frontend dependencies. Both ESM and
 CommonJS are supported on Node.js 22+. See [server packaging](packages/server/README.md)
 for build and delivery instructions.
 

@@ -87,7 +87,7 @@ indexes through the Local constructor, using the same format:
 
 ```js
 const database = new LocalDatabase({
-    storageKey: "my-app",
+    storageId: "my-app",
     stores: [{
         store: "audit",
         storeConfig: {keyPath: "_id", autoIncrement: true},
@@ -106,7 +106,7 @@ merge by store and index name. Identical repeated definitions are allowed;
 conflicting definitions, reserved metadata keyPaths and invalid definitions reject
 before opening IndexedDB. Inputs are copied and never modified. Additional stores
 support CRUD, nested paths, cursors and subscriptions. Each instance accepts only
-its own configured collections, even when another instance sharing its storageKey
+its own configured collections, even when another instance sharing its storageId
 has created additional physical stores.
 
 The converter adds only one framework index, `_identity`, with the unique keyPath
@@ -165,7 +165,7 @@ DatabaseBase and FirebaseDatabase have no schema method.
 Databases from the previous `_rowId` storage model are incompatible and must be
 explicitly removed before this adapter opens them. There is no automatic deletion
 or data migration from that model. For the default dev configuration, close other
-connections and delete only `redequate:local:redequate:database:local` in the dev
+connections and delete only `redequate:local:redequate:local` in the dev
 origin's IndexedDB storage. This does not reset the separate Local Auth database.
 
   `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
