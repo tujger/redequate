@@ -1,6 +1,6 @@
 import {resolvePackage} from "../../common";
 
 export default async messaging => resolvePackage(messaging, "messaging", async () => {
-    const {default: LocalMessaging} = await import("./local/index.js");
+    const {default: LocalMessaging} = await import("./local/index");
     return new LocalMessaging();
 });
