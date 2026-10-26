@@ -107,9 +107,8 @@ export default (props) => {
         const initDatabase = async props => {
             try {
                 const database = await resolveDatabase(databaseGiven);
-                consoleHandler = installConsoleError(database);
                 console.log("[Dispatcher]", "database resolved", {database});
-                return {...props, consoleHandler, database};
+                return {...props, database};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -149,6 +148,11 @@ export default (props) => {
             } catch (error) {
                 throw {...props, fatal: error};
             }
+        }
+        const initConsoleHandler = props => {
+            const {database} = props;
+            consoleHandler = installConsoleError(database);
+            return {...props, consoleHandler};
         }
         const initStore = async props => {
             return {...props, store: Store(title, reducers)};
@@ -369,6 +373,7 @@ export default (props) => {
             .then(initBackend)
             .then(initMessaging)
             .then(initStorage)
+            .then(initConsoleHandler)
             .then(initStore)
             .then(restoreAuth)
             .then(initWindowData)
