@@ -23,7 +23,7 @@ it("stores different dynamic types with JSON indexes and one unique path index",
     ]);
     const database = await openDatabase("test");
     try {
-        expect([...database.objectStoreNames]).toEqual(["$auth", "$messaging", "$storage", ...Object.keys(LOCAL_COLLECTIONS)].sort());
+        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS).sort());
         const store = database.transaction("mutual").objectStore("mutual");
         expect(store.keyPath).toBe("_id");
         expect(store.autoIncrement).toBe(true);

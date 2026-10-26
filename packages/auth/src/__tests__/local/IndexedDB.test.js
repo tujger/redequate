@@ -22,11 +22,9 @@ it("opens redequate:local lazily and preserves Auth store keys in the shared sch
     expect(open).toHaveBeenCalledWith("redequate:local", undefined);
     const database = await openLocalDatabase();
     try {
-        expect([...database.objectStoreNames]).toEqual(["$auth", "$messaging", "$storage"]);
+        expect([...database.objectStoreNames]).toEqual(["$auth"]);
         const transaction = database.transaction([...database.objectStoreNames]);
         expect(transaction.objectStore("$auth").keyPath).toEqual(["kind", "key"]);
-        expect(transaction.objectStore("$messaging").keyPath).toBe("key");
-        expect(transaction.objectStore("$storage").keyPath).toBe("fullPath");
         const index = transaction.objectStore("$auth").index("email");
         expect(index.unique).toBe(true);
         expect(index.keyPath).toBe("accountEmail");

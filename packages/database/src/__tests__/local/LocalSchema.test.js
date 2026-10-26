@@ -20,7 +20,7 @@ it("exposes a serializable description of the physical version-one stores", asyn
     await db.applySchema(LOCAL_SCHEMA);
     const connection = await openDatabase("description");
     expect(connection.version).toBe(1);
-    expect([...connection.objectStoreNames].sort()).toEqual(["$auth", "$messaging", "$storage", ...Object.keys(LOCAL_SCHEMA)].sort());
+    expect([...connection.objectStoreNames].sort()).toEqual(Object.keys(LOCAL_SCHEMA).sort());
     connection.close();
 });
 

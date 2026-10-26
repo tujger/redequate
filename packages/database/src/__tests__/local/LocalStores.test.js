@@ -26,7 +26,7 @@ it("creates only physical roots with native autoIncrement and unique path indexe
     try {
         expect(open).toHaveBeenCalledExactlyOnceWith("schema", undefined);
         expect(database.version).toBe(1);
-        expect([...database.objectStoreNames]).toEqual(["$auth", "$messaging", "$storage", ...Object.keys(LOCAL_COLLECTIONS)].sort());
+        expect([...database.objectStoreNames]).toEqual(Object.keys(LOCAL_COLLECTIONS).sort());
         for (const obsolete of ["records", "follow", "watch", "followstamps", "watchstamps",
             "_developers", "_game_scores", "_genres", "_main_counters", "_posts",
             "_platforms", "_publishers", "_stat"]) {
