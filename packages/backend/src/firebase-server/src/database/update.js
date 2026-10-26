@@ -1,9 +1,13 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getDatabase} from "firebase-admin/database";
-import resolvePath from "../../../../database/src/common/resolvePath";
+import resolvePath from "../../../../../database/src/common/resolvePath";
 
-// eslint-disable-next-line no-control-regex
-const invalidPath = /[.#$[\]\x00-\x1f\x7f]/;
+import invalidPath from "../common/invalidPath.js";
+import getRequestToken from "../common/getRequestToken.js";
+import createDatabaseUrl from "../common/createDatabaseUrl.js";
+import sendRequest from "../common/sendRequest.js";
+import checkResponse from "../common/checkResponse.js";
+import throwDatabaseError from "../common/throwDatabaseError.js";
 
 const prepare = request => {
     const args = request.data;
@@ -25,40 +29,24 @@ const prepare = request => {
     if (mode === "replace" && (typeof options.etag !== "string" || !options.etag.length || /[\r\n]/.test(options.etag))) {
         throw new HttpsError("invalid-argument", "Conditional replacement requires an ETag.");
     }
-    const authorization = request.rawRequest?.headers?.authorization;
-    const token = request.auth && typeof authorization === "string"
-        ? /^Bearer (.+)$/i.exec(authorization)?.[1]
-        : undefined;
-    if (request.auth && !token) throw new HttpsError("unauthenticated", "A Firebase ID token is required.");
+    const token = getRequestToken(request);
     const database = getDatabase();
     const reference = address ? database.ref(address) : database.ref();
-    const url = new URL(reference.toString());
-    url.pathname += ".json";
-    if (process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
-        const databaseUrl = new URL(database.app.options.databaseURL);
-        url.searchParams.set("ns", databaseUrl.searchParams.get("ns") ?? databaseUrl.hostname.split(".")[0]);
-    }
-    if (token) url.searchParams.set("auth", token);
+    const url = createDatabaseUrl({database, reference, token});
     if (mode === "patch") url.searchParams.set("print", "silent");
     return {url, mode, value, etag: options.etag};
 };
 
-const sendRequest = async props => {
-    const {url, mode, value, etag} = props;
+const prepareRequest = props => {
+    const {mode, value, etag} = props;
     const headers = {"Content-Type": "application/json"};
     if (mode !== "patch") headers["X-Firebase-ETag"] = "true";
     if (mode === "replace") headers["If-Match"] = etag;
-    // Forward the caller's token so Rules authorize reads and writes alike.
-    const response = await fetch(url, {
+    return {...props,
         method: {patch: "PATCH", read: "GET", replace: "PUT"}[mode],
         headers,
         ...(mode === "read" ? {} : {body: JSON.stringify(value)}),
-        signal: AbortSignal.timeout(30000),
-        redirect: "error",
-    }).catch(error => {
-        throw new HttpsError(error.name === "TimeoutError" ? "deadline-exceeded" : "unavailable", "Database request failed.");
-    });
-    return {...props, response};
+    };
 };
 
 const readResponse = async props => {
@@ -66,8 +54,7 @@ const readResponse = async props => {
     const conflict = mode === "replace" && response.status === 412;
     if (!response.ok && !conflict) {
         await response.body?.cancel();
-        const code = {400: "invalid-argument", 401: "permission-denied", 403: "permission-denied"}[response.status];
-        throw new HttpsError(code ?? (response.status >= 500 ? "unavailable" : "internal"), "Record update failed.");
+        checkResponse(response, "Record update failed.");
     }
     if (mode === "patch") {
         await response.body?.cancel();
@@ -82,15 +69,8 @@ const readResponse = async props => {
 
 export default onCall(async request => {
     try {
-        return await Promise.resolve(prepare(request)).then(sendRequest).then(readResponse);
+        return await Promise.resolve(prepare(request)).then(prepareRequest).then(sendRequest).then(readResponse);
     } catch (error) {
-        if (error instanceof HttpsError) throw error;
-        if (["database/invalid-argument", "database/invalid-path"].includes(error?.code)) {
-            throw new HttpsError("invalid-argument", error.message);
-        }
-        if (["TimeoutError", "AbortError"].includes(error?.name)) {
-            throw new HttpsError("deadline-exceeded", "Database request failed.");
-        }
-        throw new HttpsError("internal", "Record update failed.");
+        throwDatabaseError(error, "Record update failed.");
     }
 });
