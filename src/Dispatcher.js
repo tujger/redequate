@@ -124,7 +124,7 @@ export default (props) => {
         }
         const initBackend = async props => {
             try {
-                const backend = await resolveBackend(backendGiven, {storageId: props.database.storageId});
+                const backend = await resolveBackend(backendGiven);
                 console.log("[Dispatcher]", "backend resolved", {backend});
                 return {...props, backend};
             } catch (error) {
