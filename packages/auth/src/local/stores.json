@@ -1,0 +1,19 @@
+{
+    "$auth": {
+        "keyPath": [
+            "kind",
+            "key"
+        ],
+        "autoIncrement": false,
+        "indexes": {
+            "kind": {
+                "keyPath": "kind",
+                "unique": false
+            },
+            "email": {
+                "keyPath": "accountEmail",
+                "unique": true
+            }
+        }
+    }
+}

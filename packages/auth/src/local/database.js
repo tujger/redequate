@@ -1,8 +1,8 @@
+import stores from "./stores.json";
 import {identifier} from "../../../common";
 import {openLocalDatabase} from "../../../common/src/localDatabase";
 
-const stores = {accounts: "auth_accounts", links: "auth_links", mail: "auth_mail"};
-const stateKey = auth => `auth:${auth.storageKey}`;
+const fields = ["accounts", "links", "mail"];
 
 const storageError = error => {
     if (error?.code?.startsWith?.("auth/")) return error;
@@ -12,10 +12,10 @@ const storageError = error => {
     return Object.assign(new Error("Local authentication storage is unavailable."), {code: "auth/storage-unavailable", cause: error});
 };
 
-const operation = async execute => {
+const operation = async (auth, execute) => {
     let database;
     try {
-        database = await openLocalDatabase();
+        database = await openLocalDatabase(auth.storageId, stores);
         return await execute(database);
     } catch (error) {
         throw storageError(error);
@@ -24,13 +24,13 @@ const operation = async execute => {
     }
 };
 
-export const readState = auth => operation(database => new Promise((resolve, reject) => {
-    const transaction = database.transaction(["auth_state", ...Object.values(stores)], "readonly");
+export const readState = auth => operation(auth, database => new Promise((resolve, reject) => {
+    const transaction = database.transaction("$auth", "readonly");
     const state = {revision: null, accounts: [], session: null, redirect: null, links: [], mail: []};
     transaction.onabort = () => reject(transaction.error);
     transaction.onerror = () => {};
     transaction.oncomplete = () => resolve(state);
-    const request = transaction.objectStore("auth_state").get(stateKey(auth));
+    const request = transaction.objectStore("$auth").get(["state", "session"]);
     request.onsuccess = () => {
         const record = request.result;
         if (!record) return;
@@ -38,21 +38,21 @@ export const readState = auth => operation(database => new Promise((resolve, rej
         state.session = record.userKey === null ? null : {key: record.userKey, token: record.token};
         state.redirect = record.redirectKey;
     };
-    for (const [field, name] of Object.entries(stores)) {
-        const request = transaction.objectStore(name).index("namespace").getAll(auth.storageKey);
-        request.onsuccess = () => { state[field] = request.result; };
+    for (const field of fields) {
+        const request = transaction.objectStore("$auth").index("kind").getAll(field);
+        request.onsuccess = () => { state[field] = request.result.map(record => record.value); };
     }
 }));
 
-export const writeState = (auth, state, {expectedRevision = state.revision, restore = false} = {}) => operation(database => new Promise((resolve, reject) => {
-    const transaction = database.transaction(["auth_state", ...Object.values(stores)], "readwrite");
+export const writeState = (auth, state, {expectedRevision = state.revision, restore = false} = {}) => operation(auth, database => new Promise((resolve, reject) => {
+    const transaction = database.transaction("$auth", "readwrite");
     let failure;
     let result = null;
     transaction.onabort = () => reject(failure || transaction.error);
     transaction.onerror = () => {};
     transaction.oncomplete = () => resolve(result);
-    const stateStore = transaction.objectStore("auth_state");
-    const request = stateStore.get(stateKey(auth));
+    const stateStore = transaction.objectStore("$auth");
+    const request = stateStore.get(["state", "session"]);
     request.onsuccess = () => {
         if ((request.result?.revision ?? null) !== expectedRevision) {
             if (restore) return;
@@ -62,18 +62,20 @@ export const writeState = (auth, state, {expectedRevision = state.revision, rest
         }
         const revision = restore ? state.revision : identifier();
         result = {...state, revision};
-        if (revision === null) stateStore.delete(stateKey(auth));
+        if (revision === null) stateStore.delete(["state", "session"]);
         else stateStore.put({
-            key: stateKey(auth), namespace: auth.storageKey, revision,
+            kind: "state", key: "session", revision,
             userKey: state.session?.key ?? null, token: state.session?.token ?? null,
             redirectKey: state.redirect
         });
-        for (const [field, name] of Object.entries(stores)) {
-            const store = transaction.objectStore(name);
-            const keys = store.index("namespace").getAllKeys(auth.storageKey);
+        for (const field of fields) {
+            const keys = stateStore.index("kind").getAllKeys(field);
             keys.onsuccess = () => {
-                for (const key of keys.result) store.delete(key);
-                for (const record of state[field]) store.add({...record, namespace: auth.storageKey});
+                for (const key of keys.result) stateStore.delete(key);
+                for (const record of state[field]) stateStore.add({
+                    kind: field, key: record.key, value: record,
+                    ...(field === "accounts" ? {accountEmail: record.email} : {})
+                });
             };
         }
     };
