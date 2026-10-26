@@ -34,13 +34,13 @@ it("keeps identical files independent and namespaces isolated", async () => {
     const second = await upload();
     expect(first.url).not.toBe(second.url);
     expect(first.metadata.fullPath).not.toBe(second.metadata.fullPath);
-    const other = new LocalStorage({storageKey: "other"});
+    const other = new LocalStorage({storageId: "other"});
     await expect(other.resolveMetadata(first.url)).rejects.toMatchObject({code: "storage/object-not-found"});
     await storage.delete(first.metadata.fullPath);
     expect(await storage.resolveDownloadURL(second.url)).toBe(second.url);
 });
 it("validates arguments and requires an authenticated user", async () => {
-    for (const key of [null, "", " ", 1]) expect(() => new LocalStorage({storageKey: key})).toThrow("storageKey");
+    for (const key of [null, "", " ", 1]) expect(() => new LocalStorage({storageId: key})).toThrow("storageId");
     for (const options of [{auth: null}, {blob: {}}, {metadata: []}, {name: 3}, {onProgress: "bad"}]) {
         await expect(upload(options)).rejects.toMatchObject({code: "storage/invalid-argument"});
     }
@@ -109,7 +109,7 @@ it("rejects blocked IndexedDB upgrades and closes a late connection", async () =
     vi.spyOn(window.indexedDB, "open").mockReturnValue(request);
     const onProgress = vi.fn();
     const pending = upload({onProgress});
-    const rejected = expect(pending).rejects.toThrow("LocalStorage database upgrade is blocked.");
+    const rejected = expect(pending).rejects.toThrow("Local database upgrade is blocked.");
     await vi.waitFor(() => expect(request.onblocked).toBeTypeOf("function"));
     request.onblocked();
     await rejected;
