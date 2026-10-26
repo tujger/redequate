@@ -10,7 +10,7 @@ import json from "@rollup/plugin-json";
 const source = path => fileURLToPath(new URL(path, import.meta.url));
 const sharedSources = [source("../common/src/"), source("../database/src/")];
 const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
-    .filter(entry => entry.isDirectory() && entry.name.endsWith("-server") && entry.name !== "local-server")
+    .filter(entry => entry.isDirectory() && entry.name.endsWith("-server"))
     .map(({name}) => {
         const directory = source(`../backend/src/${name}/`);
         return {

@@ -20,7 +20,8 @@ Nested manifests contain only module type, runtime dependencies and build/watch
 commands. They do not define independently installed or published npm packages,
 and require no separate installs or lockfiles.
 Browser builds reject Node Backend sources; server builds reject browser and UI sources.
-Local Server is a browser worker shipped by `redequate`, outside this Node archive.
+LocalBackendClient executes local handlers in the browser using the application's
+LocalDatabase; it is shipped by `redequate`, outside this Node archive.
 
 Supported entry points:
 
