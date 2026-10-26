@@ -1,4 +1,5 @@
 import create from "./databaseCreate.js";
+import update from "./databaseUpdate.js";
 
 
 import {initializeApp} from "firebase-admin/app";
@@ -9,7 +10,7 @@ import {getMessaging} from "firebase-admin/messaging";
 
 const app = initializeApp();
 
-export const database = {create};
+export const database = {create, update};
 // export const projectUrl = "https://" + app.options.projectId + ".web.app";
 // export const projectTitle = "The Whisky Talks";
 // export const storageBucket = app.options.storageBucket;
