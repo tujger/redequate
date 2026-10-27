@@ -117,10 +117,21 @@ Multiple physical records in an unindexed store are rejected instead of guessed 
 merged. Deleting the store path clears the document; deleting a field removes only
 that property. No schema indexes are added to make these stores searchable.
 
-CRUD transactions are native IndexedDB transactions. Callback replacements are
-synchronous; callback errors and unique-index conflicts abort all writes. Cross-store
+CRUD writes are native IndexedDB transactions. Local update uses the injected backend:
+Database prepares the complete value from a backend read snapshot, then requests an
+ETag-conditional replacement. Both providers prepare their paths and batch encoding, then call super.update.
+The provider owns the single error boundary and original error context; DatabaseBase
+validates prepared arguments and routes through _backend. common/methods/update
+handles complete-value preparation and retries.
+Object changes shallow-merge at the target address; supplied child objects replace
+their previous values. Relative keys with / update nested addresses. Neither provider
+constructs a fallback backend for update. Firebase object updates require read and
+write permission. Synchronous
+callbacks replace the whole value and may rerun on conflict, up to 25 attempts.
+Callback failures prevent replacement; native index errors roll back the transaction.
+Local update does not initialize schema or open IndexedDB itself. Cross-store
 batches commit atomically, overlapping addresses reject, and timestamp/increment
-markers resolve during the write. Backend creates notify observers only after commit.
+markers resolve during the write. Backend creates and updates notify observers only after commit.
 Listeners refresh collection snapshots from native rows; cross-context messages carry
 only changed collection names. No path metadata is stored or transmitted.
 

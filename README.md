@@ -722,6 +722,29 @@ previous physical database names is also left untouched.
 `request("database.create", path, value)`, returning the saved key or rejecting.
 It accepts prepared objects, requires prepared stores and publishes collection changes after commit.
 
+LocalBackend also accepts `request("database.update", path, changes, options?)` on
+prepared stores. The default `patch` mode accepts relative child paths; an empty
+path accepts root-relative objects or Maps of Local paths, atomically across stores.
+`{mode: "read"}` with a null value returns `{value, etag}`. `{mode: "replace", etag}`
+conditionally saves a prepared value and returns `{committed: true, value}` or the
+fresh `{committed: false, value, etag}` snapshot. Callbacks stay with the caller.
+Committed writes notify observers; reads, conflicts and failures do not. LocalDatabase.update delegates to this
+handler: object changes are merged in Database, callbacks prepare full replacements,
+and ETag conflicts rerun preparation up to 25 times. Object changes use Firebase
+semantics: retain unspecified children and replace supplied child objects entirely. Batch values
+are sent as complete replacements in one root Map. Like create, update requires an
+explicit backend and separately prepared stores; it does not open IndexedDB or emit
+notifications itself.
+
+Local and Firebase prepare paths and batch payloads in their own `update` methods,
+then explicitly call `super.update`. Their single outer `this.run` boundary handles
+errors with the original arguments. The superclass uses `common/methods/update`: a single-path object update reads
+its snapshot, applies shallow or relative-path changes in Database, then sends the
+whole value for ETag-conditional replacement. Callbacks also prepare full replacements.
+Both require the supplied backend; Firebase update has no client fallback and now
+requires read as well as write permission for object updates. Batch payloads remain
+one atomic map of full replacements at their individual addresses.
+
 Pass a backend explicitly when constructing LocalDatabase:
 
 ```js
@@ -733,7 +756,7 @@ LocalDatabase.create generates the final key when needed, evaluates a synchronou
 callback with that key, validates the result, and sends the prepared path/object
 to its supplied backend. There is no backend fallback. The create method retains its error boundary but performs no schema preparation,
 collection checks, storage access or listener notification. Backend stores must be
-prepared separately. Other database operations keep their existing behavior. Dispatcher resolves backend before constructing its default database.
+prepared separately. Dispatcher resolves backend before constructing its default database.
 
 All new automatic Local keys are 20-character, time-sortable IDs from firebase-key.
 They sort by generation time, with monotonic generation within one generator even

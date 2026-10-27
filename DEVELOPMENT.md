@@ -129,16 +129,18 @@ Rules authoritative, including anonymous access and validation. Like SDK
 transactions, it requires read/write permission. Consumers initialize the default
 Admin app; importing server entry points does not initialize Firebase.
 
-Firebase `database.update` routes all writes through the same Backend as create.
-Its ordinary `(path, changes)` request performs a Rules-authorized REST PATCH;
-object/Map batches become one root-relative PATCH. Callback updates execute on the
-client, using `(path, null, {mode: "read"})` to obtain `{value, etag}` and
-`(path, value, {mode: "replace", etag})` for a conditional PUT. Responses report
-`{committed: true, value}` or `{committed: false, value, etag}` on conflicts.
-Callbacks may rerun against current data, with up to 25 write attempts and bounded
-jittered backoff. Undefined callback results delete; confirmed server values are
-returned. The protocol preserves Security Rules and requires read/write access
-for callbacks; it never serializes functions or bypasses Rules through Admin writes.
+Firebase and Local single-path `database.update` share common/methods/update.
+Database reads a logical snapshot, applies Firebase-style shallow/relative-path
+changes or a synchronous callback, then sends the entire prepared value in an
+ETag-conditional replacement. Supplied child objects replace their previous value;
+there is no special Local collection merge. Both providers require the explicit
+backend, and Firebase update no longer constructs a fallback client. Firebase paths
+are normalized to strings; Local named paths remain intact. Object updates now
+require read and write permission, just like callback updates. Object/Map batches
+remain one root-relative atomic patch of full replacement values for each address.
+ETag conflicts rerun preparation up to 25 times with bounded jittered backoff.
+Undefined callback results delete; confirmed backend values are returned for callbacks.
+The protocol keeps Security Rules authoritative and never serializes callbacks.
 
 Firebase `database.delete` follows the same injected/default Backend routing.
 Its single path argument is the direct callable payload, and `database-delete`
@@ -346,7 +348,7 @@ remains separate, and collection notifications are published after commit. resol
 caches one default instance; explicit backends remain as supplied.
 
 Native transaction, index-query and write primitives live in one adjacent
-createHelpers module. Database/local retains schema initialization, native reads, update/delete and listener delivery. The adjacent recordValue module encapsulates wrapping and restoring all Local record values. Common/localDatabase.js is unchanged;
+createHelpers module. Database/local retains schema initialization, native reads, delete/cursor writes and listener delivery. The adjacent recordValue module encapsulates wrapping and restoring all Local record values. Common/localDatabase.js is unchanged;
 there is no additional common storage layer or context registry.
 
 LocalDatabase receives backend explicitly; it never constructs or resolves a
@@ -422,7 +424,7 @@ Local allocation and insertion share a native IndexedDB transaction.
 
 Object update is a shallow merge, retaining unspecified fields and deleting null
 fields. Callback update atomically replaces/returns the whole value; null or
-undefined deletes. Firebase may retry the callback, so it must be synchronous and
+undefined deletes. Firebase and Local may retry the callback, so it must be synchronous and
 free of external side effects. Batch paths are root relative; callbacks belong
 only to the single-path overload. Delete is idempotent; public `write` is removed.
 
@@ -497,10 +499,10 @@ reads/updates that document; these stores do not support search or query options
 Do not add indexes or record registries to them. Provider stores beginning with $
 remain isolated from application CRUD and schema updates.
 
-Schema preparation is lazy for database reads/updates. Local-only applySchema changes
+Schema preparation remains available through read/listener/cursor/delete paths and explicit applySchema. Local-only applySchema changes
 declared indexes/stores without rewriting data, migrating old formats or deleting
-unrelated indexes. Create still only prepares key/value and delegates to the explicit
-backend; its stores must already be prepared. Observers refresh ordinary collection
+unrelated indexes. Create and update prepare their values and delegate to the explicit
+backend; their stores must already be prepared. Observers refresh ordinary collection
 snapshots after committed writes; broadcasts carry collection names only.
 
 The old encoded record format is unsupported. No migration script, startup/Dispatcher
@@ -586,3 +588,33 @@ concurrent text edits are not guaranteed; keep that limitation explicit instead
 of adding an unrelated concurrency protocol.
 
 Roles remain scalar strings for all database callers. Local uses its general record-value codec; auth and UI do not handle Local storage formats. Value queries operate on decoded values without new service indexes. No existing browser data is migrated.
+
+LocalDatabase.update delegates all saving to LocalBackend database.update, without
+opening IndexedDB, preparing schema, or emitting notifications. It merges object
+changes in Database (shallow or relative-path updates, replacing supplied child objects),
+or executes a synchronous callback to prepare a full replacement. ETag conflicts
+rerun preparation up to 25 times with the same retry policy as Firebase. Batch values
+are full replacements sent in one root Map. Delete and cursor write paths are unchanged. It accepts `(path, changes, options?)` with
+patch/read/replace modes. Patch expands child paths and root-relative object/Map
+batches into a single native transaction. Read returns a logical snapshot and a
+canonical, type-sensitive string ETag without stored revisions. Replace compares
+that token and writes inside one readwrite transaction; a mismatch returns the
+current snapshot without writing. Both read and conflict responses contain only
+the logical value and ETag (plus committed:false for conflicts).
+The backend never executes update callbacks.
+Empty paths are only supported for batch patches. Prepared stores, the existing
+record codec, overlap validation, and post-commit collection notifications are reused.
+No automatic schema initialization, migration or Firebase changes are added.
+
+LocalDatabase.update and FirebaseDatabase.update perform provider-specific path
+preparation and batch encoding, then explicitly call super.update. Local retains
+named paths in a Map; Firebase normalizes paths to strings and builds an object.
+A single this.run boundary in each provider covers preparation and the superclass
+call, preserving original error context and invoking onError only once. As with
+create, DatabaseBase.update validates prepared arguments and uses its injected
+_backend without another error boundary. Single updates call common/methods/update
+for full-value preparation and ETag retries. There are no path/batch hook methods.
+Provider-specific update logic lives in firebase/update.js and local/update.js,
+including path/batch preparation and the error boundary. Both classes only delegate
+arguments and bound run and super.update functions. Firebase cursor replacements use the same common single-update helper with
+the explicitly passed backend.

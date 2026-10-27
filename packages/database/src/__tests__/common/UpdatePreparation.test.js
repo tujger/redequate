@@ -18,15 +18,35 @@ const snapshot = (value, etag = "initial") => ({value, etag});
 const commit = value => ({committed: true, value});
 
 describe.each(["local", "firebase"])("%s update preparation", provider => {
-    it("inherits the superclass update without a provider override", async () => {
+    it("prepares provider-specific arguments and explicitly calls the superclass update", async () => {
         const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({keep: true})).mockResolvedValueOnce(commit({keep: true, added: 1}))};
         const database = forProvider(provider, backend);
-        expect(Object.hasOwn(Object.getPrototypeOf(database), "update")).toBe(false);
-        expect(database.update).toBe(DatabaseBase.prototype.update);
+        expect(Object.hasOwn(Object.getPrototypeOf(database), "update")).toBe(true);
+        expect(database).not.toHaveProperty("_resolveUpdatePath");
+        expect(database).not.toHaveProperty("_encodeUpdateBatch");
         const update = vi.spyOn(DatabaseBase.prototype, "update");
         await database.update(path, {added: 1});
-        expect(update).toHaveBeenCalledExactlyOnceWith(path, {added: 1});
+        expect(update).toHaveBeenCalledExactlyOnceWith(address(provider), {added: 1});
         expect(backend.request.mock.calls[1][2]).toEqual({keep: true, added: 1});
+    });
+
+    it("passes its prepared batch to the superclass", async () => {
+        const backend = {request: vi.fn().mockResolvedValue(null)};
+        const database = forProvider(provider, backend), update = vi.spyOn(DatabaseBase.prototype, "update");
+        const updates = new Map([[path, {complete: true}]]);
+        await database.update(updates);
+        expect(update).toHaveBeenCalledExactlyOnceWith(provider === "firebase" ? {"posts/p1": {complete: true}} : updates);
+    });
+
+    it.each(["preparation", "backend"])("handles a %s error once even when onError throws", async phase => {
+        const failure = new Error("backend failed"), handlerFailure = new Error("handler failed");
+        const backend = {request: vi.fn().mockRejectedValue(failure)};
+        const onError = vi.fn(() => { throw handlerFailure; });
+        const target = phase === "preparation" ? [null] : path;
+        const database = forProvider(provider, backend, onError);
+        await expect(database.update(target, {})).rejects.toBe(handlerFailure);
+        expect(onError).toHaveBeenCalledExactlyOnceWith(phase === "backend" ? failure : expect.any(Error), "update", {path: target, changes: {}});
+        if (phase === "preparation") expect(backend.request).not.toHaveBeenCalled();
     });
 
     it("merges a record in Database and sends its complete value for conditional replacement", async () => {
@@ -172,7 +192,7 @@ describe.each(["local", "firebase"])("%s update preparation", provider => {
     });
 });
 
-it("implements update in DatabaseBase with validated paths and a Map batch by default", async () => {
+it("implements common saving in DatabaseBase and retains the prepared batch format", async () => {
     const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({keep: true})).mockResolvedValueOnce(commit({keep: true, added: 1}))};
     const database = new DatabaseBase({backend});
     await database.update(path, {added: 1});
@@ -184,4 +204,8 @@ it("implements update in DatabaseBase with validated paths and a Map batch by de
     const updates = new Map([[path, {complete: true}]]);
     await database.update(updates);
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.update", "", updates);
+    backend.request.mockClear();
+    const prepared = {"posts/p1": {complete: true}};
+    await database.update(prepared);
+    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.update", "", prepared);
 });
