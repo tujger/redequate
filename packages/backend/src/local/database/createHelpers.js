@@ -354,13 +354,16 @@ export const observeWrites = (storageId, callback) => {
     };
 };
 
-const notifyCreated = async (storageId, collection) => {
-    await Promise.allSettled([...(writeObservers.get(storageId) ?? [])].map(callback => Promise.resolve().then(() => callback(collection))));
+export const notifyWrites = async (storageId, collections) => {
+    collections = [...new Set(collections)];
+    if (!collections.length) return;
+    await Promise.allSettled(collections.flatMap(collection => [...(writeObservers.get(storageId) ?? [])]
+        .map(callback => Promise.resolve().then(() => callback(collection)))));
     if (typeof globalThis.BroadcastChannel !== "function") return;
     let channel;
     try {
         channel = new globalThis.BroadcastChannel(`redequate:local:${storageId}:changes`);
-        channel.postMessage({collections: [collection]});
+        channel.postMessage({collections});
     } catch (_) { /* Notification failure cannot invalidate a committed record. */ }
     finally { channel?.close(); }
 };
@@ -370,6 +373,6 @@ export const addRecord = async (storageId, path, value) => {
     const database = await openLocalDatabase(storageId);
     const result = await runTransaction(database, "readwrite", [collection], transaction =>
         writeStore(transaction.objectStore(collection), path, value, {create: true}));
-    await notifyCreated(storageId, collection);
+    await notifyWrites(storageId, [collection]);
     return result;
 };
