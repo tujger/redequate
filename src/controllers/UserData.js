@@ -1,4 +1,5 @@
 import {UserData as UserDataCommon, UserRole} from "../../packages/common";
+import {decodeRole, encodeRole, roleQuery} from "../../packages/auth/src/common/roleData";
 import {restoreLanguage} from "../reducers/languageReducer";
 import {cacheDatas} from "./General";
 import notifySnackbar from "./notifySnackbar";
@@ -66,9 +67,9 @@ export default class UserData extends UserDataCommon {
     }
 
     async _assertAdminRemains() {
-        const role = await this.#database.read(["roles", {user_id: this.id}]);
+        const role = decodeRole(this.#database, await this.#database.read(["roles", {user_id: this.id}]));
         if (role !== UserRole.ADMIN) return;
-        const roles = await this.#database.read(["roles"], {equalTo: UserRole.ADMIN});
+        const roles = await this.#database.read(["roles"], roleQuery(this.#database, UserRole.ADMIN));
         let hasAnotherAdmin = false;
         for (const id of Object.keys(roles || {})) {
             if (id === this.id) continue;
@@ -82,7 +83,7 @@ export default class UserData extends UserDataCommon {
 
     async updateRole(role, updates = new Map()) {
         if (role !== UserRole.ADMIN) await this._assertAdminRemains();
-        updates.set(["roles", {user_id: this.id}], role);
+        updates.set(["roles", {user_id: this.id}], encodeRole(this.#database, this.id, role));
         await this.#database.update(updates);
         return this;
     }
@@ -166,7 +167,7 @@ export default class UserData extends UserDataCommon {
             tasks.push(new Promise((resolve, reject) => {
                 this.#database.read(["roles", {user_id: state.id}])
                     .then(value => {
-                        state.role = value;
+                        state.role = decodeRole(this.#database, value);
                         state.loaded = {...state.loaded, role: true};
                         resolve(state.role);
                     }).catch(reject);
