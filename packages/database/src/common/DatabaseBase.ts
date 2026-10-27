@@ -139,12 +139,13 @@ export default class DatabaseBase {
     /**
      * Shallow merge: nested values are replaced; null deletes. Non-null values may create records.
      * Batch paths are root-relative. A synchronous callback replaces atomically,
-     * returns the final value, and deletes on null or undefined; it requires read/write access.
+     * returns the resulting value, deletes on null, and leaves storage unchanged on undefined.
+     * The callback receives a copy; mutations without a returned value are discarded.
      */
-    update(path: DatabasePath, callback: (value: DatabaseValue) => DatabaseValue | undefined, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
+    update(path: DatabasePath, callback: (value: DatabaseValue) => DatabaseValue | void, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
     update(path: DatabasePath, changes: Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
     update(updates: Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
-    async update(path: DatabasePath | Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, changes?: Record<string, DatabaseValue> | ((value: DatabaseValue) => DatabaseValue | undefined) | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
+    async update(path: DatabasePath | Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, changes?: Record<string, DatabaseValue> | ((value: DatabaseValue) => DatabaseValue | void) | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
         return updateRecord(this._backend, path, changes);
     }
 
@@ -159,7 +160,7 @@ export default class DatabaseBase {
      * Compositions deduplicate by source path + key (or cursor ID + key without a path)
      * and run each source's handle once, before buffering.
      */
-    cursor(path: DatabasePath | ((DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
+    cursor(path: DatabasePath | ((DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor | undefined {
         return new DatabaseCursor(options, typeof path === "string" || (path instanceof Array &&
             (path.length === 0 || typeof path[0] === "string"))
             ? path as DatabasePath

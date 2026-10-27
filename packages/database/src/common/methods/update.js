@@ -64,7 +64,8 @@ export default async function update(backend, path, changes) {
     const entries = callback ? undefined : prepareChanges(changes);
     let snapshot = await backend.request("database.update", path, null, {mode: "read"});
     for (let attempt = 0; attempt < 25; attempt++) {
-        const value = callback ? applyUpdate(changes, snapshot.value) ?? null : merge(snapshot.value, entries);
+        const value = callback ? applyUpdate(changes, snapshot.value) : merge(snapshot.value, entries);
+        if (callback && value === undefined) return snapshot.value ?? null;
         snapshot = await backend.request("database.update", path, value, {mode: "replace", etag: snapshot.etag});
         if (snapshot.committed) return callback ? snapshot.value : undefined;
         if (attempt < 24) {

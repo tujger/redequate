@@ -55,13 +55,29 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   database's `onError` handler can suppress a create failure by returning normally,
   in which case create resolves to `undefined`. `update(path, object)` is
   a shallow merge, with null deleting fields; `update(path, callback)` atomically
-  replaces and returns the final value, with null or undefined deleting. Its
-  callback signature is `(value: DatabaseValue) => DatabaseValue | undefined`;
+  replaces and returns the final value: null deletes, undefined leaves storage unchanged. Its
+  callback signature is `(value: DatabaseValue) => DatabaseValue | void`;
   no separate updater type is exported. Batch
   paths are root relative. `delete` succeeds for absent paths. Operation errors
   go to the call's `onError` or the database default; a normally returning
   handler suppresses the error and leaves an undefined result. Listeners and
   cursors retain their error handler.
+- Successful object and batch updates resolve to `undefined`, as does a suppressed
+  failure; their return value alone cannot distinguish those outcomes. Callback
+  updates return the committed value (`null` for deletion), so `undefined` means
+  a suppressed failure. If the callback returns undefined or has no return statement,
+  update returns its original snapshot (null when absent) without a replacement request
+  or write notification. A no-change result after a conflict returns the fresh snapshot.
+  Callbacks receive copies, so mutations are discarded unless a value is returned.
+  The result contract matches `cursor.handle`: null deletes, undefined leaves the
+  original value unchanged, and any other value replaces it, including false, 0,
+  empty strings and arrays. Update callbacks are synchronous; cursor handles may
+  return a Promise.
+- Provider `cursor(...)` factories and `cursor.subscribe(...)` return their handle,
+  or `undefined` after a suppressed construction/registration failure. `next(...)`
+  returns an entry array, or `undefined` after a suppressed page failure. `[]` is
+  an exhausted page, not a failed page; check `position.finished` for completion.
+  Group headings have a `key` and no `value`; data entries have both properties.
 - Neither provider adds a `timestamp` field to a record. Local preserves ordinary
   data fields through create, update, and collection writes, excluding service keys. A caller
   supplied `timestamp`, including a `TIMESTAMP` marker, remains explicit data;
@@ -236,6 +252,15 @@ by the development/test workflow.
   subscriptions of that cursor;
   `unsubscribe()` is idempotent. Live events do not advance `position` or
   cancel an in-flight `next` page.
+
+Local listener registration uses the shared error boundary: an exception from
+`onError` propagates once, and a suppressed registration failure returns `undefined`
+without a dummy subscription. Asynchronous Local delivery reports exceptions from
+`onError` through the host's `reportError` (or an uncaught microtask exception when
+unavailable). It does not invoke `onError` again, stop other listeners, or reject an
+already committed backend write. Callback promises are observed without blocking
+listener queues, so callbacks can perform writes. Completed queue tails are released;
+unsubscribing does not discard pending work or break ordering on resubscription.
 
 ## Verification and limits
 
