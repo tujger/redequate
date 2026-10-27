@@ -740,13 +740,15 @@ They sort by generation time, with monotonic generation within one generator eve
 in the same millisecond or after a clock rollback. They do not describe server commit
 time or establish global order between devices with different clocks. Existing and
 explicit keys are unchanged; mixed historical keys do not gain chronological order.
-Native IndexedDB primary keys and indexed identity fields are returned as ordinary fields. Failed saves leave no record; generated
+Local returns the original value; native primary keys and injected index fields stay internal. Failed saves leave no record; generated
 logical IDs are not reserved or reused. Direct backend requests without a key use the
 same string-key generator. No data migration is performed.
 
 ### Local IndexedDB records
 
-Local rows are ordinary objects with native `_id` and actual index fields. Only
+Local rows use an internal `_encoded`/`_value` container with native `_id` and index projections.
+Reads restore the original value, including explicitly supplied identity fields. Old rows without a
+container reject with `VersionError`; they are not automatically migrated or deleted. Only
 indexes declared in stores.json or constructor stores are created; searches require
 an appropriate index. Nested values stay inside their parent record. A store without
 indexes (such as meta) holds one small document and supports field access rather than

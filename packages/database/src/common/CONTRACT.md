@@ -80,7 +80,7 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   it does not access IndexedDB, initialize schemas or publish notifications. The
   backend operates independently on stores prepared separately.
 - Failed writes roll back records, but generated logical IDs are not reserved or reused.
-  Native _id values and indexed identity fields are ordinary returned record fields.
+  Native _id and injected address fields stay inside Local; reads return exactly the supplied value.
   No allocator stores or implicit timestamps are added; no data migration is performed.
 
 ## Local IndexedDB schema
@@ -91,12 +91,16 @@ not add framework indexes. Simple and compound `unique` indexes enforce uniquene
 Additional configured stores use the same format; provider stores beginning with `$`
 remain outside the application schema and cannot be changed by application CRUD.
 
-Rows are normal objects. Identity fields from the requested address, such as
-`post_id`, `chat_id` and `message_id`, are real stored fields, available on reads along
-with `_id`. Conflicting address fields are rejected instead of overwritten and later
-restored. Root indexed records must be objects. Nested arrays, scalars, objects and
-collections live directly inside their parent object, rather than separate path rows.
-Native primary keys remain stable on replacement and cannot be changed by an update.
+Local stores every record in an internal `{_encoded: true, _value: value}` container.
+The physical row also has a native `_id`, injected address fields and an independent
+projection of object fields for native indexes, including indexes declared later.
+Reads, callbacks, queries, cursors and listeners receive exactly the original value.
+Explicit identity fields in that value remain user data; injected fields do not leak.
+Wrapper-like names inside the original value are ordinary user fields. Nested values
+stay inside the same record. Conflicting address fields are rejected and the physical
+primary key remains stable. `null` deletes and `undefined` is rejected. Create still
+requires an object. Old rows without a container reject with `VersionError`; there is
+no automatic conversion or deletion of existing browser data.
 
 Named field lookups use declared indexes or the native `_id` primary key. A compound
 index can address a full unique record or a prefix scope. Explicit identity fields
