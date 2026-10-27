@@ -342,12 +342,11 @@ existing payload shape for legacy callables. `database.create` accepts exactly
 LocalBackend from `redequate/backend/local` accepts `{storageId}` and owns no
 LocalDatabase instance. Its create handler opens IndexedDB by storageId and writes
 only to prepared application stores. Missing stores fail; schema initialization
-and listener notifications are outside this handler's current scope. resolveBackend
+remains separate, and collection notifications are published after commit. resolveBackend
 caches one default instance; explicit backends remain as supplied.
 
-Create and the required shared path/tree/row primitives live in one adjacent
-createHelpers module. Database/local imports those primitives and retains its
-schema initialization, reads, update/delete and notification queue. Its row module re-exports the shared format functions. Common/localDatabase.js is unchanged;
+Native transaction, index-query and write primitives live in one adjacent
+createHelpers module. Database/local retains schema initialization, native reads, update/delete and listener delivery. There is no row encoding/decoding layer. Common/localDatabase.js is unchanged;
 there is no additional common storage layer or context registry.
 
 LocalDatabase receives backend explicitly; it never constructs or resolves a
@@ -477,39 +476,31 @@ Do not replace that with initial replay or a bounded listener that can miss even
 
 ### Local storage and schema
 
-`local/stores.json` plus constructor `stores` are the only native store/index
-configuration. Identical definitions merge; conflicting definitions reject.
-Additional configured stores participate in CRUD, nested paths, cursors, and
-subscriptions. Collection visibility is instance-scoped even when storageId is
-shared. Do not restore parallel store registries or field whitelists.
+Application stores and their indexes come exclusively from local/stores.json and
+constructor stores. There are no generated identity, path, type or cursor indexes.
+Records are ordinary objects with their native _id and real indexed identity fields;
+reads retain those fields. Nested values live in their parent object. Do not restore
+address envelopes, field-projection bookkeeping or a reconstruction codec.
 
-Physical rows use native auto-increment `_id`; new public keys are time-sortable
-strings independent of that internal primary key. The former public key was a numeric
-string allocated during create. Each store has one unique `_identity` index on
-`_local.path`; other native indexes come only from configured definitions.
-Do not restore allocator stores or generated cursor/scope/type indexes.
+Lookups use declared simple/compound indexes, including compound-prefix scopes, or
+native primary keys. Missing lookup indexes and ambiguous addresses reject explicitly.
+Native unique indexes enforce uniqueness. Record updates retain their native primary
+keys; multi-store batches are atomic and reject overlapping addresses.
 
-Public object fields are stored once, alongside sparse `_local` address/identity
-metadata. Scalars/arrays and overwritten reserved fields retain their original
-values through that envelope. Internal primary keys and metadata must not leak
-into public reads or overwrite caller data. Nested JSON alone does not establish
-a new collection; named/existing identities determine record boundaries.
+Stores without secondary indexes intentionally hold one small document. Field access
+reads/updates that document; these stores do not support search or query options.
+Do not add indexes or record registries to them. Provider stores beginning with $
+remain isolated from application CRUD and schema updates.
 
-Cursor/type queries scan collections with the shared comparator; native paging
-is not guaranteed. Do not claim generated-index performance from superseded
-implementations. Large collections can be slower, and indexes must preserve
-actual public-field and nested identity semantics.
+Schema preparation is lazy for database reads/updates. Local-only applySchema changes
+declared indexes/stores without rewriting data, migrating old formats or deleting
+unrelated indexes. Create still only prepares key/value and delegates to the explicit
+backend; its stores must already be prepared. Observers refresh ordinary collection
+snapshots after committed writes; broadcasts carry collection names only.
 
-Preparation is lazy per instance. Compatible schema/envelope upgrades are atomic,
-preserve `_id` and records, and do not bump versions when unchanged. Constraint
-failures roll back rows, indexes, and version. Blocked upgrades remain retryable.
-Older incompatible `_rowId` databases require explicit repair/reset on the chosen
-origin; opening must never silently delete them.
-
-`applySchema` belongs only to LocalDatabase and accepts its physical-schema format;
-it does not register additional CRUD collections. It is additive: unspecified
-stores/indexes remain, and keyPath/autoIncrement changes or record deletion are
-not an implicit migration. Auth uses separate IndexedDB storage.
+The old encoded record format is unsupported. No migration script, startup/Dispatcher
+migration or compatibility decoder is shipped or run. Tests use fresh disposable
+IndexedDB factories; developer data is not deleted or converted.
 
 ## 6. State, navigation, and retained constraints
 
@@ -588,3 +579,5 @@ requires approval, following does not. Baseline repairs must not pre-apply delta
 that existing triggers will add. Atomic snapshots across repairs/triggers or
 concurrent text edits are not guaranteed; keep that limitation explicit instead
 of adding an unrelated concurrency protocol.
+
+Local role records use `{user_id, role}` and the declared `role` index. Firebase roles remain scalar strings. `DatabaseBase.supportsScalarRecords` defaults to true; LocalDatabase sets it to false. The shared auth role helpers adapt profile writes, reads, and role queries to this capability, including last-admin checks. No existing browser data is migrated.

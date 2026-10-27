@@ -720,7 +720,7 @@ previous physical database names is also left untouched.
 `LocalBackend` from `redequate/backend/local` accepts `{storageId}`, defaulting to
 `redequate:local`. It writes prepared record objects through
 `request("database.create", path, value)`, returning the saved key or rejecting.
-It neither accepts callbacks nor initializes schemas or publishes listener notifications.
+It accepts prepared objects, requires prepared stores and publishes collection changes after commit.
 
 Pass a backend explicitly when constructing LocalDatabase:
 
@@ -740,9 +740,19 @@ They sort by generation time, with monotonic generation within one generator eve
 in the same millisecond or after a clock rollback. They do not describe server commit
 time or establish global order between devices with different clocks. Existing and
 explicit keys are unchanged; mixed historical keys do not gain chronological order.
-Numeric IndexedDB primary keys remain internal. Failed saves leave no record; generated
+Native IndexedDB primary keys and indexed identity fields are returned as ordinary fields. Failed saves leave no record; generated
 logical IDs are not reserved or reused. Direct backend requests without a key use the
 same string-key generator. No data migration is performed.
+
+### Local IndexedDB records
+
+Local rows are ordinary objects with native `_id` and actual index fields. Only
+indexes declared in stores.json or constructor stores are created; searches require
+an appropriate index. Nested values stay inside their parent record. A store without
+indexes (such as meta) holds one small document and supports field access rather than
+record searches. The previous service envelope and generated identity index are
+removed, along with their codecs and compatibility logic. No migration or automatic
+data deletion is provided; use a clean local database for the new format.
 
 ### Independent common and server archive
 
