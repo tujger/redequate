@@ -1,6 +1,6 @@
 import {query, startAt, endAt, limitToFirst, limitToLast, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
 import readSnapshot from "./readSnapshot";
-import update from "./update";
+import update from "../common/methods/update";
 import compareValues from "../common/compareValues";
 import compareKeys from "../common/compareKeys";
 import DatabaseCursor from "../common/DatabaseCursor";
@@ -239,7 +239,7 @@ const saveReplacement = async (props) => {
     const {state, child, replacement} = props;
     if (replacement === undefined) return props;
     const path = state.path ? `${state.path}/${child.key}` : child.key;
-    await update(state.firebase, state.backend, path, () => replacement);
+    await update(state.backend, path, () => replacement);
     return {...props, entry: undefined};
 };
 

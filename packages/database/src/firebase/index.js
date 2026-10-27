@@ -71,9 +71,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async update(path, changes, options = {}) {
-        const batch = typeof path !== "string" && !(path instanceof Array);
-        return this.run(() => update(this.#firebase, this._backend, path, batch ? undefined : changes),
-            batch ? changes ?? options : options, "update", batch ? {updates: path} : {path, changes});
+        return update(path, changes, options, this.run.bind(this), super.update.bind(this));
     }
 
     get TIMESTAMP() {
