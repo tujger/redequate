@@ -4,7 +4,7 @@ import DatabaseCursor from "../common/DatabaseCursor";
 import compareKeys from "../common/compareKeys";
 import resolvePath from "../common/resolvePath";
 import addEventListener, {mutate} from "./addEventListener";
-import {createRecordPath, getAllRecords, getChildRecordPath, getCursorChildren, getSubtree, subtreeValue, updateRecords} from "./helpers";
+import {getChildRecordPath, getCursorChildren, getSubtree, updateRecords} from "./helpers";
 
 const invalid = message => fail("database/invalid-argument", message);
 const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
@@ -30,7 +30,7 @@ export default class LocalCursor extends DatabaseCursor {
         const resolvedPath = identityField === undefined ? path : path.slice(0, -1);
         super(options, resolvedPath);
         this.#storageId = storageId;
-        this.#path = typeof resolvedPath === "string" ? resolvedPath.split("/").filter(Boolean) : resolvedPath;
+        this.#path = resolvedPath;
         this.#identityField = identityField;
         this.#field = this.orderBy === undefined ? undefined : resolvePath(this.orderBy);
         this.#byValue = this.#field === "" || (this.#field === undefined && this.equalTo !== undefined);
@@ -62,12 +62,9 @@ export default class LocalCursor extends DatabaseCursor {
         if (this.#identityField !== undefined) return getCursorChildren(this.#storageId, this.#path, this.#identityField, {
             orderBy: this.orderBy, equalTo: this.equalTo, start: this.start, end: this.end
         });
-        if (this.#path.length) return getSubtree(this.#storageId, this.#path, {
+        return getSubtree(this.#storageId, this.#path, {
             orderBy: this.orderBy, equalTo: this.equalTo, start: this.start, end: this.end
         });
-        const rows = await getAllRecords(this.#storageId);
-        return Object.fromEntries([...new Set(rows.map(row => row._collection))]
-            .map(collection => [collection, subtreeValue(rows, [collection])]));
     }
 
     #hasField(value) {
@@ -124,8 +121,7 @@ export default class LocalCursor extends DatabaseCursor {
                 const replacement = await this.handle(structuredClone(entry));
                 if (replacement !== undefined) {
                     const recordPath = this.#path.length
-                        ? await getChildRecordPath(this.#storageId, this.#path, key, this.#identityField) ??
-                            createRecordPath([...this.#path, this.#identityField ?? "id"], key)
+                        ? await getChildRecordPath(this.#storageId, this.#path, key, this.#identityField)
                         : [key];
                     await mutate(this.#storageId, [recordPath], () =>
                         updateRecords(this.#storageId, [[recordPath, replacement]]));

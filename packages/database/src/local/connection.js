@@ -1,5 +1,4 @@
 import {LOCAL_SCHEMA} from "./storeSchema";
-import {IDENTITY_INDEX} from "./row";
 
 const openVersionedDatabase = (storageId, version, schema) => new Promise((resolve, reject) => {
     const request = globalThis.indexedDB.open(storageId, version);
@@ -37,13 +36,7 @@ export const openDatabase = async (storageId, initialSchema = LOCAL_SCHEMA) => {
             Object.entries(LOCAL_SCHEMA).some(([name, definition]) => {
                 if (!database.objectStoreNames.contains(name)) return false;
                 const store = database.transaction(name).objectStore(name);
-                if (store.keyPath !== definition.keyPath || store.autoIncrement !== definition.autoIncrement ||
-                    !store.indexNames.contains("_identity")) return true;
-                const index = store.index("_identity");
-                const path = JSON.stringify(index.keyPath);
-                return !index.unique || index.multiEntry ||
-                    (path !== JSON.stringify(IDENTITY_INDEX.keyPath) &&
-                        path !== JSON.stringify(["_local._collection", "_local._key"]));
+                return store.keyPath !== definition.keyPath || store.autoIncrement !== definition.autoIncrement;
             });
         if (incompatible) throw Object.assign(new Error("Existing Local database has an incompatible schema."), {name: "VersionError"});
         return database;
