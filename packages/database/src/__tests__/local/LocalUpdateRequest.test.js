@@ -73,11 +73,20 @@ it("executes callbacks before replace requests and returns the committed value",
     expect(backend.request.mock.calls[2][2]).toEqual({count: 4});
 });
 
-it.each([undefined, null, false, 0, "", [1, 2]])("sends callback result %j as a complete replacement", async value => {
+it.each([null, false, 0, "", [1, 2]].map(value => ({value})))("sends callback result $value as a complete replacement", async ({value}) => {
     const {backend, database} = client();
-    backend.request.mockResolvedValueOnce(snapshot({old: true})).mockResolvedValueOnce(commit(value ?? null));
-    expect(await database.update(path, () => value)).toEqual(value ?? null);
-    expect(backend.request.mock.calls[1][2]).toEqual(value ?? null);
+    backend.request.mockResolvedValueOnce(snapshot({old: true})).mockResolvedValueOnce(commit(value));
+    expect(await database.update(path, () => value)).toEqual(value);
+    expect(backend.request.mock.calls[1][2]).toEqual(value);
+});
+
+it("returns the original value without a replacement request when the callback returns undefined", async () => {
+    const {backend, database} = client();
+    const value = {keep: true};
+    backend.request.mockResolvedValueOnce(snapshot(value));
+    expect(await database.update(path, copy => { copy.keep = false; return undefined; })).toEqual({keep: true});
+    expect(value).toEqual({keep: true});
+    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.update", path, null, {mode: "read"});
 });
 
 it("rejects async and throwing callbacks after reading, without requesting replacement", async () => {

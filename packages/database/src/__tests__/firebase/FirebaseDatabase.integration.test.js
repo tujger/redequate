@@ -175,7 +175,9 @@ it("atomically increments through update callbacks and returns committed values"
         database.update([path, "counter"], value => (value ?? 0) + 1)));
     expect(results.slice().sort((a, b) => a - b)).toEqual(Array.from({length: 12}, (_, index) => index + 1));
     expect(await database.read([path, {counter: "counter"}])).toBe(12);
-    expect(await database.update([path, "counter"], () => undefined)).toBeNull();
+    expect(await database.update([path, "counter"], () => undefined)).toBe(12);
+    expect(await database.read([path, {counter: "counter"}])).toBe(12);
+    expect(await database.update([path, "counter"], () => null)).toBeNull();
     await expect(database.update([path, "counter"], async () => 99)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await database.read([path, {counter: "counter"}])).toBeUndefined();
     expect(await database.update([path, "counter"], () => null)).toBeNull();

@@ -139,7 +139,9 @@ are normalized to strings; Local named paths remain intact. Object updates now
 require read and write permission, just like callback updates. Object/Map batches
 remain one root-relative atomic patch of full replacement values for each address.
 ETag conflicts rerun preparation up to 25 times with bounded jittered backoff.
-Undefined callback results delete; confirmed backend values are returned for callbacks.
+Null callback results delete; undefined leaves storage unchanged without a replacement request.
+Callbacks receive copies. No-change callbacks return the original snapshot (null when absent);
+replacement callbacks return the confirmed backend value.
 The protocol keeps Security Rules authoritative and never serializes callbacks.
 
 DatabaseBase.delete validates the prepared path and sends database.delete through
@@ -429,8 +431,9 @@ fail atomically. Firebase uses a transaction and needs read plus write permissio
 Local allocation and insertion share a native IndexedDB transaction.
 
 Object update is a shallow merge, retaining unspecified fields and deleting null
-fields. Callback update atomically replaces/returns the whole value; null or
-undefined deletes. Firebase and Local may retry the callback, so it must be synchronous and
+fields. Callback update atomically replaces/returns the whole value; null deletes,
+undefined leaves the original value unchanged without a write. Mutations to the callback's
+copy are discarded unless it returns a value, matching cursor.handle. Firebase and Local may retry the callback, so it must be synchronous and
 free of external side effects. Batch paths are root relative; callbacks belong
 only to the single-path overload. Delete is idempotent; public `write` is removed.
 

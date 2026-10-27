@@ -117,10 +117,50 @@ describe.each(["local", "firebase"])("%s update preparation", provider => {
         expect(backend.request.mock.calls[2][2]).toEqual({count: 4});
     });
 
-    it.each([null, undefined, false, 0, "", [1, 2]])("preserves callback result %j", async value => {
-        const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({old: true})).mockResolvedValueOnce(commit(value ?? null))};
-        expect(await forProvider(provider, backend).update(path, () => value)).toEqual(value ?? null);
-        expect(backend.request.mock.calls[1][2]).toEqual(value ?? null);
+    it.each([null, false, 0, "", [1, 2]].map(value => ({value})))("preserves callback result $value", async ({value}) => {
+        const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({old: true})).mockResolvedValueOnce(commit(value))};
+        expect(await forProvider(provider, backend).update(path, () => value)).toEqual(value);
+        expect(backend.request.mock.calls[1][2]).toEqual(value);
+    });
+
+    it.each([null, false, 0, "", [1, 2], {nested: {keep: true}}].map(value => ({value})))(
+        "leaves snapshot $value unchanged when the callback returns undefined", async ({value}) => {
+            const original = structuredClone(value);
+            const backend = {request: vi.fn().mockResolvedValueOnce(snapshot(value))};
+            const callback = vi.fn(copy => {
+                if (Array.isArray(copy)) copy.push("discarded");
+                else if (copy && typeof copy === "object") copy.nested.keep = false;
+                return undefined;
+            });
+            expect(await forProvider(provider, backend).update(path, callback)).toEqual(original);
+            expect(value).toEqual(original);
+            expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.update", address(provider), null, {mode: "read"});
+            expect(callback).toHaveBeenCalledOnce();
+        }
+    );
+
+    it("discards mutations when a callback has no return statement", async () => {
+        const value = {nested: {keep: true}};
+        const backend = {request: vi.fn().mockResolvedValueOnce(snapshot(value))};
+        expect(await forProvider(provider, backend).update(path, copy => { copy.nested.keep = false; }))
+            .toEqual({nested: {keep: true}});
+        expect(value).toEqual({nested: {keep: true}});
+        expect(backend.request).toHaveBeenCalledTimes(1);
+    });
+
+    it("can stop after a conflict without replacing the fresh value", async () => {
+        vi.spyOn(Math, "random").mockReturnValue(0);
+        const fresh = {count: 3};
+        const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({count: 1}))
+            .mockResolvedValueOnce({committed: false, ...snapshot(fresh, "fresh")})};
+        const callback = vi.fn().mockReturnValueOnce({count: 2}).mockImplementationOnce(copy => { copy.count = 99; });
+        expect(await forProvider(provider, backend).update(path, callback)).toEqual({count: 3});
+        expect(fresh).toEqual({count: 3});
+        expect(callback).toHaveBeenCalledTimes(2);
+        expect(backend.request.mock.calls).toEqual([
+            ["database.update", address(provider), null, {mode: "read"}],
+            ["database.update", address(provider), {count: 2}, {mode: "replace", etag: "initial"}]
+        ]);
     });
 
     it("passes timestamp and increment markers inside the complete value", async () => {

@@ -301,3 +301,36 @@ it.each(["_value", "_record", "_encoded"])("rejects reserved root field %s, but 
     await put(database, {nested: {[name]: "user"}});
     expect(await database.read(path)).toEqual({nested: {[name]: "user"}});
 });
+
+
+it("discards callback mutations without writes or notifications unless a value is returned", async () => {
+    const storageId = "callback-no-change", database = createLocalDatabase({storageId});
+    await database.read(["posts"]);
+    await put(database, {nested: {keep: true}, list: [1, 2]});
+    const before = await readNativeStore(storageId, "posts");
+    const onChange = vi.fn(), changed = vi.fn(), removed = vi.fn();
+    const listener = database.addEventListener(["posts"], {onChange, onChildChange: changed, onChildRemove: removed});
+    try {
+        await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+        expect(await database.update(path, copy => {
+            copy.nested.keep = false;
+            copy.list.push(3);
+        })).toEqual({nested: {keep: true}, list: [1, 2]});
+        expect(await database.update(path, () => undefined)).toEqual({nested: {keep: true}, list: [1, 2]});
+        expect(await readNativeStore(storageId, "posts")).toEqual(before);
+        expect(onChange).toHaveBeenCalledTimes(1);
+        expect(changed).not.toHaveBeenCalled();
+        expect(removed).not.toHaveBeenCalled();
+        expect(await database.update(path, () => null)).toBeNull();
+        expect(await database.read(path)).toBeUndefined();
+        expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {nested: {keep: true}, list: [1, 2]}});
+    } finally { listener.remove(); }
+});
+
+it("leaves missing storage untouched when an update callback returns undefined", async () => {
+    const storageId = "callback-missing", database = createLocalDatabase({storageId});
+    await database.read(["posts"]);
+    expect(await database.update(path, () => undefined)).toBeNull();
+    expect(await database.read(path)).toBeUndefined();
+    expect(await readNativeStore(storageId, "posts")).toEqual([]);
+});

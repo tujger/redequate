@@ -44,10 +44,9 @@ it("validates independent read, listener and cursor entrypoints before accessing
     await expect(database.read(path)).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(database.readSubtree(path)).rejects.toMatchObject({code: "database/invalid-argument"});
     const onError = vi.fn();
-    vi.spyOn(console, "error").mockImplementation(() => {});
     const listener = database.addEventListener(path, {onError});
     expect(onError).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({code: "database/invalid-argument"}), "addEventListener", {path, orderBy: undefined});
-    listener.remove();
+    expect(listener).toBeUndefined();
     expect(() => database.cursor(path)).toThrow(expect.objectContaining({code: "database/invalid-argument"}));
     expect(open).not.toHaveBeenCalled();
 });
