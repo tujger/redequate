@@ -1,12 +1,18 @@
-import {IDBFactory} from "fake-indexeddb";
+import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
 import LocalBackend from "../local";
 import LocalDatabase from "../../../database/src/local";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
-it("creates directly through backend without calling database.create and shares markers", async () => {
-    const database = new LocalDatabase({storageId: "backend-create-direct"});
+const prepare = async (storageId, stores) => {
+    const database = new LocalDatabase({storageId, stores});
+    await database.read(["posts"]);
+    return database;
+};
+
+it("creates in prepared storage without calling LocalDatabase.create and preserves markers", async () => {
+    const database = await prepare("prepared-direct");
     const backend = new LocalBackend({storageId: database.storageId});
     const create = vi.spyOn(database, "create").mockImplementation(() => { throw new Error("recursive create"); });
     const key = await backend.request("database.create", ["posts", "post_id"], id => ({
@@ -19,98 +25,73 @@ it("creates directly through backend without calling database.create and shares 
         .rejects.toMatchObject({name: "ConstraintError"});
 });
 
-it("preserves the supplied database's custom stores and instance scope", async () => {
+it("creates in a prepared custom store without receiving its schema", async () => {
     const stores = [{store: "audit", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: []}];
-    const database = new LocalDatabase({storageId: "backend-create-stores", stores});
-    const backend = new LocalBackend({storageId: database.storageId, stores});
-    await backend.request("database.create", ["audit", {id: "a"}], {value: 1});
-    expect(await database.read(["audit", {id: "a"}])).toEqual({value: 1});
-    const plain = new LocalDatabase({storageId: database.storageId});
-    await expect(new LocalBackend({storageId: plain.storageId}).request("database.create", ["audit", {id: "b"}], {}))
-        .rejects.toMatchObject({code: "database/invalid-argument"});
-});
-
-it("rolls back generated IDs and publishes only committed creations", async () => {
-    const database = new LocalDatabase({storageId: "backend-create-notifications"});
+    const database = await prepare("prepared-custom", stores);
     const backend = new LocalBackend({storageId: database.storageId});
-    const events = [];
-    const listener = database.addEventListener(["posts"], {onChange: value => events.push(value)});
-    try {
-        // Queue a failed transaction behind the initial listener snapshot.
-        const failure = new Error("callback failed");
-        await expect(backend.request("database.create", ["posts", "post_id"], () => { throw failure; }))
-            .rejects.toBe(failure);
-        const initial = events.length;
-        expect(await backend.request("database.create", ["posts", "post_id"], id => ({id}))).toBe("1");
-        expect(events).toHaveLength(initial + 1);
-        expect(events.at(-1)).toEqual({"1": {id: "1"}});
-        await expect(backend.request("database.create", ["posts", "post_id"], async () => ({})))
-            .rejects.toMatchObject({code: "database/invalid-argument"});
-        expect(events).toHaveLength(initial + 1);
-        expect(await backend.request("database.create", ["posts", "post_id"], {})).toBe("2");
-    } finally {
-        listener.remove();
-    }
+    expect(await backend.request("database.create", ["audit", {id: "a"}], {value: 1})).toBe("a");
+    expect(await database.read(["audit", {id: "a"}])).toEqual({value: 1});
 });
 
-it("keeps the adapter error boundary and reports callback failures once", async () => {
-    const onError = vi.fn();
-    const database = new LocalDatabase({storageId: "backend-create-errors", onError});
-    const failure = new Error("failed");
-    const path = ["posts", "post_id"];
-    const callback = () => { throw failure; };
-    expect(await database.create(path, callback)).toBeUndefined();
-    expect(onError).toHaveBeenCalledExactlyOnceWith(failure, "create", {path, value: callback});
-    expect(await database.create(path, {})).toBe("1");
+it("keeps named identities, nested paths, and colliding metadata fields compatible with readers", async () => {
+    const database = await prepare("prepared-format");
+    const backend = new LocalBackend({storageId: database.storageId});
+    const path = ["posts", {post_id: "p1"}, "edit", {edit_id: "e1"}];
+    const value = {_id: "public-id", _local: {public: true}, value: false, nested: {list: [1, 2]}};
+    expect(await backend.request("database.create", path, value)).toBe("e1");
+    expect(await database.read(path)).toEqual(value);
+    const key = await backend.request("database.create", ["posts", {post_id: "p1"}, "edit", "edit_id"], id => ({id}));
+    expect(await database.read(["posts", {post_id: "p1"}, "edit", {edit_id: key}])).toEqual({id: key});
 });
 
-it("initializes standalone backend storage and validates request arity", async () => {
+it("rolls back callback failures and generated keys, and never runs a callback for a duplicate", async () => {
+    const database = await prepare("prepared-rollback");
+    const backend = new LocalBackend({storageId: database.storageId});
+    const failure = new Error("callback failed");
+    await expect(backend.request("database.create", ["posts", "post_id"], () => { throw failure; })).rejects.toBe(failure);
+    await expect(backend.request("database.create", ["posts", "post_id"], async () => ({})))
+        .rejects.toMatchObject({code: "database/invalid-argument"});
+    expect(await backend.request("database.create", ["posts", "post_id"], {})).toBe("1");
+    const callback = vi.fn(() => ({}));
+    await expect(backend.request("database.create", ["posts", {post_id: "1"}], callback))
+        .rejects.toMatchObject({name: "ConstraintError"});
+    expect(callback).not.toHaveBeenCalled();
+});
+
+it("rolls back a native write failure and serializes concurrent allocations", async () => {
+    const database = await prepare("prepared-native-rollback");
+    const backend = new LocalBackend({storageId: database.storageId});
+    const put = vi.spyOn(IDBObjectStore.prototype, "put").mockImplementationOnce(() => { throw new Error("write failed"); });
+    await expect(backend.request("database.create", ["posts", "post_id"], {})).rejects.toThrow("write failed");
+    put.mockRestore();
+    const keys = await Promise.all(Array.from({length: 4}, (_, i) => backend.request("database.create", ["posts", "post_id"], {i})));
+    expect(keys).toEqual(["1", "2", "3", "4"]);
+});
+
+it("does not initialize stores and closes connections after success or failure", async () => {
+    const database = await prepare("prepared-close");
+    const close = vi.spyOn(IDBDatabase.prototype, "close");
+    const backend = new LocalBackend({storageId: database.storageId});
+    await backend.request("database.create", ["posts", {post_id: "p1"}], {});
+    expect(close).toHaveBeenCalledTimes(1);
+    await expect(backend.request("database.create", ["unknown", {id: "a"}], {})).rejects.toMatchObject({name: "NotFoundError"});
+    expect(close).toHaveBeenCalledTimes(2);
+    await expect(backend.request("database.create", ["posts", {post_id: "p1"}], {})).rejects.toMatchObject({name: "ConstraintError"});
+    expect(close).toHaveBeenCalledTimes(3);
+    await expect(new LocalBackend({storageId: "empty-storage"}).request("database.create", ["posts", "post_id"], {}))
+        .rejects.toMatchObject({name: "NotFoundError"});
+});
+
+it("validates arguments, rejects service stores, and uses the default storage ID", async () => {
+    const database = await prepare(undefined);
     const backend = new LocalBackend();
-    expect(await backend.request("database.create", ["posts", {post_id: "p1"}], {value: 1})).toBe("p1");
-    expect(await new LocalDatabase().read(["posts", {post_id: "p1"}])).toEqual({value: 1});
+    expect(await backend.request("database.create", ["posts", {post_id: "p1"}], {})).toBe("p1");
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({});
     await expect(backend.request("database.create", ["posts", "post_id"]))
         .rejects.toMatchObject({code: "database/invalid-argument"});
-});
-
-it("delegates creation to the supplied backend and preserves its result and error boundary", async () => {
-    const backend = {request: vi.fn().mockResolvedValue("permanent-key")};
-    const onError = vi.fn();
-    const database = new LocalDatabase({storageId: "backend-injected", backend, onError});
-    const path = ["posts", "post_id"];
-    const value = {title: "A"};
-    expect(await database.create(path, value)).toBe("permanent-key");
-    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create", path, value);
-    const error = new Error("backend failed");
-    backend.request.mockRejectedValueOnce(error);
-    expect(await database.create(path, value)).toBeUndefined();
-    expect(onError).toHaveBeenCalledExactlyOnceWith(error, "create", {path, value});
-});
-
-it("routes default adapter creation through LocalBackend.request", async () => {
-    const request = vi.spyOn(LocalBackend.prototype, "request");
-    const database = new LocalDatabase({storageId: "backend-default-route"});
-    const path = ["posts", {post_id: "p1"}];
-    expect(await database.create(path, {value: 1})).toBe("p1");
-    expect(request).toHaveBeenCalledExactlyOnceWith("database.create", path, {value: 1});
-    expect(await database.read(path)).toEqual({value: 1});
-});
-
-it("configures standalone storage lazily and validates storage IDs", async () => {
-    const open = vi.spyOn(indexedDB, "open");
-    const backend = new LocalBackend({storageId: "standalone-lazy"});
-    expect(open).not.toHaveBeenCalled();
-    expect(await backend.request("database.create", ["posts", "post_id"], {})).toBe("1");
-    expect(open).toHaveBeenCalled();
+    await expect(backend.request("database.create", ["$auth", {id: "a"}], {}))
+        .rejects.toMatchObject({code: "database/invalid-argument"});
     for (const storageId of ["", "  ", null, 1]) {
         expect(() => new LocalBackend({storageId})).toThrow("storageId must be a non-empty string.");
     }
-});
-
-it("resolves one default LocalBackend and preserves explicitly supplied backends", async () => {
-    const {default: resolveBackend} = await import("../resolveBackend");
-    const backend = await resolveBackend();
-    expect(backend).toBeInstanceOf(LocalBackend);
-    expect(await resolveBackend()).toBe(backend);
-    const explicit = new LocalBackend({storageId: "explicit-backend"});
-    expect(await resolveBackend(explicit)).toBe(explicit);
 });

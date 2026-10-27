@@ -1,7 +1,7 @@
 import {afterEach, beforeEach, expect, it, vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
-import stores from "../../../../common/src/localDatabase/stores.json";
+import stores from "../../local/stores.json";
 import {convertStores, LOCAL_SCHEMA} from "../../local/constants";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));

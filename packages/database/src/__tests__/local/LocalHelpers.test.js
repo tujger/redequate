@@ -1,7 +1,6 @@
 import {vi} from "vitest";
 import {IDBFactory, IDBDatabase, IDBTransaction} from "fake-indexeddb";
-import {deleteRecord, getRecord, getRecordsByType, interpretPath, openDatabase, putRecord} from "../../local/helpers";
-import {addRecord} from "../../../../backend/src/local/database/createHelpers";
+import {addRecord, deleteRecord, getRecord, getRecordsByType, interpretPath, openDatabase, putRecord} from "../../local/helpers";
 import {indexesForStore, LOCAL_COLLECTIONS} from "../../local/constants";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
