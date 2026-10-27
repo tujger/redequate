@@ -2,7 +2,7 @@ import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import {fail} from "../../../../common";
 import validatePath from "../../../../database/src/common/validatePath";
 import parseCreatePath from "../../../../database/src/common/parseCreatePath";
-import {decodeRecordValue, encodeRecordValue} from "./recordValue";
+import {decodeRecordValue, encodeRecordValue, setRecordField} from "./recordValue";
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -203,6 +203,14 @@ const identityField = (store, conditions, requested) => {
     return index?.fields.at(-1) ?? "_id";
 };
 
+const recordValue = (store, row, conditions = {}, keyField) => {
+    const unique = uniqueIndexes(store);
+    const fields = unique.flatMap(({fields}) => fields);
+    if (!unique.length) fields.push(...Object.keys(conditions));
+    if (keyField) fields.push(keyField);
+    return decodeRecordValue(row, fields);
+};
+
 const collectionValue = (store, rows, conditions, keyField) => {
     if (!rows.length) return undefined;
     const field = identityField(store, conditions, keyField);
@@ -211,7 +219,7 @@ const collectionValue = (store, rows, conditions, keyField) => {
         const key = at(row, parts(field));
         if (key === undefined) invalid(`Record has no ${field} collection key.`);
         if (Object.hasOwn(result, String(key))) invalid("A collection read must identify each child uniquely.");
-        set(result, String(key), decodeRecordValue(row));
+        set(result, String(key), recordValue(store, row, conditions, field));
     }
     return result;
 };
@@ -233,11 +241,11 @@ const checkQuery = (store, options) => {
 export const readStore = async (store, path, {keyField, ...options} = {}) => {
     checkQuery(store, options);
     const target = address(store, path);
-    if (target.singleton) return at(decodeRecordValue(await singleton(store)), target.property);
+    if (target.singleton) return at(recordValue(store, await singleton(store)), target.property);
     const rows = await queryRows(store, target.conditions, options);
     if (target.single && (target.unique || !keyField)) {
         if (rows.length > 1) invalid("A record path must identify a single record.");
-        return at(decodeRecordValue(rows[0]), target.property);
+        return at(recordValue(store, rows[0], target.conditions), target.property);
     }
     return collectionValue(store, rows, target.conditions, keyField);
 };
@@ -248,11 +256,11 @@ const withIdentity = (value, conditions, previous) => {
     for (const [name, expected] of Object.entries(conditions)) {
         const supplied = at(result, parts(name));
         if (supplied !== undefined && !Object.is(supplied, expected)) invalid(`Record conflicts with path field ${name}.`);
-        assign(result, parts(name), expected);
+        setRecordField(result, parts(name), expected);
     }
     if (previous?._id !== undefined) {
         if (result._id !== undefined && result._id !== previous._id) invalid("The native primary key cannot be changed.");
-        result._id = previous._id;
+        setRecordField(result, ["_id"], previous._id);
     }
     return result;
 };
@@ -289,7 +297,7 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
         if (rows.length > 1) invalid("A write requires a unique record path.");
         previous = rows[0];
     }
-    const decoded = decodeRecordValue(previous);
+    const decoded = recordValue(store, previous, target.conditions);
     const current = at(decoded, target.property);
     if (value === undefined) invalid("Undefined values cannot be stored.");
     if (create && current !== undefined) throw new DOMException("Record already exists.", "ConstraintError");
@@ -311,13 +319,13 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
     for (const {fields} of indexes(store)) for (const field of fields) {
         const prior = at(previous, parts(field));
         if (at(decoded, parts(field)) === undefined && at(next, parts(field)) === undefined && prior !== undefined) {
-            assign(next, parts(field), prior);
+            setRecordField(next, parts(field), prior);
         }
     }
     next = withIdentity(next, target.conditions, previous);
     const savedKey = await requestResult(create && !target.property.length ? store.add(next) : store.put(next));
-    next._id = savedKey;
-    return at(decodeRecordValue(next), target.property);
+    setRecordField(next, ["_id"], savedKey);
+    return at(recordValue(store, next, target.conditions), target.property);
 };
 
 export const assertNonOverlapping = (transaction, entries) => {
