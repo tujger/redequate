@@ -763,16 +763,23 @@ They sort by generation time, with monotonic generation within one generator eve
 in the same millisecond or after a clock rollback. They do not describe server commit
 time or establish global order between devices with different clocks. Existing and
 explicit keys are unchanged; mixed historical keys do not gain chronological order.
-Local returns the original value; native primary keys and injected index fields stay internal. Failed saves leave no record; generated
+Local excludes native and schema-defined service keys when returning object records. Failed saves leave no record; generated
 logical IDs are not reserved or reused. Direct backend requests without a key use the
 same string-key generator. No data migration is performed.
 
 ### Local IndexedDB records
 
-Local rows use an internal `_encoded`/`_value` container with native `_id` and index projections.
-Reads restore the original value, including explicitly supplied identity fields. Old rows without a
-container reject with `VersionError`; they are not automatically migrated or deleted. Only
-indexes declared in stores.json or constructor stores are created; searches require
+Local objects store fields directly, with no `_record`, `_encoded`, `_local` or
+restoration metadata. Reads exclude `_id` and fields of unique indexes, even when
+explicitly supplied in the object. Other indexed data, such as post `uid` and `to`,
+remain ordinary returned fields. For stores without unique indexes, fields selected
+in the address or as the collection key are excluded. Empty branches left by nested
+service keys are pruned. Indexed path parents must be objects.
+Strings, numbers, booleans and arrays use `{_value: value}` as their only payload,
+without an extra type marker. `_value` is reserved at the record root; old service
+fields `_record` and `_encoded` are also rejected there. Nested data may use these
+names. Old wrappers reject with `VersionError`; they are not migrated or deleted.
+Only indexes declared in stores.json or constructor stores are created; searches require
 an appropriate index. Nested values stay inside their parent record. A store without
 indexes (such as meta) holds one small document and supports field access rather than
 record searches. The previous service envelope and generated identity index are

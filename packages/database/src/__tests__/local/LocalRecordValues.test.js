@@ -15,7 +15,7 @@ it.each(["text", "", 0, 12.5, false, true, [], [1, false, {nested: "value"}]])(
         expect(await database.read(["posts"])).toEqual({p1: value});
         expect(await database.readSubtree(path)).toEqual(value);
         expect(await readNativeStore("value-roundtrip", "posts")).toEqual([
-            {_id: 1, post_id: "p1", _encoded: true, _value: value}
+            {_id: 1, post_id: "p1", _value: value}
         ]);
     }
 );
@@ -30,7 +30,7 @@ it("preserves native and compound identities across representation changes", asy
     await put(database, [1, 2], message);
     await put(database, {text: "new"}, ["chats", {_id: "1"}]);
     expect(await readNativeStore("value-transition", "chats")).toEqual([
-        {_id: 1, chat_id: "c1", message_id: "m1", text: "new", _encoded: true, _value: {text: "new"}}
+        {_id: 1, chat_id: "c1", message_id: "m1", text: "new"}
     ]);
     expect(await database.read(["chats", {chat_id: "c1"}, "message_id"])).toEqual({
         m1: {text: "new"}
@@ -73,7 +73,7 @@ it("encodes a singleton document without introducing indexes", async () => {
     await put(database, "changed", ["meta", {index: "1"}]);
     expect(await database.read(["meta"])).toEqual(["a", "changed"]);
     await put(database, {settings: {_value: true}}, ["meta"]);
-    expect(await readNativeStore("value-singleton", "meta")).toEqual([{_id: 1, settings: {_value: true}, _encoded: true, _value: {settings: {_value: true}}}]);
+    expect(await readNativeStore("value-singleton", "meta")).toEqual([{_id: 1, settings: {_value: true}}]);
     await expect(database.read(["meta"], {equalTo: false})).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
@@ -158,28 +158,25 @@ it("decodes collection callback inputs and encodes replacement children inside t
     expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "a"}])).toBe("other");
 });
 
-it("preserves explicit identity fields and wrapper-like properties as original user data", async () => {
-    const database = createLocalDatabase({storageId: "exact-object"});
+
+it("treats explicit native and unique-index fields as service keys", async () => {
+    const database = createLocalDatabase({storageId: "service-keys"});
     await database.read(["posts"]);
-    const value = {post_id: "p1", _id: "logical-id", _encoded: false, _value: {user: true}, title: "original"};
-    await database.create(path, value);
-    expect(await database.read(path)).toEqual(value);
-    expect(await database.read(["posts"])).toEqual({p1: value});
+    await database.create(path, {_id: "not-data", post_id: "p1", uid: "author", to: "parent", text: "Original"});
+    expect(await database.read(path)).toEqual({uid: "author", to: "parent", text: "Original"});
+    expect(await database.read(["posts"])).toEqual({p1: {uid: "author", to: "parent", text: "Original"}});
+    const [physical] = await readNativeStore("service-keys", "posts");
+    expect(physical).toEqual({_id: 1, post_id: "p1", uid: "author", to: "parent", text: "Original"});
     await database.update(path, current => {
-        expect(current).toEqual(value);
-        return {...current, title: "changed"};
+        expect(current).not.toHaveProperty("post_id");
+        expect(current).not.toHaveProperty("_id");
+        return {...current, text: "Changed"};
     });
-    expect(await database.read(path)).toEqual({...value, title: "changed"});
-    const [physical] = await readNativeStore("exact-object", "posts");
-    expect(physical._id).toBe(1);
-    expect(physical._value).toEqual({...value, title: "changed"});
-    await database.update(new Map([[[...path, {field: "_id"}], "changed-logical-id"]]));
-    expect((await readNativeStore("exact-object", "posts"))[0]._id).toBe(1);
-    expect((await database.read(path))._id).toBe("changed-logical-id");
+    expect((await readNativeStore("service-keys", "posts"))[0]._id).toBe(1);
 });
 
-it("keeps nested index projections independent of the original value", async () => {
-    const database = createLocalDatabase({storageId: "nested-projection", stores: [{
+it("removes nested service keys and prunes only their empty branches", async () => {
+    const database = createLocalDatabase({storageId: "nested-keys", stores: [{
         store: "items", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: [
             {name: "identity", keypath: "identity.id", options: {unique: true}},
             {name: "rank", keypath: "data.rank"}
@@ -187,19 +184,23 @@ it("keeps nested index projections independent of the original value", async () 
     }]});
     await database.read(["items"]);
     const itemPath = ["items", {"identity.id": "a"}];
-    const value = {identity: {name: "Original"}, data: {rank: 2}};
-    await database.create(itemPath, value);
-    expect(await database.read(itemPath)).toEqual(value);
-    expect(await database.read(["items"], {orderBy: "data/rank", equalTo: 2})).toEqual({a: value});
-    const [physical] = await readNativeStore("nested-projection", "items");
-    expect(physical.identity).toEqual({id: "a", name: "Original"});
-    expect(physical._value.identity).toEqual({name: "Original"});
-    await database.update(itemPath, {data: {rank: 3}});
+    await database.create(itemPath, {identity: {name: "Original"}, data: {rank: 2}});
+    const expected = {identity: {name: "Original"}, data: {rank: 2}};
+    expect(await database.read(itemPath)).toEqual(expected);
+    expect(await database.read(["items"], {orderBy: "data/rank", equalTo: 2})).toEqual({a: expected});
+    expect((await readNativeStore("nested-keys", "items"))[0]).toEqual({
+        _id: 1, identity: {id: "a", name: "Original"}, data: {rank: 2}
+    });
+    await database.update(itemPath, () => ({data: {rank: 3}}));
+    expect(await database.read(itemPath)).toEqual({data: {rank: 3}});
     expect(await database.read(["items"], {orderBy: "data/rank", equalTo: 2})).toBeUndefined();
-    expect(await database.read(itemPath)).toEqual({...value, data: {rank: 3}});
 });
 
-it("rejects old physical records without migrating or rewriting them", async () => {
+it.each([
+    {post_id: "p1", title: "old", _encoded: true, _value: {title: "old"}},
+    {post_id: "p1", title: "old", _record: {type: "object", added: [["post_id"]]}},
+    {post_id: "p1", _record: {type: "value"}, _value: "old"}
+])("rejects old wrappers without migrating or rewriting them: %j", async legacy => {
     const database = createLocalDatabase({storageId: "old-records"});
     await database.read(["posts"]);
     const {openDatabase} = await import("../../local/helpers");
@@ -207,16 +208,16 @@ it("rejects old physical records without migrating or rewriting them", async () 
     try {
         await new Promise((resolve, reject) => {
             const transaction = connection.transaction("posts", "readwrite");
-            transaction.objectStore("posts").add({post_id: "p1", title: "old"});
+            transaction.objectStore("posts").add(legacy);
             transaction.oncomplete = resolve;
             transaction.onabort = () => reject(transaction.error);
         });
     } finally { connection.close(); }
-    await expect(database.read(path)).rejects.toMatchObject({name: "VersionError", message: expect.stringContaining("Incompatible Local record format")});
+    await expect(database.read(path)).rejects.toMatchObject({name: "VersionError"});
     const callback = vi.fn(() => ({title: "changed"}));
     await expect(database.update(path, callback)).rejects.toMatchObject({name: "VersionError"});
     expect(callback).not.toHaveBeenCalled();
-    expect(await readNativeStore("old-records", "posts")).toEqual([{_id: 1, post_id: "p1", title: "old"}]);
+    expect(await readNativeStore("old-records", "posts")).toEqual([{_id: 1, ...legacy}]);
 });
 
 it("includes the original path when a nested address is ambiguous", async () => {
@@ -226,4 +227,77 @@ it("includes the original path when a nested address is ambiguous", async () => 
     await expect(database.read(invalidPath)).rejects.toMatchObject({
         code: "database/invalid-argument", message: expect.stringContaining(JSON.stringify(invalidPath))
     });
+});
+
+it("stores posts and counters without metadata, flags or duplicate payloads", async () => {
+    const database = createLocalDatabase({storageId: "plain-records"});
+    await database.read(["posts"]);
+    const post = {created: 123, images: null, to: "parent", text: "message", uid: "author"};
+    await put(database, post);
+    await put(database, {like: 2}, ["_counters", {id: "counter"}]);
+    expect(await readNativeStore("plain-records", "posts")).toEqual([{...post, post_id: "p1", _id: 1}]);
+    expect(await readNativeStore("plain-records", "_counters")).toEqual([{like: 2, id: "counter", _id: 1}]);
+    expect(await database.read(path)).toEqual(post);
+    expect(await database.read(["_counters", {id: "counter"}])).toEqual({like: 2});
+    expect(Object.keys(await database.read(["posts"], {orderBy: "uid", equalTo: "author"}))).toEqual(["p1"]);
+});
+
+it("removes explicitly selected address fields from stores without a unique index", async () => {
+    const database = createLocalDatabase({storageId: "nonunique-addresses"});
+    await database.read(["_counters"]);
+    await put(database, {total: 2}, ["_counters", {gid: "group"}, {id: "one"}]);
+    await put(database, {total: 3}, ["_counters", {gid: "group"}, {id: "two"}]);
+    expect(await database.read(["_counters", {gid: "group"}, {id: "one"}])).toEqual({total: 2});
+    expect(await database.read(["_counters", {gid: "group"}, "id"])).toEqual({one: {total: 2}, two: {total: 3}});
+    expect(await database.cursor(["_counters", {gid: "group"}, "id"]).next(10)).toEqual([
+        {key: "one", value: {total: 2}}, {key: "two", value: {total: 3}}
+    ]);
+});
+
+it.each([{}, {identity: {}}])("does not create metadata for nested address branches: %j", async value => {
+    const database = createLocalDatabase({storageId: "nested-parents", stores: [{
+        store: "items", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: [
+            {name: "identity", keypath: "identity.id", options: {unique: true}}
+        ]
+    }]});
+    await database.read(["items"]);
+    const itemPath = ["items", {"identity.id": "a"}];
+    await database.create(itemPath, value);
+    expect(await database.read(itemPath)).toEqual({});
+    expect(await readNativeStore("nested-parents", "items")).toEqual([{_id: 1, identity: {id: "a"}}]);
+});
+
+it.each([null, "original", false])("rejects incompatible indexed parents instead of storing restoration metadata: %j", async identity => {
+    const database = createLocalDatabase({storageId: "invalid-parent", stores: [{
+        store: "items", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: [
+            {name: "identity", keypath: "identity.id", options: {unique: true}}
+        ]
+    }]});
+    await database.read(["items"]);
+    await expect(database.create(["items", {"identity.id": "a"}], {identity})).rejects.toMatchObject({code: "database/invalid-argument"});
+    expect(await readNativeStore("invalid-parent", "items")).toEqual([]);
+});
+
+it("removes a shared branch containing only compound service keys", async () => {
+    const database = createLocalDatabase({storageId: "compound-parent", stores: [{
+        store: "items", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: [
+            {name: "scope_key", keypath: ["identity.scope", "identity.key"], options: {unique: true}}
+        ]
+    }]});
+    await database.read(["items"]);
+    const itemPath = ["items", {"identity.scope": "scope"}, {"identity.key": "key"}];
+    await database.create(itemPath, {text: "Original"});
+    expect(await database.read(itemPath)).toEqual({text: "Original"});
+    expect(await readNativeStore("compound-parent", "items")).toEqual([
+        {_id: 1, identity: {scope: "scope", key: "key"}, text: "Original"}
+    ]);
+});
+
+it.each(["_value", "_record", "_encoded"])("rejects reserved root field %s, but allows it in nested data", async name => {
+    const database = createLocalDatabase({storageId: "reserved-fields"});
+    await database.read(["posts"]);
+    await expect(put(database, {[name]: "user"})).rejects.toMatchObject({code: "database/invalid-argument"});
+    expect(await database.read(path)).toBeUndefined();
+    await put(database, {nested: {[name]: "user"}});
+    expect(await database.read(path)).toEqual({nested: {[name]: "user"}});
 });

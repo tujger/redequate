@@ -23,7 +23,7 @@ it("patches nested values and deletes supplied children without invoking LocalDa
     expect(await database.read(post)).toEqual({text: "new", keep: true, nested: {a: 1, b: false}});
     expect(update).not.toHaveBeenCalled();
     expect((await readNativeStore("backend-update", "posts"))[0]).toMatchObject({
-        _id: 1, post_id: "p1", _encoded: true, _value: {text: "new", keep: true, nested: {a: 1, b: false}}
+        _id: 1, post_id: "p1", text: "new", keep: true, nested: {a: 1, b: false}
     });
 });
 
@@ -109,13 +109,13 @@ it("serializes competing replacements so only one writer commits a shared snapsh
     expect(await replace(post, 3, conflict.etag)).toEqual({committed: true, value: 3});
 });
 
-it("uses deterministic, type-sensitive ETags and restores explicit user fields exactly", async () => {
+it("uses deterministic, type-sensitive ETags and excludes explicit service keys", async () => {
     const {read, replace} = await setup();
     const first = await read(post);
-    const value = {_id: "user", post_id: "p1", _encoded: false, _value: {a: true}, nested: {b: 2, a: 1}};
+    const value = {_id: "user", post_id: "p1", nested: {b: 2, a: 1}};
     await replace(post, value, first.etag);
     const saved = await read(post);
-    expect(saved.value).toEqual(value);
+    expect(saved.value).toEqual({nested: {b: 2, a: 1}});
     await replace(post, {...value, nested: {a: 1, b: 2}}, saved.etag);
     expect((await read(post)).etag).toBe(saved.etag);
     await replace(post, [1], saved.etag);

@@ -31,7 +31,7 @@ it("creates the declared schema at version one and leaves it stable when reopene
     connection.close();
     await database.create(["audit", {audit_id: "a"}], {code: "one"});
     const reopened = make("schema-native");
-    expect(await reopened.read(["audit", {audit_id: "a"}])).toEqual({code: "one"});
+    expect(await reopened.read(["audit", {audit_id: "a"}])).toEqual({});
     connection = await openDatabase("schema-native");
     expect(connection.version).toBe(1);
     connection.close();

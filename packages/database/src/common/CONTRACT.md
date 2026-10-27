@@ -62,8 +62,8 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   go to the call's `onError` or the database default; a normally returning
   handler suppresses the error and leaves an undefined result. Listeners and
   cursors retain their error handler.
-- Neither provider adds a `timestamp` field to a record. Local preserves the
-  caller's value shape through create, update, and collection writes. A caller
+- Neither provider adds a `timestamp` field to a record. Local preserves ordinary
+  data fields through create, update, and collection writes, excluding service keys. A caller
   supplied `timestamp`, including a `TIMESTAMP` marker, remains explicit data;
   queries with `orderBy: "timestamp"` still use that field, not the key.
 - Without a supplied key, Firebase create uses Realtime Database push(). Local uses
@@ -91,16 +91,19 @@ not add framework indexes. Simple and compound `unique` indexes enforce uniquene
 Additional configured stores use the same format; provider stores beginning with `$`
 remain outside the application schema and cannot be changed by application CRUD.
 
-Local stores every record in an internal `{_encoded: true, _value: value}` container.
-The physical row also has a native `_id`, injected address fields and an independent
-projection of object fields for native indexes, including indexes declared later.
-Reads, callbacks, queries, cursors and listeners receive exactly the original value.
-Explicit identity fields in that value remain user data; injected fields do not leak.
-Wrapper-like names inside the original value are ordinary user fields. Nested values
-stay inside the same record. Conflicting address fields are rejected and the physical
-primary key remains stable. `null` deletes and `undefined` is rejected. Create still
-requires an object. Old rows without a container reject with `VersionError`; there is
-no automatic conversion or deletion of existing browser data.
+Local object records keep fields directly, without `_record`, `_encoded`, `_local`,
+added/overwritten field lists or a duplicate payload. `_id` and all fields of unique
+indexes are service keys and are omitted from object reads even when explicitly
+provided. For stores without unique indexes, fields explicitly selected in the
+address or as the collection key are omitted. Ordinary non-unique data indexes,
+such as post uid/to, remain in the returned value. Empty nested branches left by
+service-key removal are pruned. Indexed path parents must be compatible objects.
+Strings, numbers, booleans and arrays use only `{_value: value}` plus physical keys;
+there is no type marker. Objects with `_value` at their root are rejected, as are
+legacy root fields `_record` and `_encoded`. Nested fields with these names are
+allowed. `null` deletes, `undefined` is rejected, and create requires an object.
+Old wrappers reject with `VersionError`; there is no automatic conversion or deletion.
+Index definitions do not change.
 
 Named field lookups use declared indexes or the native `_id` primary key. A compound
 index can address a full unique record or a prefix scope. Explicit identity fields

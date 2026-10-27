@@ -32,7 +32,7 @@ it("keeps physical fields inside Local and queries the schema's unique index", a
     const value = await database.read(["posts", {post_id: "p1"}]);
     expect(value).toEqual({title: "A"});
     expect(await raw("native", "posts")).toEqual({
-        indexes: ["post_id", "to", "uid"], rows: [{...value, _id: 1, post_id: "p1", _encoded: true, _value: value}]
+        indexes: ["post_id", "to", "uid"], rows: [{...value, _id: 1, post_id: "p1"}]
     });
     await expect(database.create(["posts", {post_id: "p1"}], {title: "B"})).rejects.toMatchObject({name: "ConstraintError"});
     expect(await database.read(["posts", {post_id: "p1"}])).toEqual(value);
@@ -78,7 +78,7 @@ it("stores one small document in unindexed stores and updates properties without
     const stored = await raw("native", "meta");
     expect(stored.indexes).toEqual([]);
     const document = {settings: {theme: "dark", locale: "en"}, maintenance: false, support: "user-1"};
-    expect(stored.rows).toEqual([{...document, _id: 1, _encoded: true, _value: document}]);
+    expect(stored.rows).toEqual([{...document, _id: 1}]);
     await database.delete(["meta", "maintenance"]);
     expect(await database.read(["meta", "maintenance"])).toBeUndefined();
     await expect(database.read(["meta"], {orderBy: "settings"})).rejects.toMatchObject({code: "database/invalid-argument"});

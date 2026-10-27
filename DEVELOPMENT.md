@@ -348,7 +348,7 @@ remains separate, and collection notifications are published after commit. resol
 caches one default instance; explicit backends remain as supplied.
 
 Native transaction, index-query and write primitives live in one adjacent
-createHelpers module. Database/local retains schema initialization, native reads, delete/cursor writes and listener delivery. The adjacent recordValue module encapsulates wrapping and restoring all Local record values. Common/localDatabase.js is unchanged;
+createHelpers module. Database/local retains schema initialization, native reads, delete/cursor writes and listener delivery. The adjacent recordValue module encapsulates encoding and restoring Local record values without duplicating object payloads. Common/localDatabase.js is unchanged;
 there is no additional common storage layer or context registry.
 
 LocalDatabase receives backend explicitly; it never constructs or resolves a
@@ -480,14 +480,18 @@ Do not replace that with initial replay or a bounded listener that can miss even
 
 Application stores and their indexes come exclusively from local/stores.json and
 constructor stores. There are no generated identity, path, type or cursor indexes.
-Records use a Local-only `{_encoded: true, _value: value}` container. The physical
-row has its native _id, injected identity fields, and independent object-field
-projections for native indexes (including indexes declared later). Reads return
-exactly the original value; explicitly supplied identity fields remain in that value,
-while physical fields never leak to auth or UI. Nested values stay inside the same
-record. Do not restore encoded address paths or field-projection bookkeeping.
-Rows without this container reject with VersionError; do not migrate or delete them
-automatically. The caller must explicitly recreate incompatible local storage.
+Object records store actual fields directly, with native _id and address fields.
+Do not add _record, _encoded, _local, restoration lists, shadow values or duplicate
+payloads. Reading excludes _id and all fields of unique indexes, including explicitly
+supplied keys; exact recovery of those keys as user data is no longer supported.
+Stores without unique indexes exclude fields explicitly selected in the address or
+as the collection key. Ordinary non-unique indexed data such as posts.uid and posts.to
+remain visible. Empty branches left by nested service keys are pruned; incompatible
+indexed parents reject rather than being overwritten.
+Strings, numbers, booleans and arrays use _value as their single payload, without a
+type marker. _value is reserved at the record root; _record and _encoded are reserved
+legacy service fields. Nested fields with these names are ordinary data. Old wrappers
+reject with VersionError; never migrate or delete them automatically.
 
 Lookups use declared simple/compound indexes, including compound-prefix scopes, or
 native primary keys. Missing lookup indexes and ambiguous addresses reject explicitly.
