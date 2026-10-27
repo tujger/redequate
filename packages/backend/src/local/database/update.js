@@ -2,7 +2,7 @@ import {fail} from "../../../../common";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import validatePath from "../../../../database/src/common/validatePath";
 import {
-    TIMESTAMP, resolveCollectionPath, runTransaction, readStore, writeStore,
+    TIMESTAMP, validateCollectionPath, runTransaction, readStore, writeStore,
     childRecordPath, assertNonOverlapping, notifyWrites
 } from "./createHelpers";
 
@@ -35,24 +35,27 @@ const prepare = args => {
     if (!["patch", "read", "replace"].includes(mode)) invalid("Invalid update mode.");
     const root = isRoot(path);
     if (root && mode !== "patch") invalid("Only batch patch accepts an empty path.");
-    if (!root) resolveCollectionPath(path);
+    if (!root) validateCollectionPath(path);
     if (!(root && mode === "patch" && value instanceof Map)) validateValue(value);
     if (mode === "read" && value !== null) invalid("Read requires a null value.");
     if (mode === "replace" && (typeof options.etag !== "string" || !options.etag.length || /[\r\n]/.test(options.etag))) {
         invalid("Conditional replacement requires an ETag.");
     }
     if (mode !== "patch") {
-        return {path, value, mode, etag: options.etag, names: [resolveCollectionPath(path)[0]]};
+        return {path, value, mode, etag: options.etag, names: [validateCollectionPath(path)[0]]};
     }
     if (!isRecord(value) && !(root && value instanceof Map)) invalid("changes must be an object, or a Map for a root batch.");
     const entries = value instanceof Map ? [...value] : Object.entries(value);
     for (const [entryPath, child] of entries) {
         if (value instanceof Map) validateValue(child);
-        if (root) resolveCollectionPath(entryPath);
+        if (root) {
+            validatePath(entryPath);
+            validateCollectionPath(entryPath);
+        }
         else if (!entryPath.split("/").filter(Boolean).length) invalid("Patch paths must not be empty.");
     }
-    const names = root ? [...new Set(entries.map(([path]) => resolveCollectionPath(path)[0]))]
-        : [resolveCollectionPath(path)[0]];
+    const names = root ? [...new Set(entries.map(([path]) => validateCollectionPath(path)[0]))]
+        : [validateCollectionPath(path)[0]];
     return {path, root, entries, mode, names};
 };
 
@@ -83,7 +86,7 @@ export default async function update({storageId, args}) {
             assertNonOverlapping(transaction, updates);
             const now = Date.now();
             for (const [target, changes] of updates) {
-                const name = resolveCollectionPath(target)[0];
+                const name = validateCollectionPath(target)[0];
                 await writeStore(transaction.objectStore(name), target, changes, {now});
             }
             committed = updates.length > 0;

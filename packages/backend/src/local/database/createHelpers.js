@@ -1,6 +1,5 @@
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import {fail} from "../../../../common";
-import validatePath from "../../../../database/src/common/validatePath";
 import parseCreatePath from "../../../../database/src/common/parseCreatePath";
 import {decodeRecordValue, encodeRecordValue, setRecordField} from "./recordValue";
 
@@ -45,20 +44,17 @@ const resolveValue = (value, previous, now) => {
     return value;
 };
 
-export const resolveCollectionPath = rawPath => {
-    validatePath(rawPath);
+export const validateCollectionPath = rawPath => {
+    if (typeof rawPath !== "string" && !Array.isArray(rawPath)) invalid("Expected a collection path.");
     const path = typeof rawPath === "string" ? rawPath.split("/").filter(Boolean) : [...rawPath];
     if (!path.length) invalid("Expected a collection path.");
-    if (typeof path[0] !== "string") path[0] = path[0][Object.keys(path[0]).find(name => name !== "_")];
-    if (!path[0] || path[0].includes("/") || path[0].startsWith("$")) invalid("Invalid application collection.");
+    if (path[0] !== null && typeof path[0] === "object") {
+        path[0] = path[0][Object.keys(path[0]).find(name => name !== "_")];
+    }
+    if (typeof path[0] !== "string" || !path[0] || path[0].includes("/") || path[0].startsWith("$")) {
+        invalid("Invalid application collection.");
+    }
     return path;
-};
-
-export const parseDatabasePath = rawPath => {
-    const path = resolveCollectionPath(rawPath);
-    const last = path.at(-1);
-    const field = path.length > 2 && typeof last === "string" && typeof path.at(-2) !== "string" ? last : undefined;
-    return {collection: path[0], field, kind: field ? "field" : typeof last === "object" ? "record" : "collection"};
 };
 
 export const createRecordPath = (rawPath, key) => {
@@ -95,7 +91,7 @@ const keyValue = (name, value) => name === "_id" ? nativeKey(value) : value;
 const uniqueIndexes = store => indexes(store).filter(({index}) => index.unique && !index.multiEntry);
 
 const address = (store, rawPath) => {
-    const path = resolveCollectionPath(rawPath);
+    const path = validateCollectionPath(rawPath);
     const segments = path.slice(1);
     if (!store.indexNames.length) {
         return {conditions: {}, property: segments.map(segment => typeof segment === "string" ? segment :
@@ -301,6 +297,7 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
     const current = at(decoded, target.property);
     if (value === undefined) invalid("Undefined values cannot be stored.");
     if (create && current !== undefined) throw new DOMException("Record already exists.", "ConstraintError");
+    if (value === null && target.property.length && current === undefined) return null;
     let next;
     if (target.property.length) {
         next = decoded !== null && typeof decoded === "object" ? structuredClone(decoded) : {};
@@ -330,7 +327,7 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
 
 export const assertNonOverlapping = (transaction, entries) => {
     const targets = entries.map(([path]) => {
-        const collection = resolveCollectionPath(path)[0];
+        const collection = validateCollectionPath(path)[0];
         return {collection, ...address(transaction.objectStore(collection), path)};
     });
     for (let i = 0; i < targets.length; i++) for (let j = i + 1; j < targets.length; j++) {
@@ -376,7 +373,7 @@ export const notifyWrites = async (storageId, collections) => {
 };
 
 export const addRecord = async (storageId, path, value) => {
-    const collection = resolveCollectionPath(path)[0];
+    const collection = validateCollectionPath(path)[0];
     const database = await openLocalDatabase(storageId);
     const result = await runTransaction(database, "readwrite", [collection], transaction =>
         writeStore(transaction.objectStore(collection), path, value, {create: true}));
