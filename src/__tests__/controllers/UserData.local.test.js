@@ -1,7 +1,7 @@
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../../packages/database/src/local";
-import {getAllRecords} from "../../../packages/backend/src/local/database/helpers";
+import {getAllRecords} from "../../../packages/database/src/local/helpers";
 import UserData from "../../controllers/UserData";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));

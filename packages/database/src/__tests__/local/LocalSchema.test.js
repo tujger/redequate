@@ -2,8 +2,8 @@ import {afterEach, beforeEach, expect, it, vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import LocalDatabase from "../../local";
-import {openDatabase} from "../../../../backend/src/local/database/helpers";
-import {LOCAL_SCHEMA} from "../../../../backend/src/local/database/constants";
+import {openDatabase} from "../../local/helpers";
+import {LOCAL_SCHEMA} from "../../local/constants";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
