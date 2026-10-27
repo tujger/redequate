@@ -174,3 +174,22 @@ it("keeps native keys and resolves collection marker fields against previous chi
     const counter = await database.update([...path, {count: "count"}], value => value + 1);
     expect(counter).toBe(8);
 });
+
+it("replaces Local collection subtrees atomically and removes descendant records", async () => {
+    const database = createLocalDatabase({storageId: "subtrees"});
+    await database.read(["posts"]);
+    const record = ["posts", {post_id: "p1"}];
+    const child = [...record, "edit", {edit_id: "e1"}];
+    await database.update(record, () => ({text: "old"}));
+    await database.update(child, () => ({uid: "u1"}));
+    const callback = vi.fn(value => ({text: value.text + "!"}));
+    expect(await database.update(record, callback)).toMatchObject({text: "old!"});
+    expect(callback.mock.calls[0][0]).toMatchObject({edit: {e1: {uid: "u1"}}});
+    expect(await database.read(child)).toBeUndefined();
+    const result = await database.update(["posts"], value => ({p2: {text: value.p1.text}}));
+    expect(result).toMatchObject({p2: {text: "old!"}});
+    expect(await database.read(record)).toBeUndefined();
+    expect(await database.read(["posts", {post_id: "p2"}])).toMatchObject({text: "old!"});
+    await expect(database.update(["posts"], () => 1)).rejects.toMatchObject({code: "database/invalid-argument"});
+    expect(await database.read(["posts"])).toEqual(result);
+});

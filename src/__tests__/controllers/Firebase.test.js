@@ -1,7 +1,7 @@
 import {vi} from "vitest";
 import {initializeApp, deleteApp} from "firebase/app";
 import {getAnalytics, isSupported} from "firebase/analytics";
-import Firebase, {firebaseMessaging, forceFirebaseReinit} from "../../controllers/Firebase";
+import Firebase, {forceFirebaseReinit} from "../../controllers/Firebase";
 
 vi.mock("firebase/app", () => ({initializeApp: vi.fn(), deleteApp: vi.fn()}));
 vi.mock("firebase/analytics", () => ({getAnalytics: vi.fn(), isSupported: vi.fn()}));
@@ -22,7 +22,6 @@ afterEach(() => vi.unstubAllGlobals());
 it("initializes a modular app and preserves the shared handle", () => {
     const handle = Firebase(config);
     expect(initializeApp).toHaveBeenCalledExactlyOnceWith(config);
-    expect(handle).toBe(firebaseMessaging);
     expect(handle).toEqual({app, config});
     expect(handle).not.toHaveProperty("database");
     expect(Firebase(config)).toBe(handle);

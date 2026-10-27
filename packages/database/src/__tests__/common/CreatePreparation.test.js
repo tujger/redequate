@@ -85,7 +85,7 @@ it("Local generates a key for an ordinary value before calling super", async () 
 it.each(["local", "firebase"])("%s rejects invalid values before requesting the backend", async provider => {
     const backend = {request: vi.fn()};
     const path = ["posts", {post_id: "manual"}];
-    for (const value of [null, [], false, () => null, async () => ({})]) {
+    for (const value of [undefined, null, "value", 1, false, [], () => null, async () => ({})]) {
         await expect(create(provider, backend, path, value)).rejects.toMatchObject({code: "database/invalid-argument"});
     }
     const error = new Error("callback failed");
@@ -96,6 +96,18 @@ it.each(["local", "firebase"])("%s rejects invalid values before requesting the 
 it.each(["local", "firebase"])("%s has no backend fallback", async provider => {
     await expect(create(provider, undefined, ["posts", {post_id: "manual"}], {})).rejects.toBeInstanceOf(TypeError);
     expect(getDatabase).not.toHaveBeenCalled();
+});
+
+it.each(["local", "firebase"])("%s can create again after a backend rejection", async provider => {
+    const failure = new Error("offline");
+    const backend = {request: vi.fn().mockRejectedValueOnce(failure).mockResolvedValueOnce("saved-key")};
+    const database = databaseFor(provider, backend);
+    const path = ["posts", {post_id: "manual"}], value = {title: "ready"};
+    await expect(database.create(path, value)).rejects.toBe(failure);
+    expect(await database.create(path, value)).toBe("saved-key");
+    expect(backend.request.mock.calls).toEqual([
+        ["database.create", path, value], ["database.create", path, value]
+    ]);
 });
 
 it("Firebase maps conflicts and propagates other backend errors", async () => {

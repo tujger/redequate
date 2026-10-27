@@ -4,14 +4,16 @@ import DatabaseCursor from "../../common/DatabaseCursor";
 import resolvePath from "../../common/resolvePath";
 import FirebaseDatabase from "../../firebase";
 import {createFirebase} from "../fixtures/firebase";
+import {createBackend} from "../fixtures/backend";
 
 vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
 
 const path = ["users_public", {user_id: "u123"}, "email"];
-let fixture, database;
+let fixture, database, backend;
 beforeEach(() => {
     fixture = createFirebase();
-    database = new FirebaseDatabase({firebase: fixture.firebase});
+    backend = createBackend();
+    database = new FirebaseDatabase({firebase: fixture.firebase, backend});
 });
 
 it("resolves named segment values and normalizes slashes", () => {
@@ -32,12 +34,12 @@ it("ignores numeric dynamic levels in Firebase paths, including level zero", asy
     const dynamic = ["mutual", {friendship: "m123", _: 0}, {active: "a456", _: 1}];
     expect(resolvePath(dynamic)).toBe("mutual/m123/a456");
     await database.update(dynamic, () => ({nested: {value: 1}}));
-    expect(fixture.sdk.transaction.mock.calls[0][0].path).toBe("mutual/m123/a456");
+    expect(backend.request).toHaveBeenCalledWith("database.update", "mutual/m123/a456", {nested: {value: 1}}, {mode: "replace", etag: "initial"});
     const single = ["mutual", {friendship: "m123", _: true}];
     expect(resolvePath(single)).toBe(resolvePath(["mutual", {friendship: "m123", _: 0}]));
     expect(resolvePath(single)).toBe("mutual/m123");
     await database.update(single, () => ({value: 2}));
-    expect(fixture.sdk.transaction.mock.calls[1][0].path).toBe("mutual/m123");
+    expect(backend.request).toHaveBeenLastCalledWith("database.update", "mutual/m123", {value: 2}, {mode: "replace", etag: "initial"});
     expect(() => resolvePath(["mutual", {friendship: "m123", _type: 0}])).toThrow();
 });
 
@@ -46,7 +48,7 @@ it.each([false, -1, "0", null, undefined, 1.5, Number.MAX_SAFE_INTEGER + 1, {lev
         const path = ["mutual", {friendship: "m123", _: metadata}];
         expect(resolvePath(path)).toBe("mutual/m123");
         await database.update(path, () => ({value: 1}));
-        expect(fixture.sdk.transaction.mock.calls[0][0].path).toBe("mutual/m123");
+        expect(backend.request).toHaveBeenLastCalledWith("database.update", "mutual/m123", {value: 1}, {mode: "replace", etag: "initial"});
     }
 );
 
@@ -57,18 +59,21 @@ it("uses named segments in reads, writes, updates, deletes and creation", async 
     await database.update(path, () => "b@example.com");
     await database.update(["users_public", {user_id: "u123"}], {email: "c@example.com"});
     await database.delete(path);
-    expect(fixture.sdk.transaction.mock.calls.map(([ref]) => ref.path)).toEqual([
-        "users_public/u123/email"
+    expect(backend.request.mock.calls).toEqual([
+        ["database.update", "users_public/u123/email", null, {mode: "read"}],
+        ["database.update", "users_public/u123/email", "b@example.com", {mode: "replace", etag: "initial"}],
+        ["database.update", "users_public/u123", null, {mode: "read"}],
+        ["database.update", "users_public/u123", {email: "c@example.com"}, {mode: "replace", etag: "initial"}],
+        ["database.delete", "users_public/u123/email"]
     ]);
-    expect(fixture.sdk.update.mock.calls[0][0].path).toBe("users_public/u123");
-    await database.create(["users_public", {user_id: "u123"}, "posts", "id"], {text: "Post"});
-    expect(fixture.sdk.transaction.mock.calls.at(-1)[0].path).toBe("users_public/u123/posts/generated-1");
+    const createPath = ["users_public", {user_id: "u123"}, "posts", "id"];
+    expect(await database.create(createPath, {text: "Post"})).toBe("backend-key");
+    expect(backend.request).toHaveBeenLastCalledWith("database.create", createPath, {text: "Post"});
 });
 
 it("resolves named paths in batch updates", async () => {
     await database.update(new Map([[path, "a@example.com"], ["other", 1]]));
-    expect(fixture.sdk.update.mock.calls[0][0].path).toBe("");
-    expect(fixture.sdk.update.mock.calls[0][1]).toEqual({"users_public/u123/email": "a@example.com", other: 1});
+    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.update", "", {"users_public/u123/email": "a@example.com", other: 1});
 });
 
 it("keeps nested field names and values through Map serialization", async () => {
@@ -76,7 +81,7 @@ it("keeps nested field names and values through Map serialization", async () => 
         [["users_private", {user_id: "u123"}, {device_id: "phone"}, "locale"], "en"],
         [["users_public", {user_id: "u123"}, "name"], null]
     ]));
-    expect(fixture.sdk.update.mock.calls[0][1]).toEqual({
+    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.update", "", {
         "users_private/u123/phone/locale": "en",
         "users_public/u123/name": null
     });
@@ -122,6 +127,7 @@ it.each(["users_public", [], ["users_public"], ["users_public", "_"]])(
     "validates create-specific path shape at runtime: %j", async invalid => {
         await expect(database.create(invalid, {})).rejects.toMatchObject({code: "database/invalid-argument"});
         expect(fixture.sdk.refs).toHaveLength(0);
+        expect(backend.request).not.toHaveBeenCalled();
     }
 );
 
@@ -138,6 +144,7 @@ it.each([{}, {uid: "u123", tenant: "t1"}, {uid: 123}, {uid: null}, {uid: undefin
         expect(() => database.addEventListener(invalid)).toThrow();
         expect(() => database.cursor(invalid)).toThrow();
         expect(fixture.sdk.refs).toHaveLength(0);
+        expect(backend.request).not.toHaveBeenCalled();
     }
 );
 

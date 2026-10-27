@@ -1,4 +1,5 @@
-import createLocalDatabase from "../../../packages/database/src/__tests__/createLocalDatabase";
+import LocalDatabase from "../../../packages/database/src/local";
+import LocalBackend from "../../../packages/backend/src/local";
 import React, {act} from "react";
 import {Provider} from "react-redux";
 import {createStore} from "redux";
@@ -51,18 +52,28 @@ afterEach(() => { unmount(container); container.remove(); });
 
 it.each(["local", "firebase"])("releases the composer blocker before navigating after a %s root publication", async provider => {
     const fixture = createFirebase();
+    const values = new Map();
     fixture.sdk.once.mockImplementation(ref => {
-        const values = fixture.sdk.values;
         const value = values.has(ref.path) ? values.get(ref.path) : Object.fromEntries(
             [...values].filter(([path]) => path.startsWith(`${ref.path}/`))
                 .map(([path, value]) => [path.slice(ref.path.length + 1), value]));
         return Promise.resolve(fixture.snapshot(value));
     });
+    const storageId = `post-navigation-${crypto.randomUUID()}`;
+    context.backend = provider === "local" ? new LocalBackend({storageId}) : {request: vi.fn(async (name, path, value) => {
+        expect(name).toBe("database.create");
+        expect(path).toEqual(["posts", "post_id"]);
+        values.set("posts/backend-key", structuredClone(value));
+        return "backend-key";
+    })};
     context.database = provider === "local"
-        ? createLocalDatabase({storageId: `post-navigation-${crypto.randomUUID()}`})
-        : new FirebaseDatabase({firebase: fixture.firebase});
+        ? new LocalDatabase({storageId, backend: context.backend})
+        : new FirebaseDatabase({firebase: fixture.firebase, backend: context.backend});
     const database = context.database;
-    context.backend = {request: vi.fn((name, {path, value}) => database.create(path, value))};
+    if (provider === "local") {
+        await database.read(["posts"]);
+        vi.spyOn(context.backend, "request");
+    }
     const history = createMemoryHistory({initialEntries: ["/discover"]});
     const complete = vi.fn(({key}) => history.push(`/post/${key}`));
     const error = vi.fn();
@@ -94,9 +105,9 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
     });
     const {key} = complete.mock.calls[0][0];
     expect(error).not.toHaveBeenCalled();
-    expect(context.backend.request).toHaveBeenCalledExactlyOnceWith("database.create", {
-        path: ["posts", "post_id"], value: expect.objectContaining({uid: "author", to: 0, text: "root post"})
-    });
+    expect(context.backend.request).toHaveBeenCalledExactlyOnceWith("database.create",
+        provider === "local" ? ["posts", {post_id: key}] : ["posts", "post_id"],
+        expect.objectContaining({uid: "author", to: 0, text: "root post"}));
     expect(await database.read(["posts", {post_id: key}])).toMatchObject({to: 0, text: "root post"});
     expect(history.location.pathname).toBe(`/post/${key}`);
     expect(container.querySelector("[data-post-page]")).not.toBeNull();
@@ -112,8 +123,8 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
 
 it("passes a server creation error to onError without completing publication", async () => {
     const failure = Object.assign(new Error("Not allowed"), {code: "functions/permission-denied"});
-    context.database = {TIMESTAMP: 123};
     context.backend = {request: vi.fn().mockRejectedValue(failure)};
+    context.database = new FirebaseDatabase({backend: context.backend});
     const complete = vi.fn();
     const error = vi.fn();
     const history = createMemoryHistory({initialEntries: ["/discover"]});

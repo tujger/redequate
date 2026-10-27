@@ -29,12 +29,14 @@ describe("Local database updates", () => {
 
     it("returns a plain counter value through counterControl for the likes caller", async () => {
         const database = createLocalDatabase({storageId: "likes"});
-        expect(await counterControl({database, path: [{post_id: "p1"}, "like"], increment: 1})).toBe(1);
-        expect(await counterControl({database, path: [{post_id: "p1"}, "like"], increment: -1})).toBeNull();
+        await database.read(["_counters"]);
+        expect(await counterControl({database, path: [{id: "p1"}, "like"], increment: 1})).toBe(1);
+        expect(await counterControl({database, path: [{id: "p1"}, "like"], increment: -1})).toBeNull();
     });
     it("keeps live scalar counters on their literal field path", async () => {
         const database = createLocalDatabase({storageId: "live-likes"});
-        const path = [{post_id: "p1"}, "like"];
+        await database.read(["_counters"]);
+        const path = [{id: "p1"}, "like"];
         const onchange = vi.fn();
         const remove = counterControl({database, path, onchange});
         try {
@@ -42,7 +44,7 @@ describe("Local database updates", () => {
             await counterControl({database, path, increment: 1});
             expect(onchange).toHaveBeenLastCalledWith(1);
             expect(await counterControl({database, path})).toBe(1);
-            expect(path).toEqual([{post_id: "p1"}, "like"]);
+            expect(path).toEqual([{id: "p1"}, "like"]);
         } finally { remove(); }
     });
 

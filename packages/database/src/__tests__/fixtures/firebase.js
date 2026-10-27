@@ -73,16 +73,6 @@ export function createFirebase() {
             },
         };
     }
-    const values = new Map();
-    sdk.values = values;
-    sdk.transaction.mockImplementation(async (ref, callback) => {
-        const current = values.get(ref.path) ?? null;
-        const next = callback(structuredClone(current));
-        if (next === undefined) return {committed: false, snapshot: snapshot(current, ref.key)};
-        if (next === null) values.delete(ref.path);
-        else values.set(ref.path, structuredClone(next));
-        return {committed: true, snapshot: snapshot(next, ref.key)};
-    });
     // Assign the default after reference is initialized.
     sdk.once.mockResolvedValue({exists: () => false, val: () => null, forEach: () => {}});
     return {

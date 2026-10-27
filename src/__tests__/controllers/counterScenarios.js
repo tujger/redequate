@@ -6,7 +6,10 @@ import counterControl from "../../controllers/counterControl";
 export function counterScenarios(createDatabases, {local = false} = {}) {
     let database, other;
     const path = [{id: "audit-post"}, "like"];
-    beforeEach(() => { [database, other] = createDatabases(); });
+    beforeEach(async () => {
+        [database, other] = createDatabases();
+        if (local) await database.read(["_counters"]);
+    });
     const stored = () => counterControl({database, path});
     const seed = value => database.update(["_counters", ...path], () => value);
 
@@ -55,8 +58,14 @@ export function counterScenarios(createDatabases, {local = false} = {}) {
         ["profile posts", [{id: "audit-user"}, "mutualstamps", {_my: "_my"}]],
     ];
     for (const [name, address] of paths) {
-        const check = local && ["string", "literal array", "requests"].includes(name) ? knownCounterFailure : it;
-        check(`${name} path: initial snapshot, writes, zero, sibling isolation and unsubscribe [C6/C7 on Local]`, async () => {
+        if (local && ["string", "literal array", "post_id"].includes(name)) {
+            it(`${name} path requires a declared indexed address on Local`, async () => {
+                await expect(counterControl({database, path: address})).rejects.toMatchObject({code: "database/invalid-argument"});
+                await expect(counterControl({database, path: address, increment: 1})).rejects.toMatchObject({code: "database/invalid-argument"});
+            });
+            continue;
+        }
+        it(`${name} path: initial snapshot, writes, zero, sibling isolation and unsubscribe`, async () => {
             const before = structuredClone(address);
             const changes = vi.fn();
             const stop = counterControl({database, path: address, onchange: changes});
@@ -93,6 +102,8 @@ export function counterScenarios(createDatabases, {local = false} = {}) {
     });
 
     it("commits concurrent increments/decrements from two instances without lost writes", async () => {
+        // Exercise real CAS retries without random backoff dominating the unit test.
+        if (local) vi.spyOn(Math, "random").mockReturnValue(0);
         const changes = vi.fn();
         const stop = counterControl({database, path, onchange: changes});
         try {

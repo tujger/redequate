@@ -36,9 +36,9 @@ it("creates a fresh cursor on parent renders and when query inputs change", () =
     show({...props, itemTransform: item => item});
     expect(context.props.cursor).not.toBe(cursor);
     expect(context.database.cursor).toHaveBeenCalledTimes(2);
-    expect(context.database.cursor).toHaveBeenLastCalledWith(["mutualstamps", "_my", {user_id: "u1"}, "mutual_id"], {order: "desc"});
+    expect(context.database.cursor).toHaveBeenLastCalledWith(["mutualstamps", {mutual_type: "_my"}, {user_id: "u1"}, "mutual_id"], {order: "desc"});
     show({...props, mutualId: "u2"});
-    expect(context.database.cursor).toHaveBeenLastCalledWith(["mutualstamps", "_my", {user_id: "u2"}, "mutual_id"], {order: "desc"});
+    expect(context.database.cursor).toHaveBeenLastCalledWith(["mutualstamps", {mutual_type: "_my"}, {user_id: "u2"}, "mutual_id"], {order: "desc"});
 });
 
 it("restarts through the existing layout remount without revision state", () => {

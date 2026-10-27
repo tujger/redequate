@@ -17,8 +17,8 @@ export function counterUiScenarios(Component, context, createDatabases) {
             expect(container.textContent).toBe(value);
         });
     };
-    beforeEach(() => {
-        [database, other] = createDatabases();
+    beforeEach(async () => {
+        [database, other] = await createDatabases();
         context.database = database;
         globalThis.IS_REACT_ACT_ENVIRONMENT = true;
         container = document.createElement("div");
@@ -84,7 +84,7 @@ export function counterUiScenarios(Component, context, createDatabases) {
     });
     knownCounterFailure("C4: changing database with the same path follows the new provider", async () => {
         await render(); await write({increment: 2}); await displayed("2");
-        const replacement = createDatabases("replacement")[0];
+        const [replacement] = await createDatabases("replacement");
         const subscribe = vi.spyOn(replacement, "addEventListener");
         context.database = replacement;
         await render();

@@ -15,6 +15,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 knownCounterFailure.each(["like", "dislike"])("C8: Local %s updates persisted counters, not only PostData memory", async type => {
     const database = createLocalDatabase({storageId: "local-writers"});
+    await database.read(["_counters"]);
     const post = PostData({database, allowedExtras: ["like", "dislike"]}); post.id = "p1";
     await post.fetchCounters(); await post.fetchExtras("reader");
     await post.putExtra({type, uid: "reader"});
@@ -24,6 +25,7 @@ knownCounterFailure.each(["like", "dislike"])("C8: Local %s updates persisted co
 });
 knownCounterFailure("C8: Local following creates a relation and updates both directional counters", async () => {
     const database = createLocalDatabase({storageId: "local-follow-writers"});
+    await database.read(["_counters"]);
     const result = await mutualRequest({database, currentUserData: {id: "reader"}, mutualId: "author",
         mutualType: "users_public", mutualMode: MutualMode.SIMPLEX_QUIET, typeId: "following"});
     expect(result.key).toEqual(expect.any(String));
@@ -34,6 +36,7 @@ knownCounterFailure("C8: Local following creates a relation and updates both dir
 
 knownCounterFailure("C8: publishing a Local post updates its author's persisted count", async () => {
     const database = createLocalDatabase({storageId: "local-post-writers"});
+    await database.read(["_counters"]);
     const post = await PostData({database}).create({uid: "author", text: "Root"});
     await post.publish()();
     expect(await database.read(["posts", {post_id: post.id}])).toMatchObject({uid: "author", to: 0});
@@ -41,6 +44,7 @@ knownCounterFailure("C8: publishing a Local post updates its author's persisted 
 });
 knownCounterFailure("C8: creating a Local friend request updates the pending count", async () => {
     const database = createLocalDatabase({storageId: "local-request-writers"});
+    await database.read(["_counters"]);
     const result = await mutualRequest({database, currentUserData: {id: "reader"}, mutualId: "author",
         mutualType: "users_public", mutualMode: MutualMode.DUPLEX_APPROVE, typeId: "friend"});
     expect(await database.read(["mutualrequests", {mutual_type: "friend"}, {mutual_id: result.key}]))
