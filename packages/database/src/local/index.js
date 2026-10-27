@@ -4,12 +4,12 @@ import DatabaseBase from "../common/DatabaseBase";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
 import resolvePath from "../common/resolvePath";
 import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
-import {key as generateKey} from "firebase-key";
-import parseCreatePath from "../common/parseCreatePath";
-import addEventListener, {mutate} from "./addEventListener";
+import addEventListener from "./addEventListener";
 import LocalCursor from "./cursor";
+import createRecord from "./create";
 import update from "./update";
-import {deleteRecord, readValue, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecords, openDatabase} from "./helpers";
+import deleteRecord from "./delete";
+import {readValue, getSubtree, increment, TIMESTAMP, openDatabase} from "./helpers";
 import {applySchema} from "./schema";
 import {convertStores} from "./storeSchema";
 
@@ -78,16 +78,11 @@ export default class LocalDatabase extends DatabaseBase {
     }
 
     async create(path, value) {
-        return this.run(() => {
-            const key = parseCreatePath(path).key ?? generateKey();
-            return super.create(path, value, {key});
-        }, undefined, "create", {path, value});
+        return createRecord(path, value, this.run.bind(this), super.create.bind(this));
     }
 
     async delete(path, options = {}) {
-        return this.run(() => mutate(this.#context, [path], () => parseDatabasePath(path).kind === "collection"
-            ? updateRecords(this.#context, [[path, null]])
-            : deleteRecord(this.#context, path)), options, "delete", {path});
+        return deleteRecord(path, options, this.run.bind(this), super.delete.bind(this));
     }
 
     async read(path, options = {}) {

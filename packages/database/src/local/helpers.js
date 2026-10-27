@@ -1,10 +1,11 @@
 import parseReadPath from "../common/parseReadPath";
+import validatePath from "../common/validatePath";
 import {fail} from "../../../common";
 import {LOCAL_SCHEMA} from "./storeSchema";
 import {applySchema} from "./schema";
 import {openDatabase as openConnection} from "./connection";
 import {
-    resolveCollectionPath, runTransaction, readStore, writeStore, childRecordPath,
+    validateCollectionPath, runTransaction, readStore, writeStore, childRecordPath,
     assertNonOverlapping
 } from "../../../backend/src/local/database/createHelpers";
 
@@ -32,8 +33,9 @@ const transact = async (context, mode, names, operation) => {
 };
 
 const read = (context, rawPath, options, query) => {
+    validatePath(rawPath);
     const root = rawPath === "" || Array.isArray(rawPath) && !rawPath.length;
-    const names = root ? storeNames(context) : [resolveCollectionPath(rawPath)[0]];
+    const names = root ? storeNames(context) : [validateCollectionPath(rawPath)[0]];
     return transact(context, "readonly", names, async transaction => {
         if (root) {
             const entries = await Promise.all(names.map(async name => [name,
@@ -56,20 +58,21 @@ export const getCursorChildren = (context, path, keyField, options = {}) =>
 
 export const updateRecords = async (context, entries, {merge = false} = {}) => {
     if (!entries.length) return;
-    const names = [...new Set(entries.map(([path]) => resolveCollectionPath(path)[0]))];
+    for (const [path] of entries) validatePath(path);
+    const names = [...new Set(entries.map(([path]) => validateCollectionPath(path)[0]))];
     return transact(context, "readwrite", names, async transaction => {
         assertNonOverlapping(transaction, entries);
         const now = Date.now();
         for (const [path, value] of entries) {
-            await writeStore(transaction.objectStore(resolveCollectionPath(path)[0]), path, value, {merge, now});
+            await writeStore(transaction.objectStore(validateCollectionPath(path)[0]), path, value, {merge, now});
         }
     });
 };
 
-export const deleteRecord = (context, path) => updateRecords(context, [[path, null]]);
 export const getChildRecordPath = (context, path, key, keyField) => {
-    const name = resolveCollectionPath(path)[0];
+    validatePath(path);
+    const name = validateCollectionPath(path)[0];
     return transact(context, "readonly", [name], transaction => childRecordPath(transaction.objectStore(name), path, key, keyField));
 };
 
-export {TIMESTAMP, increment, resolveCollectionPath, parseDatabasePath} from "../../../backend/src/local/database/createHelpers";
+export {TIMESTAMP, increment, validateCollectionPath} from "../../../backend/src/local/database/createHelpers";

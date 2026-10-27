@@ -2,7 +2,7 @@ import {observeWrites} from "../../../backend/src/local/database/createHelpers";
 import validatePath from "../common/validatePath";
 import compareKeys from "../common/compareKeys";
 import {fail} from "../../../common";
-import {assertCollection, getSubtree, readValue, resolveCollectionPath} from "./helpers";
+import {assertCollection, getSubtree, readValue, validateCollectionPath} from "./helpers";
 
 const listeners = new Map();
 const queues = new Map();
@@ -12,7 +12,7 @@ const storageName = context => typeof context === "string" ? context : context.s
 const invalid = message => fail("database/invalid-argument", message);
 
 const collectionFor = path => path === "" || Array.isArray(path) && !path.length
-    ? undefined : resolveCollectionPath(path)[0];
+    ? undefined : validateCollectionPath(path)[0];
 
 const channelName = storageId => `redequate:local:${storageId}:changes`;
 const receive = (storageId, event) => {
@@ -113,6 +113,7 @@ export const mutate = (storageId, paths, operation) => enqueue(storageId, async 
 });
 
 export default function addEventListener(storageId, path, callbacks, read) {
+    validatePath(path);
     for (const [name, handler] of Object.entries(callbacks)) {
         if (name.startsWith("on") && handler !== undefined && !(handler instanceof Function)) {
             invalid(`${name} must be a function or undefined.`);
