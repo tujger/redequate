@@ -34,20 +34,6 @@ const openChannel = storageId => {
     } catch (_) { /* BroadcastChannel is optional (for example in SSR). */ }
 };
 
-const publish = (storageId, collections) => {
-    if (!collections.length || typeof globalThis.BroadcastChannel !== "function") return;
-    if (listeners.has(storageId)) openChannel(storageId);
-    let channel = channels.get(storageId);
-    let temporary = false;
-    try {
-        if (!channel) {
-            channel = new globalThis.BroadcastChannel(channelName(storageId));
-            temporary = true;
-        }
-        channel.postMessage({collections});
-    } catch (_) { /* A notification failure must not turn a committed write into a failed write. */ } finally { if (temporary) channel?.close(); }
-};
-
 const enqueue = (storageId, operation) => {
     storageId = storageName(storageId);
     const next = (queues.get(storageId) ?? Promise.resolve()).then(operation);
@@ -101,16 +87,6 @@ const refresh = async listener => {
     }
     try { deliver(listener, value); } catch (_) { /* Callback wrapper already reported the error. */ }
 };
-
-export const mutate = (storageId, paths, operation) => enqueue(storageId, async () => {
-    const result = await operation();
-    const changed = [...new Set(paths.map(collectionFor).filter(Boolean))];
-    for (const listener of listeners.get(storageName(storageId)) ?? []) {
-        if (!listener.collection || changed.includes(listener.collection)) await refresh(listener);
-    }
-    publish(storageName(storageId), changed);
-    return result;
-});
 
 export default function addEventListener(storageId, path, callbacks, read) {
     validatePath(path);

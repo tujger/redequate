@@ -3,8 +3,9 @@ import {fail} from "../../../common";
 import DatabaseCursor from "../common/DatabaseCursor";
 import compareKeys from "../common/compareKeys";
 import resolvePath from "../common/resolvePath";
-import addEventListener, {mutate} from "./addEventListener";
-import {getChildRecordPath, getCursorChildren, getSubtree, updateRecords} from "./helpers";
+import addEventListener from "./addEventListener";
+import update from "../common/methods/update";
+import {getChildRecordPath, getCursorChildren, getSubtree} from "./helpers";
 
 const invalid = message => fail("database/invalid-argument", message);
 const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
@@ -12,6 +13,7 @@ const children = value => value !== null && typeof value === "object" ? Object.e
 
 export default class LocalCursor extends DatabaseCursor {
     #storageId;
+    #backend;
     #path;
     #identityField;
     #field;
@@ -23,13 +25,14 @@ export default class LocalCursor extends DatabaseCursor {
     #scan;
     #header = [];
 
-    constructor(storageId, path, options = {}) {
+    constructor(storageId, path, options = {}, backend) {
         const identityField = Array.isArray(path) && path.length > 1 && typeof path.at(-1) === "string"
             ? path.at(-1)
             : undefined;
         const resolvedPath = identityField === undefined ? path : path.slice(0, -1);
         super(options, resolvedPath);
         this.#storageId = storageId;
+        this.#backend = backend;
         this.#path = resolvedPath;
         this.#identityField = identityField;
         this.#field = this.orderBy === undefined ? undefined : resolvePath(this.orderBy);
@@ -123,8 +126,7 @@ export default class LocalCursor extends DatabaseCursor {
                     const recordPath = this.#path.length
                         ? await getChildRecordPath(this.#storageId, this.#path, key, this.#identityField)
                         : [key];
-                    await mutate(this.#storageId, [recordPath], () =>
-                        updateRecords(this.#storageId, [[recordPath, replacement]]));
+                    await update(this.#backend, recordPath, () => replacement);
                     if (replacement === null) entry = undefined;
                     else {
                         const saved = this.#path.length

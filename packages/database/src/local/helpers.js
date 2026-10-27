@@ -5,8 +5,7 @@ import {LOCAL_SCHEMA} from "./storeSchema";
 import {applySchema} from "./schema";
 import {openDatabase as openConnection} from "./connection";
 import {
-    validateCollectionPath, runTransaction, readStore, writeStore, childRecordPath,
-    assertNonOverlapping
+    validateCollectionPath, runTransaction, readStore, childRecordPath
 } from "../../../backend/src/local/database/createHelpers";
 
 const invalid = message => fail("database/invalid-argument", message);
@@ -55,19 +54,6 @@ export const readValue = (context, path, options = {}) => read(context, path, op
 export const getSubtree = (context, path, options = {}) => read(context, path, options, false);
 export const getCursorChildren = (context, path, keyField, options = {}) =>
     read(context, path, {...options, keyField}, false);
-
-export const updateRecords = async (context, entries, {merge = false} = {}) => {
-    if (!entries.length) return;
-    for (const [path] of entries) validatePath(path);
-    const names = [...new Set(entries.map(([path]) => validateCollectionPath(path)[0]))];
-    return transact(context, "readwrite", names, async transaction => {
-        assertNonOverlapping(transaction, entries);
-        const now = Date.now();
-        for (const [path, value] of entries) {
-            await writeStore(transaction.objectStore(validateCollectionPath(path)[0]), path, value, {merge, now});
-        }
-    });
-};
 
 export const getChildRecordPath = (context, path, key, keyField) => {
     validatePath(path);
