@@ -2,6 +2,7 @@ import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import {fail} from "../../../../common";
 import validatePath from "../../../../database/src/common/validatePath";
 import parseCreatePath from "../../../../database/src/common/parseCreatePath";
+import {decodeRecordValue, encodeRecordValue} from "./recordValue";
 import applyUpdate from "../../../../database/src/common/applyUpdate";
 
 const invalid = message => fail("database/invalid-argument", message);
@@ -22,8 +23,11 @@ const at = (object, names) => names.reduce((value, name) => value !== null && ty
 const parts = name => name.split(".");
 const assign = (object, names, value, remove = false) => {
     let node = object;
-    for (const name of names.slice(0, -1)) {
-        if (!isRecord(node[name]) || !Object.hasOwn(node, name)) set(node, name, {});
+    for (let index = 0; index < names.length - 1; index++) {
+        const name = names[index];
+        if (node[name] === null || typeof node[name] !== "object" || !Object.hasOwn(node, name)) {
+            set(node, name, /^(0|[1-9]\d*)$/.test(names[index + 1]) ? [] : {});
+        }
         node = node[name];
     }
     if (remove) delete node[names.at(-1)];
@@ -123,7 +127,7 @@ const address = (store, rawPath) => {
     const unique = Object.hasOwn(conditions, "_id") || uniqueIndexes(store)
         .some(({fields}) => fields.every(field => Object.hasOwn(conditions, field)));
     const single = unique || Object.keys(conditions).length > 0 && !uniqueIndexes(store).length;
-    if (property.length && !single) invalid("A nested property requires a unique indexed record.");
+    if (property.length && !single) invalid(`A nested property requires a unique indexed record: ${JSON.stringify(rawPath)}.`);
     return {conditions, property, single, unique, singleton: false};
 };
 
@@ -208,7 +212,7 @@ const collectionValue = (store, rows, conditions, keyField) => {
         const key = at(row, parts(field));
         if (key === undefined) invalid(`Record has no ${field} collection key.`);
         if (Object.hasOwn(result, String(key))) invalid("A collection read must identify each child uniquely.");
-        set(result, String(key), row);
+        set(result, String(key), decodeRecordValue(row));
     }
     return result;
 };
@@ -223,17 +227,18 @@ const checkQuery = (store, options) => {
     const path = typeof options.orderBy === "string" ? options.orderBy : options.orderBy.map(segment =>
         typeof segment === "string" ? segment : segment[Object.keys(segment).find(name => name !== "_")]).join("/");
     const field = path.replaceAll("/", ".");
+    if (!field && store.indexNames.length) return;
     if (!indexes(store).some(({fields}) => fields.includes(field))) invalid(`No declared index for field ${path}.`);
 };
 
 export const readStore = async (store, path, {keyField, ...options} = {}) => {
     checkQuery(store, options);
     const target = address(store, path);
-    if (target.singleton) return at(await singleton(store), target.property);
+    if (target.singleton) return at(decodeRecordValue(await singleton(store)), target.property);
     const rows = await queryRows(store, target.conditions, options);
     if (target.single && (target.unique || !keyField)) {
         if (rows.length > 1) invalid("A record path must identify a single record.");
-        return at(rows[0], target.property);
+        return at(decodeRecordValue(rows[0]), target.property);
     }
     return collectionValue(store, rows, target.conditions, keyField);
 };
@@ -254,7 +259,7 @@ const withIdentity = (value, conditions, previous) => {
 };
 
 const mergeValue = (previous, changes) => {
-    const result = {...previous};
+    const result = isRecord(previous) ? {...previous} : {};
     for (const [name, value] of Object.entries(changes)) {
         if (value === null) delete result[name];
         else set(result, name, value);
@@ -284,14 +289,14 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
         if (rows.length > 1) invalid("A write requires a unique record path.");
         previous = rows[0];
     }
-    const current = at(previous, target.property);
+    const decoded = decodeRecordValue(previous);
+    const current = at(decoded, target.property);
     if (callback) value = applyUpdate(callback, structuredClone(current ?? null)) ?? null;
     if (value === undefined) invalid("Undefined values cannot be stored.");
     if (create && current !== undefined) throw new DOMException("Record already exists.", "ConstraintError");
     let next;
     if (target.property.length) {
-        if (target.property[0] === "_id") invalid("The native primary key cannot be changed.");
-        next = {...previous};
+        next = decoded !== null && typeof decoded === "object" ? structuredClone(decoded) : {};
         if (value === null) assign(next, target.property, undefined, true);
         else {
             const prepared = merge ? mergeValue(current, value) : value;
@@ -301,13 +306,19 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
         if (previous) await requestResult(store.delete(previous._id));
         return null;
     } else {
-        if (!isRecord(value)) invalid("A store record must be an object.");
-        next = resolveValue(merge ? mergeValue(previous, value) : value, previous, now);
+        next = resolveValue(merge && isRecord(value) ? mergeValue(decoded, value) : value, decoded, now);
+    }
+    next = encodeRecordValue(next);
+    for (const {fields} of indexes(store)) for (const field of fields) {
+        const prior = at(previous, parts(field));
+        if (at(decoded, parts(field)) === undefined && at(next, parts(field)) === undefined && prior !== undefined) {
+            assign(next, parts(field), prior);
+        }
     }
     next = withIdentity(next, target.conditions, previous);
     const savedKey = await requestResult(create && !target.property.length ? store.add(next) : store.put(next));
     next._id = savedKey;
-    return target.property.length ? at(next, target.property) : next;
+    return at(decodeRecordValue(next), target.property);
 };
 
 export const assertNonOverlapping = (transaction, entries) => {
