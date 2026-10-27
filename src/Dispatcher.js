@@ -104,9 +104,19 @@ export default (props) => {
             document.cookie = "g_state=''";
             return props;
         }
-        const initDatabase = async props => {
+        const initBackend = async props => {
             try {
-                const database = await resolveDatabase(databaseGiven);
+                const backend = await resolveBackend(backendGiven);
+                console.log("[Dispatcher]", "backend resolved", {backend});
+                return {...props, backend};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
+        const initDatabase = async props => {
+            const {backend} = props;
+            try {
+                const database = await resolveDatabase(databaseGiven, {backend});
                 console.log("[Dispatcher]", "database resolved", {database});
                 return {...props, database};
             } catch (error) {
@@ -114,19 +124,11 @@ export default (props) => {
             }
         }
         const initAuth = async props => {
+            const {database} = props;
             try {
-                const auth = await resolveAuth(authGiven, {database: props.database, UserData});
+                const auth = await resolveAuth(authGiven, {database, UserData});
                 console.log("[Dispatcher]", "auth resolved", {auth});
                 return {...props, auth};
-            } catch (error) {
-                throw {...props, fatal: error};
-            }
-        }
-        const initBackend = async props => {
-            try {
-                const backend = await resolveBackend(backendGiven);
-                console.log("[Dispatcher]", "backend resolved", {backend});
-                return {...props, backend};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -368,9 +370,9 @@ export default (props) => {
 
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
+            .then(initBackend)
             .then(initDatabase)
             .then(initAuth)
-            .then(initBackend)
             .then(initMessaging)
             .then(initStorage)
             .then(initConsoleHandler)
