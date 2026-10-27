@@ -1,7 +1,7 @@
 import {getFunctions, httpsCallable} from "firebase/functions";
-import BackendBase from "../BackendBase";
+import BackendClientBase from "../BackendClientBase";
 
-export default class FirebaseBackendClient extends BackendBase {
+export default class FirebaseBackendClient extends BackendClientBase {
     _functions = undefined;
 
     constructor({firebase}) {

@@ -1,9 +1,9 @@
 import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
-import BackendBase from "../BackendBase";
+import BackendClientBase from "../BackendClientBase";
 import handlers from "./handlers";
 
-export default class LocalBackend extends BackendBase {
+export default class LocalBackend extends BackendClientBase {
     #storageId;
 
     constructor({storageId = LOCAL_DATABASE_NAME} = {}) {
