@@ -1,7 +1,9 @@
 import type BackendClientBase from "../../../backend/src/BackendClientBase";
-import {notImplemented} from "../../../common"
+import {fail, notImplemented} from "../../../common"
 import DatabaseCursor from "./DatabaseCursor";
 import createRecord from "./methods/create";
+import updateRecord from "./methods/update";
+import validatePath from "./validatePath";
 import type {
     DatabasePath, DatabaseValue, DatabaseOptions,
     DatabaseErrorHandler,
@@ -147,7 +149,21 @@ export default class DatabaseBase {
     update(path: DatabasePath, changes: Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
     update(updates: Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
     async update(path: DatabasePath | Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, changes?: Record<string, DatabaseValue> | ((value: DatabaseValue) => DatabaseValue | undefined) | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
-        return notImplemented("update")
+        const batch = typeof path !== "string" && !Array.isArray(path);
+        if (!batch) {
+            validatePath(path);
+            return updateRecord(this._backend, path as DatabasePath, changes);
+        }
+        if (path === null || typeof path !== "object") {
+            fail("database/invalid-argument", "Batch updates require an object or Map.");
+        }
+        const updates = path as Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>;
+        const entries = updates instanceof Map ? [...updates] : Object.entries(updates);
+        for (const [target, value] of entries) {
+            validatePath(target);
+            if (value instanceof Function) fail("database/invalid-argument", "Batch updates do not accept callbacks.");
+        }
+        await this._backend.request("database.update", "", updates);
     }
 
     /** Absent records also succeed. */
