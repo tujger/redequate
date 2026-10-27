@@ -1,4 +1,3 @@
-import {encodeRole} from "./roleData";
 import {isRecord} from "./validateArguments";
 
 const appendUpdates = (updates, path, fields) => {
@@ -15,7 +14,7 @@ export default async function saveUserData(user, fields, database, options) {
     const {public: publicData, role, private: privateData} = fields;
     const updates = new Map();
     if (publicData !== undefined) appendUpdates(updates, ["users_public", {user_id: user.id}], publicData);
-    if (role !== undefined) updates.set(["roles", {user_id: user.id}], encodeRole(database, user.id, role));
+    if (role !== undefined) updates.set(["roles", {user_id: user.id}], role);
     if (privateData !== undefined) appendUpdates(updates, ["users_private", {user_id: user.id}], privateData);
     if (updates.size) await database.update(updates, options);
 }

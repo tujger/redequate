@@ -196,8 +196,7 @@
             "autoIncrement": true
         },
         "storeSchema": [
-            {"name": "user_id", "keypath": "user_id", "options": {"unique": true}},
-            {"name": "role", "keypath": "role"}
+            {"name": "user_id", "keypath": "user_id", "options": {"unique": true}}
         ]
     },
     {

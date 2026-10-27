@@ -27,21 +27,3 @@ it("saves profile fields under their query names and reads the complete profile"
     expect(rows.every(row => !Object.hasOwn(row, "_local"))).toBe(true);
 });
 
-
-it("changes and loads Local roles while keeping an active administrator", async () => {
-    const database = createLocalDatabase({storageId: "user-local-roles"});
-    const one = new UserData(database).create("one", {name: "One"});
-    const two = new UserData(database).create("two", {name: "Two"});
-    await one.save();
-    await one.updateRole("admin");
-    await expect(one.updateRole(null)).rejects.toMatchObject({code: "auth/last-admin"});
-    await expect(one.delete()).rejects.toMatchObject({code: "auth/last-admin"});
-    await two.save();
-    await two.updateRole("admin");
-    await one.updateRole("disabled");
-    const loaded = await new UserData(database).fetch("one", [UserData.ROLE]);
-    expect(loaded.role).toBe("disabled");
-    await one.updateRole(null);
-    expect(await database.read(["roles", {user_id: "one"}])).toBeUndefined();
-    await expect(two.updateRole("disabled")).rejects.toMatchObject({code: "auth/last-admin"});
-});

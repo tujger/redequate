@@ -1,6 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
 import React from "react";
-import {roleQuery} from "../../../../packages/auth/src/common/roleData";
 import {connect, useDispatch} from "react-redux";
 import {Link} from "react-router-dom";
 import {DatabaseOrder} from "../../../../packages/database/src";
@@ -67,10 +66,14 @@ function Users(props) {
             });
             break;
         case "admins":
-            cursor = database.cursor(["roles", "user_id"], roleQuery(database, "admin"));
+            cursor = database.cursor(["roles", "user_id"], {
+                equalTo: "admin"
+            });
             break;
         case "disabled":
-            cursor = database.cursor(["roles", "user_id"], roleQuery(database, "disabled"));
+            cursor = database.cursor(["roles", "user_id"], {
+                equalTo: "disabled"
+            });
             break;
         case "notVerified":
             cursor = database.cursor(["users_public", "user_id"], {

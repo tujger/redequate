@@ -16,7 +16,6 @@ const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
 
 export default class LocalDatabase extends DatabaseBase {
-    supportsScalarRecords = false;
     #context;
     /**
      * @param {object} [options]
