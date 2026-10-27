@@ -56,15 +56,15 @@ it("notifies across independent contexts using collection names only, without ec
     expect(Channel.open.size).toBe(0);
 });
 
-it("broadcasts backend updates only after commit and remains silent on conditional conflicts", async () => {
+it("broadcasts backend updates and deletes after commit, remaining silent on conflicts and errors", async () => {
     const A = await context(), B = await context();
     const storageId = "shared-backend-update";
     const writer = new A.Database({storageId, backend: new A.Backend({storageId})});
     const reader = new B.Database({storageId, backend: new B.Backend({storageId})});
     const backend = new A.Backend({storageId});
     await writer.read(["posts"]);
-    const initial = vi.fn(), added = vi.fn(), changed = vi.fn();
-    const listener = reader.addEventListener(["posts"], {onChange: initial, onChildAdd: added, onChildChange: changed});
+    const initial = vi.fn(), added = vi.fn(), changed = vi.fn(), removed = vi.fn();
+    const listener = reader.addEventListener(["posts"], {onChange: initial, onChildAdd: added, onChildChange: changed, onChildRemove: removed});
     try {
         await vi.waitFor(() => expect(initial).toHaveBeenCalledTimes(1));
         const post = ["posts", {post_id: "p1"}];
@@ -80,6 +80,13 @@ it("broadcasts backend updates only after commit and remains silent on condition
         await backend.request("database.update", post, false, {mode: "replace", etag: fresh.etag});
         await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: false}));
         expect(Channel.messages).toHaveLength(2);
+        expect(await backend.request("database.delete", post)).toBeNull();
+        await vi.waitFor(() => expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: false}));
+        expect(await reader.read(post)).toBeUndefined();
+        expect(Channel.messages).toHaveLength(3);
+        await expect(backend.request("database.delete", ["missing-store"]))
+            .rejects.toMatchObject({name: "NotFoundError"});
+        expect(Channel.messages).toHaveLength(3);
         expect(Channel.messages.every(message => JSON.stringify(message.data) === '{"collections":["posts"]}')).toBe(true);
     } finally { listener.remove(); }
     expect(Channel.open.size).toBe(0);
