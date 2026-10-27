@@ -66,11 +66,6 @@ export const updateRecords = async (context, entries, {merge = false} = {}) => {
     });
 };
 
-export const updateRecord = (context, path, callback) => {
-    const name = resolveCollectionPath(path)[0];
-    return transact(context, "readwrite", [name], transaction => writeStore(transaction.objectStore(name), path, undefined, {callback}));
-};
-
 export const deleteRecord = (context, path) => updateRecords(context, [[path, null]]);
 export const getChildRecordPath = (context, path, key, keyField) => {
     const name = resolveCollectionPath(path)[0];

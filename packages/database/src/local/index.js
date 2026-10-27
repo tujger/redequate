@@ -8,12 +8,12 @@ import {key as generateKey} from "firebase-key";
 import parseCreatePath from "../common/parseCreatePath";
 import addEventListener, {mutate} from "./addEventListener";
 import LocalCursor from "./cursor";
-import {deleteRecord, readValue, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecord, updateRecords, openDatabase} from "./helpers";
+import update from "./update";
+import {deleteRecord, readValue, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecords, openDatabase} from "./helpers";
 import {applySchema} from "./schema";
 import {convertStores} from "./storeSchema";
 
 const invalid = message => fail("database/invalid-argument", message);
-const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
 
 export default class LocalDatabase extends DatabaseBase {
     #context;
@@ -116,22 +116,7 @@ export default class LocalDatabase extends DatabaseBase {
     }
 
     async update(path, changes, options = {}) {
-        const batch = typeof path !== "string" && !Array.isArray(path);
-        return this.run(() => mutate(this.#context,
-            batch ? path instanceof Map ? [...path.keys()] : Object.keys(path ?? {}) : [path], async () => {
-                if (batch) {
-                    if (!(path instanceof Map) && !isRecord(path)) invalid("updates must be a Map or record object.");
-                    const entries = path instanceof Map ? [...path] : Object.entries(path);
-                    if (entries.some(([, value]) => value instanceof Function)) invalid("Batch updates do not accept callbacks.");
-                    await updateRecords(this.#context, entries);
-                    return;
-                }
-                if (changes instanceof Function) return updateRecord(this.#context, path, changes);
-                const parsed = parseDatabasePath(path);
-                if (parsed.field) invalid("update requires a record path.");
-                if (!isRecord(changes)) invalid("changes must be a record object.");
-                await updateRecords(this.#context, [[path, changes]], {merge: true});
-            }), batch ? changes ?? options : options, "update", batch ? {updates: path} : {path, changes});
+        return update(path, changes, options, this.run.bind(this), super.update.bind(this));
     }
 
     get TIMESTAMP() {
