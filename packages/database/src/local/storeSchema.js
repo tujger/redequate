@@ -1,5 +1,4 @@
 import stores from "./stores.json";
-import {IDENTITY_INDEX} from "./row";
 
 const plain = value => value !== null && typeof value === "object" && !Array.isArray(value) &&
     Object.getPrototypeOf(value) === Object.prototype;
@@ -34,10 +33,6 @@ export const convertStores = (additional = []) => {
                 (index.options?.multiEntry && Array.isArray(index.keypath))) {
                 throw new TypeError(`Invalid Local index in store ${name}.`);
             }
-            const paths = Array.isArray(index.keypath) ? index.keypath : [index.keypath];
-            if (paths.some(path => ["_local", "_id"].includes(path.split(".")[0]))) {
-                throw new TypeError(`Reserved Local index keyPath: ${name}.${index.name}`);
-            }
             const description = {
                 keyPath: structuredClone(index.keypath), unique: index.options?.unique ?? false,
                 ...(index.options?.multiEntry ? {multiEntry: true} : {})
@@ -47,10 +42,6 @@ export const convertStores = (additional = []) => {
             }
             definition.indexes[index.name] = description;
         }
-    }
-    for (const definition of Object.values(result)) {
-        if (Object.hasOwn(definition.indexes, "_identity")) throw new TypeError("Reserved Local index: _identity");
-        definition.indexes._identity = {...IDENTITY_INDEX};
     }
     return result;
 };

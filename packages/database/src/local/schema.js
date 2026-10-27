@@ -1,6 +1,5 @@
 import {openDatabase} from "./connection";
 import {LOCAL_SCHEMA} from "./storeSchema";
-import {decodeRow, encodeRow} from "./row";
 
 const incompatible = message => Object.assign(new Error(message), {name: "VersionError"});
 const validPath = path => {
@@ -51,7 +50,7 @@ const changesFor = (database, schema, transaction) => {
     const changes = [];
     for (const [name, definition] of Object.entries(schema)) {
         if (!database.objectStoreNames.contains(name)) {
-            changes.push([name, definition, null, []]);
+            changes.push([name, definition, null]);
             continue;
         }
         const store = transaction ? transaction.objectStore(name) : database.transaction(name).objectStore(name);
@@ -61,17 +60,7 @@ const changesFor = (database, schema, transaction) => {
         const indexes = Object.entries(definition.indexes).filter(([index, spec]) =>
             !store.indexNames.contains(index) || !same(store.index(index).keyPath, spec.keyPath) ||
             store.index(index).unique !== spec.unique || store.index(index).multiEntry !== !!spec.multiEntry);
-        // Only old framework indexes use the reserved metadata namespace.
-        // Physical stores managed outside the configured collection schema stay additive.
-        const obsolete = Object.hasOwn(definition.indexes, "_identity")
-            ? [...store.indexNames].filter(index => {
-                if (Object.hasOwn(definition.indexes, index)) return false;
-                const paths = store.index(index).keyPath;
-                const parts = Array.isArray(paths) ? paths : [paths];
-                return parts.length > 0 && parts.every(path => path.startsWith("_local."));
-            })
-            : [];
-        if (indexes.length || obsolete.length) changes.push([name, definition, indexes, obsolete]);
+        if (indexes.length) changes.push([name, definition, indexes]);
     }
     return changes;
 };
@@ -90,28 +79,13 @@ const upgrade = (storageId, version, schema) => new Promise((resolve, reject) =>
         try {
             // Check every store before changing anything. An abort rolls back all index work.
             const changes = changesFor(request.result, schema, request.transaction);
-            for (const [name, definition, indexes, obsolete] of changes) {
+            for (const [name, definition, indexes] of changes) {
                 const store = indexes === null
                     ? request.result.createObjectStore(name, {keyPath: definition.keyPath, autoIncrement: definition.autoIncrement})
                     : request.transaction.objectStore(name);
-                for (const index of obsolete) store.deleteIndex(index);
                 for (const [index, spec] of indexes ?? Object.entries(definition.indexes)) {
                     if (store.indexNames.contains(index)) store.deleteIndex(index);
                     store.createIndex(index, spec.keyPath, {unique: spec.unique, multiEntry: spec.multiEntry ?? false});
-                }
-                if (indexes !== null) {
-                    const cursor = store.openCursor();
-                    cursor.onsuccess = () => {
-                        if (!cursor.result) return;
-                        try {
-                            const row = decodeRow(cursor.result.value, name);
-                            if (row) cursor.result.update(encodeRow(row, store));
-                            cursor.result.continue();
-                        } catch (error) {
-                            failure = error;
-                            request.transaction.abort();
-                        }
-                    };
                 }
             }
         } catch (error) {
@@ -130,7 +104,7 @@ const upgrade = (storageId, version, schema) => new Promise((resolve, reject) =>
     };
 });
 
-/** Apply schema changes atomically, compacting obsolete framework metadata. */
+/** Apply only declared schema changes atomically. */
 export const applySchema = async (storageId, input, initialSchema = LOCAL_SCHEMA) => {
     const schema = normalize(input, initialSchema);
     for (let attempt = 0; attempt < 10; attempt++) {
