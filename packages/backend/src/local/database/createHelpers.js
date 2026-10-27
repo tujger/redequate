@@ -3,7 +3,6 @@ import {fail} from "../../../../common";
 import validatePath from "../../../../database/src/common/validatePath";
 import parseCreatePath from "../../../../database/src/common/parseCreatePath";
 import {decodeRecordValue, encodeRecordValue} from "./recordValue";
-import applyUpdate from "../../../../database/src/common/applyUpdate";
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -267,17 +266,18 @@ const mergeValue = (previous, changes) => {
     return result;
 };
 
-export const writeStore = async (store, rawPath, value, {merge = false, create = false, callback, now = Date.now()} = {}) => {
+export const writeStore = async (store, rawPath, value, {merge = false, create = false, now = Date.now()} = {}) => {
     const target = address(store, rawPath);
     if (!target.singleton && !target.single && !target.property.length && !create) {
         const rows = await queryRows(store, target.conditions);
         const field = identityField(store, target.conditions);
-        const current = collectionValue(store, rows, target.conditions);
-        if (callback) value = applyUpdate(callback, structuredClone(current ?? null)) ?? null;
         if (value !== null && !isRecord(value)) invalid("Collection changes must be an object or null.");
+        const primaryKeys = new Map(rows.map(row => [String(at(row, parts(field))), row._id]));
+        if (!merge && value !== null) value = resolveValue(value, collectionValue(store, rows, target.conditions), now);
         if (!merge || value === null) for (const row of rows) await requestResult(store.delete(row._id));
         for (const [key, child] of Object.entries(value ?? {})) {
             const path = [store.name, ...Object.entries(target.conditions).map(([name, value]) => ({[name]: String(value)})), {[field]: key}];
+            if (!merge && field !== "_id" && primaryKeys.has(key)) path.push({_id: String(primaryKeys.get(key))});
             await writeStore(store, path, child, {merge, now});
         }
         return value;
@@ -291,7 +291,6 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
     }
     const decoded = decodeRecordValue(previous);
     const current = at(decoded, target.property);
-    if (callback) value = applyUpdate(callback, structuredClone(current ?? null)) ?? null;
     if (value === undefined) invalid("Undefined values cannot be stored.");
     if (create && current !== undefined) throw new DOMException("Record already exists.", "ConstraintError");
     let next;
