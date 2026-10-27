@@ -1,7 +1,9 @@
-import {fail} from "../../../../common";
+import {fail, notImplemented} from "../../../../common";
 import parseCreatePath from "../parseCreatePath";
 
-export default async function createRecord(backend, path, value, {key, mapError}) {
+export default async function createRecord(backend, path, value, implementation) {
+    if (!implementation) return notImplemented("create");
+    const {key, mapError} = implementation;
     const {parentPath, fieldName, key: suppliedKey} = parseCreatePath(path);
     const recordKey = suppliedKey ?? key;
     const preparedValue = value instanceof Function ? value(recordKey) : value;
