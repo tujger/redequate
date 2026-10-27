@@ -9,21 +9,13 @@ import {createFirebase} from "../fixtures/firebase";
 
 vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
 
-vi.mock("firebase/functions", () => ({
-    getFunctions: app => app,
-    httpsCallable: (_functions, endpoint) => async args => {
-        expect(endpoint).toBe("database-update");
-        return {data: await backend.request("database.update", ...args)};
-    },
-}));
-
 let fixture, database, backend;
 beforeEach(() => {
     fixture = createFirebase();
     backend = {request: vi.fn(async (_name, _path, value, options) => options.mode === "read"
         ? {value: null, etag: "initial"}
         : {committed: true, value})};
-    database = new FirebaseDatabase({firebase: fixture.firebase});
+    database = new FirebaseDatabase({firebase: fixture.firebase, backend});
 });
 const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
 

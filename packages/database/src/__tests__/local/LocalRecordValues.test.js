@@ -9,6 +9,7 @@ const put = (database, value, recordPath = path) => database.update(new Map([[re
 it.each(["text", "", 0, 12.5, false, true, [], [1, false, {nested: "value"}]])(
     "round trips non-object value %j with physical identity fields", async value => {
         const database = createLocalDatabase({storageId: "value-roundtrip"});
+        await database.read(["posts"]);
         await put(database, value);
         expect(await database.read(path)).toEqual(value);
         expect(await database.read(["posts"])).toEqual({p1: value});
@@ -21,6 +22,7 @@ it.each(["text", "", 0, 12.5, false, true, [], [1, false, {nested: "value"}]])(
 
 it("preserves native and compound identities across representation changes", async () => {
     const database = createLocalDatabase({storageId: "value-transition"});
+    await database.read(["posts"]);
     const message = ["chats", {chat_id: "c1"}, {message_id: "m1"}];
     await put(database, {text: "old"}, message);
     await put(database, false, ["chats", {_id: "1"}]);
@@ -37,6 +39,7 @@ it("preserves native and compound identities across representation changes", asy
 
 it("passes decoded values to callbacks and resolves root increment and timestamp markers", async () => {
     const database = createLocalDatabase({storageId: "value-callback"});
+    await database.read(["posts"]);
     await put(database, 2);
     expect(await database.update(path, value => {
         expect(value).toBe(2);
@@ -53,6 +56,7 @@ it("passes decoded values to callbacks and resolves root increment and timestamp
 
 it("reads and modifies nested arrays while permitting nested reserved names", async () => {
     const database = createLocalDatabase({storageId: "value-array"});
+    await database.read(["posts"]);
     await put(database, [{nested: [1, 2], _value: "user", _encoded: true}]);
     const item = [...path, {index: "0"}];
     expect(await database.read([...item, {nested: "nested"}, {index: "1"}])).toBe(2);
@@ -62,6 +66,7 @@ it("reads and modifies nested arrays while permitting nested reserved names", as
 
 it("encodes a singleton document without introducing indexes", async () => {
     const database = createLocalDatabase({storageId: "value-singleton"});
+    await database.read(["posts"]);
     await put(database, false, ["meta"]);
     expect(await database.read(["meta"])).toBe(false);
     await put(database, ["a", "b"], ["meta"]);
@@ -74,6 +79,7 @@ it("encodes a singleton document without introducing indexes", async () => {
 
 it("filters and pages decoded values, and passes them to cursor handles", async () => {
     const database = createLocalDatabase({storageId: "value-query"});
+    await database.read(["posts"]);
     await database.update(new Map([
         [["posts", {post_id: "a"}], false],
         [["posts", {post_id: "b"}], 2],
@@ -93,11 +99,13 @@ it("filters and pages decoded values, and passes them to cursor handles", async 
 
 it("notifies record listeners and cursor subscribers with decoded values after commit", async () => {
     const database = createLocalDatabase({storageId: "value-events"});
+    await database.read(["posts"]);
     const onChange = vi.fn(), added = vi.fn(), changed = vi.fn(), removed = vi.fn();
     const listener = database.addEventListener(["posts"], {onChange, onChildAdd: added, onChildChange: changed, onChildRemove: removed});
     const events = [];
     const subscription = database.cursor(["posts", "post_id"]).subscribe(event => events.push(event));
     try {
+        await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
         await put(database, false);
         await put(database, [1, 2]);
         await database.delete(path);
@@ -115,6 +123,7 @@ it("notifies record listeners and cursor subscribers with decoded values after c
 
 it("rejects undefined atomically without leaking aborted changes", async () => {
     const database = createLocalDatabase({storageId: "value-rollback"});
+    await database.read(["posts"]);
     await put(database, "original");
     await expect(database.update(new Map([
         [path, "changed"], [["posts", {post_id: "p2"}], undefined]
@@ -126,6 +135,7 @@ it("rejects undefined atomically without leaking aborted changes", async () => {
 
 it("merges object changes into a scalar record without retaining its character properties", async () => {
     const database = createLocalDatabase({storageId: "value-merge"});
+    await database.read(["posts"]);
     await put(database, "before");
     await database.update(path, {title: "after"});
     expect(await database.read(path)).toEqual({title: "after"});
@@ -133,6 +143,7 @@ it("merges object changes into a scalar record without retaining its character p
 
 it("decodes collection callback inputs and encodes replacement children inside their compound scope", async () => {
     const database = createLocalDatabase({storageId: "value-collection"});
+    await database.read(["posts"]);
     const scope = ["chats", {chat_id: "c1"}];
     await database.update(new Map([
         [[...scope, {message_id: "a"}], "first"],
@@ -210,6 +221,7 @@ it("rejects old physical records without migrating or rewriting them", async () 
 
 it("includes the original path when a nested address is ambiguous", async () => {
     const database = createLocalDatabase({storageId: "ambiguous-path"});
+    await database.read(["posts"]);
     const invalidPath = ["chats", {chat_id: "c1"}, {field: "title"}];
     await expect(database.read(invalidPath)).rejects.toMatchObject({
         code: "database/invalid-argument", message: expect.stringContaining(JSON.stringify(invalidPath))

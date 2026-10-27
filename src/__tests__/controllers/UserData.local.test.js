@@ -15,6 +15,7 @@ const created = value => value;
 
 it("saves profile fields under their query names and reads the complete profile", async () => {
     const database = createLocalDatabase({storageId: "profile-fields"});
+    await database.read(["posts"]);
     const profile = new UserData(database).create("u1", {name: " User ", email: "a@b.com", updated: 1});
     await profile.setPrivate("phone", {locale: "en", enabled: true});
     await profile.save();
@@ -32,6 +33,7 @@ it("saves profile fields under their query names and reads the complete profile"
 
 it("uses scalar roles and protects the last active administrator through LocalDatabase", async () => {
     const database = createLocalDatabase({storageId: "local-user-roles"});
+    await database.read(["posts"]);
     const one = new UserData(database).create("one", {name: "One"});
     const two = new UserData(database).create("two", {name: "Two"});
     await one.save();
@@ -50,6 +52,7 @@ it("uses scalar roles and protects the last active administrator through LocalDa
 
 it("loads an authenticated profile and saves private devices again without physical fields", async () => {
     const database = createLocalDatabase({storageId: "private-login-roundtrip"});
+    await database.read(["posts"]);
     const auth = new AuthBase({database, UserData});
     const first = new UserData(database).create("retained-user", {name: "Original", email: "user@example.test"});
     await first.setPrivate("phone", {locale: "en", browserName: "Chrome"});
@@ -71,6 +74,7 @@ it("loads an authenticated profile and saves private devices again without physi
 
 it("subscribes to posts by the indexed author field used by Home", async () => {
     const database = createLocalDatabase({storageId: "home-author-listener"});
+    await database.read(["posts"]);
     const onChange = vi.fn(), added = vi.fn(), onError = vi.fn();
     const listener = database.addEventListener(["posts", {uid: "author"}], {onChange, onChildAdd: added, onError});
     try {

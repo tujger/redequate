@@ -10,6 +10,7 @@ const created = value => value;
 
 it("loads private devices into the user profile through LocalDatabase", async () => {
     const database = createLocalDatabase({storageId: "private-profile"});
+    await database.read(["posts"]);
     await database.update(new Map([
         [["users_private", {user_id: "u1"}, {device_id: "phone"}, "locale"], "en"],
         [["users_private", {user_id: "u1"}, {device_id: "phone"}, "enabled"], true]

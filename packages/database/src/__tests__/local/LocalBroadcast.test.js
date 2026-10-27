@@ -55,3 +55,32 @@ it("notifies across independent contexts using collection names only, without ec
     } finally { one.unsubscribe(); two.unsubscribe(); ready.remove(); separateReady.remove(); }
     expect(Channel.open.size).toBe(0);
 });
+
+it("broadcasts backend updates only after commit and remains silent on conditional conflicts", async () => {
+    const A = await context(), B = await context();
+    const storageId = "shared-backend-update";
+    const writer = new A.Database({storageId, backend: new A.Backend({storageId})});
+    const reader = new B.Database({storageId, backend: new B.Backend({storageId})});
+    const backend = new A.Backend({storageId});
+    await writer.read(["posts"]);
+    const initial = vi.fn(), added = vi.fn(), changed = vi.fn();
+    const listener = reader.addEventListener(["posts"], {onChange: initial, onChildAdd: added, onChildChange: changed});
+    try {
+        await vi.waitFor(() => expect(initial).toHaveBeenCalledTimes(1));
+        const post = ["posts", {post_id: "p1"}];
+        const snapshot = await backend.request("database.update", post, null, {mode: "read"});
+        expect(Channel.messages).toHaveLength(0);
+        await backend.request("database.update", post, {title: "A"});
+        await vi.waitFor(() => expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "A"}}));
+        expect(Channel.messages).toHaveLength(1);
+        expect(await backend.request("database.update", post, {title: "stale"}, {mode: "replace", etag: snapshot.etag}))
+            .toMatchObject({committed: false, value: {title: "A"}});
+        expect(Channel.messages).toHaveLength(1);
+        const fresh = await backend.request("database.update", post, null, {mode: "read"});
+        await backend.request("database.update", post, false, {mode: "replace", etag: fresh.etag});
+        await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: false}));
+        expect(Channel.messages).toHaveLength(2);
+        expect(Channel.messages.every(message => JSON.stringify(message.data) === '{"collections":["posts"]}')).toBe(true);
+    } finally { listener.remove(); }
+    expect(Channel.open.size).toBe(0);
+});
