@@ -1,7 +1,7 @@
-import {serverTimestamp, increment, getDatabase, ref, push} from "firebase/database";
+import {serverTimestamp, increment} from "firebase/database";
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
-import parseCreatePath from "../common/parseCreatePath";
+import createRecord from "./create";
 import FirebaseCursor from "./cursor";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
 import deleteRecord from "./delete";
@@ -9,13 +9,6 @@ import read from "./read";
 import update from "./update";
 import resolvePath from "../common/resolvePath";
 import {fail} from "../../../common";
-
-const mapCreateError = error => {
-    if (error.code === "functions/already-exists") {
-        fail("database/conflict", "Record already exists.");
-    }
-    return error;
-};
 
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;
@@ -31,13 +24,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async create(path, value) {
-        return this.run(() => {
-            const {parentPath, key: suppliedKey} = parseCreatePath(path);
-            const key = suppliedKey ?? (value instanceof Function
-                ? push(ref(getDatabase(this.#firebase.app), resolvePath(parentPath))).key
-                : undefined);
-            return super.create(path, value, {key, mapError: mapCreateError});
-        }, undefined, "create", {path, value});
+        return createRecord(this.#firebase, path, value, this.run.bind(this), super.create.bind(this));
     }
 
     cursor(path, options = {}) {
@@ -59,7 +46,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async delete(path, options = {}) {
-        return this.run(() => deleteRecord(this.#firebase, this._backend, path), options, "delete", {path});
+        return deleteRecord(path, options, this.run.bind(this), super.delete.bind(this));
     }
 
     async read(path, options = {}) {
