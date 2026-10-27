@@ -1,651 +1,364 @@
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
-import parseCreatePath from "../../../../database/src/common/parseCreatePath";
-import resolvePath from "../../../../database/src/common/resolvePath";
-import validatePath from "../../../../database/src/common/validatePath";
 import {fail} from "../../../../common";
+import validatePath from "../../../../database/src/common/validatePath";
+import parseCreatePath from "../../../../database/src/common/parseCreatePath";
+import applyUpdate from "../../../../database/src/common/applyUpdate";
 
-const storeName = collection => {
-    if (typeof collection !== "string" || !collection || collection.includes("/")) fail("database/invalid-argument", "Invalid Local collection.");
-    return collection;
-};
-
-const numericKey = key => typeof key === "string" && /^[1-9]\d*$/.test(key) && Number.isSafeInteger(Number(key))
-    ? Number(key)
-    : undefined;
-
-const invalidPath = message => fail("database/invalid-argument", message);
-
-const TIMESTAMP = Symbol("LocalDatabase.TIMESTAMP");
-
+const invalid = message => fail("database/invalid-argument", message);
+const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
+export const TIMESTAMP = Symbol("LocalDatabase.TIMESTAMP");
 const increments = new WeakMap();
-
-const increment = delta => {
-    if (typeof delta !== "number" || !Number.isFinite(delta)) invalidPath("increment requires a finite number.");
+export const increment = delta => {
+    if (typeof delta !== "number" || !Number.isFinite(delta)) invalid("increment requires a finite number.");
     const marker = Object.freeze({});
     increments.set(marker, delta);
     return marker;
 };
 
-const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
-
-const resolveValue = (value, previous, now) => {
-    if (value === TIMESTAMP) return now;
-    if (isRecord(value) && increments.has(value)) {
-        return (typeof previous === "number" ? previous : 0) + increments.get(value);
+const set = (object, name, value) => Object.defineProperty(object, name,
+    {value, enumerable: true, writable: true, configurable: true});
+const at = (object, names) => names.reduce((value, name) => value !== null && typeof value === "object" &&
+    Object.hasOwn(value, name) ? value[name] : undefined, object);
+const parts = name => name.split(".");
+const assign = (object, names, value, remove = false) => {
+    let node = object;
+    for (const name of names.slice(0, -1)) {
+        if (!isRecord(node[name]) || !Object.hasOwn(node, name)) set(node, name, {});
+        node = node[name];
     }
-    if (Array.isArray(value)) return value.map((entry, index) => resolveValue(entry, previous?.[index], now));
+    if (remove) delete node[names.at(-1)];
+    else set(node, names.at(-1), value);
+};
+const resolveValue = (value, previous, now) => {
+    if (value === undefined) invalid("Undefined values cannot be stored.");
+    if (value === TIMESTAMP) return now;
+    if (increments.has(value)) return (typeof previous === "number" ? previous : 0) + increments.get(value);
+    if (Array.isArray(value)) return value.map((item, index) => resolveValue(item, previous?.[index], now));
     if (isRecord(value)) {
         const result = {};
-        for (const [key, entry] of Object.entries(value)) {
-            if (entry === undefined) invalidPath("Undefined values cannot be stored.");
-            Object.defineProperty(result, key, {
-                value: resolveValue(entry, previous?.[key], now),
-                enumerable: true,
-                writable: true,
-                configurable: true
-            });
-        }
+        for (const [name, item] of Object.entries(value)) set(result, name, resolveValue(item, previous?.[name], now));
         return result;
     }
     return value;
 };
 
-const recordValue = resolveValue;
-
-const resolveCollectionPath = path => {
-    validatePath(path);
-    if (!Array.isArray(path) || !path.length) invalidPath("Expected a collection path.");
-    let collection = path[0];
-    if (typeof collection !== "string") {
-        const name = Object.getOwnPropertyNames(collection).find(key => key !== "_");
-        storeName(collection[name]);
-        collection = resolvePath(path.slice(0, 1));
-    }
-    const result = [collection, ...path.slice(1)];
-    const last = result.at(-1);
-    if (result.length > 2 && typeof last !== "string" && !Object.hasOwn(last, "_") &&
-        typeof result.at(-2) !== "string") {
-        const name = Object.getOwnPropertyNames(last)[0];
-        if (last[name] === name) result[result.length - 1] = name;
-    }
-    return result;
-};
-
-// A path without a named segment addresses a collection. A trailing string after
-// a named segment addresses a field for record operations, or a child collection
-// when reading a subtree.
-const parseDatabasePath = (path, {allowField = true} = {}) => {
-    path = resolveCollectionPath(path);
-    const last = path.at(-1);
-    const field = allowField && typeof last === "string" && path.length > 1 &&
-        typeof path.at(-2) !== "string"
-        ? last
-        : undefined;
-    const identity = field === undefined ? path.slice(1) : path.slice(1, -1);
-    const keys = {};
-    const values = {};
-    const conditions = {};
-    const segments = identity.map(segment => {
-        if (typeof segment === "string") return ["literal", segment];
-        const name = Object.getOwnPropertyNames(segment).find(key => key !== "_");
-        const value = segment[name];
-        if (Object.hasOwn(segment, "_")) {
-            const level = segment._ === true ? 0 : segment._;
-            if (!Number.isSafeInteger(level) || level < 0 || Object.hasOwn(keys, `_key${level}`)) {
-                return invalidPath("Dynamic _ marker must be true or a unique non-negative integer level.");
-            }
-            keys[`_key${level}`] = name;
-            values[`_value${level}`] = value;
-            return ["dynamic", level, name, value];
-        }
-        if (["_collection", "_key", "_id", "value"].includes(name) || /^_(?:key|value)\d+$/.test(name)) {
-            invalidPath("A fixed condition cannot overwrite a Local storage field.");
-        }
-        if (Object.hasOwn(conditions, name) && conditions[name] !== value) {
-            return invalidPath("Conflicting fixed path conditions.");
-        }
-        Object.defineProperty(conditions, name, {value, enumerable: true, configurable: true, writable: true});
-        return ["fixed", name, value];
-    });
-    const levels = Object.keys(values).map(key => Number(key.slice(6)));
-    const id = levels.length ? values[`_value${Math.max(...levels)}`] : undefined;
-    const kind = field !== undefined ? "field" : identity.length && typeof last !== "string" ? "record" : "collection";
-    return {collection: path[0], key: JSON.stringify(segments), segments, keys, values, conditions, id, field, kind};
-};
-
-const interpretPath = (path, options) => {
-    const parsed = parseDatabasePath(path, options);
-    if (parsed.kind === "collection") invalidPath("A record path must include a named identity segment.");
-    return parsed;
-};
-
-const storedSegments = row => {
-    const segments = identityTokens(row._key).map(token => token[0] === "fixed"
-        ? [token[0], token[1], Object.hasOwn(row, token[1]) ? row[token[1]] : token[2]]
-        : token[0] === "dynamic" ? [token[0], token[1], token[2], row[`_value${token[1]}`] ?? token[3]] : token);
-    const last = segments.at(-1);
-    if (segments.length > 1 && last[0] === "fixed" && last[1] === last[2] &&
-        segments.at(-2)[0] !== "literal") segments[segments.length - 1] = ["literal", last[1]];
-    return segments;
-};
-
-const readStores = (transaction, receive) => {
-    const rows = [];
-    const names = [...transaction.objectStoreNames];
-    let pending = names.length;
-    for (const name of names) {
-        const request = transaction.objectStore(name).getAll();
-        request.onsuccess = () => {
-            rows.push(...request.result.map(row => decodeRow(row, name)).filter(row => row?._collection === name));
-            if (!--pending) receive(rows);
-        };
-    }
-};
-
-const generatedSegment = (key, prefix) => {
-    const levels = prefix.filter(segment => segment[0] === "dynamic").map(segment => segment[1]);
-    return {id: key, _: levels.length ? Math.max(...levels) + 1 : 0};
-};
-
-const createRecordPath = (rawPath, key) => {
-    const {parentPath, fieldName} = parseCreatePath(rawPath);
-    const parent = resolveCollectionPath(parentPath);
-    const dynamicLevels = parseDatabasePath(parent, {allowField: false}).segments
-        .filter(segment => segment[0] === "dynamic").map(segment => segment[1]);
-    const identity = fieldName === "id" && dynamicLevels.length
-        ? {id: key, _: Math.max(...dynamicLevels) + 1}
-        : {[fieldName]: key};
-    const path = [...parent, identity];
-    interpretPath(path);
+export const resolveCollectionPath = rawPath => {
+    validatePath(rawPath);
+    const path = typeof rawPath === "string" ? rawPath.split("/").filter(Boolean) : [...rawPath];
+    if (!path.length) invalid("Expected a collection path.");
+    if (typeof path[0] !== "string") path[0] = path[0][Object.keys(path[0]).find(name => name !== "_")];
+    if (!path[0] || path[0].includes("/") || path[0].startsWith("$")) invalid("Invalid application collection.");
     return path;
 };
 
-const keyFor = ({collection, key}) => [collection, key];
+export const parseDatabasePath = rawPath => {
+    const path = resolveCollectionPath(rawPath);
+    const last = path.at(-1);
+    const field = path.length > 2 && typeof last === "string" && typeof path.at(-2) !== "string" ? last : undefined;
+    return {collection: path[0], field, kind: field ? "field" : typeof last === "object" ? "record" : "collection"};
+};
 
-const pathSegments = path => path.segments ?? JSON.parse(path.key);
+export const createRecordPath = (rawPath, key) => {
+    const {parentPath, fieldName} = parseCreatePath(rawPath);
+    return [...parentPath, {[fieldName]: key}];
+};
 
-const reservedField = name => ["_collection", "_key", "_id", "value", "id"].includes(name) ||
-    /^_(?:key|value)\d+$/.test(name);
-
-const stored = (path, value) => ({
-    ...Object.fromEntries(isRecord(value)
-        ? Object.keys(value).filter(name => !reservedField(name))
-            .map(name => [name, name])
-        : []),
-    ...path.conditions,
-    ...path.keys,
-    ...path.values,
-    ...(path.id !== undefined ? {id: path.id} : {}),
-    _collection: path.collection,
-    _key: path.key,
-    value
+const requestResult = request => new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
 });
 
-const relativeSegments = (row, prefix) => {
-    const segments = storedSegments(row);
-    const selected = new Set();
-    for (const token of prefix.filter(segment => segment[0] === "fixed")) {
-        if (!Object.hasOwn(row, token[1]) || row[token[1]] !== token[2]) return;
-        const index = segments.findIndex(segment => segment[0] === "fixed" &&
-            segment[1] === token[1]);
-        if (index >= 0) selected.add(index);
-        else if (token[1] === "id") {
-            const index = segments.findIndex(segment => segment[0] === "dynamic" &&
-                segment[2] === "id");
-            if (index >= 0) selected.add(index);
-        }
-    }
-    const structural = segments.map((token, index) => ({token, index})).filter(({token, index}) =>
-        token[0] !== "fixed" && !selected.has(index));
-    const scope = prefix.filter(token => token[0] !== "fixed");
-    if (scope.length > structural.length) return;
-    for (let index = 0; index < scope.length; index++) {
-        const token = scope[index]; const candidate = structural[index];
-        if (token[0] !== candidate.token[0]) return;
-        if (token[0] === "literal" && token[1] !== candidate.token[1]) return;
-        if (token[0] === "dynamic" && (token[1] !== candidate.token[1] || token[2] !== candidate.token[2])) return;
-        if (token[0] === "dynamic" && (row[`_key${token[1]}`] !== token[2] ||
-            row[`_value${token[1]}`] !== token[3])) return;
-        selected.add(candidate.index);
-    }
-    return segments.filter((token, index) => !selected.has(index));
-};
-
-const resolveStoredPath = (rows, path) => {
-    const matches = rows.filter(row => row._collection === path.collection &&
-        relativeSegments(row, pathSegments(path))?.length === 0);
-    const unique = [...new Map(matches.map(row => [row._key, row])).values()];
-    if (unique.length > 1) invalidPath("A record query must identify a single record.");
-    if (!unique.length) return path;
-    const actual = parseDatabasePath(pathFromSegments(path.collection, storedSegments(unique[0])), {allowField: false});
-    return {...actual, key: unique[0]._key, field: path.field, kind: path.kind};
-};
-
-const addRecord = async (storageId, rawPath, value, transact = transactPrepared) => {
-    const path = interpretPath(rawPath);
-    return transact(storageId, "readwrite", [storeName(path.collection)], (transaction, _setResult, abortWith) => {
-        readStores(transaction, rows => {
-            try {
-                if (subtreeValue(rows, rawPath) !== undefined) {
-                    throw new DOMException("Record already exists.", "ConstraintError");
-                }
-                if (value === undefined) invalidPath("Undefined values cannot be stored.");
-                const changed = new Map();
-                replaceTree(rows, changed, resolveStoredPath(rows, path), value, Date.now());
-                persistChanges(transaction, changed, abortWith);
-            } catch (error) { abortWith(error); }
-        });
-    });
-};
-
-const subtreeValue = (records, rawPath) => {
-    const path = parseDatabasePath(rawPath, {allowField: false});
-    const prefix = pathSegments(path);
-    const query = stored(path, undefined);
-    let result;
-    const rows = records.filter(row => row._collection === path.collection)
-        .sort((a, b) => JSON.parse(a._key).length - JSON.parse(b._key).length);
-    for (const row of rows) {
-        const segments = relativeSegments(row, prefix);
-        if (segments === undefined) {
-            const suffix = relativeSegments(query, storedSegments(row));
-            if (suffix?.length) {
-                const nested = suffix.reduce((node, token) => node !== null && typeof node === "object" &&
-                    Object.hasOwn(node, token.at(-1))
-                    ? node[token.at(-1)]
-                    : undefined, row.value);
-                if (nested !== undefined) result = structuredClone(nested);
-            }
-            continue;
-        }
-        if (!segments.length) {
-            result = structuredClone(row.value);
-            continue;
-        }
-        if (!isRecord(result)) result = {};
-        let target = result;
-        for (const segment of segments.slice(0, -1)) {
-            const name = segment.at(-1);
-            if (!Object.hasOwn(target, name) || !isRecord(target[name])) {
-                Object.defineProperty(target, name, {value: {}, enumerable: true, writable: true, configurable: true});
-            }
-            target = target[name];
-        }
-        Object.defineProperty(target, segments.at(-1).at(-1), {
-            value: structuredClone(row.value), enumerable: true, writable: true, configurable: true
-        });
-    }
-    return result;
-};
-
-const applyCollection = (rows, changed, rawPath, value, merge, now, callback = false) => {
-    if (value !== null && !isRecord(value)) invalidPath("A collection value must be a record object or null.");
-    const collection = parseDatabasePath(rawPath, {allowField: false}).collection;
-    const original = rows.filter(row => row._collection === collection);
-    const current = () => {
-        const result = new Map(original.map(row => [row._key, row]));
-        for (const [identity, row] of changed) {
-            const [name, key] = JSON.parse(identity);
-            if (name !== collection) continue;
-            if (row) result.set(key, row);
-            else result.delete(key);
-        }
-        return [...result.values()];
-    };
-    const setRow = (row, next) => changed.set(JSON.stringify([collection, row._key]), next);
-    const removeTree = prefix => {
-        for (const row of current()) {
-            if (relativeSegments(row, prefix) !== undefined) setRow(row, undefined);
-        }
-    };
-    const replaceChildren = (prefix, entries) => {
-        for (const [key, child] of entries) {
-            if (!key || key.includes("/")) invalidPath("Collection child keys must be non-empty and cannot contain '/'.");
-            const existing = original.filter(row => relativeSegments(row, prefix)?.[0]?.at(-1) === key);
-            const tokens = [...new Set(existing.map(row => JSON.stringify(relativeSegments(row, prefix)[0])))];
-            if (tokens.length > 1) invalidPath("Collection child key is ambiguous across named records.");
-            const path = (() => {
-                const marker = tokens.length ? JSON.parse(tokens[0]) : undefined;
-                const childSegment = marker
-                    ? marker[0] === "literal"
-                        ? marker[1]
-                        : marker[0] === "fixed"
-                            ? {[marker[1]]: marker[2]}
-                            : {[marker[2]]: marker[3], _: marker[1]}
-                    : generatedSegment(key, prefix);
-                const parent = prefix.map(segment => segment[0] === "literal"
-                    ? segment[1]
-                    : segment[0] === "fixed"
-                        ? {[segment[1]]: segment[2]}
-                        : {[segment[2]]: segment[3], _: segment[1]});
-                const parsed = resolveStoredPath(original, parseDatabasePath([collection, ...parent, childSegment]));
-                return parsed;
-            })();
-            if (!callback) {
-                replaceTree(rows, changed, path, child, now);
-                continue;
-            }
-            const childPrefix = pathSegments(path);
-            const previous = existing.find(row => row._key === path.key);
-            removeTree(childPrefix);
-            if (child === null) continue;
-            if (child === undefined) invalidPath("Undefined values cannot be stored.");
-            let rowValue = child;
-            if (isRecord(child)) {
-                rowValue = {};
-                for (const [name, entry] of Object.entries(child)) {
-                    if (entry === undefined) invalidPath("Undefined values cannot be stored.");
-                    if (entry === null) continue;
-                    const nestedPrefix = [...childPrefix, ["literal", name]];
-                    const hasChildren = original.some(row => relativeSegments(row, nestedPrefix)?.length > 0);
-                    const callbackCollection = isRecord(entry) && Object.values(entry).some(isRecord) &&
-                        Object.values(entry).every(item => item === null || isRecord(item));
-                    if (hasChildren || callbackCollection) {
-                        replaceChildren(nestedPrefix, Object.entries(entry));
-                    } else {
-                        Object.defineProperty(rowValue, name, {
-                            value: entry,
-                            enumerable: true,
-                            writable: true,
-                            configurable: true
-                        });
-                    }
-                }
-            }
-            const row = stored(path, recordValue(rowValue, previous?.value, now));
-            delete row._updatedAt;
-            setRow(row, row);
-        }
-    };
-    const prefix = pathSegments(parseDatabasePath(rawPath, {allowField: false}));
-    if (!merge) {
-        removeEmbedded(rows, changed, collection, prefix);
-        removeTree(prefix);
-    }
-    if (value !== null) replaceChildren(prefix, Object.entries(value));
-};
-
-const pathFromSegments = (collection, segments) => [collection, ...segments.map(segment =>
-    segment[0] === "literal"
-        ? segment[1]
-        : segment[0] === "fixed"
-            ? {[segment[1]]: segment[2]}
-            : {[segment[2]]: segment[3], _: segment[1]})];
-
-const removeDescendants = (rows, changed, collection, prefix) => {
-    const current = new Map(rows.map(row => [JSON.stringify([row._collection, row._key]), row]));
-    for (const [identity, row] of changed) {
-        if (row) current.set(identity, row);
-        else current.delete(identity);
-    }
-    for (const [identity, row] of current) {
-        if (row._collection === collection && relativeSegments(row, prefix) !== undefined) {
-            changed.set(identity, undefined);
-        }
-    }
-};
-
-const removeEmbedded = (rows, changed, collection, address) => {
-    const parsed = parseDatabasePath(pathFromSegments(collection, address), {allowField: false});
-    const target = stored(parsed, undefined);
-    const current = new Map(rows.map(row => [JSON.stringify([row._collection, row._key]), row]));
-    for (const [identity, row] of changed) {
-        if (row) current.set(identity, row);
-        else current.delete(identity);
-    }
-    for (const [identity, row] of current) {
-        if (row._collection !== collection || !isRecord(row.value)) continue;
-        const suffix = relativeSegments(target, storedSegments(row));
-        if (!suffix?.length) continue;
-        const value = structuredClone(row.value);
-        let node = value;
-        const parents = [];
-        for (const token of suffix.slice(0, -1)) {
-            const name = token.at(-1);
-            if (!Object.hasOwn(node, name) || !isRecord(node[name])) { node = undefined; break; }
-            parents.push([node, name]);
-            node = node[name];
-        }
-        const name = suffix.at(-1).at(-1);
-        if (!node || !Object.hasOwn(node, name)) continue;
-        delete node[name];
-        for (const [parent, name] of parents.reverse()) {
-            if (!Object.keys(parent[name]).length) delete parent[name];
-            else break;
-        }
-        const path = parseDatabasePath(pathFromSegments(collection, storedSegments(row)), {allowField: false});
-        changed.set(identity, stored({...path, key: row._key}, value));
-    }
-};
-
-const partitionValue = (rows, changed, collection, prefix, value, now) => {
-    if (!isRecord(value) || increments.has(value)) return value;
-    const result = {};
-    for (const [name, entry] of Object.entries(value)) {
-        if (entry === undefined) invalidPath("Undefined values cannot be stored.");
-        const children = rows.filter(row => row._collection === collection)
-            .map(row => relativeSegments(row, prefix)?.[0])
-            .filter(token => token && token[0] !== "literal" && token.at(-1) === name);
-        const identities = [...new Set(children.map(token => JSON.stringify(token)))];
-        if (identities.length > 1) invalidPath("Collection child key is ambiguous across named records.");
-        if (identities.length) {
-            const child = parseDatabasePath(pathFromSegments(collection, [...prefix, JSON.parse(identities[0])]));
-            replaceTree(rows, changed, resolveStoredPath(rows, child), entry, now);
-            continue;
-        }
-        const nested = [...prefix, ["literal", name]];
-        const hasChildren = rows.some(row => row._collection === collection && relativeSegments(row, nested)?.length > 0);
-        if (hasChildren && isRecord(entry) && !increments.has(entry)) {
-            applyCollection(rows, changed, pathFromSegments(collection, nested), entry, false, now);
-        } else {
-            Object.defineProperty(result, name, {value: entry, enumerable: true, writable: true, configurable: true});
-        }
-    }
-    return result;
-};
-
-const replaceTree = (rows, changed, path, value, now) => {
-    if (value === undefined) invalidPath("Undefined values cannot be stored.");
-    const prefix = pathSegments(path);
-    const address = path.field ? [...prefix, ["literal", path.field]] : prefix;
-    const identity = JSON.stringify(keyFor(path));
-    const original = rows.find(row => row._collection === path.collection && row._key === path.key);
-    const previous = path.field && changed.has(identity) ? changed.get(identity) : changed.get(identity) ?? original;
-    removeEmbedded(rows, changed, path.collection, address);
-    removeDescendants(rows, changed, path.collection, address);
-    if (!path.field) {
-        if (value === null) return;
-        const next = partitionValue(rows, changed, path.collection, prefix, value, now);
-        const row = stored(path, recordValue(next, previous?.value, now));
-        delete row._updatedAt;
-        changed.set(identity, row);
-        return;
-    }
-    if (previous && !isRecord(previous.value)) invalidPath("A field update requires an object record.");
-    const next = {...previous?.value};
-    if (value === null) delete next[path.field];
-    else {
-        const hasChildren = rows.some(row => row._collection === path.collection && relativeSegments(row, address)?.length > 0);
-        if (hasChildren && isRecord(value) && !increments.has(value)) {
-            applyCollection(rows, changed, pathFromSegments(path.collection, address), value, false, now);
-            delete next[path.field];
-        } else {
-            Object.defineProperty(next, path.field, {
-                value: resolveValue(value, next[path.field], now),
-                enumerable: true,
-                writable: true,
-                configurable: true
-            });
-        }
-    }
-    if (previous || Object.keys(next).length) {
-        const row = stored(path, recordValue(next, previous?.value, now));
-        delete row._updatedAt;
-        changed.set(identity, Object.keys(row.value).length ? row : undefined);
-    }
-};
-
-// Resolve logical identities without scanning the store; retain physical IDs on replacement.
-const persistChanges = (transaction, changed, abortWith) => {
-    const entries = [...changed];
-    const next = () => {
-        if (!entries.length) return;
-        const [identity, row] = entries.shift();
-        const [collection, key] = JSON.parse(identity);
-        const store = transaction.objectStore(storeName(collection));
-        const request = store.index("_identity").getKey(key);
-        request.onsuccess = () => {
-            try {
-                if (!row) {
-                    if (request.result === undefined) next();
-                    else store.delete(request.result).onsuccess = next;
-                    return;
-                }
-                const rowId = request.result ?? row._id;
-                const save = id => {
-                    store.put(encodeRow({...row, ...(id === undefined ? {} : {_id: id})}, store)).onsuccess = next;
-                };
-                const supplied = numericKey(JSON.parse(key).at(-1)?.at(-1));
-                if (rowId === undefined && supplied !== undefined) {
-                    // Serialize slots too: two logical paths can have the same supplied key.
-                    const slot = store.getKey(supplied);
-                    slot.onsuccess = () => {
-                        try { save(slot.result === undefined ? supplied : undefined); } catch (error) { abortWith(error); }
-                    };
-                } else save(rowId);
-            } catch (error) { abortWith(error); }
-        };
-    };
-    next();
-};
-
-export {invalidPath, resolveCollectionPath, storeName, parseDatabasePath, relativeSegments, storedSegments, readStores, subtreeValue, interpretPath, pathSegments, pathFromSegments, generatedSegment, resolveStoredPath, stored, isRecord, applyCollection, replaceTree, persistChanges, TIMESTAMP, increment, createRecordPath, addRecord};
-
-// Stored path keys are JSON arrays of literal, fixed and dynamic identity tokens.
-const identityTokens = pathKey => JSON.parse(pathKey);
-
-export const identityField = token => token?.[0] === "dynamic"
-    ? token[2]
-    : token?.[0] === "fixed" ? token[1] : undefined;
-
-export const IDENTITY_INDEX = Object.freeze({keyPath: "_local.path", unique: true});
-
-const record = value => value !== null && typeof value === "object" && !Array.isArray(value);
-const set = (object, name, value) => Object.defineProperty(object, name,
-    {value, enumerable: true, configurable: true, writable: true});
-
-// Keep public object fields once. Only injected or overwritten fields need
-// reconstruction metadata; scalar and array values have no object fields.
-export const encodeRow = (row, store) => {
-    const object = record(row.value);
-    const fields = object ? {...row.value} : {};
-    const tokens = JSON.parse(row._key).map(token => token[0] === "fixed"
-        ? [token[0], token[1], Object.hasOwn(row, token[1]) ? row[token[1]] : token[2]]
-        : token[0] === "dynamic" ? [token[0], token[1], token[2], row[`_value${token[1]}`] ?? token[3]] : token);
-    const metadata = {path: JSON.stringify(tokens)};
-    if (!object) metadata.value = row.value;
-    const originals = {};
-    const added = new Set();
-    const project = (name, value) => {
-        if (object && Object.hasOwn(row.value, name)) {
-            if (!Object.is(row.value[name], value)) set(originals, name, row.value[name]);
-        } else if (object) added.add(name);
-        set(fields, name, value);
-    };
-    const last = tokens.at(-1);
-    const leaf = last?.[0] === "fixed" ? last[1] : last?.[0] === "dynamic" ? last[2] : undefined;
-    const projected = new Set();
-    // Project ancestor identities only for compound indexes describing this child.
-    for (const name of store.indexNames) {
-        if (name === "_identity") continue;
-        const paths = store.index(name).keyPath;
-        if (Array.isArray(paths) && paths.includes(leaf)) paths.forEach(path => projected.add(path));
-        else if (paths === leaf) projected.add(leaf);
-    }
-    for (const token of tokens) {
-        if (token[0] === "literal") continue;
-        const name = token[0] === "fixed" ? token[1] : token[2];
-        if (!projected.has(name)) continue;
-        const value = token === last && tokens.length > 1 && token[0] === "fixed" && token[1] === token[2]
-            ? row.value : token.at(-1);
-        project(name, value);
-    }
-    for (const name of ["_id", "_local"]) {
-        if (object && Object.hasOwn(row.value, name)) set(originals, name, row.value[name]);
-        added.delete(name);
-    }
-    if (added.size) metadata.added = [...added];
-    if (Object.keys(originals).length) metadata.originals = originals;
-    delete fields._id;
-    return {...fields, ...(row._id === undefined ? {} : {_id: row._id}), _local: metadata};
-};
-
-const logicalRow = (collection, path, value, id) => {
-    const row = {};
-    if (record(value)) {
-        for (const name of Object.keys(value)) {
-            if (!["_collection", "_key", "_id", "value", "id"].includes(name) && !/^_(?:key|value)\d+$/.test(name)) {
-                set(row, name, name);
-            }
-        }
-    }
-    let level = -1;
-    for (const token of JSON.parse(path)) {
-        if (token[0] === "fixed") set(row, token[1], token[2]);
-        if (token[0] === "dynamic") {
-            row[`_key${token[1]}`] = token[2];
-            row[`_value${token[1]}`] = token[3];
-            if (token[1] > level) { row.id = token[3]; level = token[1]; }
-        }
-    }
-    return {...row, _collection: collection, _key: path, _id: id, value};
-};
-
-export const decodeRow = (row, collection) => {
-    const metadata = row?._local;
-    if (typeof metadata?._key === "string") {
-        // Read the previous envelope during its atomic schema upgrade.
-        return {...logicalRow(collection, metadata._key, metadata.value, row._id), ...metadata, _id: row._id};
-    }
-    if (typeof metadata?.path !== "string") return undefined;
-    let value;
-    if (Object.hasOwn(metadata, "value")) value = metadata.value;
-    else {
-        value = {...row};
-        delete value._id;
-        delete value._local;
-        for (const name of metadata.added ?? []) delete value[name];
-        for (const [name, original] of Object.entries(metadata.originals ?? {})) set(value, name, original);
-    }
-    return logicalRow(collection, metadata.path, value, row._id);
-};
-
-export const runTransaction = async (database, mode, names, run) => {
+export const runTransaction = async (database, mode, names, operation) => {
     try {
         return await new Promise((resolve, reject) => {
-            const selected = names;
-            const transaction = database.transaction([...new Set(selected)], mode);
-            let result;
-            let abortedError;
+            const transaction = database.transaction([...new Set(names)], mode);
+            let result, failure;
             transaction.oncomplete = () => resolve(result);
-            transaction.onabort = () => reject(abortedError || transaction.error || new Error("LocalDatabase transaction aborted."));
-            try {
-                run(transaction, value => { result = value; }, error => {
-                    abortedError = error;
-                    transaction.abort();
-                });
-            } catch (error) {
-                transaction.abort();
-                reject(error);
-            }
+            transaction.onabort = () => reject(failure ?? transaction.error ?? new Error("Local transaction aborted."));
+            Promise.resolve().then(() => operation(transaction)).then(value => { result = value; }, error => {
+                failure = error;
+                try { transaction.abort(); } catch (_) { reject(error); }
+            });
         });
-    } finally {
-        database.close();
+    } finally { database.close(); }
+};
+
+const indexes = store => [...store.indexNames].map(name => {
+    const index = store.index(name);
+    return {index, fields: Array.isArray(index.keyPath) ? [...index.keyPath] : [index.keyPath]};
+});
+const nativeKey = value => typeof value === "string" && /^(0|[1-9]\d*)$/.test(value) ? Number(value) : value;
+const keyValue = (name, value) => name === "_id" ? nativeKey(value) : value;
+const uniqueIndexes = store => indexes(store).filter(({index}) => index.unique && !index.multiEntry);
+
+const address = (store, rawPath) => {
+    const path = resolveCollectionPath(rawPath);
+    const segments = path.slice(1);
+    if (!store.indexNames.length) {
+        return {conditions: {}, property: segments.map(segment => typeof segment === "string" ? segment :
+            segment[Object.keys(segment).find(name => name !== "_")]), single: true, singleton: true};
+    }
+    const conditions = {};
+    const property = [];
+    const indexed = new Set(indexes(store).flatMap(({fields}) => fields));
+    indexed.add("_id");
+    let nested = false;
+    if (typeof rawPath === "string" && segments.length) {
+        const candidates = uniqueIndexes(store).filter(({fields}) => fields.length <= segments.length);
+        if (candidates.length !== 1) invalid("A string record path requires one unambiguous unique index.");
+        const {fields} = candidates[0];
+        fields.forEach((field, index) => { conditions[field] = keyValue(field, segments[index]); });
+        property.push(...segments.slice(fields.length));
+    } else {
+        for (const segment of segments) {
+            if (typeof segment === "string") { nested = true; property.push(segment); continue; }
+            const name = Object.keys(segment).find(name => name !== "_");
+            const value = segment[name];
+            const fieldAddress = Object.keys(conditions).length && name === value;
+            if (!nested && !fieldAddress && indexed.has(name)) conditions[name] = keyValue(name, value);
+            else if (!nested && !Object.keys(conditions).length) invalid(`No declared index for field ${name}.`);
+            else { nested = true; property.push(value); }
+        }
+    }
+    const unique = Object.hasOwn(conditions, "_id") || uniqueIndexes(store)
+        .some(({fields}) => fields.every(field => Object.hasOwn(conditions, field)));
+    const single = unique || Object.keys(conditions).length > 0 && !uniqueIndexes(store).length;
+    if (property.length && !single) invalid("A nested property requires a unique indexed record.");
+    return {conditions, property, single, unique, singleton: false};
+};
+
+const queryRows = async (store, conditions, options = {}) => {
+    const field = options.orderBy === undefined ? undefined : (typeof options.orderBy === "string"
+        ? options.orderBy : options.orderBy.map(segment => typeof segment === "string" ? segment :
+            segment[Object.keys(segment).find(name => name !== "_")]).join("/")).replaceAll("/", ".");
+    const bounded = options.equalTo !== undefined || options.start !== undefined || options.end !== undefined;
+    if (field && bounded) {
+        const source = indexes(store).find(({fields}) => {
+            const position = fields.indexOf(field);
+            return position >= 0 && fields.slice(0, position).every(name => Object.hasOwn(conditions, name));
+        });
+        if (!source) invalid(`No declared index supports the requested range for ${field}.`);
+        const {index, fields} = source;
+        const position = fields.indexOf(field);
+        const prefix = fields.slice(0, position).map(name => conditions[name]);
+        const valid = value => typeof value === "string" || typeof value === "number" && Number.isFinite(value);
+        const bound = value => Array.isArray(index.keyPath) ? [...prefix, value] : value;
+        let range;
+        if (options.equalTo !== undefined) {
+            if (!valid(options.equalTo)) return [];
+            const key = bound(options.equalTo);
+            range = position === fields.length - 1 ? IDBKeyRange.only(key)
+                : IDBKeyRange.bound(key, [...key, []], false, true);
+        } else {
+            const lower = options.start === undefined ? (prefix.length ? prefix : undefined) : bound(options.start);
+            const upper = options.end === undefined ? (prefix.length ? [...prefix, []] : undefined)
+                : position === fields.length - 1 ? bound(options.end) : [...bound(options.end), []];
+            if ([options.start, options.end].some(value => value !== undefined && !valid(value))) invalid("Native range bounds must be strings or finite numbers.");
+            range = lower === undefined ? IDBKeyRange.upperBound(upper)
+                : upper === undefined ? IDBKeyRange.lowerBound(lower) : IDBKeyRange.bound(lower, upper);
+        }
+        const rows = await requestResult(index.getAll(range));
+        return [...new Map(rows.map(row => [row._id, row])).values()]
+            .filter(row => Object.entries(conditions).every(([name, value]) => Object.is(at(row, parts(name)), value)));
+    }
+    if (Object.hasOwn(conditions, "_id")) {
+        const value = await requestResult(store.get(conditions._id));
+        return value === undefined ? [] : [value];
+    }
+    const names = Object.keys(conditions);
+    if (!names.length) return requestResult(store.getAll());
+    const candidates = indexes(store).map(entry => {
+        let count = 0;
+        while (count < entry.fields.length && Object.hasOwn(conditions, entry.fields[count])) count++;
+        return {...entry, count};
+    }).filter(({count}) => count).sort((a, b) => b.count - a.count || a.fields.length - b.fields.length);
+    if (!candidates.length) invalid("No declared index matches this lookup.");
+    const {index, fields, count} = candidates[0];
+    const values = fields.slice(0, count).map(field => conditions[field]);
+    const key = Array.isArray(index.keyPath) ? values : values[0];
+    const range = count === fields.length ? IDBKeyRange.only(key)
+        : IDBKeyRange.bound(values, [...values, []], false, true);
+    const rows = await requestResult(index.getAll(range));
+    return rows.filter(row => names.every(name => Object.is(at(row, parts(name)), conditions[name])));
+};
+
+const singleton = async store => {
+    const rows = await requestResult(store.getAll(undefined, 2));
+    if (rows.length > 1) invalid("An unindexed store must contain a single document.");
+    return rows[0];
+};
+
+const identityField = (store, conditions, requested) => {
+    if (requested) {
+        if (requested !== "_id" && !indexes(store).some(({fields}) => fields.includes(requested))) {
+            invalid(`No declared index for field ${requested}.`);
+        }
+        return requested;
+    }
+    const index = uniqueIndexes(store).find(({fields}) => fields.slice(0, -1)
+        .every(field => Object.hasOwn(conditions, field)));
+    return index?.fields.at(-1) ?? "_id";
+};
+
+const collectionValue = (store, rows, conditions, keyField) => {
+    if (!rows.length) return undefined;
+    const field = identityField(store, conditions, keyField);
+    const result = {};
+    for (const row of rows) {
+        const key = at(row, parts(field));
+        if (key === undefined) invalid(`Record has no ${field} collection key.`);
+        if (Object.hasOwn(result, String(key))) invalid("A collection read must identify each child uniquely.");
+        set(result, String(key), row);
+    }
+    return result;
+};
+
+const checkQuery = (store, options) => {
+    if (options.orderBy === undefined) {
+        if (!store.indexNames.length && [options.equalTo, options.start, options.end].some(value => value !== undefined)) {
+            invalid("Unindexed stores do not support queries.");
+        }
+        return;
+    }
+    const path = typeof options.orderBy === "string" ? options.orderBy : options.orderBy.map(segment =>
+        typeof segment === "string" ? segment : segment[Object.keys(segment).find(name => name !== "_")]).join("/");
+    const field = path.replaceAll("/", ".");
+    if (!indexes(store).some(({fields}) => fields.includes(field))) invalid(`No declared index for field ${path}.`);
+};
+
+export const readStore = async (store, path, {keyField, ...options} = {}) => {
+    checkQuery(store, options);
+    const target = address(store, path);
+    if (target.singleton) return at(await singleton(store), target.property);
+    const rows = await queryRows(store, target.conditions, options);
+    if (target.single && (target.unique || !keyField)) {
+        if (rows.length > 1) invalid("A record path must identify a single record.");
+        return at(rows[0], target.property);
+    }
+    return collectionValue(store, rows, target.conditions, keyField);
+};
+
+const withIdentity = (value, conditions, previous) => {
+    if (!isRecord(value)) invalid("An indexed record must be an object.");
+    const result = {...value};
+    for (const [name, expected] of Object.entries(conditions)) {
+        const supplied = at(result, parts(name));
+        if (supplied !== undefined && !Object.is(supplied, expected)) invalid(`Record conflicts with path field ${name}.`);
+        assign(result, parts(name), expected);
+    }
+    if (previous?._id !== undefined) {
+        if (result._id !== undefined && result._id !== previous._id) invalid("The native primary key cannot be changed.");
+        result._id = previous._id;
+    }
+    return result;
+};
+
+const mergeValue = (previous, changes) => {
+    const result = {...previous};
+    for (const [name, value] of Object.entries(changes)) {
+        if (value === null) delete result[name];
+        else set(result, name, value);
+    }
+    return result;
+};
+
+export const writeStore = async (store, rawPath, value, {merge = false, create = false, callback, now = Date.now()} = {}) => {
+    const target = address(store, rawPath);
+    if (!target.singleton && !target.single && !target.property.length && !create) {
+        const rows = await queryRows(store, target.conditions);
+        const field = identityField(store, target.conditions);
+        const current = collectionValue(store, rows, target.conditions);
+        if (callback) value = applyUpdate(callback, structuredClone(current ?? null)) ?? null;
+        if (value !== null && !isRecord(value)) invalid("Collection changes must be an object or null.");
+        if (!merge || value === null) for (const row of rows) await requestResult(store.delete(row._id));
+        for (const [key, child] of Object.entries(value ?? {})) {
+            const path = [store.name, ...Object.entries(target.conditions).map(([name, value]) => ({[name]: String(value)})), {[field]: key}];
+            await writeStore(store, path, child, {merge, now});
+        }
+        return value;
+    }
+    let previous;
+    if (target.singleton) previous = await singleton(store);
+    else {
+        const rows = await queryRows(store, target.conditions);
+        if (rows.length > 1) invalid("A write requires a unique record path.");
+        previous = rows[0];
+    }
+    const current = at(previous, target.property);
+    if (callback) value = applyUpdate(callback, structuredClone(current ?? null)) ?? null;
+    if (value === undefined) invalid("Undefined values cannot be stored.");
+    if (create && current !== undefined) throw new DOMException("Record already exists.", "ConstraintError");
+    let next;
+    if (target.property.length) {
+        if (target.property[0] === "_id") invalid("The native primary key cannot be changed.");
+        next = {...previous};
+        if (value === null) assign(next, target.property, undefined, true);
+        else {
+            const prepared = merge ? mergeValue(current, value) : value;
+            assign(next, target.property, resolveValue(prepared, current, now));
+        }
+    } else if (value === null) {
+        if (previous) await requestResult(store.delete(previous._id));
+        return null;
+    } else {
+        if (!isRecord(value)) invalid("A store record must be an object.");
+        next = resolveValue(merge ? mergeValue(previous, value) : value, previous, now);
+    }
+    next = withIdentity(next, target.conditions, previous);
+    const savedKey = await requestResult(create && !target.property.length ? store.add(next) : store.put(next));
+    next._id = savedKey;
+    return target.property.length ? at(next, target.property) : next;
+};
+
+export const assertNonOverlapping = (transaction, entries) => {
+    const targets = entries.map(([path]) => {
+        const collection = resolveCollectionPath(path)[0];
+        return {collection, ...address(transaction.objectStore(collection), path)};
+    });
+    for (let i = 0; i < targets.length; i++) for (let j = i + 1; j < targets.length; j++) {
+        const a = targets[i], b = targets[j];
+        if (a.collection !== b.collection) continue;
+        const conflicting = Object.keys(a.conditions).some(name => Object.hasOwn(b.conditions, name) && a.conditions[name] !== b.conditions[name]);
+        if (conflicting) continue;
+        const n = Math.min(a.property.length, b.property.length);
+        if (a.property.slice(0, n).every((name, index) => name === b.property[index])) invalid("Batch paths must not overlap.");
     }
 };
 
-const transactPrepared = async (storageId, mode, names, run) => {
-    if (names.some(name => name.startsWith("$"))) invalidPath("Service stores cannot contain application records.");
+export const childRecordPath = (store, path, key, keyField) => {
+    const target = address(store, path);
+    const base = [store.name, ...Object.entries(target.conditions).map(([name, value]) => ({[name]: String(value)})), ...target.property];
+    if (target.singleton || target.single) return [...base, {[key]: key}];
+    return [...base, {[identityField(store, target.conditions, keyField)]: key}];
+};
+
+const writeObservers = new Map();
+export const observeWrites = (storageId, callback) => {
+    if (!writeObservers.has(storageId)) writeObservers.set(storageId, new Set());
+    writeObservers.get(storageId).add(callback);
+    return () => {
+        const callbacks = writeObservers.get(storageId);
+        callbacks?.delete(callback);
+        if (!callbacks?.size) writeObservers.delete(storageId);
+    };
+};
+
+const notifyCreated = async (storageId, collection) => {
+    await Promise.allSettled([...(writeObservers.get(storageId) ?? [])].map(callback => Promise.resolve().then(() => callback(collection))));
+    if (typeof globalThis.BroadcastChannel !== "function") return;
+    let channel;
+    try {
+        channel = new globalThis.BroadcastChannel(`redequate:local:${storageId}:changes`);
+        channel.postMessage({collections: [collection]});
+    } catch (_) { /* Notification failure cannot invalidate a committed record. */ }
+    finally { channel?.close(); }
+};
+
+export const addRecord = async (storageId, path, value) => {
+    const collection = resolveCollectionPath(path)[0];
     const database = await openLocalDatabase(storageId);
-    return runTransaction(database, mode, names, run);
+    const result = await runTransaction(database, "readwrite", [collection], transaction =>
+        writeStore(transaction.objectStore(collection), path, value, {create: true}));
+    await notifyCreated(storageId, collection);
+    return result;
 };
