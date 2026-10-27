@@ -4,10 +4,11 @@ import DatabaseBase from "../common/DatabaseBase";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
 import resolvePath from "../common/resolvePath";
 import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
+import {key as generateKey} from "firebase-key";
 import parseCreatePath from "../common/parseCreatePath";
 import addEventListener, {mutate} from "./addEventListener";
 import LocalCursor from "./cursor";
-import {addGeneratedRecord, addRecord, deleteRecord, readValue, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecord, updateRecords, createRecordPath, openDatabase} from "./helpers";
+import {deleteRecord, readValue, getSubtree, increment, parseDatabasePath, TIMESTAMP, updateRecord, updateRecords, openDatabase} from "./helpers";
 import {applySchema} from "./schema";
 import {convertStores} from "./storeSchema";
 
@@ -15,9 +16,11 @@ const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
 
 export default class LocalDatabase extends DatabaseBase {
+    supportsScalarRecords = false;
     #context;
     /**
      * @param {object} [options]
+     * @param {{request: Function}} options.backend
      * @param {string} [options.storageId]
      * @param {Array<{store: string, storeConfig: {keyPath: "_id", autoIncrement: true},
      * storeSchema: Array<{name: string, keypath: string | string[],
@@ -77,25 +80,8 @@ export default class LocalDatabase extends DatabaseBase {
 
     async create(path, value) {
         return this.run(() => {
-            const {key: suppliedKey} = parseCreatePath(path);
-            const resolveValue = key => {
-                const result = value instanceof Function ? value(key) : value;
-                if (result?.then instanceof Function) {
-                    Promise.resolve(result).catch(() => {});
-                    invalid("create callback must be synchronous.");
-                }
-                if (!isRecord(result)) invalid("value must be a record object.");
-                return result;
-            };
-            if (suppliedKey !== undefined) {
-                const recordPath = createRecordPath(path, suppliedKey);
-                return mutate(this.#context, [recordPath], async () => {
-                    await addRecord(this.#context, recordPath, () => resolveValue(suppliedKey));
-                    return suppliedKey;
-                });
-            }
-            return mutate(this.#context, [path], () =>
-                addGeneratedRecord(this.#context, path, resolveValue));
+            const key = parseCreatePath(path).key ?? generateKey();
+            return super.create(path, value, {key});
         }, undefined, "create", {path, value});
     }
 
