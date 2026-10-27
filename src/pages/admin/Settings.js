@@ -7,6 +7,7 @@ import SupportIcon from "@mui/icons-material/Person";
 import BlockedNamesIcon from "@mui/icons-material/PersonAddDisabled";
 import MaintenanceIcon from "@mui/icons-material/Settings";
 import React from "react";
+import {roleQuery} from "../../../packages/auth/src/common/roleData";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
@@ -363,9 +364,7 @@ export default ({uploadable}) => {
                         mention={{
                             ...mentionUsers,
                             trigger: "",
-                            cursor: () => database.cursor(["roles", "user_id"], {
-                                equalTo: "admin"
-                            }),
+                            cursor: () => database.cursor(["roles", "user_id"], roleQuery(database, "admin")),
                             transform: item => new UserData(database)
                                 .fetch(item.key)
                                 .then(item => {
