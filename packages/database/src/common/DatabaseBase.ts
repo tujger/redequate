@@ -28,6 +28,7 @@ type CreateMethodOptions = {
  * Cursors and listeners retain their options. Writes resolve after storage confirms them.
  */
 export default class DatabaseBase {
+    readonly supportsScalarRecords: boolean = true;
     onError: DatabaseErrorHandler;
     protected _backend?: BackendBase;
 

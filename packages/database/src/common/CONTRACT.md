@@ -80,106 +80,56 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   it does not access IndexedDB, initialize schemas or publish notifications. The
   backend operates independently on stores prepared separately.
 - Failed writes roll back records, but generated logical IDs are not reserved or reused.
-  Numeric internal _id and the unique _local.path index remain storage details. No
-  allocator stores or implicit timestamp fields are added, and no data migration occurs.
+  Native _id values and indexed identity fields are ordinary returned record fields.
+  No allocator stores or implicit timestamps are added; no data migration is performed.
 
 ## Local IndexedDB schema
 
-`local/stores.json` is the source of the built-in physical stores and indexes.
-The file keeps its `store` / `storeConfig` / `storeSchema` format. Add stores or
-indexes through the Local constructor, using the same format:
+`local/stores.json` and constructor `stores` define application stores, their native
+primary key (`_id`, autoIncrement true), and all secondary indexes. The adapter does
+not add framework indexes. Simple and compound `unique` indexes enforce uniqueness.
+Additional configured stores use the same format; provider stores beginning with `$`
+remain outside the application schema and cannot be changed by application CRUD.
 
-```js
-const backend = new LocalBackend({storageId: "my-app"});
-const database = new LocalDatabase({
-    backend,
-    storageId: "my-app",
-    stores: [{
-        store: "audit",
-        storeConfig: {keyPath: "_id", autoIncrement: true},
-        storeSchema: [
-            {name: "code", keypath: "code", options: {unique: true}},
-            {name: "owner_status", keypath: ["owner", "status"]}
-        ]
-    }]
-});
-await database.create(["audit", "audit_id"], key => ({code: key, status: "open"}));
-```
+Rows are normal objects. Identity fields from the requested address, such as
+`post_id`, `chat_id` and `message_id`, are real stored fields, available on reads along
+with `_id`. Conflicting address fields are rejected instead of overwritten and later
+restored. Root indexed records must be objects. Nested arrays, scalars, objects and
+collections live directly inside their parent object, rather than separate path rows.
+Native primary keys remain stable on replacement and cannot be changed by an update.
 
-Constructor stores require `_id` with `autoIncrement: true`. Index options support
-`unique` and `multiEntry`; compound indexes cannot use `multiEntry`. Definitions
-merge by store and index name. Identical repeated definitions are allowed;
-conflicting definitions, reserved metadata keyPaths and invalid definitions reject
-before opening IndexedDB. Inputs are copied and never modified. Additional stores
-support CRUD, nested paths, cursors and subscriptions. Each instance accepts only
-its own configured collections, even when another instance sharing its storageId
-has created additional physical stores.
+Named field lookups use declared indexes or the native `_id` primary key. A compound
+index can address a full unique record or a prefix scope. Explicit identity fields
+select keys for returned collections; otherwise a suitable unique index determines
+the key, falling back to the native primary key for a full collection read. An
+unindexed search field, ambiguous record lookup, or unsupported range raises
+`database/invalid-argument`; there is no synthetic lookup index or encoded-path scan.
+Literal string record paths require an unambiguous unique index.
 
-The converter adds only one framework index, `_identity`, with the unique keyPath
-`_local.path`. All other indexes come from stores.json and constructor stores.
-The built-in schema has 68 JSON indexes plus 18 identity indexes, for 86 total.
-There are no generated cursor, scope, dynamic-type or unsupported-value indexes.
-When an operation creates children without naming their identity field, it uses
-the generic dynamic id; explicit and existing identities remain authoritative.
+A store with no secondary indexes is intentionally a single small document. Read it
+as a whole, or access its fields (for example `meta/settings`); field writes update
+that document. It supports neither record searches nor query bounds/order fields.
+Multiple physical records in an unindexed store are rejected instead of guessed or
+merged. Deleting the store path clears the document; deleting a field removes only
+that property. No schema indexes are added to make these stores searchable.
 
-Physical object rows contain public fields directly, a numeric `_id` and sparse
-`_local` reconstruction metadata. `_local.path` is the serialized named path;
-the collection name comes from the physical store. `_local.added` lists injected
-address fields, and `_local.originals` holds only public fields overwritten by
-address projections or reserved storage fields. Objects are not copied into a
-second value envelope. Primitive and array values use `_local.value`. Dynamic
-levels, fixed conditions and ordering values are computed in memory when read.
+CRUD transactions are native IndexedDB transactions. Callback replacements are
+synchronous; callback errors and unique-index conflicts abort all writes. Cross-store
+batches commit atomically, overlapping addresses reject, and timestamp/increment
+markers resolve during the write. Backend creates notify observers only after commit.
+Listeners refresh collection snapshots from native rows; cross-context messages carry
+only changed collection names. No path metadata is stored or transmitted.
 
-Only declared native indexes require identity projections. Compound indexes
-including a leaf identity may also project ancestor identities. Parent-only
-identities are not copied onto every descendant row, preserving nested records
-under unique parent indexes. Reads reconstruct the exact original public value,
-including caller-owned `_id`, `_local` and conflicting identity fields. JSON
-`unique` indexes retain native IndexedDB enforcement across each physical store;
-failed writes and upgrades roll back atomically. Native IndexedDB key eligibility
-applies (for example, boolean values are not native index keys).
+`applySchema` adds declared stores/indexes and can replace non-required index
+definitions atomically. Configured indexes and store keyPath/autoIncrement settings
+are protected. Existing rows and unrelated native indexes are not rewritten or
+removed. Schema updates neither compact nor migrate old record formats. New stores
+introduced only through applySchema do not become configured CRUD collections.
 
-Cursors and dynamic-type queries read the selected collection rows and apply the
-shared path filtering, comparisons and ordering in memory. Each page reads fresh
-values and resumes from its `(sort value, child key)` boundary. Handler writes and
-subscriptions keep their existing public behavior. There is no promise of native
-indexed paging or bounded collection reads; large collection queries may be slower.
-
-Schema preparation runs before the first operation, cursor read or listener
-snapshot. Concurrent operations on an instance share preparation; failures follow
-the existing operation/subscription error handling and allow a later retry.
-A new database creates the full merged schema at version 1. A compatible existing
-schema gains missing stores/indexes in one versionchange transaction, increasing
-its current version by 1 only when changes are needed. Existing records are
-reprojected when an added compound index requires ancestor fields. The former
-_local envelope format is compacted in place; obsolete framework indexes using
-the reserved _local namespace are removed in the same transaction. Public data,
-physical primary keys and unrelated native indexes are preserved. Reopening an
-unchanged schema does not increase its version. Local connections close on
-`versionchange`; external blockers produce an error and upgrades can be retried.
-Concurrent upgrades recheck the schema before completing.
-
-`LOCAL_SCHEMA` describes the converted built-in schema. The Local-only API
-`await localDatabase.applySchema(schema)` continues to accept the physical object
-format `{storeName: {keyPath, autoIncrement, indexes: {indexName: {keyPath, unique?,
-multiEntry?}}}}`. It adds stores/indexes and may replace non-required indexes;
-unspecified stores, non-framework indexes and records remain. Required configured indexes and
-existing store keyPath/autoIncrement settings cannot be changed. Physical stores
-added only through applySchema do not become configured CRUD collections.
-DatabaseBase and FirebaseDatabase have no schema method.
-
-Databases from the previous `_rowId` storage model are incompatible and must be
-explicitly removed before this adapter opens them. There is no automatic deletion
-or data migration from that model. For the default dev configuration, close other
-connections and delete only `redequate:local` in the dev
-origin's IndexedDB storage. This does not reset the separate Local Auth database.
-
-  `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
-  key's encoded client-side generation time **when the key is known to be a
-  push key**. This is not the server commit time. The library does not verify
-  provenance: applying it to an arbitrary key may throw or decode unrelated
-  data. Its inverse is `key(timestampOrDate, "min"|"max"|"random")`; it
-  generates a key or a range boundary, not the original key from a timestamp.
+The previous metadata-based local format is no longer supported. There is no migration,
+automatic data deletion, compatibility decoder, startup conversion or Dispatcher hook.
+Use a separate clean database for this format; existing user databases are not modified
+by the development/test workflow.
 
 ## Cursor query and traversal
 
