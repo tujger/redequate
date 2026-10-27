@@ -1,7 +1,7 @@
-import {serverTimestamp, increment} from "firebase/database";
+import {serverTimestamp, increment, getDatabase, ref, push} from "firebase/database";
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
-import createRecord from "./create";
+import parseCreatePath from "../common/parseCreatePath";
 import FirebaseCursor from "./cursor";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
 import deleteRecord from "./delete";
@@ -10,13 +10,18 @@ import update from "./update";
 import resolvePath from "../common/resolvePath";
 import {fail} from "../../../common";
 
+const mapCreateError = error => {
+    if (error.code === "functions/already-exists") {
+        fail("database/conflict", "Record already exists.");
+    }
+    return error;
+};
+
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;
-    #backend;
 
     constructor({backend, firebase, onError}) {
-        super({onError});
-        this.#backend = backend;
+        super({backend, onError});
         this.#firebase = firebase;
     }
 
@@ -26,7 +31,13 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async create(path, value) {
-        return createRecord(this.#firebase, this.#backend, path, value, this.run.bind(this));
+        return this.run(() => {
+            const {parentPath, key: suppliedKey} = parseCreatePath(path);
+            const key = suppliedKey ?? (value instanceof Function
+                ? push(ref(getDatabase(this.#firebase.app), resolvePath(parentPath))).key
+                : undefined);
+            return super.create(path, value, {key, mapError: mapCreateError});
+        }, undefined, "create", {path, value});
     }
 
     cursor(path, options = {}) {
@@ -42,13 +53,13 @@ export default class FirebaseDatabase extends DatabaseBase {
             : {...options, onError: options.onError ?? this.onError};
         return composeCursor(queries, effective,
             (path, options) => new FirebaseCursor(this.#firebase, path,
-                {...options, onError: options?.onError ?? this.onError}, this.#backend), run, path,
+                {...options, onError: options?.onError ?? this.onError}, this._backend), run, path,
             pathIsDatabasePath ? () => resolvePath(Array.isArray(path) && path.length > 1 &&
                 typeof path.at(-1) === "string" ? path.slice(0, -1) : path) : undefined);
     }
 
     async delete(path, options = {}) {
-        return this.run(() => deleteRecord(this.#firebase, this.#backend, path), options, "delete", {path});
+        return this.run(() => deleteRecord(this.#firebase, this._backend, path), options, "delete", {path});
     }
 
     async read(path, options = {}) {
@@ -61,7 +72,7 @@ export default class FirebaseDatabase extends DatabaseBase {
 
     async update(path, changes, options = {}) {
         const batch = typeof path !== "string" && !(path instanceof Array);
-        return this.run(() => update(this.#firebase, this.#backend, path, batch ? undefined : changes),
+        return this.run(() => update(this.#firebase, this._backend, path, batch ? undefined : changes),
             batch ? changes ?? options : options, "update", batch ? {updates: path} : {path, changes});
     }
 
