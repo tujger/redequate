@@ -49,7 +49,7 @@ export default props => {
                 orderBy: ["id"],
             })
         } else if (mode === MutualListMode.SELF) {
-            cursor = database.cursor(["mutualstamps", "_my", {user_id: mutualId}, "mutual_id"], {
+            cursor = database.cursor(["mutualstamps", {mutual_type: "_my"}, {user_id: mutualId}, "mutual_id"], {
                 order,
             })
         } else if (mode === MutualListMode.SUBSCRIBES) {
