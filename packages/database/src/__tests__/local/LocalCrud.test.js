@@ -26,27 +26,27 @@ const raw = async (storageId, name) => {
     } finally { database.close(); }
 };
 
-it("stores only normal fields and native primary keys, using the schema's unique index", async () => {
+it("keeps physical fields inside Local and queries the schema's unique index", async () => {
     const {database} = await setup();
     expect(await database.create(["posts", {post_id: "p1"}], {title: "A"})).toBe("p1");
     const value = await database.read(["posts", {post_id: "p1"}]);
-    expect(value).toEqual({post_id: "p1", title: "A", _id: 1});
+    expect(value).toEqual({title: "A"});
     expect(await raw("native", "posts")).toEqual({
-        indexes: ["post_id", "to", "uid"], rows: [value]
+        indexes: ["post_id", "to", "uid"], rows: [{...value, _id: 1, post_id: "p1", _encoded: true, _value: value}]
     });
     await expect(database.create(["posts", {post_id: "p1"}], {title: "B"})).rejects.toMatchObject({name: "ConstraintError"});
     expect(await database.read(["posts", {post_id: "p1"}])).toEqual(value);
     await expect(database.create(["posts", {post_id: "p2"}], {post_id: "different"})).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
-it("uses composite indexes for scoped queries and retains real identity fields", async () => {
+it("uses composite indexes for scoped queries without leaking identity fields", async () => {
     const {database} = await setup();
     for (const [chat_id, message_id] of [["c1", "m1"], ["c1", "m2"], ["c2", "m1"]]) {
         await database.create(["chats", {chat_id}, {message_id}], {text: message_id});
     }
     expect(await database.read(["chats", {chat_id: "c1"}, "message_id"])).toEqual({
-        m1: {_id: 1, chat_id: "c1", message_id: "m1", text: "m1"},
-        m2: {_id: 2, chat_id: "c1", message_id: "m2", text: "m2"}
+        m1: {text: "m1"},
+        m2: {text: "m2"}
     });
     await database.update(["chats", {chat_id: "c1"}, {message_id: "m1"}], {text: "changed"});
     expect((await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).text).toBe("m1");
@@ -77,7 +77,8 @@ it("stores one small document in unindexed stores and updates properties without
     await database.update(["meta", "settings"], {locale: "en"});
     const stored = await raw("native", "meta");
     expect(stored.indexes).toEqual([]);
-    expect(stored.rows).toEqual([{_id: 1, settings: {theme: "dark", locale: "en"}, maintenance: false, support: "user-1"}]);
+    const document = {settings: {theme: "dark", locale: "en"}, maintenance: false, support: "user-1"};
+    expect(stored.rows).toEqual([{...document, _id: 1, _encoded: true, _value: document}]);
     await database.delete(["meta", "maintenance"]);
     expect(await database.read(["meta", "maintenance"])).toBeUndefined();
     await expect(database.read(["meta"], {orderBy: "settings"})).rejects.toMatchObject({code: "database/invalid-argument"});
@@ -108,17 +109,17 @@ it("rolls back callbacks and cross-store batches atomically", async () => {
     ]))).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
-it("resolves timestamp and increment markers without adding storage envelopes", async () => {
+it("resolves timestamp and increment markers before encoding the record", async () => {
     const {database} = await setup();
     await database.create(["posts", {post_id: "p1"}], {count: 2});
     await database.update(["posts", {post_id: "p1"}], {count: database.increment(3), timestamp: database.TIMESTAMP});
-    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({_id: 1, post_id: "p1", count: 5, timestamp: expect.any(Number)});
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({count: 5, timestamp: expect.any(Number)});
 });
 
 it("uses native primary keys when explicitly addressing a record", async () => {
     const {database} = await setup();
     await database.create(["posts", {post_id: "p1"}], {});
-    expect(await database.read(["posts", {_id: "1"}])).toEqual({_id: 1, post_id: "p1"});
+    expect(await database.read(["posts", {_id: "1"}])).toEqual({});
     await database.update(["posts", {_id: "1"}], {title: "native"});
     expect((await database.read(["posts", {post_id: "p1"}])).title).toBe("native");
 });

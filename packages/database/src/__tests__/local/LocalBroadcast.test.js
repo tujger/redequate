@@ -36,17 +36,22 @@ it("notifies across independent contexts using collection names only, without ec
     const events = [], wrong = vi.fn();
     const one = reader.cursor(["posts", "post_id"]).subscribe(event => events.push(event));
     const two = isolated.cursor(["posts", "post_id"]).subscribe(wrong);
+    const initial = vi.fn(), separateInitial = vi.fn();
+    const ready = reader.addEventListener(["posts"], {onChange: initial});
+    const separateReady = isolated.addEventListener(["posts"], {onChange: separateInitial});
     try {
-        await vi.waitFor(() => expect(Channel.open.size).toBe(2));
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await vi.waitFor(() => {
+            expect(initial).toHaveBeenCalledTimes(1);
+            expect(separateInitial).toHaveBeenCalledTimes(1);
+        });
         await writer.create(["posts", {post_id: "p1"}], {title: "A"});
         await vi.waitFor(() => expect(events).toHaveLength(1));
-        expect(events[0]).toMatchObject({type: "add", entry: {key: "p1", value: {post_id: "p1", title: "A"}}});
+        expect(events[0]).toMatchObject({type: "add", entry: {key: "p1", value: {title: "A"}}});
         await writer.update(["posts", {post_id: "p1"}], {title: "B"});
         await vi.waitFor(() => expect(events).toHaveLength(2));
         expect(events[1].type).toBe("change");
         expect(wrong).not.toHaveBeenCalled();
         expect(Channel.messages.every(message => JSON.stringify(message.data) === '{"collections":["posts"]}')).toBe(true);
-    } finally { one.unsubscribe(); two.unsubscribe(); }
+    } finally { one.unsubscribe(); two.unsubscribe(); ready.remove(); separateReady.remove(); }
     expect(Channel.open.size).toBe(0);
 });
