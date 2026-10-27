@@ -114,7 +114,7 @@ it("initializes a cleared real LocalDatabase despite a retained authentication i
     const auth = new AuthBase({database});
     const first = identity("retained-account");
     await auth._saveInitialProfile(first);
-    expect(await database.read(["roles", {user_id: first.id}])).toBe("admin");
+    expect(await database.read(["roles", {user_id: first.id}])).toMatchObject({user_id: first.id, role: "admin"});
     await database.delete(["users_public", {user_id: first.id}]);
     await database.delete(["roles", {user_id: first.id}]);
     const returning = identity(first.id);

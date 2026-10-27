@@ -1,69 +1,75 @@
-import createLocalDatabase from "../createLocalDatabase";
-import {vi} from "vitest";
-import {IDBFactory, IDBIndex, IDBObjectStore} from "fake-indexeddb";
-
+import {IDBFactory, IDBIndex} from "fake-indexeddb";
+import LocalDatabase from "../../local";
+import LocalBackend from "../../../../backend/src/local";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
-
-const collect = async (cursor, size = 1) => {
-    const entries = [];
-    while (!cursor.position.finished) entries.push(...await cursor.next(size));
-    return entries;
+afterEach(() => vi.unstubAllGlobals());
+const setup = async () => {
+    const database = new LocalDatabase({storageId: "native-queries", backend: new LocalBackend({storageId: "native-queries"})});
+    await database.read(["posts"]);
+    for (const [post_id, uid, to] of [["p1", "a", 1], ["p2", "b", 2], ["p3", "a", 3]]) {
+        await database.create(["posts", {post_id}], {uid, to});
+    }
+    return database;
 };
 
-it("uses an existing field index for bounded reads and cursor pages", async () => {
-    const db = createLocalDatabase({storageId: "indexed-field"});
-    for (const [id, name] of [["10", "Bob"], ["2", "Amy"], ["02", "Amy"], ["x", "Zoe"]]) {
-        await db.update(["users_public", {user_id: id}], () => ({name}));
+it("uses a declared simple index for exact matches and bounds", async () => {
+    const database = await setup();
+    const indexes = [];
+    const getAll = IDBIndex.prototype.getAll;
+    vi.spyOn(IDBIndex.prototype, "getAll").mockImplementation(function (...args) {
+        indexes.push(this.name);
+        return getAll.apply(this, args);
+    });
+    expect(Object.keys(await database.read(["posts"], {orderBy: "uid", equalTo: "a"}))).toEqual(["p1", "p3"]);
+    expect(indexes).toContain("uid");
+    expect(Object.keys(await database.read(["posts"], {orderBy: "to", start: 2, end: 3, order: "desc"}))).toEqual(["p3", "p2"]);
+    expect(indexes).toContain("to");
+});
+
+it("uses a compound index for a scoped range without scanning other scopes", async () => {
+    const database = await setup();
+    for (const [chat_id, message_id, created] of [["c1", "m1", 1], ["c1", "m2", 3], ["c2", "m3", 2]]) {
+        await database.create(["chats", {chat_id}, {message_id}], {created});
     }
-    const index = vi.spyOn(IDBIndex.prototype, "getAll");
-    const store = vi.spyOn(IDBObjectStore.prototype, "getAll");
-    expect(await db.read(["users_public", "user_id"], {orderBy: "name", equalTo: "Amy"}))
-        .toEqual({2: expect.objectContaining({name: "Amy"}), "02": expect.objectContaining({name: "Amy"})});
-    expect(await db.read(["users_public"], {orderBy: "name", equalTo: "Bob"}))
-        .toEqual({10: expect.objectContaining({name: "Bob"})});
-    expect((await collect(db.cursor(["users_public"], {orderBy: "name", equalTo: "Bob"}))).map(entry => entry.key))
-        .toEqual(["10"]);
-    expect((await collect(db.cursor(["users_public", "user_id"], {
-        orderBy: "name", start: "Amy", end: "Bob", order: "desc"
-    }))).map(entry => entry.key)).toEqual(["10", "02", "2"]);
-    expect(index).toHaveBeenCalled();
-    expect(store).not.toHaveBeenCalled();
+    const indexes = [];
+    const getAll = IDBIndex.prototype.getAll;
+    vi.spyOn(IDBIndex.prototype, "getAll").mockImplementation(function (...args) {
+        indexes.push(this.name);
+        return getAll.apply(this, args);
+    });
+    const rows = await database.read(["chats", {chat_id: "c1"}, "message_id"], {orderBy: "created", start: 2, end: 4});
+    expect(Object.keys(rows)).toEqual(["m2"]);
+    expect(indexes).toEqual(["chat_id_created"]);
 });
 
-it("uses a compound index within a fixed scope and hydrates nested records", async () => {
-    const db = createLocalDatabase({storageId: "indexed-scope"});
-    const path = ["chats", {chat_id: "room"}];
-    await db.update([...path, {message_id: "a"}], () => ({created: 1}));
-    await db.update([...path, {message_id: "b"}], () => ({created: 2}));
-    await db.update(["chats", {chat_id: "other"}, {message_id: "c"}], () => ({created: 2}));
-    await db.update([...path, {message_id: "b"}, "edit", {id: "e1"}], () => ({text: "nested"}));
-    const index = vi.spyOn(IDBIndex.prototype, "getAll");
-    expect((await collect(db.cursor([...path, "message_id"], {orderBy: "created", equalTo: 2}))))
-        .toMatchObject([{key: "b", value: {edit: {e1: {text: "nested"}}}}]);
-    expect(index).toHaveBeenCalled();
+it("rejects queries without an index and ambiguous string addresses", async () => {
+    const database = await setup();
+    await expect(database.read(["posts", {title: "title"}])).rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(database.read(["posts"], {orderBy: "unknown", equalTo: "a"})).rejects.toMatchObject({code: "database/invalid-argument"});
+    expect((await database.read("posts/p1")).post_id).toBe("p1");
+    expect(await database.read("posts/p1/uid")).toBe("a");
 });
 
-it("falls back for scalar role values and bounds that can include unindexed values", async () => {
-    const db = createLocalDatabase({storageId: "fallback"});
-    await db.update(["roles", {user_id: "u1"}], () => "admin");
-    await db.update(["roles", {user_id: "u2"}], () => "member");
-    const index = vi.spyOn(IDBIndex.prototype, "getAll");
-    const store = vi.spyOn(IDBObjectStore.prototype, "getAll");
-    expect((await collect(db.cursor(["roles", "user_id"], {equalTo: "admin"}))))
-        .toEqual([{key: "u1", value: "admin"}]);
-    expect(await db.read(["roles", "user_id"], {equalTo: "admin"})).toEqual({u1: "admin"});
-    expect(store).toHaveBeenCalled();
-    expect(index).not.toHaveBeenCalled();
+it("updates independent properties in a batch and replaces collection rows using their unique field", async () => {
+    const database = await setup();
+    await database.update(new Map([
+        [["posts", {post_id: "p1"}, "uid"], "changed"],
+        [["posts", {post_id: "p1"}, "to"], 10]
+    ]));
+    expect(await database.read("posts/p1")).toMatchObject({uid: "changed", to: 10});
+    await database.update(["posts"], () => ({p4: {uid: "d"}}));
+    expect(await database.read("posts/p1")).toBeUndefined();
+    expect(await database.read("posts/p4")).toMatchObject({post_id: "p4", uid: "d"});
+    await database.delete(["posts"]);
+    expect(await database.read(["posts"])).toBeUndefined();
 });
 
-it("falls back when an open range includes object values omitted by IndexedDB", async () => {
-    const db = createLocalDatabase({storageId: "open-range"});
-    await db.update(["users_public", {user_id: "a"}], () => ({name: "Amy"}));
-    await db.update(["users_public", {user_id: "b"}], () => ({name: {first: "Bob"}}));
-    const index = vi.spyOn(IDBIndex.prototype, "getAll");
-    expect(await db.read(["users_public", "user_id"], {orderBy: "name", start: "A"}))
-        .toEqual({a: expect.any(Object), b: expect.any(Object)});
-    expect(index).not.toHaveBeenCalled();
+it("addresses records by a non-unique declared index only when the result is unambiguous", async () => {
+    const database = await setup();
+    await database.update(["_counters", {gid: "group"}, {id: "one"}], {total: 1});
+    await database.update(["_counters", {gid: "group"}, {id: "two"}], {total: 2});
+    expect(await database.read(["_counters", {gid: "group"}, {id: "one"}])).toMatchObject({gid: "group", id: "one", total: 1});
+    expect(Object.keys(await database.read(["_counters", {gid: "group"}, "id"]))).toEqual(["one", "two"]);
+    await expect(database.read(["_counters", {gid: "group"}])).rejects.toMatchObject({code: "database/invalid-argument"});
 });

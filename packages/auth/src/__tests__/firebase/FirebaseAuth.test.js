@@ -332,7 +332,7 @@ it.each(["google.com", "facebook.com"])("initializes a first %s profile in real 
     const user = await auth.signInWithPopup({providerId});
     expect(user.persisted).toBe(true);
     expect(user.role).toBe("admin");
-    expect(await database.read(["roles", {user_id: user.id}])).toBe("admin");
+    expect(await database.read(["roles", {user_id: user.id}])).toMatchObject({user_id: user.id, role: "admin"});
 });
 
 it.each(["signInWithEmailAndPassword", "signInWithCredential", "signInWithEmailLink", "resolveCurrentUser", "resolveRedirectResult"])(

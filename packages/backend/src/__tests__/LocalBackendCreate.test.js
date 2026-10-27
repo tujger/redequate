@@ -20,25 +20,25 @@ it("creates in prepared storage without calling LocalDatabase.create and preserv
         count: database.increment(2), time: database.TIMESTAMP
     });
     expect(key).toMatch(/^[-0-9A-Z_a-z]{20}$/);
-    expect(await database.read(["posts", {post_id: key}])).toEqual({count: 2, time: expect.any(Number)});
+    expect(await database.read(["posts", {post_id: key}])).toEqual({_id: 1, post_id: key, count: 2, time: expect.any(Number)});
     expect(create).not.toHaveBeenCalled();
     await expect(backend.request("database.create", ["posts", {post_id: key}], {}))
         .rejects.toMatchObject({name: "ConstraintError"});
 });
 
 it("creates in a prepared custom store without receiving its schema", async () => {
-    const stores = [{store: "audit", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: []}];
+    const stores = [{store: "audit", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: [{name: "id", keypath: "id", options: {unique: true}}]}];
     const database = await prepare("prepared-custom", stores);
     const backend = new LocalBackend({storageId: database.storageId});
     expect(await backend.request("database.create", ["audit", {id: "a"}], {value: 1})).toBe("a");
-    expect(await database.read(["audit", {id: "a"}])).toEqual({value: 1});
+    expect(await database.read(["audit", {id: "a"}])).toEqual({_id: 1, id: "a", value: 1});
 });
 
-it("keeps named identities, nested paths, and colliding metadata fields compatible with readers", async () => {
+it("keeps named identities, nested paths, and ordinary fields compatible with readers", async () => {
     const database = await prepare("prepared-format");
     const backend = new LocalBackend({storageId: database.storageId});
     const path = ["posts", {post_id: "p1"}, "edit", {edit_id: "e1"}];
-    const value = {_id: "public-id", _local: {public: true}, value: false, nested: {list: [1, 2]}};
+    const value = {value: false, nested: {list: [1, 2]}};
     expect(await backend.request("database.create", path, value)).toBe("e1");
     expect(await database.read(path)).toEqual(value);
     const key = await backend.request("database.create", ["posts", {post_id: "p1"}, "edit", "edit_id"], {name: "generated"});
@@ -60,7 +60,7 @@ it("rejects callbacks and asynchronous values without executing them", async () 
 it("rolls back a native write failure and serializes concurrent allocations", async () => {
     const database = await prepare("prepared-native-rollback");
     const backend = new LocalBackend({storageId: database.storageId});
-    const put = vi.spyOn(IDBObjectStore.prototype, "put").mockImplementationOnce(() => { throw new Error("write failed"); });
+    const put = vi.spyOn(IDBObjectStore.prototype, "add").mockImplementationOnce(() => { throw new Error("write failed"); });
     await expect(backend.request("database.create", ["posts", "post_id"], {})).rejects.toThrow("write failed");
     put.mockRestore();
     const keys = await Promise.all(Array.from({length: 4}, (_, i) => backend.request("database.create", ["posts", "post_id"], {i})));
@@ -87,7 +87,7 @@ it("validates arguments, rejects service stores, and uses the default storage ID
     const database = await prepare(undefined);
     const backend = new LocalBackend();
     expect(await backend.request("database.create", ["posts", {post_id: "p1"}], {})).toBe("p1");
-    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({});
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({_id: 1, post_id: "p1"});
     await expect(backend.request("database.create", ["posts", "post_id"]))
         .rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(backend.request("database.create", ["$auth", {id: "a"}], {}))
