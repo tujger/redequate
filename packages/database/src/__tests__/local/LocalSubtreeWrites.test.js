@@ -1,6 +1,7 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
@@ -17,7 +18,7 @@ const seed = async database => {
 };
 
 it.each([[parent], [[...parent, "edit"]], [["posts"]]])("deletes a path and all of its descendants: %j", async path => {
-    const database = new LocalDatabase({storageId: "delete-tree"});
+    const database = createLocalDatabase({storageId: "delete-tree"});
     await seed(database);
     await database.delete(path);
     expect(await database.read(child)).toBeUndefined();
@@ -26,14 +27,14 @@ it.each([[parent], [[...parent, "edit"]], [["posts"]]])("deletes a path and all 
     if (path === parent) expect(await database.readSubtree(parent)).toBeUndefined();
 });
 it("deletes child rows even when the parent row is absent", async () => {
-    const database = new LocalDatabase({storageId: "orphan"});
+    const database = createLocalDatabase({storageId: "orphan"});
     await database.update(child, () => ({uid: "alice"}));
     await database.delete(parent);
     expect(await database.read(child)).toBeUndefined();
     expect(await database.readSubtree(parent)).toBeUndefined();
 });
 it.each(["write", "batch"])("replaces a record subtree through %s and preserves explicit named children", async mode => {
-    const database = new LocalDatabase({storageId: "replace-tree"});
+    const database = createLocalDatabase({storageId: "replace-tree"});
     await seed(database);
     const value = {text: "new", edit: {e1: {uid: "changed"}}};
     if (mode === "write") await database.update(parent, () => value);
@@ -47,7 +48,7 @@ it.each(["write", "batch"])("replaces a record subtree through %s and preserves 
     expect(await database.readSubtree(parent)).toEqual(created({text: "flat"}));
 });
 it("replaces only supplied update fields and their descendants", async () => {
-    const database = new LocalDatabase({storageId: "update-fields"});
+    const database = createLocalDatabase({storageId: "update-fields"});
     await seed(database);
     await database.update(parent, {text: "new"});
     expect(await database.read(child)).toEqual(created({uid: "alice"}));
@@ -60,7 +61,7 @@ it("replaces only supplied update fields and their descendants", async () => {
     expect(await database.read(parent)).toEqual(created({text: "new", kept: true}));
 });
 it("preserves nested JSON through record and collection writes", async () => {
-    const direct = new LocalDatabase({storageId: "direct"}), collection = new LocalDatabase({storageId: "collection"});
+    const direct = createLocalDatabase({storageId: "direct"}), collection = createLocalDatabase({storageId: "collection"});
     const value = {text: "post", details: {child: {name: "value"}}};
     await direct.update(parent, () => value);
     await collection.update(["posts"], () => ({p1: value}));
@@ -69,7 +70,7 @@ it("preserves nested JSON through record and collection writes", async () => {
     expect(await collection.read(["posts", {id: "p1"}, {details: "details"}])).toEqual({child: created({name: "value"})});
 });
 it("omits unspecified timestamps and resolves increments when replacing a collection", async () => {
-    const database = new LocalDatabase({storageId: "collection-markers"});
+    const database = createLocalDatabase({storageId: "collection-markers"});
     await database.update(parent, () => ({count: 3, timestamp: 123}));
     await database.update(child, () => ({count: 4, timestamp: 456}));
     await database.update(["posts"], () => ({p1: {count: database.increment(2), edit: {e1: {count: database.increment(3)}}}}));
@@ -77,7 +78,7 @@ it("omits unspecified timestamps and resolves increments when replacing a collec
     expect(await database.read(child)).toEqual({count: 7});
 });
 it("preserves explicit grandchildren and removes omitted branches", async () => {
-    const database = new LocalDatabase({storageId: "grandchildren"});
+    const database = createLocalDatabase({storageId: "grandchildren"});
     const first = [...child, "details", {detail_id: "d1"}];
     const second = [...child, "details", {detail_id: "d2"}];
     await seed(database);
@@ -95,7 +96,7 @@ it.each([
     [[{type: "posts"}, {post_id: "p1"}], parent],
     [["posts"], child]
 ])("rejects overlapping addresses before applying a cross-store batch: %j %j", async (first, second) => {
-    const database = new LocalDatabase({storageId: "overlap"});
+    const database = createLocalDatabase({storageId: "overlap"});
     await seed(database);
     const notify = vi.fn();
     const listener = database.addEventListener(parent, {onChange: notify});
@@ -112,7 +113,7 @@ it.each([
     } finally { listener.remove(); }
 });
 it("allows independent fields and collections while retaining callback replacement behavior", async () => {
-    const database = new LocalDatabase({storageId: "independent"});
+    const database = createLocalDatabase({storageId: "independent"});
     await seed(database);
     await database.update(new Map([[[...parent, "text"], "new"], [[...parent, "kept"], false],
         [["meta", {post_id: "p1"}], {text: "reply"}]]));

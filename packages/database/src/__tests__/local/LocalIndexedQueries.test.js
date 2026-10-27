@@ -1,6 +1,7 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory, IDBIndex, IDBObjectStore} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -12,7 +13,7 @@ const collect = async (cursor, size = 1) => {
 };
 
 it("uses an existing field index for bounded reads and cursor pages", async () => {
-    const db = new LocalDatabase({storageId: "indexed-field"});
+    const db = createLocalDatabase({storageId: "indexed-field"});
     for (const [id, name] of [["10", "Bob"], ["2", "Amy"], ["02", "Amy"], ["x", "Zoe"]]) {
         await db.update(["users_public", {user_id: id}], () => ({name}));
     }
@@ -32,7 +33,7 @@ it("uses an existing field index for bounded reads and cursor pages", async () =
 });
 
 it("uses a compound index within a fixed scope and hydrates nested records", async () => {
-    const db = new LocalDatabase({storageId: "indexed-scope"});
+    const db = createLocalDatabase({storageId: "indexed-scope"});
     const path = ["chats", {chat_id: "room"}];
     await db.update([...path, {message_id: "a"}], () => ({created: 1}));
     await db.update([...path, {message_id: "b"}], () => ({created: 2}));
@@ -45,7 +46,7 @@ it("uses a compound index within a fixed scope and hydrates nested records", asy
 });
 
 it("falls back for scalar role values and bounds that can include unindexed values", async () => {
-    const db = new LocalDatabase({storageId: "fallback"});
+    const db = createLocalDatabase({storageId: "fallback"});
     await db.update(["roles", {user_id: "u1"}], () => "admin");
     await db.update(["roles", {user_id: "u2"}], () => "member");
     const index = vi.spyOn(IDBIndex.prototype, "getAll");
@@ -58,7 +59,7 @@ it("falls back for scalar role values and bounds that can include unindexed valu
 });
 
 it("falls back when an open range includes object values omitted by IndexedDB", async () => {
-    const db = new LocalDatabase({storageId: "open-range"});
+    const db = createLocalDatabase({storageId: "open-range"});
     await db.update(["users_public", {user_id: "a"}], () => ({name: "Amy"}));
     await db.update(["users_public", {user_id: "b"}], () => ({name: {first: "Bob"}}));
     const index = vi.spyOn(IDBIndex.prototype, "getAll");

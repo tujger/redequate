@@ -1,7 +1,8 @@
+import createLocalDatabase from "../../../../packages/database/src/__tests__/createLocalDatabase";
 import {knownCounterFailure} from "../../controllers/knownCounterFailure";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../../../packages/database/src/local";
+
 import {PostData} from "../../../components/PostComponent/PostData";
 import counterControl from "../../../controllers/counterControl";
 import {mutualRequest} from "../../../components/MutualComponent/mutualComponentControls";
@@ -13,7 +14,7 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 knownCounterFailure.each(["like", "dislike"])("C8: Local %s updates persisted counters, not only PostData memory", async type => {
-    const database = new LocalDatabase({storageId: "local-writers"});
+    const database = createLocalDatabase({storageId: "local-writers"});
     const post = PostData({database, allowedExtras: ["like", "dislike"]}); post.id = "p1";
     await post.fetchCounters(); await post.fetchExtras("reader");
     await post.putExtra({type, uid: "reader"});
@@ -22,7 +23,7 @@ knownCounterFailure.each(["like", "dislike"])("C8: Local %s updates persisted co
     expect(await counterControl({database, path: [{id: "p1"}, type]})).toBe(1);
 });
 knownCounterFailure("C8: Local following creates a relation and updates both directional counters", async () => {
-    const database = new LocalDatabase({storageId: "local-follow-writers"});
+    const database = createLocalDatabase({storageId: "local-follow-writers"});
     const result = await mutualRequest({database, currentUserData: {id: "reader"}, mutualId: "author",
         mutualType: "users_public", mutualMode: MutualMode.SIMPLEX_QUIET, typeId: "following"});
     expect(result.key).toEqual(expect.any(String));
@@ -32,14 +33,14 @@ knownCounterFailure("C8: Local following creates a relation and updates both dir
 });
 
 knownCounterFailure("C8: publishing a Local post updates its author's persisted count", async () => {
-    const database = new LocalDatabase({storageId: "local-post-writers"});
+    const database = createLocalDatabase({storageId: "local-post-writers"});
     const post = await PostData({database}).create({uid: "author", text: "Root"});
     await post.publish()();
     expect(await database.read(["posts", {post_id: post.id}])).toMatchObject({uid: "author", to: 0});
     expect(await counterControl({database, path: [{id: "author"}, "posts"]})).toBe(1);
 });
 knownCounterFailure("C8: creating a Local friend request updates the pending count", async () => {
-    const database = new LocalDatabase({storageId: "local-request-writers"});
+    const database = createLocalDatabase({storageId: "local-request-writers"});
     const result = await mutualRequest({database, currentUserData: {id: "reader"}, mutualId: "author",
         mutualType: "users_public", mutualMode: MutualMode.DUPLEX_APPROVE, typeId: "friend"});
     expect(await database.read(["mutualrequests", {mutual_type: "friend"}, {mutual_id: result.key}]))

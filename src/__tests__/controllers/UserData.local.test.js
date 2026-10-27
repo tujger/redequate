@@ -1,6 +1,7 @@
+import createLocalDatabase from "../../../packages/database/src/__tests__/createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../../packages/database/src/local";
+
 import {getAllRecords} from "../../../packages/database/src/local/helpers";
 import UserData from "../../controllers/UserData";
 
@@ -11,7 +12,7 @@ const email = [...user, {email: "email"}];
 const created = value => value;
 
 it("saves profile fields under their query names and reads the complete profile", async () => {
-    const database = new LocalDatabase({storageId: "profile-fields"});
+    const database = createLocalDatabase({storageId: "profile-fields"});
     const profile = new UserData(database).create("u1", {name: " User ", email: "a@b.com", updated: 1});
     await profile.setPrivate("phone", {locale: "en", enabled: true});
     await profile.save();

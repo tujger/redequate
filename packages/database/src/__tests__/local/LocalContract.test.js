@@ -1,13 +1,14 @@
+import createLocalDatabase from "../createLocalDatabase";
 import LocalCursor from "../../local/cursor";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 import {databaseContract} from "../common/databaseContract";
 
 let serial = 0;
 beforeEach(() => { globalThis.indexedDB = new IDBFactory(); });
 
 databaseContract(() => {
-    const db = new LocalDatabase({storageId: `contract-${++serial}`});
+    const db = createLocalDatabase({storageId: `contract-${++serial}`});
     const path = "meta";
     const record = key => [path, {id: key, _: true}];
     return {

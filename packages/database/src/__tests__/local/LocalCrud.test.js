@@ -1,13 +1,14 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 it("creates records, uses final keys in callbacks, and rejects duplicate IDs", async () => {
-    const database = new LocalDatabase({storageId: "crud-create"});
+    const database = createLocalDatabase({storageId: "crud-create"});
     const generatedKey = await database.create(["posts", "post_id"], key => ({key}));
-    expect(generatedKey).toBe("1");
+    expect(generatedKey).toMatch(/^[-0-9A-Z_a-z]{20}$/);
     expect(await database.read(["posts", {post_id: generatedKey}])).toMatchObject({key: generatedKey});
     expect(await database.create(["posts", {post_id: "p1"}], key => ({key}))).toBe("p1");
     await expect(database.create(["posts", {post_id: "p1"}], {key: "changed"})).rejects.toMatchObject({name: "ConstraintError"});
@@ -17,7 +18,7 @@ it("creates records, uses final keys in callbacks, and rejects duplicate IDs", a
 });
 
 it("merges, atomically replaces and deletes values, rejects asynchronous callbacks and preserves batches", async () => {
-    const database = new LocalDatabase({storageId: "crud-update"});
+    const database = createLocalDatabase({storageId: "crud-update"});
     const path = ["posts", {post_id: "p1"}];
     await database.update(path, {name: "A"});
     await database.update(path, {retained: true});

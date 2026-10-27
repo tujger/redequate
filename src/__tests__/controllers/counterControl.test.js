@@ -1,6 +1,7 @@
+import createLocalDatabase from "../../../packages/database/src/__tests__/createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../../packages/database/src/local";
+
 import counterControl from "../../controllers/counterControl";
 
 
@@ -27,12 +28,12 @@ describe("Local database updates", () => {
     afterEach(() => vi.unstubAllGlobals());
 
     it("returns a plain counter value through counterControl for the likes caller", async () => {
-        const database = new LocalDatabase({storageId: "likes"});
+        const database = createLocalDatabase({storageId: "likes"});
         expect(await counterControl({database, path: [{post_id: "p1"}, "like"], increment: 1})).toBe(1);
         expect(await counterControl({database, path: [{post_id: "p1"}, "like"], increment: -1})).toBeNull();
     });
     it("keeps live scalar counters on their literal field path", async () => {
-        const database = new LocalDatabase({storageId: "live-likes"});
+        const database = createLocalDatabase({storageId: "live-likes"});
         const path = [{post_id: "p1"}, "like"];
         const onchange = vi.fn();
         const remove = counterControl({database, path, onchange});

@@ -1,6 +1,7 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {afterEach, beforeEach, expect, it, vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 import {LOCAL_SCHEMA} from "../../local/storeSchema";
 import stores from "../../local/stores.json";
 import {getRecordsByType} from "../../local/helpers";
@@ -48,7 +49,7 @@ const seedLegacy = async (name, rows) => {
 };
 
 it("creates exactly the JSON indexes plus one path index in every store", async () => {
-    await new LocalDatabase({storageId: "compact-schema"}).read(["meta"]);
+    await createLocalDatabase({storageId: "compact-schema"}).read(["meta"]);
     const connection = await rawOpen("compact-schema");
     try {
         let count = 0;
@@ -65,7 +66,7 @@ it("creates exactly the JSON indexes plus one path index in every store", async 
 });
 
 it("stores object fields once and preserves scalar, array and colliding values", async () => {
-    const db = new LocalDatabase({storageId: "compact-values"});
+    const db = createLocalDatabase({storageId: "compact-values"});
     const plain = {text: "hello", details: {nested: [1, 2]}};
     const collisions = JSON.parse('{"_id":"public","_local":{"public":true},"_key":"public","value":"public","__proto__":{"safe":true}}');
     for (const [id, value] of [["a", plain], ["b", collisions], ["c", [1, {a: 2}]], ["d", false], ["e", "text"]]) {
@@ -84,7 +85,7 @@ it("stores object fields once and preserves scalar, array and colliding values",
 });
 
 it("stores identity projections only for declared indexes and restores conflicting public fields", async () => {
-    const db = new LocalDatabase({storageId: "compact-projection"});
+    const db = createLocalDatabase({storageId: "compact-projection"});
     const address = ["posts", {post_id: "address"}];
     const value = {post_id: "public", text: "hello"};
     await db.update(address, () => value);
@@ -103,7 +104,7 @@ it("stores identity projections only for declared indexes and restores conflicti
 it("compacts legacy rows and removes generated indexes in one version bump without deleting native external indexes", async () => {
     const value = {_id: "public", _local: {public: true}, text: "kept", nested: {items: [1, 2]}};
     await seedLegacy("compact-upgrade", [legacyRow("a", value)]);
-    const db = new LocalDatabase({storageId: "compact-upgrade"});
+    const db = createLocalDatabase({storageId: "compact-upgrade"});
     expect(await db.read(record("a"))).toEqual(value);
     expect(await getRecordsByType("compact-upgrade", ["meta", "id"])).toEqual([{id: "a", value}]);
     const connection = await rawOpen("compact-upgrade");
@@ -120,8 +121,8 @@ it("compacts legacy rows and removes generated indexes in one version bump witho
             expect(names.some(index => index.startsWith("_field:") || index === "_key0")).toBe(false);
         }
     } finally { connection.close(); }
-    expect(await db.create(["meta", "id"], {after: true})).toBe("8");
-    const reopened = new LocalDatabase({storageId: "compact-upgrade"});
+    expect(await db.create(["meta", "id"], {after: true})).toMatch(/^[-0-9A-Z_a-z]{20}$/);
+    const reopened = createLocalDatabase({storageId: "compact-upgrade"});
     expect(await reopened.read(record("a"))).toEqual(value);
     const unchanged = await rawOpen("compact-upgrade");
     expect(unchanged.version).toBe(2);
@@ -130,7 +131,7 @@ it("compacts legacy rows and removes generated indexes in one version bump witho
 
 it("rolls back compaction, index cleanup and version when a new unique index conflicts", async () => {
     await seedLegacy("compact-rollback", [legacyRow("a", {code: "same"}), legacyRow("b", {code: "same"})]);
-    const db = new LocalDatabase({storageId: "compact-rollback", stores: [{
+    const db = createLocalDatabase({storageId: "compact-rollback", stores: [{
         store: "meta", storeConfig: {keyPath: "_id", autoIncrement: true},
         storeSchema: [{name: "code", keypath: "code", options: {unique: true}}]
     }]});

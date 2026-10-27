@@ -1,12 +1,13 @@
+import createLocalDatabase from "../../../database/src/__tests__/createLocalDatabase";
 import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
 import LocalBackend from "../local";
-import LocalDatabase from "../../../database/src/local";
+
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 const prepare = async (storageId, stores) => {
-    const database = new LocalDatabase({storageId, stores});
+    const database = createLocalDatabase({storageId, stores});
     await database.read(["posts"]);
     return database;
 };
@@ -15,11 +16,11 @@ it("creates in prepared storage without calling LocalDatabase.create and preserv
     const database = await prepare("prepared-direct");
     const backend = new LocalBackend({storageId: database.storageId});
     const create = vi.spyOn(database, "create").mockImplementation(() => { throw new Error("recursive create"); });
-    const key = await backend.request("database.create", ["posts", "post_id"], id => ({
-        id, count: database.increment(2), time: database.TIMESTAMP
-    }));
-    expect(key).toBe("1");
-    expect(await database.read(["posts", {post_id: key}])).toEqual({id: key, count: 2, time: expect.any(Number)});
+    const key = await backend.request("database.create", ["posts", "post_id"], {
+        count: database.increment(2), time: database.TIMESTAMP
+    });
+    expect(key).toMatch(/^[-0-9A-Z_a-z]{20}$/);
+    expect(await database.read(["posts", {post_id: key}])).toEqual({count: 2, time: expect.any(Number)});
     expect(create).not.toHaveBeenCalled();
     await expect(backend.request("database.create", ["posts", {post_id: key}], {}))
         .rejects.toMatchObject({name: "ConstraintError"});
@@ -40,22 +41,20 @@ it("keeps named identities, nested paths, and colliding metadata fields compatib
     const value = {_id: "public-id", _local: {public: true}, value: false, nested: {list: [1, 2]}};
     expect(await backend.request("database.create", path, value)).toBe("e1");
     expect(await database.read(path)).toEqual(value);
-    const key = await backend.request("database.create", ["posts", {post_id: "p1"}, "edit", "edit_id"], id => ({id}));
-    expect(await database.read(["posts", {post_id: "p1"}, "edit", {edit_id: key}])).toEqual({id: key});
+    const key = await backend.request("database.create", ["posts", {post_id: "p1"}, "edit", "edit_id"], {name: "generated"});
+    expect(await database.read(["posts", {post_id: "p1"}, "edit", {edit_id: key}])).toEqual({name: "generated"});
 });
 
-it("rolls back callback failures and generated keys, and never runs a callback for a duplicate", async () => {
-    const database = await prepare("prepared-rollback");
+it("rejects callbacks and asynchronous values without executing them", async () => {
+    const database = await prepare("prepared-validation");
     const backend = new LocalBackend({storageId: database.storageId});
-    const failure = new Error("callback failed");
-    await expect(backend.request("database.create", ["posts", "post_id"], () => { throw failure; })).rejects.toBe(failure);
-    await expect(backend.request("database.create", ["posts", "post_id"], async () => ({})))
-        .rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await backend.request("database.create", ["posts", "post_id"], {})).toBe("1");
     const callback = vi.fn(() => ({}));
-    await expect(backend.request("database.create", ["posts", {post_id: "1"}], callback))
-        .rejects.toMatchObject({name: "ConstraintError"});
+    await expect(backend.request("database.create", ["posts", "post_id"], callback))
+        .rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(backend.request("database.create", ["posts", "post_id"], Promise.resolve({})))
+        .rejects.toMatchObject({code: "database/invalid-argument"});
     expect(callback).not.toHaveBeenCalled();
+    expect(await database.read(["posts"])).toBeUndefined();
 });
 
 it("rolls back a native write failure and serializes concurrent allocations", async () => {
@@ -65,7 +64,9 @@ it("rolls back a native write failure and serializes concurrent allocations", as
     await expect(backend.request("database.create", ["posts", "post_id"], {})).rejects.toThrow("write failed");
     put.mockRestore();
     const keys = await Promise.all(Array.from({length: 4}, (_, i) => backend.request("database.create", ["posts", "post_id"], {i})));
-    expect(keys).toEqual(["1", "2", "3", "4"]);
+    expect(keys).toEqual([...keys].sort());
+    expect(new Set(keys).size).toBe(4);
+    expect(keys.every(key => /^[-0-9A-Z_a-z]{20}$/.test(key))).toBe(true);
 });
 
 it("does not initialize stores and closes connections after success or failure", async () => {

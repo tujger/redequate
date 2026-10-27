@@ -1,3 +1,4 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 
@@ -134,7 +135,7 @@ it("sends one batch notice after commit and none after abort", async () => {
 it("works without BroadcastChannel", async () => {
     vi.stubGlobal("BroadcastChannel", undefined);
     const LocalDatabase = await context();
-    const database = new LocalDatabase({storageId: "offline"});
+    const database = createLocalDatabase({storageId: "offline"});
     const onChange = vi.fn();
     const handle = database.addEventListener(["meta"], {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());

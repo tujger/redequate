@@ -1,6 +1,7 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
@@ -14,7 +15,7 @@ it.each([
     {orderBy: ["details", {field: "score", _: 0}], last: "a"},
     {orderBy: "details/score", last: "b"}
 ])("orders child additions by ready field segments: %j", async ({orderBy, last}) => {
-    const database = new LocalDatabase({storageId: "field-order"});
+    const database = createLocalDatabase({storageId: "field-order"});
     await database.update(record("a"), () => ({details: {score: 2}, "details/score": 1}));
     await database.update(record("b"), () => ({details: {score: 1}, "details/score": 2}));
     const onChildAdd = vi.fn();
@@ -27,7 +28,7 @@ it.each([
 });
 
 it("delivers initial value and only keys above the initial maximum, then CRUD events", async () => {
-    const database = new LocalDatabase({storageId: "events"});
+    const database = createLocalDatabase({storageId: "events"});
     await database.update(record("a"), () => ({score: 1}));
     await database.update(record("b"), () => ({score: 2}));
     const onChange = vi.fn(), onChildAdd = vi.fn(), onChildChange = vi.fn(), onChildRemove = vi.fn();
@@ -50,7 +51,7 @@ it("reports an invalid feed path and returns a safe cleanup handle", () => {
     const onError = vi.fn();
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
-        const database = new LocalDatabase({storageId: "invalid-feed", onError});
+        const database = createLocalDatabase({storageId: "invalid-feed", onError});
         const path = "discover/user-1";
         const handle = database.addEventListener(path, {onChildAdd: vi.fn()});
         expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}),
@@ -59,14 +60,14 @@ it("reports an invalid feed path and returns a safe cleanup handle", () => {
             path, reason: "addEventListener", error: expect.objectContaining({code: "database/invalid-argument"})
         }));
         expect(() => handle.remove()).not.toThrow();
-        const defaultHandle = new LocalDatabase({storageId: "invalid-feed-default"})
+        const defaultHandle = createLocalDatabase({storageId: "invalid-feed-default"})
             .addEventListener(path, {onChildAdd: vi.fn()});
         expect(() => defaultHandle.remove()).not.toThrow();
     } finally { logged.mockRestore(); }
 });
 
 it("watches records and fields, including creation, replacement and deletion", async () => {
-    const database = new LocalDatabase({storageId: "fields-listeners"});
+    const database = createLocalDatabase({storageId: "fields-listeners"});
     const recordValue = vi.fn(), fieldValue = vi.fn(), childChange = vi.fn(), childRemove = vi.fn();
     const a = database.addEventListener(record("a"), {onChange: recordValue, onChildChange: childChange, onChildRemove: childRemove});
     const b = database.addEventListener([...record("a"), {name: "name"}], {onChange: fieldValue});
@@ -84,8 +85,8 @@ it("watches records and fields, including creation, replacement and deletion", a
 });
 
 it("keeps subscribers independent and stops initial or later delivery after remove", async () => {
-    const first = new LocalDatabase({storageId: "shared"});
-    const second = new LocalDatabase({storageId: "shared"});
+    const first = createLocalDatabase({storageId: "shared"});
+    const second = createLocalDatabase({storageId: "shared"});
     const one = vi.fn(), two = vi.fn(), removed = vi.fn();
     const a = first.addEventListener(collection, {onChange: one});
     const b = second.addEventListener(collection, {onChange: two});
@@ -100,7 +101,7 @@ it("keeps subscribers independent and stops initial or later delivery after remo
 });
 
 it("keeps named record paths distinct and accepts Firebase-style string addresses", async () => {
-    const database = new LocalDatabase({storageId: "paths-listeners"});
+    const database = createLocalDatabase({storageId: "paths-listeners"});
     const named = vi.fn(), other = vi.fn(), stringPath = vi.fn();
     const a = database.addEventListener(record("a"), {onChange: named});
     const b = database.addEventListener(["meta", {other_id: "a", _: true}], {onChange: other});
@@ -115,7 +116,7 @@ it("keeps named record paths distinct and accepts Firebase-style string addresse
 
 it("reports registration, storage and callback errors through the public onError contract", async () => {
     const onError = vi.fn();
-    const database = new LocalDatabase({storageId: "errors-listeners", onError});
+    const database = createLocalDatabase({storageId: "errors-listeners", onError});
     expect(database.addEventListener(collection, {onChildAdd: true})).toHaveProperty("remove");
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "addEventListener", {path: collection});
     const failure = new Error("IndexedDB unavailable");
@@ -131,7 +132,7 @@ it("reports registration, storage and callback errors through the public onError
 });
 
 it("notifies listeners once after batch commit and never for a rolled-back batch", async () => {
-    const database = new LocalDatabase({storageId: "batch-listeners"});
+    const database = createLocalDatabase({storageId: "batch-listeners"});
     const onChange = vi.fn();
     const listener = database.addEventListener(collection, {onChange});
     await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
@@ -145,7 +146,7 @@ it("notifies listeners once after batch commit and never for a rolled-back batch
 });
 
 it("publishes a complete settings collection only after commit and stays silent on abort", async () => {
-    const database = new LocalDatabase({storageId: "settings-listeners"});
+    const database = createLocalDatabase({storageId: "settings-listeners"});
     const settings = ["meta", "settings"];
     const onChange = vi.fn();
     const listener = database.addEventListener(["meta", {settings: "settings"}], {onChange});
@@ -165,7 +166,7 @@ it("publishes a complete settings collection only after commit and stays silent 
 });
 
 it.each([{orderBy: ""}, {orderBy: []}])("orders root values for Local listeners: %j", async ({orderBy}) => {
-    const database = new LocalDatabase({storageId: "root-order"});
+    const database = createLocalDatabase({storageId: "root-order"});
     await database.update(record("a"), () => 3);
     await database.update(record("b"), () => 1);
     const onChildAdd = vi.fn();
@@ -180,7 +181,7 @@ it.each([{orderBy: ""}, {orderBy: []}])("orders root values for Local listeners:
 });
 
 it("uses numeric key order, ignores older additions, and observes writes queued during subscription", async () => {
-    const database = new LocalDatabase({storageId: "key-boundary"});
+    const database = createLocalDatabase({storageId: "key-boundary"});
     await database.update(record("2"), () => 1);
     await database.update(record("10"), () => 1);
     const added = vi.fn();
@@ -197,7 +198,7 @@ it("uses numeric key order, ignores older additions, and observes writes queued 
 });
 
 it("uses signed and padded numeric key ordering for the addition boundary", async () => {
-    const database = new LocalDatabase({storageId: "numeric-boundary"});
+    const database = createLocalDatabase({storageId: "numeric-boundary"});
     await database.update(record("-2"), () => true);
     await database.update(record("2"), () => true);
     const added = vi.fn();
@@ -209,7 +210,7 @@ it("uses signed and padded numeric key ordering for the addition boundary", asyn
 });
 
 it("emits the first child for an empty collection without an initial replay", async () => {
-    const database = new LocalDatabase({storageId: "empty-boundary"});
+    const database = createLocalDatabase({storageId: "empty-boundary"});
     const added = vi.fn();
     const listener = database.addEventListener(collection, {onChildAdd: added});
     await database.update(record("a"), () => ({score: 1}));
@@ -218,7 +219,7 @@ it("emits the first child for an empty collection without an initial replay", as
 });
 
 it("selects only the requested child identity in a nested collection listener", async () => {
-    const db = new LocalDatabase({storageId: "identity-listener"});
+    const db = createLocalDatabase({storageId: "identity-listener"});
     const parent = ["meta", {owner: "alice"}];
     const left = [...parent, {left_id: "a"}];
     const right = [...parent, {right_id: "b"}];
@@ -242,7 +243,7 @@ it("selects only the requested child identity in a nested collection listener", 
 });
 
 it("keeps an internal cursor's literal collection path when its own read callback is supplied", async () => {
-    const db = new LocalDatabase({storageId: "cursor-listener-path"});
+    const db = createLocalDatabase({storageId: "cursor-listener-path"});
     const parent = ["meta", {owner: "alice"}, "history"];
     const cursor = db.cursor([...parent, "id"]);
     const changed = vi.fn();

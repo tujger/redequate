@@ -1,6 +1,7 @@
+import createLocalDatabase from "../../../../database/src/__tests__/createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../../../database/src/local";
+
 import loadUserData from "../../common/loadUserData";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
@@ -8,7 +9,7 @@ afterEach(() => vi.unstubAllGlobals());
 const created = value => value;
 
 it("loads private devices into the user profile through LocalDatabase", async () => {
-    const database = new LocalDatabase({storageId: "private-profile"});
+    const database = createLocalDatabase({storageId: "private-profile"});
     await database.update(new Map([
         [["users_private", {user_id: "u1"}, {device_id: "phone"}, "locale"], "en"],
         [["users_private", {user_id: "u1"}, {device_id: "phone"}, "enabled"], true]

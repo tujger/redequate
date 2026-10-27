@@ -1,6 +1,7 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 import {getAllRecords, openDatabase} from "../../local/helpers";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
@@ -12,9 +13,9 @@ const nested = ["mutual", {friendship: "m123", _: true}, "members", {member: "u4
 const created = value => value;
 
 it("creates records with permanent keys", async () => {
-    const database = new LocalDatabase({storageId: "meta"});
+    const database = createLocalDatabase({storageId: "meta"});
     const key = await database.create(["mutual", "id"], {name: "created"});
-    expect(key).toBe("1");
+    expect(key).toMatch(/^[-0-9A-Z_a-z]{20}$/);
     expect(await database.read(["mutual", {id: key}])).toEqual(created({name: "created"}));
     await expect(database.create(["mutual", {id: key}], {name: "duplicate"})).rejects.toMatchObject({name: "ConstraintError"});
 
@@ -23,14 +24,14 @@ it("creates records with permanent keys", async () => {
 });
 
 it("creates posts under the post_id identity used by post reads", async () => {
-    const database = new LocalDatabase({storageId: "posts"});
+    const database = createLocalDatabase({storageId: "posts"});
     const key = await database.create(["posts", "post_id"], {text: "Post"});
     expect(await database.read(["posts", {post_id: key}])).toEqual(created({text: "Post"}));
     expect(await database.read(["posts", {id: key, _: true}])).toBeUndefined();
 });
 
 it("assembles a private user subtree from separate device records", async () => {
-    const database = new LocalDatabase({storageId: "subtree"});
+    const database = createLocalDatabase({storageId: "subtree"});
     const user = ["users_private", {user_id: "u1"}];
     expect(await database.readSubtree(user)).toBeUndefined();
     await database.update(new Map([
@@ -46,7 +47,7 @@ it("assembles a private user subtree from separate device records", async () => 
 });
 
 it("reads every record in a literal collection and keeps sibling collections isolated", async () => {
-    const database = new LocalDatabase({storageId: "literal-collections"});
+    const database = createLocalDatabase({storageId: "literal-collections"});
     const settings = ["meta", "settings"];
     expect(await database.readSubtree(settings)).toBeUndefined();
     await database.update([...settings, {setting_id: "theme"}], () => ({value: "dark"}));
@@ -64,7 +65,7 @@ it("reads every record in a literal collection and keeps sibling collections iso
 });
 
 it("preserves nested collections and named record paths in a collection subtree", async () => {
-    const database = new LocalDatabase({storageId: "nested-collections"});
+    const database = createLocalDatabase({storageId: "nested-collections"});
     const settings = ["meta", "settings"];
     const theme = [...settings, {setting_id: "theme"}];
     await database.update(theme, () => ({label: "Theme"}));
@@ -97,7 +98,7 @@ it("preserves nested collections and named record paths in a collection subtree"
 });
 
 it("writes and replaces the settings collection while preserving child identities", async () => {
-    const database = new LocalDatabase({storageId: "settings-write"});
+    const database = createLocalDatabase({storageId: "settings-write"});
     const settings = ["meta", "settings"];
     const theme = [...settings, {setting_id: "theme"}];
     await database.update(theme, () => ({value: "light"}));
@@ -111,7 +112,7 @@ it("writes and replaces the settings collection while preserving child identitie
 });
 
 it("accepts the flat Settings.js batch payload with arrays and null removals", async () => {
-    const database = new LocalDatabase({storageId: "settings-payload"});
+    const database = createLocalDatabase({storageId: "settings-payload"});
     const settings = ["meta", "settings"];
     await database.update(new Map([[settings, {
         postsAllowEdit: true,
@@ -127,7 +128,7 @@ it("accepts the flat Settings.js batch payload with arrays and null removals", a
 });
 
 it("updates settings children, nested collections and null removals in one transaction", async () => {
-    const database = new LocalDatabase({storageId: "settings-update"});
+    const database = createLocalDatabase({storageId: "settings-update"});
     const settings = ["meta", "settings"];
     await database.update(settings, () => ({
         theme: {value: "dark", options: {light: {enabled: true}}},
@@ -152,7 +153,7 @@ it("updates settings children, nested collections and null removals in one trans
 });
 
 it("preserves existing identities and gives new collection children a generic id", async () => {
-    const database = new LocalDatabase({storageId: "posts-collection"});
+    const database = createLocalDatabase({storageId: "posts-collection"});
     const post = ["posts", {post_id: "p1"}];
     await database.update(post, () => ({text: "old"}));
     await database.update(["posts"], () => ({p1: {text: "new"}, p2: {text: "second"}}));
@@ -162,7 +163,7 @@ it("preserves existing identities and gives new collection children a generic id
 });
 
 it("rolls back a failed collection batch without changing existing records", async () => {
-    const database = new LocalDatabase({storageId: "settings-rollback"});
+    const database = createLocalDatabase({storageId: "settings-rollback"});
     const settings = ["meta", "settings"];
     await database.update(settings, () => ({theme: {value: "old"}}));
     const before = await database.readSubtree(settings);
@@ -173,7 +174,7 @@ it("rolls back a failed collection batch without changing existing records", asy
 });
 
 it("creates a missing parent for a field write and leaves no record for absent nulls", async () => {
-    const database = new LocalDatabase({storageId: "field-parent"});
+    const database = createLocalDatabase({storageId: "field-parent"});
     await database.delete([...friendship, "missing"]);
     expect(await getAllRecords("field-parent")).toEqual([]);
     await database.update([...friendship, "name"], () => "created");
@@ -184,7 +185,7 @@ it("creates a missing parent for a field write and leaves no record for absent n
 });
 
 it("reads, writes, updates and deletes records with dynamic levels", async () => {
-    const database = new LocalDatabase({storageId: "crud"});
+    const database = createLocalDatabase({storageId: "crud"});
     expect(await database.read(friendship)).toBeUndefined();
     await database.delete(friendship);
     await database.update(friendship, () => ({name: "first", nested: {kept: true}, removed: 1}));
@@ -206,7 +207,7 @@ it("reads, writes, updates and deletes records with dynamic levels", async () =>
 });
 
 it("reads and changes top-level fields while preserving the record", async () => {
-    const database = new LocalDatabase({storageId: "fields"});
+    const database = createLocalDatabase({storageId: "fields"});
     expect(await database.read([...friendship, {name: "name"}])).toBeUndefined();
     await database.delete([...friendship, "name"]);
     await database.delete([...friendship, "name"]);
@@ -222,7 +223,7 @@ it("reads and changes top-level fields while preserving the record", async () =>
 });
 
 it("creates an absent record on a non-null update and ignores empty removals", async () => {
-    const database = new LocalDatabase({storageId: "updates"});
+    const database = createLocalDatabase({storageId: "updates"});
     await database.update(friendship, {removed: null});
     expect(await database.read(friendship)).toBeUndefined();
     await database.update(friendship, {active: true});
@@ -233,7 +234,7 @@ it("creates an absent record on a non-null update and ignores empty removals", a
 
 it("reports invalid operations and IndexedDB failures through DatabaseBase", async () => {
     const onError = vi.fn();
-    const database = new LocalDatabase({storageId: "errors", onError});
+    const database = createLocalDatabase({storageId: "errors", onError});
     await expect(database.create(["mutual", {friendship: "m123", _: -1}], {})).resolves.toBeUndefined();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}),
         "create", {path: ["mutual", {friendship: "m123", _: -1}], value: {}});
@@ -257,7 +258,7 @@ it("reports invalid operations and IndexedDB failures through DatabaseBase", asy
 });
 
 it("resolves local timestamp and increment markers against prior values", async () => {
-    const database = new LocalDatabase({storageId: "sentinels"});
+    const database = createLocalDatabase({storageId: "sentinels"});
     vi.spyOn(Date, "now").mockReturnValue(1234);
     try {
         expect(database.TIMESTAMP).not.toEqual({".sv": "timestamp"});
@@ -280,7 +281,7 @@ it("resolves local timestamp and increment markers against prior values", async 
 });
 
 it("does not add creation time to values across existing record writes", async () => {
-    const database = new LocalDatabase({storageId: "times"});
+    const database = createLocalDatabase({storageId: "times"});
     const now = vi.spyOn(Date, "now");
     try {
         now.mockReturnValue(100);
@@ -303,7 +304,7 @@ it("does not add creation time to values across existing record writes", async (
 });
 
 it("keeps explicit timestamps and leaves primitives without a timestamp", async () => {
-    const database = new LocalDatabase({storageId: "value-shapes"});
+    const database = createLocalDatabase({storageId: "value-shapes"});
     vi.spyOn(Date, "now").mockReturnValue(100);
     try {
         await database.update(friendship, () => ({timestamp: null, nested: {name: "one"}}));
@@ -320,7 +321,7 @@ it("keeps explicit timestamps and leaves primitives without a timestamp", async 
 });
 
 it("applies Map and string batch paths atomically and rejects overlapping paths", async () => {
-    const database = new LocalDatabase({storageId: "batch"});
+    const database = createLocalDatabase({storageId: "batch"});
     await database.update(friendship, () => ({count: 2, kept: true}));
     await database.update(new Map([
         [[...friendship, "count"], database.increment(3)],

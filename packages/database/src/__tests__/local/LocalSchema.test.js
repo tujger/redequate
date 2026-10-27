@@ -1,7 +1,8 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {afterEach, beforeEach, expect, it, vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
-import LocalDatabase from "../../local";
+
 import {openDatabase} from "../../local/helpers";
 import {LOCAL_SCHEMA} from "../../local/constants";
 
@@ -29,11 +30,11 @@ it("exposes a serializable application schema and preserves an unknown provider 
             transaction.onabort = () => reject(transaction.error);
         });
     } finally { provider.close(); }
-    const db = new LocalDatabase({storageId: "description"});
+    const db = createLocalDatabase({storageId: "description"});
     expect(JSON.parse(JSON.stringify(LOCAL_SCHEMA))).toEqual(LOCAL_SCHEMA);
     await db.applySchema(LOCAL_SCHEMA);
     await expect(db.applySchema(providerSchema)).rejects.toThrow(TypeError);
-    expect(() => new LocalDatabase({stores: [{
+    expect(() => createLocalDatabase({stores: [{
         store: "$customProvider", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: []
     }]})).toThrow(TypeError);
     const connection = await openDatabase("description");
@@ -54,7 +55,7 @@ it("exposes a serializable application schema and preserves an unknown provider 
 });
 
 it("adds a store, updates its indexes, preserves rows, and repeats without a version bump", async () => {
-    const db = new LocalDatabase({storageId: "migration"});
+    const db = createLocalDatabase({storageId: "migration"});
     await db.update(["meta", {id: "before", _: true}], () => ({value: 1}));
     await db.applySchema(schema);
     let connection = await openDatabase("migration");
@@ -96,7 +97,7 @@ it("adds a store, updates its indexes, preserves rows, and repeats without a ver
 });
 
 it("rejects incompatible store changes without altering data or version", async () => {
-    const db = new LocalDatabase({storageId: "incompatible"});
+    const db = createLocalDatabase({storageId: "incompatible"});
     await db.update(["meta", {id: "safe", _: true}], () => ({value: 7}));
     await expect(db.applySchema({meta: {keyPath: "other", autoIncrement: false, indexes: {}}}))
         .rejects.toMatchObject({name: "VersionError"});
@@ -115,7 +116,7 @@ it("rejects incompatible store changes without altering data or version", async 
 });
 
 it("rolls back a unique index that conflicts with existing rows", async () => {
-    const db = new LocalDatabase({storageId: "unique-rollback"});
+    const db = createLocalDatabase({storageId: "unique-rollback"});
     await db.applySchema(schema);
     const connection = await openDatabase("unique-rollback");
     await new Promise((resolve, reject) => {
@@ -143,7 +144,7 @@ it("rolls back a unique index that conflicts with existing rows", async () => {
 });
 
 it("closes Local connections on versionchange and reports an external blocker", async () => {
-    const db = new LocalDatabase({storageId: "connections"});
+    const db = createLocalDatabase({storageId: "connections"});
     const local = await openDatabase("connections");
     await db.applySchema(schema);
     expect(() => local.transaction("meta")).toThrow();
@@ -171,8 +172,8 @@ it("closes Local connections on versionchange and reports an external blocker", 
 });
 
 it("converges when two callers add different stores at the same time", async () => {
-    const first = new LocalDatabase({storageId: "race"});
-    const second = new LocalDatabase({storageId: "race"});
+    const first = createLocalDatabase({storageId: "race"});
+    const second = createLocalDatabase({storageId: "race"});
     await Promise.all([
         first.applySchema(schema),
         second.applySchema({auditOther: {keyPath: "id", autoIncrement: false, indexes: {}}})

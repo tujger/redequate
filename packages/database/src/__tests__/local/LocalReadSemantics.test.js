@@ -1,12 +1,13 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
 it("reads exact fields and nested collections without suffix guesses", async () => {
-    const database = new LocalDatabase({storageId: "read-shapes"});
+    const database = createLocalDatabase({storageId: "read-shapes"});
     const post = ["posts", {post_id: "p"}];
     await database.update(post, () => ({owner_id: {id: "u", roles: ["a"]}, id: ["one", "two"],
         post_id: false}));
@@ -29,7 +30,7 @@ it("reads exact fields and nested collections without suffix guesses", async () 
 });
 
 it("filters ordered collections with inclusive bounds and equality", async () => {
-    const database = new LocalDatabase({storageId: "read-query"});
+    const database = createLocalDatabase({storageId: "read-query"});
     for (const [key, created] of [["a", 100], ["b", 150], ["c", 200], ["d", 250]]) {
         await database.update(["posts", {post_id: key}], () => ({created}));
     }
@@ -45,7 +46,7 @@ it("filters ordered collections with inclusive bounds and equality", async () =>
 });
 
 it("queries values and numeric keys at nested and record paths", async () => {
-    const database = new LocalDatabase({storageId: "read-query-children"});
+    const database = createLocalDatabase({storageId: "read-query-children"});
     const post = ["posts", {post_id: "p"}];
     await database.update(post, () => ({states: {a: "active", b: "idle", c: "active"},
         scores: {"2": "a", "10": "b", "02": "c", z: "d"},
@@ -66,7 +67,7 @@ it("queries values and numeric keys at nested and record paths", async () => {
 });
 
 it("reads a literal child beside records with named identities", async () => {
-    const database = new LocalDatabase({storageId: "literal-post-child"});
+    const database = createLocalDatabase({storageId: "literal-post-child"});
     await database.update(["posts", {post_id: "p1"}], () => ({created: 100}));
     await database.update(["posts", "post_id"], () => ({marker: "literal"}));
     expect(await database.read(["posts", {post_id: "post_id"}])).toEqual({marker: "literal"});
@@ -76,7 +77,7 @@ it("reads a literal child beside records with named identities", async () => {
 
 it("keeps array paths exact for settings and reports read errors", async () => {
     const onError = vi.fn();
-    const database = new LocalDatabase({storageId: "literal-settings", onError});
+    const database = createLocalDatabase({storageId: "literal-settings", onError});
     await database.update(["meta", "settings"], () => ({theme: "dark"}));
     expect(await database.read("meta/settings")).toEqual({theme: "dark"});
     expect(await database.read(["meta", {settings: "settings"}])).toEqual({theme: "dark"});
@@ -87,7 +88,7 @@ it("keeps array paths exact for settings and reports read errors", async () => {
 });
 
 it("selects only the requested identity field, including dynamic identities and descendants", async () => {
-    const database = new LocalDatabase({storageId: "identity-reads"});
+    const database = createLocalDatabase({storageId: "identity-reads"});
     await database.create(["users_public", {user_id: "fixed"}], {name: "Fixed"});
     await database.update(["users_public", {user_id: "dynamic", _: 0}], () => ({name: "Dynamic"}));
     await database.update(["users_public", {user_id: "dynamic", _: 0}, "devices", {device_id: "phone"}], () => ({locale: "en"}));
@@ -103,7 +104,7 @@ it("selects only the requested identity field, including dynamic identities and 
 });
 
 it("reads an actual named identity equal to its field name", async () => {
-    const database = new LocalDatabase({storageId: "same-name-identity"});
+    const database = createLocalDatabase({storageId: "same-name-identity"});
     await database.create(["users_public", {user_id: "user_id"}], {name: "Named"});
     expect(await database.read(["users_public", {user_id: "user_id"}])).toEqual({name: "Named"});
 });

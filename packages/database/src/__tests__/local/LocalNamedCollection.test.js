@@ -1,6 +1,7 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 import {getAllRecords, getRecordsByType, parseDatabasePath} from "../../local/helpers";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
@@ -8,7 +9,7 @@ afterEach(() => vi.unstubAllGlobals());
 const created = value => value;
 
 it.each(["posts", "meta"])("shares %s records, fields and deletes across named and string roots", async collection => {
-    const database = new LocalDatabase({storageId: "aliases"});
+    const database = createLocalDatabase({storageId: "aliases"});
     const string = [collection, {post_id: "p1"}];
     const named = [{type: collection}, {post_id: "p1"}];
     await database.update(named, () => ({text: "created", count: 0}));
@@ -30,7 +31,7 @@ it.each(["posts", "meta"])("shares %s records, fields and deletes across named a
 });
 
 it("keeps the posts identity and nested levels unchanged", async () => {
-    const database = new LocalDatabase({storageId: "meta"});
+    const database = createLocalDatabase({storageId: "meta"});
     const path = Object.freeze([Object.freeze({type: "posts"})]);
     const key = await database.create([...path, "post_id"], {text: "post"});
     const post = ["posts", {post_id: key}];
@@ -46,7 +47,7 @@ it("keeps the posts identity and nested levels unchanged", async () => {
 });
 
 it("uses named collections in batch replacements and type queries without storing root metadata", async () => {
-    const database = new LocalDatabase({storageId: "batch"});
+    const database = createLocalDatabase({storageId: "batch"});
     const record = [{name: "meta"}, {kind: "r1", _: 0}];
     await database.update(new Map([[record, {text: "reply", nested: {enabled: true}}]]));
     await database.update(new Map([[[{type: "meta"}, {kind: "r1", _: 0}, "text"], "updated"]]));
@@ -67,7 +68,7 @@ it("uses named collections in batch replacements and type queries without storin
 });
 
 it("notifies listeners for writes through either root form", async () => {
-    const database = new LocalDatabase({storageId: "listeners"});
+    const database = createLocalDatabase({storageId: "listeners"});
     const string = ["posts", {post_id: "p1"}], named = [{type: "posts"}, {post_id: "p1"}];
     const first = vi.fn(), second = vi.fn(), collection = vi.fn();
     const listeners = [database.addEventListener(string, {onChange: first}),
@@ -88,7 +89,7 @@ it("notifies listeners for writes through either root form", async () => {
 });
 
 it.each(["follow", "watch", "_posts", "replies"])("rejects obsolete root %s", async name => {
-    const database = new LocalDatabase({storageId: "validation"});
+    const database = createLocalDatabase({storageId: "validation"});
     const named = [{type: name}, {id: "r1"}];
     await expect(database.update(named, () => ({name}))).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(database.create([{type: name}], {})).rejects.toMatchObject({code: "database/invalid-argument"});

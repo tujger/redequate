@@ -1,6 +1,7 @@
+import createLocalDatabase from "../createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
-import LocalDatabase from "../../local";
+
 import {getAllRecords, getRecordsByType, openDatabase} from "../../local/helpers";
 import {indexesForStore, LOCAL_COLLECTIONS, STORE_SCHEMA} from "../../local/constants";
 
@@ -44,7 +45,7 @@ it("creates only physical roots with native autoIncrement and unique path indexe
 });
 
 it("uses one transaction to write posts, metadata and users and aggregates their rows", async () => {
-    const database = new LocalDatabase({storageId: "batch-stores"});
+    const database = createLocalDatabase({storageId: "batch-stores"});
     const transaction = vi.spyOn(IDBDatabase.prototype, "transaction");
     await database.update(new Map([
         [record("posts"), {text: "post"}],
@@ -68,7 +69,7 @@ it("uses one transaction to write posts, metadata and users and aggregates their
 });
 
 it("rolls back all stores and sends no notification if a queued write fails", async () => {
-    const database = new LocalDatabase({storageId: "abort-stores"});
+    const database = createLocalDatabase({storageId: "abort-stores"});
     await database.update(record("posts"), () => ({text: "original"}));
     const onChange = vi.fn();
     const listener = database.addEventListener(record("posts"), {onChange});
@@ -95,7 +96,7 @@ it("rolls back all stores and sends no notification if a queued write fails", as
 });
 
 it("reads type indexes and notifies collection listeners from the dedicated stores", async () => {
-    const database = new LocalDatabase({storageId: "indexed"});
+    const database = createLocalDatabase({storageId: "indexed"});
     const postChanged = vi.fn(); const metaChanged = vi.fn();
     const handles = [database.addEventListener([{type: "posts"}], {onChange: postChanged}),
         database.addEventListener(["meta"], {onChange: metaChanged})];

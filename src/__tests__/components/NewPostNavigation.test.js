@@ -1,3 +1,4 @@
+import createLocalDatabase from "../../../packages/database/src/__tests__/createLocalDatabase";
 import React, {act} from "react";
 import {Provider} from "react-redux";
 import {createStore} from "redux";
@@ -8,7 +9,7 @@ import {render, unmount} from "../render";
 import NewPostComponent from "../../components/NewPostComponent/NewPostComponent";
 import LazyListComponent from "../../components/LazyListComponent/LazyListComponent";
 import reducer from "../../components/NewPostComponent/newPostComponentReducer";
-import LocalDatabase from "../../../packages/database/src/local";
+
 import FirebaseDatabase from "../../../packages/database/src/firebase";
 import {createFirebase} from "../../../packages/database/src/__tests__/fixtures/firebase";
 
@@ -58,7 +59,7 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
         return Promise.resolve(fixture.snapshot(value));
     });
     context.database = provider === "local"
-        ? new LocalDatabase({storageId: `post-navigation-${crypto.randomUUID()}`})
+        ? createLocalDatabase({storageId: `post-navigation-${crypto.randomUUID()}`})
         : new FirebaseDatabase({firebase: fixture.firebase});
     const database = context.database;
     context.backend = {request: vi.fn((name, {path, value}) => database.create(path, value))};
