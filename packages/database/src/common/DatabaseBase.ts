@@ -1,5 +1,7 @@
+import type {BackendBase} from "../../../backend/src/BackendTypes";
 import {notImplemented} from "../../../common"
 import DatabaseCursor from "./DatabaseCursor";
+import createRecord from "./methods/create";
 import type {
     DatabasePath, DatabaseValue, DatabaseOptions,
     DatabaseErrorHandler,
@@ -16,19 +18,27 @@ export type {
     DatabaseCursorSubscription, DatabaseCursorOptions
 } from "./DatabaseTypes";
 
+type CreateMethodOptions = {
+    key?: string;
+    mapError?: (error: unknown) => unknown;
+};
+
 /**
  * onError may suppress a failure by returning normally; the operation then returns undefined.
  * Cursors and listeners retain their options. Writes resolve after storage confirms them.
  */
 export default class DatabaseBase {
     onError: DatabaseErrorHandler;
+    protected _backend?: BackendBase;
 
     constructor(
         {
+            backend,
             onError = error => {
                 throw error;
             }
         }: DatabaseOptions = {}) {
+        this._backend = backend;
         this.onError = onError;
     }
 
@@ -110,8 +120,12 @@ export default class DatabaseBase {
     }
 
     /** Atomically creates an absent record and returns its permanent key. The callback receives that key synchronously before insertion. */
-    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((key: string) => DatabaseValue)): Promise<string | undefined> {
-        return notImplemented("create")
+    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((key: string) => DatabaseValue), implementation?: CreateMethodOptions): Promise<string | undefined> {
+        if (!implementation) return notImplemented("create");
+        return createRecord(this._backend, path, valueOrCallback, {
+            key: implementation.key,
+            mapError: implementation.mapError
+        });
     }
 
     /**

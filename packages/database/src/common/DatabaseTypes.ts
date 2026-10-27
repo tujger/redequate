@@ -1,3 +1,4 @@
+import type {BackendBase} from "../../../backend/src/BackendTypes";
 import type {DatabaseOrder} from "./DatabaseOrder";
 
 /**
@@ -28,6 +29,7 @@ export interface DatabaseGroupEntry {
 }
 
 export interface DatabaseOptions extends Record<string, unknown> {
+    backend?: BackendBase;
     onError?: DatabaseErrorHandler;
 }
 
