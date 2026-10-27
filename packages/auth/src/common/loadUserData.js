@@ -1,3 +1,5 @@
+import {decodeRole} from "./roleData";
+
 /** Load the profile attached to an authenticated identity through the injected database. */
 export default function loadUserData(user, database, initializeProfile) {
     if (!user?.id || !database) return user;
@@ -13,7 +15,7 @@ export default function loadUserData(user, database, initializeProfile) {
         }
         const state = user._getState();
         if (publicData != null) state.public = {...state.public, ...publicData};
-        if (role !== undefined) state.role = role;
+        if (role !== undefined) state.role = decodeRole(database, role);
         if (privateData != null) state.private = {...state.private, ...privateData};
         state.loaded = {
             ...state.loaded,

@@ -2,6 +2,7 @@ import {fail, notImplemented, UserData as DefaultUserData, UserRole} from "../..
 import type {UserData} from "../../common";
 import type DatabaseBase from "../../database/src/common/DatabaseBase";
 import type {DatabaseValue} from "../../database/src/common/DatabaseTypes";
+import {decodeRole, roleQuery} from "./common/roleData";
 import saveUserData from "./common/saveUserData";
 import loadUserData from "./common/loadUserData";
 import {
@@ -186,9 +187,9 @@ export default class AuthBase {
         validateProfile(fields);
         if (fields.role !== undefined && fields.role !== "admin") {
             const database = this._requireDatabase();
-            const role = await database.read(["roles", {user_id: user.id}]);
+            const role = decodeRole(database, await database.read(["roles", {user_id: user.id}]));
             if (role === "admin") {
-                const roles = await database.read(["roles"], {equalTo: UserRole.ADMIN});
+                const roles = await database.read(["roles"], roleQuery(database, UserRole.ADMIN));
                 let hasAnotherAdmin = false;
                 for (const id of Object.keys(roles || {})) {
                     if (id === user.id) continue;
