@@ -22,7 +22,7 @@ const receive = (storageId, event) => {
         for (const listener of listeners.get(storageName(storageId)) ?? []) {
             if (!listener.collection || collections.includes(listener.collection)) await refresh(listener);
         }
-    }).catch(() => {});
+    });
 };
 
 const openChannel = storageId => {
@@ -34,11 +34,25 @@ const openChannel = storageId => {
     } catch (_) { /* BroadcastChannel is optional (for example in SSR). */ }
 };
 
+const reportAsyncError = error => {
+    if (typeof globalThis.reportError === "function") globalThis.reportError(error);
+    else queueMicrotask(() => { throw error; });
+};
+
 const enqueue = (storageId, operation) => {
     storageId = storageName(storageId);
     const next = (queues.get(storageId) ?? Promise.resolve()).then(operation);
-    queues.set(storageId, next.catch(() => {}));
-    return next;
+    const tail = next.catch(reportAsyncError).finally(() => {
+        if (queues.get(storageId) === tail) queues.delete(storageId);
+    });
+    queues.set(storageId, tail);
+    return tail;
+};
+
+// Callbacks may write through the same queue; observe rejections without awaiting them.
+const invokeCallback = (callback, value) => {
+    const result = callback?.(value);
+    if (result?.then instanceof Function) Promise.resolve(result).catch(reportAsyncError);
 };
 
 const children = value => value !== null && typeof value === "object" ? value : {};
@@ -54,38 +68,43 @@ const deliver = (listener, value) => {
     if (initial) listener.initialKey = maximumKey(value);
     if (!initial) {
         for (const key of Object.keys(before)) {
-            if (!Object.hasOwn(after, key)) callbacks.onChildRemove?.({key, value: before[key]});
+            if (!Object.hasOwn(after, key)) invokeCallback(callbacks.onChildRemove, {key, value: before[key]});
         }
     }
     if (!initial) {
         for (const key of Object.keys(after).sort(compareKeys)) {
             if (!Object.hasOwn(before, key) && (listener.initialKey === undefined || compareKeys(key, listener.initialKey) > 0)) {
-                callbacks.onChildAdd?.({key, value: after[key]});
+                invokeCallback(callbacks.onChildAdd, {key, value: after[key]});
             }
         }
     }
     if (!initial) {
         for (const key of Object.keys(after)) {
             if (Object.hasOwn(before, key) && !equal(before[key], after[key])) {
-                callbacks.onChildChange?.({key, value: after[key]});
+                invokeCallback(callbacks.onChildChange, {key, value: after[key]});
             }
         }
     }
-    if (initial || !equal(previous, value)) callbacks.onChange?.(value);
+    if (initial || !equal(previous, value)) invokeCallback(callbacks.onChange, value);
 };
 
 const refresh = async listener => {
     if (!listener.active) return;
-    let value;
     try {
-        value = listener.read
-            ? await listener.read()
-            : await getSubtree(listener.storageId, listener.path);
+        let value;
+        try {
+            value = listener.read
+                ? await listener.read()
+                : await getSubtree(listener.storageId, listener.path);
+        } catch (error) {
+            if (!listener.callbacks.onError) throw error;
+            invokeCallback(listener.callbacks.onError, error);
+            return;
+        }
+        deliver(listener, value);
     } catch (error) {
-        try { listener.callbacks.onError(error); } catch (_) { /* Already reported by DatabaseBase. */ }
-        return;
+        reportAsyncError(error);
     }
-    try { deliver(listener, value); } catch (_) { /* Callback wrapper already reported the error. */ }
 };
 
 export default function addEventListener(storageId, path, callbacks, read) {
@@ -120,7 +139,7 @@ export default function addEventListener(storageId, path, callbacks, read) {
     }
     listeners.get(storageId).add(listener);
     openChannel(storageId);
-    enqueue(storageId, () => refresh(listener)).catch(() => {});
+    enqueue(storageId, () => refresh(listener));
     return {
         remove: () => {
             if (!listener.active) return;
