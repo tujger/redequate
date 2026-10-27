@@ -2,7 +2,7 @@ import {IDBFactory} from "fake-indexeddb";
 import * as pathValidation from "../../common/validatePath";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local";
-import {validateCollectionPath, readValue, updateRecords, getChildRecordPath} from "../../local/helpers";
+import {validateCollectionPath, readValue, getChildRecordPath} from "../../local/helpers";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
@@ -57,7 +57,6 @@ it("validates independent storage helper arguments without opening a transaction
     const open = vi.spyOn(globalThis.indexedDB, "open");
     expect(() => readValue(context, path)).toThrow(expect.objectContaining({code: "database/invalid-argument"}));
     expect(() => getChildRecordPath(context, path, "child")).toThrow(expect.objectContaining({code: "database/invalid-argument"}));
-    await expect(updateRecords(context, [[path, null]])).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(open).not.toHaveBeenCalled();
 });
 

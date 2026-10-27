@@ -142,7 +142,13 @@ ETag conflicts rerun preparation up to 25 times with bounded jittered backoff.
 Undefined callback results delete; confirmed backend values are returned for callbacks.
 The protocol keeps Security Rules authoritative and never serializes callbacks.
 
-Firebase `database.delete` follows the same injected/default Backend routing.
+DatabaseBase.delete validates the prepared path and sends database.delete through
+its injected backend. Providers prepare the path and call super.delete: Firebase
+resolves a string address, while Local retains its validated named path. Their
+single operation boundary preserves the original error context and options.onError.
+Both providers require a supplied backend; delete never creates a fallback client.
+
+Firebase `database.delete` uses this shared backend routing.
 Its single path argument is the direct callable payload, and `database-delete`
 performs an unconditional Rules-authorized REST DELETE with the caller's ID token.
 It needs write permission only, supports root and absent paths, and returns null
@@ -342,13 +348,13 @@ existing payload shape for legacy callables. `database.create` accepts exactly
 `(path, value)` through a two-element array and rejects the old object envelope.
 
 LocalBackend from `redequate/backend/local` accepts `{storageId}` and owns no
-LocalDatabase instance. Its create handler opens IndexedDB by storageId and writes
+LocalDatabase instance. Its create/update/delete handlers open IndexedDB by storageId and write
 only to prepared application stores. Missing stores fail; schema initialization
 remains separate, and collection notifications are published after commit. resolveBackend
 caches one default instance; explicit backends remain as supplied.
 
 Native transaction, index-query and write primitives live in one adjacent
-createHelpers module. Database/local retains schema initialization, native reads, delete/cursor writes and listener delivery. The adjacent recordValue module encapsulates encoding and restoring Local record values without duplicating object payloads. Common/localDatabase.js is unchanged;
+createHelpers module. Database/local retains schema initialization, native reads and listener delivery. Cursor handler replacements use common/methods/update with the supplied backend, matching Firebase; database performs no direct record writes. The adjacent recordValue module encapsulates encoding and restoring Local record values without duplicating object payloads. Common/localDatabase.js is unchanged;
 there is no additional common storage layer or context registry.
 
 LocalDatabase receives backend explicitly; it never constructs or resolves a
@@ -503,10 +509,11 @@ reads/updates that document; these stores do not support search or query options
 Do not add indexes or record registries to them. Provider stores beginning with $
 remain isolated from application CRUD and schema updates.
 
-Schema preparation remains available through read/listener/cursor/delete paths and explicit applySchema. Local-only applySchema changes
+Schema preparation remains available through read/listener/cursor paths and explicit applySchema. Local-only applySchema changes
 declared indexes/stores without rewriting data, migrating old formats or deleting
 unrelated indexes. Create and update prepare their values and delegate to the explicit
-backend; their stores must already be prepared. Observers refresh ordinary collection
+backend; delete forwards its validated path through request("database.delete", path).
+All three operations require prepared stores. Observers refresh ordinary collection
 snapshots after committed writes; broadcasts carry collection names only.
 
 The old encoded record format is unsupported. No migration script, startup/Dispatcher

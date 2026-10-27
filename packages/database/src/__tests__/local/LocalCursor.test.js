@@ -93,3 +93,62 @@ it("refreshes the unindexed singleton document after changes to its fields", asy
         expect(values.at(-1)).toEqual({settings: {theme: "dark", locale: "en"}});
     } finally { listener.remove(); }
 });
+
+it("sends a complete handler replacement through the supplied backend and rereads resolved markers", async () => {
+    const storageId = "cursor-backend-replacement", backend = new LocalBackend({storageId});
+    const database = new LocalDatabase({storageId, backend});
+    await database.read(["posts"]);
+    await database.create(["posts", {post_id: "p1"}], {count: 3, obsolete: true});
+    const request = vi.spyOn(backend, "request");
+    const replacement = {count: database.increment(2), time: database.TIMESTAMP};
+    const handle = vi.fn(() => replacement);
+    const cursor = database.cursor(["posts", "post_id"], {handle});
+    const entries = await cursor.next(10);
+    expect(handle).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {count: 3, obsolete: true}});
+    expect(request.mock.calls).toEqual([
+        ["database.update", ["posts", {post_id: "p1"}], null, {mode: "read"}],
+        ["database.update", ["posts", {post_id: "p1"}], replacement, {mode: "replace", etag: expect.any(String)}]
+    ]);
+    expect(entries).toEqual([{key: "p1", value: {count: 5, time: expect.any(Number)}}]);
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual(entries[0].value);
+});
+
+it("skips backend writes for undefined handler results and propagates backend failures without local fallback", async () => {
+    const storageId = "cursor-backend-failure", backend = new LocalBackend({storageId});
+    const database = new LocalDatabase({storageId, backend});
+    await database.read(["posts"]);
+    await database.create(["posts", {post_id: "p1"}], {text: "original"});
+    const request = vi.spyOn(backend, "request");
+    const unchanged = database.cursor(["posts", "post_id"], {handle: ({value}) => { value.text = "ignored"; }});
+    expect(await unchanged.next(10)).toEqual([{key: "p1", value: {text: "original"}}]);
+    expect(request).not.toHaveBeenCalled();
+    const failure = new Error("backend unavailable");
+    request.mockRejectedValueOnce(failure);
+    const editing = database.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
+    await expect(editing.next(10)).rejects.toBe(failure);
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({text: "original"});
+});
+
+it("requires backend only when a cursor handler requests a replacement", async () => {
+    const writer = await setup("cursor-missing-backend");
+    await writer.create(["posts", {post_id: "p1"}], {text: "original"});
+    const database = new LocalDatabase({storageId: "cursor-missing-backend"});
+    expect(await database.cursor(["posts", "post_id"]).next(10)).toEqual([{key: "p1", value: {text: "original"}}]);
+    const cursor = database.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
+    await expect(cursor.next(10)).rejects.toBeInstanceOf(TypeError);
+    expect(await writer.read(["posts", {post_id: "p1"}])).toEqual({text: "original"});
+});
+
+it("routes compound-scope handler writes through backend without changing sibling scopes", async () => {
+    const storageId = "cursor-backend-scope", backend = new LocalBackend({storageId});
+    const database = new LocalDatabase({storageId, backend});
+    await database.read(["chats"]);
+    for (const chat_id of ["c1", "c2"]) await database.create(["chats", {chat_id}, {message_id: "m1"}], {text: "original"});
+    const request = vi.spyOn(backend, "request");
+    const cursor = database.cursor(["chats", {chat_id: "c1"}, "message_id"], {handle: () => ({text: "changed"})});
+    expect(await cursor.next(10)).toEqual([{key: "m1", value: {text: "changed"}}]);
+    expect(request.mock.calls[1]).toEqual([
+        "database.update", ["chats", {chat_id: "c1"}, {message_id: "m1"}], {text: "changed"}, {mode: "replace", etag: expect.any(String)}
+    ]);
+    expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({text: "original"});
+});

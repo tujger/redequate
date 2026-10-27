@@ -91,3 +91,27 @@ it("broadcasts backend updates and deletes after commit, remaining silent on con
     } finally { listener.remove(); }
     expect(Channel.open.size).toBe(0);
 });
+
+it("broadcasts cursor handler replacement and deletion once across independent contexts", async () => {
+    const A = await context(), B = await context();
+    const storageId = "shared-cursor-backend";
+    const writer = new A.Database({storageId, backend: new A.Backend({storageId})});
+    const reader = new B.Database({storageId, backend: new B.Backend({storageId})});
+    await writer.read(["posts"]);
+    await writer.create(["posts", {post_id: "p1"}], {text: "original"});
+    const onChange = vi.fn(), changed = vi.fn(), removed = vi.fn();
+    const listener = reader.addEventListener(["posts"], {onChange, onChildChange: changed, onChildRemove: removed});
+    try {
+        await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+        const editing = writer.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
+        expect(await editing.next(10)).toEqual([{key: "p1", value: {text: "changed"}}]);
+        await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {text: "changed"}}));
+        expect(Channel.messages).toHaveLength(2);
+        const deleting = writer.cursor(["posts", "post_id"], {handle: () => null});
+        expect(await deleting.next(10)).toEqual([]);
+        await vi.waitFor(() => expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {text: "changed"}}));
+        expect(onChange).toHaveBeenCalledTimes(3);
+        expect(Channel.messages).toHaveLength(3);
+    } finally { listener.remove(); }
+    expect(Channel.open.size).toBe(0);
+});
