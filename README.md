@@ -717,19 +717,32 @@ previous physical database names is also left untouched.
 
 ### Local backend
 
-`LocalBackendClient` from `redequate/backend/local-client` accepts `{storageId}`
-and creates its own LocalDatabase with that identifier. Configure the application's
-LocalDatabase and LocalBackendClient with the same storageId to share IndexedDB.
-Both default to `redequate:local`; LocalDatabase accepts only `storageId`, with no
-`storageId` alias. The physical IndexedDB name keeps the `redequate:local:` prefix.
-Changing the default does not migrate data; explicitly set the former identifier
-`redequate:database:local` to access the previous default database.
+`LocalBackend` from `redequate/backend/local` accepts `{storageId}`, defaulting to
+`redequate:local`. It writes prepared record objects through
+`request("database.create", path, value)`, returning the saved key or rejecting.
+It neither accepts callbacks nor initializes schemas or publishes listener notifications.
 
-Handlers execute directly, with no worker or message serialization.
-`backend.request("database.create", path, value)` delegates to the internal
-`database.create`, including synchronous callbacks and Local timestamp/increment
-markers. Dispatcher passes the resolved database's storageId when constructing
-the default backend. Explicit backends remain as supplied.
+Pass a backend explicitly when constructing LocalDatabase:
+
+```js
+const backend = new LocalBackend({storageId});
+const database = new LocalDatabase({storageId, backend});
+```
+
+LocalDatabase.create generates the final key when needed, evaluates a synchronous
+callback with that key, validates the result, and sends the prepared path/object
+to its supplied backend. There is no backend fallback. The create method retains its error boundary but performs no schema preparation,
+collection checks, storage access or listener notification. Backend stores must be
+prepared separately. Other database operations keep their existing behavior. Dispatcher resolves backend before constructing its default database.
+
+All new automatic Local keys are 20-character, time-sortable IDs from firebase-key.
+They sort by generation time, with monotonic generation within one generator even
+in the same millisecond or after a clock rollback. They do not describe server commit
+time or establish global order between devices with different clocks. Existing and
+explicit keys are unchanged; mixed historical keys do not gain chronological order.
+Numeric IndexedDB primary keys remain internal. Failed saves leave no record; generated
+logical IDs are not reserved or reused. Direct backend requests without a key use the
+same string-key generator. No data migration is performed.
 
 ### Independent common and server archive
 

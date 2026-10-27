@@ -86,7 +86,7 @@ common, database, and client services. The maintained private
 to Backend manifests; consumer lockfiles pin installed versions. It exposes only
 explicit common, database and server Backend subpaths; there is no root entry.
 Import `DatabaseCursor` from `redequate-server/database`. Browser builds reject Node server
-sources, and Node server builds reject browser and UI sources. LocalBackendClient
+sources, and Node server builds reject browser and UI sources. LocalBackend
 is a browser adapter shipped in `redequate`, outside `redequate-server`.
 
 Functions install the generated server archive under the `redequate-server` dependency
@@ -339,21 +339,32 @@ Multiple positional arguments travel as an array; a single argument keeps its
 existing payload shape for legacy callables. `database.create` accepts exactly
 `(path, value)` through a two-element array and rejects the old object envelope.
 
-LocalDatabase and LocalBackendClient use `storageId`, defaulting to `redequate:local`.
-The former LocalDatabase `storageId` option/property is removed without an alias.
-LocalBackendClient creates its own LocalDatabase for that ID; it receives no database
-instance. Dispatcher supplies the resolved database's storageId to resolveBackend;
-automatic backends are cached by normalized storageId. Explicit backends remain as
-supplied. Applications pass one storageId to both constructors. Auth, Storage and
-Messaging retain their separate storageId settings.
+LocalBackend from `redequate/backend/local` accepts `{storageId}` and owns no
+LocalDatabase instance. Its create handler opens IndexedDB by storageId and writes
+only to prepared application stores. Missing stores fail; schema initialization
+and listener notifications are outside this handler's current scope. resolveBackend
+caches one default instance; explicit backends remain as supplied.
 
-The IndexedDB `redequate:local:` name prefix and change-channel format are preserved.
-The default ID change selects a new physical database; no automatic data migration
-is performed. Explicit `storageId: "redequate:database:local"` opens the former default.
-Schemas remain instance-scoped; the internal backend database uses default stores.
-`request("database.create", path, value)` delegates to LocalDatabase.create and
-returns its permanent string key, preserving callbacks and timestamp/increment
-markers. Unsupported operations reject with `backend/not-implemented`.
+Create and the required shared path/tree/row primitives live in one adjacent
+createHelpers module. Database/local imports those primitives and retains its
+schema initialization, reads, update/delete and notification queue. Its row module re-exports the shared format functions. Common/localDatabase.js is unchanged;
+there is no additional common storage layer or context registry.
+
+LocalDatabase receives backend explicitly; it never constructs or resolves a
+replacement. create prepares its final key, synchronous callback and record before
+request("database.create", preparedPath, preparedValue). The backend accepts only a
+record object and returns the committed key or throws. The create method retains only preparation, delegation and its error boundary.
+It performs no schema preparation, collection checks, IndexedDB access or mutate
+notifications; backend stores must already be prepared separately.
+Dispatcher resolves backend before database, passing it through resolveDatabase.
+
+New automatic Local IDs use firebase-key.key() for both object and callback values;
+backend requests without a supplied key use the same generator. IDs sort by generation
+time, monotonically within one generator despite same-millisecond calls/clock rollback.
+They are not commit timestamps or a globally synchronized order. Existing/explicit keys
+and numeric physical _id remain unchanged. The numerical logical-key allocator is removed.
+Callbacks run before storage requests, including requests that later conflict; failed
+saves roll back records, while generated logical IDs are not reserved or reused.
 
 The former local-server worker and its package export/build have been removed.
 IndexedDB is already asynchronous; a separate worker added a message protocol,
@@ -472,7 +483,8 @@ Additional configured stores participate in CRUD, nested paths, cursors, and
 subscriptions. Collection visibility is instance-scoped even when storageId is
 shared. Do not restore parallel store registries or field whitelists.
 
-Physical rows use native auto-increment `_id`; the generated public key is a numeric
+Physical rows use native auto-increment `_id`; new public keys are time-sortable
+strings independent of that internal primary key. The former public key was a numeric
 string allocated during create. Each store has one unique `_identity` index on
 `_local.path`; other native indexes come only from configured definitions.
 Do not restore allocator stores or generated cursor/scope/type indexes.

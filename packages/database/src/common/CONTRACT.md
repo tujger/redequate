@@ -66,18 +66,22 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   caller's value shape through create, update, and collection writes. A caller
   supplied `timestamp`, including a `TIMESTAMP` marker, remains explicit data;
   queries with `orderBy: "timestamp"` still use that field, not the key.
-- Without a supplied key, Firebase `create` uses Realtime Database `push()`.
-  Local allocates a permanent numeric string
-  during `create` from the native auto-increment primary key of the physical
-  `path[0]` store. All logical collections in that store share this sequence.
-  Allocation and record insertion commit in one IndexedDB transaction; failed
-  creates roll both back. A supplied key is used unchanged. The synchronous
-  create callback receives the final key after allocation and before insertion.
-  The internal numeric `_id` and unique `_local.path` identity index
-  are not exposed through the value API. No allocator stores are created.
-  Incompatible existing databases require explicit repair; compatible schemas upgrade additively, while opening never automatically deletes data. Generated IDs need not be contiguous.
-  Local does not add a timestamp field.
-  Firebase generated keys remain 20-character push keys.
+- Without a supplied key, Firebase create uses Realtime Database push(). Local uses
+  firebase-key.key() for all new automatic keys, including object values and callbacks.
+  Both generate 20-character time-sortable strings. Local keys increase within one
+  generator during the same millisecond and after clock rollback; cross-device clock
+  synchronization and ordering by commit time are not guaranteed. Existing and supplied
+  keys remain unchanged. Old numeric keys do not gain chronological ordering.
+- LocalDatabase requires a supplied backend for create. It prepares the final key and
+  synchronous callback result before request("database.create", preparedPath, value).
+  Callback errors and invalid results prevent the request; a callback can run even when
+  the subsequent save conflicts. The backend accepts only prepared record objects and
+  returns the committed key or rejects. The create adapter only prepares arguments, delegates and handles operation errors;
+  it does not access IndexedDB, initialize schemas or publish notifications. The
+  backend operates independently on stores prepared separately.
+- Failed writes roll back records, but generated logical IDs are not reserved or reused.
+  Numeric internal _id and the unique _local.path index remain storage details. No
+  allocator stores or implicit timestamp fields are added, and no data migration occurs.
 
 ## Local IndexedDB schema
 
@@ -86,7 +90,9 @@ The file keeps its `store` / `storeConfig` / `storeSchema` format. Add stores or
 indexes through the Local constructor, using the same format:
 
 ```js
+const backend = new LocalBackend({storageId: "my-app"});
 const database = new LocalDatabase({
+    backend,
     storageId: "my-app",
     stores: [{
         store: "audit",
