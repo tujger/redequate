@@ -21,16 +21,17 @@ commands. They do not define independently installed or published npm packages,
 and require no separate installs or lockfiles.
 Browser builds reject Node Backend sources; server builds reject browser and UI sources.
 LocalBackend creates records directly in prepared browser IndexedDB stores; it is shipped by `redequate`, outside this Node archive.
+LocalDatabase is available through `redequate/database/local` in the browser; it is not included in this Node package.
 
 Supported entry points:
 
 - `redequate-server/common`
-- `redequate-server/database`, `/database/local`
+- `redequate-server/database`
 - `redequate-server/backend/common`, `/backend/common-server`
 - `redequate-server/backend/firebase-server`
 
 Use explicit subpaths; the package has no root entry point. `DatabaseCursor` is
-exported by `/database`. Constructors from different packages or formats have
+exported by `/database`. Server `resolveDatabase` requires an explicit database instance; it has no LocalDatabase fallback. Constructors from different packages or formats have
 distinct `instanceof` identities.
 Public declaration files are not generated.
 

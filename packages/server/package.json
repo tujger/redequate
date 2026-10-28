@@ -34,10 +34,6 @@
             "import": "./dist/database/index.mjs",
             "require": "./dist/database/index.cjs"
         },
-        "./database/local": {
-            "import": "./dist/database/local.mjs",
-            "require": "./dist/database/local.cjs"
-        },
         "./package.json": "./package.json"
     },
     "files": [

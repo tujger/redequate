@@ -124,12 +124,11 @@ export default ({configBackend, configOutput}) => {
         builds.unshift({
             input: {
                 "common/index": source("../common/src/index.js"),
-                "database/index": source("../database/src/index.js"),
-                "database/local": source("../database/src/local/index.js"),
+                "database/index": source("./src/database.js"),
                 "backend/common": source("../backend/src/common/index.js"),
             },
             output: outputDirectory,
-            sources: [source("../backend/src/common/"), ...sharedSources],
+            sources: [source("./src/"), source("../backend/src/common/"), ...sharedSources],
             clean: ["index.*", "common", "database", "server-chunks", "backend/common.*",
                 "backend/local-server", "backend/local-server.*",
                 ...backends.map(({name}) => `backend/${name}.*`)].map(path => `${outputDirectory}${path}`),
