@@ -147,3 +147,9 @@ it("rejects ambiguous nested addresses without changing data or notifying", asyn
         expect(await database.read(["chats", {chat_id: "c1"}, {message_id: "m1"}])).toEqual({text: "A"});
     } finally { stop(); }
 });
+
+// Storage and delivery tests isolate application reactions; their effects have integration coverage.
+vi.mock("../common", () => ({handlers: {
+    extra: {path: ["extra", "extra_id"], onWrite() {}},
+    post: {path: ["posts", "post_id"], onWrite() {}},
+}}));

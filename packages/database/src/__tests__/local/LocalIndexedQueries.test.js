@@ -73,3 +73,6 @@ it("addresses records by a non-unique declared index only when the result is una
     expect(Object.keys(await database.read(["_counters", {gid: "group"}, "id"]))).toEqual(["one", "two"]);
     await expect(database.read(["_counters", {gid: "group"}])).rejects.toMatchObject({code: "database/invalid-argument"});
 });
+
+// Keep storage checks independent of asynchronous application reactions.
+vi.mock("../../../../backend/src/common", () => ({handlers: {}}));

@@ -4,10 +4,10 @@ import onWrite from "../local/database/onWrite";
 import LocalDatabase from "../../../database/src/local";
 
 const callbacks = vi.hoisted(() => ({extra: vi.fn(), post: vi.fn()}));
-vi.mock("../common", () => ({
+vi.mock("../common", () => ({handlers: {
     extra: {path: ["extra", "extra_id"], onWrite: props => callbacks.extra(props)},
     post: {path: ["posts", "post_id"], onWrite: props => callbacks.post(props)},
-}));
+}}));
 
 class Channel {
     static open = new Set();

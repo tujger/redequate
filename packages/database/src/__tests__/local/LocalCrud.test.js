@@ -109,10 +109,11 @@ it("rolls back callbacks and cross-store batches atomically", async () => {
     ]))).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
-it("resolves timestamp and increment markers before encoding the record", async () => {
-    const {database} = await setup();
-    await database.create(["posts", {post_id: "p1"}], {count: 2});
-    await database.update(["posts", {post_id: "p1"}], {count: database.increment(3), timestamp: database.TIMESTAMP});
+it("resolves prepared numbers and timestamp markers before encoding the record", async () => {
+    const {database, backend} = await setup();
+    const path = ["posts", {post_id: "p1"}];
+    await database.create(path, {count: 2});
+    await database.update(path, {count: backend.increment(3), timestamp: database.TIMESTAMP});
     expect(await database.read(["posts", {post_id: "p1"}])).toEqual({count: 5, timestamp: expect.any(Number)});
 });
 
@@ -133,3 +134,6 @@ it("closes connections on commit and on missing-store errors", async () => {
     await expect(backend.request("database.create", ["missing", {id: "x"}], {})).rejects.toMatchObject({name: "NotFoundError"});
     expect(close).toHaveBeenCalledTimes(2);
 });
+
+// Keep storage checks independent of asynchronous application reactions.
+vi.mock("../../../../backend/src/common", () => ({handlers: {}}));

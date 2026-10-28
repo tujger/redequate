@@ -171,12 +171,12 @@ it("requires separately prepared stores and performs no implicit schema initiali
     expect(await database.read(path)).toEqual({title: "A"});
 });
 
-it("keeps native keys and resolves collection marker fields against previous child values", async () => {
+it("keeps native keys when replacing prepared collection values", async () => {
     const database = createLocalDatabase({storageId: "delegated-collection-markers"});
     await database.read(["posts"]);
     await database.update(new Map([[path, {count: 5, keep: true}], [["posts", {post_id: "p2"}], {other: true}]]));
     const before = await readNativeStore("delegated-collection-markers", "posts");
-    await database.update(["posts"], {p1: {count: database.increment(2), time: database.TIMESTAMP}});
+    await database.update(["posts"], {p1: {count: 7, time: database.TIMESTAMP}});
     expect(await database.read(path)).toEqual({count: 7, time: expect.any(Number)});
     const after = await readNativeStore("delegated-collection-markers", "posts");
     expect(after.map(row => [row.post_id, row._id])).toEqual(before.map(row => [row.post_id, row._id]));
@@ -202,3 +202,6 @@ it("replaces Local collection subtrees atomically and removes descendant records
     await expect(database.update(["posts"], () => 1)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await database.read(["posts"])).toEqual(result);
 });
+
+// Keep storage checks independent of asynchronous application reactions.
+vi.mock("../../../../backend/src/common", () => ({handlers: {}}));

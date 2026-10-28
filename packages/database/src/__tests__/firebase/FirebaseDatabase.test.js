@@ -20,7 +20,7 @@ it("exports the same order enum through the base and source entrypoints", async 
     expect((await import("../../index")).DatabaseOrder).toBe(DatabaseOrder);
     expect(database).toBeInstanceOf(DatabaseBase);
     expect(database.TIMESTAMP).toEqual({".sv": "timestamp"});
-    expect(database.increment(-2)).toEqual({".sv": {increment: -2}});
+    expect(database).not.toHaveProperty("increment");
 });
 it("keeps the Local schema API out of the shared and Firebase providers", () => {
     expect(new DatabaseBase()).not.toHaveProperty("applySchema");

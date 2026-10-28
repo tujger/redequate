@@ -36,7 +36,6 @@ export const firebaseDatabaseMock = () => {
         onChildChanged: (...args) => subscribe("child_changed", ...args),
         onChildRemoved: (...args) => subscribe("child_removed", ...args),
         serverTimestamp: () => ({".sv": "timestamp"}),
-        increment: delta => ({".sv": {increment: delta}}),
     };
 };
 

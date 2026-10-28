@@ -53,7 +53,7 @@ it("saves by generated key and rejects duplicate creation", async () => {
     await expect(database.create([path, {id: key}], {name: "overwritten"})).rejects.toMatchObject({code: "database/conflict"});
     expect(await database.read([path, {id: key}])).toEqual({name: "created"});
     await expect(database.create([path, "id"], undefined)).rejects.toMatchObject({code: "database/invalid-argument"});
-    const retryKey = await database.create([path, "id"], {timestamp: database.TIMESTAMP, count: database.increment(2)});
+    const retryKey = await database.create([path, "id"], {timestamp: database.TIMESTAMP, count: 2});
     expect(await database.read([path, {id: retryKey}])).toMatchObject({timestamp: expect.any(Number), count: 2});
 });
 it.each(["asc", "desc"])("reads all 83 equal-valued records in %s pages", async order => {

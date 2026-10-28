@@ -1,4 +1,5 @@
 import {IDBFactory} from "fake-indexeddb";
+import LocalBackend from "../../../../backend/src/local";
 import createLocalDatabase, {readNativeStore} from "../createLocalDatabase";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
@@ -37,13 +38,14 @@ it("preserves native and compound identities across representation changes", asy
     });
 });
 
-it("passes decoded values to callbacks and resolves root increment and timestamp markers", async () => {
+it("passes decoded values to callbacks and resolves backend increment markers and timestamps", async () => {
     const database = createLocalDatabase({storageId: "value-callback"});
     await database.read(["posts"]);
+    const backend = new LocalBackend({storageId: database.storageId});
     await put(database, 2);
     expect(await database.update(path, value => {
         expect(value).toBe(2);
-        return database.increment(3);
+        return backend.increment(3);
     })).toBe(5);
     expect(await database.update(path, value => [value, false])).toEqual([5, false]);
     await database.update(path, value => { value.push("added"); return value; });
@@ -334,3 +336,9 @@ it("leaves missing storage untouched when an update callback returns undefined",
     expect(await database.read(path)).toBeUndefined();
     expect(await readNativeStore(storageId, "posts")).toEqual([]);
 });
+
+// Storage and delivery tests isolate application reactions; their effects have integration coverage.
+vi.mock("../../../../backend/src/common", () => ({handlers: {
+    extra: {path: ["extra", "extra_id"], onWrite() {}},
+    post: {path: ["posts", "post_id"], onWrite() {}},
+}}));

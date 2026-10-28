@@ -105,9 +105,10 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
     });
     const {key} = complete.mock.calls[0][0];
     expect(error).not.toHaveBeenCalled();
-    expect(context.backend.request).toHaveBeenCalledExactlyOnceWith("database.create",
+    const creates = context.backend.request.mock.calls.filter(([name]) => name === "database.create");
+    expect(creates).toEqual([["database.create",
         provider === "local" ? ["posts", {post_id: key}] : ["posts", "post_id"],
-        expect.objectContaining({uid: "author", to: 0, text: "root post"}));
+        expect.objectContaining({uid: "author", to: 0, text: "root post"})]]);
     expect(await database.read(["posts", {post_id: key}])).toMatchObject({to: 0, text: "root post"});
     expect(history.location.pathname).toBe(`/post/${key}`);
     expect(container.querySelector("[data-post-page]")).not.toBeNull();

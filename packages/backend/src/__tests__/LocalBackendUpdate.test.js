@@ -58,10 +58,10 @@ it("supports root objects and Maps of named Local paths in atomic multi-store pa
 });
 
 it("resolves timestamp and increment markers once per committed batch", async () => {
-    const {database, request} = await setup();
+    const {database, backend, request} = await setup();
     await request(post, {count: 2});
     await request("", new Map([
-        [[...post, "count"], database.increment(3)],
+        [[...post, "count"], backend.increment(3)],
         [[...post, "time"], database.TIMESTAMP],
         [["meta", "time"], database.TIMESTAMP]
     ]));
@@ -125,7 +125,7 @@ it("uses deterministic, type-sensitive ETags and excludes explicit service keys"
 });
 
 it("conditionally replaces a collection and returns resolved values for nested markers", async () => {
-    const {database, request, read, replace} = await setup();
+    const {database, backend, request, read, replace} = await setup();
     await request(["posts"], {p1: {count: 1}, p2: {count: 2}});
     const snapshot = await read(["posts"]);
     expect(await replace(["posts"], {p3: {time: database.TIMESTAMP}}, snapshot.etag)).toEqual({
@@ -133,7 +133,7 @@ it("conditionally replaces a collection and returns resolved values for nested m
     });
     const field = [...post, {field: "count"}];
     const missing = await read(field);
-    expect(await replace(field, database.increment(2), missing.etag)).toEqual({committed: true, value: 2});
+    expect(await replace(field, backend.increment(2), missing.etag)).toEqual({committed: true, value: 2});
 });
 
 it("rejects overlapping paths and preserves the whole batch on unique-index failure", async () => {
@@ -190,7 +190,7 @@ it("validates modes, values and paths without initializing stores or invoking ca
     const {backend, request} = await setup();
     const callback = vi.fn(() => ({}));
     for (const args of [[], [post], [post, {}, {}, {}], [post, {}, null], [post, {}, []], [post, {}, {mode: "bad"}],
-        [post, false], [post, []], [post, callback], [post, {bad: callback}], [post, {bad: undefined}],
+        [post, false], [post, []], [post, callback, {}], [post, {bad: callback}], [post, {bad: undefined}],
         [post, {bad: Promise.resolve(1)}], [post, null, {mode: "replace"}], [post, {}, {mode: "read"}],
         [post, null, {mode: "replace", etag: "\n"}], ["", null, {mode: "read"}], [[], {}, {mode: "replace", etag: "x"}],
         ["", new Map([[["$auth", {id: "a"}], true]])], [post, {"/": 1}], ["", {"": 1}]]) {
@@ -211,3 +211,9 @@ it("validates modes, values and paths without initializing stores or invoking ca
     expect(open).not.toHaveBeenCalled();
     expect(backend).toBeInstanceOf(LocalBackend);
 });
+
+// Storage and delivery tests isolate application reactions; their effects have integration coverage.
+vi.mock("../common", () => ({handlers: {
+    extra: {path: ["extra", "extra_id"], onWrite() {}},
+    post: {path: ["posts", "post_id"], onWrite() {}},
+}}));

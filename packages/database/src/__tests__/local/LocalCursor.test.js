@@ -100,7 +100,7 @@ it("sends a complete handler replacement through the supplied backend and reread
     await database.read(["posts"]);
     await database.create(["posts", {post_id: "p1"}], {count: 3, obsolete: true});
     const request = vi.spyOn(backend, "request");
-    const replacement = {count: database.increment(2), time: database.TIMESTAMP};
+    const replacement = {count: backend.increment(2), time: database.TIMESTAMP};
     const handle = vi.fn(() => replacement);
     const cursor = database.cursor(["posts", "post_id"], {handle});
     const entries = await cursor.next(10);
@@ -152,3 +152,9 @@ it("routes compound-scope handler writes through backend without changing siblin
     ]);
     expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({text: "original"});
 });
+
+// Storage and delivery tests isolate application reactions; their effects have integration coverage.
+vi.mock("../../../../backend/src/common", () => ({handlers: {
+    extra: {path: ["extra", "extra_id"], onWrite() {}},
+    post: {path: ["posts", "post_id"], onWrite() {}},
+}}));

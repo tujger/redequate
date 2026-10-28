@@ -17,7 +17,7 @@ it("creates in prepared storage without calling LocalDatabase.create and preserv
     const backend = new LocalBackend({storageId: database.storageId});
     const create = vi.spyOn(database, "create").mockImplementation(() => { throw new Error("recursive create"); });
     const key = await backend.request("database.create", ["posts", "post_id"], {
-        count: database.increment(2), time: database.TIMESTAMP
+        count: backend.increment(2), time: database.TIMESTAMP
     });
     expect(key).toMatch(/^[-0-9A-Z_a-z]{20}$/);
     expect(await database.read(["posts", {post_id: key}])).toEqual({count: 2, time: expect.any(Number)});
@@ -96,3 +96,9 @@ it("validates arguments, rejects service stores, and uses the default storage ID
         expect(() => new LocalBackend({storageId})).toThrow("storageId must be a non-empty string.");
     }
 });
+
+// Storage and delivery tests isolate application reactions; their effects have integration coverage.
+vi.mock("../common", () => ({handlers: {
+    extra: {path: ["extra", "extra_id"], onWrite() {}},
+    post: {path: ["posts", "post_id"], onWrite() {}},
+}}));

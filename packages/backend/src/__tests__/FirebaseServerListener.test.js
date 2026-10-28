@@ -53,7 +53,7 @@ it.each([
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
         await listener(extra).run(event(before, after));
-        expect(log).toHaveBeenCalledExactlyOnceWith("[Extra]WRITE", "e1", before, after);
+        expect(log).toHaveBeenCalledExactlyOnceWith("[Backend:Extra]", `${before === null ? "added" : after === null ? "deleted" : "changed"} e1`, {previous: before, value: after, backend: undefined});
     } finally {
         log.mockRestore();
     }

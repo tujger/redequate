@@ -34,13 +34,13 @@ knownCounterFailure("C8: Local following creates a relation and updates both dir
     expect(await counterControl({database, path: [{id: "author"}, "mutual", {mutual_type: "following_s"}]})).toBe(1);
 });
 
-knownCounterFailure("C8: publishing a Local post updates its author's persisted count", async () => {
+it("publishing a Local post updates its author's persisted count", async () => {
     const database = createLocalDatabase({storageId: "local-post-writers"});
     await database.read(["_counters"]);
     const post = await PostData({database}).create({uid: "author", text: "Root"});
     await post.publish()();
     expect(await database.read(["posts", {post_id: post.id}])).toMatchObject({uid: "author", to: 0});
-    expect(await counterControl({database, path: [{id: "author"}, "posts"]})).toBe(1);
+    await vi.waitFor(async () => expect(await counterControl({database, path: [{id: "author"}, "posts"]})).toBe(1));
 });
 knownCounterFailure("C8: creating a Local friend request updates the pending count", async () => {
     const database = createLocalDatabase({storageId: "local-request-writers"});

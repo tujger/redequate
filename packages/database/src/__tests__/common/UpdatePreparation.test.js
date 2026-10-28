@@ -1,3 +1,5 @@
+import localIncrement from "../../../../backend/src/local/increment";
+import {increment as firebaseIncrement} from "firebase/database";
 import {getFunctions} from "firebase/functions";
 import FirebaseDatabase from "../../firebase";
 import DatabaseBase from "../../common/DatabaseBase";
@@ -163,12 +165,11 @@ describe.each(["local", "firebase"])("%s update preparation", provider => {
         ]);
     });
 
-    it("passes timestamp and increment markers inside the complete value", async () => {
+    it("passes timestamp and backend increment markers inside the complete value", async () => {
         const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({count: 5, keep: true})).mockResolvedValueOnce(commit({}))};
-        const database = forProvider(provider, backend), time = database.TIMESTAMP, delta = database.increment(2);
+        const database = forProvider(provider, backend), time = database.TIMESTAMP, delta = (provider === "firebase" ? firebaseIncrement : localIncrement)(2);
         await database.update(path, {count: delta, time});
         expect(backend.request.mock.calls[1][2]).toEqual({count: delta, time, keep: true});
-        expect(backend.request.mock.calls[1][2].count).toBe(delta);
         expect(backend.request.mock.calls[1][2].time).toBe(time);
     });
 
