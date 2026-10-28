@@ -1,5 +1,6 @@
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import {fail} from "../../../../common";
+import {captureWrites, publishWrites} from "./writeEvents";
 import parseCreatePath from "../../../../database/src/common/parseCreatePath";
 import {decodeRecordValue, encodeRecordValue, setRecordField} from "./recordValue";
 
@@ -68,18 +69,28 @@ const requestResult = request => new Promise((resolve, reject) => {
 });
 
 export const runTransaction = async (database, mode, names, operation) => {
+    let previous, value;
+    const storageId = database.name;
+    let result;
     try {
-        return await new Promise((resolve, reject) => {
+        result = await new Promise((resolve, reject) => {
             const transaction = database.transaction([...new Set(names)], mode);
             let result, failure;
             transaction.oncomplete = () => resolve(result);
             transaction.onabort = () => reject(failure ?? transaction.error ?? new Error("Local transaction aborted."));
-            Promise.resolve().then(() => operation(transaction)).then(value => { result = value; }, error => {
+            Promise.resolve().then(async () => {
+                if (mode === "readwrite") previous = await captureWrites(storageId, transaction);
+                const result = await operation(transaction);
+                if (mode === "readwrite") value = await captureWrites(storageId, transaction);
+                return result;
+            }).then(value => { result = value; }, error => {
                 failure = error;
                 try { transaction.abort(); } catch (_) { reject(error); }
             });
         });
     } finally { database.close(); }
+    if (previous) publishWrites(storageId, previous, value);
+    return result;
 };
 
 const indexes = store => [...store.indexNames].map(name => {
