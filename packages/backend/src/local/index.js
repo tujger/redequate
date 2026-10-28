@@ -29,7 +29,7 @@ export default class LocalBackend extends BackendClientBase {
         if (!Object.hasOwn(requestHandlers, name)) {
             fail("backend/not-implemented", `Backend request ${name} is not implemented.`);
         }
-        console.log("[Backend]", `called '${name}'`, args);
+        console.debug("[Backend]", `called '${name}'`, args);
         return requestHandlers[name]({storageId: this.#storageId, args});
     }
 }

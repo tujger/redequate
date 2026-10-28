@@ -2,13 +2,13 @@ export default {
     path: ["extra", "extra_id"],
     async onWrite({value, previous, params, backend}) {
         if(previous === null) {
-            console.log("[Backend:Extra]", `added ${params.extra_id}`, {previous, value, backend});
+            console.debug("[Backend:Extra]", `added ${params.extra_id}`, {previous, value, backend});
             await backend.request("database.update", ["_counters", {id: value.id}, value.type], backend.increment(1));
         } else if(value === null) {
-            console.log("[Backend:Extra]", `deleted ${params.extra_id}`, {previous, value, backend});
+            console.debug("[Backend:Extra]", `deleted ${params.extra_id}`, {previous, value, backend});
             await backend.request("database.update", ["_counters", {id: previous.id}, previous.type], backend.increment(-1));
         } else {
-            console.log("[Backend:Extra]", `changed ${params.extra_id}`, {previous, value, backend});
+            console.debug("[Backend:Extra]", `changed ${params.extra_id}`, {previous, value, backend});
         }
     },
 };
