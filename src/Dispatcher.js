@@ -88,8 +88,6 @@ export default (props) => {
     const setCurrentUserData = useSetCurrentUserData();
     widthRef.current = width;
 
-    const metaInfo = useMetaInfo();
-
     React.useEffect(() => {
         if (previousWidth.current !== width) {
             previousWidth.current = width;
@@ -177,14 +175,6 @@ export default (props) => {
             }
             return {...props, windowData};
         }
-        const initTextTranslation = async props => {
-            const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
-            if (firebaseApiKey) {
-                const textTranslationInstance = textTranslation({firebaseApiKey});
-                return {...props, textTranslation: textTranslationInstance};
-            }
-            return props;
-        }
         const fetchDeviceId_ = async props => {
             return {...props, deviceId: fetchDeviceId()};
         }
@@ -210,6 +200,15 @@ export default (props) => {
             const {database} = props;
             const settings = (await database.read(["meta", {settings: "settings"}])) || {};
             return {...props, metaInfo: {settings}};
+        }
+        const initTextTranslation = async props => {
+            const {metaInfo} = props;
+            const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
+            if (firebaseApiKey) {
+                const textTranslationInstance = textTranslation({firebaseApiKey});
+                return {...props, textTranslation: textTranslationInstance};
+            }
+            return props;
         }
         const fetchCurrentUserData = async props => {
             const {authUser, database, deviceId} = props;
@@ -378,10 +377,10 @@ export default (props) => {
             .then(initStore)
             .then(restoreAuth)
             .then(initWindowData)
-            .then(initTextTranslation)
             .then(fetchDeviceId_)
             .then(checkIfCompatible)
             .then(fetchMetaInfo)
+            .then(initTextTranslation)
             .then(fetchCurrentUserData)
             .then(fetchCurrentUserLastVisit)
             .then(changeCurrentLanguage)
@@ -402,7 +401,7 @@ export default (props) => {
             consoleHandler?.();
         }
         // eslint-disable-next-line
-    }, [metaInfo]);
+    }, []);
 
     if (state.fatal) return <DispatcherInitializationError error={state.fatal} theme={props.theme}/>;
 
