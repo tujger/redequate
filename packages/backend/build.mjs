@@ -20,7 +20,8 @@ export const withBackend = config => {
         plugins: [...clientConfig.plugins, {
             name: "backend-client-boundary",
             moduleParsed({id}) {
-                if (id.startsWith(sourceDirectory) && /^(common-server|firebase-server)\//.test(id.slice(sourceDirectory.length))) {
+                const relative = id.slice(sourceDirectory.length);
+                if (id.startsWith(sourceDirectory) && /^(common-server|firebase-server)\//.test(relative)) {
                     this.error(`Browser build cannot import server Backend modules: ${id}`);
                 }
             },

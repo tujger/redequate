@@ -354,6 +354,15 @@ LocalDatabase instance. Its create/update/delete handlers open IndexedDB by stor
 only to prepared application stores. Missing stores fail; schema initialization
 remains separate, and collection notifications are published after commit. resolveBackend
 caches one default instance; explicit backends remain as supplied.
+Local onWrite subscriptions use provider-neutral definitions from backend/common/handlers.
+Readwrite transactions capture logical before/after snapshots for subscribed paths and
+publish source-tagged changes only after commit and connection close. Their source
+context delivers backend reactions once; other tabs still receive collection-only UI
+notifications. Callback promises are observed but never awaited by delivery, allowing
+reactions to await further backend writes without deadlock. A request confirms its
+write, not completion of the reaction chain. Unchanged values and rollbacks emit no
+backend event. Shared handler definitions are exported by backend/common; browser
+packaging rejects all common-server and firebase-server modules.
 
 Native transaction, index-query and write primitives live in one adjacent
 createHelpers module. Database/local retains schema initialization, native reads and listener delivery. Cursor handler replacements use common/methods/update with the supplied backend, matching Firebase; database performs no direct record writes. The adjacent recordValue module encapsulates encoding and restoring Local record values without duplicating object payloads. Common/localDatabase.js is unchanged;
