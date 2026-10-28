@@ -150,7 +150,9 @@ callbacks replace the whole value and may rerun on conflict, up to 25 attempts.
 Callback failures prevent replacement; native index errors roll back the transaction.
 Local update does not initialize schema or open IndexedDB itself. Cross-store
 batches commit atomically, overlapping addresses reject, and timestamp/increment
-markers resolve during the write. Backend creates and updates notify observers only after commit.
+markers resolve during the write. Increment markers come from `backend.increment(n)`;
+Database has no `increment` method. The marker is a JSON-compatible object, not a callback.
+Backend creates and updates notify observers only after commit.
 Listeners refresh collection snapshots from native rows; cross-context messages carry
 only changed collection names. No path metadata is stored or transmitted.
 

@@ -354,6 +354,18 @@ LocalDatabase instance. Its create/update/delete handlers open IndexedDB by stor
 only to prepared application stores. Missing stores fail; schema initialization
 remains separate, and collection notifications are published after commit. resolveBackend
 caches one default instance; explicit backends remain as supplied.
+Atomic numeric changes use backend.increment(n). BackendClientBase declares the
+contract only; FirebaseBackendClient delegates marker construction to the Firebase
+database SDK, while LocalBackend owns its finite-number validation and factory.
+Both currently produce the JSON-compatible {".sv": {increment: n}} wire format.
+Database providers have no increment method. Local resolves markers against the
+stored value inside the write transaction, including nested record/batch values.
+Local direct database.update requests with an increment marker return the saved
+number. FirebaseBackendClient wraps ordinary nonempty-path writes as root PATCH
+batches, without inspecting values or increment markers, and returns null. Root
+batches and explicit patch/read/conditional replace modes pass through unchanged.
+The Firebase Functions update handler retains its existing PATCH/GET/CAS PUT contract.
+No executable callback is accepted or transported by backend.request.
 Local onWrite subscriptions use provider-neutral definitions from backend/common/handlers.
 Readwrite transactions capture logical before/after snapshots for subscribed paths and
 publish source-tagged changes only after commit and connection close. Their source

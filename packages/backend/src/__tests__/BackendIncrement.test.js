@@ -19,10 +19,13 @@ vi.mock("firebase/functions", () => ({
         expect(value).not.toBeTypeOf("function");
         transport.calls.push(structuredClone(payload));
         const snapshot = () => ({value: transport.value, etag: String(transport.version)});
-        if (!options && value?.[".sv"]?.increment !== undefined) {
-            transport.value = (typeof transport.value === "number" ? transport.value : 0) + value[".sv"].increment;
+        if (!options) {
+            expect(path).toBe("");
+            expect(Object.keys(value)).toEqual(["meta/count"]);
+            const delta = value["meta/count"][".sv"].increment;
+            transport.value = (typeof transport.value === "number" ? transport.value : 0) + delta;
             transport.version++;
-            return {data: transport.value};
+            return {data: null};
         }
         if (options.mode === "read") return {data: snapshot()};
         if (options.etag !== String(transport.version)) return {data: {committed: false, ...snapshot()}};
@@ -66,7 +69,7 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
         "increments %j by %j and returns %j", async (initial, n, expected) => {
             const backend = await setup(provider);
             if (initial !== null) await seed(backend, initial);
-            expect(await backend.request("database.update", path, backend.increment(n))).toBe(expected);
+            expect(await backend.request("database.update", path, backend.increment(n))).toBe(provider === "local" ? expected : null);
             expect((await backend.request("database.update", path, null, {mode: "read"})).value).toBe(expected);
         }
     );
@@ -84,9 +87,9 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
         transport.calls.length = 0;
         const request = vi.spyOn(backend, "request");
         const marker = structuredClone(backend.increment(2));
-        expect(await backend.request("database.update", path, marker)).toBe(3);
+        expect(await backend.request("database.update", path, marker)).toBe(provider === "local" ? 3 : null);
         expect(request).toHaveBeenCalledExactlyOnceWith("database.update", path, marker);
-        if (provider === "firebase") expect(transport.calls).toEqual([[path, marker]]);
+        if (provider === "firebase") expect(transport.calls).toEqual([["", {"meta/count": marker}]]);
     });
 
     it("preserves increments under concurrent updates", async () => {

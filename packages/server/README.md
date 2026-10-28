@@ -63,9 +63,12 @@ Existing records are preserved. Errors use `permission-denied`, `already-exists`
 ## Firebase database.update
 
 The `database` callable group also exports `update` as `database-update`.
-`request("database.update", path, changes)` performs a shallow PATCH, including
-multi-location keys; batches use the root path. The client adapter returns
-`undefined` once that write is confirmed.
+FirebaseBackendClient converts `request("database.update", path, value)` for a
+nonempty path to a root PATCH batch `{[resolvedPath]: value}`, replacing that value
+without inspecting its contents. Root batches and explicit modes pass through
+unchanged. The Functions handler still defaults to PATCH; `{mode: "patch"}` supports
+partial updates at a nonempty path. Patch responses return `null`. The Database
+adapter preserves its public return contract.
 
 Synchronous update callbacks execute in the client adapter. It obtains a snapshot
 with `request("database.update", path, null, {mode: "read"})`, returning
@@ -78,6 +81,15 @@ results delete the value. Callback exceptions and Promise results prevent writes
 
 All reads and writes forward the caller's ID token to preserve Security Rules.
 Patch needs write access; callback updates need both read and write access.
+`backend.increment(n)` produces the native `{".sv": {"increment": n}}` value.
+A direct `request("database.update", path, backend.increment(n))` uses one root
+PATCH with the marker at the target path and returns `null`. Firebase performs the
+increment atomically; missing or nonnumeric values start at zero. No preliminary
+read or callback serialization is needed.
+Nested increment markers in ordinary PATCH/conditional PUT values remain native
+Firebase server values. The adapter does not inspect increment markers; Firebase
+resolves them as part of an ordinary write.
+
 The public `database.update` overloads and error handlers are unchanged.
 
 ## Firebase database.delete
