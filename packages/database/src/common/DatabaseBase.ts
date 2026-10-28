@@ -170,8 +170,4 @@ export default class DatabaseBase {
     get TIMESTAMP(): DatabaseValue | undefined {
         return notImplemented("timestamp")
     }
-
-    increment(delta: number): DatabaseValue | undefined {
-        return notImplemented("increment")
-    }
 }
