@@ -157,7 +157,6 @@ function Login(props) {
         }
         const fetchPublicAndPrivateData = async props => {
             const {deviceId} = props;
-            // eslint-disable-next-line react/prop-types -- userData is an Auth model passed between pipeline steps.
             const userData = new UserData(database).fromJSON(props.userData.toJSON());
             await userData.fetch([UserData.ROLE, UserData.PUBLIC, UserData.FORCE])
                 .then(() => userData.fetchPrivate(deviceId, true));
