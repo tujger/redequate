@@ -27,6 +27,7 @@ export default ({path, onWrite}) => {
             }));
         },
         deliver({value, previous, params}) {
+            console.log("[Backend]", `called 'onWrite' for '${collection}/${id}'`, {value, previous, params})
             return onWrite({value, previous, params, backend});
         },
     });

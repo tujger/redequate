@@ -1,3 +1,4 @@
+import {isIncrement} from "../increment";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import {fail} from "../../../../common";
 import {captureWrites, publishWrites} from "./writeEvents";
@@ -7,14 +8,6 @@ import {decodeRecordValue, encodeRecordValue, setRecordField} from "./recordValu
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
 export const TIMESTAMP = Symbol("LocalDatabase.TIMESTAMP");
-const increments = new WeakMap();
-export const increment = delta => {
-    if (typeof delta !== "number" || !Number.isFinite(delta)) invalid("increment requires a finite number.");
-    const marker = Object.freeze({});
-    increments.set(marker, delta);
-    return marker;
-};
-
 const set = (object, name, value) => Object.defineProperty(object, name,
     {value, enumerable: true, writable: true, configurable: true});
 const at = (object, names) => names.reduce((value, name) => value !== null && typeof value === "object" &&
@@ -35,7 +28,11 @@ const assign = (object, names, value, remove = false) => {
 const resolveValue = (value, previous, now) => {
     if (value === undefined) invalid("Undefined values cannot be stored.");
     if (value === TIMESTAMP) return now;
-    if (increments.has(value)) return (typeof previous === "number" ? previous : 0) + increments.get(value);
+    if (isIncrement(value)) {
+        const result = (typeof previous === "number" && Number.isFinite(previous) ? previous : 0) + value[".sv"].increment;
+        if (!Number.isFinite(result)) invalid("increment result must be finite.");
+        return result;
+    }
     if (Array.isArray(value)) return value.map((item, index) => resolveValue(item, previous?.[index], now));
     if (isRecord(value)) {
         const result = {};

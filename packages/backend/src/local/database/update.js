@@ -1,3 +1,4 @@
+import {isIncrement} from "../increment";
 import {fail} from "../../../../common";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import validatePath from "../../../../database/src/common/validatePath";
@@ -31,8 +32,9 @@ const prepare = args => {
     const [path, value, options = {}] = args;
     validatePath(path);
     if (!isRecord(options)) invalid("Invalid update options.");
-    const mode = options.mode ?? "patch";
-    if (!["patch", "read", "replace"].includes(mode)) invalid("Invalid update mode.");
+    const mode = options.mode ?? (isIncrement(value) ? "increment" : "patch");
+    if (!["patch", "read", "replace", "increment"].includes(mode)) invalid("Invalid update mode.");
+    if (mode === "increment" && !isIncrement(value)) invalid("Expected an increment value.");
     const root = isRoot(path);
     if (root && mode !== "patch") invalid("Only batch patch accepts an empty path.");
     if (!root) validateCollectionPath(path);
@@ -93,6 +95,11 @@ export default async function update({storageId, args}) {
             return null;
         }
         const store = transaction.objectStore(names[0]);
+        if (mode === "increment") {
+            await writeStore(store, path, value);
+            committed = true;
+            return await readStore(store, path) ?? null;
+        }
         const current = await readStore(store, path) ?? null;
         const currentETag = snapshotETag(current);
         if (mode === "read") return {value: current, etag: currentETag};
