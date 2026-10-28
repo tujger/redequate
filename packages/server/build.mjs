@@ -16,7 +16,7 @@ const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
         return {
             name,
             input: {index: `${directory}${existsSync(`${directory}src/index.js`) ? "src/" : ""}index.js`},
-            sources: [directory, ...sharedSources],
+            sources: [directory, source("../backend/src/common-server/"), ...sharedSources],
             manifest: `${directory}package.json`,
         };
     });
