@@ -8,7 +8,7 @@ import del from "rollup-plugin-delete";
 import json from "@rollup/plugin-json";
 
 const source = path => fileURLToPath(new URL(path, import.meta.url));
-const sharedSources = [source("../common/src/"), source("../database/src/")];
+const sharedSources = [source("../common/src/"), source("../database/src/"), source("../backend/src/common/")];
 const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
     .filter(entry => entry.isDirectory() && entry.name.endsWith("-server"))
     .map(({name}) => {
@@ -128,7 +128,7 @@ export default ({configBackend, configOutput}) => {
                 "backend/common": source("../backend/src/common/index.js"),
             },
             output: outputDirectory,
-            sources: [source("./src/"), source("../backend/src/common/"), ...sharedSources],
+            sources: [source("./src/"), ...sharedSources],
             clean: ["index.*", "common", "database", "server-chunks", "backend/common.*",
                 "backend/local-server", "backend/local-server.*",
                 ...backends.map(({name}) => `backend/${name}.*`)].map(path => `${outputDirectory}${path}`),
