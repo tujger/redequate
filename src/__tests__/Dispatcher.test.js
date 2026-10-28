@@ -2,10 +2,13 @@ import React, {act} from "react";
 import {vi} from "vitest";
 import Dispatcher from "../Dispatcher";
 import UserData from "../controllers/UserData";
+import {useMetaInfo} from "../controllers/General";
+import {refreshAll} from "../controllers/Store";
+import textTranslation from "../controllers/textTranslation";
 import loadUserData from "../../packages/auth/src/common/loadUserData";
 import {render, unmount} from "./render";
 
-const context = vi.hoisted(() => ({setUser: vi.fn()}));
+const context = vi.hoisted(() => ({setUser: vi.fn(), meta: undefined}));
 vi.mock("notistack", () => ({SnackbarProvider: () => null}));
 vi.mock("react-ios-pwa-prompt", () => ({default: () => null}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value}), getI18n: () => undefined}));
@@ -15,7 +18,11 @@ vi.mock("../controllers/General", () => ({
     cacheDatas: {put: vi.fn()},
     fetchDeviceId: () => "device",
     Layout: {},
-    useMetaInfo: vi.fn(),
+    useMetaInfo: vi.fn(initial => {
+        if (initial instanceof Function) context.meta = initial(context.meta);
+        else if (initial) context.meta = initial;
+        return context.meta;
+    }),
     useStore: vi.fn(),
     useWindowData: vi.fn(),
     usePages: value => value,
@@ -38,7 +45,8 @@ vi.mock("../reducers/languageReducer", () => ({restoreLanguage: vi.fn()}));
 let container;
 beforeEach(() => {
     container = document.createElement("div");
-    context.setUser.mockClear();
+    vi.clearAllMocks();
+    context.meta = undefined;
     vi.spyOn(globalThis, "setInterval").mockReturnValue(0);
 });
 afterEach(() => unmount(container));
@@ -46,7 +54,7 @@ afterEach(() => unmount(container));
 const start = async (resolveUser, values = {}) => {
     const database = {
         read: vi.fn(async path => values[path.map(segment => typeof segment === "string" ? segment : Object.values(segment)[0]).join("/")]),
-        addEventListener: () => ({remove: vi.fn()}),
+        addEventListener: vi.fn(() => ({remove: vi.fn()})),
     };
     await act(async () => {
         render(
@@ -105,4 +113,27 @@ it("initializes a guest without profile reads", async () => {
     const database = await start(() => guest);
     expect(database.read).toHaveBeenCalledExactlyOnceWith(["meta", {settings: "settings"}]);
     expect(context.setUser).toHaveBeenCalledWith(guest);
+});
+
+
+it("updates settings without repeating initialization", async () => {
+    const resolveUser = vi.fn(() => new UserData());
+    const database = await start(resolveUser);
+    const {onChange} = database.addEventListener.mock.calls[0][1];
+    await act(async () => onChange({settings: {title: "Initial"}}));
+    for (const title of ["First save", "Second save"]) {
+        await act(async () => onChange({settings: {title}}));
+        expect(useMetaInfo).toHaveBeenLastCalledWith({settings: {title}});
+    }
+    expect(resolveUser).toHaveBeenCalledTimes(1);
+    expect(database.read).toHaveBeenCalledTimes(1);
+    expect(database.addEventListener).toHaveBeenCalledTimes(1);
+    expect(setInterval).toHaveBeenCalledTimes(1);
+    expect(refreshAll).toHaveBeenCalledTimes(2);
+});
+
+it("initializes translation with the loaded settings", async () => {
+    context.meta = {settings: {firebaseApiKey: "stale-key"}};
+    await start(() => new UserData(), {"meta/settings": {firebaseApiKey: "loaded-key"}});
+    expect(textTranslation).toHaveBeenCalledExactlyOnceWith({firebaseApiKey: "loaded-key"});
 });
