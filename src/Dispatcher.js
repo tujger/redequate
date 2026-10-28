@@ -218,7 +218,6 @@ export default (props) => {
                 return props;
             }
             try {
-                // eslint-disable-next-line react/prop-types -- authUser is a provider model.
                 const userData = new UserData(database).fromJSON(authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
