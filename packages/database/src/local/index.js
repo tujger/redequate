@@ -9,7 +9,7 @@ import LocalCursor from "./cursor";
 import createRecord from "./create";
 import update from "./update";
 import deleteRecord from "./delete";
-import {readValue, getSubtree, increment, TIMESTAMP, openDatabase} from "./helpers";
+import {readValue, getSubtree, TIMESTAMP, openDatabase} from "./helpers";
 import {applySchema} from "./schema";
 import {convertStores} from "./storeSchema";
 
@@ -105,9 +105,5 @@ export default class LocalDatabase extends DatabaseBase {
 
     get TIMESTAMP() {
         return TIMESTAMP;
-    }
-
-    increment(delta) {
-        return increment(delta);
     }
 }
