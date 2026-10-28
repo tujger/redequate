@@ -46,6 +46,7 @@
     "scripts": {
         "build": "npm --prefix ../.. run \"build server\" --",
         "watch": "npm run build -- --watch",
-        "pack": "npm run build && npm pack ./dist"
+        "pack": "npm run build && npm pack ./dist",
+        "check updates": "npx npm-check-updates --dep prod&&npx npm-check-updates --dep dev"
     }
 }
