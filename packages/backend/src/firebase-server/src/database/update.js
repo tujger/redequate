@@ -1,12 +1,11 @@
-import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {getDatabase} from "firebase-admin/database";
+import {HttpsError, onCall} from "firebase-functions/v2/https";
 import resolvePath from "../../../../../database/src/common/resolvePath";
-
-import invalidPath from "../common/invalidPath";
-import getRequestToken from "../common/getRequestToken";
-import createDatabaseUrl from "../common/createDatabaseUrl";
-import sendRequest from "../common/sendRequest";
 import checkResponse from "../common/checkResponse";
+import createDatabaseUrl from "../common/createDatabaseUrl";
+import getRequestToken from "../common/getRequestToken";
+import invalidPath from "../common/invalidPath";
+import sendRequest from "../common/sendRequest";
 import throwDatabaseError from "../common/throwDatabaseError";
 
 const prepare = request => {
@@ -42,7 +41,8 @@ const prepareRequest = props => {
     const headers = {"Content-Type": "application/json"};
     if (mode !== "patch") headers["X-Firebase-ETag"] = "true";
     if (mode === "replace") headers["If-Match"] = etag;
-    return {...props,
+    return {
+        ...props,
         method: {patch: "PATCH", read: "GET", replace: "PUT"}[mode],
         headers,
         ...(mode === "read" ? {} : {body: JSON.stringify(value)}),
