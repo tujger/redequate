@@ -1,7 +1,7 @@
-import * as handlers from "../../../common-server";
+import {handlers} from "../../../common";
 import create from "./create";
 import deleteRecord from "./delete";
-import onWrite from "./onWrite.js";
+import onWrite from "./onWrite";
 import update from "./update";
 
 export {create, update, deleteRecord as delete};
