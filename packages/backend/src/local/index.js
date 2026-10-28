@@ -1,7 +1,8 @@
 import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import BackendClientBase from "../BackendClientBase";
-import handlers from "./handlers";
+import {installListeners} from "./database/installListeners";
+import requestHandlers from "./database/requestHandlers";
 
 export default class LocalBackend extends BackendClientBase {
     #storageId;
@@ -12,12 +13,17 @@ export default class LocalBackend extends BackendClientBase {
             fail("database/invalid-argument", "storageId must be a non-empty string.");
         }
         this.#storageId = storageId;
+        installListeners(this);
+    }
+
+    get storageId() {
+        return this.#storageId;
     }
 
     async request(name, ...args) {
-        if (!Object.hasOwn(handlers, name)) {
+        if (!Object.hasOwn(requestHandlers, name)) {
             fail("backend/not-implemented", `Backend request ${name} is not implemented.`);
         }
-        return handlers[name]({storageId: this.#storageId, args});
+        return requestHandlers[name]({storageId: this.#storageId, args});
     }
 }
