@@ -6,7 +6,7 @@ import {composeCursor} from "../common/ComposedDatabaseCursor";
 import deleteRecord from "./delete";
 import read from "./read";
 import update from "./update";
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 import {fail} from "../../../common";
 
 export default class FirebaseDatabase extends DatabaseBase {
@@ -40,8 +40,7 @@ export default class FirebaseDatabase extends DatabaseBase {
         return composeCursor(queries, effective,
             (path, options) => new FirebaseCursor(this.#firebase, path,
                 {...options, onError: options?.onError ?? this.onError}, this._backend), run, path,
-            pathIsDatabasePath ? () => resolvePath(Array.isArray(path) && path.length > 1 &&
-                typeof path.at(-1) === "string" ? path.slice(0, -1) : path) : undefined);
+            pathIsDatabasePath ? () => parsePath(path, "collection").address : undefined);
     }
 
     async delete(path, options = {}) {

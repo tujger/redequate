@@ -1,7 +1,7 @@
 import {getDatabase, ref, query, orderByChild, orderByValue, orderByKey, equalTo, startAt, endAt} from "firebase/database";
 import {key} from "firebase-key";
 import {DatabaseOrder} from "../common/DatabaseOrder";
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 
 export default function createCursorQuery(firebase, path, {
     orderBy,
@@ -12,7 +12,7 @@ export default function createCursorQuery(firebase, path, {
     endDate,
     order = DatabaseOrder.ASC
 }) {
-    orderBy = orderBy === undefined ? undefined : resolvePath(orderBy);
+    orderBy = orderBy === undefined ? undefined : parsePath(orderBy).address;
     const startKey = startDate === undefined ? undefined : key(startDate, "min");
     const endKey = endDate === undefined ? undefined : key(endDate, "max");
     if (typeof start === "string" && end === undefined) {
@@ -27,7 +27,7 @@ export default function createCursorQuery(firebase, path, {
             end = endKey;
         }
     }
-    const reference = ref(getDatabase(firebase.app), resolvePath(path));
+    const reference = ref(getDatabase(firebase.app), parsePath(path).address);
     const byValue = orderBy === "" || orderBy === undefined && equals !== undefined;
     let baseQuery;
     if (orderBy !== undefined && orderBy !== "") {

@@ -1,14 +1,11 @@
 import {getDatabase, ref, query, orderByValue, orderByChild, orderByKey, equalTo as equalToConstraint, startAt, endAt} from "firebase/database";
 import readSnapshot from "./readSnapshot";
-import parsePath from "../common/parsePath";
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
 import {fail} from "../../../common";
 
 export default async function read(firebase, path, options = {}) {
-    const parsed = parsePath(path);
-    const collection = !parsed.literal && parsed.path.length > 1 && typeof parsed.path.at(-1) === "string";
-    const effectivePath = resolvePath(collection ? parsed.path.slice(0, -1) : parsed.path);
+    const {address: effectivePath} = parsePath(path, "collection");
     if (!effectivePath) fail("database/invalid-argument", "read requires a non-empty path.");
     const {field, equalTo, start, end} = readQueryOptions(options);
 

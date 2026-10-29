@@ -1,5 +1,5 @@
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 
 export default async function deleteRecord(path, options, run, superDelete) {
-    return run(() => superDelete(resolvePath(path)), options, "delete", {path});
+    return run(() => superDelete(parsePath(path).address), options, "delete", {path});
 }

@@ -1,4 +1,4 @@
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 
 export default async function update(path, changes, options, run, superUpdate) {
     const batch = typeof path !== "string" && !Array.isArray(path);
@@ -6,9 +6,9 @@ export default async function update(path, changes, options, run, superUpdate) {
         if (batch) {
             if (path === null || typeof path !== "object") return superUpdate(path);
             const entries = path instanceof Map ? [...path] : Object.entries(path);
-            const updates = Object.fromEntries(entries.map(([target, value]) => [resolvePath(target), value]));
+            const updates = Object.fromEntries(entries.map(([target, value]) => [parsePath(target).address, value]));
             return superUpdate(updates);
         }
-        return superUpdate(resolvePath(path), changes);
+        return superUpdate(parsePath(path).address, changes);
     }, batch ? changes ?? options : options, "update", batch ? {updates: path} : {path, changes});
 }
