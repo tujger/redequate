@@ -1,11 +1,11 @@
 import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import createIncrement from "./increment";
-import BackendClientBase from "../BackendClientBase";
+import BackendBase from "../common/BackendBase";
 import {installListeners} from "./database/installListeners";
 import requestHandlers from "./database/requestHandlers";
 
-export default class LocalBackend extends BackendClientBase {
+export default class LocalBackend extends BackendBase {
     #storageId;
 
     constructor({storageId = LOCAL_DATABASE_NAME} = {}) {
