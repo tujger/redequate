@@ -1,5 +1,6 @@
 import BackendListener from "../BackendListener";
 import {updateCounter} from "./utils";
+import {createAlert} from "./alert";
 
 export default class ExtraListener extends BackendListener {
     constructor(backend) {
@@ -14,14 +15,9 @@ export default class ExtraListener extends BackendListener {
 
         const author = await this.backend.request("database.read", ["posts", {post_id: value.id}, "uid"]);
         if (author === null || author === value.uid) return;
-        await this.backend.request("database.create", ["alerts", {user_id: author}, "alert_id"], {
-            uid: value.uid || null,
-            context: null,
+        await createAlert(this.backend, author, {
+            uid: value.uid,
             id: value.id,
-            message: null,
-            new: true,
-            path: null,
-            timestamp: this.backend.TIMESTAMP,
             type: value.type,
         });
     }
