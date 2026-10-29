@@ -3,7 +3,8 @@ import {incrementDelta, isIncrement} from "../../increment";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";
 import {fail} from "../../../../../common";
 import {captureWrites, publishWrites} from "../writeEvents";
-import parsePath from "../../../../../database/src/common/parsePath";
+import parsePath, {validateCollectionPath} from "../../../../../database/src/local/parsePath";
+export {validateCollectionPath};
 import {decodeRecordValue, encodeRecordValue, setRecordField} from "../recordValue";
 
 const invalid = message => fail("database/invalid-argument", message);
@@ -42,25 +43,8 @@ const resolveValue = (value, previous, now) => {
     return value;
 };
 
-export const validateCollectionPath = rawPath => {
-    if (typeof rawPath !== "string" && !Array.isArray(rawPath)) invalid("Expected a collection path.");
-    const path = typeof rawPath === "string" ? rawPath.split("/").filter(Boolean) : [...rawPath];
-    if (!path.length) invalid("Expected a collection path.");
-    if (path[0] !== null && typeof path[0] === "object") {
-        path[0] = path[0][Object.keys(path[0])[0]];
-    }
-    if (typeof path[0] !== "string" || !path[0] || path[0].includes("/") || path[0].startsWith("$")) {
-        invalid("Invalid application collection.");
-    }
-    return path;
-};
-
 export const createRecordPath = (rawPath, key) => {
-    const parsed = parsePath(rawPath);
-    if (parsed.literal || parsed.path.length < 2) invalid("create requires a collection path followed by a key field name.");
-    const parentPath = parsed.path.slice(0, -1);
-    const last = parsed.path.at(-1);
-    const fieldName = typeof last === "string" ? last : parsed.segments.at(-1).name;
+    const {parentPath, fieldName} = parsePath(rawPath, "create");
     return [...parentPath, {[fieldName]: key}];
 };
 

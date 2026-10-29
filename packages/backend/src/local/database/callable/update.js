@@ -1,9 +1,9 @@
-import resolvePath from "../../../../../database/src/common/resolvePath";
+import parsePath from "../../../../../database/src/local/parsePath";
+
 import {isTimestamp} from "../../timestamp";
 import {isIncrement} from "../../increment";
 import {fail} from "../../../../../common";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";
-import validatePath from "../../../../../database/src/common/validatePath";
 import {
     validateCollectionPath, runTransaction, readStore, writeStore,
     childRecordPath, assertNonOverlapping, notifyWrites
@@ -12,8 +12,6 @@ import {
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value) &&
     [Object.prototype, null].includes(Object.getPrototypeOf(value));
-const isRoot = path => typeof path === "string" ? !path.split("/").filter(Boolean).length
-    : Array.isArray(path) && !path.length;
 
 const validateValue = (value, ancestors = new Set()) => {
     if (isTimestamp(value) || isIncrement(value) || value === null || typeof value === "string" || typeof value === "boolean" ||
@@ -33,35 +31,35 @@ const validateValue = (value, ancestors = new Set()) => {
 const prepare = args => {
     if (![2, 3].includes(args.length)) invalid("Expected (path, changes, options?).");
     const [path, value, options = {}] = args;
-    validatePath(path);
+    const parsed = parsePath(path);
     if (!isRecord(options)) invalid("Invalid update options.");
     const mode = options.mode ?? (isIncrement(value) ? "increment" : "patch");
     if (!["patch", "read", "replace", "increment"].includes(mode)) invalid("Invalid update mode.");
     if (mode === "increment" && !isIncrement(value)) invalid("Expected an increment value.");
     if (mode === "patch" && isIncrement(value)) invalid("changes must be an object, or a Map for a root batch.");
-    const root = isRoot(path);
+    const root = !parsed.path.length;
     if (root && mode !== "patch") invalid("Only batch patch accepts an empty path.");
-    if (!root) validateCollectionPath(path);
     if (!(root && mode === "patch" && value instanceof Map)) validateValue(value);
     if (mode === "read" && value !== null) invalid("Read requires a null value.");
     if (mode === "replace" && (typeof options.etag !== "string" || !options.etag.length || /[\r\n]/.test(options.etag))) {
         invalid("Conditional replacement requires an ETag.");
     }
     if (mode !== "patch") {
-        return {path, value, mode, etag: options.etag, names: [validateCollectionPath(path)[0]]};
+        return {path, value, mode, etag: options.etag, names: [parsed.collection]};
     }
     if (!isRecord(value) && !(root && value instanceof Map)) invalid("changes must be an object, or a Map for a root batch.");
     const entries = value instanceof Map ? [...value] : Object.entries(value);
+    const collections = new Set();
     for (const [entryPath, child] of entries) {
         if (value instanceof Map) validateValue(child);
         if (root) {
-            validatePath(entryPath);
-            validateCollectionPath(entryPath);
+            const {collection} = parsePath(entryPath);
+            if (!collection) invalid("Expected a collection path.");
+            collections.add(collection);
         }
         else if (!entryPath.split("/").filter(Boolean).length) invalid("Patch paths must not be empty.");
     }
-    const names = root ? [...new Set(entries.map(([path]) => validateCollectionPath(path)[0]))]
-        : [validateCollectionPath(path)[0]];
+    const names = root ? [...collections] : [parsed.collection];
     return {path, root, entries, mode, names};
 };
 
@@ -81,7 +79,7 @@ export default async function update({storageId, args}) {
     const database = await openLocalDatabase(storageId);
     let committed = false;
     const result = await runTransaction(database, mode === "read" ? "readonly" : "readwrite", names, async transaction => {
-        console.debug("[Backend:Update]", `update [${resolvePath(path)}]`, {value});
+        console.debug("[Backend:Update]", `update [${parsePath(path).address}]`, {value});
         if (mode === "patch") {
             const updates = entries.map(([relative, value]) => {
                 if (root) return [relative, value];
