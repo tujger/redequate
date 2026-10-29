@@ -28,10 +28,21 @@ export async function conditionalUpdate(database, address, value, options) {
         if (typeof options.etag !== "string" || !options.etag.length || /[\r\n]/.test(options.etag)) {
             fail("database/invalid-argument", "Conditional replacement requires an ETag.");
         }
-        const {committed, snapshot} = await _transaction(database.ref(address),
-            current => snapshotETag(current) === options.etag ? value : undefined);
-        const current = snapshot.val();
-        return committed ? {committed: true, value: current}
-            : {committed: false, value: current, etag: snapshotETag(current)};
+        const reference = database.ref(address);
+        let onValue;
+        try {
+            // Keep the cache populated until the conditional transaction finishes.
+            await new Promise((resolve, reject) => {
+                onValue = () => resolve();
+                reference.on("value", onValue, reject);
+            });
+            const {committed, snapshot} = await _transaction(reference,
+                current => snapshotETag(current) === options.etag ? value : undefined);
+            const current = snapshot.val();
+            return committed ? {committed: true, value: current}
+                : {committed: false, value: current, etag: snapshotETag(current)};
+        } finally {
+            reference.off("value", onValue);
+        }
     }
 }
