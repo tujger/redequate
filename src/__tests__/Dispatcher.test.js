@@ -55,6 +55,8 @@ const start = async (resolveUser, values = {}) => {
     const database = {
         read: vi.fn(async path => values[path.map(segment => typeof segment === "string" ? segment : Object.values(segment)[0]).join("/")]),
         addEventListener: vi.fn(() => ({remove: vi.fn()})),
+        create: vi.fn().mockResolvedValue("error-key"),
+        TIMESTAMP: {".sv": "timestamp"},
     };
     await act(async () => {
         render(
@@ -136,4 +138,72 @@ it("initializes translation with the loaded settings", async () => {
     context.meta = {settings: {firebaseApiKey: "stale-key"}};
     await start(() => new UserData(), {"meta/settings": {firebaseApiKey: "loaded-key"}});
     expect(textTranslation).toHaveBeenCalledExactlyOnceWith({firebaseApiKey: "loaded-key"});
+});
+
+
+it("saves all console error arguments with nested Error details", async () => {
+    const original = vi.spyOn(console, "error").mockImplementation(() => {});
+    const database = await start(() => new UserData());
+    const cause = new Error("root cause");
+    const error = Object.assign(new Error("failed", {cause}), {code: "backend/failed", details: {retry: false}});
+    console.error("Request failed", {error, count: 2});
+    expect(original).toHaveBeenCalledWith("Request failed", {error, count: 2});
+    const [path, saved] = database.create.mock.calls[0];
+    expect(path).toEqual(["errors", "error_id"]);
+    expect(saved).toMatchObject({uid: "anonymous", timestamp: database.TIMESTAMP});
+    expect(typeof saved.error).toBe("string");
+    expect(saved.error.startsWith("Request failed\n")).toBe(true);
+    const details = JSON.parse(saved.error.slice("Request failed\n".length));
+    expect(details).toMatchObject({count: 2, error: {name: "Error", message: "failed", stack: error.stack,
+        code: "backend/failed", details: {retry: false}, cause: {message: "root cause", stack: cause.stack}}});
+});
+
+it("keeps readable data alongside cycles, BigInt, undefined and throwing getters", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const database = await start(() => new UserData());
+    const details = {count: 12n, missing: undefined}; details.self = details;
+    Object.defineProperty(details, "broken", {enumerable: true, get() { throw new Error("getter failed"); }});
+    console.error(details, undefined);
+    const text = database.create.mock.calls[0][1].error;
+    expect(text).toContain('"count": "12n"');
+    expect(text).toContain('"self": "[Circular]"');
+    expect(text).toContain('"missing": "[undefined]"');
+    expect(text).toContain('"broken": "[Unreadable property]"');
+    expect(text.endsWith('\n"[undefined]"')).toBe(true);
+});
+
+it("saves a single string unchanged and filters messages across arguments", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const database = await start(() => new UserData());
+    console.error("plain error");
+    expect(database.create.mock.calls[0][1].error).toBe("plain error");
+    database.create.mockClear();
+    console.error();
+    for (const filter of ["Module not found", "no such file or directory", "memory access out of bounds"]) {
+        console.error("context", {message: filter});
+    }
+    expect(database.create).not.toHaveBeenCalled();
+});
+
+it("reports save rejection through the original console without recursive writes", async () => {
+    const original = vi.spyOn(console, "error").mockImplementation(() => {});
+    const database = await start(() => new UserData());
+    const failure = new Error("save failed");
+    database.create.mockRejectedValueOnce(failure);
+    console.error("original error");
+    await Promise.resolve();
+    expect(database.create).toHaveBeenCalledTimes(1);
+    expect(original).toHaveBeenCalledWith(failure);
+});
+
+it("reports synchronous save failure and restores the console on unmount", async () => {
+    const original = vi.spyOn(console, "error").mockImplementation(() => {});
+    const database = await start(() => new UserData());
+    const failure = new Error("save failed");
+    database.create.mockImplementationOnce(() => { throw failure; });
+    console.error(new Error("original error"));
+    expect(database.create).toHaveBeenCalledTimes(1);
+    expect(original).toHaveBeenCalledWith(failure);
+    unmount(container);
+    expect(console.error).toBe(original);
 });
