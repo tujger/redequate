@@ -7,18 +7,18 @@ export default class PostListener extends BackendListener {
     }
 
     async onCreate({params, value}) {
-        console.debug("[Backend:Post]", `added ${params.post_id}`, {params, value});
+        console.debug("[Backend:Post]", `created [${params.post_id}]`, {params, value});
         await updateCounter(this.backend, [{id: "total"}, "posts"], 1);
         if (value.uid) await this.backend.request("database.update", ["_counters", {id: value.uid}, "posts"], this.backend.increment(1));
     }
 
-    async onUpdate({previous, value, params}) {
-        console.debug("[Backend:Post]", `changed ${params.post_id}`, {previous, value});
-    }
-
     async onDelete({value, params}) {
-        console.debug("[Backend:Post]", `deleted ${params.post_id}`, {params, value});
+        console.debug("[Backend:Post]", `deleted [${params.post_id}]`, {params, value});
         await updateCounter(this.backend, [{id: "total"}, "posts"], -1);
         if (value.uid) await this.backend.request("database.update", ["_counters", {id: value.uid}, "posts"], this.backend.increment(-1));
+    }
+
+    async onUpdate({previous, value, params}) {
+        console.debug("[Backend:Post]", `updated [${params.post_id}]`, {previous, value});
     }
 }

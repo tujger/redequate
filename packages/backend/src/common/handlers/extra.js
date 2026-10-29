@@ -7,7 +7,7 @@ export default class ExtraListener extends BackendListener {
     }
 
     async onCreate({params, value}) {
-        console.debug("[Backend:Extra]", `added ${params.extra_id}`, {value});
+        console.debug("[Backend:Extra]", `created [${params.extra_id}]`, {value});
 
         if (!value) return;
         await updateCounter(this.backend, [{id: value.id}, value.type], 1);
@@ -27,12 +27,12 @@ export default class ExtraListener extends BackendListener {
     }
 
     async onDelete({params, value}) {
-        console.debug("[Backend:Extra]", `deleted ${params.extra_id}`, {value});
+        console.debug("[Backend:Extra]", `deleted [${params.extra_id}]`, {value});
         if (!value) return;
         await updateCounter(this.backend, [{id: value.id}, value.type], -1);
     }
 
     async onUpdate({params, value, previous}) {
-        console.debug("[Backend:Extra]", `changed ${params.extra_id}`, {previous, value});
+        console.debug("[Backend:Extra]", `updated [${params.extra_id}]`, {previous, value});
     }
 }
