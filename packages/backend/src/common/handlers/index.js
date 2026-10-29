@@ -1,3 +1,4 @@
-export {default as alert} from "./alert.js";
-export {default as extra} from "./extra.js";
-export {default as post} from "./post.js";
+export {default as activity} from "./activity";
+export {default as alert} from "./alert";
+export {default as extra} from "./extra";
+export {default as post} from "./post";
