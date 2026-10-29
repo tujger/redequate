@@ -2,8 +2,8 @@ import type BackendBase from "./BackendBase";
 import type {DatabasePath} from "../../../database/src/common/DatabaseTypes";
 
 export interface BackendListenerValueEvent {
-    value: unknown;
     params: Record<string, string>;
+    value: unknown;
 }
 
 export interface BackendListenerUpdateEvent extends BackendListenerValueEvent {
