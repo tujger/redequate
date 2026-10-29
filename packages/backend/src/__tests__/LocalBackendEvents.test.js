@@ -258,3 +258,112 @@ it.each(["onCreate", "onUpdate", "onDelete"])("skips missing %s without logging 
         remove(); debug.mockRestore(); report.mockRestore();
     }
 });
+
+
+it("captures all alert owners and preserves identities for create, update and delete", async () => {
+    const {database, backend} = await setup();
+    const callbacks = {onCreate: vi.fn(), onUpdate: vi.fn(), onDelete: vi.fn()};
+    const remove = onEvents({path: ["alerts", "user_id", "alert_id"], ...callbacks})(backend);
+    const a = ["alerts", {user_id: "u1"}, {alert_id: "a1"}];
+    const b = ["alerts", {user_id: "u2"}, {alert_id: "a2"}];
+    try {
+        await database.create(a, {new: true, text: "first"});
+        await database.create(b, {new: true, text: "second"});
+        await database.update(a, {new: false});
+        await database.delete(b);
+        expect(callbacks.onCreate.mock.calls.map(([event]) => event)).toEqual([
+            {params: {user_id: "u1", alert_id: "a1"}, value: {new: true, text: "first"}},
+            {params: {user_id: "u2", alert_id: "a2"}, value: {new: true, text: "second"}},
+        ]);
+        expect(callbacks.onUpdate).toHaveBeenCalledExactlyOnceWith({
+            params: {user_id: "u1", alert_id: "a1"}, previous: {new: true, text: "first"}, value: {new: false, text: "first"},
+        });
+        expect(callbacks.onDelete).toHaveBeenCalledExactlyOnceWith({
+            params: {user_id: "u2", alert_id: "a2"}, value: {new: true, text: "second"},
+        });
+    } finally { remove(); }
+});
+
+it.each(["user_id", {user_id: "{owner}"}])("captures named wildcard %j before decoding and filters fixed owners", async wildcard => {
+    const {database, backend} = await setup();
+    const all = vi.fn(), own = vi.fn();
+    const removeAll = onEvents({path: ["alerts", wildcard, "alert_id"], onCreate: all})(backend);
+    const removeOwn = onEvents({path: ["alerts", {user_id: "u1"}, "alert_id"], onCreate: own})(backend);
+    try {
+        await database.create(["alerts", {user_id: "u1"}, {alert_id: "a1"}], {new: true});
+        await database.create(["alerts", {user_id: "u2"}, {alert_id: "a2"}], {new: false});
+        expect(all).toHaveBeenCalledTimes(2);
+        expect(all.mock.calls.map(([{params}]) => params)).toEqual([
+            {[typeof wildcard === "string" ? "user_id" : "owner"]: "u1", alert_id: "a1"},
+            {[typeof wildcard === "string" ? "user_id" : "owner"]: "u2", alert_id: "a2"},
+        ]);
+        expect(own).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u1", alert_id: "a1"}, value: {new: true}});
+    } finally { removeAll(); removeOwn(); }
+});
+
+it("keeps composite identities separate when different users share the same child key", async () => {
+    const {database, backend} = await setup();
+    const callback = vi.fn();
+    const remove = onEvents({path: ["_chats", "user_id", "chat_id"], onCreate: callback})(backend);
+    try {
+        await database.create(["_chats", {user_id: "u1"}, {chat_id: "shared"}], {timestamp: 1});
+        await database.create(["_chats", {user_id: "u2"}, {chat_id: "shared"}], {timestamp: 2});
+        expect(callback.mock.calls.map(([event]) => event)).toEqual([
+            {params: {user_id: "u1", chat_id: "shared"}, value: {timestamp: 1}},
+            {params: {user_id: "u2", chat_id: "shared"}, value: {timestamp: 2}},
+        ]);
+    } finally { remove(); }
+});
+
+it("preserves fixed nested field subscriptions alongside record wildcards", async () => {
+    const {database, backend} = await setup();
+    const create = vi.fn(), update = vi.fn();
+    const remove = onEvents({path: ["posts", "post_id", {field: "text"}], onCreate: create, onUpdate: update})(backend);
+    try {
+        await database.create(["posts", {post_id: "p1"}], {text: "before", uid: "u1"});
+        await database.update(["posts", {post_id: "p1"}], {text: "after"});
+        expect(create).toHaveBeenCalledExactlyOnceWith({params: {post_id: "p1", field: "text"}, value: "before"});
+        expect(update).toHaveBeenCalledExactlyOnceWith({params: {post_id: "p1", field: "text"}, value: "after", previous: "before"});
+    } finally { remove(); }
+});
+
+it("rejects undeclared wildcard fields before committing a write", async () => {
+    const {database, backend} = await setup();
+    const callback = vi.fn();
+    const remove = onEvents({path: ["alerts", "unknown", "alert_id"], onCreate: callback})(backend);
+    try {
+        await expect(database.create(["alerts", {user_id: "u1"}, {alert_id: "a1"}], {new: true}))
+            .rejects.toThrow("No declared index for listener field unknown");
+        expect(callback).not.toHaveBeenCalled();
+        expect(await database.read(["alerts", "alert_id"])).toBeUndefined();
+    } finally { remove(); }
+});
+
+
+it("emits removal and creation when a record moves between captured owners", async () => {
+    const {database, backend} = await setup();
+    const create = vi.fn(), removeEvent = vi.fn(), update = vi.fn();
+    const remove = onEvents({path: ["alerts", "user_id", "alert_id"], onCreate: create, onDelete: removeEvent, onUpdate: update})(backend);
+    try {
+        await database.create(["alerts", {user_id: "u1"}, {alert_id: "a1"}], {new: true});
+        create.mockClear();
+        await database.update(["alerts", {alert_id: "a1"}], {user_id: "u2"});
+        expect(removeEvent).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u1", alert_id: "a1"}, value: {new: true}});
+        expect(create).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u2", alert_id: "a1"}, value: {new: true}});
+        expect(update).not.toHaveBeenCalled();
+    } finally { remove(); }
+});
+
+it("does not publish wildcard matches from an aborted alert batch", async () => {
+    const {backend, database} = await setup();
+    const callback = vi.fn();
+    const remove = onEvents({path: ["alerts", "user_id", "alert_id"], onCreate: callback})(backend);
+    try {
+        await expect(backend.request("database.update", "", new Map([
+            [["alerts", {user_id: "u1"}, {alert_id: "a1"}], {new: true}],
+            [["alerts", {user_id: "u2"}, {alert_id: "a2"}], {alert_id: "wrong"}],
+        ]))).rejects.toThrow();
+        expect(callback).not.toHaveBeenCalled();
+        expect(await database.read(["alerts", "alert_id"])).toBeUndefined();
+    } finally { remove(); }
+});

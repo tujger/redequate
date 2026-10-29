@@ -28,7 +28,7 @@ const setup = async (provider, initial = null) => {
         value = next;
         return {committed: true, snapshot: {val: () => value}};
     });
-    const ref = vi.fn(() => ({transaction, get: async () => { const current = value; return {val: () => current}; }}));
+    const ref = vi.fn(() => ({transaction, on: (event, callback) => callback(), off: vi.fn(), get: async () => { const current = value; return {val: () => current}; }}));
     const backend = new FirebaseServerBackend(() => ({ref}));
     return {backend, read: async () => value, transaction, ref};
 };
@@ -99,7 +99,7 @@ it("recomputes the counter from fresh data after an Admin transaction conflict",
             return {committed: true, snapshot: {val: () => null}};
         });
     const backend = new FirebaseServerBackend(() => ({ref: () => ({
-        get: async () => ({val: () => 10}), transaction,
+        get: async () => ({val: () => 10}), transaction, on: (event, callback) => callback(), off: vi.fn(),
     })}));
     expect(await updateCounter(backend, relative, -1)).toBeNull();
     expect(transaction).toHaveBeenCalledTimes(2);
@@ -108,7 +108,7 @@ it("recomputes the counter from fresh data after an Admin transaction conflict",
 
 it.each(["get", "transaction"])("Admin SDK %s errors propagate unchanged", async method => {
     const error = new Error("SDK unavailable");
-    const ref = {get: async () => ({val: () => 1}), transaction: vi.fn()};
+    const ref = {get: async () => ({val: () => 1}), transaction: vi.fn(), on: (event, callback) => callback(), off: vi.fn()};
     ref[method] = vi.fn().mockRejectedValue(error);
     const backend = new FirebaseServerBackend(() => ({ref: () => ref}));
     await expect(updateCounter(backend, relative, -1)).rejects.toBe(error);

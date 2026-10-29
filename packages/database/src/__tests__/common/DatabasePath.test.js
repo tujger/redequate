@@ -30,27 +30,19 @@ it("resolves named segment values and normalizes slashes", () => {
     expect(() => resolvePath(undefined)).toThrow();
 });
 
-it("ignores numeric dynamic levels in Firebase paths, including level zero", async () => {
-    const dynamic = ["mutual", {friendship: "m123", _: 0}, {active: "a456", _: 1}];
-    expect(resolvePath(dynamic)).toBe("mutual/m123/a456");
-    await database.update(dynamic, () => ({nested: {value: 1}}));
-    expect(backend.request).toHaveBeenCalledWith("database.update", "mutual/m123/a456", {nested: {value: 1}}, {mode: "replace", etag: "initial"});
-    const single = ["mutual", {friendship: "m123", _: true}];
-    expect(resolvePath(single)).toBe(resolvePath(["mutual", {friendship: "m123", _: 0}]));
-    expect(resolvePath(single)).toBe("mutual/m123");
-    await database.update(single, () => ({value: 2}));
-    expect(backend.request).toHaveBeenLastCalledWith("database.update", "mutual/m123", {value: 2}, {mode: "replace", etag: "initial"});
-    expect(() => resolvePath(["mutual", {friendship: "m123", _type: 0}])).toThrow();
-});
-
-it.each([false, -1, "0", null, undefined, 1.5, Number.MAX_SAFE_INTEGER + 1, {level: 2}])(
-    "ignores Firebase path metadata _ = %j without validating it", async metadata => {
+it.each([false, -1, "0", null, undefined, 1.5, {level: 2}])(
+    "rejects removed path metadata _ = %j", async metadata => {
         const path = ["mutual", {friendship: "m123", _: metadata}];
-        expect(resolvePath(path)).toBe("mutual/m123");
-        await database.update(path, () => ({value: 1}));
-        expect(backend.request).toHaveBeenLastCalledWith("database.update", "mutual/m123", {value: 1}, {mode: "replace", etag: "initial"});
+        expect(() => resolvePath(path)).toThrow();
+        await expect(database.update(path, () => ({value: 1}))).rejects.toMatchObject({code: "database/invalid-argument"});
+        expect(backend.request).not.toHaveBeenCalled();
     }
 );
+
+it("allows underscore as an ordinary field", async () => {
+    expect(resolvePath(["mutual", {_: "m123"}])).toBe("mutual/m123");
+    expect(await database.create(["posts", "_"], {text: "ordinary key field"})).toBe("backend-key");
+});
 
 it("uses named segments in reads, writes, updates, deletes and creation", async () => {
     fixture.sdk.once.mockResolvedValue(fixture.snapshot("a@example.com"));
@@ -100,7 +92,7 @@ it("attaches and removes listeners at the resolved path", () => {
 it("distinguishes paths with named segments from cursor compositions", async () => {
     expect(new DatabaseBase().cursor(path).path).toEqual(path);
     expect(new DatabaseBase().cursor([{path}]).path).toBeUndefined();
-    const dynamicPath = ["mutual", {friendship: "m123", _: true}];
+    const dynamicPath = ["mutual", {friendship: "m123"}];
     expect(database.cursor(dynamicPath).path).toBe("mutual/m123");
     expect(database.cursor([]).path).toBe("");
     fixture.sdk.once.mockResolvedValue(fixture.snapshot({a: 1}));
@@ -123,7 +115,7 @@ it("rejects empty read paths while retaining root cursors", async () => {
     expect(fixture.sdk.once.mock.calls.map(([ref]) => ref.path)).toEqual([""]);
 });
 
-it.each(["users_public", [], ["users_public"], ["users_public", "_"]])(
+it.each(["users_public", [], ["users_public"]])(
     "validates create-specific path shape at runtime: %j", async invalid => {
         await expect(database.create(invalid, {})).rejects.toMatchObject({code: "database/invalid-argument"});
         expect(fixture.sdk.refs).toHaveLength(0);
@@ -158,7 +150,7 @@ it("reports invalid paths through the configured operation error handler", async
 
 it("preserves orderBy segments and resolves them only in Firebase", async () => {
     expect(new DatabaseCursor({orderBy: ["profile", "name"]}, path).orderBy).toEqual(["profile", "name"]);
-    const orderBy = ["profile", {field: "name", _: 0}];
+    const orderBy = ["profile", {field: "name"}];
     expect(new DatabaseCursor({orderBy}, path).orderBy).toEqual(orderBy);
     expect(new DatabaseCursor({orderBy: "profile/name"}, path).orderBy).toBe("profile/name");
     const cursor = database.cursor(path, {orderBy, start: "Al"});
@@ -188,4 +180,16 @@ it.each([{orderBy: ""}, {orderBy: []}])("orders root values in Firebase: %j", as
     const listener = database.addEventListener("records", {orderBy, onChildAdd: vi.fn()});
     expect(fixture.sdk.listeners.find(item => item.type === "child_added").ref.query).toEqual({orderByKey: []});
     listener.remove();
+});
+
+
+it("keeps parser Symbols out of backend request paths and values", async () => {
+    const containsSymbol = value => typeof value === "symbol" || value !== null && typeof value === "object" &&
+        (Reflect.ownKeys(value).some(key => typeof key === "symbol") || Object.values(value).some(containsSymbol));
+    await database.create(["posts", "post_id"], key => ({text: key}));
+    await database.create(["posts", {post_id: "{literal-key}"}], {text: "explicit key"});
+    await database.update(["posts", {post_id: "p1"}, "text"], () => "updated");
+    await database.delete(["posts", {post_id: "p1"}]);
+    expect(containsSymbol(backend.request.mock.calls)).toBe(false);
+    expect(backend.request).toHaveBeenCalledWith("database.create", ["posts", {post_id: "{literal-key}"}], {text: "explicit key"});
 });

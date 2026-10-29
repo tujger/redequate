@@ -1,6 +1,6 @@
 import listener from "../firebase-server/src/database/onEvents";
 import {oncreate, ondelete, onupdate} from "../firebase-server/src/database";
-import {extra as ExtraListener, post as PostListener} from "../common/handlers";
+import {alert as AlertListener, extra as ExtraListener, post as PostListener} from "../common/handlers";
 import BackendListener from "../common/BackendListener";
 
 const snapshot = value => ({val: () => value});
@@ -19,8 +19,10 @@ const payload = (type, before, after, params = {extra_id: "e1"}) => type === "up
 it.each([
     ["/posts//p1/", "posts/p1"],
     [["extra", "extra_id"], "extra/{extra_id}"],
+    [["alerts", "user_id", "alert_id"], "alerts/{user_id}/{alert_id}"],
+    [["alerts", {user_id: "u1"}, "alert_id"], "alerts/u1/{alert_id}"],
     [["posts", {post_id: "p1"}], "posts/p1"],
-    [["posts", {post_id: "{postId}", _: {label: "ignored"}}, {field: "text"}], "posts/{postId}/text"],
+    [["posts", {post_id: "{postId}"}, {field: "text"}], "posts/{postId}/text"],
     ["posts/{postId}", "posts/{postId}"],
 ])("registers each event at database path %j", (path, ref) => {
     const triggers = listener({path, onCreate() {}, onDelete() {}, onUpdate() {}});
@@ -32,7 +34,7 @@ it.each([
     }
 });
 
-it.each([[null], [[]], [["posts", {post_id: ""}]], [["posts", {a: "1", b: "2"}]]])(
+it.each([[null], [[]], [["posts", {post_id: ""}]], [["posts", {a: "1", b: "2"}]], [["alerts", "user_id", "user_id"]], [["alerts", "bad/name"]], [["posts", {post_id: "p1", _: true}]]])(
     "rejects an invalid path %j", path => {
         expect(() => listener({path, onCreate() {}})).toThrow();
     }
@@ -69,7 +71,7 @@ it.each(types)("keeps the listener instance as this for %s", async (type, name, 
 });
 
 it("exports only the three production trigger groups", () => {
-    for (const group of [oncreate, ondelete, onupdate]) expect(Object.keys(group)).toEqual(["extra", "post"]);
+    for (const group of [oncreate, ondelete, onupdate]) expect(Object.keys(group)).toEqual(["alert", "extra", "post"]);
 });
 
 it.each(types)("runs the extra %s behavior", async (type, name, suffix, before, after) => {
@@ -118,4 +120,20 @@ it("keeps Firebase listener contexts isolated between registrations", async () =
     await listener(second).onCreate.run(event("create", null, {id: "two"}));
     expect(first.seen).toEqual([{backend: firstBackend, props: {value: {id: "one"}, params: {extra_id: "e1"}}}]);
     expect(second.seen).toEqual([{backend: secondBackend, props: {value: {id: "two"}, params: {extra_id: "e1"}}}]);
+});
+
+
+it.each(types)("delivers alert %s with both wildcard parameters", async (type, name, suffix, before, after) => {
+    const instance = new AlertListener({});
+    const callback = vi.spyOn(instance, name).mockResolvedValue("done");
+    const params = {user_id: "u1", alert_id: "a1"};
+    expect(await listener(instance)[name].run(event(type, before, after, params))).toBe("done");
+    expect(callback).toHaveBeenCalledExactlyOnceWith(payload(type, before, after, params));
+});
+
+it("includes fixed named parameters alongside captured Firebase parameters", async () => {
+    const callback = vi.fn();
+    const triggers = listener({path: ["alerts", {user_id: "u1"}, "alert_id"], onCreate: callback});
+    await triggers.onCreate.run(event("create", null, {new: true}, {alert_id: "a1"}));
+    expect(callback).toHaveBeenCalledExactlyOnceWith({value: {new: true}, params: {user_id: "u1", alert_id: "a1"}});
 });

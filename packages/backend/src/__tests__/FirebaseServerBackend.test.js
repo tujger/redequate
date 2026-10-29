@@ -11,6 +11,8 @@ const reference = path => {
         child: vi.fn(key => reference(`${path}/${key}`)),
         push: vi.fn(() => reference(`${path}/-generated-${++generated}`)),
         get: vi.fn(async () => ({val: () => records.get(path) ?? null})),
+        on: vi.fn((event, callback) => { callback(); return callback; }),
+        off: vi.fn(),
         set: vi.fn(async value => { records.set(path, value); }),
         update: vi.fn(async () => {}),
         remove: vi.fn(async () => { records.delete(path); }),
@@ -189,3 +191,50 @@ it.each([
     await expect(backend.request("database.update", ...args)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(database.ref).not.toHaveBeenCalled();
 });
+
+
+it("warms a cold transaction cache and retains only its own listener until commit", async () => {
+    records.set("posts/p1", 7);
+    const ref = reference("posts/p1");
+    const snapshot = await backend.request("database.update", "posts/p1", null, {mode: "read"});
+    let cached = null;
+    const listeners = new Set([() => {}]);
+    ref.on.mockImplementation((event, callback) => {
+        listeners.add(callback);
+        queueMicrotask(() => { cached = records.get("posts/p1"); callback(); });
+    });
+    ref.off.mockImplementation((event, callback) => {
+        listeners.delete(callback);
+        cached = null;
+    });
+    ref.transaction.mockImplementation(async callback => {
+        expect(listeners.size).toBe(2);
+        const next = callback(cached);
+        if (next === undefined) return {committed: false, snapshot: {val: () => cached}};
+        records.set("posts/p1", next);
+        return {committed: true, snapshot: {val: () => next}};
+    });
+    expect(await backend.request("database.update", "posts/p1", 8, {mode: "replace", etag: snapshot.etag}))
+        .toEqual({committed: true, value: 8});
+    expect(ref.transaction).toHaveBeenCalledTimes(1);
+    expect(ref.off).toHaveBeenCalledExactlyOnceWith("value", ref.on.mock.calls[0][1]);
+    expect(listeners.size).toBe(1);
+    expect(records.get("posts/p1")).toBe(8);
+});
+
+it.each(["commit", "conflict", "subscribe-error", "subscribe-throw", "transaction-error"])(
+    "releases the temporary value listener after %s", async outcome => {
+        records.set("posts/p1", 1);
+        const snapshot = await backend.request("database.update", "posts/p1", null, {mode: "read"});
+        const ref = reference("posts/p1");
+        const error = new Error("SDK failed");
+        if (outcome === "conflict") records.set("posts/p1", 2);
+        if (outcome === "subscribe-error") ref.on.mockImplementation((event, callback, reject) => reject(error));
+        if (outcome === "subscribe-throw") ref.on.mockImplementation(() => { throw error; });
+        if (outcome === "transaction-error") ref.transaction.mockRejectedValue(error);
+        const result = backend.request("database.update", "posts/p1", 9, {mode: "replace", etag: snapshot.etag});
+        if (outcome.includes("error") || outcome.includes("throw")) await expect(result).rejects.toBe(error);
+        else expect((await result).committed).toBe(outcome === "commit");
+        expect(ref.off).toHaveBeenCalledExactlyOnceWith("value", ref.on.mock.calls[0][1]);
+        if (outcome.startsWith("subscribe-")) expect(ref.transaction).not.toHaveBeenCalled();
+    });
