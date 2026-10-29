@@ -1,6 +1,6 @@
 import {getDatabase} from "firebase-admin/database";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
-import resolvePath from "../../../../../../database/src/common/resolvePath";
+import parsePath from "../../../../../../database/src/firebase/parsePath";
 import checkResponse from "../../common/checkResponse";
 import createDatabaseUrl from "../../common/createDatabaseUrl";
 import getRequestToken from "../../common/getRequestToken";
@@ -9,7 +9,7 @@ import sendRequest from "../../common/sendRequest";
 import throwDatabaseError from "../../common/throwDatabaseError";
 
 const prepare = request => {
-    const address = resolvePath(request.data);
+    const address = parsePath(request.data).address;
     if (invalidPath.test(address)) throw new HttpsError("invalid-argument", "Invalid Firebase path.");
     const token = getRequestToken(request);
     const database = getDatabase();

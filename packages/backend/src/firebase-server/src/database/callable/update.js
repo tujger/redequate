@@ -1,6 +1,6 @@
 import {getDatabase} from "firebase-admin/database";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
-import resolvePath from "../../../../../../database/src/common/resolvePath";
+import parsePath from "../../../../../../database/src/firebase/parsePath";
 import checkResponse from "../../common/checkResponse";
 import createDatabaseUrl from "../../common/createDatabaseUrl";
 import getRequestToken from "../../common/getRequestToken";
@@ -19,7 +19,7 @@ const prepare = request => {
     }
     const mode = options.mode ?? "patch";
     if (!["patch", "read", "replace"].includes(mode)) throw new HttpsError("invalid-argument", "Invalid update mode.");
-    const address = resolvePath(path);
+    const address = parsePath(path).address;
     if (invalidPath.test(address)) throw new HttpsError("invalid-argument", "Invalid Firebase path.");
     if (mode === "read" && value !== null) throw new HttpsError("invalid-argument", "Read requires a null value.");
     if (mode === "patch" && (value === null || typeof value !== "object" || value instanceof Array)) {
