@@ -1,4 +1,4 @@
-import {observeWrites} from "../../../backend/src/local/database/createHelpers";
+import {observeWrites} from "../../../backend/src/local/database/callable/createHelpers";
 import validatePath from "../common/validatePath";
 import compareKeys from "../common/compareKeys";
 import {fail} from "../../../common";
