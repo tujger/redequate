@@ -1,6 +1,6 @@
-import validatePath from "../../../../database/src/common/validatePath";
-import {fail} from "../../../../common";
-import {openLocalDatabase} from "../../../../common/src/localDatabase";
+import validatePath from "../../../../../database/src/common/validatePath";
+import {fail} from "../../../../../common";
+import {openLocalDatabase} from "../../../../../common/src/localDatabase";
 import {validateCollectionPath, runTransaction, writeStore, notifyWrites} from "./createHelpers";
 
 export default async function deleteRecord({storageId, args}) {

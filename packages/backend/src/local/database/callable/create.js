@@ -1,6 +1,6 @@
 import {key as generateKey} from "firebase-key";
-import {fail} from "../../../../common";
-import parseCreatePath from "../../../../database/src/common/parseCreatePath";
+import {fail} from "../../../../../common";
+import parseCreatePath from "../../../../../database/src/common/parseCreatePath";
 import {addRecord, createRecordPath} from "./createHelpers";
 
 export default async function createRecord({storageId, args}) {

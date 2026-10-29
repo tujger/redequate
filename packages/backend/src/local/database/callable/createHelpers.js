@@ -1,10 +1,10 @@
-import {isTimestamp} from "../timestamp";
-import {incrementDelta, isIncrement} from "../increment";
-import {openLocalDatabase} from "../../../../common/src/localDatabase";
-import {fail} from "../../../../common";
-import {captureWrites, publishWrites} from "./writeEvents";
-import parseCreatePath from "../../../../database/src/common/parseCreatePath";
-import {decodeRecordValue, encodeRecordValue, setRecordField} from "./recordValue";
+import {isTimestamp} from "../../timestamp";
+import {incrementDelta, isIncrement} from "../../increment";
+import {openLocalDatabase} from "../../../../../common/src/localDatabase";
+import {fail} from "../../../../../common";
+import {captureWrites, publishWrites} from "../writeEvents";
+import parseCreatePath from "../../../../../database/src/common/parseCreatePath";
+import {decodeRecordValue, encodeRecordValue, setRecordField} from "../recordValue";
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
