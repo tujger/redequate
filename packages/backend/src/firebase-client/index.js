@@ -1,4 +1,4 @@
-import {increment} from "firebase/database";
+import {increment, serverTimestamp} from "firebase/database";
 import {getFunctions, httpsCallable} from "firebase/functions";
 import BackendBase from "../common/BackendBase";
 
@@ -8,6 +8,10 @@ export default class FirebaseBackendClient extends BackendBase {
     constructor({firebase}) {
         super();
         this._functions = getFunctions(firebase.app);
+    }
+
+    get TIMESTAMP() {
+        return serverTimestamp();
     }
 
     increment(n) {

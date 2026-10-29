@@ -1,9 +1,10 @@
+import {isTimestamp} from "../timestamp";
 import {isIncrement} from "../increment";
 import {fail} from "../../../../common";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import validatePath from "../../../../database/src/common/validatePath";
 import {
-    isTimestamp, validateCollectionPath, runTransaction, readStore, writeStore,
+    validateCollectionPath, runTransaction, readStore, writeStore,
     childRecordPath, assertNonOverlapping, notifyWrites
 } from "./createHelpers";
 

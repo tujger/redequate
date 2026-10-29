@@ -1,3 +1,4 @@
+import {isTimestamp} from "../timestamp";
 import {incrementDelta, isIncrement} from "../increment";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import {fail} from "../../../../common";
@@ -7,9 +8,6 @@ import {decodeRecordValue, encodeRecordValue, setRecordField} from "./recordValu
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
-export const TIMESTAMP = Object.freeze({".sv": "timestamp"});
-export const isTimestamp = value => isRecord(value) && Object.keys(value).length === 1 &&
-    Object.getOwnPropertySymbols(value).length === 0 && value[".sv"] === "timestamp";
 const set = (object, name, value) => Object.defineProperty(object, name,
     {value, enumerable: true, writable: true, configurable: true});
 const at = (object, names) => names.reduce((value, name) => value !== null && typeof value === "object" &&
