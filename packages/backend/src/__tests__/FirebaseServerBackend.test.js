@@ -1,3 +1,4 @@
+import ExtraListener from "../common/handlers/extra";
 import BackendBase from "../common/BackendBase";
 import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
 
@@ -9,6 +10,7 @@ const reference = path => {
         key: path.split("/").at(-1) || null,
         child: vi.fn(key => reference(`${path}/${key}`)),
         push: vi.fn(() => reference(`${path}/-generated-${++generated}`)),
+        get: vi.fn(async () => ({val: () => records.get(path) ?? null})),
         set: vi.fn(async value => { records.set(path, value); }),
         update: vi.fn(async () => {}),
         remove: vi.fn(async () => { records.delete(path); }),
@@ -112,6 +114,7 @@ it.each([
     ["database.create", ["posts", "post_id"], {}, {}],
     ["database.update", "posts/p1"], ["database.update", "posts/p1", {}, {}],
     ["database.update", "", false], ["database.update", "", []],
+    ["database.read"], ["database.read", "posts/p1", {}],
     ["database.delete"], ["database.delete", "posts/p1", null],
 ])("rejects malformed arguments %j without writing", async (...args) => {
     await expect(backend.request(...args)).rejects.toMatchObject({code: "database/invalid-argument"});
@@ -123,7 +126,7 @@ it.each([
     }
 });
 
-it.each(["database.read", "unknown", "toString"])("rejects unsupported %s before opening a database", async name => {
+it.each(["database.watch", "unknown", "toString"])("rejects unsupported %s before opening a database", async name => {
     await expect(backend.request(name, "posts/p1", {})).rejects.toMatchObject({code: "backend/not-implemented"});
     expect(getDatabase).not.toHaveBeenCalled();
 });
@@ -131,9 +134,31 @@ it.each(["database.read", "unknown", "toString"])("rejects unsupported %s before
 it.each([
     ["database.create", "transaction", [["posts", {post_id: "p1"}], {text: "new"}]],
     ["database.update", "set", [["posts", {post_id: "p1"}], {text: "new"}]],
+    ["database.read", "get", [["posts", {post_id: "p1"}]]],
     ["database.delete", "remove", [["posts", {post_id: "p1"}]]],
 ])("propagates SDK failures from %s", async (name, method, args) => {
     const failure = new Error("SDK unavailable");
     reference("posts/p1")[method].mockRejectedValueOnce(failure);
     await expect(backend.request(name, ...args)).rejects.toBe(failure);
+});
+
+
+it.each(["author", 0, false, null])("reads a resolved path without losing %j", async value => {
+    records.set("posts/p1/uid", value);
+    expect(await backend.request("database.read", ["posts", {post_id: "p1"}, "uid"])).toBe(value);
+    expect(reference("posts/p1/uid").get).toHaveBeenCalledExactlyOnceWith();
+});
+
+
+it("runs ExtraListener through Admin reads, native counter writes and alert creation", async () => {
+    records.set("posts/p1/uid", "author");
+    await new ExtraListener(backend).onCreate({
+        value: {id: "p1", uid: "reactor", type: "like"}, params: {extra_id: "e1"},
+    });
+    expect(reference("_counters/p1/like").set).toHaveBeenCalledExactlyOnceWith({".sv": {increment: 1}});
+    expect(reference("posts/p1/uid").get).toHaveBeenCalledTimes(1);
+    expect(records.get("alerts/author/-generated-1")).toEqual({
+        uid: "reactor", context: null, id: "p1", message: null,
+        new: true, path: null, timestamp: backend.TIMESTAMP, type: "like",
+    });
 });

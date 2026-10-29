@@ -59,12 +59,11 @@ it("supports root objects and Maps of named Local paths in atomic multi-store pa
 
 it("resolves timestamp and increment markers once per committed batch", async () => {
     const {database, backend, request} = await setup();
-    expect(database.TIMESTAMP).toEqual({".sv": "timestamp"});
-    expect(JSON.parse(JSON.stringify(database.TIMESTAMP))).toEqual(database.TIMESTAMP);
+    expect(database.TIMESTAMP).toBe(backend.TIMESTAMP);
     await request(post, {count: 2});
     await request("", new Map([
         [[...post, "count"], backend.increment(3)],
-        [[...post, "time"], JSON.parse(JSON.stringify(database.TIMESTAMP))],
+        [[...post, "time"], backend.TIMESTAMP],
         [["meta", "time"], database.TIMESTAMP]
     ]));
     const result = await database.read(post);
@@ -245,3 +244,19 @@ it("validates modes, values and paths without initializing stores or invoking ca
 
 // Storage and delivery tests isolate application reactions; their effects have integration coverage.
 vi.mock("../common", () => ({handlers: {}}));
+
+
+it("resolves nested and reused timestamp markers while leaving Firebase-shaped objects as ordinary data", async () => {
+    const {database, backend, request} = await setup("timestamp-symbol");
+    const marker = backend.TIMESTAMP;
+    const firebaseValue = {".sv": "timestamp"};
+    await request(post, {first: marker, nested: {second: marker}, firebaseValue});
+    const saved = await database.read(post);
+    expect(saved).toEqual({first: expect.any(Number), nested: {second: expect.any(Number)}, firebaseValue});
+    expect(saved.first).toBe(saved.nested.second);
+    expect(Object.getOwnPropertySymbols(saved)).toEqual([]);
+    const field = [...post, {field: "last"}];
+    const current = await backend.request("database.update", field, null, {mode: "read"});
+    expect(await backend.request("database.update", field, marker, {mode: "replace", etag: current.etag}))
+        .toEqual({committed: true, value: expect.any(Number)});
+});

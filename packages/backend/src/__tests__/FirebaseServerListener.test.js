@@ -74,12 +74,12 @@ it("exports only the three production trigger groups", () => {
 
 it.each(types)("runs the extra %s behavior", async (type, name, suffix, before, after) => {
     const value = {id: "p", type: "like"};
-    const backend = {increment: vi.fn(n => ({delta: n})), request: vi.fn()};
+    const backend = {increment: vi.fn(n => ({delta: n})), request: vi.fn().mockResolvedValue(null)};
     const log = vi.spyOn(console, "debug").mockImplementation(() => {});
     try {
         await new ExtraListener(backend)[name](payload(type, value, value));
         expect(log).toHaveBeenCalledWith("[Backend:Extra]", `${{create: "added", delete: "deleted", update: "changed"}[type]} e1`, expect.any(Object));
-        expect(backend.request).toHaveBeenCalledTimes(type === "update" ? 0 : 1);
+        expect(backend.request).toHaveBeenCalledTimes(type === "create" ? 2 : type === "update" ? 0 : 1);
         if (type !== "update") expect(backend.request).toHaveBeenCalledWith("database.update", ["_counters", {id: "p"}, "like"], {delta: type === "create" ? 1 : -1});
     } finally { log.mockRestore(); }
 });

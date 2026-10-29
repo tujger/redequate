@@ -2,7 +2,7 @@ import {vi} from "vitest";
 
 // Controlled responses only; persistence and conflict handling have their own backend tests.
 export function createBackend() {
-    return {request: vi.fn(async (name, _path, value, options) => {
+    return {TIMESTAMP: {".sv": "timestamp"}, request: vi.fn(async (name, _path, value, options) => {
         if (name === "database.create") return "backend-key";
         if (name === "database.delete") return null;
         if (name === "database.update") {

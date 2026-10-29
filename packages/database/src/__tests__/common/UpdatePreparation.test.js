@@ -166,7 +166,7 @@ describe.each(["local", "firebase"])("%s update preparation", provider => {
     });
 
     it("passes timestamp and backend increment markers inside the complete value", async () => {
-        const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({count: 5, keep: true})).mockResolvedValueOnce(commit({}))};
+        const backend = {TIMESTAMP: {".sv": "timestamp"}, request: vi.fn().mockResolvedValueOnce(snapshot({count: 5, keep: true})).mockResolvedValueOnce(commit({}))};
         const database = forProvider(provider, backend), time = database.TIMESTAMP, delta = (provider === "firebase" ? firebaseIncrement : localIncrement)(2);
         await database.update(path, {count: delta, time});
         expect(backend.request.mock.calls[1][2]).toEqual({count: delta, time, keep: true});
