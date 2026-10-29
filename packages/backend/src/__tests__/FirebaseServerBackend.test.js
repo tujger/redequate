@@ -16,9 +16,9 @@ const reference = path => {
         remove: vi.fn(async () => { records.delete(path); }),
         transaction: vi.fn(async callback => {
             const value = callback(records.get(path) ?? null);
-            if (value === undefined) return {committed: false};
+            if (value === undefined) return {committed: false, snapshot: {val: () => records.get(path) ?? null}};
             records.set(path, value);
-            return {committed: true};
+            return {committed: true, snapshot: {val: () => value}};
         }),
     };
     references.set(path, ref);
@@ -112,7 +112,7 @@ it.each([
     ["database.create", ["posts", "post_id"], null], ["database.create", ["posts", "post_id"], []],
     ["database.create", ["posts", {post_id: "bad/key"}], {}],
     ["database.create", ["posts", "post_id"], {}, {}],
-    ["database.update", "posts/p1"], ["database.update", "posts/p1", {}, {}],
+    ["database.update", "posts/p1"], ["database.update", "posts/p1", {}, {mode: "unknown"}],
     ["database.update", "", false], ["database.update", "", []],
     ["database.read"], ["database.read", "posts/p1", {}],
     ["database.delete"], ["database.delete", "posts/p1", null],
@@ -126,7 +126,7 @@ it.each([
     }
 });
 
-it.each(["database.watch", "unknown", "toString"])("rejects unsupported %s before opening a database", async name => {
+it.each(["database.transaction", "database.watch", "unknown", "toString"])("rejects unsupported %s before opening a database", async name => {
     await expect(backend.request(name, "posts/p1", {})).rejects.toMatchObject({code: "backend/not-implemented"});
     expect(getDatabase).not.toHaveBeenCalled();
 });
@@ -155,10 +155,37 @@ it("runs ExtraListener through Admin reads, native counter writes and alert crea
     await new ExtraListener(backend).onCreate({
         value: {id: "p1", uid: "reactor", type: "like"}, params: {extra_id: "e1"},
     });
-    expect(reference("_counters/p1/like").set).toHaveBeenCalledExactlyOnceWith({".sv": {increment: 1}});
+    expect(reference("_counters/p1/like").transaction).toHaveBeenCalledTimes(1);
+    expect(records.get("_counters/p1/like")).toBe(1);
     expect(reference("posts/p1/uid").get).toHaveBeenCalledTimes(1);
     expect(records.get("alerts/author/-generated-1")).toEqual({
         uid: "reactor", context: null, id: "p1", message: null,
         new: true, path: null, timestamp: backend.TIMESTAMP, type: "like",
     });
+});
+
+
+it("conditionally replaces values with stable tokens and returns fresh data on conflicts", async () => {
+    records.set("posts/p1", {a: 1, b: 2});
+    const snapshot = await backend.request("database.update", "posts/p1", null, {mode: "read"});
+    expect(snapshot).toEqual({value: {a: 1, b: 2}, etag: expect.any(String)});
+    records.set("posts/p1", {b: 2, a: 1});
+    expect(await backend.request("database.update", "posts/p1", 3, {mode: "replace", etag: snapshot.etag}))
+        .toEqual({committed: true, value: 3});
+    const conflict = await backend.request("database.update", "posts/p1", 99, {mode: "replace", etag: snapshot.etag});
+    expect(conflict).toEqual({committed: false, value: 3, etag: expect.any(String)});
+    expect(records.get("posts/p1")).toBe(3);
+    expect(await backend.request("database.update", "posts/p1", null, {mode: "replace", etag: conflict.etag}))
+        .toEqual({committed: true, value: null});
+    expect(reference("posts/p1").set).not.toHaveBeenCalled();
+});
+
+it.each([
+    ["posts/p1", null, null], ["posts/p1", null, []],
+    ["", null, {mode: "read"}], ["posts/p1", 1, {mode: "read"}],
+    ["posts/p1", 1, {mode: "replace"}], ["posts/p1", 1, {mode: "replace", etag: ""}],
+    ["posts/p1", 1, {mode: "replace", etag: "bad\nETag"}],
+])("rejects invalid conditional update arguments %j", async (...args) => {
+    await expect(backend.request("database.update", ...args)).rejects.toMatchObject({code: "database/invalid-argument"});
+    expect(database.ref).not.toHaveBeenCalled();
 });

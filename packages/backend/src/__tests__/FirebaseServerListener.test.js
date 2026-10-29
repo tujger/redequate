@@ -74,30 +74,34 @@ it("exports only the three production trigger groups", () => {
 
 it.each(types)("runs the extra %s behavior", async (type, name, suffix, before, after) => {
     const value = {id: "p", type: "like"};
-    const backend = {increment: vi.fn(n => ({delta: n})), request: vi.fn().mockResolvedValue(null)};
+    const backend = {request: vi.fn(async (name, path, value, options) => name !== "database.update" ? null
+        : options.mode === "read" ? {value: null, etag: "initial"} : {committed: true, value})};
     const log = vi.spyOn(console, "debug").mockImplementation(() => {});
     try {
         await new ExtraListener(backend)[name](payload(type, value, value));
         expect(log).toHaveBeenCalledWith("[Backend:Extra]", `${{create: "added", delete: "deleted", update: "changed"}[type]} e1`, expect.any(Object));
-        expect(backend.request).toHaveBeenCalledTimes(type === "create" ? 2 : type === "update" ? 0 : 1);
-        if (type !== "update") expect(backend.request).toHaveBeenCalledWith("database.update", ["_counters", {id: "p"}, "like"], {delta: type === "create" ? 1 : -1});
+        expect(backend.request).toHaveBeenCalledTimes(type === "create" ? 3 : type === "update" ? 0 : 2);
+        if (type !== "update") expect(backend.request).toHaveBeenCalledWith("database.update", ["_counters", {id: "p"}, "like"], type === "create" ? 1 : null, {mode: "replace", etag: "initial"});
     } finally { log.mockRestore(); }
 });
 
 it.each(types)("runs the post %s counters in order", async (type, name) => {
-    const backend = {increment: vi.fn(n => ({delta: n})), request: vi.fn()};
+    const backend = {increment: vi.fn(n => ({delta: n})), request: vi.fn(async (name, path, value, options) =>
+        options?.mode === "read" ? {value: 1, etag: "initial"} : {committed: true, value})};
     const value = {uid: "u"};
     await new PostListener(backend)[name](payload(type, value, value, {post_id: "p"}));
     expect(backend.request.mock.calls).toEqual(type === "update" ? [] : [
-        ["database.update", ["_counters", {id: "total"}, "posts"], {delta: type === "create" ? 1 : -1}],
+        ["database.update", ["_counters", {id: "total"}, "posts"], null, {mode: "read"}],
+        ["database.update", ["_counters", {id: "total"}, "posts"], type === "create" ? 2 : null, {mode: "replace", etag: "initial"}],
         ["database.update", ["_counters", {id: "u"}, "posts"], {delta: type === "create" ? 1 : -1}],
     ]);
 });
 
 it("skips a missing post owner and stops after a failed total counter update", async () => {
-    const backend = {increment: n => ({delta: n}), request: vi.fn()};
+    const backend = {increment: n => ({delta: n}), request: vi.fn(async (name, path, value, options) =>
+        options?.mode === "read" ? {value: null, etag: "initial"} : {committed: true, value})};
     await new PostListener(backend).onCreate({value: {}, params: {post_id: "p"}});
-    expect(backend.request).toHaveBeenCalledTimes(1);
+    expect(backend.request).toHaveBeenCalledTimes(2);
     backend.request.mockClear().mockRejectedValueOnce(new Error("counter failed"));
     await expect(new PostListener(backend).onDelete({value: {uid: "u"}, params: {post_id: "p"}})).rejects.toThrow("counter failed");
     expect(backend.request).toHaveBeenCalledTimes(1);
