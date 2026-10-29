@@ -33,10 +33,11 @@ const prepare = args => {
     const [path, value, options = {}] = args;
     const parsed = parsePath(path);
     if (!isRecord(options)) invalid("Invalid update options.");
-    const mode = options.mode ?? (isIncrement(value) ? "increment" : "patch");
-    if (!["patch", "read", "replace", "increment"].includes(mode)) invalid("Invalid update mode.");
+    const mode = options.mode ?? (isIncrement(value) ? "increment" : isTimestamp(value) ? "timestamp" : "patch");
+    if (!["patch", "read", "replace", "increment", "timestamp"].includes(mode)) invalid("Invalid update mode.");
     if (mode === "increment" && !isIncrement(value)) invalid("Expected an increment value.");
-    if (mode === "patch" && isIncrement(value)) invalid("changes must be an object, or a Map for a root batch.");
+    if (mode === "timestamp" && !isTimestamp(value)) invalid("Expected a timestamp value.");
+    if (mode === "patch" && (isIncrement(value) || isTimestamp(value))) invalid("changes must be an object, or a Map for a root batch.");
     const root = !parsed.path.length;
     if (root && mode !== "patch") invalid("Only batch patch accepts an empty path.");
     if (!(root && mode === "patch" && value instanceof Map)) validateValue(value);
@@ -60,7 +61,7 @@ const prepare = args => {
         else if (!entryPath.split("/").filter(Boolean).length) invalid("Patch paths must not be empty.");
     }
     const names = root ? [...collections] : [parsed.collection];
-    return {path, root, entries, mode, names};
+    return {path, value, root, entries, mode, names};
 };
 
 // An exact, deterministic token avoids hash collisions and persistent revision fields.
@@ -98,7 +99,7 @@ export default async function update({storageId, args}) {
             return null;
         }
         const store = transaction.objectStore(names[0]);
-        if (mode === "increment") {
+        if (mode === "increment" || mode === "timestamp") {
             await writeStore(store, path, value);
             committed = true;
             return await readStore(store, path) ?? null;
