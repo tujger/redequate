@@ -1,11 +1,11 @@
 import {fail} from "../../../../../../common";
-import resolvePath from "../../../../../../database/src/common/resolvePath";
+import parsePath from "../../../../../../database/src/firebase/parsePath";
 import invalidPath from "../../common/invalidPath";
 import {conditionalUpdate} from "./_transaction";
 
 export default async (database, path, value, options = {}, ...args) => {
     if (args.length) fail("database/invalid-argument", "Expected (path, value, options?).");
-    const address = resolvePath(path);
+    const address = parsePath(path).address;
     if (invalidPath.test(address)) fail("database/invalid-argument", "Invalid Firebase path.");
     if (options === null || typeof options !== "object" || Array.isArray(options)) {
         fail("database/invalid-argument", "Invalid update options.");
@@ -16,7 +16,7 @@ export default async (database, path, value, options = {}, ...args) => {
         await database.ref(address).set(value);
     } else {
         const changes = value instanceof Map
-            ? Object.fromEntries([...value].map(([path, value]) => [resolvePath(path), value]))
+            ? Object.fromEntries([...value].map(([path, value]) => [parsePath(path).address, value]))
             : value;
         if (changes === null || typeof changes !== "object" || Array.isArray(changes)) {
             fail("database/invalid-argument", "Batch updates require an object or Map.");
