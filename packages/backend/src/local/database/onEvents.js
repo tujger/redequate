@@ -1,29 +1,34 @@
-import {identifier} from "../../../../common";
-import parseReadPath from "../../../../database/src/common/parseReadPath";
+import {fail, identifier} from "../../../../common";
+import parsePath, {PATH_VARIABLE} from "../../../../database/src/common/parsePath";
 import resolvePath from "../../../../database/src/common/resolvePath";
-import {readStore} from "./callable/createHelpers";
+import {readStoreMatches} from "./callable/createHelpers";
 import {subscribeWrites} from "./writeEvents";
 
 export default (listener, id = identifier()) => {
-    const {path: parentPath, keyField} = parseReadPath(listener.path);
-    const collection = resolvePath(parentPath).split("/")[0];
+    const parsed = parsePath(listener.path);
+    if (!parsed.path.length) fail("database/invalid-argument", "A listener requires a nonempty path.");
+    const variables = parsed.segments.flatMap((segment, index) => index > 0 && segment.value === PATH_VARIABLE
+        ? [{index, field: segment.name, parameter: segment.parameter ?? segment.name}] : []);
+    const names = variables.map(({parameter}) => parameter);
+    if (new Set(names).size !== names.length || names.some(name => /[{}\/]/.test(name))) {
+        fail("database/invalid-argument", "Listener variables must have distinct nonempty names without slashes or braces.");
+    }
+    const params = Object.fromEntries(parsed.segments.flatMap((segment, index) => index > 0 &&
+        typeof parsed.path[index] === "object" && segment.value !== PATH_VARIABLE ? [[segment.name, segment.value]] : []));
+    const pattern = {path: parsed.path, variables, params};
+    const collection = resolvePath(pattern.path.slice(0, 1)).split("/")[0];
 
     return backend => subscribeWrites(backend.storageId, id, {
         collection,
         async snapshot(transaction) {
-            const value = await readStore(transaction.objectStore(collection), parentPath, {keyField});
-            const fixedParams = Object.assign({}, ...parentPath.filter(segment => typeof segment === "object"));
-            delete fixedParams._;
-            const entries = keyField ? Object.entries(value ?? {}) : [["", value]];
-            return new Map(entries.filter(([, value]) => value !== undefined && value !== null).map(([key, value]) => {
-                const target = keyField ? [...parentPath, {[keyField]: key}] : parentPath;
-                const address = resolvePath(target);
-                return [address, {
-                    path: target,
-                    value,
-                    params: {...fixedParams, ...(keyField ? {[keyField]: key} : {})}
-                }];
-            }));
+            const entries = await readStoreMatches(transaction.objectStore(collection), pattern);
+            const matches = new Map();
+            for (const entry of entries) {
+                const address = resolvePath(entry.path);
+                if (matches.has(address)) fail("database/invalid-argument", "A listener path must identify each matching record uniquely.");
+                matches.set(address, entry);
+            }
+            return matches;
         },
         deliver({value, previous, params}) {
             const event = previous === null ? "onCreate" : value === null ? "onDelete" : "onUpdate";
