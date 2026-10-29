@@ -1,7 +1,7 @@
 import {identifier} from "../../../../common";
 import parseReadPath from "../../../../database/src/common/parseReadPath";
 import resolvePath from "../../../../database/src/common/resolvePath";
-import {readStore} from "./createHelpers";
+import {readStore} from "./callable/createHelpers";
 import {subscribeWrites} from "./writeEvents";
 
 export default (listener, id = identifier()) => {
