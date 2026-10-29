@@ -1,5 +1,5 @@
 import {getMessaging} from "firebase-admin/messaging";
-import sendToTokens from "../notification/sendToTokens";
+import {sendToTokens} from "../notification/send";
 import BackendBase from "../../../common/BackendBase";
 import {getDatabase, ServerValue} from "firebase-admin/database";
 import {fail} from "../../../../../common";

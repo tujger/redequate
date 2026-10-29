@@ -1,10 +1,10 @@
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 import authorize from "../common/authorize.js";
-import {database, messaging, url} from "../common/firebase";
 
 export default onCall(async request => {
     const {data} = request;
     try {
+        const {database, messaging, url} = await import("../common/firebase");
         await authorize(request, database, {adminOnly: true});
         let tokens = [];
         let uidTokens = [];
@@ -46,7 +46,7 @@ export default onCall(async request => {
         let options = {};
         if (data.priority) options.priority = data.priority;
 
-        const results = await sendNotificationToTokens(messaging, tokens, payload, options);
+        const results = await sendToTokens(messaging, tokens, payload, options);
         let toRemove = [];
         for (let result of results) {
             const {token, expired} = result;
@@ -74,8 +74,7 @@ export default onCall(async request => {
     }
 });
 
-
-const sendNotificationToTokens = async (messaging, tokens, payload, options = {}) => {
+export const sendToTokens = async (messaging, tokens, payload, options = {}) => {
     if (process.env.FUNCTIONS_EMULATOR === "true") {
         console.info("[Emulator] Push", {tokens, payload, options});
         return tokens.map((token, index) => ({token, messageId: `emulator-${index}`}));
