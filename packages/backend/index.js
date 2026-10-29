@@ -1,1 +1,1 @@
-export {default as BackendClientBase} from "./src/BackendClientBase";
+export {default as BackendBase} from "./src/common/BackendBase";
