@@ -95,7 +95,10 @@ it.each(types)("runs the post %s counters in order", async (type, name) => {
     expect(backend.request.mock.calls).toEqual(type === "update" ? [] : [
         ["database.update", ["_counters", {id: "total"}, "posts"], null, {mode: "read"}],
         ["database.update", ["_counters", {id: "total"}, "posts"], type === "create" ? 2 : null, {mode: "replace", etag: "initial"}],
-        ["database.update", ["_counters", {id: "u"}, "posts"], {delta: type === "create" ? 1 : -1}],
+        ...(type === "create" ? [
+            ["database.update", ["_counters", {id: "u"}, "posts"], null, {mode: "read"}],
+            ["database.update", ["_counters", {id: "u"}, "posts"], 2, {mode: "replace", etag: "initial"}],
+        ] : [["database.update", ["_counters", {id: "u"}, "posts"], {delta: -1}]]),
     ]);
 });
 

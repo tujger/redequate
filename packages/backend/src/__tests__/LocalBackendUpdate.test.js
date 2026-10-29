@@ -260,3 +260,37 @@ it("resolves nested and reused timestamp markers while leaving Firebase-shaped o
     expect(await backend.request("database.update", field, marker, {mode: "replace", etag: current.etag}))
         .toEqual({committed: true, value: expect.any(Number)});
 });
+
+
+it("writes a timestamp directly to a missing or existing field, preserving siblings", async () => {
+    const {database, backend, request} = await setup("direct-timestamp");
+    await request(["_activity", "types"], {other: 7});
+    const path = ["_activity", "types", "service"];
+    const first = await request(path, backend.TIMESTAMP);
+    expect(first).toEqual(expect.any(Number));
+    expect(await database.read(["_activity", "types"])).toEqual({other: 7, service: first});
+    await request(path, {old: true});
+    const second = await request(path, backend.TIMESTAMP);
+    expect(second).toEqual(expect.any(Number));
+    expect(await database.read(["_activity", "types"])).toEqual({other: 7, service: second});
+});
+
+it("logs the original patch value instead of undefined", async () => {
+    const {request} = await setup("patch-log");
+    const log = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const changes = {service: 42};
+    await request(["_activity", "types"], changes);
+    expect(log).toHaveBeenCalledWith("[Backend:Update]", "update [_activity/types]", {value: changes});
+});
+
+it("validates explicit timestamp mode and rejects timestamps as patches", async () => {
+    const {database, backend, request} = await setup("timestamp-mode");
+    const path = ["_activity", "types", "service"];
+    for (const value of [undefined, null, 123, {}, {".sv": "timestamp"}]) {
+        await expect(request(path, value, {mode: "timestamp"})).rejects.toMatchObject({code: "database/invalid-argument"});
+    }
+    await expect(request(path, backend.TIMESTAMP, {mode: "patch"})).rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(request("", backend.TIMESTAMP)).rejects.toMatchObject({code: "database/invalid-argument"});
+    await request(path, backend.TIMESTAMP, {mode: "timestamp"});
+    expect(await database.read(path)).toEqual(expect.any(Number));
+});
