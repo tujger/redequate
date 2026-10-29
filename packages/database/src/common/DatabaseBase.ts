@@ -1,4 +1,4 @@
-import type BackendClientBase from "../../../backend/src/BackendClientBase";
+import type BackendBase from "../../../backend/src/common/BackendBase";
 import {notImplemented} from "../../../common"
 import DatabaseCursor from "./DatabaseCursor";
 import createRecord from "./methods/create";
@@ -31,7 +31,7 @@ type CreateMethodOptions = {
  */
 export default class DatabaseBase {
     onError: DatabaseErrorHandler;
-    protected _backend?: BackendClientBase;
+    protected _backend?: BackendBase;
 
     constructor(
         {

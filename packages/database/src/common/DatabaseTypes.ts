@@ -1,4 +1,4 @@
-import type BackendClientBase from "../../../backend/src/BackendClientBase";
+import type BackendBase from "../../../backend/src/common/BackendBase";
 import type {DatabaseOrder} from "./DatabaseOrder";
 
 /**
@@ -29,7 +29,7 @@ export interface DatabaseGroupEntry {
 }
 
 export interface DatabaseOptions extends Record<string, unknown> {
-    backend?: BackendClientBase;
+    backend?: BackendBase;
     onError?: DatabaseErrorHandler;
 }
 

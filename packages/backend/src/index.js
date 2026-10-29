@@ -1,2 +1,2 @@
-export {default as BackendClientBase} from "./BackendClientBase";
+export {default as BackendBase} from "./common/BackendBase";
 export {default as resolveBackend} from "./resolveBackend";
