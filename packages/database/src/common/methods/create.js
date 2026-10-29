@@ -1,10 +1,15 @@
 import {fail, notImplemented} from "../../../../common";
-import parseCreatePath from "../parseCreatePath";
+import parsePath from "../parsePath";
 
 export default async function createRecord(backend, path, value, implementation) {
     if (!implementation) return notImplemented("create");
     const {key, mapError} = implementation;
-    const {parentPath, fieldName, key: suppliedKey} = parseCreatePath(path);
+    const parsed = parsePath(path);
+    if (parsed.literal || parsed.path.length < 2) fail("database/invalid-argument", "create requires a collection path followed by a key field name.");
+    const parentPath = parsed.path.slice(0, -1);
+    const last = parsed.path.at(-1);
+    const fieldName = typeof last === "string" ? last : parsed.segments.at(-1).name;
+    const suppliedKey = typeof last === "string" ? undefined : last[fieldName];
     const recordKey = suppliedKey ?? key;
     const preparedValue = value instanceof Function ? value(recordKey) : value;
     if (preparedValue?.then instanceof Function) {

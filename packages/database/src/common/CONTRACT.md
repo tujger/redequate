@@ -19,9 +19,9 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
 
 - Paths are strings or arrays of nonempty string segments and named segments
   with exactly one nonempty string value. `resolvePath` joins the segment values
-  with `/` and ignores `_`. Firebase uses that resulting address. Local uses
+  with `/`. Firebase uses that resulting address. Local uses
   `path[0]` as a configured physical object store; named segments retain their
-  field name and optional dynamic level as part of Local identity. Root reads
+  field name as part of Local identity. Root reads
   (`''`, `[]`) are invalid; root cursors are valid.
 - Array `read`, `cursor` and `addEventListener` paths share a grammar: a trailing string in
   an array of two or more segments is the collection's identity field. Firebase

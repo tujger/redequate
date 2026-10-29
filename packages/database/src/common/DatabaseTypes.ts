@@ -1,14 +1,8 @@
 import type BackendBase from "../../../backend/src/common/BackendBase";
 import type {DatabaseOrder} from "./DatabaseOrder";
 
-/**
- * A literal name or one string-valued field. Local dynamic level _ accepts a
- * non-negative integer; true means 0. Firebase ignores _.
- */
-export type DatabasePathSegment = string | {
-    [key: string]: string | number | true | undefined;
-    _?: number | true;
-};
+/** A literal name or one string-valued field. */
+export type DatabasePathSegment = string | {[key: string]: string};
 /**
  * Reads require a non-empty path. Their trailing array string names an identity
  * field; concrete branches use named segments. Cursors may use '' or [] for root.

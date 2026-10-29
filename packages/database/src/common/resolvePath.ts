@@ -1,13 +1,8 @@
-import validatePath from "./validatePath";
+import parsePath from "./parsePath";
 import type {DatabasePath} from "./DatabaseTypes";
 
-/** Resolve segment values to a canonical address, ignoring _ metadata. */
-export default function resolvePath(path: DatabasePath): string {
-    validatePath(path);
-    const resolved = typeof path === "string"
-        ? path
-        : path.map(segment => typeof segment === "string"
-            ? segment
-            : segment[Object.getOwnPropertyNames(segment).find(name => name !== "_")!]).join("/");
-    return resolved.split("/").filter(Boolean).join("/");
+export default function resolvePath(rawPath: DatabasePath): string {
+    const {path, segments} = parsePath(rawPath);
+    return path.map((segment, index) => typeof segment === "string"
+        ? segment : segment[segments[index].name]).join("/").split("/").filter(Boolean).join("/");
 }
