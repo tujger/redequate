@@ -96,14 +96,14 @@ const Activity = props => {
     let cursor;
     switch (activityMode) {
         case "all":
-            cursor = database.cursor(["activity", "activity_uid"], {
+            cursor = database.cursor(["activity", "activity_id"], {
                 order: activitySort,
                 endDate: endDate?.toDate(),
                 startDate: startDate?.toDate(),
             });
             break;
         case "type":
-            cursor = database.cursor(["activity", "activity_uid"], {
+            cursor = database.cursor(["activity", "activity_id"], {
                 order: activitySort,
                 endDate: endDate?.toDate(),
                 orderBy: ["type"],
@@ -112,7 +112,7 @@ const Activity = props => {
             });
             break;
         case "uid":
-            cursor = database.cursor(["activity", "activity_uid"], {
+            cursor = database.cursor(["activity", "activity_id"], {
                 order: activitySort,
                 endDate: endDate?.toDate(),
                 orderBy: ["uid"],

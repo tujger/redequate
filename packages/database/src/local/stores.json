@@ -32,7 +32,7 @@
             "autoIncrement": true
         },
         "storeSchema": [
-            {"name": "activity_uid", "keypath": "activity_uid", "options": {"unique": true}},
+            {"name": "activity_id", "keypath": "activity_id", "options": {"unique": true}},
             {"name": "type", "keypath": "type"},
             {"name": "uid", "keypath": "uid"}
         ]

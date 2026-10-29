@@ -15,7 +15,7 @@ auditReducer.SAVE = "audit_save";
 auditReducer.ERRORS = "audit_errors";
 
 export const updateActivity = async ({database, uid = 0, type = null, details = null}) => {
-    database.create(["activity", "activity_uid"], {
+    database.create(["activity", "activity_id"], {
         details,
         timestamp: database.TIMESTAMP,
         type,
