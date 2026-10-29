@@ -1,3 +1,5 @@
+import {getMessaging} from "firebase-admin/messaging";
+import sendToTokens from "../notification/sendToTokens";
 import BackendBase from "../../../common/BackendBase";
 import {getDatabase, ServerValue} from "firebase-admin/database";
 import {fail} from "../../../../../common";
@@ -14,10 +16,15 @@ const requests = {
 };
 
 export default class FirebaseServerBackend extends BackendBase {
-    constructor(getDatabaseInstance = getDatabase, createIncrement = ServerValue.increment) {
-        super();
+    constructor(getDatabaseInstance = getDatabase, createIncrement = ServerValue.increment, options = {}) {
+        super(options);
+        this.getMessagingInstance = options.getMessagingInstance ?? getMessaging;
         this.getDatabaseInstance = getDatabaseInstance;
         this.createIncrement = createIncrement;
+    }
+
+    get projectUrl() {
+        return this._projectUrl ?? `https://${this.getDatabaseInstance().app.options.projectId}.web.app`;
     }
 
     get TIMESTAMP() {
@@ -29,6 +36,7 @@ export default class FirebaseServerBackend extends BackendBase {
     }
 
     async request(name, ...args) {
+        if (name === "notification.send") return sendToTokens(this.getMessagingInstance(), ...args);
         if (!Object.hasOwn(requests, name)) {
             fail("backend/not-implemented", `Backend request ${name} is not implemented.`);
         }
