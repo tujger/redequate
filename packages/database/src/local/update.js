@@ -1,4 +1,4 @@
-import {validateCollectionPath} from "./helpers";
+import {validateCollectionPath} from "./parsePath";
 
 export default async function update(path, changes, options, run, superUpdate) {
     const batch = typeof path !== "string" && !Array.isArray(path);

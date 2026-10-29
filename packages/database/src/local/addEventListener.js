@@ -1,5 +1,5 @@
 import {observeWrites} from "../../../backend/src/local/database/callable/createHelpers";
-import validatePath from "../common/validatePath";
+import parsePath from "./parsePath";
 import compareKeys from "../common/compareKeys";
 import {fail} from "../../../common";
 import {assertCollection, getSubtree, readValue, validateCollectionPath} from "./helpers";
@@ -108,14 +108,14 @@ const refresh = async listener => {
 };
 
 export default function addEventListener(storageId, path, callbacks, read) {
-    validatePath(path);
+    parsePath(path);
     for (const [name, handler] of Object.entries(callbacks)) {
         if (name.startsWith("on") && handler !== undefined && !(handler instanceof Function)) {
             invalid(`${name} must be a function or undefined.`);
         }
     }
     if (callbacks.orderBy !== undefined) {
-        validatePath(callbacks.orderBy);
+        parsePath(callbacks.orderBy);
         const path = typeof callbacks.orderBy === "string"
             ? callbacks.orderBy === "" ? [] : [callbacks.orderBy]
             : callbacks.orderBy;

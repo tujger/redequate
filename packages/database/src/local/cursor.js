@@ -2,7 +2,7 @@ import compareValues from "../common/compareValues";
 import {fail} from "../../../common";
 import DatabaseCursor from "../common/DatabaseCursor";
 import compareKeys from "../common/compareKeys";
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 import addEventListener from "./addEventListener";
 import update from "../common/methods/update";
 import {getChildRecordPath, getCursorChildren, getSubtree} from "./helpers";
@@ -26,16 +26,13 @@ export default class LocalCursor extends DatabaseCursor {
     #header = [];
 
     constructor(storageId, path, options = {}, backend) {
-        const identityField = Array.isArray(path) && path.length > 1 && typeof path.at(-1) === "string"
-            ? path.at(-1)
-            : undefined;
-        const resolvedPath = identityField === undefined ? path : path.slice(0, -1);
+        const {keyField: identityField, effectivePath: resolvedPath} = parsePath(path, "collection");
         super(options, resolvedPath);
         this.#storageId = storageId;
         this.#backend = backend;
         this.#path = resolvedPath;
         this.#identityField = identityField;
-        this.#field = this.orderBy === undefined ? undefined : resolvePath(this.orderBy);
+        this.#field = this.orderBy === undefined ? undefined : parsePath(this.orderBy).address;
         this.#byValue = this.#field === "" || (this.#field === undefined && this.equalTo !== undefined);
         this.#start = this.start;
         this.#end = this.end === undefined && typeof this.start === "string"

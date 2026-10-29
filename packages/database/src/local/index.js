@@ -2,7 +2,7 @@ import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import DatabaseBase from "../common/DatabaseBase";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
 import addEventListener from "./addEventListener";
 import LocalCursor from "./cursor";
@@ -62,8 +62,7 @@ export default class LocalDatabase extends DatabaseBase {
         return composeCursor(queries, effective,
             (sourcePath, sourceOptions) => new LocalCursor(this.#context, sourcePath,
                 {...sourceOptions, onError: sourceOptions?.onError ?? this.onError}, this._backend),
-            this.run.bind(this), path, pathIsDatabasePath ? () => resolvePath(Array.isArray(path) &&
-                path.length > 1 && typeof path.at(-1) === "string" ? path.slice(0, -1) : path) : undefined);
+            this.run.bind(this), path, pathIsDatabasePath ? () => parsePath(path, "collection").address : undefined);
     }
 
     async create(path, value) {

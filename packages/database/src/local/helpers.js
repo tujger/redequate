@@ -1,5 +1,4 @@
-import parsePath from "../common/parsePath";
-import validatePath from "../common/validatePath";
+import parsePath from "./parsePath";
 import {fail} from "../../../common";
 import {LOCAL_SCHEMA} from "./storeSchema";
 import {applySchema} from "./schema";
@@ -32,9 +31,9 @@ const transact = async (context, mode, names, operation) => {
 };
 
 const read = (context, rawPath, options, query) => {
-    validatePath(rawPath);
-    const root = rawPath === "" || Array.isArray(rawPath) && !rawPath.length;
-    const names = root ? storeNames(context) : [validateCollectionPath(rawPath)[0]];
+    const parsed = parsePath(rawPath, query ? "collection" : "address");
+    const root = !parsed.path.length;
+    const names = root ? storeNames(context) : [parsed.collection];
     return transact(context, "readonly", names, async transaction => {
         if (root) {
             const entries = await Promise.all(names.map(async name => [name,
@@ -43,11 +42,7 @@ const read = (context, rawPath, options, query) => {
         }
         const store = transaction.objectStore(names[0]);
         if (query && store.indexNames.length && Array.isArray(rawPath)) {
-            const parsed = parsePath(rawPath);
-            if (!parsed.path.length) invalid("read requires a non-empty path.");
-            const keyField = parsed.path.length > 1 && typeof parsed.path.at(-1) === "string"
-                ? parsed.path.at(-1) : undefined;
-            const path = keyField === undefined ? parsed.path : parsed.path.slice(0, -1);
+            const {effectivePath: path, keyField} = parsed;
             return readStore(store, path, {...options, keyField});
         }
         return readStore(store, rawPath, options);
@@ -60,8 +55,7 @@ export const getCursorChildren = (context, path, keyField, options = {}) =>
     read(context, path, {...options, keyField}, false);
 
 export const getChildRecordPath = (context, path, key, keyField) => {
-    validatePath(path);
-    const name = validateCollectionPath(path)[0];
+    const {collection: name} = parsePath(path);
     return transact(context, "readonly", [name], transaction => childRecordPath(transaction.objectStore(name), path, key, keyField));
 };
 
