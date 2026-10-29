@@ -151,7 +151,9 @@ Callback failures prevent replacement; native index errors roll back the transac
 Local update does not initialize schema or open IndexedDB itself. Cross-store
 batches commit atomically, overlapping addresses reject, and timestamp/increment
 markers resolve during the write. Increment markers come from `backend.increment(n)`;
-Database has no `increment` method. The marker is a JSON-compatible object, not a callback.
+Database has no `increment` method. Firebase markers are JSON-compatible objects.
+Local markers are symbols whose deltas are kept in a module-owned Map. They work
+within one JS space and can be reused. Neither marker is a callback.
 Backend creates and updates notify observers only after commit.
 Listeners refresh collection snapshots from native rows; cross-context messages carry
 only changed collection names. No path metadata is stored or transmitted.

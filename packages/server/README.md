@@ -35,6 +35,13 @@ exported by `/database`. Server `resolveDatabase` requires an explicit database 
 distinct `instanceof` identities.
 Public declaration files are not generated.
 
+## Database implementation layout
+
+Firebase database operations in `packages/backend/src/firebase-server/src/database`
+are separated into `admin/` for internal Admin SDK requests and `callable/` for
+client-facing Functions with caller-token authorization. Public exports and
+Functions names remain unchanged.
+
 ## Firebase database.create
 
 Initialize the default Firebase Admin app in the consuming Functions application,
