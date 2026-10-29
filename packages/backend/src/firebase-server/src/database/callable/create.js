@@ -1,6 +1,7 @@
 import {getDatabase} from "firebase-admin/database";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
-import parseCreatePath from "../../../../../../database/src/common/parseCreatePath";
+import {fail} from "../../../../../../common";
+import parsePath from "../../../../../../database/src/common/parsePath";
 import resolvePath from "../../../../../../database/src/common/resolvePath";
 import checkResponse from "../../common/checkResponse";
 import createDatabaseUrl from "../../common/createDatabaseUrl";
@@ -15,7 +16,12 @@ const prepare = request => {
         throw new HttpsError("invalid-argument", "Expected (path, value).");
     }
     const [path, value] = args;
-    const {parentPath, key} = parseCreatePath(path);
+    const parsed = parsePath(path);
+    if (parsed.literal || parsed.path.length < 2) fail("database/invalid-argument", "create requires a collection path followed by a key field name.");
+    const parentPath = parsed.path.slice(0, -1);
+    const last = parsed.path.at(-1);
+    const fieldName = typeof last === "string" ? last : parsed.segments.at(-1).name;
+    const key = typeof last === "string" ? undefined : last[fieldName];
     if (value === null || typeof value !== "object" || value instanceof Array) {
         throw new HttpsError("invalid-argument", "value must be a record object.");
     }
@@ -23,6 +29,7 @@ const prepare = request => {
     if (invalidPath.test(parent) || (key !== undefined && (invalidPath.test(key) || key.includes("/")))) {
         throw new HttpsError("invalid-argument", "Invalid Firebase path or record key.");
     }
+    console.debug("[Backend:Create]", `create [${parent}]`, {value});
     const token = getRequestToken(request);
     const database = getDatabase();
     const collection = database.ref(parent);

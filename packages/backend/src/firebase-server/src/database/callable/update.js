@@ -30,6 +30,7 @@ const prepare = request => {
     }
     const token = getRequestToken(request);
     const database = getDatabase();
+    console.debug("[Backend:Update]", `update [${address}]`, {value});
     const reference = address ? database.ref(address) : database.ref();
     const url = createDatabaseUrl({database, reference, token});
     if (mode === "patch") url.searchParams.set("print", "silent");

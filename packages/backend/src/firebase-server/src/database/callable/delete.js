@@ -13,6 +13,7 @@ const prepare = request => {
     if (invalidPath.test(address)) throw new HttpsError("invalid-argument", "Invalid Firebase path.");
     const token = getRequestToken(request);
     const database = getDatabase();
+    console.debug("[Backend:Delete]", `delete [${address}]`);
     const reference = address ? database.ref(address) : database.ref();
     const url = createDatabaseUrl({database, reference, token});
     return {url};
