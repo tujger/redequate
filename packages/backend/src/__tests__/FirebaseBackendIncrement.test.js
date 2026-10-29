@@ -1,5 +1,5 @@
 import FirebaseBackendClient from "../firebase-client";
-import update from "../firebase-server/src/database/update";
+import update from "../firebase-server/src/database/callable/update";
 import {increment} from "firebase/database";
 
 vi.mock("../firebase-server/node_modules/firebase-admin/lib/esm/database/index.js", () => ({

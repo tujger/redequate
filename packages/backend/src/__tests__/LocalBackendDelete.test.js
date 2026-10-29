@@ -149,7 +149,4 @@ it("rejects ambiguous nested addresses without changing data or notifying", asyn
 });
 
 // Storage and delivery tests isolate application reactions; their effects have integration coverage.
-vi.mock("../common", () => ({handlers: {
-    extra: {path: ["extra", "extra_id"], onWrite() {}},
-    post: {path: ["posts", "post_id"], onWrite() {}},
-}}));
+vi.mock("../common", () => ({handlers: {}}));

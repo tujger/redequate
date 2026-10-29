@@ -338,7 +338,4 @@ it("leaves missing storage untouched when an update callback returns undefined",
 });
 
 // Storage and delivery tests isolate application reactions; their effects have integration coverage.
-vi.mock("../../../../backend/src/common", () => ({handlers: {
-    extra: {path: ["extra", "extra_id"], onWrite() {}},
-    post: {path: ["posts", "post_id"], onWrite() {}},
-}}));
+vi.mock("../../../../backend/src/common", () => ({handlers: {}}));

@@ -124,6 +124,10 @@ it("broadcasts cursor handler replacement and deletion once across independent c
 
 // Storage and delivery tests isolate application reactions; their effects have integration coverage.
 vi.mock("../../../../backend/src/common", () => ({handlers: {
-    extra: {path: ["extra", "extra_id"], onWrite() {}},
-    post: {path: ["posts", "post_id"], onWrite() {}},
+    post: class {
+        constructor() { this.path = ["posts", "post_id"]; }
+        onCreate() {}
+        onUpdate() {}
+        onDelete() {}
+    },
 }}));

@@ -98,7 +98,4 @@ it("validates arguments, rejects service stores, and uses the default storage ID
 });
 
 // Storage and delivery tests isolate application reactions; their effects have integration coverage.
-vi.mock("../common", () => ({handlers: {
-    extra: {path: ["extra", "extra_id"], onWrite() {}},
-    post: {path: ["posts", "post_id"], onWrite() {}},
-}}));
+vi.mock("../common", () => ({handlers: {}}));

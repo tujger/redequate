@@ -59,15 +59,46 @@ it("supports root objects and Maps of named Local paths in atomic multi-store pa
 
 it("resolves timestamp and increment markers once per committed batch", async () => {
     const {database, backend, request} = await setup();
+    expect(database.TIMESTAMP).toEqual({".sv": "timestamp"});
+    expect(JSON.parse(JSON.stringify(database.TIMESTAMP))).toEqual(database.TIMESTAMP);
     await request(post, {count: 2});
     await request("", new Map([
         [[...post, "count"], backend.increment(3)],
-        [[...post, "time"], database.TIMESTAMP],
+        [[...post, "time"], JSON.parse(JSON.stringify(database.TIMESTAMP))],
         [["meta", "time"], database.TIMESTAMP]
     ]));
     const result = await database.read(post);
     expect(result).toEqual({count: 5, time: expect.any(Number)});
     expect((await database.read(["meta"])).time).toBe(result.time);
+});
+
+it("resolves nested increments and reuses one marker across fields and writes", async () => {
+    const {database, backend, request} = await setup("backend-reused-increment");
+    await database.create(post, {nested: {left: 1, right: [3]}});
+    const marker = backend.increment(2);
+    const changes = {nested: {left: marker, right: [marker]}};
+    await request(post, changes);
+    expect(await database.read(post)).toEqual({nested: {left: 3, right: [5]}});
+    await request(post, changes);
+    expect(await database.read(post)).toEqual({nested: {left: 5, right: [7]}});
+    await request("", new Map([
+        [[...post, "nested", "left"], marker],
+        [["meta", "count"], marker]
+    ]));
+    expect(await database.read(post)).toEqual({nested: {left: 7, right: [7]}});
+    expect(await database.read(["meta"])).toEqual({count: 2});
+});
+
+it("rejects malformed symbol values without changing a stored record", async () => {
+    const {database, backend, request} = await setup("backend-invalid-increment");
+    await request(post, {count: 4, keep: true});
+    const marker = backend.increment(2);
+    await expect(request(post, marker, {mode: "patch"})).rejects.toMatchObject({code: "database/invalid-argument"});
+    const [key] = Object.getOwnPropertySymbols(marker);
+    for (const invalid of [{[key]: Infinity}, {[key]: "2"}, {[Symbol("other")]: 2}]) {
+        await expect(request(post, {count: marker, keep: invalid})).rejects.toMatchObject({code: "database/invalid-argument"});
+        expect(await database.read(post)).toEqual({count: 4, keep: true});
+    }
 });
 
 it("reads missing values and conditionally creates, replaces, and deletes them", async () => {
@@ -213,7 +244,4 @@ it("validates modes, values and paths without initializing stores or invoking ca
 });
 
 // Storage and delivery tests isolate application reactions; their effects have integration coverage.
-vi.mock("../common", () => ({handlers: {
-    extra: {path: ["extra", "extra_id"], onWrite() {}},
-    post: {path: ["posts", "post_id"], onWrite() {}},
-}}));
+vi.mock("../common", () => ({handlers: {}}));

@@ -13,7 +13,7 @@ vi.mock("../../../components/MentionedTextComponent", () => ({tokenizeText: text
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
-knownCounterFailure.each(["like", "dislike"])("C8: Local %s updates persisted counters, not only PostData memory", async type => {
+it.each(["like", "dislike"])("C8: Local %s updates persisted counters, not only PostData memory", async type => {
     const database = createLocalDatabase({storageId: "local-writers"});
     await database.read(["_counters"]);
     const post = PostData({database, allowedExtras: ["like", "dislike"]}); post.id = "p1";

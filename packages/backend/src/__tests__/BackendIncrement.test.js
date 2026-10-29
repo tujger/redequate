@@ -1,9 +1,11 @@
 import {IDBFactory} from "fake-indexeddb";
 import {increment as firebaseIncrement} from "firebase/database";
-import BackendClientBase from "../BackendClientBase";
+import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
+import BackendBase from "../common/BackendBase";
 import LocalBackend from "../local";
 import FirebaseBackendClient from "../firebase-client";
 import LocalDatabase from "../../../database/src/local";
+import {isIncrement} from "../local/increment";
 
 vi.mock("firebase/database", async importOriginal => {
     const actual = await importOriginal();
@@ -55,11 +57,26 @@ const seed = async (backend, value) => {
     await backend.request("database.update", path, value, {mode: "replace", etag: snapshot.etag});
 };
 
-it("declares a serializable increment marker without a database method", () => {
+it("returns a local object with a private Symbol delta without a database method", () => {
     const backend = new LocalBackend({storageId: "increment-shape"});
-    expect(() => new BackendClientBase().increment(2)).toThrow("Not implemented: increment");
-    expect(backend.increment(2)).toEqual({".sv": {increment: 2}});
-    expect(JSON.parse(JSON.stringify(backend.increment(-1)))).toEqual(backend.increment(-1));
+    expect(() => new BackendBase().increment(2)).toThrow("Not implemented: increment");
+    const marker = backend.increment(2);
+    expect(typeof marker).toBe("object");
+    expect(Object.keys(marker)).toEqual([]);
+    const [key] = Object.getOwnPropertySymbols(marker);
+    expect(Object.getOwnPropertySymbols(marker)).toHaveLength(1);
+    expect(key.description).toBe("LocalBackend.increment");
+    expect(marker[key]).toBe(2);
+    expect(isIncrement(marker)).toBe(true);
+    expect(backend.increment(2)).not.toBe(marker);
+    expect(isIncrement({".sv": {increment: 2}})).toBe(false);
+    expect(isIncrement(Symbol("LocalBackend.increment"))).toBe(false);
+    expect(isIncrement({[Symbol("LocalBackend.increment")]: 2})).toBe(false);
+    expect(isIncrement(Object.create(marker))).toBe(false);
+    expect(isIncrement({[key]: NaN})).toBe(false);
+    expect(isIncrement({[key]: "2"})).toBe(false);
+    expect(isIncrement({operation: marker, value: 2})).toBe(false);
+    expect(isIncrement(structuredClone(marker))).toBe(false);
     expect(firebaseIncrement).not.toHaveBeenCalled();
     expect(LocalDatabase.prototype).not.toHaveProperty("increment");
 });
@@ -75,9 +92,14 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
     );
 
     if (provider === "local") {
-        it.each([NaN, Infinity, -Infinity, "1", undefined])("rejects an invalid step %j", async n => {
+        it.each([NaN, Infinity, -Infinity, "1", undefined, null, {}])("rejects an invalid step %j", async n => {
             const backend = await setup(provider);
-            expect(() => backend.increment(n)).toThrow();
+            expect(() => backend.increment(n)).toThrow("increment requires a finite number.");
+        });
+
+        it("rejects a bigint step", async () => {
+            const backend = await setup(provider);
+            expect(() => backend.increment(1n)).toThrow("increment requires a finite number.");
         });
     }
 
@@ -86,7 +108,7 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
         await seed(backend, 1);
         transport.calls.length = 0;
         const request = vi.spyOn(backend, "request");
-        const marker = structuredClone(backend.increment(2));
+        const marker = provider === "local" ? backend.increment(2) : structuredClone(backend.increment(2));
         expect(await backend.request("database.update", path, marker)).toBe(provider === "local" ? 3 : null);
         expect(request).toHaveBeenCalledExactlyOnceWith("database.update", path, marker);
         if (provider === "firebase") expect(transport.calls).toEqual([["", {"meta/count": marker}]]);
@@ -139,4 +161,13 @@ it("delegates Firebase marker construction to the SDK and returns its object", a
     const marker = backend.increment(-2);
     expect(firebaseIncrement).toHaveBeenCalledExactlyOnceWith(-2);
     expect(marker).toBe(firebaseIncrement.mock.results[0].value);
+});
+
+
+it("shares BackendBase across local, Firebase client and Firebase server backends", async () => {
+    expect(await setup("local")).toBeInstanceOf(BackendBase);
+    expect(await setup("firebase")).toBeInstanceOf(BackendBase);
+    expect(new FirebaseServerBackend()).toBeInstanceOf(BackendBase);
+    expect((await import("../common")).BackendBase).toBe(BackendBase);
+    expect((await import("../index")).BackendBase).toBe(BackendBase);
 });
