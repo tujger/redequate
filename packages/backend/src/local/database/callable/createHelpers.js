@@ -3,7 +3,7 @@ import {incrementDelta, isIncrement} from "../../increment";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";
 import {fail} from "../../../../../common";
 import {captureWrites, publishWrites} from "../writeEvents";
-import parseCreatePath from "../../../../../database/src/common/parseCreatePath";
+import parsePath from "../../../../../database/src/common/parsePath";
 import {decodeRecordValue, encodeRecordValue, setRecordField} from "../recordValue";
 
 const invalid = message => fail("database/invalid-argument", message);
@@ -47,7 +47,7 @@ export const validateCollectionPath = rawPath => {
     const path = typeof rawPath === "string" ? rawPath.split("/").filter(Boolean) : [...rawPath];
     if (!path.length) invalid("Expected a collection path.");
     if (path[0] !== null && typeof path[0] === "object") {
-        path[0] = path[0][Object.keys(path[0]).find(name => name !== "_")];
+        path[0] = path[0][Object.keys(path[0])[0]];
     }
     if (typeof path[0] !== "string" || !path[0] || path[0].includes("/") || path[0].startsWith("$")) {
         invalid("Invalid application collection.");
@@ -56,7 +56,11 @@ export const validateCollectionPath = rawPath => {
 };
 
 export const createRecordPath = (rawPath, key) => {
-    const {parentPath, fieldName} = parseCreatePath(rawPath);
+    const parsed = parsePath(rawPath);
+    if (parsed.literal || parsed.path.length < 2) invalid("create requires a collection path followed by a key field name.");
+    const parentPath = parsed.path.slice(0, -1);
+    const last = parsed.path.at(-1);
+    const fieldName = typeof last === "string" ? last : parsed.segments.at(-1).name;
     return [...parentPath, {[fieldName]: key}];
 };
 
@@ -103,7 +107,7 @@ const address = (store, rawPath) => {
     const segments = path.slice(1);
     if (!store.indexNames.length) {
         return {conditions: {}, property: segments.map(segment => typeof segment === "string" ? segment :
-            segment[Object.keys(segment).find(name => name !== "_")]), single: true, singleton: true};
+            segment[Object.keys(segment)[0]]), single: true, singleton: true};
     }
     const conditions = {};
     const property = [];
@@ -119,7 +123,7 @@ const address = (store, rawPath) => {
     } else {
         for (const segment of segments) {
             if (typeof segment === "string") { nested = true; property.push(segment); continue; }
-            const name = Object.keys(segment).find(name => name !== "_");
+            const name = Object.keys(segment)[0];
             const value = segment[name];
             const fieldAddress = Object.keys(conditions).length && name === value;
             if (!nested && !fieldAddress && indexed.has(name)) conditions[name] = keyValue(name, value);
@@ -137,7 +141,7 @@ const address = (store, rawPath) => {
 const queryRows = async (store, conditions, options = {}) => {
     const field = options.orderBy === undefined ? undefined : (typeof options.orderBy === "string"
         ? options.orderBy : options.orderBy.map(segment => typeof segment === "string" ? segment :
-            segment[Object.keys(segment).find(name => name !== "_")]).join("/")).replaceAll("/", ".");
+            segment[Object.keys(segment)[0]]).join("/")).replaceAll("/", ".");
     const bounded = options.equalTo !== undefined || options.start !== undefined || options.end !== undefined;
     if (field && bounded) {
         const source = indexes(store).find(({fields}) => {
@@ -211,7 +215,7 @@ const recordValue = (store, row, conditions = {}, keyField) => {
     const unique = uniqueIndexes(store);
     const fields = unique.flatMap(({fields}) => fields);
     if (!unique.length) fields.push(...Object.keys(conditions));
-    if (keyField) fields.push(keyField);
+    if (keyField) fields.push(...(Array.isArray(keyField) ? keyField : [keyField]));
     return decodeRecordValue(row, fields);
 };
 
@@ -236,7 +240,7 @@ const checkQuery = (store, options) => {
         return;
     }
     const path = typeof options.orderBy === "string" ? options.orderBy : options.orderBy.map(segment =>
-        typeof segment === "string" ? segment : segment[Object.keys(segment).find(name => name !== "_")]).join("/");
+        typeof segment === "string" ? segment : segment[Object.keys(segment)[0]]).join("/");
     const field = path.replaceAll("/", ".");
     if (!field && store.indexNames.length) return;
     if (!indexes(store).some(({fields}) => fields.includes(field))) invalid(`No declared index for field ${path}.`);
@@ -252,6 +256,45 @@ export const readStore = async (store, path, {keyField, ...options} = {}) => {
         return at(recordValue(store, rows[0], target.conditions), target.property);
     }
     return collectionValue(store, rows, target.conditions, keyField);
+};
+
+// Listener identities must be captured before recordValue strips storage keys.
+export const readStoreMatches = async (store, {path, variables, params}) => {
+    if (!variables.length) {
+        const value = await readStore(store, path);
+        return value === undefined || value === null ? [] : [{path, params, value}];
+    }
+    const indexed = new Set(indexes(store).flatMap(({fields}) => fields));
+    indexed.add("_id");
+    for (const {field} of variables) {
+        if (!indexed.has(field)) invalid(`No declared index for listener field ${field}.`);
+    }
+    const template = path.map((segment, index) => {
+        const variable = variables.find(variable => variable.index === index);
+        return variable ? {[variable.field]: `{${variable.parameter}}`} : segment;
+    });
+    const target = address(store, template);
+    for (const {field} of variables) {
+        if (!Object.hasOwn(target.conditions, field)) invalid(`Listener field ${field} must identify a record index.`);
+    }
+    const fields = new Set(variables.map(({field}) => field));
+    const conditions = Object.fromEntries(Object.entries(target.conditions).filter(([name]) => !fields.has(name)));
+    const rows = await queryRows(store, conditions);
+    const matches = [];
+    for (const row of rows) {
+        const values = variables.map(({field}) => at(row, parts(field)));
+        if (values.some(value => value === undefined || value === null)) continue;
+        const bindings = {...params};
+        const concrete = [...path];
+        variables.forEach(({index, field, parameter}, position) => {
+            const value = String(values[position]);
+            Object.defineProperty(bindings, parameter, {value, enumerable: true, configurable: true, writable: true});
+            concrete[index] = {[field]: value};
+        });
+        const value = at(recordValue(store, row, target.conditions, [...fields]), target.property);
+        if (value !== undefined && value !== null) matches.push({path: concrete, params: bindings, value});
+    }
+    return matches;
 };
 
 const withIdentity = (value, conditions, previous) => {

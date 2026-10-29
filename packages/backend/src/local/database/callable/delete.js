@@ -1,3 +1,4 @@
+import resolvePath from "../../../../../database/src/common/resolvePath";
 import validatePath from "../../../../../database/src/common/validatePath";
 import {fail} from "../../../../../common";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";
@@ -9,6 +10,7 @@ export default async function deleteRecord({storageId, args}) {
     validatePath(path);
     const collection = validateCollectionPath(path)[0];
     const database = await openLocalDatabase(storageId);
+    console.debug("[Backend:Delete]", `delete [${resolvePath(path)}]`);
     await runTransaction(database, "readwrite", [collection], transaction =>
         writeStore(transaction.objectStore(collection), path, null));
     await notifyWrites(storageId, [collection]);

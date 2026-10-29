@@ -1,3 +1,4 @@
+import resolvePath from "../../../../../database/src/common/resolvePath";
 import {isTimestamp} from "../../timestamp";
 import {isIncrement} from "../../increment";
 import {fail} from "../../../../../common";
@@ -80,6 +81,7 @@ export default async function update({storageId, args}) {
     const database = await openLocalDatabase(storageId);
     let committed = false;
     const result = await runTransaction(database, mode === "read" ? "readonly" : "readwrite", names, async transaction => {
+        console.debug("[Backend:Update]", `update [${resolvePath(path)}]`, {value});
         if (mode === "patch") {
             const updates = entries.map(([relative, value]) => {
                 if (root) return [relative, value];
