@@ -25,6 +25,7 @@ import {getCurrentUserData, useCurrentUserDataValue, useSetCurrentUserData} from
 import UserData, {matchRole, needAuth, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import Button from "./controls/Button/Button";
+import installConsoleError from "./helpers/installConsoleError";
 import initInternationalization from "./helpers/initInternationalization";
 import useBreakpoint from "./helpers/useBreakpoint";
 import {getScrollPosition} from "./helpers/useScrollPosition";
@@ -35,37 +36,6 @@ const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDraw
 const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout/TopBottomMenuLayout"));
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-const installConsoleError = database => {
-    const origin = console.error;
-    const reportError = error => origin.call(console, error);
-    const handler = function (...args) {
-        origin.call(console, ...args);
-        try {
-            if (args.length !== 1) return;
-            const message = String(args[0]);
-            if (["no such file or directory", "Module not found", "memory access out of bounds"].some(filter => message.includes(filter))) return;
-
-            if (!database) {
-                reportError("[Dispatcher] Error was not saved: database is unavailable.");
-                return;
-            }
-            const currentUserData = getCurrentUserData();
-            const saving = database.create(["errors", "error_id"], {
-                error: String(args[0]?.stack || message),
-                timestamp: database.TIMESTAMP,
-                uid: currentUserData?.id || "anonymous"
-            });
-            Promise.resolve(saving).catch(reportError);
-        } catch (error) {
-            reportError(error);
-        }
-    };
-    console.error = handler;
-    return () => {
-        if (console.error === handler) console.error = origin;
-    };
-};
 
 export default (props) => {
     const {
