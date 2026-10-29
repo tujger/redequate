@@ -369,7 +369,40 @@ number. FirebaseBackendClient wraps ordinary nonempty-path writes as root PATCH
 batches, without inspecting values or increment markers, and returns null. Root
 batches and explicit patch/read/conditional replace modes pass through unchanged.
 The Firebase Functions update handler retains its existing PATCH/GET/CAS PUT contract.
-No executable callback is accepted or transported by backend.request.
+Callable requests never transport executable callbacks. Counter callbacks run in
+common/handlers/utils using the existing Database update read/conditional replace
+loop, which retries conflicts against the returned snapshot. Local commits the
+replacement in one readwrite transaction and publishes after commit. Admin uses
+its native SDK transaction inside database.update's conditional replacement.
+Conditional replacement holds a temporary value subscription through completion
+to populate the SDK cache before comparing tokens, and removes it in finally.
+A one-shot get alone does not retain the cache and can cause false conflicts.
+There is no separate database.transaction command.
+The helper common/handlers/utils.updateCounter(backend, counterPath, increment)
+accepts a nonempty array path relative to _counters and adds that collection itself.
+String paths are not accepted. It applies
+the legacy counter rules atomically: missing/nonpositive counters reset to a
+positive step or delete; a positive counter deletes when the sum is nonpositive.
+Only ordinary named Local counter paths are unambiguous for its declared indexes.
+TIMESTAMP markers belong to BackendBase's provider contract. LocalBackend owns a
+stable frozen timestamp object with a private module-scoped Symbol key and
+recognizes it during native writes. Like Local increment, the marker is valid only
+in the local JS context; JSON and structured clones lose its Symbol key. Ordinary
+Firebase-shaped timestamp objects have no special Local meaning;
+Firebase client and server backends use their respective SDK timestamp values.
+DatabaseBase retains the single compatibility getter delegating to its injected
+backend, so models and components can keep using database.TIMESTAMP. Database
+providers no longer create or re-export timestamp markers.
+LocalBackend and FirebaseServerBackend provide internal database.read(path),
+returning null for missing values and preserving falsy values. Local directly uses readStore in a readonly transaction without an ETag;
+the server uses Admin SDK get(). Firebase client reading
+remains unchanged.
+ExtraListener creation/deletion uses utils.updateCounter with relative paths and
+steps +1/-1; missing deleted extras are ignored. onCreate then reads the
+post author's uid. For an existing different author it creates alerts/{uid}/{key}
+with the original alert.create payload and backend.TIMESTAMP; missing authors and
+self-reactions create no alert. Deletion only updates its counter and preserves
+existing alerts; onUpdate and application Functions registrations are unchanged.
 FirebaseServerBackend extends backend/common/BackendBase and dispatches internal
 create/update/delete operations to firebase-server/src/database/admin. These use
 Admin SDK privileges; external callable REST handlers live in the adjacent
@@ -380,6 +413,17 @@ conflicts use database/conflict. Admin update replaces one value with set(), or
 applies root object/normalized Map batches with update(); delete uses remove().
 Both write operations return null and propagate SDK errors.
 Local onWrite subscriptions use provider-neutral definitions from backend/common/handlers.
+Backend listener array paths use the first segment as the collection and every
+subsequent bare string as a captured field. For example ["alerts", "user_id",
+"alert_id"] means all alerts of all users; fixed objects constrain values and
+{field: "text"} selects a literal nested field. Shared database/common/parsePath
+also recognizes explicit {user_id: "{owner}"} aliases. Firebase compiles captures
+into its native wildcard ref. Local uses declared index fields (or _id), captures
+identities from physical rows before decoding, and compares matches by full
+concrete path. Unindexed captures and nonunique matches are rejected. Both
+providers include captured and fixed named parameters.
+This grammar belongs only to backend listeners; Database reads, cursors, UI
+subscriptions and CRUD paths retain their existing rules. No schema migration is needed.
 Readwrite transactions capture logical before/after snapshots for subscribed paths and
 publish source-tagged changes only after commit and connection close. Their source
 context delivers backend reactions once; other tabs still receive collection-only UI
@@ -441,12 +485,29 @@ choices that are easy to accidentally reverse.
 
 ### Address and operation semantics
 
-Paths accept strings or arrays with string/named segments. Named segment values
-form the Firebase address; Local also uses their names and optional dynamic level
-as identity metadata. Shared validation/normalization must not mutate caller input.
+Paths accept strings or arrays with string/named segments. A named segment has
+exactly one string-valued field; the old _ metadata is removed. The shared
+parsePath normalizes paths and describes segments as {name, value, parameter?};
+unbound array fields and explicit wildcard aliases use its PATH_VARIABLE Symbol.
+The original serializable path is retained: markers never travel in backend
+requests or BroadcastChannel messages. Operation-specific create/read/listener
+rules remain at the call sites; resolvePath keeps concrete address semantics.
+There are no separate parseCreatePath, parseReadPath or parseListenerPath modules.
+Provider adaptation is implemented by SDK-independent module functions in
+Database/local/parsePath.ts and Database/firebase/parsePath.ts, used by both
+Database and Backend. They take address (default), collection, create or listener
+mode. Address mode preserves concrete native backend reads and writes; collection
+mode selects the final bare key field for Database reads, cursors and UI listeners.
+Create mode supplies parent/key information. Listener mode produces Local index
+captures or Firebase wildcard refs and fixed params. No parser method is installed
+on provider classes. Local store-only validation is also exported from its adapter
+for the update/delete superclass pipeline, where generic validation already runs.
+resolveParsedPath renders an already parsed result without validating it again.
+ Named segment values
+form the Firebase address; Local also uses their names to select record fields. Shared validation/normalization must not mutate caller input.
 The first Local segment selects a configured physical store, not a virtual collection.
 
-A trailing string in an array read/cursor/listener path of at least two segments names an
+A trailing string in a Database array read/cursor/UI-listener path of at least two segments names an
 identity field. It is not a literal final branch:
 
 - `["users_public", "user_id"]` reads the user collection.
@@ -666,3 +727,20 @@ Provider-specific update logic lives in firebase/update.js and local/update.js,
 including path/batch preparation and the error boundary. Both classes only delegate
 arguments and bound run and super.update functions. Firebase cursor replacements use the same common single-update helper with
 the explicitly passed backend.
+
+### Alert push delivery
+
+AlertListener sends the original alert data payload when an alerts record is created;
+updates and deletions do not send notifications. Author lookup failures use Somebody.
+BackendBase exposes projectTitle (default Redequate) and projectUrl. LocalBackend accepts
+both in its existing options object and defaults the URL to the current origin.
+FirebaseServerBackend accepts a third options argument with projectTitle/projectUrl
+and an optional getMessagingInstance factory; its default URL is the database app's
+Firebase Hosting origin. Existing constructor arguments remain compatible.
+
+The internal notification.send request takes tokens, payload, and optional options.
+AlertListener calls this request directly. Firebase internal delivery and the
+admin-only callable share the named sendToTokens export from notification/send.js, including emulator simulation and batches of
+500. Local delivery posts only for the current subscription token in the same storageId;
+it remains foreground simulation. Push payload fields and alert records remain compatible
+with web and Android consumers. No new callable endpoint is exposed.
