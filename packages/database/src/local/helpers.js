@@ -61,4 +61,4 @@ export const getChildRecordPath = (context, path, key, keyField) => {
     return transact(context, "readonly", [name], transaction => childRecordPath(transaction.objectStore(name), path, key, keyField));
 };
 
-export {TIMESTAMP, validateCollectionPath} from "../../../backend/src/local/database/createHelpers";
+export {validateCollectionPath} from "../../../backend/src/local/database/createHelpers";

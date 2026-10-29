@@ -1,6 +1,10 @@
 import {notImplemented} from "../../../common";
 
 export default class BackendBase {
+    get TIMESTAMP(): object {
+        return notImplemented("timestamp");
+    }
+
     increment(n: number): object {
         return notImplemented("increment");
     }

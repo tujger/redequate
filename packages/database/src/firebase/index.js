@@ -1,4 +1,3 @@
-import {serverTimestamp} from "firebase/database";
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
@@ -59,9 +58,5 @@ export default class FirebaseDatabase extends DatabaseBase {
 
     async update(path, changes, options = {}) {
         return update(path, changes, options, this.run.bind(this), super.update.bind(this));
-    }
-
-    get TIMESTAMP() {
-        return serverTimestamp();
     }
 }

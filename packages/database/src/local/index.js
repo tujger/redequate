@@ -9,7 +9,7 @@ import LocalCursor from "./cursor";
 import createRecord from "./create";
 import update from "./update";
 import deleteRecord from "./delete";
-import {readValue, getSubtree, TIMESTAMP, openDatabase} from "./helpers";
+import {readValue, getSubtree, openDatabase} from "./helpers";
 import {applySchema} from "./schema";
 import {convertStores} from "./storeSchema";
 
@@ -101,9 +101,5 @@ export default class LocalDatabase extends DatabaseBase {
 
     async update(path, changes, options = {}) {
         return update(path, changes, options, this.run.bind(this), super.update.bind(this));
-    }
-
-    get TIMESTAMP() {
-        return TIMESTAMP;
     }
 }

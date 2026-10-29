@@ -168,6 +168,6 @@ export default class DatabaseBase {
     }
 
     get TIMESTAMP(): DatabaseValue | undefined {
-        return notImplemented("timestamp")
+        return this._backend.TIMESTAMP as DatabaseValue;
     }
 }

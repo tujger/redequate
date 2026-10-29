@@ -1,5 +1,6 @@
 import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
+import TIMESTAMP from "./timestamp";
 import createIncrement from "./increment";
 import BackendBase from "../common/BackendBase";
 import {installListeners} from "./database/installListeners";
@@ -19,6 +20,10 @@ export default class LocalBackend extends BackendBase {
 
     get storageId() {
         return this.#storageId;
+    }
+
+    get TIMESTAMP() {
+        return TIMESTAMP;
     }
 
     increment(n) {
