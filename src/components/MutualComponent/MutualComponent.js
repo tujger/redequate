@@ -217,7 +217,7 @@ export default props => {
             onchange: requestsCounter => {
                 setState(state => ({...state, requestsCounter}))
             },
-            path: [{id: currentUserData.id}, "mutualrequests", {typeId, _:true}]
+            path: [{id: currentUserData.id}, "mutualrequests", {mutual_type: typeId}]
         });
         return () => listener();
     }, [mutualId, typeId, mutualMode, isSameUser, currentUserData.id])
