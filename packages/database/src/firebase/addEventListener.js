@@ -1,7 +1,7 @@
 import {getDatabase, ref, query, orderByKey, onValue, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
 import {fail} from "../../../common";
 import resolvePath from "../common/resolvePath";
-import parseReadPath from "../common/parseReadPath";
+import parsePath from "../common/parsePath";
 import compareKeys from "../common/compareKeys";
 
 /**
@@ -20,7 +20,9 @@ export default function addEventListener(firebase, path, {onChange, onChildAdd, 
             fail("database/invalid-argument", `${name} must be a function or undefined.`);
         }
     }
-    const listenerPath = Array.isArray(path) && path.length ? parseReadPath(path).path : path;
+    const parsed = parsePath(path);
+    const collection = !parsed.literal && parsed.path.length > 1 && typeof parsed.path.at(-1) === "string";
+    const listenerPath = collection ? parsed.path.slice(0, -1) : parsed.path;
     const effectivePath = resolvePath(listenerPath);
     orderBy = orderBy === undefined ? undefined : resolvePath(orderBy);
 
