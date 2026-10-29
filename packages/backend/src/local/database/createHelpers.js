@@ -1,4 +1,4 @@
-import {isIncrement} from "../increment";
+import {incrementDelta, isIncrement} from "../increment";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import {fail} from "../../../../common";
 import {captureWrites, publishWrites} from "./writeEvents";
@@ -7,7 +7,9 @@ import {decodeRecordValue, encodeRecordValue, setRecordField} from "./recordValu
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
-export const TIMESTAMP = Symbol("LocalDatabase.TIMESTAMP");
+export const TIMESTAMP = Object.freeze({".sv": "timestamp"});
+export const isTimestamp = value => isRecord(value) && Object.keys(value).length === 1 &&
+    Object.getOwnPropertySymbols(value).length === 0 && value[".sv"] === "timestamp";
 const set = (object, name, value) => Object.defineProperty(object, name,
     {value, enumerable: true, writable: true, configurable: true});
 const at = (object, names) => names.reduce((value, name) => value !== null && typeof value === "object" &&
@@ -27,9 +29,9 @@ const assign = (object, names, value, remove = false) => {
 };
 const resolveValue = (value, previous, now) => {
     if (value === undefined) invalid("Undefined values cannot be stored.");
-    if (value === TIMESTAMP) return now;
+    if (isTimestamp(value)) return now;
     if (isIncrement(value)) {
-        const result = (typeof previous === "number" && Number.isFinite(previous) ? previous : 0) + value[".sv"].increment;
+        const result = (typeof previous === "number" && Number.isFinite(previous) ? previous : 0) + incrementDelta(value);
         if (!Number.isFinite(result)) invalid("increment result must be finite.");
         return result;
     }
