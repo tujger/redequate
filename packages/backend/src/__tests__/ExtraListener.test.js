@@ -1,4 +1,4 @@
-import {IDBFactory} from "fake-indexeddb";
+import {IDBFactory, IDBDatabase} from "fake-indexeddb";
 import ExtraListener from "../common/handlers/extra";
 import LocalBackend from "../local";
 import LocalDatabase from "../../../database/src/local";
@@ -101,4 +101,16 @@ it("Local internal reads preserve falsy values, require one path and do not publ
     expect(await backend.request("database.read", ["meta", "settings", "missing"])).toBeNull();
     await expect(backend.request("database.read")).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(backend.request("database.read", ownerPath, {})).rejects.toMatchObject({code: "database/invalid-argument"});
+});
+
+
+it("validates Local read paths and closes the database when the store is missing", async () => {
+    const {backend} = await local();
+    for (const path of [null, "", [], ["$auth"]]) {
+        await expect(backend.request("database.read", path)).rejects.toMatchObject({code: "database/invalid-argument"});
+    }
+    const close = vi.spyOn(IDBDatabase.prototype, "close");
+    await expect(backend.request("database.read", ["missing-store"]))
+        .rejects.toMatchObject({name: "NotFoundError"});
+    expect(close).toHaveBeenCalledTimes(1);
 });
