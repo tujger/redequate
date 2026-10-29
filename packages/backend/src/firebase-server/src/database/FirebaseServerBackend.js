@@ -1,11 +1,13 @@
 import BackendBase from "../../../common/BackendBase";
 import {getDatabase, ServerValue} from "firebase-admin/database";
 import {fail} from "../../../../../common";
+import read from "./admin/read";
 import create from "./admin/create";
 import update from "./admin/update";
 import deleteRecord from "./admin/delete";
 
 const requests = {
+    "database.read": read,
     "database.create": create,
     "database.update": update,
     "database.delete": deleteRecord,
@@ -16,6 +18,10 @@ export default class FirebaseServerBackend extends BackendBase {
         super();
         this.getDatabaseInstance = getDatabaseInstance;
         this.createIncrement = createIncrement;
+    }
+
+    get TIMESTAMP() {
+        return ServerValue.TIMESTAMP;
     }
 
     increment(n) {
