@@ -45,6 +45,7 @@
         },
         "storeSchema": [
             {"name": "user_id", "keypath": "user_id"},
+            {"name": "alert_id", "keypath": "alert_id", "options": {"unique": true}},
             {"name": "user_id_alert_id", "keypath": ["user_id", "alert_id"], "options": {"unique": true}},
             {"name": "user_id_timestamp", "keypath": ["user_id", "timestamp"]}
         ]

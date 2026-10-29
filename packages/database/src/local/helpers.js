@@ -1,4 +1,4 @@
-import parseReadPath from "../common/parseReadPath";
+import parsePath from "../common/parsePath";
 import validatePath from "../common/validatePath";
 import {fail} from "../../../common";
 import {LOCAL_SCHEMA} from "./storeSchema";
@@ -43,7 +43,11 @@ const read = (context, rawPath, options, query) => {
         }
         const store = transaction.objectStore(names[0]);
         if (query && store.indexNames.length && Array.isArray(rawPath)) {
-            const {path, keyField} = parseReadPath(rawPath);
+            const parsed = parsePath(rawPath);
+            if (!parsed.path.length) invalid("read requires a non-empty path.");
+            const keyField = parsed.path.length > 1 && typeof parsed.path.at(-1) === "string"
+                ? parsed.path.at(-1) : undefined;
+            const path = keyField === undefined ? parsed.path : parsed.path.slice(0, -1);
             return readStore(store, path, {...options, keyField});
         }
         return readStore(store, rawPath, options);

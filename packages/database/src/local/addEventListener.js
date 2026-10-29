@@ -121,7 +121,7 @@ export default function addEventListener(storageId, path, callbacks, read) {
             : callbacks.orderBy;
         const orderBy = path.map(segment => typeof segment === "string"
             ? segment
-            : segment[Object.getOwnPropertyNames(segment).find(name => name !== "_")]);
+            : segment[Object.getOwnPropertyNames(segment)[0]]);
         callbacks = {...callbacks, orderBy};
     }
     if (read === undefined && collectionFor(path)) read = readValue.bind(null, storageId, path, {orderBy: callbacks.orderBy});
