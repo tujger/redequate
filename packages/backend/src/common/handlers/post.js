@@ -19,6 +19,6 @@ export default class PostListener extends BackendListener {
     }
 
     async onUpdate({previous, value, params}) {
-        console.debug("[Backend:Post]", `updated [${params.post_id}]`, {previous, value});
+        console.debug("[Backend:Post]", `updated [${params.post_id}]`, {params, previous, value});
     }
 }
