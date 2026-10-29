@@ -1,17 +1,25 @@
-export default {
-    path: ["extra", "extra_id"],
-    async onWrite({value, previous, params, backend}) {
-        if(previous === null) {
-            console.debug("[Backend:Extra]", `added ${params.extra_id}`, {previous, value, backend});
-            await backend.request("database.update", ["_counters", {id: value.id}, value.type], backend.increment(1));
-        } else if(value === null) {
-            console.debug("[Backend:Extra]", `deleted ${params.extra_id}`, {previous, value, backend});
-            await backend.request("database.update", ["_counters", {id: previous.id}, previous.type], backend.increment(-1));
-        } else {
-            console.debug("[Backend:Extra]", `changed ${params.extra_id}`, {previous, value, backend});
-        }
-    },
-};
+import BackendListener from "../BackendListener";
+
+export default class ExtraListener extends BackendListener {
+    constructor(backend) {
+        super(["extra", "extra_id"], backend);
+    }
+
+    async onCreate({value, params}) {
+        console.debug("[Backend:Extra]", `added ${params.extra_id}`, {value});
+        await this.backend.request("database.update", ["_counters", {id: value.id}, value.type], this.backend.increment(1));
+    }
+
+    async onDelete({value, params}) {
+        console.debug("[Backend:Extra]", `deleted ${params.extra_id}`, {value});
+        await this.backend.request("database.update", ["_counters", {id: value.id}, value.type], this.backend.increment(-1));
+    }
+
+    async onUpdate({value, previous, params}) {
+        console.debug("[Backend:Extra]", `changed ${params.extra_id}`, {previous, value});
+    }
+}
+
 //         await updateCounter(database, extra.id, extra.type, 1);
 
 
