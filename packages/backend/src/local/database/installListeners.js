@@ -1,9 +1,11 @@
 import {handlers} from "../../common";
-import onWrite from "./onWrite";
+import {identifier} from "../../../../common";
+import onEvents from "./onEvents";
 
-const listeners = Object.values(handlers).map(handler => onWrite(handler));
+const registrations = Object.values(handlers).map(Listener => ({Listener, id: identifier()}));
+
 export const installListeners = backend => {
-    for (const install of listeners) {
-        install(backend);
+    for (const {Listener, id} of registrations) {
+        onEvents(new Listener(backend), id)(backend);
     }
 };

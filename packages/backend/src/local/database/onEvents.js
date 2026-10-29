@@ -4,10 +4,9 @@ import resolvePath from "../../../../database/src/common/resolvePath";
 import {readStore} from "./createHelpers";
 import {subscribeWrites} from "./writeEvents";
 
-export default ({path, onWrite}) => {
-    const {path: parentPath, keyField} = parseReadPath(path);
+export default (listener, id = identifier()) => {
+    const {path: parentPath, keyField} = parseReadPath(listener.path);
     const collection = resolvePath(parentPath).split("/")[0];
-    const id = identifier();
 
     return backend => subscribeWrites(backend.storageId, id, {
         collection,
@@ -27,8 +26,12 @@ export default ({path, onWrite}) => {
             }));
         },
         deliver({value, previous, params}) {
-            console.debug("[Backend]", `called 'onWrite' for '${collection}/${id}'`, {value, previous, params})
-            return onWrite({value, previous, params, backend});
+            const event = previous === null ? "onCreate" : value === null ? "onDelete" : "onUpdate";
+            if (typeof listener[event] !== "function") return;
+            console.debug("[Backend]", `called '${event}' for '${collection}/${id}'`, {value, previous, params});
+            if (event === "onCreate") return listener.onCreate({value, params});
+            if (event === "onDelete") return listener.onDelete({value: previous, params});
+            return listener.onUpdate({value, previous, params});
         },
     });
 };

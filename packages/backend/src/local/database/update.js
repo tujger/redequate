@@ -3,7 +3,7 @@ import {fail} from "../../../../common";
 import {openLocalDatabase} from "../../../../common/src/localDatabase";
 import validatePath from "../../../../database/src/common/validatePath";
 import {
-    TIMESTAMP, validateCollectionPath, runTransaction, readStore, writeStore,
+    isTimestamp, validateCollectionPath, runTransaction, readStore, writeStore,
     childRecordPath, assertNonOverlapping, notifyWrites
 } from "./createHelpers";
 
@@ -14,13 +14,14 @@ const isRoot = path => typeof path === "string" ? !path.split("/").filter(Boolea
     : Array.isArray(path) && !path.length;
 
 const validateValue = (value, ancestors = new Set()) => {
-    if (value === TIMESTAMP || value === null || typeof value === "string" || typeof value === "boolean" ||
+    if (isTimestamp(value) || isIncrement(value) || value === null || typeof value === "string" || typeof value === "boolean" ||
         typeof value === "number" && Number.isFinite(value)) return;
     if (value?.then instanceof Function) {
         Promise.resolve(value).catch(() => {});
         invalid("Update values must be prepared synchronously.");
     }
     if (!Array.isArray(value) && !isRecord(value)) invalid("Invalid update value.");
+    if (Object.getOwnPropertySymbols(value).length) invalid("Invalid update value.");
     if (ancestors.has(value)) invalid("Update values must not contain cycles.");
     ancestors.add(value);
     for (const child of Object.values(value)) validateValue(child, ancestors);
@@ -35,6 +36,7 @@ const prepare = args => {
     const mode = options.mode ?? (isIncrement(value) ? "increment" : "patch");
     if (!["patch", "read", "replace", "increment"].includes(mode)) invalid("Invalid update mode.");
     if (mode === "increment" && !isIncrement(value)) invalid("Expected an increment value.");
+    if (mode === "patch" && isIncrement(value)) invalid("changes must be an object, or a Map for a root batch.");
     const root = isRoot(path);
     if (root && mode !== "patch") invalid("Only batch patch accepts an empty path.");
     if (!root) validateCollectionPath(path);
