@@ -1,6 +1,6 @@
 import {IDBFactory, IDBDatabase} from "fake-indexeddb";
 import ExtraListener from "../common/handlers/extra";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
 
 const value = {id: "p1", uid: "reactor", type: "like"};

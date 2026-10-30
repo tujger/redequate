@@ -1,6 +1,6 @@
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
-import LocalBackend from "../../../../backend/src/local";
+import LocalBackend from "../../../../backend/src/local/LocalBackend";
 import addEventListener from "../../local/addEventListener";
 import * as helpers from "../../local/helpers";
 

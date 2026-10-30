@@ -1,7 +1,7 @@
 import {IDBFactory} from "fake-indexeddb";
 import {milliseconds, resetLastTimestamp} from "firebase-key";
 import LocalDatabase from "../../local";
-import LocalBackend from "../../../../backend/src/local";
+import LocalBackend from "../../../../backend/src/local/LocalBackend";
 import resolveDatabase from "../../resolveDatabase";
 import createLocalDatabase from "../createLocalDatabase";
 

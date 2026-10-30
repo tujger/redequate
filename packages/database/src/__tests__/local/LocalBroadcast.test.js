@@ -26,7 +26,7 @@ const uiMessages = () => Channel.messages.filter(message => message.data.collect
 const writeMessages = () => Channel.messages.filter(message => message.data.changes);
 const context = async () => {
     vi.resetModules();
-    return {Database: (await import("../../local")).default, Backend: (await import("../../../../backend/src/local")).default};
+    return {Database: (await import("../../local")).default, Backend: (await import("../../../../backend/src/local/LocalBackend")).default};
 };
 
 it("notifies across independent contexts for UI and backend reactions without echo", async () => {

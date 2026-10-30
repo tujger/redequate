@@ -1,6 +1,6 @@
 import {IDBFactory} from "fake-indexeddb";
 import PostListener from "../common/handlers/post";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
 
 const params = {post_id: "new"};

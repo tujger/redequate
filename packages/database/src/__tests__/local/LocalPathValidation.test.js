@@ -1,7 +1,7 @@
 import {IDBFactory} from "fake-indexeddb";
 import * as pathValidation from "../../common/validatePath";
 import LocalDatabase from "../../local";
-import LocalBackend from "../../../../backend/src/local";
+import LocalBackend from "../../../../backend/src/local/LocalBackend";
 import {validateCollectionPath, readValue, getChildRecordPath} from "../../local/helpers";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));

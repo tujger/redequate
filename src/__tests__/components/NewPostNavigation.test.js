@@ -1,5 +1,5 @@
 import LocalDatabase from "../../../packages/database/src/local";
-import LocalBackend from "../../../packages/backend/src/local";
+import LocalBackend from "../../../packages/backend/src/local/LocalBackend";
 import React, {act} from "react";
 import {Provider} from "react-redux";
 import {createStore} from "redux";

@@ -1,5 +1,5 @@
 import {IDBFactory} from "fake-indexeddb";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 import onEvents from "../local/database/onEvents";
 import LocalDatabase from "../../../database/src/local";
 import BackendListener from "../common/BackendListener";
@@ -168,7 +168,7 @@ it("reports rejected reactions without failing the committed request or other re
 it("isolates storage IDs and executes reactions only in the writing context", async () => {
     const {database, storageId, backend} = await setup();
     vi.resetModules();
-    const OtherBackend = (await import("../local")).default;
+    const OtherBackend = (await import("../local/LocalBackend")).default;
     const OtherDatabase = (await import("../../../database/src/local")).default;
     const remote = new OtherBackend({storageId});
     const remoteDatabase = new OtherDatabase({storageId, backend: remote});

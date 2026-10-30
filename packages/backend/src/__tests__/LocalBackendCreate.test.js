@@ -1,6 +1,6 @@
 import createLocalDatabase from "../../../database/src/__tests__/createLocalDatabase";
 import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));

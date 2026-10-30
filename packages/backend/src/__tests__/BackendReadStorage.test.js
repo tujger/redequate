@@ -1,7 +1,7 @@
 import {IDBFactory} from "fake-indexeddb";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
-import FirebaseBackendClient from "../firebase-client";
+import FirebaseBackendClient from "../firebase-client/FirebaseBackendClient";
 import StorageBase from "../../../storage/src/StorageBase";
 import {httpsCallable} from "firebase/functions";
 vi.mock("firebase/functions", () => ({getFunctions: vi.fn(() => ({})), httpsCallable: vi.fn()}));
@@ -47,14 +47,17 @@ it("LocalBackend exposes the exact supplied Storage instance", async () => {
     expect(storage.delete).toHaveBeenCalledExactlyOnceWith("https://files.test/one");
     await expect(backend.request("storage.delete", "one")).rejects.toMatchObject({code: "backend/not-implemented"});
 });
-it("FirebaseBackendClient ignores deletion without touching the passed Storage or callable", async () => {
+it("FirebaseBackendClient logs ignored deletion without calling Storage or callable", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const storage = {delete: vi.fn()};
     const backend = new FirebaseBackendClient({firebase: {app: {}}, storage});
     expect(backend.storage).toBeInstanceOf(StorageBase);
     await expect(backend.storage.delete("one")).resolves.toBeUndefined();
+    expect(log).toHaveBeenCalledExactlyOnceWith("[FirebaseClientStorage] delete ignored", {pathOrURL: "one"});
     expect(storage.delete).not.toHaveBeenCalled();
     expect(httpsCallable).not.toHaveBeenCalled();
 });
+
 it("FirebaseServerBackend always creates and uses its own FirebaseServerStorage", async () => {
     const external = {delete: vi.fn()};
     const remove = vi.fn().mockResolvedValue(undefined);

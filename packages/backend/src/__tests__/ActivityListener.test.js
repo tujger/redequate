@@ -1,6 +1,6 @@
 import {IDBFactory} from "fake-indexeddb";
 import ActivityListener, {createActivity} from "../common/handlers/activity";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
 
 const params = {activity_id: "a1"};

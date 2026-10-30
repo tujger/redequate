@@ -1,5 +1,5 @@
 import {IDBFactory, IDBDatabase} from "fake-indexeddb";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 import createLocalDatabase, {readNativeStore} from "../../../database/src/__tests__/createLocalDatabase";
 import {openLocalDatabase} from "../../../common/src/localDatabase";
 import {observeWrites} from "../local/database/callable/createHelpers";

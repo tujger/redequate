@@ -1,6 +1,6 @@
 import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
 import createLocalDatabase, {readNativeStore} from "../../../database/src/__tests__/createLocalDatabase";
-import LocalBackend from "../local";
+import LocalBackend from "../local/LocalBackend";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
@@ -172,6 +172,7 @@ it("rejects overlapping paths and preserves the whole batch on unique-index fail
     ]};
     const {database, request} = await setup("update-rollback", [audit]);
     await request("", new Map([[post, {title: "old"}], [["audit", {id: "a"}], {code: "unique"}]]));
+    const log = vi.spyOn(console, "debug").mockImplementation(() => {});
     await expect(request(post, {nested: {}, "nested/child": true})).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(request("", new Map([[post, {title: "new"}], [[...post, "title"], "overlap"]])))
         .rejects.toMatchObject({code: "database/invalid-argument"});
@@ -179,6 +180,7 @@ it("rejects overlapping paths and preserves the whole batch on unique-index fail
         .rejects.toMatchObject({name: "ConstraintError"});
     expect(await database.read(post)).toEqual({title: "old"});
     expect(await database.read(["audit", {id: "b"}])).toBeUndefined();
+    expect(log).not.toHaveBeenCalled();
 });
 
 it("delivers one committed snapshot and decoded child events, without read, conflict or abort notifications", async () => {
@@ -280,7 +282,7 @@ it("logs the original patch value instead of undefined", async () => {
     const log = vi.spyOn(console, "debug").mockImplementation(() => {});
     const changes = {service: 42};
     await request(["_activity", "types"], changes);
-    expect(log).toHaveBeenCalledWith("[Backend:Update]", "update [_activity/types]", {value: changes});
+    expect(log).toHaveBeenCalledWith("[Backend:Update]", "patch [_activity/types]", {value: changes});
 });
 
 it("validates explicit timestamp mode and rejects timestamps as patches", async () => {
@@ -293,4 +295,36 @@ it("validates explicit timestamp mode and rejects timestamps as patches", async 
     await expect(request("", backend.TIMESTAMP)).rejects.toMatchObject({code: "database/invalid-argument"});
     await request(path, backend.TIMESTAMP, {mode: "timestamp"});
     expect(await database.read(path)).toEqual(expect.any(Number));
+});
+
+
+it("does not log reads or empty patches", async () => {
+    const {request, read} = await setup("silent-reads");
+    const log = vi.spyOn(console, "debug").mockImplementation(() => {});
+    await read(post);
+    await request(post, {});
+    await request("", new Map());
+    expect(log).not.toHaveBeenCalled();
+});
+
+it("logs committed writes after transaction completion and distinguishes conflicts", async () => {
+    const {backend, request, read, replace} = await setup("commit-logs");
+    const close = vi.spyOn(IDBDatabase.prototype, "close");
+    const log = vi.spyOn(console, "debug").mockImplementation(() => {
+        expect(close).toHaveBeenCalled();
+    });
+    const snapshot = await read(post);
+    close.mockClear();
+    await replace(post, {count: 0}, snapshot.etag);
+    expect(log).toHaveBeenCalledExactlyOnceWith("[Backend:Update]", "replace [posts/p1]", {value: {count: 0}});
+    log.mockClear();
+    await replace(post, {count: 99}, snapshot.etag);
+    expect(log).toHaveBeenCalledExactlyOnceWith("[Backend:Update]", "conflict [posts/p1]", {value: {count: 99}});
+    log.mockClear(); close.mockClear();
+    const increment = backend.increment(1);
+    await request([...post, "count"], increment);
+    expect(log).toHaveBeenCalledExactlyOnceWith("[Backend:Update]", "increment [posts/p1/count]", {value: increment});
+    log.mockClear(); close.mockClear();
+    await request([...post, "time"], backend.TIMESTAMP);
+    expect(log).toHaveBeenCalledExactlyOnceWith("[Backend:Update]", "timestamp [posts/p1/time]", {value: backend.TIMESTAMP});
 });

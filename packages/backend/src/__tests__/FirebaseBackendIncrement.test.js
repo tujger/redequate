@@ -1,4 +1,4 @@
-import FirebaseBackendClient from "../firebase-client";
+import FirebaseBackendClient from "../firebase-client/FirebaseBackendClient";
 import update from "../firebase-server/src/database/callable/update";
 import {increment} from "firebase/database";
 
