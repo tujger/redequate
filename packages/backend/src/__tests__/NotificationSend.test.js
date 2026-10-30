@@ -27,10 +27,14 @@ it("simulates emulator delivery without contacting FCM", async () => {
 });
 it("dispatches internal Firebase notifications with configured metadata", async () => {
     const messaging = {sendEachForMulticast: vi.fn().mockResolvedValue({responses: [{messageId: "sent"}]})};
-    const backend = new FirebaseServerBackend(() => ({app: {options: {projectId: "demo-test"}}}), undefined,
-        {projectTitle: "App", projectUrl: "https://custom.test", getMessagingInstance: () => messaging});
+    const getDatabaseInstance = vi.fn(() => { throw new Error("Notifications must not initialize Database."); });
+    const getMessagingInstance = vi.fn(() => messaging);
+    const backend = new FirebaseServerBackend(getDatabaseInstance, undefined,
+        {projectTitle: "App", projectUrl: "https://custom.test", getMessagingInstance});
     expect(backend.projectTitle).toBe("App"); expect(backend.projectUrl).toBe("https://custom.test");
     expect(await backend.request("notification.send", ["t"], {data: {body: "hi"}})).toEqual([{token: "t", messageId: "sent"}]);
+    expect(getDatabaseInstance).not.toHaveBeenCalled();
+    expect(getMessagingInstance).toHaveBeenCalledOnce();
     expect(new FirebaseServerBackend(() => ({app: {options: {projectId: "demo-test"}}})).projectUrl).toBe("https://demo-test.web.app");
 });
 it("only posts matching subscribed Local tokens within their storage", async () => {

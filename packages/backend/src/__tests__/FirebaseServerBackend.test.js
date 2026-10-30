@@ -31,7 +31,9 @@ beforeEach(() => {
     database = {ref: vi.fn(reference)};
     getDatabase = vi.fn(() => database);
     createIncrement = vi.fn(n => ({".sv": {increment: n}}));
-    backend = new FirebaseServerBackend(getDatabase, createIncrement);
+    backend = new FirebaseServerBackend(getDatabase, createIncrement, {
+        getMessagingInstance: vi.fn(() => { throw new Error("Database commands must not initialize Messaging."); }),
+    });
 });
 
 it("inherits BackendBase and delegates native increments without opening a database", () => {
@@ -40,6 +42,7 @@ it("inherits BackendBase and delegates native increments without opening a datab
     expect(marker).toBe(createIncrement.mock.results[0].value);
     expect(createIncrement).toHaveBeenCalledExactlyOnceWith(-2);
     expect(getDatabase).not.toHaveBeenCalled();
+    expect(backend.getMessagingInstance).not.toHaveBeenCalled();
 });
 
 it("creates at a generated key without injecting the key into the record", async () => {
@@ -131,6 +134,7 @@ it.each([
 it.each(["database.transaction", "database.watch", "unknown", "toString"])("rejects unsupported %s before opening a database", async name => {
     await expect(backend.request(name, "posts/p1", {})).rejects.toMatchObject({code: "backend/not-implemented"});
     expect(getDatabase).not.toHaveBeenCalled();
+    expect(backend.getMessagingInstance).not.toHaveBeenCalled();
 });
 
 it.each([

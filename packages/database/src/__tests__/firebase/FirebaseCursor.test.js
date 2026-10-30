@@ -347,3 +347,15 @@ it("omits a replacement that no longer contains the ordered field", async () => 
     expect(await cursor.next()).toEqual([]);
     expect(cursor.count).toBe(0);
 });
+
+it("accepts the native firebase context directly without an adapter", async () => {
+    fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: 1, b: 2}))
+        .mockResolvedValueOnce(fixture.snapshot({b: 2, c: 3}));
+    const cursor = new FirebaseCursor(fixture.firebase, ["records", "record_id"], {}, backend);
+    expect(cursor.path).toBe("records");
+    expect(await cursor.next(2)).toEqual([{key: "a", value: 1}, {key: "b", value: 2}]);
+    expect(await cursor.next(2)).toEqual([{key: "c", value: 3}]);
+    expect(cursor.position.finished).toBe(true);
+    expect(fixture.sdk.once.mock.calls[1][0].query)
+        .toEqual({orderByKey: [], startAt: ["b"], limitToFirst: [3]});
+});
