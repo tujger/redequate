@@ -73,12 +73,12 @@ export default ({uploadable}) => {
         tab,
         translateLimit,
         uploadsAllow,
-        uploadsTypes = [],
         uploadsMaxHeight,
         uploadsMaxSize,
         uploadsMaxWidth,
         uploadsQuality
     } = state;
+    const uploadsTypes = Array.isArray(state.uploadsTypes) ? state.uploadsTypes : [];
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
     const parseUploadables = () => {
@@ -158,6 +158,14 @@ export default ({uploadable}) => {
         }))
     }
 
+    const handleUploadType = type => (event, checked) => {
+        setState(state => {
+            const current = Array.isArray(state.uploadsTypes) ? state.uploadsTypes : [];
+            const uploadsTypes = checked ? [...new Set([...current, type])] : current.filter(item => item !== type);
+            return {...state, uploadsTypes, details: {...state.details, uploadsTypes}};
+        });
+    };
+
     const handleChangeTab = tab => {
         setState(state => ({...state, tab}));
     };
@@ -213,11 +221,7 @@ export default ({uploadable}) => {
         }
         const addPreferenceUploads = async () => {
             settings.uploadsAllow = uploadsAllow || null;
-            settings.uploadsTypes = [];
-            if (settings.uploadsAudio) settings.uploadsTypes.push("audio/*");
-            if (settings.uploadsImages) settings.uploadsTypes.push("images/*");
-            if (settings.uploadsVideo) settings.uploadsTypes.push("video/*");
-            if (!settings.uploadsTypes.length) settings.uploadsTypes = null;
+            settings.uploadsTypes = uploadsTypes.length ? uploadsTypes : null;
             settings.uploadsMaxHeight = uploadsAllow ? +uploadsMaxHeight || 1000 : null;
             settings.uploadsMaxSize = uploadsAllow ? +uploadsMaxSize || 100 : null;
             settings.uploadsMaxWidth = uploadsAllow ? +uploadsMaxWidth || 1000 : null;
@@ -503,17 +507,17 @@ export default ({uploadable}) => {
                             checked={uploadsTypes.includes("audio/*")}
                             disabled={disabled}
                             label={"Allow audio/*"}
-                            onChange={handleSwitch("uploadsAudio")}/>}
+                            onChange={handleUploadType("audio/*")}/>}
                         {uploadableTypes.includes("images/*") && <Option
                             checked={uploadsTypes.includes("images/*")}
                             disabled={disabled}
-                            onChange={handleSwitch("uploadsImages")}
+                            onChange={handleUploadType("images/*")}
                             label={"Allow images/*"}/>}
                         {uploadableTypes.includes("video/*") && <Option
                             checked={uploadsTypes.includes("video/*")}
                             disabled={disabled}
                             label={"Allow video/*"}
-                            onChange={handleSwitch("uploadsVideo")}/>}
+                            onChange={handleUploadType("video/*")}/>}
                     </div>
                 </div>}
                 <Option
