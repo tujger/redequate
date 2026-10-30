@@ -44,8 +44,24 @@ export default class PostListener extends BackendListener {
 
     async onDelete({value, params}) {
         console.debug("[Backend:Post]", `deleted [${params.post_id}]`, {params, value});
-        await updateCounter(this.backend, [{id: "total"}, "posts"], -1);
-        if (value.uid) await this.backend.request("database.update", ["_counters", {id: value.uid}, "posts"], this.backend.increment(-1));
+        if (!params.post_id) throw new Error("[Post] id is not defined");
+        if (value.to) {
+            await updateCounter(this.backend, [{id: value.uid}, "replies"], -1);
+            if (value.root) await updateCounter(this.backend, [{id: value.root}, "replied"], -1);
+            else console.warn("[Post] reply has no root, skipping root counter", value.to);
+        } else {
+            if (value.uid) await updateCounter(this.backend, [{id: value.uid}, "posts"], -1);
+            await updateCounter(this.backend, [{id: "total"}, "posts"], -1);
+        }
+        const replies = await this.backend.request("database.read", ["posts"], {orderBy: "to", equalTo: params.post_id});
+        for (const postId of Object.keys(replies || {})) {
+            await this.backend.request("database.delete", ["posts", {post_id: postId}]);
+        }
+        await Promise.all((value.images || []).map(async url => {
+            if (!url) return;
+            try { await this.backend.storage.delete(url); }
+            catch (error) { console.error(error); }
+        }));
     }
 
     async onUpdate({previous, value, params}) {
