@@ -54,7 +54,7 @@ export function counterScenarios(createDatabases, {local = false} = {}) {
         ["post_id", [{post_id: "audit-post"}, "dislike"]],
         ["subscribers", [{id: "audit-user"}, "mutual", {mutual_type: "following_s"}]],
         ["subscriptions", [{id: "audit-user"}, "mutual", {mutual_type: "friend"}]],
-        ["requests", [{id: "audit-user"}, "mutualrequests", {typeId: "friend", _: true}]],
+        ["requests", [{id: "audit-user"}, "mutualrequests", {typeId: "friend"}]],
         ["profile posts", [{id: "audit-user"}, "mutualstamps", {_my: "_my"}]],
     ];
     for (const [name, address] of paths) {
@@ -109,11 +109,12 @@ export function counterScenarios(createDatabases, {local = false} = {}) {
         try {
             await vi.waitFor(() => expect(changes).toHaveBeenCalledWith(undefined));
             await Promise.all(Array.from({length: 20}, (_, i) => counterControl({database: i % 2 ? database : other, path, increment: 1})));
-            expect(await stored()).toBe(20);
             await vi.waitFor(() => expect(changes).toHaveBeenLastCalledWith(20));
+            expect(await stored()).toBe(20);
             await Promise.all(Array.from({length: 12}, (_, i) => counterControl({database: i % 2 ? database : other, path, increment: -1})));
-            expect(await stored()).toBe(8);
+            // Backend writes arrive through the live SDK subscription asynchronously.
             await vi.waitFor(() => expect(changes).toHaveBeenLastCalledWith(8));
+            expect(await stored()).toBe(8);
         } finally { stop(); }
     });
 }

@@ -24,7 +24,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 const path = ["_counters", {id: "total"}, "posts"];
 
-it("sends a native increment through one root PATCH without changing the server handler", async () => {
+it("sends a native increment through a valid root PATCH", async () => {
     expect(await backend.request("database.update", path, marker)).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, request] = fetchMock.mock.calls[0];
@@ -57,10 +57,14 @@ it("forwards authentication and preserves permission errors", async () => {
 });
 
 
-it.each([0, false, null, [1, 2], {complete: true}])("writes a complete value %j without inspecting its contents", async value => {
-    expect(await backend.request("database.update", path, value)).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({method: "PATCH", body: JSON.stringify({"_counters/total/posts": value})});
+it.each([0, false, null, [1, 2]])("rejects scalar or array patch %j without a request", async value => {
+    await expect(backend.request("database.update", path, value)).rejects.toMatchObject({code: "invalid-argument"});
+    expect(fetchMock).not.toHaveBeenCalled();
+});
+it("patches named fields at the supplied address", async () => {
+    const changes = {complete: true};
+    expect(await backend.request("database.update", path, changes)).toBeNull();
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({method: "PATCH", body: JSON.stringify(changes)});
 });
 
 it("uses PATCH for root batches by default", async () => {

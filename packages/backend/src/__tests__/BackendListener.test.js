@@ -19,7 +19,9 @@ it.each([[ExtraListener, ["extra", "extra_id"]], [PostListener, ["posts", "post_
         const listener = new Listener({});
         expect(listener).toBeInstanceOf(BackendListener);
         expect(listener.path).toEqual(path);
-        for (const name of ["onCreate", "onUpdate", "onDelete"]) expect(listener[name]).toBeInstanceOf(Function);
+        for (const name of ["onCreate", "onDelete"]) expect(listener[name]).toBeInstanceOf(Function);
+        if (Listener === PostListener) expect(listener.onUpdate).toBeInstanceOf(Function);
+        else expect(listener.onUpdate).toBeUndefined();
         expect(listener.onWrite).toBeUndefined();
     }
 );

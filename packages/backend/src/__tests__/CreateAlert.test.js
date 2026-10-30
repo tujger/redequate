@@ -1,4 +1,4 @@
-import {create} from "../common/handlers/alert";
+import {createAlert as create} from "../common/handlers/alert";
 
 it("creates the original alert shape and returns its key", async () => {
     const backend = {TIMESTAMP: {".sv": "timestamp"}, request: vi.fn().mockResolvedValue("a1")};

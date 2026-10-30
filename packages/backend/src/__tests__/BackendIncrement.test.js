@@ -22,6 +22,7 @@ vi.mock("firebase/functions", () => ({
         transport.calls.push(structuredClone(payload));
         const snapshot = () => ({value: transport.value, etag: String(transport.version)});
         if (!options) {
+            // A callable PATCH must carry the marker under a field, not at its root.
             expect(path).toBe("");
             expect(Object.keys(value)).toEqual(["meta/count"]);
             const delta = value["meta/count"][".sv"].increment;
@@ -142,8 +143,8 @@ it("updates post counters through a real local reaction chain", async () => {
     expect(await database.read(total)).toEqual({posts: 1});
     await database.delete(post);
     await vi.waitFor(async () => {
-        expect(await database.read(user)).toEqual({posts: 0});
-        expect(await database.read(total)).toEqual({posts: 0});
+        expect(await database.read(user)).toEqual({});
+        expect(await database.read(total)).toEqual({});
     });
 });
 

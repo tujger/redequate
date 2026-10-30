@@ -58,7 +58,7 @@ it("deletes an empty counter and leaves updates unchanged", async () => {
     expect(backend.request).toHaveBeenCalledTimes(2);
     expect(backend.request).toHaveBeenLastCalledWith("database.update", ["_counters", {id: "p1"}, "like"], null, {mode: "replace", etag: "initial"});
     backend.request.mockClear();
-    await listener.onUpdate({value, previous: value, params});
+    expect(listener.onUpdate).toBeUndefined();
     expect(backend.request).not.toHaveBeenCalled();
 });
 

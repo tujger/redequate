@@ -6,12 +6,14 @@ import Firebase from "../controllers/Firebase";
 import UserData from "../controllers/UserData";
 import FirebaseDatabase from "../../packages/database/src/firebase";
 import FirebaseAuth from "../../packages/auth/src/firebase";
+import createEmulatorBackend from "./fixtures/createEmulatorBackend";
 
 export const projectId = process.env.GCLOUD_PROJECT;
 export const databaseNamespace = `${projectId}-default-rtdb`;
 const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST;
 const databaseHost = process.env.FIREBASE_DATABASE_EMULATOR_HOST;
-if (!projectId?.startsWith("demo-") || authHost !== "127.0.0.1:9099" || databaseHost !== "127.0.0.1:9000") {
+if (!projectId?.startsWith("demo-") || !/^127\.0\.0\.1:\d+$/.test(authHost ?? "") || !/^127\.0\.0\.1:\d+$/.test(databaseHost ?? "") ||
+    Number(authHost?.split(":")[1]) < 10000 || Number(databaseHost?.split(":")[1]) < 10000) {
     throw new Error("Run integration tests with npm run test:integration; local emulators are required");
 }
 export const firebase = Firebase({
@@ -23,8 +25,9 @@ export const firebase = Firebase({
 export const sdkAuth = getAuth(firebase.app);
 connectAuthEmulator(sdkAuth, `http://${authHost}`, {disableWarnings: true});
 export const sdkDatabase = getDatabase(firebase.app);
-connectDatabaseEmulator(sdkDatabase, "127.0.0.1", 9000);
-export const database = new FirebaseDatabase({firebase});
+connectDatabaseEmulator(sdkDatabase, "127.0.0.1", Number(databaseHost.split(":")[1]));
+export const backend = createEmulatorBackend(firebase);
+export const database = new FirebaseDatabase({firebase, backend});
 export const auth = new FirebaseAuth({firebase, database, UserData});
 
 export async function emulatorRequest(path, options = {}) {

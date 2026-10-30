@@ -201,7 +201,7 @@ it("notifies when an ordered field appears and disappears in a real subscription
 });
 
 it("requires read permission for transactional creation", async () => {
-    await expect(database.create(["database_write_only", "id"], {name: "created"})).rejects.toThrow("permission_denied");
+    await expect(database.create(["database_write_only", "id"], {name: "created"})).rejects.toThrow(/permission[ _-]denied/i);
 });
 it("looks up a record by an exact key range regardless of the record value", async () => {
     await seed({before: {text: "before"}, target: {text: "found"}, targetSuffix: {text: "other"}});

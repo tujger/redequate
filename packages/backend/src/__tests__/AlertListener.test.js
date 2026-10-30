@@ -50,8 +50,7 @@ it.each([2, 3])("propagates failure at operation %s and stops", async operation 
     await expect(listener.onCreate({params, value})).rejects.toBe(error);
     expect(backend.request).toHaveBeenCalledTimes(operation);
 });
-it("does not send on update or delete", async () => {
-    await listener.onUpdate({params, value, previous: value});
-    await listener.onDelete({params, value});
-    expect(backend.request).not.toHaveBeenCalled();
+it("exposes only the alert creation reaction", () => {
+    expect(listener.onUpdate).toBeUndefined();
+    expect(listener.onDelete).toBeUndefined();
 });

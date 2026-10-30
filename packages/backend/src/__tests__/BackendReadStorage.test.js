@@ -9,7 +9,7 @@ import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend"
 import FirebaseServerStorage from "../firebase-server/src/FirebaseServerStorage";
 
 // Query tests isolate storage operations from application reactions.
-vi.mock("../common", () => ({handlers: {}}));
+vi.mock("../common", async original => ({...await original(), handlers: {}}));
 
 it("filters Local records by to while retaining unfiltered reads", async () => {
     vi.stubGlobal("indexedDB", new IDBFactory());

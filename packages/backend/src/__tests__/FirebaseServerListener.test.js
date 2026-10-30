@@ -70,11 +70,13 @@ it.each(types)("keeps the listener instance as this for %s", async (type, name, 
     expect(instance.calls).toEqual([{props: payload(type, before, after), backend}]);
 });
 
-it("exports only the three production trigger groups", () => {
-    for (const group of [oncreate, ondelete, onupdate]) expect(Object.keys(group)).toEqual(["alert", "extra", "post"]);
+it("exports the supported production trigger groups", () => {
+    expect(Object.keys(oncreate)).toEqual(["activity", "alert", "extra", "post", "tag"]);
+    expect(Object.keys(ondelete)).toEqual(["activity", "extra", "post", "tag"]);
+    expect(Object.keys(onupdate)).toEqual(["activity", "post", "tag"]);
 });
 
-it.each(types)("runs the extra %s behavior", async (type, name, suffix, before, after) => {
+it.each(types.filter(([type]) => type !== "update"))("runs the extra %s behavior", async (type, name, suffix, before, after) => {
     const value = {id: "p", type: "like"};
     const backend = {request: vi.fn(async (name, path, value, options) => name !== "database.update" ? null
         : options.mode === "read" ? {value: null, etag: "initial"} : {committed: true, value})};
@@ -126,7 +128,7 @@ it("keeps Firebase listener contexts isolated between registrations", async () =
 });
 
 
-it.each(types)("delivers alert %s with both wildcard parameters", async (type, name, suffix, before, after) => {
+it.each(types.filter(([type]) => type === "create"))("delivers alert %s with both wildcard parameters", async (type, name, suffix, before, after) => {
     const instance = new AlertListener({});
     const callback = vi.spyOn(instance, name).mockResolvedValue("done");
     const params = {user_id: "u1", alert_id: "a1"};

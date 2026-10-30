@@ -3,23 +3,40 @@ import {homedir, tmpdir} from "node:os";
 import {delimiter, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {spawn} from "node:child_process";
+import {createServer} from "node:net";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const projectId = "demo-redequate-tests";
+const projectId = `demo-redequate-${process.pid}`;
 const logDirectory = mkdtempSync(join(tmpdir(), "redequate-emulators-"));
 const config = join(logDirectory, "firebase.json");
+const ports = new Set();
+const freePort = () => new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+        const port = server.address().port;
+        server.close(error => {
+            if (error) reject(error);
+            else if (port < 10000 || ports.has(port)) freePort().then(resolve, reject);
+            else { ports.add(port); resolve(port); }
+        });
+    });
+});
+const emulators = {};
+for (const name of ["auth", "database", "hub", "logging", "eventarc", "tasks"]) {
+    emulators[name] = {host: "127.0.0.1", port: await freePort()};
+}
 // Firebase CLI requires rules to live inside the generated config's project directory.
 copyFileSync(new URL("./fixtures/database.rules.json", import.meta.url), join(logDirectory, "database.rules.json"));
 writeFileSync(config, JSON.stringify({
     database: {rules: "database.rules.json"},
     emulators: {
-        auth: {host: "127.0.0.1", port: 9099},
-        database: {host: "127.0.0.1", port: 9000},
+        ...emulators,
         ui: {enabled: false},
         singleProjectMode: true,
     },
 }));
-const env = {...process.env};
+const env = {...process.env, TMPDIR: logDirectory, TMP: logDirectory, TEMP: logDirectory};
 const javaHome = join(homedir(), ".local/share/redequate/jdks/temurin-21/Contents/Home");
 if (process.platform === "darwin" && existsSync(join(javaHome, "bin/java"))) {
     env.JAVA_HOME = javaHome;
