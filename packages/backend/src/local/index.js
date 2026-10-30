@@ -2,15 +2,22 @@ import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import BackendBase from "../common/BackendBase";
 import {installListeners} from "./database/installListeners";
-import requestHandlers from "./requestHandlers";
 import createIncrement from "./increment";
+import requestHandlers from "./requestHandlers";
 import TIMESTAMP from "./timestamp";
 
 export default class LocalBackend extends BackendBase {
     #storageId;
 
-    constructor({storageId = LOCAL_DATABASE_NAME, projectTitle, projectUrl = globalThis.location?.origin ?? ""} = {}) {
-        super({projectTitle, projectUrl});
+    constructor(
+        {
+            projectTitle,
+            projectUrl = globalThis.location?.origin ?? "",
+            storage,
+            storageId = LOCAL_DATABASE_NAME,
+        } = {}) {
+
+        super({projectTitle, projectUrl, storage});
         if (typeof storageId !== "string" || !storageId.trim()) {
             fail("database/invalid-argument", "storageId must be a non-empty string.");
         }
