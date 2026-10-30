@@ -5,8 +5,8 @@ import BackendBase from "../common/BackendBase";
 export default class FirebaseBackendClient extends BackendBase {
     _functions = undefined;
 
-    constructor({firebase}) {
-        super();
+    constructor({firebase, ...options}) {
+        super(options);
         this._functions = getFunctions(firebase.app);
     }
 
