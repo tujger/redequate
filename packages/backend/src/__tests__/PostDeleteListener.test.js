@@ -7,10 +7,9 @@ const params = {post_id: "deleted"};
 const path = (id, name) => ["_counters", {id}, name];
 const setup = () => {
     const counters = new Map(); const deleted = []; const images = [];
-    const backend = {request: vi.fn(async (name, target, value, options) => {
+    const backend = {storage: {delete: vi.fn(async url => { images.push(url); })}, request: vi.fn(async (name, target, value, options) => {
         if (name === "database.read") return {child: {to: "deleted"}};
         if (name === "database.delete") { deleted.push(target); return null; }
-        if (name === "storage.delete") { images.push(target); return; }
         if (options.mode === "read") return {value: counters.get(JSON.stringify(target)) ?? 3, etag: "initial"};
         counters.set(JSON.stringify(target), value); return {committed: true, value};
     })};
@@ -23,7 +22,6 @@ it("decrements the author's posts then total, deletes children, then images", as
     expect(backend.request.mock.calls.slice(4)).toEqual([
         ["database.read", ["posts"], {orderBy: "to", equalTo: "deleted"}],
         ["database.delete", ["posts", {post_id: "child"}]],
-        ["storage.delete", "one"], ["storage.delete", "two"],
     ]);
     expect(deleted).toEqual([["posts", {post_id: "child"}]]); expect(images).toEqual(["one", "two"]);
 });
@@ -53,9 +51,10 @@ it.each([1, 3, 5, 6])("propagates database failure at operation %s before deleti
 });
 it("logs an image failure and still attempts all other images", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    const {listener, backend, images} = setup(); const invoke = backend.request.getMockImplementation();
+    const {listener, backend, images} = setup();
     const error = new Error("storage failed");
-    backend.request.mockImplementation((name, ...args) => name === "storage.delete" && args[0] === "bad" ? Promise.reject(error) : invoke(name, ...args));
+    const remove = backend.storage.delete.getMockImplementation();
+    backend.storage.delete.mockImplementation(url => url === "bad" ? Promise.reject(error) : remove(url));
     await listener.onDelete({params, value: {uid: "author", images: [null, "bad", "good"]}});
     expect(log).toHaveBeenCalledWith(error); expect(images).toEqual(["good"]);
 });

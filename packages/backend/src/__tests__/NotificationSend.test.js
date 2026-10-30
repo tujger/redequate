@@ -1,6 +1,6 @@
 import {IDBFactory} from "fake-indexeddb";
 import {sendToTokens} from "../firebase-server/src/notification/send";
-import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
+import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
 import LocalBackend from "../local";
 import {subscribeToken, deleteToken} from "../../../messaging/src/local/database";
 import {messageType} from "../../../messaging/src/local/common";

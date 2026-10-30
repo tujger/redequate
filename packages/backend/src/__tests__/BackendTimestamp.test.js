@@ -4,7 +4,7 @@ import BackendBase from "../common/BackendBase";
 import {isTimestamp} from "../local/timestamp";
 import LocalBackend from "../local";
 import FirebaseBackendClient from "../firebase-client";
-import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
+import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
 import DatabaseBase from "../../../database/src/common/DatabaseBase";
 import LocalDatabase from "../../../database/src/local";
 import FirebaseDatabase from "../../../database/src/firebase";

@@ -1,6 +1,6 @@
 import {IDBFactory} from "fake-indexeddb";
 import {increment as firebaseIncrement} from "firebase/database";
-import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
+import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
 import BackendBase from "../common/BackendBase";
 import LocalBackend from "../local";
 import FirebaseBackendClient from "../firebase-client";

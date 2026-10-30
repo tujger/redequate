@@ -3,7 +3,7 @@ import update from "../../../database/src/common/methods/update";
 import {updateCounter} from "../common/handlers/utils";
 import LocalBackend from "../local";
 import LocalDatabase from "../../../database/src/local";
-import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
+import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
 import onEvents from "../local/database/onEvents";
 import {observeWrites} from "../local/database/callable/createHelpers";
 

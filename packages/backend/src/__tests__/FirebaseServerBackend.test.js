@@ -1,6 +1,6 @@
 import ExtraListener from "../common/handlers/extra";
 import BackendBase from "../common/BackendBase";
-import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
+import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
 
 let backend, getDatabase, createIncrement, database, references, records, generated;
 const reference = path => {

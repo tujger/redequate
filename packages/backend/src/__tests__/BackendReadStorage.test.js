@@ -1,8 +1,12 @@
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../local";
 import LocalDatabase from "../../../database/src/local";
-import FirebaseServerBackend from "../firebase-server/src/database/FirebaseServerBackend";
-import adminStorage from "../firebase-server/src/storage";
+import FirebaseBackendClient from "../firebase-client";
+import StorageBase from "../../../storage/src/StorageBase";
+import {httpsCallable} from "firebase/functions";
+vi.mock("firebase/functions", () => ({getFunctions: vi.fn(() => ({})), httpsCallable: vi.fn()}));
+import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseServerStorage from "../firebase-server/src/FirebaseServerStorage";
 
 // Query tests isolate storage operations from application reactions.
 vi.mock("../common", () => ({handlers: {}}));
@@ -35,17 +39,38 @@ it.each([null, [], {limit: 10}])("rejects unsupported read options %j", async op
     const backend = new FirebaseServerBackend(() => ({ref: vi.fn()}));
     await expect(backend.request("database.read", ["posts"], options)).rejects.toMatchObject({code: "database/invalid-argument"});
 });
-it("delegates storage deletion to the supplied provider in both backends", async () => {
+it("LocalBackend exposes the exact supplied Storage instance", async () => {
     const storage = {delete: vi.fn().mockResolvedValue("deleted")};
-    for (const backend of [new LocalBackend({storage}), new FirebaseServerBackend(undefined, undefined, {storage})]) {
-        expect(await backend.request("storage.delete", "https://files.test/one")).toBe("deleted");
-    }
-    expect(storage.delete).toHaveBeenCalledTimes(2);
-    await expect(new LocalBackend().request("storage.delete", "one")).rejects.toMatchObject({code: "backend/not-configured"});
+    const backend = new LocalBackend({storage});
+    expect(backend.storage).toBe(storage);
+    expect(await backend.storage.delete("https://files.test/one")).toBe("deleted");
+    expect(storage.delete).toHaveBeenCalledExactlyOnceWith("https://files.test/one");
+    await expect(backend.request("storage.delete", "one")).rejects.toMatchObject({code: "backend/not-implemented"});
+});
+it("FirebaseBackendClient ignores deletion without touching the passed Storage or callable", async () => {
+    const storage = {delete: vi.fn()};
+    const backend = new FirebaseBackendClient({firebase: {app: {}}, storage});
+    expect(backend.storage).toBeInstanceOf(StorageBase);
+    await expect(backend.storage.delete("one")).resolves.toBeUndefined();
+    expect(storage.delete).not.toHaveBeenCalled();
+    expect(httpsCallable).not.toHaveBeenCalled();
+});
+it("FirebaseServerBackend always creates and uses its own FirebaseServerStorage", async () => {
+    const external = {delete: vi.fn()};
+    const remove = vi.fn().mockResolvedValue(undefined);
+    const bucket = {name: "own-bucket", file: vi.fn(() => ({delete: remove}))};
+    const backend = new FirebaseServerBackend(undefined, undefined, {storage: external, getStorageInstance: () => ({bucket: () => bucket})});
+    expect(backend.storage).toBeInstanceOf(FirebaseServerStorage);
+    expect(backend.storage).toBeInstanceOf(StorageBase);
+    await backend.storage.delete("one");
+    expect(bucket.file).toHaveBeenCalledExactlyOnceWith("one");
+    expect(remove).toHaveBeenCalledExactlyOnceWith({ignoreNotFound: true});
+    expect(external.delete).not.toHaveBeenCalled();
+    await expect(backend.request("storage.delete", "one")).rejects.toMatchObject({code: "backend/not-implemented"});
 });
 it("deletes only the exact Admin Storage object and rejects foreign buckets", async () => {
     const bucket = {name: "own-bucket", file: vi.fn(() => ({delete: vi.fn().mockResolvedValue(undefined)}))};
-    const storage = adminStorage(() => ({bucket: () => bucket}));
+    const storage = new FirebaseServerStorage(() => ({bucket: () => bucket}));
     for (const input of ["images/one.jpg", "gs://own-bucket/images/one.jpg", "https://firebasestorage.googleapis.com/v0/b/own-bucket/o/images%2Fone.jpg?token=secret"]) {
         await storage.delete(input);
         expect(bucket.file).toHaveBeenLastCalledWith("images/one.jpg");
