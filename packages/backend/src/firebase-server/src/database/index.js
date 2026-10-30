@@ -1,5 +1,5 @@
 import {handlers} from "../../../common";
-import FirebaseServerBackend from "./FirebaseServerBackend.js";
+import FirebaseServerBackend from "../FirebaseServerBackend.js";
 import create from "./callable/create";
 import deleteRecord from "./callable/delete";
 import onEvents from "./onEvents";
