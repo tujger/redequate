@@ -744,3 +744,104 @@ admin-only callable share the named sendToTokens export from notification/send.j
 500. Local delivery posts only for the current subscription token in the same storageId;
 it remains foreground simulation. Push payload fields and alert records remain compatible
 with web and Android consumers. No new callable endpoint is exposed.
+
+### Explicit Local key migration
+
+Only LocalBackend implements database.migrate({collection, sourceField, targetField}).
+It copies nonempty string keys into absent/null target fields using native IndexedDB
+rows, preserving the source, _id and all payload fields. The target must have an
+existing single-field unique index. Source-field indexes absent from the current
+framework schema are removed in the same atomic version upgrade as the data repair;
+declared indexes are preserved. Migration does not run on read or generate keys. Validation/conflicts abort the whole transaction; repeat runs leave
+existing targets unchanged. It returns {scanned, repaired, unchanged} and notifies
+collection readers after commit. Native migration avoids business create/update
+listeners and their side effects. No Firebase command or common Database API is added.
+The Whisky Talks exposes it only for LocalBackend in Admin → Database fixes, behind
+its existing acknowledgement checkbox. Defaults repair activity_uid → activity_id.
+The operator must explicitly invoke it; no developer database is migrated by tests.
+
+### Direct Local timestamp updates
+
+LocalBackend database.update recognizes a direct backend.TIMESTAMP marker and writes
+its resolved value at the requested non-root path, matching ActivityListener's direct
+call. It uses the timestamp mode (also accepted explicitly only with that marker).
+Explicit patch mode rejects a direct timestamp marker; nested markers in patch values
+remain supported. Patch preparation retains the original value for diagnostic logging.
+Firebase backend behavior is unchanged.
+
+### Post creation reactions without tags
+
+PostListener.onCreate counts top-level posts with updateCounter and resolves reply
+ancestors before writing. Replies increment the writer's replies, the immediate
+parent author's replied counter when notified, and the root post's replied counter.
+Alerts target the parent/root authors once each, excluding the reply writer; they use
+type replies, the reply id and root context, preserving the original payload contract.
+The root field is merged through the common conditional update helper so both Local
+and Firebase retain all post fields. Missing ancestors and cycles fail before effects.
+Tag processing is not included. Delete/update behavior is unchanged; the operations
+remain sequential, without an enclosing transaction or event deduplication.
+
+### Post deletion without tags
+
+PostListener deletes ordinary-post counters (author then total), or reply counters
+(author replies and root replied). Missing reply roots warn without guessing a root.
+It reads direct children using database.read(path, {orderBy, equalTo}), then deletes
+them through database.delete so their own delete events cascade to deeper replies.
+Both internal backend readers support these optional query arguments; older path-only
+calls retain their results. Parent/root author replied counts and existing alerts are
+not removed, matching the original delete handler. No tag processing is included.
+
+PostListener calls backend.storage.delete(pathOrURL) directly; storage.delete is
+not a backend request command. LocalBackend uses the passed storage instance.
+FirebaseBackendClient exposes the supplied storage instance unchanged; direct storage
+calls use that provider without invoking a callable. It installs no backend listeners. FirebaseServerBackend always owns a
+FirebaseServerStorage extending StorageBase, ignores options.storage, and uses Admin
+Storage in its configured default bucket. Only the exact object is deleted, not a prefix. Image errors are
+logged independently without interrupting other image deletes; database errors stop
+the sequence. The Whisky Talks passes its existing Storage instance to LocalBackend.
+
+### Local backend cursor command
+
+LocalBackend supports await backend.request("database.cursor", path, options?) and
+returns a live ComposedDatabaseCursor, not a serializable page. It reuses the database provider's
+pagination, filtering, handle and subscribe behavior. The request context includes the
+current backend so cursor handle replacements/deletions use that same instance.
+The factory creates no new providers or listeners; callers own subscription cleanup.
+No Firebase callable or transport-level cursor format is introduced.
+
+### Frontend and Admin Firebase cursors
+
+FirebaseCursor(firebase, path, options, backend) uses the native modular Client SDK
+from firebase/database directly. FirebaseDatabase passes its firebase context;
+createCursorQuery uses the same native context. Pagination, date bounds, handle
+writes through the supplied backend, rereads and subscription cleanup are retained.
+There is no frontend cursor adapter.
+
+FirebaseServerBackend database.cursor uses a separate FirebaseServerCursor extending
+DatabaseCursor. It accepts the existing Admin Database, path, options and backend;
+queries and reads use the Admin SDK directly without any Client SDK import or
+adapter. It supports pagination, filters, date bounds, handle writes and rereads.
+It intentionally implements no subscriptions. Frontend FirebaseCursor remains
+unchanged and uses its native modular SDK.
+
+### Backend cursor composition
+
+Both local and Firebase server database.cursor commands use the shared backend
+createCursor factory and return ComposedDatabaseCursor even for a single path.
+The factory is a plain function using the existing composeCursor implementation.
+Backend cursor errors propagate directly to the caller; onError does not suppress
+them. Frontend Database.cursor error handling is unchanged.
+Inputs match Database.cursor: a path, query descriptions with
+inline options, or fresh cursor instances. A single-path cursor retains its
+resolved collection path; composed inputs retain the existing grouping,
+deduplication, subscriptions and source ownership rules. Backend request remains
+asynchronous, so callers must await cursor creation.
+
+
+### Firebase server command context
+
+All internal Firebase server commands share one requests registry and execute via
+handler.call(backend, ...args). Admin CRUD and cursor handlers resolve Database
+through this.getDatabaseInstance(); notification.send resolves only Messaging
+through this.getMessagingInstance(). Unknown commands resolve neither service.
+The low-level sendToTokens(messaging, ...) API remains available to the callable.
