@@ -1,4 +1,5 @@
 import BackendListener from "../BackendListener";
+import {fetchExistingTags, filterTagTokens, parseTokens} from "./tag";
 import {updateCounter} from "./utils";
 import {createAlert} from "./alert";
 import update from "../../../../database/src/common/methods/update";
@@ -62,9 +63,23 @@ export default class PostListener extends BackendListener {
             try { await this.backend.storage.delete(url); }
             catch (error) { console.error(error); }
         }));
+
     }
 
     async onUpdate({previous, value, params}) {
         console.debug("[Backend:Post]", `updated [${params.post_id}]`, {params, previous, value});
+
+        const previousImages = previous.images ?? [];
+        const images = value.images ?? [];
+        if ((previous.text ?? "") === (value.text ?? "") &&
+            previousImages.length === images.length && previousImages.every((image, index) => image === images[index])) return;
+
+        await parseTokens({backend:this.backend, text: value.text ?? ""})
+            .then(filterTagTokens)
+            .then(fetchExistingTags)
+            .then(result => {
+                console.log(">>>>>>>>>", result)
+            })
+
     }
 }
