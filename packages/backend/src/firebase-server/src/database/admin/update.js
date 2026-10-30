@@ -3,8 +3,9 @@ import parsePath from "../../../../../../database/src/firebase/parsePath";
 import invalidPath from "../../common/invalidPath";
 import {conditionalUpdate} from "./_transaction";
 
-export default async (database, path, value, options = {}, ...args) => {
+export default async function (path, value, options = {}, ...args) {
     if (args.length) fail("database/invalid-argument", "Expected (path, value, options?).");
+    const database = this.getDatabaseInstance();
     const address = parsePath(path).address;
     if (invalidPath.test(address)) fail("database/invalid-argument", "Invalid Firebase path.");
     if (options === null || typeof options !== "object" || Array.isArray(options)) {
@@ -24,4 +25,4 @@ export default async (database, path, value, options = {}, ...args) => {
         await database.ref().update(changes);
     }
     return null;
-};
+}

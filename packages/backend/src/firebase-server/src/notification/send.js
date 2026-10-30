@@ -106,3 +106,7 @@ export const sendToTokens = async (messaging, tokens, payload, options = {}) => 
     }
     return results;
 };
+
+export function send(tokens, payload, options = {}) {
+    return sendToTokens(this.getMessagingInstance(), tokens, payload, options);
+}

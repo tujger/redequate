@@ -3,8 +3,9 @@ import parsePath from "../../../../../../database/src/firebase/parsePath";
 import invalidPath from "../../common/invalidPath";
 import _transaction from "./_transaction";
 
-export default async (database, path, value, ...args) => {
+export default async function (path, value, ...args) {
     if (args.length) fail("database/invalid-argument", "Expected (path, value).");
+    const database = this.getDatabaseInstance();
     const {parentAddress: parent, key} = parsePath(path, "create");
     if (value === null || typeof value !== "object" || Array.isArray(value)) {
         fail("database/invalid-argument", "value must be a record object.");
@@ -18,4 +19,4 @@ export default async (database, path, value, ...args) => {
     const {committed} = await _transaction(reference, current => current === null ? value : undefined);
     if (!committed) fail("database/conflict", "Record already exists.");
     return reference.key;
-};
+}

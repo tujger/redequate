@@ -1,19 +1,22 @@
-import FirebaseServerStorage from "./FirebaseServerStorage.js";
-import {getMessaging} from "firebase-admin/messaging";
-import {sendToTokens} from "./notification/send.js";
-import BackendBase from "../../common/BackendBase.ts";
 import {getDatabase, ServerValue} from "firebase-admin/database";
-import {fail} from "../../../../common/index.js";
-import read from "./database/admin/read.js";
-import create from "./database/admin/create.js";
-import update from "./database/admin/update.js";
-import deleteRecord from "./database/admin/delete.js";
+import {getMessaging} from "firebase-admin/messaging";
+import {fail} from "../../../../common";
+import BackendBase from "../../common/BackendBase.ts";
+import create from "./database/admin/create";
+import cursor from "./database/admin/cursor";
+import deleteRecord from "./database/admin/delete";
+import read from "./database/admin/read";
+import update from "./database/admin/update";
+import FirebaseServerStorage from "./FirebaseServerStorage.js";
+import {send} from "./notification/send.js";
 
 const requests = {
-    "database.read": read,
     "database.create": create,
-    "database.update": update,
+    "database.cursor": cursor,
     "database.delete": deleteRecord,
+    "database.read": read,
+    "database.update": update,
+    "notification.send": send,
 };
 
 export default class FirebaseServerBackend extends BackendBase {
@@ -38,10 +41,9 @@ export default class FirebaseServerBackend extends BackendBase {
     }
 
     async request(name, ...args) {
-        if (name === "notification.send") return sendToTokens(this.getMessagingInstance(), ...args);
         if (!Object.hasOwn(requests, name)) {
             fail("backend/not-implemented", `Backend request ${name} is not implemented.`);
         }
-        return requests[name](this.getDatabaseInstance(), ...args);
+        return requests[name].call(this, ...args);
     }
 }
