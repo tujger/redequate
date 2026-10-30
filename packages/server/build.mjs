@@ -8,6 +8,7 @@ import del from "rollup-plugin-delete";
 import json from "@rollup/plugin-json";
 
 const source = path => fileURLToPath(new URL(path, import.meta.url));
+const sharedModules = [source("../common/index.js"), source("../storage/src/StorageBase.js")];
 const sharedSources = [source("../common/src/"), source("../database/src/"), source("../backend/src/common/")];
 const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
     .filter(entry => entry.isDirectory() && entry.name.endsWith("-server"))
@@ -100,7 +101,7 @@ const createBuild = ({input, output, sources, clean = [output]}, dependencies) =
             generateBundle() {
                 for (const id of this.getModuleIds()) {
                     if (!this.getModuleInfo(id).isExternal && id !== "\0rollupPluginBabelHelpers.js" &&
-                        id !== source("../common/index.js") && !sources.some(directory => id.startsWith(directory))) {
+                        !sharedModules.includes(id) && !sources.some(directory => id.startsWith(directory))) {
                         this.error(`Server package cannot include modules outside its source boundary: ${id}`);
                     }
                 }
