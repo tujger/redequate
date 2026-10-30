@@ -105,7 +105,7 @@ it("Local internal reads preserve falsy values, require one path and do not publ
     expect(await backend.request("database.read", ["meta", "settings", "flag"])).toBe(false);
     expect(await backend.request("database.read", ["meta", "settings", "missing"])).toBeNull();
     await expect(backend.request("database.read")).rejects.toMatchObject({code: "database/invalid-argument"});
-    await expect(backend.request("database.read", ownerPath, {})).rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(backend.request("database.read", ownerPath, {unexpected: true})).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
 

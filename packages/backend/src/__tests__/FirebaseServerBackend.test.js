@@ -116,7 +116,7 @@ it.each([
     ["database.create", ["posts", "post_id"], {}, {}],
     ["database.update", "posts/p1"], ["database.update", "posts/p1", {}, {mode: "unknown"}],
     ["database.update", "", false], ["database.update", "", []],
-    ["database.read"], ["database.read", "posts/p1", {}],
+    ["database.read"], ["database.read", "posts/p1", {unexpected: true}],
     ["database.delete"], ["database.delete", "posts/p1", null],
 ])("rejects malformed arguments %j without writing", async (...args) => {
     await expect(backend.request(...args)).rejects.toMatchObject({code: "database/invalid-argument"});

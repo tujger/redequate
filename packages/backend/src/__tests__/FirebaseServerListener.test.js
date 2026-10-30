@@ -88,18 +88,18 @@ it.each(types)("runs the extra %s behavior", async (type, name, suffix, before, 
 });
 
 it.each(types)("runs the post %s counters in order", async (type, name) => {
-    const backend = {increment: vi.fn(n => ({delta: n})), request: vi.fn(async (name, path, value, options) =>
-        options?.mode === "read" ? {value: 1, etag: "initial"} : {committed: true, value})};
+    const backend = {request: vi.fn(async (name, path, value, options) => name === "database.read" ? null
+        : options?.mode === "read" ? {value: 1, etag: "initial"} : {committed: true, value})};
     const value = {uid: "u"};
     await new PostListener(backend)[name](payload(type, value, value, {post_id: "p"}));
-    expect(backend.request.mock.calls).toEqual(type === "update" ? [] : [
-        ["database.update", ["_counters", {id: "total"}, "posts"], null, {mode: "read"}],
-        ["database.update", ["_counters", {id: "total"}, "posts"], type === "create" ? 2 : null, {mode: "replace", etag: "initial"}],
-        ...(type === "create" ? [
-            ["database.update", ["_counters", {id: "u"}, "posts"], null, {mode: "read"}],
-            ["database.update", ["_counters", {id: "u"}, "posts"], 2, {mode: "replace", etag: "initial"}],
-        ] : [["database.update", ["_counters", {id: "u"}, "posts"], {delta: -1}]]),
-    ]);
+    const counter = id => ["_counters", {id}, "posts"];
+    const changes = id => [
+        ["database.update", counter(id), null, {mode: "read"}],
+        ["database.update", counter(id), type === "create" ? 2 : null, {mode: "replace", etag: "initial"}],
+    ];
+    expect(backend.request.mock.calls).toEqual(type === "update" ? [] : type === "create"
+        ? [...changes("total"), ...changes("u")]
+        : [...changes("u"), ...changes("total"), ["database.read", ["posts"], {orderBy: "to", equalTo: "p"}]]);
 });
 
 it("skips a missing post owner and stops after a failed total counter update", async () => {
