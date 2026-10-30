@@ -1,4 +1,4 @@
-import validateReadOptions from "../../../../common/readOptions";
+import validateReadOptions from "../../../../common/validateReadOptions.js";
 import {fail} from "../../../../../../common";
 import parsePath from "../../../../../../database/src/firebase/parsePath";
 import invalidPath from "../../common/invalidPath";
