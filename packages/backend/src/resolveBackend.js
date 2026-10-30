@@ -1,7 +1,7 @@
 import {resolvePackage} from "../../common";
 
 let localBackend;
-const resolveLocalBackend = () => localBackend ??= import("./local")
+const resolveLocalBackend = () => localBackend ??= import("./local/LocalBackend")
     .then(({default: LocalBackend}) => new LocalBackend())
     .catch(error => {
         localBackend = undefined;
