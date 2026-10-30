@@ -9,7 +9,7 @@ import {share} from "../ShareComponent";
 import SelectItem from "../../controls/Select/SelectItem";
 import actionStyles from "./styles/PostActions.module.css";
 
-export default React.forwardRef(({isReply, onMenuItemClick, postData, ...selectProps}, ref) => {
+export default React.forwardRef(({isReply, onMenuItemClick, postData, bordered: _1, onDelete: _2, userData: _3, allowedExtras: _4, collapsible: _5, disableClick: _6, expanded: _7, handleClickPost: _8, ...selectProps}, ref) => {
     const pages = usePages();
     const dispatch = useDispatch();
     const {t} = useTranslation();
