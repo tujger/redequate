@@ -1,4 +1,4 @@
-import validateReadOptions from "../../../common/validateReadOptions";
+import validateReadOptions from "../../../common/helpers/validateReadOptions";
 import applyReadOptions from "../../../../../database/src/common/applyReadOptions";
 import {fail} from "../../../../../common";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";
