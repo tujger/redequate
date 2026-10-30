@@ -80,7 +80,6 @@ export default async function update({storageId, args}) {
     const database = await openLocalDatabase(storageId);
     let committed = false;
     const result = await runTransaction(database, mode === "read" ? "readonly" : "readwrite", names, async transaction => {
-        console.debug("[Backend:Update]", `update [${parsePath(path).address}]`, {value});
         if (mode === "patch") {
             const updates = entries.map(([relative, value]) => {
                 if (root) return [relative, value];
@@ -113,6 +112,11 @@ export default async function update({storageId, args}) {
         committed = true;
         return {committed: true, value: saved};
     });
-    if (committed) await notifyWrites(storageId, names);
+    if (committed) {
+        console.debug("[Backend:Update]", `${mode} [${parsePath(path).address}]`, {value});
+        await notifyWrites(storageId, names);
+    } else if (mode === "replace" && result.committed === false) {
+        console.debug("[Backend:Update]", `conflict [${parsePath(path).address}]`, {value});
+    }
     return result;
 }
