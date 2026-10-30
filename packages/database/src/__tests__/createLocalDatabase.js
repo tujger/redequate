@@ -1,5 +1,5 @@
 import LocalDatabase from "../local";
-import LocalBackend from "../../../backend/src/local";
+import LocalBackend from "../../../backend/src/local/LocalBackend";
 
 export default function createLocalDatabase(options = {}) {
     const backend = new LocalBackend({storageId: options.storageId});
