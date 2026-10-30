@@ -1,11 +1,14 @@
+import type StorageBase from "../../../storage/src/StorageBase";
 import {notImplemented} from "../../../common";
 
 export default class BackendBase {
     protected readonly _projectUrl?: string;
     readonly projectTitle: string;
+    readonly storage?: StorageBase;
 
-    constructor({projectTitle = "Redequate", projectUrl}: {projectTitle?: string; projectUrl?: string} = {}) {
+    constructor({projectTitle = "Redequate", projectUrl, storage}: {projectTitle?: string; projectUrl?: string; storage?: StorageBase} = {}) {
         this.projectTitle = projectTitle;
+        this.storage = storage;
         this._projectUrl = projectUrl;
     }
 
