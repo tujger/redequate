@@ -845,3 +845,15 @@ handler.call(backend, ...args). Admin CRUD and cursor handlers resolve Database
 through this.getDatabaseInstance(); notification.send resolves only Messaging
 through this.getMessagingInstance(). Unknown commands resolve neither service.
 The low-level sendToTokens(messaging, ...) API remains available to the callable.
+
+
+### Test ownership after backend handler migration
+
+Post/tag/alert/extra reaction coverage belongs to packages/backend tests; consumer
+Functions suites no longer invoke disabled -prefixed copies. Applications retain
+checks for their active triggers, fixes, callable authorization and actual backend
+namespace registration. Provider fixtures supply the required backend explicitly.
+The library's Auth/RTDB-only integration suite uses an emulator REST backend with
+real rules and ETags; callable transport is covered by the consumer emulator suite.
+Its runner allocates non-default ports for all services and a dedicated demo project
+and temp directory, without importing developer data.
