@@ -85,6 +85,14 @@ export default class PostListener extends BackendListener {
         const promises = deleteTags.map(tag => unlinkPostFromTag({backend: this.backend, postId: params.post_id, tag}));
 
         await Promise.all(promises);
+
+        await createActivity(this.backend, {
+            type: "post.delete",
+            details: {
+                postId: params.post_id,
+                uid: value.uid,
+            },
+        });
     }
 
     async onUpdate({previous, value, params}) {
