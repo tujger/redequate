@@ -12,7 +12,6 @@ import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import {matchRole, normalizeSortName, UserRole} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
-import {updateActivity} from "../../pages/admin/audit/auditReducer";
 import LoadingComponent from "../LoadingComponent";
 import {tokenizeText} from "../MentionedTextComponent";
 import MentionsInputComponent from "../MentionsInputComponent/MentionsInputComponent";
@@ -190,20 +189,7 @@ const NewPostComponent = props => {
                 const updates = new Map();
                 updates.set(["posts", {post_id: editPostData.id}, "images"], images);
                 updates.set(["posts", {post_id: editPostData.id}, "text"], text);
-                return database.update(updates)
-                    .then(() => {
-                        updateActivity({
-                            database,
-                            uid: currentUserData.id,
-                            type: "Post edit",
-                            details: {
-                                postId: editPostData.id,
-                                path: `${editPostData.root ? editPostData.root + "/" : ""}${editPostData.replyTo ? editPostData.replyTo + "/" : ""}${editPostData.id}` || null,
-                                uid: editPostData.uid,
-                            }
-                        })
-                        return editPostData.id;
-                    });
+                return database.update(updates).then(() => editPostData.id);
             } else {
                 return database.create(["posts", "post_id"], data);
             }
