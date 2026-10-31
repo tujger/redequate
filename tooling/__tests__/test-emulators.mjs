@@ -1,9 +1,11 @@
-import {copyFileSync, existsSync, mkdtempSync, writeFileSync} from "node:fs";
+import {existsSync, mkdtempSync, readFileSync, writeFileSync, rmSync} from "node:fs";
 import {homedir, tmpdir} from "node:os";
 import {delimiter, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {spawn} from "node:child_process";
 import {createServer} from "node:net";
+
+import {resolveRules} from "../../packages/database/src/firebase/rules.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const projectId = `demo-redequate-${process.pid}`;
@@ -27,7 +29,7 @@ for (const name of ["auth", "database", "hub", "logging", "eventarc", "tasks"]) 
     emulators[name] = {host: "127.0.0.1", port: await freePort()};
 }
 // Firebase CLI requires rules to live inside the generated config's project directory.
-copyFileSync(new URL("./fixtures/database.rules.json", import.meta.url), join(logDirectory, "database.rules.json"));
+writeFileSync(join(logDirectory, "database.rules.json"), JSON.stringify(resolveRules(JSON.parse(readFileSync(new URL("../../src/__tests__/fixtures/database.rules.json", import.meta.url), "utf8")))));
 writeFileSync(config, JSON.stringify({
     database: {rules: "database.rules.json"},
     emulators: {
@@ -73,4 +75,19 @@ child.on("error", error => {
     console.error(error);
     process.exitCode = 1;
 });
-child.on("exit", code => {process.exitCode = code ?? 1;});
+child.on("exit", async code => {
+    process.exitCode = code ?? 1;
+    try {
+        for (const {port} of Object.values(emulators)) {
+            await new Promise((resolve, reject) => {
+                const server = createServer();
+                server.once("error", reject);
+                server.listen(port, "127.0.0.1", () => server.close(resolve));
+            });
+        }
+        rmSync(logDirectory, {recursive: true, force: true});
+    } catch (error) {
+        console.error("Emulator ports not released; preserving logs:", logDirectory, error);
+        process.exitCode = 1;
+    }
+});
