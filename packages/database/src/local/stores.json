@@ -23,6 +23,8 @@
             "autoIncrement": true
         },
         "storeSchema": [
+            {"name": "activity_type_id", "keypath": "activity_type_id", "options": {"unique": true}},
+            {"name": "type", "keypath": "type"}
         ]
     },
     {
