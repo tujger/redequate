@@ -8,7 +8,7 @@ export default class ExtraListener extends BackendListener {
 
     async onCreate({params, value}) {
         console.debug("[Backend:Tag]", `created [${params.tag_id}]`, {params, value});
-        createActivity(this.backend, {
+        await createActivity(this.backend, {
             type: "tag.create",
             details: {
                 params, value,
@@ -18,7 +18,7 @@ export default class ExtraListener extends BackendListener {
 
     async onDelete({params, value}) {
         console.debug("[Backend:Tag]", `deleted [${params.tag_id}]`, {params, value});
-        createActivity(this.backend, {
+        await createActivity(this.backend, {
             type: "tag.delete",
             details: {
                 params, value,
