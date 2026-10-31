@@ -5,7 +5,7 @@ import LocalDatabase from "../../../database/src/local";
 
 const value = {id: "p1", uid: "reactor", type: "like"};
 const params = {extra_id: "e1"};
-const ownerPath = ["posts", {post_id: "p1"}, "uid"];
+const ownerPath = ["posts", {post_id: "p1"}, {uid: "uid"}];
 let backend, listener;
 beforeEach(() => {
     backend = {
@@ -84,7 +84,7 @@ it("persists a Local extra → counter → alert reaction chain with a resolved 
             new: true, path: null, timestamp: expect.any(Number), type: "like",
         }]);
     });
-    expect(await backend.request("database.read", ["_counters", {id: "p1"}, "like"])).toBe(1);
+    expect(await backend.request("database.read", ["_counters", {id: "p1"}, {like: "like"}])).toBe(1);
     expect(await backend.request("database.read", ownerPath)).toBe("author");
 });
 
@@ -92,7 +92,7 @@ it.each(["self", "missing", "no-author"])("suppresses Local alerts for %s reacti
     const {database, backend} = await local();
     if (kind !== "missing") await database.create(["posts", {post_id: "p1"}], kind === "self" ? {uid: "reactor"} : {text: "no author"});
     await database.create(["extra", {extra_id: "e1"}], value);
-    await vi.waitFor(async () => expect(await backend.request("database.read", ["_counters", {id: "p1"}, "like"])).toBe(1));
+    await vi.waitFor(async () => expect(await backend.request("database.read", ["_counters", {id: "p1"}, {like: "like"}])).toBe(1));
     // Await a read issued after the reaction's owner lookup before checking the absence of alerts.
     await backend.request("database.read", ownerPath);
     expect(await database.read(["alerts", "alert_id"])).toBeUndefined();
@@ -133,6 +133,6 @@ it("Local extra deletion removes a counter at zero and preserves the original al
     await database.create(target, value);
     await vi.waitFor(async () => expect(Object.keys(await database.read(["alerts", {user_id: "author"}, "alert_id"]) ?? {})).toHaveLength(1));
     await database.delete(target);
-    await vi.waitFor(async () => expect(await backend.request("database.read", ["_counters", {id: "p1"}, "like"])).toBeNull());
+    await vi.waitFor(async () => expect(await backend.request("database.read", ["_counters", {id: "p1"}, {like: "like"}])).toBeNull());
     expect(Object.keys(await database.read(["alerts", {user_id: "author"}, "alert_id"]))).toHaveLength(1);
 });

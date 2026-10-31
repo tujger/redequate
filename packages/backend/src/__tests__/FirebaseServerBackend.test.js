@@ -151,7 +151,7 @@ it.each([
 
 it.each(["author", 0, false, null])("reads a resolved path without losing %j", async value => {
     records.set("posts/p1/uid", value);
-    expect(await backend.request("database.read", ["posts", {post_id: "p1"}, "uid"])).toBe(value);
+    expect(await backend.request("database.read", ["posts", {post_id: "p1"}, {uid: "uid"}])).toBe(value);
     expect(reference("posts/p1/uid").get).toHaveBeenCalledExactlyOnceWith();
 });
 

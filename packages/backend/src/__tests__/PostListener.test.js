@@ -7,6 +7,7 @@ const params = {post_id: "new"};
 const key = path => JSON.stringify(path);
 const postPath = id => ["posts", {post_id: id}];
 const counterPath = (id, name) => ["_counters", {id}, name];
+const counterReadPath = (id, name) => ["_counters", {id}, {[name]: name}];
 const setup = (post = {uid: "writer", to: "parent", text: "keep", nested: {flag: true}}, parentUid = "parent-author", rootUid = "root-author") => {
     const records = new Map([
         [key(postPath("new")), post],
@@ -93,22 +94,22 @@ it("creates replies and alerts through LocalBackend while preserving complete po
         const database = new LocalDatabase({storageId, backend});
         await database.read(["posts"]);
         await database.create(postPath("root"), {uid: "root-author", text: "root content"});
-        await vi.waitFor(async () => expect(await backend.request("database.read", counterPath("total", "posts"))).toBe(1));
+        await vi.waitFor(async () => expect(await backend.request("database.read", counterReadPath("total", "posts"))).toBe(1));
         await database.create(postPath("parent"), {uid: "parent-author", to: "root", text: "parent content"});
-        await vi.waitFor(async () => expect(await backend.request("database.read", counterPath("root", "replied"))).toBe(1));
+        await vi.waitFor(async () => expect(await backend.request("database.read", counterReadPath("root", "replied"))).toBe(1));
         const reply = {uid: "writer", to: "parent", text: "reply content", images: ["keep"]};
         await database.create(postPath("new"), reply);
         await vi.waitFor(async () => {
-            expect(await backend.request("database.read", counterPath("root", "replied"))).toBe(2);
+            expect(await backend.request("database.read", counterReadPath("root", "replied"))).toBe(2);
             const rootAlerts = await database.read(["alerts", {user_id: "root-author"}, "alert_id"]);
             expect(Object.values(rootAlerts ?? {}).filter(alert => alert.id === "new")).toHaveLength(1);
         });
         expect(await database.read(postPath("new"))).toEqual({...reply, root: "root"});
         expect(await database.read(postPath("parent"))).toEqual({uid: "parent-author", to: "root", text: "parent content", root: "root"});
-        expect(await backend.request("database.read", counterPath("total", "posts"))).toBe(1);
-        expect(await backend.request("database.read", counterPath("writer", "replies"))).toBe(1);
-        expect(await backend.request("database.read", counterPath("parent-author", "replied"))).toBe(1);
-        expect(await backend.request("database.read", counterPath("writer", "posts"))).toBeNull();
+        expect(await backend.request("database.read", counterReadPath("total", "posts"))).toBe(1);
+        expect(await backend.request("database.read", counterReadPath("writer", "replies"))).toBe(1);
+        expect(await backend.request("database.read", counterReadPath("parent-author", "replied"))).toBe(1);
+        expect(await backend.request("database.read", counterReadPath("writer", "posts"))).toBeNull();
         const alerts = await database.read(["alerts", {user_id: "parent-author"}, "alert_id"]);
         expect(Object.values(alerts)).toEqual([expect.objectContaining({id: "new", uid: "writer", context: "root", type: "replies"})]);
     } finally { vi.unstubAllGlobals(); }

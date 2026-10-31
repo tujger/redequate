@@ -16,7 +16,7 @@ it.each([
     const payload = {data: {body: `Alice ${suffix}`, icon: "https://app.test/logo-192.png",
         tag: "https://app.test/alerts/", title: "App", type: "alert"}};
     expect(backend.request.mock.calls).toEqual([
-        ["database.read", ["users_public", {user_id: "author"}, "name"]],
+        ["database.read", ["users_public", {user_id: "author"}, {name: "name"}]],
         ["database.read", ["users_private", {user_id: "recipient"}]],
         ["notification.send", ["t1"], payload, {}], ["notification.send", ["t2"], payload, {}],
     ]);
