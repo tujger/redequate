@@ -586,12 +586,11 @@ Application stores and their indexes come exclusively from local/stores.json and
 constructor stores. There are no generated identity, path, type or cursor indexes.
 Object records store actual fields directly, with native _id and address fields.
 Do not add _record, _encoded, _local, restoration lists, shadow values or duplicate
-payloads. Reading excludes _id and all fields of unique indexes, including explicitly
-supplied keys; exact recovery of those keys as user data is no longer supported.
-Stores without unique indexes exclude fields explicitly selected in the address or
-as the collection key. Ordinary non-unique indexed data such as posts.uid and posts.to
-remain visible. Empty branches left by nested service keys are pruned; incompatible
-indexed parents reject rather than being overwritten.
+payloads. Reading excludes only the native _id. Unique and compound indexed fields,
+including nested fields and identities injected from addresses, remain visible in
+records, collections, cursor entries, subscriptions and update callbacks. A field
+may both identify an entry and appear inside its value. No origin metadata is
+stored. Incompatible indexed parents reject rather than being overwritten.
 Strings, numbers, booleans and arrays use _value as their single payload, without a
 type marker. _value is reserved at the record root; _record and _encoded are reserved
 legacy service fields. Nested fields with these names are ordinary data. Old wrappers
@@ -763,8 +762,8 @@ The operator must explicitly invoke it; no developer database is migrated by tes
 ### Direct Local timestamp updates
 
 LocalBackend database.update recognizes a direct backend.TIMESTAMP marker and writes
-its resolved value at the requested non-root path, matching ActivityListener's direct
-call. It uses the timestamp mode (also accepted explicitly only with that marker).
+its resolved value at the requested non-root path. It uses the timestamp mode
+(also accepted explicitly only with that marker).
 Explicit patch mode rejects a direct timestamp marker; nested markers in patch values
 remain supported. Patch preparation retains the original value for diagnostic logging.
 Firebase backend behavior is unchanged.
@@ -857,3 +856,138 @@ The library's Auth/RTDB-only integration suite uses an emulator REST backend wit
 real rules and ETags; callable transport is covered by the consumer emulator suite.
 Its runner allocates non-default ports for all services and a dedicated demo project
 and temp directory, without importing developer data.
+
+
+### Activity type index
+
+`DerivedDataRebuilder` is an opt-in `BackendListener` base. The public call is
+`backend.request("database.rebuild", listener.path)` with no options. Firebase
+requires an authenticated administrator; Local routes the same path to the same
+optional `handler.onRebuildDerivedData()` method. It applies exactly one portion,
+including its conditional checkpoint advance or deletion, before returning the
+same status shape as `database.status`: `{rebuilding: false}` or
+`{rebuilding: true, run, revision, cursor}`. A listener with more than one
+declared derived checkpoint needs a distinct rebuild path for each store. A missing checkpoint is
+conditionally created and starts at the beginning; an existing checkpoint is
+resumed from its cursor. The caller supplies a concrete checkpoint record path, a positive
+fixed batch size, and `readBatch(cursor, limit)` / `applyBatch(items, checkpoint)`.
+The checkpoint path must exist in the Local schema before use; the framework
+does not create a new Local collection or install a startup rebuild. A subclass
+must ensure that pagination is stable under source mutations and that its
+checkpoint path is dedicated to its job.
+
+`backend.request("database.status", listener.path, derivedPath)` reports only
+the selected derived store's checkpoint. A handler explicitly declares allowed
+`derivedCheckpoints` entries `{path: derivedPath, checkpointPath}`. The
+`DerivedDataRebuilder` constructor accepts an optional fifth `derivedPath`
+argument and declares its single checkpoint when provided; a handler managing
+several stores can declare several entries. Undeclared paths cannot access
+checkpoints. The response is `{rebuilding: false}` when the checkpoint is absent,
+or `{rebuilding: true, run, revision, cursor}` when present. This read-only
+request does not modify checkpoints or infer whether a runner is alive. The
+Firebase callable requires an authenticated administrator, as rebuild does.
+
+Each runner reads the checkpoint ETag before a portion and conditionally
+replaces it after the portion; the final conditional replacement deletes it.
+Client-facing conditional updates use REST GET with `X-Firebase-ETag` and PUT
+with `If-Match`; a stale ETag returns a 412 conflict. The rebuild callable runs
+through the Firebase server backend and uses an Admin SDK transaction at the
+checkpoint path. Local compares the full
+logical value inside one IndexedDB readwrite transaction. These are atomic
+checkpoint operations, including final deletion. They do not make writes to
+another derived branch atomic with the checkpoint. After a failure or lost CAS,
+the same portion can run again, and two runners may both apply one portion
+before one loses the checkpoint CAS. `applyBatch` must therefore be idempotent,
+must tolerate another runner writing the same portion, and must merge
+safely with concurrent `onCreate`/`onUpdate`/`onDelete` writes (for example,
+conditional per-record updates against current source state). The base class
+cannot guarantee this for arbitrary derived data, cannot undo a partially
+applied portion, and must not be used for a destructive clear-and-replace
+rebuild. Local subclasses may implement a stronger single-transaction
+write-plus-checkpoint operation, but this base uses the common provider CAS.
+
+For an unfinished Firebase portion, the server awaits Cloud Tasks enqueue to
+`database-rebuildWorker` before answering. Each task awaits one portion and the
+enqueue of its successor. A retried task can repair a successor enqueue that
+failed after its CAS advance. Deploy the exported worker with the callable and
+grant the Functions service identity Cloud Tasks enqueue and invoke permissions.
+If the initial enqueue fails after the callable advanced its portion, the
+callable returns an error and leaves the checkpoint for an explicit retry; there
+is no automatic recovery from that narrow gap. Queue delivery is also subject
+to its configured finite retries. Local runs remaining portions in a managed
+worker and checks declared checkpoints when a new backend starts, resuming any
+unfinished run. A worker failure retains the checkpoint for a later resume.
+
+
+All stores whose names begin with `_` are derived, disposable data. Their source
+records must remain untouched during schema migrations or index repair. A migration
+may clear an underscore store only when its rebuild path from source records is
+defined and the caller arranges to run it; clearing alone does not restore data.
+For each such store, document the source, rebuild entry point, and initiator before
+using a destructive migration. This is an architectural rule, not an automatic
+rebuild feature of LocalDatabase or Firebase.
+The current Local schema also declares `_counters`, `_chats`, and `_tag`.
+Their complete rebuild entry points have not been verified; do not clear these
+stores in a migration until their source data and rebuild initiators are specified.
+
+`_activity` is a disposable collection keyed by a service `activity_type_id`.
+Each record is `{activity_type_id, type, value}`, with the service key also stored
+in `activity_type_id`, the unmodified activity type in `type`, and
+its last indexing timestamp in `value`. Types such as `tag.create` are values,
+never Firebase keys. ActivityListener uses the existing conditional update helper
+on the collection to preserve one record per type during concurrent events. A new
+type uses the source activity ID as its service ID; later events reuse that ID.
+Local declares a unique `activity_type_id` index and an ordinary `type` index.
+The schema upgrade removes only disposable `_activity` rows without a service ID;
+the activity journal is untouched. Existing Local records without an explicit-value
+marker retain their prior identity decoding, while new records preserve identity
+fields supplied in the value. Firebase restores missing service IDs from record keys
+and discards the former nested types map on the next index write. The audit selector
+reads original types from record values; journal filtering still compares
+`activity.type` without encoding. Both
+web consumers declare `_activity/.indexOn: ["type"]`. There is no journal migration.
+`ActivityListener.rebuild()` explicitly reads the source `activity` collection and
+conditionally reconstructs one `_activity` record per type. A caller must invoke
+it after clearing the index; no startup or migration hook currently does so.
+The index is therefore not automatically restored after a schema cleanup. Before
+clearing it in a deployed migration, add a maintenance or startup invocation of
+this method and verify completion. The Local schema upgrade currently removes only
+legacy rows lacking a service ID; those rows are not automatically reconstructed.
+
+
+### Atomic post editing
+
+NewPostComponent generates an edit history ID locally with firebase-key, then
+submits the new `edit/<edit_id>` entry, text and images in one root batch update.
+It performs no separate history create and never mutates the supplied PostData
+history. Both providers therefore commit one post change with its history; a
+rejected database update leaves all three database paths unchanged. History keeps
+its `{timestamp, uid}` shape and existing entries. PostListener's logging and
+content-change guard remain unchanged; it creates one `post.update` Activity for
+a content change. Upload/file cleanup retains its existing lifecycle.
+
+
+### Local reads retain identity fields
+
+Local object decoding now hides only the native `_id`. Every other stored field
+remains in read results, cursor entries, subscriptions and update callback values,
+including unique/compound index fields and identity fields injected from paths.
+A collection entry can expose the same value as both its key and an object field.
+No origin metadata, schema/data migration or Firebase key-to-field synthesis is
+introduced. Primitive and array values still use the existing `_value` wrapper.
+
+
+### Backend collection reads
+
+Local and Firebase Admin `database.read` requests now share Database.read's
+collection path grammar. A final string in an array identifies the collection key,
+not a nested property: `["_activity", "activity_type_id"]` queries `_activity`.
+Named final segments still select concrete records; literal string paths retain
+their original addresses. Local preserves singleton-document addressing for
+unindexed stores. The existing `{orderBy, equalTo}` options filter collection
+records and return a map keyed by record ID (null when no records match).
+ActivityListener consumes that map and updates an existing matching ID. The current
+application handler creates a missing type through database.create; that separate
+read/create sequence does not guarantee uniqueness during concurrent events.
+Activity type strings remain unencoded stored values. Scalar backend reads of the
+post author and profile name use explicit named field segments.

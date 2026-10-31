@@ -376,8 +376,10 @@ Props:
 ## Database structure
 
     _activity
-        types
-            type_name: timestamp
+        activity_type_id
+            activity_type_id - service key stored in the value
+            type - original activity type (string)
+            value - last indexed timestamp
     _chats
         uid/chat_id
             private? - opposite uid
@@ -391,7 +393,7 @@ Props:
         activity_id
             details - object with details
             timestamp
-            type - indexed into _activity/types
+            type - indexed as a value in _activity records
             uid
     alerts
         uid/alert_id

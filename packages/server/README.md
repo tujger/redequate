@@ -99,6 +99,29 @@ resolves them as part of an ordinary write.
 
 The public `database.update` overloads and error handlers are unchanged.
 
+## Firebase database.rebuild
+
+`request("database.rebuild", listener.path)` sends one path directly to the
+`database-rebuild` callable. It accepts no options and invokes the registered
+listener's optional `onRebuildDerivedData()` method without arguments. Only an
+authenticated user whose `roles/<uid>` value is `admin` may start it. The Local
+backend uses the same path routing. A missing checkpoint starts a run; an existing
+checkpoint resumes it. The handler must make each batch idempotent because a
+concurrent run or a retry can apply the same batch again.
+The response follows the checkpoint status shape below after exactly one portion.
+For unfinished work, the server awaits enqueue to the exported
+`database-rebuildWorker` Cloud Tasks function before answering; each worker
+dispatch performs one more portion and enqueues its successor. Deploy that
+function and configure Cloud Tasks enqueue/invoke permissions. An enqueue
+failure on the initial callable leaves a resumable checkpoint and returns an
+error; retry the request to continue it.
+
+`request("database.status", listener.path, derivedPath)` sends both paths to
+`database-status`. The handler must declare a matching `derivedCheckpoints`
+entry for the derived store. It returns `{rebuilding: false}` without a
+checkpoint or `{rebuilding: true, run, revision, cursor}` with one. This is a
+read-only checkpoint lookup with the same administrator requirement as rebuild.
+
 ## Firebase database.delete
 
 `request("database.delete", path)` invokes `database-delete`. The single path is

@@ -30,6 +30,12 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   `read(["users_public", "user_id"])` therefore reads Firebase `/users_public`
   and the Local user_id collection. Local does not include unrelated identity
   fields from the same physical store. Nested collections use the same rule.
+- Internal backend `database.read` requests use the same collection-path grammar.
+  `read(["_activity", "activity_type_id"], {orderBy: ["type"], equalTo: "tag.create"})`
+  returns a map of matching records keyed by ID, or null when absent. A final
+  string is identity metadata; a scalar field must use a named final segment,
+  such as `["posts", {post_id: id}, {uid: "uid"}]`. Local singleton stores retain
+  their document addressing; literal string paths remain literal.
 - A trailing named segment selects a record and its descendants:
   `read(["users_public", {user_id: uid}])` addresses Firebase `/users_public/<uid>`.
   Concrete fields/branches use named segments too: `read(["meta", {settings:
@@ -96,7 +102,8 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   it does not access IndexedDB, initialize schemas or publish notifications. The
   backend operates independently on stores prepared separately.
 - Failed writes roll back records, but generated logical IDs are not reserved or reused.
-  Native _id and injected address fields stay inside Local; reads return exactly the supplied value.
+  Native _id stays inside Local; object reads retain all other fields, including
+  fields injected from the address.
   No allocator stores or implicit timestamps are added; no data migration is performed.
 
 ## Local IndexedDB schema
@@ -108,12 +115,13 @@ Additional configured stores use the same format; provider stores beginning with
 remain outside the application schema and cannot be changed by application CRUD.
 
 Local object records keep fields directly, without `_record`, `_encoded`, `_local`,
-added/overwritten field lists or a duplicate payload. `_id` and all fields of unique
-indexes are service keys and are omitted from object reads even when explicitly
-provided. For stores without unique indexes, fields explicitly selected in the
-address or as the collection key are omitted. Ordinary non-unique data indexes,
-such as post uid/to, remain in the returned value. Empty nested branches left by
-service-key removal are pruned. Indexed path parents must be compatible objects.
+added/overwritten field lists or a duplicate payload. Only the native `_id` is
+omitted from object reads. All other fields remain visible, including unique and
+compound index fields, nested identity fields and fields injected from the path.
+A field may both identify a collection entry and appear inside its value. This
+rule applies to read, cursors, subscriptions, backend reads and update callbacks.
+It does not depend on which path selected the record or whether a field was
+explicitly supplied. Indexed path parents must be compatible objects.
 Strings, numbers, booleans and arrays use only `{_value: value}` plus physical keys;
 there is no type marker. Objects with `_value` at their root are rejected, as are
 legacy root fields `_record` and `_encoded`. Nested fields with these names are
