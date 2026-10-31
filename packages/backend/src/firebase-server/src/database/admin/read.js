@@ -6,7 +6,7 @@ import invalidPath from "../../common/invalidPath";
 export default async function (path, options = {}, ...args) {
     if (args.length) fail("database/invalid-argument", "Expected (path, options?).");
     const database = this.getDatabaseInstance();
-    const address = parsePath(path).address;
+    const address = parsePath(path, "collection").address;
     if (invalidPath.test(address)) fail("database/invalid-argument", "Invalid Firebase path.");
     const {field, equalTo} = validateReadOptions(options);
     let query = database.ref(address);
