@@ -13,7 +13,7 @@ import MentionedSelectComponent from "../../../components/MentionedSelectCompone
 import NavigationToolbar from "../../../components/NavigationToolbar";
 import {useDatabase, useRedirectToLogin} from "../../../controllers";
 import {toDateString} from "../../../controllers/DateFormat";
-import {cacheDatas, useWindowData, Layout} from "../../../controllers/General";
+import {cacheDatas, Layout, useWindowData} from "../../../controllers/General";
 import {mentionUsers} from "../../../controllers/mentionTypes";
 import notifySnackbar from "../../../controllers/notifySnackbar";
 import UserData from "../../../controllers/UserData";
@@ -215,8 +215,8 @@ const Activity = props => {
                     />}
                     {activityMode === "type" && !filteredItem && <MentionedSelectComponent
                         mention={{
-                            cursor: () => database.cursor(["_activity", "types", "type"]),
-                            transform: item => ({id: item.key, display: item.key}),
+                            cursor: () => database.cursor(["_activity", "activity_type_id"]),
+                            transform: item => ({id: item.value.type, display: item.value.type}),
                         }}
                         onChange={handleTypeSelect}
                     />}
