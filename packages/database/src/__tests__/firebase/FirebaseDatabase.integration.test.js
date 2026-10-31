@@ -19,6 +19,21 @@ afterEach(() => {
     }
 });
 const seed = value => set(ref(sdkDatabase, path), value);
+it("keeps Activity identity and type values separate in reads and cursors", async () => {
+    const records = {
+        first: {activity_type_id: "first", type: "same", value: 1},
+        second: {activity_type_id: "second", type: "same", value: 2},
+        same: {activity_type_id: "same", type: "same", value: 3},
+        missing: {value: 4}
+    };
+    await seed(records);
+    expect(await database.read(path)).toEqual(records);
+    expect(await database.read([path, {activity_type_id: "first"}])).toEqual(records.first);
+    expect(await readAll(database.cursor(path))).toEqual(Object.entries(records).sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, value]) => ({key, value})));
+    expect((await readAll(database.cursor(path, {orderBy: "type", equalTo: "same"})))
+        .map(({key}) => key)).toEqual(["first", "same", "second"]);
+});
 async function readAll(cursor, size = 10) {
     const entries = [];
     while (!cursor.position.finished) {

@@ -139,13 +139,13 @@ it("serializes competing replacements so only one writer commits a shared snapsh
     expect(await replace(post, 3, conflict.etag)).toEqual({committed: true, value: 3});
 });
 
-it("uses deterministic, type-sensitive ETags and excludes explicit service keys", async () => {
+it("uses deterministic, type-sensitive ETags and retains explicit identity values", async () => {
     const {read, replace} = await setup();
     const first = await read(post);
     const value = {_id: "user", post_id: "p1", nested: {b: 2, a: 1}};
     await replace(post, value, first.etag);
     const saved = await read(post);
-    expect(saved.value).toEqual({nested: {b: 2, a: 1}});
+    expect(saved.value).toEqual({post_id: "p1", nested: {b: 2, a: 1}});
     await replace(post, {...value, nested: {a: 1, b: 2}}, saved.etag);
     expect((await read(post)).etag).toBe(saved.etag);
     await replace(post, [1], saved.etag);
@@ -266,28 +266,28 @@ it("resolves nested and reused timestamp markers while leaving Firebase-shaped o
 
 it("writes a timestamp directly to a missing or existing field, preserving siblings", async () => {
     const {database, backend, request} = await setup("direct-timestamp");
-    await request(["_activity", "types"], {other: 7});
-    const path = ["_activity", "types", "service"];
+    await request(["meta", "type_timestamps"], {other: 7});
+    const path = ["meta", "type_timestamps", "service"];
     const first = await request(path, backend.TIMESTAMP);
     expect(first).toEqual(expect.any(Number));
-    expect(await database.read(["_activity", "types"])).toEqual({other: 7, service: first});
+    expect(await database.read(["meta", "type_timestamps"])).toEqual({other: 7, service: first});
     await request(path, {old: true});
     const second = await request(path, backend.TIMESTAMP);
     expect(second).toEqual(expect.any(Number));
-    expect(await database.read(["_activity", "types"])).toEqual({other: 7, service: second});
+    expect(await database.read(["meta", "type_timestamps"])).toEqual({other: 7, service: second});
 });
 
 it("logs the original patch value instead of undefined", async () => {
     const {request} = await setup("patch-log");
     const log = vi.spyOn(console, "debug").mockImplementation(() => {});
     const changes = {service: 42};
-    await request(["_activity", "types"], changes);
-    expect(log).toHaveBeenCalledWith("[Backend:Update]", "patch [_activity/types]", {value: changes});
+    await request(["meta", "type_timestamps"], changes);
+    expect(log).toHaveBeenCalledWith("[Backend:Update]", "patch [meta/type_timestamps]", {value: changes});
 });
 
 it("validates explicit timestamp mode and rejects timestamps as patches", async () => {
     const {database, backend, request} = await setup("timestamp-mode");
-    const path = ["_activity", "types", "service"];
+    const path = ["meta", "type_timestamps", "service"];
     for (const value of [undefined, null, 123, {}, {".sv": "timestamp"}]) {
         await expect(request(path, value, {mode: "timestamp"})).rejects.toMatchObject({code: "database/invalid-argument"});
     }

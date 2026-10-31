@@ -161,20 +161,59 @@ it("decodes collection callback inputs and encodes replacement children inside t
 });
 
 
-it("treats explicit native and unique-index fields as service keys", async () => {
+it("retains an explicit unique-index field while keeping the native key private", async () => {
     const database = createLocalDatabase({storageId: "service-keys"});
     await database.read(["posts"]);
     await database.create(path, {_id: "not-data", post_id: "p1", uid: "author", to: "parent", text: "Original"});
-    expect(await database.read(path)).toEqual({uid: "author", to: "parent", text: "Original"});
-    expect(await database.read(["posts"])).toEqual({p1: {uid: "author", to: "parent", text: "Original"}});
+    expect(await database.read(path)).toEqual({post_id: "p1", uid: "author", to: "parent", text: "Original"});
+    expect(await database.read(["posts"])).toEqual({p1: {post_id: "p1", uid: "author", to: "parent", text: "Original"}});
     const [physical] = await readNativeStore("service-keys", "posts");
-    expect(physical).toEqual({_id: 1, post_id: "p1", uid: "author", to: "parent", text: "Original"});
+    expect(physical).toEqual({_id: 1, post_id: "p1", uid: "author", to: "parent", text: "Original", _encoded: ["post_id"]});
     await database.update(path, current => {
-        expect(current).not.toHaveProperty("post_id");
+        expect(current).toHaveProperty("post_id", "p1");
         expect(current).not.toHaveProperty("_id");
         return {...current, text: "Changed"};
     });
     expect((await readNativeStore("service-keys", "posts"))[0]._id).toBe(1);
+});
+
+it("reads Activity values by service ID with duplicate types, missing type and matching key/type", async () => {
+    const database = createLocalDatabase({storageId: "activity-values"});
+    await database.read(["_activity"]);
+    const values = {
+        first: {activity_type_id: "first", type: "same", value: 1},
+        second: {activity_type_id: "second", type: "same", value: 2},
+        same: {activity_type_id: "same", type: "same", value: 3},
+        missing: {value: 4}
+    };
+    await database.update(["_activity"], () => values);
+    expect(await database.read(["_activity"])).toEqual(values);
+    expect(await database.read(["_activity", {activity_type_id: "first"}])).toEqual(values.first);
+    expect(await database.cursor(["_activity", "activity_type_id"]).next(10)).toEqual(
+        Object.entries(values).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => ({key, value})));
+    expect((await database.cursor(["_activity", "activity_type_id"],
+        {orderBy: "type", equalTo: "same"}).next(10)).map(({key}) => key)).toEqual(["first", "same", "second"]);
+    await database.update(["_activity", {activity_type_id: "first"}], {value: 5});
+    expect(await database.read(["_activity", {activity_type_id: "first"}])).toEqual({...values.first, value: 5});
+    await database.delete(["_activity", {activity_type_id: "second"}]);
+    expect(await database.read(["_activity", {activity_type_id: "second"}])).toBeUndefined();
+});
+
+it("keeps old Local records without an explicit identity marker readable", async () => {
+    const database = createLocalDatabase({storageId: "legacy-identity"});
+    await database.read(["posts"]);
+    const {openDatabase} = await import("../../local/helpers");
+    const connection = await openDatabase("legacy-identity");
+    await new Promise((resolve, reject) => {
+        const transaction = connection.transaction("posts", "readwrite");
+        transaction.objectStore("posts").put({post_id: "old", title: "saved"});
+        transaction.oncomplete = resolve;
+        transaction.onabort = () => reject(transaction.error);
+    });
+    connection.close();
+    expect(await database.read(["posts", {post_id: "old"}])).toEqual({title: "saved"});
+    await database.update(["posts", {post_id: "old"}], {title: "changed"});
+    expect(await database.read(["posts", {post_id: "old"}])).toEqual({title: "changed"});
 });
 
 it("removes nested service keys and prunes only their empty branches", async () => {
@@ -196,6 +235,23 @@ it("removes nested service keys and prunes only their empty branches", async () 
     await database.update(itemPath, () => ({data: {rank: 3}}));
     expect(await database.read(itemPath)).toEqual({data: {rank: 3}});
     expect(await database.read(["items"], {orderBy: "data/rank", equalTo: 2})).toBeUndefined();
+});
+
+it("retains an explicitly supplied nested identity through cursor and update", async () => {
+    const database = createLocalDatabase({storageId: "nested-identity-value", stores: [{
+        store: "items", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: [
+            {name: "identity", keypath: "identity.id", options: {unique: true}}
+        ]
+    }]});
+    await database.read(["items"]);
+    const path = ["items", {"identity.id": "a"}];
+    await database.create(path, {identity: {id: "a", label: "A"}});
+    expect(await database.read(path)).toEqual({identity: {id: "a", label: "A"}});
+    expect(await database.cursor(["items", "identity.id"]).next(10)).toEqual([
+        {key: "a", value: {identity: {id: "a", label: "A"}}}
+    ]);
+    await database.update(path, {identity: {id: "a", label: "B"}});
+    expect(await database.read(path)).toEqual({identity: {id: "a", label: "B"}});
 });
 
 it.each([

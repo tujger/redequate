@@ -1,5 +1,6 @@
 import LocalDatabase from "../../../packages/database/src/local";
 import LocalBackend from "../../../packages/backend/src/local/LocalBackend";
+import onEvents from "../../../packages/backend/src/local/database/onEvents";
 import React, {act} from "react";
 import {Provider} from "react-redux";
 import {createStore} from "redux";
@@ -16,10 +17,10 @@ import {createFirebase} from "../../../packages/database/src/__tests__/fixtures/
 
 vi.mock("firebase/database", () => import("../../../packages/database/src/__tests__/fixtures/firebase").then(module => module.firebaseDatabaseMock()));
 
-const context = vi.hoisted(() => ({database: undefined, backend: undefined, user: {id: "author"}}));
+const context = vi.hoisted(() => ({database: undefined, backend: undefined, user: {id: "author"}, storage: {delete: vi.fn().mockResolvedValue(null)}}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value})}));
 vi.mock("../../controllers", () => ({
-    useAuth: () => ({}), useBackend: () => context.backend, useDatabase: () => context.database, useStorage: () => ({})
+    useAuth: () => ({}), useBackend: () => context.backend, useDatabase: () => context.database, useStorage: () => context.storage
 }));
 vi.mock("../../controllers/General", () => ({
     usePages: () => ({}), useWindowData: () => ({isNarrow: () => false})
@@ -34,12 +35,16 @@ vi.mock("../../controllers/notifySnackbar", () => ({default: vi.fn()}));
 vi.mock("../../pages/admin/audit/auditReducer", () => ({updateActivity: vi.fn()}));
 vi.mock("../../components/ProgressView", () => ({default: {SHOW: {type: "show"}, HIDE: {type: "hide"}}}));
 vi.mock("../../components/MentionedTextComponent", () => ({tokenizeText: value => [{type: "text", value}]}));
-vi.mock("../../components/MentionsInputComponent/MentionsInputComponent", () => ({default: () => null}));
+vi.mock("../../components/MentionsInputComponent/MentionsInputComponent", () => ({default: ({onChange}) =>
+    <button data-change-text onClick={() => onChange({target: {value: "edited text"}})}>Change text</button>}));
 vi.mock("../../components/UploadComponent/UploadComponent", () => ({default: () => null}));
 vi.mock("../../components/UploadComponent/uploadComponentControls", () => ({
     uploadComponentClean: vi.fn(), uploadComponentPublish: vi.fn()
 }));
-vi.mock("../../components/NewPostComponent/Images", () => ({default: () => null}));
+vi.mock("../../components/NewPostComponent/Images", () => ({default: ({onChange}) => <>
+    <button data-replace-images onClick={() => onChange({images: ["new.jpg"]})}>Replace images</button>
+    <button data-remove-images onClick={() => onChange({images: []})}>Remove images</button>
+</>}));
 vi.mock("../../components/NewPostComponent/Toolbar", () => ({default: ({disabled, onSend}) =>
     <button disabled={disabled} onClick={onSend}>Send</button>}));
 
@@ -146,3 +151,123 @@ it("passes a server creation error to onError without completing publication", a
     expect(history.location.pathname).toBe("/discover");
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
 });
+
+
+const editComposer = async (provider, {failure} = {}) => {
+    const oldEdit = Object.freeze({timestamp: 1, uid: "original-editor"});
+    const editPostData = {id: "edited-post", text: "old text", images: ["old.jpg"], edit: Object.freeze({old: oldEdit})};
+    const initial = {uid: "author", to: 0, text: editPostData.text, images: editPostData.images, edit: editPostData.edit};
+    let saved = structuredClone(initial);
+    let unsubscribe = () => {};
+    const changed = vi.fn();
+    if (provider === "local") {
+        const storageId = `post-edit-${crypto.randomUUID()}`;
+        context.backend = new LocalBackend({storageId});
+        context.database = new LocalDatabase({storageId, backend: context.backend});
+        await context.database.read(["posts"]);
+        await context.backend.request("database.create", ["posts", {post_id: editPostData.id}], initial);
+        unsubscribe = onEvents({path: ["posts", "post_id"], onUpdate: changed})(context.backend);
+        if (failure) {
+            const request = context.backend.request.bind(context.backend);
+            vi.spyOn(context.backend, "request").mockImplementation((name, ...args) =>
+                name === "database.update" && args[0] === "" ? Promise.reject(failure) : request(name, ...args));
+        }
+    } else {
+        const fixture = createFirebase();
+        context.backend = {TIMESTAMP: {".sv": "timestamp"}, request: vi.fn(async (name, path, changes) => {
+            expect(name).toBe("database.update");
+            expect(path).toBe("");
+            if (failure) throw failure;
+            const next = structuredClone(saved);
+            for (const [path, value] of Object.entries(changes)) {
+                const names = path.split("/").slice(2);
+                let parent = next;
+                for (const name of names.slice(0, -1)) parent = parent[name] ??= {};
+                const prepared = JSON.parse(JSON.stringify(value), (_, value) =>
+                    value?.[".sv"] === "timestamp" ? Date.now() : value);
+                if (prepared === null) delete parent[names.at(-1)];
+                else parent[names.at(-1)] = prepared;
+            }
+            saved = next;
+            return null;
+        })};
+        context.database = new FirebaseDatabase({firebase: fixture.firebase, backend: context.backend});
+    }
+    const creates = vi.spyOn(context.database, "create");
+    const updates = vi.spyOn(context.database, "update");
+    const complete = vi.fn(), error = vi.fn();
+    const history = createMemoryHistory({initialEntries: ["/post/edited-post"]});
+    const store = createStore((state = {}, action) => ({
+        newPostComponentReducer: reducer(state.newPostComponentReducer, action)
+    }));
+    await act(async () => render(<Provider store={store}><Router history={history}>
+        <NewPostComponent buttonComponent={<button>Edit post</button>}
+            editPostData={editPostData} onComplete={complete} onError={error}/>
+    </Router></Provider>, container));
+    await act(async () => container.querySelector("button").click());
+    await vi.waitFor(() => expect(document.querySelector("[data-change-text]")).not.toBeNull());
+    return {editPostData, creates, updates, complete, error, changed, unsubscribe,
+        read: () => provider === "local" ? context.database.read(["posts", {post_id: editPostData.id}]) : saved};
+};
+const sendEdit = async expected => {
+    await act(async () => {
+        [...document.querySelectorAll("button")].find(node => node.textContent === "Send").click();
+        await vi.waitFor(() => expect(expected).toHaveBeenCalledTimes(1));
+    });
+};
+
+for (const provider of ["local", "firebase"]) {
+    it.each([
+        ["text", "[data-change-text]", "edited text", ["old.jpg"]],
+        ["images", "[data-replace-images]", "old text", ["new.jpg"]],
+        ["removed images", "[data-remove-images]", "old text", []],
+    ])(`saves %s and history in one ${provider} update`, async (_, selector, text, images) => {
+        const editor = await editComposer(provider);
+        try {
+            await act(async () => document.querySelector(selector).click());
+            await sendEdit(editor.complete);
+            expect(editor.error).not.toHaveBeenCalled();
+            expect(editor.creates).not.toHaveBeenCalled();
+            expect(editor.updates).toHaveBeenCalledTimes(1);
+            expect(editor.updates.mock.calls[0][0]).toBeInstanceOf(Map);
+            expect(editor.updates.mock.calls[0][0].size).toBe(3);
+            const saved = await editor.read();
+            expect(saved.text).toBe(text);
+            expect(saved.images ?? []).toEqual(images);
+            expect(saved.edit.old).toEqual({timestamp: 1, uid: "original-editor"});
+            const added = Object.keys(saved.edit).filter(key => key !== "old");
+            expect(added).toHaveLength(1);
+            expect(saved.edit[added[0]]).toEqual({timestamp: expect.any(Number), uid: "author"});
+            expect(editor.editPostData.edit).toEqual({old: {timestamp: 1, uid: "original-editor"}});
+            if (provider === "local") {
+                await vi.waitFor(() => expect(editor.changed).toHaveBeenCalledTimes(1));
+                expect(editor.changed.mock.calls[0][0]).toMatchObject({
+                    previous: {text: "old text", edit: {old: {timestamp: 1}}},
+                    value: {text, edit: saved.edit},
+                });
+                await vi.waitFor(async () => {
+                    const activities = await context.database.read(["activity"]);
+                    expect(Object.values(activities ?? {}).filter(item => item.type === "post.update")).toHaveLength(1);
+                });
+            }
+        } finally {editor.unsubscribe();}
+    });
+
+    it(`leaves the post and history unchanged when the ${provider} edit fails`, async () => {
+        const failure = new Error("Edit rejected");
+        const editor = await editComposer(provider, {failure});
+        try {
+            await act(async () => document.querySelector("[data-change-text]").click());
+            await sendEdit(editor.error);
+            expect(editor.error).toHaveBeenCalledExactlyOnceWith(failure);
+            expect(editor.complete).not.toHaveBeenCalled();
+            expect(editor.creates).not.toHaveBeenCalled();
+            expect(await editor.read()).toMatchObject({text: "old text", images: ["old.jpg"],
+                edit: {old: {timestamp: 1, uid: "original-editor"}}});
+            expect(Object.keys((await editor.read()).edit)).toEqual(["old"]);
+            expect(editor.editPostData.edit).toEqual({old: {timestamp: 1, uid: "original-editor"}});
+            expect(editor.changed).not.toHaveBeenCalled();
+            expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+        } finally {editor.unsubscribe();}
+    });
+}

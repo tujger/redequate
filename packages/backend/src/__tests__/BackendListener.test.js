@@ -11,6 +11,7 @@ it("stores the path and leaves unimplemented events absent", () => {
     expect(listener.onCreate).toBeInstanceOf(Function);
     expect(listener.onUpdate).toBeUndefined();
     expect(listener.onDelete).toBeUndefined();
+    expect(listener.onRebuildDerivedData).toBeUndefined();
     expect(listener.onWrite).toBeUndefined();
 });
 

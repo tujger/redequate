@@ -349,7 +349,8 @@ it("emits removal and creation when a record moves between captured owners", asy
         create.mockClear();
         await database.update(["alerts", {alert_id: "a1"}], {user_id: "u2"});
         expect(removeEvent).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u1", alert_id: "a1"}, value: {new: true}});
-        expect(create).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u2", alert_id: "a1"}, value: {new: true}});
+        expect(create).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u2", alert_id: "a1"},
+            value: {new: true, user_id: "u2"}});
         expect(update).not.toHaveBeenCalled();
     } finally { remove(); }
 });

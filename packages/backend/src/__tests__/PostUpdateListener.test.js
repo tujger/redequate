@@ -7,7 +7,7 @@ const params = {post_id: "post"};
 let backend, listener;
 beforeEach(() => {
     vi.mocked(resolveTags).mockReset().mockResolvedValue([]);
-    backend = {request: vi.fn(async (name, path, value, options) => options?.mode === "read"
+    backend = {TIMESTAMP: {".sv": "timestamp"}, request: vi.fn(async (name, path, value, options) => options?.mode === "read"
         ? {value: null, etag: "current"} : {committed: true, value})};
     listener = new PostListener(backend);
 });
@@ -35,6 +35,9 @@ it.each([
         [{backend, text: previous.text ?? ""}],
         [{backend, text: value.text ?? "", createIfAbsent: true}],
     ]);
+    expect(backend.request.mock.calls.filter(([name]) => name === "database.create")).toEqual([
+        ["database.create", ["activity", "activity_id"], expect.objectContaining({type: "post.update", timestamp: backend.TIMESTAMP})],
+    ]);
 });
 it("links only added tags and removes only deleted tags", async () => {
     const tag = key => ({key, value: {id: key}});
@@ -45,12 +48,18 @@ it("links only added tags and removes only deleted tags", async () => {
         ["database.update", ["_tag", {tag_id: "new"}, {post_id: "post"}], null, {mode: "read"}],
         ["database.delete", ["_tag", {tag_id: "old"}, {post_id: "post"}]],
         ["database.update", ["_tag", {tag_id: "new"}, {post_id: "post"}], "writer", {mode: "replace", etag: "current"}],
+        ["database.create", ["activity", "activity_id"], expect.objectContaining({
+            type: "post.update", details: {path: "post", postId: "post", uid: "writer"}, timestamp: backend.TIMESTAMP,
+        })],
     ]);
 });
 it("does not link replies but still unlinks removed tags", async () => {
     vi.mocked(resolveTags).mockResolvedValueOnce([{key: "old"}]).mockResolvedValueOnce([{key: "new"}]);
     await listener.onUpdate({params, previous: {text: "before"}, value: {text: "after", to: "parent"}});
-    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.delete", ["_tag", {tag_id: "old"}, {post_id: "post"}]);
+    expect(backend.request.mock.calls).toEqual([
+        ["database.delete", ["_tag", {tag_id: "old"}, {post_id: "post"}]],
+        ["database.create", ["activity", "activity_id"], expect.objectContaining({type: "post.update"})],
+    ]);
 });
 it("waits for tag resolution and propagates its error", async () => {
     let reject;
