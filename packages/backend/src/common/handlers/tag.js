@@ -25,7 +25,7 @@ export default class ExtraListener extends BackendListener {
                 backend.request("database.delete", ["posts", {post_id: key}]);
             }
         });
-        cursor.next(1000000);
+        await cursor.next(1000000);
 
         await createActivity(this.backend, {
             type: "tag.delete",
