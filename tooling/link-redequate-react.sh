@@ -4,7 +4,7 @@ set -eu
 
 project_root=${1:-$PWD}
 project_root=$(CDPATH= cd -- "$project_root" && pwd)
-library_root=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+library_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 
 node - "$library_root" "$project_root" <<'NODE'
 const [libraryRoot, projectRoot] = process.argv.slice(2);

@@ -9,8 +9,8 @@ if (process.argv.length !== 3) {
 }
 
 const functionsDir = resolve(process.argv[2])
-const serverDir = dirname(fileURLToPath(import.meta.url))
-const frameworkDir = resolve(serverDir, '../..')
+const frameworkDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const serverDir = join(frameworkDir, 'packages/server')
 const vendorDir = join(functionsDir, 'vendor')
 
 if (!existsSync(join(functionsDir, 'package.json'))) {

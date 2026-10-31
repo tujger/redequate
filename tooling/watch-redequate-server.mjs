@@ -2,7 +2,7 @@ import {cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, ren
 import {tmpdir} from "node:os";
 import {dirname, join, resolve} from "node:path";
 import {watch} from "rollup";
-import createBuild from "./build.mjs";
+import createBuild from "../packages/server/build.mjs";
 
 const readJSON = path => JSON.parse(readFileSync(path, "utf8"));
 const dependenciesOf = manifest => JSON.stringify(Object.entries(manifest.dependencies ?? {}).sort(([a], [b]) => a.localeCompare(b)));
