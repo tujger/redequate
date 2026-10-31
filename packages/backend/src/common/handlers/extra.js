@@ -13,7 +13,7 @@ export default class ExtraListener extends BackendListener {
         if (!value) return;
         await updateCounter(this.backend, [{id: value.id}, value.type], 1);
 
-        const author = await this.backend.request("database.read", ["posts", {post_id: value.id}, "uid"]);
+        const author = await this.backend.request("database.read", ["posts", {post_id: value.id}, {uid: "uid"}]);
         if (author === null || author === value.uid) return;
         await createAlert(this.backend, author, {
             uid: value.uid,

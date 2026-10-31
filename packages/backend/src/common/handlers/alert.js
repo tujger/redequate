@@ -17,7 +17,7 @@ export default class AlertListener extends BackendListener {
         if (!Object.hasOwn(suffixes, value.type)) throw new Error(`${value.type} is not defined`);
         let authorName;
         try {
-            authorName = await this.backend.request("database.read", ["users_public", {user_id: value.uid}, "name"]);
+            authorName = await this.backend.request("database.read", ["users_public", {user_id: value.uid}, {name: "name"}]);
         } catch (error) {
             console.error(error);
         }

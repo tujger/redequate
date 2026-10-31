@@ -1,5 +1,6 @@
-import BackendListener from "../BackendListener";
+import update from "../../../../database/src/common/methods/update";
 import validatePath from "../../../../database/src/common/validatePath";
+import BackendListener from "../BackendListener";
 
 export default class ActivityListener extends BackendListener {
     constructor(backend) {
@@ -8,8 +9,19 @@ export default class ActivityListener extends BackendListener {
 
     async onCreate({params, value}) {
         console.debug("[Backend:Activity]", `created [${params.activity_id}]`, {params, value});
-        validatePath(["_activity", "types", {type: value.type}]);
-        return this.backend.request("database.update", ["_activity", "types", value.type], this.backend.TIMESTAMP);
+        validatePath(["_activity", {type: value.type}]);
+
+        const records = await this.backend.request("database.read", ["_activity", "activity_type_id"], {
+            equalTo: value.type,
+            orderBy: ["type"]
+        });
+        const data = {type: value.type, value: this.backend.TIMESTAMP};
+        const key = Object.keys(records ?? {})[0];
+        if (key) {
+            return update(this.backend, ["_activity", {activity_type_id: key}], data);
+        } else {
+            return this.backend.request("database.create", ["_activity", "activity_type_id"], data);
+        }
     }
 
     async onDelete({params, value}) {
