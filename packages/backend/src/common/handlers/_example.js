@@ -1,8 +1,6 @@
 import BackendListener from "../BackendListener";
-import {updateCounter} from "./utils";
-import {createAlert} from "./alert";
 
-export default class ExtraListener extends BackendListener {
+export default class ExampleListener extends BackendListener {
     constructor(backend) {
         super(["example", "example_id"], backend);
     }
