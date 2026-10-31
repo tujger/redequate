@@ -9,7 +9,7 @@ export default class ActivityListener extends BackendListener {
 
     async onCreate({params, value}) {
         console.debug("[Backend:Activity]", `created [${params.activity_id}]`, {params, value});
-        validatePath(["_activity", {type: value.type}]);
+        validatePath(["_activity", "activity_type_id"]);
 
         const records = await this.backend.request("database.read", ["_activity", "activity_type_id"], {
             equalTo: value.type,
