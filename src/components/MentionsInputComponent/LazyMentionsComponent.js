@@ -68,7 +68,6 @@ export default (
                 displayTransform={mention.displayTransform}
                 markup={mention.markup}
                 renderSuggestion={(entry, search, highlighted, index, focused) => {
-                    console.log(entry)
                     return <span
                         className={[
                             styles.suggestion,
