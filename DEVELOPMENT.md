@@ -1004,3 +1004,12 @@ shutdown; Firebase CLI performs its normal Rules hot reload. Vite build generate
 the same Rules via a build-only plugin. Node tooling reads base JSON afresh and
 skips identical output writes. Test suites generate into isolated temporary paths.
 No deployment target or runtime data contract changes. Demo remains unapplied.
+
+### Shared Firebase application tooling
+
+Firebase orchestration, Emulator configuration, process management and seed logic
+now live in tooling. TheWhiskyTalks invokes the common CLI with firebase.config.mjs,
+which owns project IDs, Vite modes, readiness callable, test file and seed accounts.
+The CLI resolves its own scripts relative to the framework and Firebase/Vite through
+the application, preserving existing npm names, Rules automation and lifecycle.
+No application-specific IDs or callable names are embedded in these common modules.

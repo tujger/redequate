@@ -240,6 +240,7 @@
             "import": "./core/database/firebase/rules.mjs",
             "require": "./core/database/firebase/rules.cjs"
         },
-        "./tooling/firebase-rules": "./tooling/firebase-rules.mjs"
+        "./tooling/firebase-rules": "./tooling/firebase-rules.mjs",
+        "./tooling/firebase": "./tooling/firebase.mjs"
     }
 }
