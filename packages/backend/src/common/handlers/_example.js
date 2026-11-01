@@ -10,7 +10,7 @@ export default class ExampleListener extends BackendListener {
     }
 
     async onDelete({params, value}) {
-        console.debug("[Backend:Example]", `deleted [${params.exmaple_id}]`, {params, value});
+        console.debug("[Backend:Example]", `deleted [${params.example_id}]`, {params, value});
     }
 
     async onUpdate({params, value, previous}) {
