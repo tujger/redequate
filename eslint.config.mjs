@@ -4,13 +4,15 @@ import { FlatCompat } from '@eslint/eslintrc'
 import { fileURLToPath } from 'node:url'
 import babelParser from '@babel/eslint-parser'
 import globals from 'globals'
+import databaseQueries from './tooling/eslint-database-queries.mjs'
+import localStores, { storesJsonParser } from './tooling/eslint-local-stores.mjs'
 
 const files = ['**/*.{js,mjs,cjs,ts}']
 const compat = new FlatCompat({ baseDirectory: fileURLToPath(new URL('.', import.meta.url)) })
 
 export default [
   {
-    ignores: ['**/node_modules/**', 'core/**', 'build/**', 'packages/server/dist/**', '.rpt2_cache/**', '**/.*']
+    ignores: ['**/node_modules/**', '**/core/**', '**/dist/**', '**/build/**', '**/coverage/**', '**/.rpt2_cache/**', '**/.cache/**', '**/.firebase/**', '**/vendor/**', '**/vendors/**', '**/external/**', '**/third_party/**', '**/third-party/**', '**/generated/**', '**/tmp/**', '**/temp/**', '**/*.min.js', '**/.*']
   },
   ...compat.extends('standard', 'standard-react').map(config => ({ ...config, files })),
   {
@@ -50,7 +52,8 @@ export default [
       'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
       'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',
       'packages/common/src/**/*.{js,mjs,cjs}',
-      'packages/_common/src/**/*.{js,mjs,cjs}'
+      'packages/_common/src/**/*.{js,mjs,cjs}',
+      'tooling/__tests__/test-emulators.mjs', 'tooling/watch-redequate-server.mjs'
     ],
     languageOptions: { globals: globals.jest },
     rules: {
@@ -78,6 +81,18 @@ export default [
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }]
     }
+  },
+  {
+    files: ['src/**/*.{js,mjs,cjs,ts}', 'packages/**/*.{js,mjs,cjs,ts}'],
+    ignores: ['**/__tests__/**'],
+    plugins: { redequate: databaseQueries },
+    rules: { 'redequate/database-queries': 'warn' }
+  },
+  {
+    files: ['packages/database/src/local/stores.json'],
+    languageOptions: { parser: storesJsonParser },
+    plugins: { redequate: localStores },
+    rules: { 'redequate/local-stores': 'warn' }
   }
 
 ]

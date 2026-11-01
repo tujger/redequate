@@ -29,9 +29,11 @@
         "build and publish": "npm version patch --no-git-tag-version&&rollup -c rollup.config.mjs && npm publish --registry=https://registry.npmjs.org/ --access public",
         "test": "npm run test:unit && npm run test:integration",
         "test:unit": "vitest run --config src/__tests__/vitest.config.mjs",
-        "test:integration": "node src/__tests__/test-emulators.mjs",
-        "test:integration:watch": "node src/__tests__/test-emulators.mjs --watch",
-        "check updates": "npx npm-check-updates --dep prod&&npx npm-check-updates --dep dev"
+        "test:integration": "node tooling/__tests__/test-emulators.mjs",
+        "test:integration:watch": "node tooling/__tests__/test-emulators.mjs --watch",
+        "check updates": "npx npm-check-updates --dep prod&&npx npm-check-updates --dep dev",
+        "rules:build": "node tooling/firebase-rules.mjs",
+        "test:tooling": "node --test tooling/__tests__/*.test.mjs"
     },
     "dependencies": {
         "@mui/icons-material": "^9.5.0",
@@ -47,7 +49,8 @@
         "react-mentions": "^4.4.10",
         "react-text-mask": "^5.5.0",
         "text-mask-addons": "^3.8.0",
-        "uuid": "^14.0.3"
+        "uuid": "^14.0.3",
+        "@babel/parser": "^7.29.9"
     },
     "peerDependencies": {
         "@emotion/react": "^11.14.0",
@@ -144,7 +147,10 @@
         "vitest": "5.0.5"
     },
     "files": [
-        "core"
+        "core",
+        "tooling",
+        "packages/database/src/firebase/rules.mjs",
+        "packages/database/src/firebase/database.rules.json"
     ],
     "exports": {
         ".": {
@@ -229,6 +235,11 @@
         "./core/chunks/*": null,
         "./core/*.js": "./core/*.js",
         "./core/*": "./core/*.js",
-        "./package.json": "./package.json"
+        "./package.json": "./package.json",
+        "./database/firebase/rules": {
+            "import": "./core/database/firebase/rules.mjs",
+            "require": "./core/database/firebase/rules.cjs"
+        },
+        "./tooling/firebase-rules": "./tooling/firebase-rules.mjs"
     }
 }
