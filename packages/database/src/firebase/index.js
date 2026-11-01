@@ -1,3 +1,4 @@
+import {baseRules, resolveRules} from "./rules.mjs";
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
@@ -12,9 +13,10 @@ import {fail} from "../../../common";
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;
 
-    constructor({backend, firebase, onError}) {
+    constructor({backend, firebase, onError, rules = {}}) {
         super({backend, onError});
         this.#firebase = firebase;
+        this.rules = resolveRules(baseRules, rules);
     }
 
     addEventListener(path, options = {}) {
