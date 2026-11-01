@@ -1,4 +1,4 @@
-import AlertListener from "../common/handlers/alert";
+import AlertListener from "../common/handlers/alerts";
 
 let backend, listener;
 const params = {user_id: "recipient", alert_id: "a1"};

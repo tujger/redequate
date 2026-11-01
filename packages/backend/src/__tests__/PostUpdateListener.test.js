@@ -1,5 +1,5 @@
 import {vi} from "vitest";
-import PostListener from "../common/handlers/post";
+import PostListener from "../common/handlers/posts";
 import resolveTags from "../common/helpers/resolveTags";
 
 vi.mock("../common/helpers/resolveTags", () => ({default: vi.fn()}));

@@ -1,5 +1,5 @@
 import {IDBFactory} from "fake-indexeddb";
-import PostListener from "../common/handlers/post";
+import PostListener from "../common/handlers/posts";
 import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
 

@@ -1,5 +1,5 @@
 import BackendListener from "../common/BackendListener";
-import {extra as ExtraListener, post as PostListener} from "../common/handlers";
+import {extra as ExtraListener, posts as PostListener} from "../common/handlers";
 
 it("stores the path and leaves unimplemented events absent", () => {
     class CreateOnly extends BackendListener {

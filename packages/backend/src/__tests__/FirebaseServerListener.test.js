@@ -1,6 +1,6 @@
 import listener from "../firebase-server/src/database/onEvents";
 import {oncreate, ondelete, onupdate} from "../firebase-server/src/database";
-import {alert as AlertListener, extra as ExtraListener, post as PostListener} from "../common/handlers";
+import {alerts as AlertListener, extra as ExtraListener, posts as PostListener} from "../common/handlers";
 import BackendListener from "../common/BackendListener";
 
 const snapshot = value => ({val: () => value});
