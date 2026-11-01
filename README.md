@@ -112,7 +112,7 @@ mixing browser and Node Auth exports breaks popup resolver initialization
 in jsdom. This resolution is test-only; application Vite configs are unchanged.
 
 Consumer applications own their tests, Firebase rules and local linking commands.
-The generic `link-redequate-react.sh` helper accepts a consumer directory; it has
+The generic `tooling/link-redequate-react.sh` helper accepts a consumer directory; it has
 no knowledge of specific applications. Consumer validation is separate from the
 framework's standalone test gate.
 
@@ -134,7 +134,7 @@ https://stackoverflow.com/questions/56021112/react-hooks-in-react-library-giving
 When developing a consumer against this local package, shared dependencies must resolve to the same physical packages. After installing dependencies in both repositories, call the generic helper with the consumer directory from the framework root:
 
 ```sh
-sh ./link-redequate-react.sh /absolute/path/to/consumer
+sh ./tooling/link-redequate-react.sh /absolute/path/to/consumer
 npm run "start core"
 ```
 

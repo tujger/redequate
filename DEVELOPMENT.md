@@ -98,7 +98,7 @@ install independently in Cloud Build. Server runtime support is defined by its
 own manifest. Do not restore the retired standalone common package or duplicate
 preparation logic in each consumer.
 
-Local Functions development can attach `packages/server/watch-redequate-server.mjs`
+Local Functions development can attach `tooling/watch-redequate-server.mjs`
 to a prepared Functions directory. Rollup builds into a watcher-owned temporary
 directory; only successful complete cycles replace the installed package. Touching
 the consumer entry point then triggers Functions reload, since Firebase ignores
@@ -991,3 +991,16 @@ application handler creates a missing type through database.create; that separat
 read/create sequence does not guarantee uniqueness during concurrent events.
 Activity type strings remain unencoded stored values. Scalar backend reads of the
 post author and profile name use explicit named field segments.
+
+### Centralized Firebase Database Rules
+
+The Database Firebase provider owns the authoritative TheWhiskyTalks-derived base and pure `resolveRules` implementation. Static provider arguments are resolved by one Node loader shared by CLI preparation and both ESLint validators; construction never deploys Rules. Shared RTDB instances require a complete database-owned provider manifest. Existing broad grants are retained; new inherited access conflicts require explicit overrides. See `tooling/FIREBASE_RULES.md`. Consumer migration patches are prepared but not applied; demo legacy `_activity` access differs from the accepted base.
+
+### Automatic Rules generation for local development and builds
+
+TheWhiskyTalks now uses a database-owned manifest and generated Rules. Its emulator
+launcher generates before startup and owns a polling watcher that closes before
+shutdown; Firebase CLI performs its normal Rules hot reload. Vite build generates
+the same Rules via a build-only plugin. Node tooling reads base JSON afresh and
+skips identical output writes. Test suites generate into isolated temporary paths.
+No deployment target or runtime data contract changes. Demo remains unapplied.
