@@ -2,7 +2,7 @@ import update from "../../../../database/src/common/methods/update";
 import BackendListener from "../BackendListener";
 import resolveTags from "../helpers/resolveTags";
 import {createActivity} from "./activity";
-import {createAlert} from "./alert";
+import {createAlert} from "./alerts";
 import {updateCounter} from "./utils";
 
 export default class PostListener extends BackendListener {
