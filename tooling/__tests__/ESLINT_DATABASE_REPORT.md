@@ -1,75 +1,91 @@
-# Database ESLint-only verification
+# Database ESLint editor and shared-provider verification
 
-The type/declaration approach was withdrawn. Its generator, generated schema.d.ts,
-JSDoc overloads, package types entries and declaration build hooks are absent.
-Git diff checks confirmed no changes to the provider runtime files, package exports,
-Core or Server build configuration remain from that approach.
+## Implemented
 
-## Result
+- Recognized imported `useDatabase()` / `useBackend()` (public and source controller
+  entrypoints), stable aliases, and inherited `BackendListener.this.backend`.
+- Shared origins are analyzed separately for Firebase and Local. Diagnostic labels
+  identify the provider; identical errors are grouped. Shared quick fixes identify
+  the provider. Concrete origins retain their provider-specific behavior.
+- Scope, reassignment, regular-function `this`, custom class fields and unknown or
+  computed objects do not imply a provider merely from a name.
+- Fixed the suggestion crash for non-string/non-array paths.
+- Pinned ESLint Babel configuration to Redequate's .babelrc. JSX parsing now works
+  when the ESLint process is started outside Redequate (covered by a child-process test).
+- Rules and stores are unchanged. No runtime, generator, API, or deployment changes.
 
-- Both repository database rules are configured as **error**.
-- stores.json compares to the provider base database.rules.json.
-- Firebase paths/indexes use that same base; Local paths use Local stores.json.
-- Application additions/settings/environment overrides do not change these lint sources.
-- All direct CRUD/read/cursor/listener methods and supported concrete backend
-  database requests are checked. Scoped aliases, concrete inheritance, explicit
-  simple JSDoc/TS annotations, partial dynamic values, batches and cursor sources
-  are covered. Unknown providers/custom schemas are not guessed.
-- Quick fixes preserve path form and filter values. Mutable or escaped const paths
-  are not assumed to retain their initial contents.
-- No IDE autocomplete implementation, new dependency, runtime API or build feature
-  was added. These are ESLint diagnostics and quick fixes.
+## Editor setup and verification boundary
 
-## Verification
+The installed IntelliJ plugin's serializer uses `<files-pattern value="..." />`
+in `.idea/jsLinters/eslint.xml`; its default pattern excludes JSON. The ESLint
+inspection is disabled by default in the installed plugin. The active application
+project had no explicit ESLint inspection profile.
+
+Configured JSON-inclusive Run for files in both the active application project and
+Redequate's standalone project. Enabled the ESLint inspection in the active
+application's project profile; the standalone Redequate profile was already enabled.
+Settings remain project-local; no global IDE configuration was changed. The app's
+.idea files are Git-ignored; Redequate's new jsLinters/eslint.xml is untracked.
+The source stores.json was opened through the sibling source module in IntelliJ.
+
+CLI returns the four stores.json errors below. The IDE inspection API still returns
+an empty list for JSON, and its batch API reports only native JS inspections for
+the handler. Actual external ESLint editor annotations/quick-fix presentation are
+**not confirmed**. An asynchronous question requested the user's editor observation.
+Do not interpret these API results or passing CLI tests as verified visual highlighting.
+If the running IDE has not reloaded the local project settings, check the ESLint
+settings panel (Automatic, JSON-inclusive Run for files, inspection enabled).
+No project restart or user development process was forced.
+
+## Checks
 
 | Check | Result |
 |---|---|
-| npm run test:tooling | 58 passed, 0 failed |
-| ESLint changed files | 0 errors / warnings |
+| node --test tooling/__tests__/*.test.mjs | 64 PASS, 0 FAIL, 0 SKIP |
+| ESLint changed JS/config/test files | 0 errors, 0 warnings |
 | tsc --noEmit | PASS |
-| git diff --check | PASS |
-| Full ESLint | 7072 errors / 939 warnings, nonzero exit |
-| redequate/local-stores in full scan | 4 errors |
-| redequate/database-queries in full scan | 0 errors |
+| git diff --check, both repos | PASS |
+| Full own-code ESLint, baseline rule snapshot | 7110 errors, 941 warnings |
+| Full own-code ESLint, updated rule | 7114 errors, 941 warnings |
 
-The remaining 7068 errors belong to other ESLint rules/files. No existing style rules were
-disabled to hide them. The path checker passes the valid/unknown-provider cases in
-the current source; malformed calls and their fixes are exercised by regression tests.
+The before/after comparison uses the same current working tree and ESLint config,
+substituting the pre-task provider-context and query rule for the baseline; it is
+not a clean-branch baseline. New diagnostics account for the four additional errors.
+Six new test cases are in tooling/__tests__/eslint-shared-providers.test.mjs.
+All remaining ordinary ESLint findings are preserved, not suppressed.
 
-The four exposed stores.json discrepancies are:
+## Schema/path diagnostics in the full scan
 
-1. alerts is missing the Local index for Firebase root index type.
-2. mutualstamps._my has no matching declaration or supported prefix derivation.
-3. mutualstamps.mutual_type has no matching declaration or supported prefix derivation.
-4. mutualstamps.mutual_type_user_id has no matching declaration or supported prefix derivation.
+- `packages/backend/src/common/handlers/posts.js:73` — [Firebase, Local] A path segment must be a non-empty string or one named non-empty string value.
+- `packages/database/src/local/stores.json:48` — Local store alerts is missing index for type required by Firebase alerts/.indexOn (35:24).
+- `packages/database/src/local/stores.json:170` — Local store mutualstamps index _my (_my) has no matching Firebase .indexOn declaration or documented prefix derivation.
+- `packages/database/src/local/stores.json:171` — Local store mutualstamps index mutual_type (mutual_type) has no matching Firebase .indexOn declaration or documented prefix derivation.
+- `packages/database/src/local/stores.json:174` — Local store mutualstamps index mutual_type_user_id (mutual_type + user_id) has no matching Firebase .indexOn declaration or documented prefix derivation.
+- `src/chat/ChatsDaemon.js:83` — [Local] No Local identity index for _chats.message_id. Available fields: _id, user_id, chat_id, timestamp, private.
+- `src/components/NewPostComponent/NewPostComponent.js:186` — [Local] No Local identity index for posts.edit_id. Available fields: _id, post_id, uid, to.
+- `src/tags/Tag.js:195` — [Local] No Local identity index for _tag.post_id. Available fields: _id, tag_id, score.
 
-No stores, indexes or Rules were edited to suppress those errors. Existing compound
-index, identity-index and proper-prefix comparison contracts were retained.
+## Modified by this task
 
-One existing watcher test was stabilized to wait for at least one error rather than
-exactly one notification; it could otherwise miss two closely spaced reports. No
-watcher runtime code changed.
+- eslint.config.mjs
+- tooling/provider-context.mjs
+- tooling/eslint-database-queries.mjs
+- tooling/__tests__/eslint-shared-providers.test.mjs (new)
+- tooling/README.md
+- DEVELOPMENT.md
+- tooling/__tests__/ESLINT_DATABASE_REPORT.md
+- .idea/jsLinters/eslint.xml (new, Redequate)
+- TheWhiskyTalks local ignored settings: .idea/jsLinters/eslint.xml,
+  .idea/inspectionProfiles/Project_Default.xml,
+  .idea/inspectionProfiles/profiles_settings.xml
 
-## Editor boundary
+The user's action.js is not edited: its duplicate imports still prevent ESLint
+from parsing it. Follow counter changes remain a separate task; no Follow runtime
+fix was applied here. No emulator or server was started; no network ports were used.
+Temporary diagnostics, bytecode inspection files and scripts are removed after checks.
+Git index was not modified; existing staged/unstaged changes and AD entries remain.
 
-CLI ESLint and repository JSON configuration were verified. IntelliJ did not have
-Redequate open as a project; an inspection through the app's node_modules symlink
-returned no IDE diagnostics. Therefore the actual editor red underline/quick-fix
-presentation is not claimed verified. ESLint must run on the own-project JSON/source
-file, rather than an excluded dependency path. No native IDE plugin was installed.
-
-## Files
-
-Logic/configuration: eslint.config.mjs; tooling/database-schema.mjs;
-provider-context.mjs; schema-paths.mjs; eslint-database-queries.mjs;
-eslint-local-stores.mjs. Tests stay under tooling/__tests__, including the new
-eslint-provider-paths.test.mjs. Existing fixtures are injected through test factories;
-production lint rules always use the base reader. Documentation reflects this source
-policy. Application, server logic, Rules composition and production Firebase were
-not changed by this follow-up. No servers or emulators were started for these static
-checks; the process-manager unit test cleaned up its own short-lived child.
-
-## Final Git status
+## Full Git status: Redequate
 
 ```text
  M DEVELOPMENT.md
@@ -77,11 +93,10 @@ checks; the process-manager unit test cleaned up its own short-lived child.
 AD packages/backend/src/BackendBase.ts
 AD packages/backend/src/__tests__/ListenerPath.test.js
 AD packages/backend/src/common/deleteStoredFile.js
-A  packages/backend/src/common/handlers/mutual.js
- M packages/backend/src/common/handlers/mutualrequests.js
 AD packages/backend/src/common/increment.ts
 AD packages/backend/src/common/parseListenerPath.js
 AD packages/backend/src/firebase-server/src/databaseDelete.js
+AM packages/backend/src/firebase-server/src/mutual/action.js
 AD packages/backend/src/firebase-server/src/notification/sendToTokens.js
 AD packages/backend/src/local-client/database/delete.js
 AD packages/backend/src/local-client/database/update.js
@@ -108,11 +123,7 @@ AD src/helpers/formatConsoleError.js
  M tooling/FIREBASE_RULES.md
 AD tooling/FIREBASE_RULES_REPORT.md
  M tooling/README.md
- M tooling/__tests__/eslint-local-stores.test.mjs
-AM tooling/__tests__/eslint-provider-paths.test.mjs
- M tooling/__tests__/firebase-rules-watch.test.mjs
- M tooling/__tests__/firebase-rules.test.mjs
- M tooling/__tests__/schema-paths.test.mjs
+ M tooling/__tests__/ESLINT_DATABASE_REPORT.md
 AD tooling/database-declarations.mjs
 A  tooling/database-schema.mjs
  M tooling/eslint-database-queries.mjs
@@ -125,9 +136,16 @@ AM tooling/provider-context.mjs
  M tooling/schema-paths.mjs
 AD tooling/schema-paths.test.mjs
 AD tooling/test-emulators.mjs
-?? tooling/__tests__/ESLINT_DATABASE_REPORT.md
+?? .idea/jsLinters/eslint.xml
+?? tooling/__tests__/eslint-shared-providers.test.mjs
 ```
 
-## Cleanup verification
+## Full Git status: TheWhiskyTalks
 
-Original staged diff blocks were preserved. Provider/runtime/package/build files have no remaining declaration-related diff. The removed generator/schema files are absent. No task processes remained; owned temporary logs and declaration probes were removed after recording results.
+```text
+ M functions/__tests__/counter-audit.test.js
+ M functions/package-lock.json
+ M functions/vendor/redequate-server.tgz
+ M src/App.js
+ M src/definitions.js
+```
