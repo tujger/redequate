@@ -187,3 +187,5 @@ same manifest. Applications and their Firebase CLI processes are not changed by
 installing the new provider alone.
 
 Automatic generation/watch verification: [report](__tests__/RULES_WATCH_REPORT.md).
+
+The developer/test launcher is shared by Redequate; application-specific choices live in `firebase.config.mjs`. See [FIREBASE.md](FIREBASE.md).

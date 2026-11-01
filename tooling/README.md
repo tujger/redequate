@@ -21,3 +21,7 @@ Suggestions are omitted when expressions are dynamic or the provider is unknown.
 See [FIREBASE_RULES.md](FIREBASE_RULES.md) for composition, static provider argument extraction, CLI generation, shared databases and consumer migration patches. Both validators default to the framework base and accept `settings.redequateDatabase.rulesConfig`.
 
 Tooling tests, the Emulator runner and verification reports live in `tooling/__tests__/`. Run them with `npm run test:tooling` and `npm run test:integration`.
+
+## Firebase application orchestration
+
+The common runner, Emulator configuration, process manager and seed implementation are in tooling. Applications provide `firebase.config.mjs` and invoke the common CLI directly. See [FIREBASE.md](FIREBASE.md).
