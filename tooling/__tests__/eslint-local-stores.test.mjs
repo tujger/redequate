@@ -1,27 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Linter } from 'eslint'
-import { resolveRules } from '../../packages/database/src/firebase/rules.mjs'
-import plugin, { storesJsonParser, createLocalStoresRule } from '../eslint-local-stores.mjs'
+import plugin, { storesJsonParser } from '../eslint-local-stores.mjs'
 
 const lint = (stores, rulesPath) => new Linter().verify(JSON.stringify(stores, null, 2), [{
   files: ['**/*.json'],
   languageOptions: { parser: storesJsonParser },
-  plugins: {
-    redequate: rulesPath
-      ? {
-          rules: {
-            'local-stores': createLocalStoresRule(() => {
-              const source = readFileSync(rulesPath, 'utf8')
-              return { rules: resolveRules(JSON.parse(source)), source, label: rulesPath }
-            })
-          }
-        }
-      : plugin
-  },
+  plugins: { redequate: plugin },
   rules: { 'redequate/local-stores': 'warn' },
   settings: rulesPath ? { redequateDatabase: { firebaseRules: rulesPath } } : {}
 }], { filename: 'stores.json' })

@@ -25,3 +25,4 @@ firebase-debug.log*
 database-debug.log*
 .firebase/
 /packages/server/dist/
+/tooling/migrations/firebase-rules/
