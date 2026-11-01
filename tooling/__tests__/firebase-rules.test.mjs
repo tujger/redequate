@@ -112,7 +112,7 @@ test('shared database sources are complete, ordered, conflict checked and requir
   assert.throws(() => loadRules({ rulesConfig: 'a', firebaseRules: 'b' }), /not both/)
 }))
 
-test('both ESLint validators consume resolved additions and expose invalid configuration', () => fixture(({ app, config }) => {
+test('both ESLint validators use provider base Rules independently of application additions', () => fixture(({ app, config }) => {
   app('const database = new Database({rules: {additions: {posts: {".indexOn": ["created"]}}}});')
   const path = config()
   const settings = { redequateDatabase: { rulesConfig: path } }
@@ -123,7 +123,7 @@ test('both ESLint validators consume resolved additions and expose invalid confi
     rules: { 'redequate/database-queries': 'error' }
   }]
   const code = 'import Database from "redequate/database/firebase"; const database = new Database({}); database.read(["posts"], {orderBy: ["created"]});'
-  assert.deepEqual(new Linter().verify(code, queryConfig), [])
+  assert.match(new Linter().verify(code, queryConfig)[0].message, /No Firebase .indexOn for created/)
   const stores = [{ store: 'posts', storeSchema: ['uid', 'to', 'created'].map(name => ({ name, keypath: name })) }]
   const localConfig = [{
     files: ['**/*.json'],
@@ -132,10 +132,10 @@ test('both ESLint validators consume resolved additions and expose invalid confi
     plugins: { redequate: localStores },
     rules: { 'redequate/local-stores': 'error' }
   }]
-  assert.deepEqual(new Linter().verify(JSON.stringify(stores), localConfig, { filename: 'stores.json' }), [])
+  assert.match(new Linter().verify(JSON.stringify(stores), localConfig, { filename: 'stores.json' })[0].message, /no matching Firebase/)
   app('const database = new Database({rules: dynamic()});')
-  assert.match(new Linter().verify(code, queryConfig)[0].message, /Cannot resolve Firebase Rules/)
-  assert.match(new Linter().verify(JSON.stringify(stores), localConfig, { filename: 'stores.json' })[0].message, /Cannot read Firebase rules/)
+  assert.match(new Linter().verify(code, queryConfig)[0].message, /No Firebase .indexOn for created/)
+  assert.match(new Linter().verify(JSON.stringify(stores), localConfig, { filename: 'stores.json' })[0].message, /no matching Firebase/)
 }))
 
 test('refuses to overwrite imported source JSON', () => fixture(({ app, write, config, directory }) => {

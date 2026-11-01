@@ -4,7 +4,16 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { Linter } from 'eslint'
 import { analyzePath, UNKNOWN } from '../schema-paths.mjs'
-import plugin from '../eslint-database-queries.mjs'
+import { createDatabaseQueries } from '../eslint-database-queries.mjs'
+import { loadDatabaseSchema } from '../database-schema.mjs'
+const plugin = {
+  rules: {
+    'database-queries': createDatabaseQueries(context => {
+      const file = context.settings?.redequateDatabase?.firebaseRules
+      return file ? { stores, rules: JSON.parse(readFileSync(file, 'utf8')) } : loadDatabaseSchema()
+    })
+  }
+}
 
 const stores = JSON.parse(readFileSync(new URL('../../packages/database/src/local/stores.json', import.meta.url)))
 const rules = JSON.parse(readFileSync(new URL('../../src/__tests__/fixtures/database.rules.json', import.meta.url)))
@@ -68,14 +77,14 @@ test('ESLint reports precise Local fields and skips dynamic or unknown providers
   assert.equal(lint('import LocalDatabase from "./packages/database/src/local/index"; const db = new LocalDatabase({stores: customStores}); db.read(["custom"], {orderBy: "score"});').length, 0)
 })
 
-test('ESLint checks Firebase indexes only with configured rules', () => {
+test('ESLint checks Firebase indexes using an injected base fixture', () => {
   const header = 'import FirebaseDatabase from "./packages/database/src/firebase/index"; const db = new FirebaseDatabase();\n'
   const settings = { redequateDatabase: { firebaseRules: fileURLToPath(new URL('../../src/__tests__/fixtures/database.rules.json', import.meta.url)) } }
   assert.equal(lint(header + 'db.read(["database_test", "record_id"], {orderBy: ["nested", "name"]});', settings).length, 0)
   const bad = lint(header + 'db.read(["database_test", "record_id"], {orderBy: ["nested", "missing"]});', settings)
   assert.equal(bad.length, 1)
   assert.match(bad[0].message, /No Firebase \.indexOn.*nested\/missing/)
-  assert.equal(lint(header + 'db.read(["database_test", "record_id"], {orderBy: ["nested", "missing"]});').length, 0)
+  assert.match(lint(header + 'db.read(["database_test", "record_id"], {orderBy: ["nested", "missing"]});')[0].message, /No Firebase rules path/)
 })
 
 test('Local suggestions retain path roles and orderBy syntax', () => {
@@ -112,15 +121,15 @@ test('Firebase suggestions use only query-node indexes and preserve array shape'
   }
 })
 
-test('suggestions stay absent for dynamic, ambiguous, and undeclared data paths', () => {
+test('suggestions require provable fixes and do not invent undeclared data fields', () => {
   const localHeader = 'import LocalDatabase from "./packages/database/src/local/index"; const db = new LocalDatabase();\n'
   const firebaseHeader = 'import FirebaseDatabase from "./packages/database/src/firebase/index"; const db = new FirebaseDatabase();\n'
   const settings = { redequateDatabase: { firebaseRules: fileURLToPath(new URL('../../src/__tests__/fixtures/database.rules.json', import.meta.url)) } }
-  assert.equal(lint(localHeader + 'db.read(["posts", {post_idd: id}]);')[0].suggestions?.length ?? 0, 0)
+  assert.equal(lint(localHeader + 'db.read(["posts", {post_idd: id}]);')[0].suggestions?.[0]?.desc, 'Use post_id')
   assert.equal(lint(localHeader + 'db.read(["posts", "wrong_id"]);')[0].suggestions?.length ?? 0, 0)
   assert.equal(lint(firebaseHeader + 'db.read("database_test/undocumented", {orderBy: "missing"});', settings).length, 0)
   assert.equal(lint(firebaseHeader + 'db.read(["database_test", "record_id"], {orderBy: field});', settings).length, 0)
-  assert.equal(lint(firebaseHeader + 'db.read(["database_test", "record_id"], {orderBy: "missing"});').length, 0)
+  assert.match(lint(firebaseHeader + 'db.read(["database_test", "record_id"], {orderBy: "missing"});')[0].message, /No Firebase rules path/)
 })
 
 test('Local range suggestions respect compound index prefixes', () => {

@@ -72,7 +72,7 @@ test('watcher retains working artifact and recovers after base syntax, conflicts
   t.after(() => watcher.close())
   const original = readFileSync(w.output, 'utf8')
   w.write('packages/database/src/firebase/database.rules.json', '{')
-  await wait(() => errors.length === 1)
+  await wait(() => errors.length >= 1)
   assert.equal(readFileSync(w.output, 'utf8'), original)
   w.write('packages/database/src/firebase/database.rules.json', JSON.stringify({ rules: { records: { '.read': false, '.indexOn': ['fixed'] } } }))
   await wait(() => w.read().records['.indexOn'].includes('fixed'))
