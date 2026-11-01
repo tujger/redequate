@@ -15,7 +15,7 @@ export default class MutualRequestListener extends BackendListener {
 
         const {mutual_type} = params;
         const {uid, id, message} = value;
-        await updateCounter(this.backend, [{id}, mutual_type], 1);
+        await updateCounter(this.backend, [{id}, "mutualrequests", mutual_type], 1);
         await createAlert(this.backend, uid, {
             uid: id,
             type: "request",
