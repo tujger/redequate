@@ -21,7 +21,7 @@ const prepare = request => {
     if (invalidPath.test(parent) || (key !== undefined && (invalidPath.test(key) || key.includes("/")))) {
         throw new HttpsError("invalid-argument", "Invalid Firebase path or record key.");
     }
-    console.debug("[Backend:Create]", `create [${parent}]`, {value});
+    console.debug("[Backend:Create]", `create [${parent}]`);//, {value});
     const token = getRequestToken(request);
     const database = getDatabase();
     const collection = database.ref(parent);
