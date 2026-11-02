@@ -14,7 +14,10 @@ export default class PostListener extends BackendListener {
         console.log("[Backend:Post]", `created [${params.post_id}]`, {params, value});
 
         const visited = new Set([params.post_id]);
-        let toId = value.to, parent, root, rootKey;
+        let toId = value.to;
+        let parent;
+        let root;
+        let rootKey;
         while (toId) {
             if (visited.has(toId)) throw new Error(`Cyclic post chain at ${toId}`);
             visited.add(toId);
@@ -126,7 +129,6 @@ export default class PostListener extends BackendListener {
         });
     }
 }
-
 
 const linkPostToTag = ({backend, postId, post, tag}) => {
     if (post.to) return;
