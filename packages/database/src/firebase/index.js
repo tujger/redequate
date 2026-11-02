@@ -2,7 +2,7 @@ import {baseRules, resolveRules} from "./rules.mjs";
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
-import FirebaseCursor from "./cursor";
+import FirebaseCursorClient from "./cursor";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
 import deleteRecord from "./delete";
 import read from "./read";
@@ -40,7 +40,7 @@ export default class FirebaseDatabase extends DatabaseBase {
             ? options
             : {...options, onError: options.onError ?? this.onError};
         return composeCursor(queries, effective,
-            (path, options) => new FirebaseCursor(this.#firebase, path,
+            (path, options) => new FirebaseCursorClient(this.#firebase, path,
                 {...options, onError: options?.onError ?? this.onError}, this._backend), run, path,
             pathIsDatabasePath ? () => parsePath(path, "collection").address : undefined);
     }
