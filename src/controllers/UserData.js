@@ -7,9 +7,6 @@ export {
     currentRole, matchRole, needAuth, normalizeSortName, UserRole
 } from "../../packages/common";
 
-// Temporary visit diagnostics: correlate browser call stacks with async writes.
-let visitDiagnosticSequence = 0;
-
 export default class UserData extends UserDataCommon {
     #database;
     #lastVisitUpdate = 0;
@@ -294,30 +291,16 @@ export default class UserData extends UserDataCommon {
     updateVisitTimestamp(database) {
         const state = this._getState();
         const now = new Date().getTime();
-        const call = ++visitDiagnosticSequence;
-        const label = `[UserData:Visit #${call}]`;
-        console.trace(label, "called", {
-            userId: state.id,
-            time: now,
-            persisted: state.persisted,
-            lastVisitUpdate: this.#lastVisitUpdate
-        });
         if (state.id && state.persisted && (now - this.#lastVisitUpdate) > 60000) {
-            console.debug(label, "passed throttle");
             database.read(["users_public", {user_id: state.id}, {email: "email"}])
                 .then(async value => {
                     if (value === undefined) {
-                        console.debug(label, "skipped: email absent");
                         return;
                     }
-                    console.debug(label, "write started");
                     await database.update(["users_public", {user_id: state.id}, "visit"], () => database.TIMESTAMP);
                     this.#lastVisitUpdate = now;
-                    console.debug(label, "write completed");
                 })
-                .catch(error => console.error(label, "read or write failed", error));
-        } else {
-            console.debug(label, "skipped: identity, persistence or throttle check");
+                .catch(error => console.error("[UserData] updateVisitTimestamp failed", error));
         }
         return this;
     }
