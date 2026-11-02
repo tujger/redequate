@@ -11,6 +11,7 @@ export * from "./workers";
 export * from "./components/MutualComponent";
 
 export {default as DatabaseCursor} from "../packages/database/src/common/DatabaseCursor";
+export {default as FilteringDatabaseCursor} from "../packages/database/src/common/FilteringDatabaseCursor";
 
 export {default as Dispatcher} from "./Dispatcher";
 export {default as WebWorker} from "./workers/WebWorker";
