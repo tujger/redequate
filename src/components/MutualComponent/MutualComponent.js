@@ -1,3 +1,4 @@
+/* eslint react/prop-types: "off" */
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
@@ -73,7 +74,14 @@ export default props => {
                     }))
                 }
             })
-            .catch(notifySnackbar)
+            .catch(error => {
+                notifySnackbar(error);
+                setState(state => ({
+                    ...state,
+                    pending: undefined,
+                    disabled: false
+                }));
+            })
             .finally(() => dispatch(ProgressView.HIDE));
     }
 
@@ -102,24 +110,30 @@ export default props => {
             handle: () => null,
             orderBy: ["uid_id"],
         }).next(10)
-            .catch(notifySnackbar)
+            .catch(error => {
+                notifySnackbar(error);
+                setState(state => ({...state, disabled: false}));
+            })
             .finally(() => dispatch(ProgressView.HIDE));
     }
 
     const handleRequestResponse = isAccept => evt => {
         evt.stopPropagation();
+        if (!hasRequest) return;
+
         dispatch(ProgressView.SHOW);
-        setState(state => ({...state, hasPending: hasRequest, hasRequest: null, disabled: true}));
-        (isAccept ? mutualRequestAccept : mutualRequestReject)({database, typeId, requestId: hasRequest.key})
-            .then(result => {
-                setState(state => ({...state, disabled: false}));
-                dispatch(ProgressView.HIDE);
-            })
+        setState(state => ({...state, disabled: true}));
+
+        (isAccept ? mutualRequestAccept : mutualRequestReject)({
+            database,
+            typeId,
+            requestId: hasRequest.key
+        })
             .catch(error => {
                 notifySnackbar(error);
                 setState(state => ({...state, disabled: false}));
-                dispatch(ProgressView.HIDE);
             })
+            .finally(() => dispatch(ProgressView.HIDE));
     }
 
     const handleChangeMessage = evt => {
@@ -156,12 +170,19 @@ export default props => {
                 }));
             })
             .catch(error => {
-                if (error !== "done") notifySnackbar(error);
+                if (error === "done" || !isMounted) return;
+                notifySnackbar(error);
+                setState(state => ({...state, disabled: false}));
             });
         return () => {
             isMounted = false;
         };
-    }, [uidId, typeId, subscribers]);
+    }, [database,
+        uidId,
+        typeId,
+        subscribers,
+        hasPending?.key,
+        hasRequest?.key]);
 
     // noinspection DuplicatedCode
     React.useEffect(() => {
@@ -170,8 +191,6 @@ export default props => {
             onchange: subscribers => {
                 setState(state => ({
                     ...state,
-                    disabled: false,
-                    ...(state.pending === undefined ? {} : {subscribed: state.pending}),
                     subscribers,
                 }))
             },
@@ -188,8 +207,6 @@ export default props => {
             onchange: subscribes => {
                 setState(state => ({
                     ...state,
-                    disabled: false,
-                    ...(state.pending === undefined ? {} : {subscribed: state.pending}),
                     subscribes,
                 }))
             },
@@ -202,8 +219,14 @@ export default props => {
         if (!hasPending) return;
         const listener = database.addEventListener(["mutualrequests", {mutual_type: typeId}, {mutual_id: hasPending.key}], {
             onChange(value) {
-                if (value === undefined)
-                    setState(state => ({...state, hasPending: null, disabled: false}))
+                if (value === undefined) {
+                    setState(state => ({
+                        ...state,
+                        hasPending: null,
+                        pending: undefined,
+                        disabled: true
+                    }));
+                }
             }
         })
         return () => listener.remove();
@@ -230,8 +253,8 @@ export default props => {
         }).next(10)
             .then(items => items && items[0])
             .then(hasRequest => {
-                if (hasRequest && isMutualRequestsCheckMount) {
-                    setState(state => ({...state, hasRequest}))
+                if (isMutualRequestsCheckMount) {
+                    setState(state => ({...state, hasRequest: hasRequest ?? null}));
                 }
             });
         return () => {
