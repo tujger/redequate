@@ -19,8 +19,7 @@ export default class MutualRequestListener extends BackendListener {
         await createAlert(this.backend, id, {
             uid,
             type: "request",
-            id,
-            author: id,
+            id: uid,
             message
         });
     }
@@ -42,8 +41,7 @@ export default class MutualRequestListener extends BackendListener {
             value
         });
 
-        const accepted = value.accepted;
-        if (accepted) {
+        if (value.accepted) {
             const {mutual_type: mutualType} = params;
             const {uid, id, uid_id: uidId, id_uid: idUid, timestamp} = value;
             const direct = {
@@ -60,15 +58,14 @@ export default class MutualRequestListener extends BackendListener {
                 uid_id: idUid,
                 timestamp
             }
+            await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], direct);
             const cursor = await this.backend.request("database.cursor", ["mutual", {mutual_type: mutualType}, "mutual_id"], {
                 equalTo: idUid,
                 orderBy: ["uid_id"],
             });
-            const foundRecords = await cursor.next(10);
-            if (foundRecords.length === 0) {
+            if ((await cursor.next(10)).length === 0) {
                 await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], reverse);
             }
-            await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], direct);
             await this.backend.request("database.delete", ["mutualrequests", {mutual_type: mutualType}, {mutual_id: params.mutual_id}]);
         }
     }
