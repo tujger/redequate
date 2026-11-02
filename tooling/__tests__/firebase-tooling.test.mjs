@@ -140,3 +140,36 @@ test('process manager removes its own signal handlers even after a failed child'
   try { await assert.rejects(group.run(process.execPath, ['-e', 'process.exit(3)'], { cwd: root }), /exited with 3/) } finally { await group.stop() }
   assert.equal(process.listenerCount('SIGINT'), count)
 })
+
+
+test('CLI readiness requires full startup and is revoked on shutdown', async () => {
+  const { observeEmulatorLine, emulatorReady } = await import('../emulator-lifecycle.mjs')
+  const task = { exited: false }
+  observeEmulatorLine('functions: callable initialized', task)
+  assert.equal(emulatorReady(task), false)
+  observeEmulatorLine('\x1b[32mAll emulators ready!\x1b[0m', task)
+  assert.equal(emulatorReady(task), true)
+  observeEmulatorLine('emulators: Shutting down emulators.', task)
+  assert.equal(task.shutdownStarted, true)
+  assert.equal(emulatorReady(task), false)
+})
+
+test('process teardown waits for CLI cleanup without interrupting it again', async t => {
+  const { directory } = fixture(t)
+  const marker = join(directory, 'interrupted')
+  const group = new Processes()
+  let observe
+  const observed = new Promise(resolve => { observe = resolve })
+  const { observeEmulatorLine } = await import('../emulator-lifecycle.mjs')
+  const script = `process.on('SIGINT', () => { require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'bad'); process.exit(2) }); process.stdout.write('emulators: Shutting '); setTimeout(() => { console.log('down emulators.'); setTimeout(() => process.exit(0), 200) }, 20)`
+  const task = group.start(process.execPath, ['-e', script], {
+    cwd: directory, signalGroup: false,
+    onLine(line, task) { observeEmulatorLine(line, task); if (task.shutdownStarted) observe() }
+  })
+  try {
+    await observed
+    await group.stop()
+    assert.equal((await task.completed).code, 0)
+    assert.equal(existsSync(marker), false)
+  } finally { if (!task.exited) await group.stop() }
+})
