@@ -111,14 +111,14 @@
         },
         "mutualrequests": {
             "$mutual_type": {
-                ".read": true,
+                ".read": "auth != null && query.equalTo === auth.uid && (query.orderByChild === 'uid' || query.orderByChild === 'id')",
                 ".indexOn": [
                     "id",
                     "uid"
                 ],
                 "$mutual_id": {
-                    ".write": "auth != null && ((!data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && !newData.child('accepted').exists()) || (data.exists() && data.child('id').val() === auth.uid))",
-                    ".read": "root.child('mutualrequests/' + $mutual_type + '/' + $mutual_id + '/id').val() === auth.uid",
+                    ".write": "auth != null && (data.child('id').val() === auth.uid || (!newData.child('accepted').exists() && (data.child('uid').val() === auth.uid || (!data.exists() && newData.child('uid').val() === auth.uid && newData.child('id').isString()))))",
+                    ".read": "auth != null && (data.child('uid').val() === auth.uid || data.child('id').val() === auth.uid)",
                     ".validate": "!data.exists() || (newData.child('uid').val() === data.child('uid').val() && newData.child('id').val() === data.child('id').val())"
                 }
             }
