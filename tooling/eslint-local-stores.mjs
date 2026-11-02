@@ -31,9 +31,15 @@ export function compareStoresWithRules(stores, rules) {
     const root = roots[store.store]
     if (!root || typeof root !== 'object' || Array.isArray(root)) continue
     const expected = new Map()
+    const wildcardFields = new Set()
     let uncertain = false
     const visit = (node, segments = []) => {
       if (!node || typeof node !== 'object' || Array.isArray(node)) return
+      // Wildcard keys are flattened into Local fields, even without .indexOn.
+      // Literal branches need an explicit mapping to the root store.
+      if (segments.length && segments.every(segment => segment.startsWith('$') && segment.length > 1)) {
+        wildcardFields.add(segments.at(-1).slice(1))
+      }
       const indexes = ruleIndexes(node)
       if (indexes) {
         if (!indexes.length) {
@@ -88,6 +94,7 @@ export function compareStoresWithRules(stores, rules) {
       const parts = typeof index.keypath === 'string' ? [index.keypath] : index.keypath
       const pathKey = key(parts)
       if (index.options?.unique || expected.has(pathKey) ||
+        (parts.length === 1 && wildcardFields.has(parts[0])) ||
         isDeclaredPrefix(parts, [...expected.values()])) continue
       if (issues.some(issue => issue.kind === 'incorrect' && issue.store === store.store && issue.index === index.name)) continue
       issues.push({ kind: 'extra', store: store.store, index: index.name, path: parts.join(' + ') })
@@ -119,7 +126,7 @@ export const localStoresRule = {
       rules: 'Cannot read Firebase rules at {{path}}: {{reason}}.',
       missing: 'Local store {{store}} is missing index for {{path}} required by Firebase {{rulesPath}}{{rulesLocation}}.',
       incorrect: 'Local store {{store}} index {{index}} has keypath {{actual}}; Firebase {{rulesPath}}{{rulesLocation}} requires {{path}}.',
-      extra: 'Local store {{store}} index {{index}} ({{path}}) has no matching Firebase .indexOn declaration or documented prefix derivation.',
+      extra: 'Local store {{store}} index {{index}} ({{path}}) has no matching Firebase .indexOn declaration, wildcard path key, or documented prefix derivation.',
       uncertain: 'Cannot verify Local store {{store}} against Firebase {{rulesPath}}{{rulesLocation}}: {{detail}}'
     }
   },

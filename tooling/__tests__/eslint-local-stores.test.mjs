@@ -153,3 +153,31 @@ test('shows the actual rules source location for missing indexes', () => {
     assert.match(messages[0].message, /posts\/\.indexOn \(3:26\)/)
   } finally { rmSync(directory, { recursive: true }) }
 })
+
+
+test('allows simple indexes for wildcard path keys without requiring them', () => withRules({
+  mutualrequests: { $mutual_type: { $mutual_id: {} } }
+}, path => {
+  assert.deepEqual(lint([store('mutualrequests', ['mutual_type', 'mutual_id', ['mutual_id']])], path), [])
+  assert.deepEqual(lint([store('mutualrequests', [])], path), [])
+}))
+
+test('wildcard permissions stay within their store and do not imply compound indexes', () => withRules({
+  mutualrequests: { $mutual_type: { $mutual_id: {} } },
+  posts: { '.read': true }
+}, path => {
+  const messages = lint([
+    store('mutualrequests', ['unknown', ['mutual_type', 'mutual_id']]),
+    store('posts', ['mutual_id'])
+  ], path)
+  assert.equal(messages.length, 3)
+  for (const message of messages) assert.equal(message.messageId, 'extra')
+}))
+
+test('does not map wildcard keys below literal branches', () => withRules({
+  mutualrequests: { $mutual_type: { fixed: { $mutual_id: {} } } }
+}, path => {
+  const messages = lint([store('mutualrequests', ['mutual_type', 'mutual_id'])], path)
+  assert.equal(messages.length, 1)
+  assert.match(messages[0].message, /mutual_id.*no matching Firebase/)
+}))
