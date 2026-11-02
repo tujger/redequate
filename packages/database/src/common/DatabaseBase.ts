@@ -155,7 +155,10 @@ export default class DatabaseBase {
     }
 
     /**
-     * Iterates immediate children. Arrays starting with a string are paths;
+     * Array cursor paths capture bare string segments after the collection. Named
+     * segments fix values; literal string paths retain immediate-child traversal.
+     * The final capture is key; preceding captures are entry.params. Intermediate
+     * captures support next/handle, not subscribe. Arrays starting with a string are paths;
      * source lists compose fresh cursors round-robin, skipping null/undefined.
      * Compositions deduplicate by source path + key (or cursor ID + key without a path)
      * and run each source's handle once, before buffering.
