@@ -66,6 +66,7 @@ export default (props) => {
     }, [width, state.store]);
 
     React.useEffect(() => {
+        const userChangeController = new AbortController();
         let maintenanceRef, metaListener;
         let consoleHandler;
         const clearOneTapCookie = async props => {
@@ -245,24 +246,17 @@ export default (props) => {
             })().catch(console.error);
             return initialization;
         }
-        const installUserChangeWatcher = async props => {
-            (async () => {
-                const {auth, database, store} = props;
-                setInterval(() => {
-                    watchUserChanged({
-                        auth,
-                        database,
-                        getUserData: getCurrentUserData,
-                        onUserChanged: setCurrentUserData
-                    }).then(() => refreshAll(store));
-                }, 30000)
-                watchUserChanged({
-                    auth,
-                    database,
-                    getUserData: getCurrentUserData,
-                    onUserChanged: setCurrentUserData
-                }).then(() => refreshAll(store));
-            })().catch(console.error);
+        const installUserChangeWatcher = props => {
+            const {auth, database, store} = props;
+            watchUserChanged({
+                auth,
+                database,
+                getUserData: getCurrentUserData,
+                onUserChanged: setCurrentUserData,
+                signal: userChangeController.signal
+            }).then(() => {
+                if (!userChangeController.signal.aborted) refreshAll(store);
+            }).catch(console.error);
             return props;
         }
         const installMetaWatcher = async props => {
@@ -366,6 +360,7 @@ export default (props) => {
             .catch(onError);
 
         return () => {
+            userChangeController.abort();
             maintenanceRef && maintenanceRef.off();
             metaListener?.remove();
             consoleHandler?.();
