@@ -15,7 +15,7 @@ import parsePath from "../firebase/parsePath";
 
 // Queries are opaque SDK handles; both SDKs expose the snapshot operations below.
 type CursorQuery = object;
-type QueryMethod = "orderByChild" | "orderByValue" | "orderByKey" | "equalTo" |
+export type QueryMethod = "orderByChild" | "orderByValue" | "orderByKey" | "equalTo" |
     "startAt" | "endAt" | "limitToFirst" | "limitToLast";
 
 interface CursorSnapshot {
