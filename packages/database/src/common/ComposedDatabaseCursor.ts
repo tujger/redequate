@@ -56,9 +56,20 @@ function appendUniqueEntry(props: SourceProps & {
     seen: Map<string, Set<string>>; origins: WeakMap<DatabaseEntry, DatabaseCursor>;
 }) {
     const {source, entries, entry, origin, seen, origins} = props;
-    const identity = origin.path === undefined
-        ? `id:${origin.id}`
-        : `path:${resolvePath(origin.path)}`;
+    let path = origin.path;
+
+    if (Array.isArray(path) && entry.params) {
+        const params = entry.params;
+        const parentPath = path.slice(0, -1);
+
+        path = parentPath.map((segment, index) => {
+            if (index === 0 || typeof segment !== "string") {
+                return segment;
+            }
+            return {[segment]: params[segment]};
+        });
+    }
+    const identity = path === undefined ? `id:${origin.id}` : `path:${resolvePath(path)}`;
     let keys = seen.get(identity);
     if (!keys) {
         keys = new Set();
