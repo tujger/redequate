@@ -159,9 +159,7 @@
                 "options": {"unique": true}
             },
             {"name": "mutual_type_id", "keypath": ["mutual_type", "id"]},
-            {"name": "mutual_type_uid", "keypath": ["mutual_type", "uid"]},
-            {"name": "mutual_type_id_uid", "keypath": ["mutual_type", "id_uid"]},
-            {"name": "mutual_type_uid_id", "keypath": ["mutual_type", "uid_id"]}
+            {"name": "mutual_type_uid", "keypath": ["mutual_type", "uid"]}
         ]
     },
     {

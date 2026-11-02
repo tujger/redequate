@@ -114,14 +114,12 @@
                 ".read": true,
                 ".indexOn": [
                     "id",
-                    "uid",
-                    "id_uid",
-                    "uid_id"
+                    "uid"
                 ],
                 "$mutual_id": {
                     ".write": "auth != null && ((!data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && !newData.child('accepted').exists()) || (data.exists() && data.child('id').val() === auth.uid))",
                     ".read": "root.child('mutualrequests/' + $mutual_type + '/' + $mutual_id + '/id').val() === auth.uid",
-                    ".validate": "!data.exists() || (newData.child('uid').val() === data.child('uid').val() && newData.child('id').val() === data.child('id').val() && newData.child('uid_id').val() === data.child('uid_id').val() && newData.child('id_uid').val() === data.child('id_uid').val())"
+                    ".validate": "!data.exists() || (newData.child('uid').val() === data.child('uid').val() && newData.child('id').val() === data.child('id').val())"
                 }
             }
         },
