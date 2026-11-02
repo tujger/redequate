@@ -1,18 +1,19 @@
-import {isTimestamp} from "../../timestamp";
-import {incrementDelta, isIncrement} from "../../increment";
-import {openLocalDatabase} from "../../../../../common/src/localDatabase";
 import {fail} from "../../../../../common";
-import {captureWrites, publishWrites} from "../writeEvents";
+import {openLocalDatabase} from "../../../../../common/src/localDatabase";
 import parsePath, {validateCollectionPath} from "../../../../../database/src/local/parsePath";
-export {validateCollectionPath};
+import {incrementDelta, isIncrement} from "../../increment";
+import {isTimestamp} from "../../timestamp";
 import {decodeRecordValue, encodeRecordValue, setRecordField} from "../recordValue";
+import {captureWrites, publishWrites} from "../writeEvents";
+
+export {validateCollectionPath};
 
 const invalid = message => fail("database/invalid-argument", message);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
 const set = (object, name, value) => Object.defineProperty(object, name,
     {value, enumerable: true, writable: true, configurable: true});
 const at = (object, names) => names.reduce((value, name) => value !== null && typeof value === "object" &&
-    Object.hasOwn(value, name) ? value[name] : undefined, object);
+Object.hasOwn(value, name) ? value[name] : undefined, object);
 const parts = name => name.split(".");
 const assign = (object, names, value, remove = false) => {
     let node = object;
@@ -68,12 +69,20 @@ export const runTransaction = async (database, mode, names, operation) => {
                 const result = await operation(transaction);
                 if (mode === "readwrite") value = await captureWrites(storageId, transaction);
                 return result;
-            }).then(value => { result = value; }, error => {
+            }).then(value => {
+                result = value;
+            }, error => {
                 failure = error;
-                try { transaction.abort(); } catch (_) { reject(error); }
+                try {
+                    transaction.abort();
+                } catch (_) {
+                    reject(error);
+                }
             });
         });
-    } finally { database.close(); }
+    } finally {
+        database.close();
+    }
     if (previous) publishWrites(storageId, previous, value);
     return result;
 };
@@ -90,8 +99,10 @@ const address = (store, rawPath) => {
     const path = validateCollectionPath(rawPath);
     const segments = path.slice(1);
     if (!store.indexNames.length) {
-        return {conditions: {}, property: segments.map(segment => typeof segment === "string" ? segment :
-            segment[Object.keys(segment)[0]]), single: true, singleton: true};
+        return {
+            conditions: {}, property: segments.map(segment => typeof segment === "string" ? segment :
+                segment[Object.keys(segment)[0]]), single: true, singleton: true
+        };
     }
     const conditions = {};
     const property = [];
@@ -102,17 +113,26 @@ const address = (store, rawPath) => {
         const candidates = uniqueIndexes(store).filter(({fields}) => fields.length <= segments.length);
         if (candidates.length !== 1) invalid("A string record path requires one unambiguous unique index.");
         const {fields} = candidates[0];
-        fields.forEach((field, index) => { conditions[field] = keyValue(field, segments[index]); });
+        fields.forEach((field, index) => {
+            conditions[field] = keyValue(field, segments[index]);
+        });
         property.push(...segments.slice(fields.length));
     } else {
         for (const segment of segments) {
-            if (typeof segment === "string") { nested = true; property.push(segment); continue; }
+            if (typeof segment === "string") {
+                nested = true;
+                property.push(segment);
+                continue;
+            }
             const name = Object.keys(segment)[0];
             const value = segment[name];
             const fieldAddress = Object.keys(conditions).length && name === value;
             if (!nested && !fieldAddress && indexed.has(name)) conditions[name] = keyValue(name, value);
             else if (!nested && !Object.keys(conditions).length) invalid(`No declared index for field ${name}.`);
-            else { nested = true; property.push(value); }
+            else {
+                nested = true;
+                property.push(value);
+            }
         }
     }
     const unique = Object.hasOwn(conditions, "_id") || uniqueIndexes(store)
@@ -403,8 +423,10 @@ export const notifyWrites = async (storageId, collections) => {
     try {
         channel = new globalThis.BroadcastChannel(`redequate:local:${storageId}:changes`);
         channel.postMessage({collections});
-    } catch (_) { /* Notification failure cannot invalidate a committed record. */ }
-    finally { channel?.close(); }
+    } catch (_) { /* Notification failure cannot invalidate a committed record. */
+    } finally {
+        channel?.close();
+    }
 };
 
 export const addRecord = async (storageId, path, value) => {
@@ -414,4 +436,16 @@ export const addRecord = async (storageId, path, value) => {
         writeStore(transaction.objectStore(collection), path, value, {create: true}));
     await notifyWrites(storageId, [collection]);
     return result;
+};
+
+// Cursor-only discovery permits repeated rows with the same captured branch key.
+export const cursorWildcardKeys = async (store, path, field) => {
+    const target = address(store, path);
+    if (!target.singleton && !target.single && !target.property.length) {
+        if (field !== "_id" && !indexes(store).some(({fields}) => fields.includes(field))) invalid(`No declared index for field ${field}.`);
+        const rows = await queryRows(store, target.conditions);
+        return rows.map(row => at(row, parts(field))).filter(value => value !== undefined).map(String);
+    }
+    const value = await readStore(store, path);
+    return value !== null && typeof value === "object" ? Object.keys(value) : [];
 };
