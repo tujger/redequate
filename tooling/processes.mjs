@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { createInterface } from 'node:readline'
 import { setTimeout as delay } from 'node:timers/promises'
 
 export default class Processes {
@@ -16,10 +17,16 @@ export default class Processes {
     process.on('SIGTERM', this.onSignal)
   }
 
-  start(command, args, { signalGroup = true, ...options }) {
+  start(command, args, { signalGroup = true, onLine, ...options }) {
     if (this.stopping) throw new Error('Launch interrupted.')
-    const child = spawn(command, args, { ...options, stdio: 'inherit', detached: process.platform !== 'win32' })
+    const child = spawn(command, args, { ...options, stdio: onLine ? ['inherit', 'pipe', 'pipe'] : 'inherit', detached: process.platform !== 'win32' })
     const task = { child, exited: false, signalGroup }
+    if (onLine) {
+      for (const [stream, output] of [[child.stdout, process.stdout], [child.stderr, process.stderr]]) {
+        stream.on('data', chunk => output.write(chunk))
+        createInterface({ input: stream }).on('line', line => onLine(line, task))
+      }
+    }
     task.completed = new Promise(resolve => {
       child.once('error', error => {
         console.error(error.message)
@@ -57,7 +64,7 @@ export default class Processes {
       }
     }
     // Signal groups even if their leader exited: npm/CLI may leave children.
-    this.tasks.forEach(task => signal(task, 'SIGINT'))
+    this.tasks.filter(task => !task.shutdownStarted && !(task.exited && !task.signalGroup)).forEach(task => signal(task, 'SIGINT'))
     const timeout = new AbortController()
     await Promise.race([
       Promise.all(this.tasks.map(task => task.completed)).then(() => true),

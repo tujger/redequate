@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
 import { setTimeout as delay } from 'node:timers/promises'
 import Processes from './processes.mjs'
+import { observeEmulatorLine, emulatorReady } from './emulator-lifecycle.mjs'
 import seedEmulator, { validateSeedConfig } from './seed-emulator.mjs'
 import emulatorConfig from './emulator-config.mjs'
 
@@ -57,7 +58,7 @@ export default async function runFirebase(input, argv = process.argv.slice(2)) {
   const options = { cwd: root, env }
   let rulesWatcher
   let emulatorStartedAt
-  let emulatorHubVerified = false
+  let emulatorStarted = false
   const requireFromApp = createRequire(join(root, 'package.json'))
   const packageFile = (name, path) => join(dirname(requireFromApp.resolve(`${name}/package.json`)), path)
   const ownFile = path => fileURLToPath(new URL(path, import.meta.url))
@@ -84,6 +85,7 @@ export default async function runFirebase(input, argv = process.argv.slice(2)) {
       ...options,
       cwd: props.temporaryDirectory ?? root,
       signalGroup: false,
+      onLine: observeEmulatorLine,
       env: {
         ...env,
         ...(props.runtimeDirectory ? { TMPDIR: props.runtimeDirectory, TMP: props.runtimeDirectory, TEMP: props.runtimeDirectory } : {}),
@@ -102,17 +104,17 @@ export default async function runFirebase(input, argv = process.argv.slice(2)) {
     const { task, urls } = props
     const deadline = Date.now() + 180000
     while (Date.now() < deadline) {
-      if (group.stopping || task.exited) throw new Error('Emulator Suite stopped before it was ready.')
+      if (group.stopping || task.exited || task.shutdownStarted) throw new Error('Emulator Suite stopped before it was ready.')
       try {
         const hub = await fetch(urls.hub, { signal: AbortSignal.timeout(1000) }).then(response => response.json())
         if (hub.pid !== task.child.pid) throw new Error('The emulator hub belongs to another process.')
-        emulatorHubVerified = true
         const services = await fetch(`${urls.hub}/emulators`, { signal: AbortSignal.timeout(1000) }).then(response => response.json())
         for (const { pid } of Object.values(services)) {
           if (Number.isInteger(pid) && pid > 0) group.detachedPids.add(pid)
         }
+        if (!emulatorReady(task)) throw new Error('Firebase CLI is still starting.')
         if (!settings.emulator.readyCallable) {
-          if (['functions', 'database', 'auth', 'storage'].every(name => services[name])) return props
+          if (['functions', 'database', 'auth', 'storage'].every(name => services[name])) { emulatorStarted = true; return props }
           throw new Error('Emulator services are not ready.')
         }
         // Wait for the application's configured callable, not merely an open port.
@@ -123,7 +125,7 @@ export default async function runFirebase(input, argv = process.argv.slice(2)) {
           signal: AbortSignal.timeout(2000)
         })
         const body = await response.json()
-        if (response.status === 401 && body.error?.status === 'UNAUTHENTICATED') return props
+        if (response.status === 401 && body.error?.status === 'UNAUTHENTICATED' && emulatorReady(task)) { emulatorStarted = true; return props }
       } catch { /* Services are still starting. */ }
       await delay(500)
     }
@@ -177,7 +179,7 @@ export default async function runFirebase(input, argv = process.argv.slice(2)) {
   } finally {
     rulesWatcher?.close()
     await group.stop()
-    if (emulator && action === 'start' && emulatorHubVerified) {
+    if (emulator && action === 'start' && emulatorStarted) {
       const metadata = join(local.directory, 'firebase-export-metadata.json')
       if (!existsSync(metadata) || statSync(metadata).mtimeMs < emulatorStartedAt) {
         console.error(`[EMULATOR] State export failed: ${local.directory}. See the Firebase CLI output above.`)
