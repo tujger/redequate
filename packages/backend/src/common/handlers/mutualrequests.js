@@ -43,7 +43,9 @@ export default class MutualRequestListener extends BackendListener {
 
         if (value.accepted) {
             const {mutual_type: mutualType} = params;
-            const {uid, id, uid_id: uidId, id_uid: idUid, timestamp} = value;
+            const {uid, id, timestamp} = value;
+            const uidId = `${uid}_${id}`;
+            const idUid = `${id}_${uid}`;
             const direct = {
                 id,
                 uid,
@@ -58,13 +60,14 @@ export default class MutualRequestListener extends BackendListener {
                 uid_id: idUid,
                 timestamp
             }
-            await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], direct);
-            const cursor = await this.backend.request("database.cursor", ["mutual", {mutual_type: mutualType}, "mutual_id"], {
-                equalTo: idUid,
-                orderBy: ["uid_id"],
-            });
-            if ((await cursor.next(10)).length === 0) {
-                await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], reverse);
+            for (const payload of [direct, reverse]) {
+                const cursor = await this.backend.request("database.cursor", ["mutual", {mutual_type: mutualType}, "mutual_id"], {
+                    equalTo: payload.uid_id,
+                    orderBy: ["uid_id"],
+                });
+                if ((await cursor.next(10)).length === 0) {
+                    await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], payload);
+                }
             }
             await this.backend.request("database.delete", ["mutualrequests", {mutual_type: mutualType}, {mutual_id: params.mutual_id}]);
         }
