@@ -994,6 +994,17 @@ post author and profile name use explicit named field segments.
 
 ### Centralized Firebase Database Rules
 
+The mutualrequests migration stores only `uid` and `id` as participant lookup fields.
+Accepted requests derive `uid_id` and `id_uid` when creating both `mutual` directions;
+direct simplex mutual creation and mutual indexes retain those fields. The Local
+schema no longer declares the two mutualrequests compound indexes. Its additive
+schema upgrader does not drop physical indexes in existing IndexedDB databases,
+so those old indexes remain until an explicit future cleanup. The Whisky Talks
+application now uses the provider-owned request Rules without App.js overrides.
+Request Rules use only uid/id for participant identity; uid_id/id_uid are not
+part of the request format or its validation. Deploy the generated Rules with this framework
+change before claiming deployed end-to-end compatibility.
+
 The Database Firebase provider owns the authoritative TheWhiskyTalks-derived base and pure `resolveRules` implementation. Static provider arguments are resolved by one Node loader shared by CLI preparation and both ESLint validators; construction never deploys Rules. Shared RTDB instances require a complete database-owned provider manifest. Existing broad grants are retained; new inherited access conflicts require explicit overrides. See `tooling/FIREBASE_RULES.md`. Consumer migration patches are prepared but not applied; demo legacy `_activity` access differs from the accepted base.
 
 ### Automatic Rules generation for local development and builds
@@ -1013,3 +1024,18 @@ which owns project IDs, Vite modes, readiness callable, test file and seed accou
 The CLI resolves its own scripts relative to the framework and Firebase/Vite through
 the application, preserving existing npm names, Rules automation and lifecycle.
 No application-specific IDs or callable names are embedded in these common modules.
+
+Emulator startup waits for the Firebase CLI's full ready message as well as service
+and callable checks; callable availability alone precedes Rules validation. CLI
+output is forwarded unchanged and observed for its shutdown message. Once the CLI
+is already cleaning up, process teardown waits without sending a second SIGINT
+(which could start export after Storage has deleted its temporary files). Export
+verification applies only to a successfully started developer suite.
+
+Mutual-request access restrictions belong to the Firebase database provider's base
+Rules, not application constructor overrides. Senders and recipients may read
+individual requests or query by their own uid/id; unfiltered collection reads are
+not granted. Sender writes require accepted to be absent; only recipients may
+write any accepted value, including false. Null removes the field and remains
+allowed for senders. The write rule checks access and acceptance, while the record validation
+keeps uid/id immutable. Both participants may delete even an accepted request.
