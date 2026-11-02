@@ -33,13 +33,12 @@ export const mutualRequest = async (
     let request = {
         uid: currentUserData.id,
         id: mutualId,
-        uid_id: uidId,
-        id_uid: idUid,
         timestamp: database.TIMESTAMP,
         type: mutualType,
     };
     if (mutualMode === MutualMode.SIMPLEX_QUIET) {
         path.push("mutual", {mutual_type: typeId}, "mutual_id");
+        request = {...request, uid_id: uidId, id_uid: idUid};
     } else if (mutualMode === MutualMode.DUPLEX_APPROVE) {
         path.push("mutualrequests", {mutual_type: typeId}, "mutual_id");
         request = {...request, typeId};

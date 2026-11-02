@@ -1,6 +1,7 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
+import {FilteringDatabaseCursor} from "../../../packages/database/src";
 import {useDatabase} from "../../controllers";
 import counterControl from "../../controllers/counterControl";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -56,7 +57,6 @@ export default props => {
     } = state;
 
     const uidId = `${currentUserData.id}_${mutualId}`;
-    const idUid = `${mutualId}_${currentUserData.id}`;
     const isAllowed = matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
     const isSameUser = currentUserData.id === mutualId;
 
@@ -141,10 +141,13 @@ export default props => {
 
     React.useEffect(() => {
         let isMounted = true;
-        database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
-            equalTo: uidId,
-            orderBy: ["uid_id"]
-        }).next().then(items => items[0])
+        new FilteringDatabaseCursor(
+            database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+                orderBy: ["uid"],
+                equalTo: currentUserData.id
+            }),
+            ({value}) => value?.id === mutualId
+        ).next().then(items => items?.[0])
             .then(hasPending => {
                 if (hasPending && isMounted) {
                     setState(state => ({
@@ -246,10 +249,13 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         let isMutualRequestsCheckMount = true;
-        database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
-            equalTo: idUid,
-            orderBy: ["uid_id"]
-        }).next(10)
+        new FilteringDatabaseCursor(
+            database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+                orderBy: ["id"],
+                equalTo: currentUserData.id
+            }),
+            ({value}) => value?.uid === mutualId
+        ).next()
             .then(items => items && items[0])
             .then(hasRequest => {
                 if (isMutualRequestsCheckMount) {
@@ -259,7 +265,7 @@ export default props => {
         return () => {
             isMutualRequestsCheckMount = false;
         }
-    }, [typeId, mutualMode, requestsCounter, idUid])
+    }, [database, typeId, mutualMode, requestsCounter, currentUserData.id, mutualId])
 
     // console.log(requestsCounter, subscribers, hasPending, hasRequest)
     return <>
