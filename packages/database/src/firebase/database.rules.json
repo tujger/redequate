@@ -119,8 +119,8 @@
                     "uid_id"
                 ],
                 "$mutual_id": {
-                    ".write": "(newData.child('uid').exists() && newData.child('uid').val() === auth.uid) || root.child('mutual/' + $mutual_type + '/' + $mutual_id + '/uid').val() === auth.uid",
-                    ".read": "root.child('mutual/' + $mutual_type + '/' + $mutual_id + '/uid').val() === auth.uid"
+                    ".write": "(newData.child('uid').exists() && newData.child('uid').val() === auth.uid) || root.child('mutualrequests/' + $mutual_type + '/' + $mutual_id + '/id').val() === auth.uid",
+                    ".read": "root.child('mutualrequests/' + $mutual_type + '/' + $mutual_id + '/id').val() === auth.uid"
                 }
             }
         },

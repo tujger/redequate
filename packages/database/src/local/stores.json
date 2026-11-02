@@ -60,6 +60,7 @@
         },
         "storeSchema": [
             {"name": "user_id", "keypath": "user_id"},
+            {"name": "chat_id", "keypath": "chat_id"},
             {
                 "name": "user_id_chat_id",
                 "keypath": ["user_id", "chat_id"],
@@ -77,6 +78,7 @@
         },
         "storeSchema": [
             {"name": "chat_id", "keypath": "chat_id"},
+            {"name": "message_id", "keypath": "message_id"},
             {
                 "name": "chat_id_message_id",
                 "keypath": ["chat_id", "message_id"],
@@ -130,6 +132,7 @@
         },
         "storeSchema": [
             {"name": "mutual_type", "keypath": "mutual_type"},
+            {"name": "mutual_id", "keypath": "mutual_id"},
             {
                 "name": "mutual_type_mutual_id",
                 "keypath": ["mutual_type", "mutual_id"],
@@ -149,6 +152,7 @@
         },
         "storeSchema": [
             {"name": "mutual_type", "keypath": "mutual_type"},
+            {"name": "mutual_id", "keypath": "mutual_id"},
             {
                 "name": "mutual_type_mutual_id",
                 "keypath": ["mutual_type", "mutual_id"],
