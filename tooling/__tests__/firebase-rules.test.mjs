@@ -25,6 +25,17 @@ test('base loads without SDK, is frozen and empty composition is equivalent', ()
   assert.deepEqual(baseRules.rules.alerts.$user_id.$alert_id, {})
 })
 
+test('mutualrequests index only identity fields and validate immutable participants', () => {
+  const requests = baseRules.rules.mutualrequests.$mutual_type
+  assert.deepEqual(requests['.indexOn'], ['id', 'uid'])
+  const validation = requests.$mutual_id['.validate']
+  assert(!validation.includes('uid_id'))
+  assert(!validation.includes('id_uid'))
+  assert(validation.includes("newData.child('uid').val() === data.child('uid').val()"))
+  assert(validation.includes("newData.child('id').val() === data.child('id').val()"))
+  assert.deepEqual(baseRules.rules.mutual.$mutual_type['.indexOn'], ['id', 'uid', 'id_uid', 'uid_id'])
+})
+
 test('adds branches, unions indexes and preserves inputs and scalar indexes', () => {
   const base = { rules: { posts: { '.indexOn': ['uid'] }, roles: { '.indexOn': '.value' } } }
   const options = { additions: { posts: { '.indexOn': ['uid', 'created'] }, records: { $id: {} } } }

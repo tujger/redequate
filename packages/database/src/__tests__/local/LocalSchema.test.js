@@ -21,6 +21,27 @@ it("converts exactly the indexes declared by the caller and built-in schema", ()
     }
     expect(schema.meta.indexes).toEqual({});
     expect(LOCAL_SCHEMA.posts.indexes.post_id).toMatchObject({keyPath: "post_id", unique: true});
+    expect(Object.keys(LOCAL_SCHEMA.mutualrequests.indexes)).toEqual([
+        "mutual_type", "mutual_id", "mutual_type_mutual_id", "mutual_type_id", "mutual_type_uid"
+    ]);
+    expect(LOCAL_SCHEMA.mutual.indexes).toHaveProperty("mutual_type_id_uid");
+    expect(LOCAL_SCHEMA.mutual.indexes).toHaveProperty("mutual_type_uid_id");
+});
+
+it("keeps old physical mutualrequests indexes when reopening existing Local data", async () => {
+    const storageId = "schema-old-request-indexes";
+    const legacy = structuredClone(LOCAL_SCHEMA);
+    legacy.mutualrequests.indexes.mutual_type_id_uid = {keyPath: ["mutual_type", "id_uid"], unique: false};
+    legacy.mutualrequests.indexes.mutual_type_uid_id = {keyPath: ["mutual_type", "uid_id"], unique: false};
+    const connection = await openDatabase(storageId, legacy);
+    connection.close();
+    const database = new LocalDatabase({storageId, backend: new LocalBackend({storageId})});
+    await database.applySchema({mutualrequests: LOCAL_SCHEMA.mutualrequests});
+    const reopened = await openDatabase(storageId);
+    const indexes = reopened.transaction("mutualrequests").objectStore("mutualrequests").indexNames;
+    expect([...indexes]).toContain("mutual_type_id_uid");
+    expect([...indexes]).toContain("mutual_type_uid_id");
+    reopened.close();
 });
 
 it("creates the declared schema at version one and leaves it stable when reopened", async () => {

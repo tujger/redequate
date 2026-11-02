@@ -82,6 +82,18 @@ it("loads composed production Rules and preserves real REST access, validation a
             results.push(rows);
         }
         expect(results[0]).toEqual(results[1]);
+        const requester = users.A.localId;
+        const recipient = users.B.localId;
+        const requestPath = "mutualrequests/rules-test/request1";
+        const requestValue = {uid: requester, id: recipient, timestamp: 123};
+        expect((await request(requestPath, "PUT", requestValue, users.A.idToken)).status).toBe(200);
+        expect((await request("mutualrequests/rules-test", "GET", undefined, users.A.idToken,
+            {orderBy: "uid", equalTo: requester})).body).toEqual({request1: requestValue});
+        expect((await request("mutualrequests/rules-test", "GET", undefined, users.B.idToken,
+            {orderBy: "id", equalTo: recipient})).body).toEqual({request1: requestValue});
+        expect((await request(requestPath, "PATCH", {accepted: true}, users.B.idToken)).status).toBe(200);
+        expect((await request(requestPath, "PATCH", {uid: recipient}, users.B.idToken)).status).toBe(401);
+        expect((await request(requestPath)).body).toEqual({...requestValue, accepted: true});
         // Admin grants write access but does not bypass .validate when using an ID token.
         expect((await request("rule_validation/check", "PUT", "valid", users.Admin.idToken)).status).toBe(200);
         expect((await request("rule_validation/check", "PUT", 7, users.Admin.idToken)).status).toBe(401);
@@ -91,7 +103,7 @@ it("loads composed production Rules and preserves real REST access, validation a
             .toEqual({"rules-index": {created: 123}});
     } finally {
         for (const path of [`alerts/${uid}`, "chats/rules-test", `mutualstamps/follows/${uid}`,
-            `mutualstamps/_my/${uid}`, "_tag/rules-test", `roles/${admin}`, "rule_validation", "posts/rules-index"]) {
+            `mutualstamps/_my/${uid}`, "_tag/rules-test", "mutualrequests/rules-test", `roles/${admin}`, "rule_validation", "posts/rules-index"]) {
             await request(path, "DELETE");
         }
         expect((await request(".settings/rules", "PUT", savedRules)).status).toBe(200);
