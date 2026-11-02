@@ -31,7 +31,7 @@ export default (
     const onPointerDown = useRippleEffect();
     const [state, setState] = React.useState({});
     const {disabled} = state;
-    const {key, userData, value} = data;
+    const {id, userData, value} = data;
     const {t} = useTranslation();
     const patternClass = pattern
         ? styles[`card${pattern.substr(0, 1).toUpperCase()}${pattern.substr(1)}`]
@@ -51,7 +51,7 @@ export default (
         event.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(current => ({...current, disabled: true}));
-        mutualRequestAccept({database, requestId: key, typeId: value.typeId})
+        mutualRequestAccept({database, requestId: id, typeId: value.typeId})
             .then(result => {
                 console.log(result);
                 onDelete(result);
@@ -65,7 +65,9 @@ export default (
 
     const handleReject = event => {
         event.stopPropagation();
-        mutualRequestReject({database, requestId: key, typeId: value.typeId})
+        dispatch(ProgressView.SHOW);
+        setState(current => ({...current, disabled: true}));
+        mutualRequestReject({database, requestId: id, typeId: value.typeId})
             .then(result => {
                 console.log(result);
                 onDelete(result);
