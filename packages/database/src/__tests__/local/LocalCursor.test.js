@@ -35,7 +35,7 @@ it("pages a compound-index scope without leaking sibling records", async () => {
 it("keeps nested collection cursor changes in the parent object", async () => {
     const database = await setup();
     await database.create(["posts", {post_id: "p1"}], {edits: {a: {text: "A"}, b: {text: "B"}}});
-    const cursor = database.cursor(["posts", {post_id: "p1"}, "edits", "edit_id"], {
+    const cursor = database.cursor(["posts", {post_id: "p1"}, {edits: "edits"}, "edit_id"], {
         handle: ({key, value}) => key === "a" ? null : {...value, text: "changed"}
     });
     expect((await cursor.next(10)).map(({key}) => key)).toEqual(["b"]);
