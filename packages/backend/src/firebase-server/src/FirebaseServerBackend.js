@@ -7,8 +7,8 @@ import cursor from "./database/admin/cursor";
 import deleteRecord from "./database/admin/delete";
 import read from "./database/admin/read";
 import update from "./database/admin/update";
-import FirebaseServerStorage from "./FirebaseServerStorage.js";
-import {send} from "./notification/send.js";
+import FirebaseServerStorage from "./FirebaseServerStorage";
+import {send} from "./notification/send";
 
 const requests = {
     "database.create": create,
