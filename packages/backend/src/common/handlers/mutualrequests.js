@@ -13,14 +13,14 @@ export default class MutualRequestListener extends BackendListener {
             value
         });
 
-        const {mutual_type} = params;
+        const {mutual_type: mutualType} = params;
         const {uid, id, message} = value;
-        await updateCounter(this.backend, [{id}, "mutualrequests", mutual_type], 1);
+        await updateCounter(this.backend, [{id}, "mutualrequests", {mutual_type: mutualType}], 1);
         await createAlert(this.backend, id, {
-            uid: id,
+            uid,
             type: "request",
-            id: uid,
-            author: uid,
+            id,
+            author: id,
             message
         });
     }
@@ -30,6 +30,9 @@ export default class MutualRequestListener extends BackendListener {
             params,
             value
         });
+        const {mutual_type: mutualType} = params;
+        const {id} = value;
+        await updateCounter(this.backend, [{id}, "mutualrequests", {mutual_type: mutualType}], -1);
     }
 
     async onUpdate({params, value, previous}) {
@@ -38,5 +41,35 @@ export default class MutualRequestListener extends BackendListener {
             previous,
             value
         });
+
+        const accepted = value.accepted;
+        if (accepted) {
+            const {mutual_type: mutualType} = params;
+            const {uid, id, uid_id: uidId, id_uid: idUid, timestamp} = value;
+            const direct = {
+                id,
+                uid,
+                id_uid: idUid,
+                uid_id: uidId,
+                timestamp
+            };
+            const reverse = {
+                id: uid,
+                uid: id,
+                id_uid: uidId,
+                uid_id: idUid,
+                timestamp
+            }
+            const cursor = await this.backend.request("database.cursor", ["mutual", {mutual_type: mutualType}, "mutual_id"], {
+                equalTo: idUid,
+                orderBy: ["uid_id"],
+            });
+            const foundRecords = await cursor.next(10);
+            if (foundRecords.length === 0) {
+                await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], reverse);
+            }
+            await this.backend.request("database.create", ["mutual", {mutual_type: mutualType}, "mutual_id"], direct);
+            await this.backend.request("database.delete", ["mutualrequests", {mutual_type: mutualType}, {mutual_id: params.mutual_id}]);
+        }
     }
 }
