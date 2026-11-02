@@ -4,7 +4,7 @@ import {LOCAL_SCHEMA} from "./storeSchema";
 import {applySchema} from "./schema";
 import {openDatabase as openConnection} from "./connection";
 import {
-    validateCollectionPath, runTransaction, readStore, childRecordPath
+    validateCollectionPath, runTransaction, readStore, childRecordPath, cursorWildcardKeys
 } from "../../../backend/src/local/database/callable/createHelpers";
 
 const invalid = message => fail("database/invalid-argument", message);
@@ -60,3 +60,8 @@ export const getChildRecordPath = (context, path, key, keyField) => {
 };
 
 export {validateCollectionPath} from "../../../backend/src/local/database/callable/createHelpers";
+
+export const getCursorWildcardKeys = (context, path, field) => {
+    const name = validateCollectionPath(path)[0];
+    return transact(context, "readonly", [name], transaction => cursorWildcardKeys(transaction.objectStore(name), path, field));
+};
