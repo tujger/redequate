@@ -13,6 +13,8 @@ export type DatabaseQueryValue = null | boolean | number | string;
 export type DatabaseErrorHandler = (error: unknown, reason: string, context: Record<string, unknown>) => void;
 
 export interface DatabaseEntry {
+    /** Captured cursor branches, excluding the final key wildcard. */
+    params?: Record<string, string>;
     key: string;
     value: DatabaseValue;
 }
