@@ -36,6 +36,7 @@ export default [
     rules: {
       // Don't force ES6 functions to include a space before parentheses.
       'react/jsx-uses-vars': 'error',
+      'react/prop-types': 'off',
       'space-before-function-paren': 'off',
       // Allow specifying true explicitly for boolean props.
       'react/jsx-boolean-value': 'off'
