@@ -1,7 +1,7 @@
 import React, {act} from "react";
 import {vi} from "vitest";
 import Dispatcher from "../Dispatcher";
-import UserData from "../controllers/UserData";
+import UserData, {watchUserChanged} from "../controllers/UserData";
 import {useMetaInfo} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
 import textTranslation from "../controllers/textTranslation";
@@ -31,7 +31,7 @@ vi.mock("../controllers/useCurrentUserData", () => ({
     useSetCurrentUserData: () => context.setUser, useCurrentUserDataValue: vi.fn(), getCurrentUserData: vi.fn(),
 }));
 vi.mock("../controllers/UserData", async importOriginal => ({
-    ...await importOriginal(), watchUserChanged: () => new Promise(() => {}),
+    ...await importOriginal(), watchUserChanged: vi.fn(() => new Promise(() => {})),
 }));
 vi.mock("../controllers/Store", () => ({default: () => ({}), refreshAll: vi.fn()}));
 vi.mock("../controllers/textTranslation", () => ({default: vi.fn(), useTextTranslation: vi.fn()}));
@@ -130,7 +130,8 @@ it("updates settings without repeating initialization", async () => {
     expect(resolveUser).toHaveBeenCalledTimes(1);
     expect(database.read).toHaveBeenCalledTimes(1);
     expect(database.addEventListener).toHaveBeenCalledTimes(1);
-    expect(setInterval).toHaveBeenCalledTimes(1);
+    expect(setInterval).not.toHaveBeenCalled();
+    expect(watchUserChanged).toHaveBeenCalledTimes(1);
     expect(refreshAll).toHaveBeenCalledTimes(2);
 });
 
@@ -206,4 +207,13 @@ it("reports synchronous save failure and restores the console on unmount", async
     expect(original).toHaveBeenCalledWith(failure);
     unmount(container);
     expect(console.error).toBe(original);
+});
+
+
+it("cancels the single profile watcher when unmounted", async () => {
+    await start(() => new UserData());
+    const {signal} = watchUserChanged.mock.calls[0][0];
+    expect(signal.aborted).toBe(false);
+    await unmount(container);
+    expect(signal.aborted).toBe(true);
 });
