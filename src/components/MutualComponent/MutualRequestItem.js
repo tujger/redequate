@@ -2,7 +2,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useBackend} from "../../controllers";
+import {useDatabase} from "../../controllers";
 import {toDateString} from "../../controllers/DateFormat";
 import {usePages} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -24,7 +24,7 @@ export default (
         pattern,
         skeleton
     }) => {
-    const backend = useBackend();
+    const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
     const pages = usePages();
@@ -51,7 +51,7 @@ export default (
         event.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(current => ({...current, disabled: true}));
-        mutualRequestAccept({backend, requestId: key, typeId: value.typeId})
+        mutualRequestAccept({database, requestId: key, typeId: value.typeId})
             .then(result => {
                 console.log(result);
                 onDelete(result);
@@ -65,7 +65,7 @@ export default (
 
     const handleReject = event => {
         event.stopPropagation();
-        mutualRequestReject({backend, requestId: key, typeId: value.typeId})
+        mutualRequestReject({database, requestId: key, typeId: value.typeId})
             .then(result => {
                 console.log(result);
                 onDelete(result);

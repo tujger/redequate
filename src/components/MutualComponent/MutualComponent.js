@@ -1,7 +1,7 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
-import {useBackend, useDatabase} from "../../controllers";
+import {useDatabase} from "../../controllers";
 import counterControl from "../../controllers/counterControl";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
@@ -39,7 +39,6 @@ export default props => {
         unsubscribeLabel = t("Mutual.Unsubscribe"),
         unsubscribeComponent = <ActionComponent label={unsubscribeLabel}/>,
     } = props;
-    const backend = useBackend();
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
@@ -111,7 +110,7 @@ export default props => {
         evt.stopPropagation();
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, hasPending: hasRequest, hasRequest: null, disabled: true}));
-        (isAccept ? mutualRequestAccept : mutualRequestReject)({backend, typeId, requestId: hasRequest.key})
+        (isAccept ? mutualRequestAccept : mutualRequestReject)({database, typeId, requestId: hasRequest.key})
             .then(result => {
                 setState(state => ({...state, disabled: false}));
                 dispatch(ProgressView.HIDE);

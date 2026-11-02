@@ -1,19 +1,11 @@
 import {MutualMode} from "./MutualConstants";
 
-export const mutualRequestAccept = ({backend, requestId, typeId}) => {
-    return backend.request("mutualAction", {
-        key: requestId,
-        typeId,
-        action: "accept",
-    });
+export const mutualRequestAccept = ({database, requestId, typeId}) => {
+    return database.update(["mutualrequests", {mutual_type: typeId}, {mutual_id: requestId}], {accepted: true});
 }
 
-export const mutualRequestReject = ({backend, requestId, typeId}) => {
-    return backend.request("mutualAction", {
-        key: requestId,
-        typeId,
-        action: "reject",
-    });
+export const mutualRequestReject = async ({database, requestId, typeId}) => {
+    return database.delete(["mutualrequests", {mutual_type: typeId}, {mutual_id: requestId}]);
 }
 
 export const mutualRequest = async (
