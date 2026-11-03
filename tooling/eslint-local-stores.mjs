@@ -15,8 +15,7 @@ const get = (node, name) => node?.properties?.find(property => property.key?.val
 const literal = node => node?.type === 'Literal' ? node.value : undefined
 const key = value => JSON.stringify(typeof value === 'string' ? [value] : value)
 const fieldPath = field => field.split('/').join('.')
-// The only supported derived Local index is a nonempty, proper prefix of an
-// ORIGINAL index explicitly declared by a Firebase wildcard-child .indexOn.
+// A declared Firebase index also permits its nonempty, proper Local prefixes.
 const isDeclaredPrefix = (parts, originals) => parts.length > 0 && originals.some(entry =>
   parts.length < entry.path.length && parts.every((part, i) => part === entry.path[i]))
 const ruleIndexes = node => Object.hasOwn(node, '.indexOn')
@@ -32,6 +31,7 @@ export function compareStoresWithRules(stores, rules) {
     if (!root || typeof root !== 'object' || Array.isArray(root)) continue
     const expected = new Map()
     const wildcardFields = new Set()
+    const wildcardPaths = new Set()
     let uncertain = false
     const visit = (node, segments = []) => {
       if (!node || typeof node !== 'object' || Array.isArray(node)) return
@@ -39,6 +39,7 @@ export function compareStoresWithRules(stores, rules) {
       // Literal branches need an explicit mapping to the root store.
       if (segments.length && segments.every(segment => segment.startsWith('$') && segment.length > 1)) {
         wildcardFields.add(segments.at(-1).slice(1))
+        wildcardPaths.add(key(segments.map(segment => segment.slice(1))))
       }
       const indexes = ruleIndexes(node)
       if (indexes) {
@@ -87,13 +88,13 @@ export function compareStoresWithRules(stores, rules) {
         actual: incorrect?.keypath
       })
     }
-    // A shorter prefix is derivable only from a declared original compound
-    // index. Unique Local indexes encode identity, which Rules cannot specify.
+    // Each visited wildcard path permits its ordered Local prefix index.
+    // Unique Local indexes encode identity, which Rules cannot specify.
     if (uncertain) continue
     for (const index of actual) {
       const parts = typeof index.keypath === 'string' ? [index.keypath] : index.keypath
       const pathKey = key(parts)
-      if (index.options?.unique || expected.has(pathKey) ||
+      if (index.options?.unique || expected.has(pathKey) || wildcardPaths.has(pathKey) ||
         (parts.length === 1 && wildcardFields.has(parts[0])) ||
         isDeclaredPrefix(parts, [...expected.values()])) continue
       if (issues.some(issue => issue.kind === 'incorrect' && issue.store === store.store && issue.index === index.name)) continue
