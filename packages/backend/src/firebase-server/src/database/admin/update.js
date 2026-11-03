@@ -12,7 +12,7 @@ export default async function (path, value, options = {}, ...args) {
         fail("database/invalid-argument", "Invalid update options.");
     }
     if (options.mode !== undefined) return conditionalUpdate(database, address, value, options);
-    console.debug("[Backend:Admin:Update]", `update [${address}]`, {value});
+    console.debug("[Backend:Admin:Update]", `update [${address}]`, {value: stringify(value)});
     if (address) {
         await database.ref(address).set(value);
     } else {
@@ -26,3 +26,20 @@ export default async function (path, value, options = {}, ...args) {
     }
     return null;
 }
+
+const stringify = value => JSON.parse(JSON.stringify(value, (_, v) => {
+    if (v instanceof Map) {
+        return Object.fromEntries([...v].map(([key, val]) => [
+            Array.isArray(key)
+                ? key.map(part =>
+                    typeof part === "object" && part !== null
+                        ? Object.values(part).join("/")
+                        : String(part)
+                ).join("/")
+                : String(key),
+            val
+        ]));
+    } else {
+        return v;
+    }
+}, 2))
