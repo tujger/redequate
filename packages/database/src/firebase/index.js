@@ -1,14 +1,14 @@
-import {baseRules, resolveRules} from "./rules.mjs";
+import {fail} from "../../../common";
+import {composeCursor} from "../common/ComposedDatabaseCursor";
 import DatabaseBase from "../common/DatabaseBase";
 import addEventListener from "./addEventListener";
 import createRecord from "./create";
 import FirebaseCursorClient from "./cursor";
-import {composeCursor} from "../common/ComposedDatabaseCursor";
 import deleteRecord from "./delete";
-import read from "./read";
-import update from "./update";
 import parsePath from "./parsePath";
-import {fail} from "../../../common";
+import read from "./read";
+import {baseRules, resolveRules} from "./rules.mjs";
+import update from "./update";
 
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase;

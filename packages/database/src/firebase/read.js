@@ -16,7 +16,7 @@ import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
 import parsePath from "./parsePath";
 import readSnapshot from "./readSnapshot";
 
-export async function read(firebase, path, options = {}) {
+export default async function read(firebase, path, options = {}) {
     const {address: effectivePath} = parsePath(path, "collection");
     if (!effectivePath) fail("database/invalid-argument", "read requires a non-empty path.");
     validateShallowRead(options);
