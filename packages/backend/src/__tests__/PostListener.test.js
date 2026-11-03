@@ -17,8 +17,9 @@ const setup = (post = {uid: "writer", to: "parent", text: "keep", nested: {flag:
     ]);
     const alerts = [];
     const backend = {TIMESTAMP: 123, request: vi.fn(async (name, path, value, options) => {
-        if (name === "database.read") return records.get(key(path)) ?? null;
+        if (name === "database.read") return value?.shallow ? [] : records.get(key(path)) ?? null;
         if (name === "database.create") { alerts.push({path, value}); return `alert-${alerts.length}`; }
+        if (path === "") return;
         if (options.mode === "read") return {value: records.get(key(path)) ?? null, etag: "initial"};
         records.set(key(path), value);
         return {committed: true, value};
@@ -32,7 +33,8 @@ it("counts ordinary posts without processing ancestors or alerts", async () => {
     await listener.onCreate({params, value: {uid: "writer", text: "top-level"}});
     expect(counter("total", "posts")).toBe(1);
     expect(counter("writer", "posts")).toBe(1);
-    expect(backend.request.mock.calls.map(([name]) => name)).toEqual(Array(4).fill("database.update"));
+    expect(backend.request).toHaveBeenCalledWith("database.read", ["mutual", "mutual_type"], {shallow: true});
+    expect(backend.request.mock.calls.filter(([name, path]) => name === "database.update" && path !== "")).toHaveLength(4);
     expect(alerts).toEqual([]);
 });
 

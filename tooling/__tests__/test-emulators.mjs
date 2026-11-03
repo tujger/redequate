@@ -38,7 +38,7 @@ writeFileSync(config, JSON.stringify({
         singleProjectMode: true,
     },
 }));
-const env = {...process.env, TMPDIR: logDirectory, TMP: logDirectory, TEMP: logDirectory};
+const env = {...process.env, SHALLOW_TEST_FRAMEWORK_ROOT: root, TMPDIR: logDirectory, TMP: logDirectory, TEMP: logDirectory};
 const javaHome = join(homedir(), ".local/share/redequate/jdks/temurin-21/Contents/Home");
 if (process.platform === "darwin" && existsSync(join(javaHome, "bin/java"))) {
     env.JAVA_HOME = javaHome;

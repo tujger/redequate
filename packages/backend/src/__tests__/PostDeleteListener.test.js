@@ -4,11 +4,12 @@ import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
 
 const params = {post_id: "deleted"};
-const path = (id, name) => ["_counters", {id}, name];
+const path = (id, name) => ["_counters", {id}, {[name]: name}];
 const setup = () => {
     const counters = new Map(); const deleted = []; const images = [];
     const backend = {storage: {delete: vi.fn(async url => { images.push(url); })}, request: vi.fn(async (name, target, value, options) => {
-        if (name === "database.read") return {child: {to: "deleted"}};
+        if (name === "database.read") return value?.shallow ? [] : target[0] === "posts" ? {child: {to: "deleted"}} : null;
+        if (name === "database.create" || target === "") return;
         if (name === "database.delete") { deleted.push(target); return null; }
         if (options.mode === "read") return {value: counters.get(JSON.stringify(target)) ?? 3, etag: "initial"};
         counters.set(JSON.stringify(target), value); return {committed: true, value};
@@ -18,8 +19,8 @@ const setup = () => {
 it("decrements the author's posts then total, deletes children, then images", async () => {
     const {backend, listener, counters, deleted, images} = setup();
     await listener.onDelete({params, value: {uid: "author", images: ["one", "two"]}});
-    expect([...counters]).toEqual([[JSON.stringify(path("author", "posts")), 2], [JSON.stringify(path("total", "posts")), 2]]);
-    expect(backend.request.mock.calls.slice(4)).toEqual([
+    expect([...counters]).toEqual([[JSON.stringify(["_counters", {id: "author"}, "posts"]), 2], [JSON.stringify(["_counters", {id: "total"}, "posts"]), 2]]);
+    expect(backend.request.mock.calls.filter(([name, target]) => (name === "database.read" || name === "database.delete") && target[0] === "posts")).toEqual([
         ["database.read", ["posts"], {orderBy: "to", equalTo: "deleted"}],
         ["database.delete", ["posts", {post_id: "child"}]],
     ]);
@@ -28,7 +29,7 @@ it("decrements the author's posts then total, deletes children, then images", as
 it("decrements reply and root counters without modifying top-level or user replied counts", async () => {
     const {listener, counters} = setup();
     await listener.onDelete({params, value: {uid: "author", to: "parent", root: "root"}});
-    expect([...counters]).toEqual([[JSON.stringify(path("author", "replies")), 2], [JSON.stringify(path("root", "replied")), 2]]);
+    expect([...counters]).toEqual([[JSON.stringify(["_counters", {id: "author"}, "replies"]), 2], [JSON.stringify(["_counters", {id: "root"}, "replied"]), 2]]);
 });
 it("warns about a missing root and continues deleting children", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -42,12 +43,19 @@ it("validates post id before touching data", async () => {
     await expect(listener.onDelete({params: {}, value: {uid: "author"}})).rejects.toThrow("id is not defined");
     expect(backend.request).not.toHaveBeenCalled();
 });
-it.each([1, 3, 5, 6])("propagates database failure at operation %s before deleting images", async operation => {
-    const {listener, backend, images} = setup(); const invoke = backend.request.getMockImplementation();
-    const error = new Error("database failed"); let calls = 0;
-    backend.request.mockImplementation((...args) => ++calls === operation ? Promise.reject(error) : invoke(...args));
+it.each(["counter-read", "counter-write", "children-read", "child-delete"])("propagates %s failure before deleting images", async stage => {
+    const {listener, backend, images} = setup();
+    const invoke = backend.request.getMockImplementation();
+    const error = new Error("database failed");
+    backend.request.mockImplementation((name, target, value, options) => {
+        let fails = name === "database.delete";
+        if (stage === "counter-read") fails = options?.mode === "read";
+        if (stage === "counter-write") fails = options?.mode === "replace";
+        if (stage === "children-read") fails = name === "database.read" && target[0] === "posts";
+        return fails ? Promise.reject(error) : invoke(name, target, value, options);
+    });
     await expect(listener.onDelete({params, value: {uid: "author", images: ["one"]}})).rejects.toBe(error);
-    expect(backend.request).toHaveBeenCalledTimes(operation); expect(images).toEqual([]);
+    expect(images).toEqual([]);
 });
 it("logs an image failure and still attempts all other images", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});

@@ -55,7 +55,7 @@ export function counterScenarios(createDatabases, {local = false} = {}) {
         ["subscribers", [{id: "audit-user"}, "mutual", {mutual_type: "following_s"}]],
         ["subscriptions", [{id: "audit-user"}, "mutual", {mutual_type: "friend"}]],
         ["requests", [{id: "audit-user"}, "mutualrequests", {typeId: "friend"}]],
-        ["profile posts", [{id: "audit-user"}, "mutualstamps", {_my: "_my"}]],
+        ["profile posts", [{id: "audit-user"}, "mutualstamps", {mutual_type: "_my"}]],
     ];
     for (const [name, address] of paths) {
         if (local && ["string", "literal array", "post_id"].includes(name)) {

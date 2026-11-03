@@ -71,9 +71,9 @@ it.each(types)("keeps the listener instance as this for %s", async (type, name, 
 });
 
 it("exports the supported production trigger groups", () => {
-    expect(Object.keys(oncreate)).toEqual(["activity", "alert", "extra", "post", "tag"]);
-    expect(Object.keys(ondelete)).toEqual(["activity", "extra", "post", "tag"]);
-    expect(Object.keys(onupdate)).toEqual(["activity", "post", "tag"]);
+    expect(Object.keys(oncreate)).toEqual(["activity", "alerts", "chats", "extra", "mutual", "mutualrequests", "mutualstamps", "posts", "tag", "users_public"]);
+    expect(Object.keys(ondelete)).toEqual(["activity", "chats", "extra", "mutual", "mutualrequests", "mutualstamps", "posts", "tag", "users_public"]);
+    expect(Object.keys(onupdate)).toEqual(["activity", "chats", "mutual", "mutualrequests", "mutualstamps", "posts", "tag", "users_public"]);
 });
 
 it.each(types.filter(([type]) => type !== "update"))("runs the extra %s behavior", async (type, name, suffix, before, after) => {
@@ -90,7 +90,7 @@ it.each(types.filter(([type]) => type !== "update"))("runs the extra %s behavior
 });
 
 it.each(types)("runs the post %s counters in order", async (type, name) => {
-    const backend = {request: vi.fn(async (name, path, value, options) => name === "database.read" ? null
+    const backend = {request: vi.fn(async (name, path, value, options) => name === "database.read" ? value?.shallow ? [] : null
         : options?.mode === "read" ? {value: 1, etag: "initial"} : {committed: true, value})};
     const value = {uid: "u"};
     await new PostListener(backend)[name](payload(type, value, value, {post_id: "p"}));
@@ -99,7 +99,8 @@ it.each(types)("runs the post %s counters in order", async (type, name) => {
         ["database.update", counter(id), null, {mode: "read"}],
         ["database.update", counter(id), type === "create" ? 2 : null, {mode: "replace", etag: "initial"}],
     ];
-    expect(backend.request.mock.calls).toEqual(type === "update" ? [] : type === "create"
+    const calls = backend.request.mock.calls.filter(([method, target]) => method === "database.update" && Array.isArray(target) || method === "database.read" && target[0] === "posts");
+    expect(calls).toEqual(type === "update" ? [] : type === "create"
         ? [...changes("total"), ...changes("u")]
         : [...changes("u"), ...changes("total"), ["database.read", ["posts"], {orderBy: "to", equalTo: "p"}]]);
 });

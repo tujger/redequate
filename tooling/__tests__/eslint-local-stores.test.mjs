@@ -162,7 +162,7 @@ test('allows simple indexes for wildcard path keys without requiring them', () =
   assert.deepEqual(lint([store('mutualrequests', [])], path), [])
 }))
 
-test('wildcard permissions stay within their store and do not imply compound indexes', () => withRules({
+test('wildcard permissions stay within their store', () => withRules({
   mutualrequests: { $mutual_type: { $mutual_id: {} } },
   posts: { '.read': true }
 }, path => {
@@ -170,7 +170,7 @@ test('wildcard permissions stay within their store and do not imply compound ind
     store('mutualrequests', ['unknown', ['mutual_type', 'mutual_id']]),
     store('posts', ['mutual_id'])
   ], path)
-  assert.equal(messages.length, 3)
+  assert.equal(messages.length, 2)
   for (const message of messages) assert.equal(message.messageId, 'extra')
 }))
 
@@ -180,4 +180,44 @@ test('does not map wildcard keys below literal branches', () => withRules({
   const messages = lint([store('mutualrequests', ['mutual_type', 'mutual_id'])], path)
   assert.equal(messages.length, 1)
   assert.match(messages[0].message, /mutual_id.*no matching Firebase/)
+}))
+
+
+test('allows full wildcard paths and their prefixes without requiring indexes', () => withRules({
+  mutualstamps: { $mutual_type: { $user_id: { $mutual_id: {} } } }
+}, path => {
+  assert.deepEqual(lint([store('mutualstamps', [
+    ['mutual_type'],
+    ['mutual_type', 'user_id'],
+    ['mutual_type', 'user_id', 'mutual_id']
+  ])], path), [])
+  assert.deepEqual(lint([store('mutualstamps', [])], path), [])
+}))
+
+test('rejects reordered, skipped, and non-prefix wildcard combinations', () => withRules({
+  mutualstamps: { $mutual_type: { $user_id: { $mutual_id: {} } } }
+}, path => {
+  const messages = lint([store('mutualstamps', [
+    ['user_id', 'mutual_type'],
+    ['mutual_type', 'mutual_id'],
+    ['user_id', 'mutual_id'],
+    []
+  ])], path)
+  assert.equal(messages.length, 4)
+  for (const message of messages) assert.equal(message.messageId, 'extra')
+}))
+
+test('does not combine wildcard fields across branches or literal segments', () => withRules({
+  records: {
+    $type: { $user: { fixed: { $child: {} } } },
+    fixed: { $item: {} }
+  }
+}, path => {
+  const messages = lint([store('records', [
+    ['type', 'item'],
+    ['type', 'user', 'child'],
+    ['type', 'user', 'fixed', 'child']
+  ])], path)
+  assert.equal(messages.length, 3)
+  for (const message of messages) assert.equal(message.messageId, 'extra')
 }))

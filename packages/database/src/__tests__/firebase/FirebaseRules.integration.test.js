@@ -40,7 +40,7 @@ it("loads composed production Rules and preserves real REST access, validation a
         ["chats/rules-test/message1", "all", "all"],
         ["chats/rules-test/!meta", "all", "all"],
         [`mutualstamps/follows/${uid}/mutual1`, "self", "admin"],
-        [`mutualstamps/_my/${uid}/mutual1`, "auth", "admin"],
+        [`mutualstamps/_my/${uid}/mutual1`, "self", "admin"],
         ["_tag/rules-test/post1", "all", "admin"]
     ];
     const allowed = (policy, actor) => actor === "Admin" || policy === "all" ||
