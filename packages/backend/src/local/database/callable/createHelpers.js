@@ -449,3 +449,34 @@ export const cursorWildcardKeys = async (store, path, field) => {
     const value = await readStore(store, path);
     return value !== null && typeof value === "object" ? Object.keys(value) : [];
 };
+
+export const readStoreKeys = async (store, path, {keyField} = {}) => {
+    const target = address(store, path);
+    if (target.singleton || target.single || target.property.length) {
+        const value = await readStore(store, path);
+        return value !== null && typeof value === "object" ? Object.keys(value) : [];
+    }
+    const nextIdentity = uniqueIndexes(store).flatMap(({fields}) => fields).find(name => !Object.hasOwn(target.conditions, name));
+    const field = keyField ?? nextIdentity ?? identityField(store, target.conditions);
+    const names = Object.keys(target.conditions);
+    const candidates = indexes(store).map(entry => ({...entry, position: entry.fields.indexOf(field)}))
+        .filter(({fields, position}) => position >= 0 && fields.slice(0, position).every(name => Object.hasOwn(target.conditions, name)) &&
+            names.every(name => fields.slice(0, position).includes(name)))
+        .sort((a, b) => a.fields.length - b.fields.length);
+    const source = field === "_id" && !names.length ? {index: store, fields: ["_id"], position: 0} : candidates[0];
+    if (!source) invalid(`No declared index supports shallow keys for ${field}.`);
+    const prefix = source.fields.slice(0, source.position).map(name => target.conditions[name]);
+    const range = prefix.length ? IDBKeyRange.bound(prefix, [...prefix, []], false, true) : undefined;
+    return new Promise((resolve, reject) => {
+        const keys = new Set();
+        const request = source.index.openKeyCursor(range, "nextunique");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            const cursor = request.result;
+            if (!cursor) { resolve([...keys]); return; }
+            const key = Array.isArray(source.index.keyPath) ? cursor.key[source.position] : cursor.key;
+            keys.add(String(key));
+            cursor.continue();
+        };
+    });
+};
