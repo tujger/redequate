@@ -1,3 +1,5 @@
+import {getAuth} from "firebase/auth";
+import {validateShallowRead, shallowReadUrl, fetchShallowKeys} from "../common/shallowRead";
 import {
     endAt,
     equalTo as equalToConstraint,
@@ -17,6 +19,18 @@ import readSnapshot from "./readSnapshot";
 export async function read(firebase, path, options = {}) {
     const {address: effectivePath} = parsePath(path, "collection");
     if (!effectivePath) fail("database/invalid-argument", "read requires a non-empty path.");
+    validateShallowRead(options);
+    if (options.shallow) {
+        const database = getDatabase(firebase.app);
+        const databaseURL = database.app?.options.databaseURL ?? firebase.app.options.databaseURL ??
+            `https://${firebase.app.options.projectId}-default-rtdb.firebaseio.com`;
+        const url = shallowReadUrl(ref(database, effectivePath).toString(), databaseURL);
+        const auth = getAuth(firebase.app);
+        await auth.authStateReady();
+        const token = await auth.currentUser?.getIdToken();
+        if (token) url.searchParams.set("auth", token);
+        return fetchShallowKeys(url);
+    }
     const {field, equalTo, start, end} = readQueryOptions(options);
 
     let selection = ref(getDatabase(firebase.app), effectivePath);
