@@ -146,12 +146,20 @@ export default function ChatMeta(database) {
             if (!chats.length) {
                 const value = await database.read(["users_public", {user_id: oppositeUid}, {[UserData.NAME]: UserData.NAME}]);
                 if (value !== undefined) {
-                    await database.create(["chats", "chat_id"], key => ({
-                        key,
+                    const payload = {
                         value: {private: oppositeUid},
                         redirect: true,
                         meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
-                    }));
+                    }
+                    await database.create(["chats", "chat_id", "message_id"], key => ({
+                        key,
+                        ...payload
+                    })).then(key => {
+                        chats.push({
+                            key,
+                            ...payload
+                        })
+                    });
                 }
             }
             if (!chats.length) {
