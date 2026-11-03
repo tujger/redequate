@@ -21,10 +21,9 @@ export default class MutualListener extends BackendListener {
 
         const {uid, id} = value;
         const {mutual_type: mutualType} = params;
-        await updateCounter(this.backend, [{id: uid}, "mutual", mutualType], -1);
-
         const mutualTypeS = `${mutualType}_s`;
         await updateCounter(this.backend, [{id}, "mutual", mutualTypeS], -1);
+        await updateCounter(this.backend, [{id: uid}, "mutual", mutualType], -1);
     }
 
     async onUpdate({params, value, previous}) {
