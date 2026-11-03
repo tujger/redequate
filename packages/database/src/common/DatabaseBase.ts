@@ -132,6 +132,8 @@ export default class DatabaseBase {
      * concrete records/fields, e.g. {email: "email"}; string paths stay literal.
      * Query options apply to children of the resolved address.
      */
+    read(path: DatabasePath, options: DatabaseReadOptions & {shallow: true}): Promise<string[] | undefined>;
+    read(path: DatabasePath, options?: DatabaseReadOptions): Promise<DatabaseValue | undefined>;
     async read(path: DatabasePath, options: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
         return notImplemented("read")
     }
