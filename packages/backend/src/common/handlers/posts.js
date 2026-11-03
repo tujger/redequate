@@ -3,6 +3,7 @@ import BackendListener from "../BackendListener";
 import resolveTags from "../helpers/resolveTags";
 import {createActivity} from "./activity";
 import {createAlert} from "./alerts";
+import {createMutualStamps} from "./mutualstamps";
 import {updateCounter} from "./utils";
 
 export default class PostListener extends BackendListener {
@@ -40,10 +41,15 @@ export default class PostListener extends BackendListener {
             }
             await update(this.backend, ["posts", {post_id: params.post_id}], {root: rootKey});
             await updateCounter(this.backend, [{id: rootKey}, "replied"], 1);
-            if (!notified.has(root.uid)) await createAlert(this.backend, root.uid, alert);
+            if (!notified.has(root.uid)) {
+                await createAlert(this.backend, root.uid, alert);
+            }
         } else {
             await updateCounter(this.backend, [{id: "total"}, "posts"], 1);
-            if (value.uid) await updateCounter(this.backend, [{id: value.uid}, "posts"], 1);
+            if (value.uid) {
+                await updateCounter(this.backend, [{id: value.uid}, "posts"], 1);
+                createMutualStamps(this.backend, {userId: value.uid, mutualId: params.post_id});
+            }
         }
 
         const addTags = await resolveTags({backend: this.backend, text: value.text ?? "", createIfAbsent: true});
