@@ -169,7 +169,6 @@
             "autoIncrement": true
         },
         "storeSchema": [
-            {"name": "_my", "keypath": "_my"},
             {"name": "mutual_type", "keypath": "mutual_type"},
             {
                 "name": "mutual_type_user_id",

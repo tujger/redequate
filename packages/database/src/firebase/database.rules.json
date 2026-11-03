@@ -124,15 +124,9 @@
             }
         },
         "mutualstamps": {
-            "_my": {
-                ".read": "auth.uid !== null",
-                "$user_id": {
-                    "$mutual_id": {}
-                }
-            },
             "$mutual_type": {
                 "$user_id": {
-                    ".read": "$user_id === auth.uid",
+                    ".read": "auth != null && $user_id === auth.uid",
                     "$mutual_id": {}
                 }
             }
