@@ -1,5 +1,5 @@
 import {HttpsError} from "firebase-functions/v2/https";
-import validateKey from "./validateKey.js";
+import validateKey from "./validateKey";
 
 export default async (request, database, {adminOnly = false, uid} = {}) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Authentication required.");

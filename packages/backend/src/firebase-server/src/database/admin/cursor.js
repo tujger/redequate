@@ -1,6 +1,6 @@
 import {fail} from "../../../../../../common";
 import parsePath from "../../../../../../database/src/firebase/parsePath";
-import createCursor from "../../../../common/helpers/createCursor.js";
+import createCursor from "../../../../common/helpers/createCursor";
 import FirebaseServerCursor from "../../FirebaseServerCursor";
 
 export default function (path, options = {}, ...rest) {

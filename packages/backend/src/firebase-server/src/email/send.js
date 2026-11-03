@@ -1,7 +1,7 @@
 import {defineSecret} from "firebase-functions/params";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 import nodemailer from "nodemailer";
-import authorize from "../common/authorize.js";
+import authorize from "../common/authorize";
 import {database} from "../common/firebase";
 
 const gmailEmail = defineSecret("GMAIL_EMAIL");

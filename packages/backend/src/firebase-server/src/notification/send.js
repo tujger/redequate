@@ -1,5 +1,5 @@
 import {HttpsError, onCall} from "firebase-functions/v2/https";
-import authorize from "../common/authorize.js";
+import authorize from "../common/authorize";
 
 export default onCall(async request => {
     const {data} = request;
