@@ -3,7 +3,7 @@ import BackendListener from "../BackendListener";
 import resolveTags from "../helpers/resolveTags";
 import {createActivity} from "./activity";
 import {createAlert} from "./alerts";
-import {createMutualStamps} from "./mutualstamps";
+import {createMutualStamps, deleteMutualStamps} from "./mutualstamps";
 import {updateCounter} from "./utils";
 
 export default class PostListener extends BackendListener {
@@ -73,6 +73,7 @@ export default class PostListener extends BackendListener {
         } else {
             if (value.uid) await updateCounter(this.backend, [{id: value.uid}, "posts"], -1);
             await updateCounter(this.backend, [{id: "total"}, "posts"], -1);
+            deleteMutualStamps(this.backend, {userId: value.uid, mutualId: params.post_id});
         }
         const replies = await this.backend.request("database.read", ["posts"], {
             orderBy: "to",

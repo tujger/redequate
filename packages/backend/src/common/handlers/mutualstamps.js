@@ -35,7 +35,15 @@ export default class MutualStampListener extends BackendListener {
     }
 }
 
-export async function createMutualStamps(backend, {userId, mutualId}) {
+export const createMutualStamps = async (backend, {userId, mutualId}) => {
+    return _updateMutualStamps(backend, {userId, mutualId}, userId);
+}
+
+export const deleteMutualStamps = async (backend, {userId, mutualId}) => {
+    return _updateMutualStamps(backend, {userId, mutualId}, null);
+}
+
+const _updateMutualStamps = async (backend, {userId, mutualId}, payload) => {
     if (mutualId === null || mutualId === undefined) {
         fail("database/invalid-argument", "Stamp mutualId must not be null or undefined.");
     }
@@ -44,7 +52,7 @@ export async function createMutualStamps(backend, {userId, mutualId}) {
 
     const updates = new Map();
     for (const mutualType of mutualTypes) {
-        updates.set(["mutualstamps", "_my", {user_id: userId}, {mutual_id: mutualId}], userId);
+        updates.set(["mutualstamps", "_my", {user_id: userId}, {mutual_id: mutualId}], payload);
 
         const path = ["mutual", {mutual_type: mutualType}, "mutual_id"];
         const query = {orderBy: ["uid"], equalTo: userId};
@@ -54,8 +62,8 @@ export async function createMutualStamps(backend, {userId, mutualId}) {
             records.forEach(({value}) => {
                 if (value.uid !== userId) return;
 
-                updates.set(["mutualstamps", "_", {user_id: value.id}, {mutual_id: mutualId}], userId);
-                updates.set(["mutualstamps", {mutual_type: mutualType}, {user_id: value.id}, {mutual_id: mutualId}], userId)
+                updates.set(["mutualstamps", "_", {user_id: value.id}, {mutual_id: mutualId}], payload);
+                updates.set(["mutualstamps", {mutual_type: mutualType}, {user_id: value.id}, {mutual_id: mutualId}], payload)
             });
         });
     }
