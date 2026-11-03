@@ -422,7 +422,8 @@ into its native wildcard ref. Local uses declared index fields (or _id), capture
 identities from physical rows before decoding, and compares matches by full
 concrete path. Unindexed captures and nonunique matches are rejected. Both
 providers include captured and fixed named parameters.
-This grammar belongs only to backend listeners; Database reads, cursors, UI
+Cursor array paths now also capture bare string segments: the last capture is
+the entry key and intermediate captures are entry.params. Database reads, UI
 subscriptions and CRUD paths retain their existing rules. No schema migration is needed.
 Readwrite transactions capture logical before/after snapshots for subscribed paths and
 publish source-tagged changes only after commit and connection close. Their source
@@ -810,18 +811,20 @@ No Firebase callable or transport-level cursor format is introduced.
 
 ### Frontend and Admin Firebase cursors
 
-FirebaseCursor(firebase, path, options, backend) uses the native modular Client SDK
-from firebase/database directly. FirebaseDatabase passes its firebase context;
-createCursorQuery uses the same native context. Pagination, date bounds, handle
-writes through the supplied backend, rereads and subscription cleanup are retained.
-There is no frontend cursor adapter.
+FirebaseCursorClient(firebase, path, options, backend) and
+FirebaseServerCursor(database, path, options, backend) extend the SDK-neutral
+FirebaseCursorBase. The shared superclass owns RTDB query policy, buffering,
+pagination, date bounds, handle writes/rereads and wildcard branch queues. The
+subclasses override reference creation, query constraints and snapshot reads with
+their native Client or Admin SDK. Queries initialize lazily after subclass SDK
+fields are available. Only FirebaseCursorClient implements live subscriptions.
+No Client SDK is imported into the superclass or Admin implementation.
 
-FirebaseServerBackend database.cursor uses a separate FirebaseServerCursor extending
-DatabaseCursor. It accepts the existing Admin Database, path, options and backend;
-queries and reads use the Admin SDK directly without any Client SDK import or
-adapter. It supports pagination, filters, date bounds, handle writes and rereads.
-It intentionally implements no subscriptions. Frontend FirebaseCursor remains
-unchanged and uses its native modular SDK.
+Wildcard paths are a DatabaseCursor contract. FirebaseCursorBase and LocalCursor
+implement traversal within their own instances; constructors never return a
+different cursor type. Local uses its native branch scopes and scan positions.
+There is no external WildcardDatabaseCursor or constructor callback adapter.
+The default-export module path for the client cursor is unchanged.
 
 ### Backend cursor composition
 
@@ -1039,3 +1042,41 @@ not granted. Sender writes require accepted to be absent; only recipients may
 write any accepted value, including false. Null removes the field and remains
 allowed for senders. The write rule checks access and acceptance, while the record validation
 keeps uid/id immutable. Both participants may delete even an accepted request.
+
+The common backend exposes mutualstamps.createStamp({backend, mutualType, userId,
+mutualId, value}). It conditionally creates a scalar stamp and increments its
+matching counter only for the winning creation, preserving existing values. This
+operation has no post-specific logic and is not yet wired into listeners. Stamp
+and counter writes remain separate: crash recovery between them is not covered.
+
+### Cursor wildcard traversal
+
+Cursor-only patterns such as ["mutual", "mutual_type", "mutual_id"] expand
+intermediate branches and merge leaf cursors in query order, breaking ties by
+full concrete path. Named segments fix values, including literal fields such as
+{edits: "edits"}; orderBy continues to address ordinary nested value fields.
+The final segment of an expanded pattern must be a key wildcard. Capture names
+must be distinct. Ordinary results retain {key, value}; expanded results also
+include params, excluding the capture represented by key.
+
+Branch discovery occurs on first next and does not track newly appearing branches.
+The queue keeps one candidate per concrete collection. Firebase discovery reads
+parent snapshots and requires permission to read those parents; this is not one
+server-side wildcard query. Local discovery uses declared identity indexes.
+Handle runs at delivery, with params, and writes to a concrete named path.
+Composition deduplicates by concrete record address, so identical leaf keys in
+different branches survive. Intermediate-wildcard subscriptions are rejected.
+LazyList still uses key alone: do not feed it cross-branch results with duplicate
+keys until its identity contract is separately updated.
+
+Wildcard cursor identity is derived from the public pattern, captured params and
+leaf key; no per-entry address registry is needed. Composition deduplicates by
+resolved collection plus key. The merge chooses its next candidate in one pass,
+and leaf options are prepared once. A handled record that loses its ordered field
+is consumed and skipped, allowing the remaining queue to continue.
+
+Database read options now include shallow. The true mode returns unique immediate
+child keys as string[], with [] for absent/scalar values and no ordering promise.
+It rejects query selection options and uses authenticated REST in Firebase,
+including emulator namespace routing; Local uses key-only index cursors for
+logical collections. Normal reads, cursors and application handlers are unchanged.

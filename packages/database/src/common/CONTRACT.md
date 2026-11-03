@@ -304,3 +304,19 @@ Storage and Messaging share it through reserved stores `$auth`, `$storage` and
 `$messaging`. The `$` prefix is reserved for provider-owned stores, including future providers.
 Application schemas and collection access cannot target provider stores.
 Former physical database names are not migrated or deleted automatically.
+
+## Shallow reads
+
+`read(path, {shallow: true})` returns `string[]`: unique immediate child keys,
+without their values. Missing or scalar locations return `[]`. Key order is not
+guaranteed. `shallow: false` preserves ordinary read behavior. Shallow reads cannot
+combine with ordering, filters or range options. Existing onError suppression may
+return undefined. This is also supported by backend.request("database.read", path,
+options); it does not change cursor options or path interpretation.
+
+Firebase Client and Admin use authenticated REST shallow requests and never fall
+back to downloading the subtree. Client reads await Auth restoration and use the
+current user's ID token. Admin reads use credential OAuth tokens, or emulator-only
+owner authorization on the configured emulator endpoint. Database namespaces are
+preserved when routing to emulators. Local enumerates distinct indexed identity
+keys; reads inside a native stored object return that object's own keys.
