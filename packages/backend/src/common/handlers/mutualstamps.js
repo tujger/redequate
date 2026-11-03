@@ -1,7 +1,7 @@
 import {fail} from "../../../../common";
 import update from "../../../../database/src/common/methods/update";
-import {updateCounter} from "./utils";
 import BackendListener from "../BackendListener";
+import {updateCounter} from "./utils";
 
 export default class MutualStampListener extends BackendListener {
     constructor(backend) {
@@ -35,7 +35,7 @@ export default class MutualStampListener extends BackendListener {
     }
 }
 
-export async function createMutualStamps(backend, {userId, mutualId, value}) {
+export async function createMutualStamps(backend, {userId, mutualId}) {
     if (mutualId === null || mutualId === undefined) {
         fail("database/invalid-argument", "Stamp mutualId must not be null or undefined.");
     }
@@ -51,8 +51,7 @@ export async function createMutualStamps(backend, {userId, mutualId, value}) {
         const cursor = await backend.request("database.cursor", path, query);
 
         await cursor.next(10000).then(records => {
-            records.forEach(({key, value}) => {
-                console.log("STAMPS", {path, query, mutualType, userId, mutualId, value});
+            records.forEach(({value}) => {
                 if (value.uid !== userId) return;
 
                 updates.set(["mutualstamps", "_", {user_id: value.id}, {mutual_id: mutualId}], userId);
