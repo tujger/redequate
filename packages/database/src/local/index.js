@@ -1,3 +1,4 @@
+import {validateShallowRead} from "../common/shallowRead";
 import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import DatabaseBase from "../common/DatabaseBase";
@@ -78,6 +79,7 @@ export default class LocalDatabase extends DatabaseBase {
             invalid("read requires a non-empty path.");
         }
         return this.run(async () => {
+            validateShallowRead(options);
             readQueryOptions(options);
             const value = await readValue(this.#context, path, options);
             return (options.orderBy !== undefined || options.equalTo !== undefined ||

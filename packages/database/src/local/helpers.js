@@ -4,7 +4,7 @@ import {LOCAL_SCHEMA} from "./storeSchema";
 import {applySchema} from "./schema";
 import {openDatabase as openConnection} from "./connection";
 import {
-    validateCollectionPath, runTransaction, readStore, childRecordPath, cursorWildcardKeys
+    validateCollectionPath, runTransaction, readStore, childRecordPath, cursorWildcardKeys, readStoreKeys
 } from "../../../backend/src/local/database/callable/createHelpers";
 
 const invalid = message => fail("database/invalid-argument", message);
@@ -43,9 +43,9 @@ const read = (context, rawPath, options, query) => {
         const store = transaction.objectStore(names[0]);
         if (query && store.indexNames.length && Array.isArray(rawPath)) {
             const {effectivePath: path, keyField} = parsed;
-            return readStore(store, path, {...options, keyField});
+            return options.shallow ? readStoreKeys(store, path, {keyField}) : readStore(store, path, {...options, keyField});
         }
-        return readStore(store, rawPath, options);
+        return options.shallow ? readStoreKeys(store, rawPath) : readStore(store, rawPath, options);
     });
 };
 
