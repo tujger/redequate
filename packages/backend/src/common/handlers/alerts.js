@@ -21,22 +21,12 @@ export default class AlertListener extends BackendListener {
         } catch (error) {
             console.error(error);
         }
-        const payload = {
-            data: {
-                body: `${authorName || "Somebody"} ${suffixes[value.type]}`,
-                icon: this.backend.projectUrl + "/logo-192.png",
-                tag: this.backend.projectUrl + "/alerts/",
-                title: this.backend.projectTitle,
-                type: "alert",
-            }
+        const data = {
+            body: `${authorName || "Somebody"} ${suffixes[value.type]}`,
+            tag: this.backend.projectUrl + "/alerts/",
+            type: "alert",
         };
-        const devices = await this.backend.request("database.read", ["users_private", {user_id: params.user_id}]);
-        for (const device of Object.values(devices || {})) {
-            if (device?.notification) {
-                console.debug("[Backend:Alert]", `send [${params.user_id}/${params.alert_id}] to [${device.notification}]`, payload);
-                await this.backend.request("notification.send", [device.notification], payload, {});
-            }
-        }
+        await this.backend.request("notification.send", {userId: params.user_id, data});
     }
 }
 
