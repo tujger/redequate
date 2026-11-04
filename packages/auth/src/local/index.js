@@ -33,17 +33,17 @@ export default class LocalAuth extends AuthBase {
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        super.createUserWithEmailAndPassword(email, password);
+        await super.createUserWithEmailAndPassword(email, password);
         return createUserWithEmailAndPassword(this, email, password, this._createUserData);
     }
 
     async signInWithEmailAndPassword(email, password) {
-        super.signInWithEmailAndPassword(email, password);
+        await super.signInWithEmailAndPassword(email, password);
         return signInWithEmailAndPassword(this, email, password, this._createUserData);
     }
 
     async onAuthStateChanged(callback, onError) {
-        super.onAuthStateChanged(callback, onError);
+        await super.onAuthStateChanged(callback, onError);
         return observeAuthState({
             auth: this, callback, onError,
             subscribe: (next, error) => onAuthStateChanged(this, next, error, this._createUserData),
@@ -52,7 +52,7 @@ export default class LocalAuth extends AuthBase {
     }
 
     async resolveCurrentUser(options = {}) {
-        super.resolveCurrentUser(options);
+        await super.resolveCurrentUser(options);
         const {skipDelay = false} = options;
         if (!skipDelay) await delay("LocalAuth", "resolveCurrentUser");
         const state = await read(this);
@@ -68,19 +68,19 @@ export default class LocalAuth extends AuthBase {
     }
 
     async signInWithPopup(provider, options) {
-        super.signInWithPopup(provider, options);
+        await super.signInWithPopup(provider, options);
         await delay("LocalAuth", "signInWithPopup");
         const state = await read(this);
         return login(this, state, providerAccount(state, provider), this._createUserData);
     }
 
     async signInWithCredential(credential) {
-        super.signInWithCredential(credential);
+        await super.signInWithCredential(credential);
         return signInWithCredential(this, credential, this._createUserData);
     }
 
     async signInWithRedirect(provider, options) {
-        super.signInWithRedirect(provider, options);
+        await super.signInWithRedirect(provider, options);
         await delay("LocalAuth", "signInWithRedirect");
         const state = await read(this);
         const account = providerAccount(state, provider);
@@ -104,7 +104,7 @@ export default class LocalAuth extends AuthBase {
     }
 
     async sendEmailVerification(options) {
-        super.sendEmailVerification(options);
+        await super.sendEmailVerification(options);
         await delay("LocalAuth", "sendEmailVerification");
         const state = await read(this);
         const account = current(this, state);
@@ -115,7 +115,7 @@ export default class LocalAuth extends AuthBase {
     }
 
     async sendPasswordResetEmail(email, options) {
-        super.sendPasswordResetEmail(email, options);
+        await super.sendPasswordResetEmail(email, options);
         await delay("LocalAuth", "sendPasswordResetEmail");
         email = normalizeEmail(email);
         const state = await read(this);
@@ -125,7 +125,7 @@ export default class LocalAuth extends AuthBase {
     }
 
     async sendSignInLinkToEmail(email, options) {
-        super.sendSignInLinkToEmail(email, options);
+        await super.sendSignInLinkToEmail(email, options);
         await delay("LocalAuth", "sendSignInLinkToEmail");
         email = normalizeEmail(email);
         const state = await read(this);
@@ -140,17 +140,17 @@ export default class LocalAuth extends AuthBase {
     }
 
     async signInWithEmailLink(email) {
-        super.signInWithEmailLink(email);
+        await super.signInWithEmailLink(email);
         return signInWithEmailLink(this, email, this._createUserData);
     }
 
     async updatePassword(password) {
-        super.updatePassword(password);
+        await super.updatePassword(password);
         await changePassword(this, password);
     }
 
     async updateProfile(fields) {
-        super.updateProfile(fields);
+        await super.updateProfile(fields);
         return updateProfile(this, fields);
     }
 }

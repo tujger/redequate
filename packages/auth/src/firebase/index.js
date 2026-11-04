@@ -44,16 +44,18 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async createUserWithEmailAndPassword(email, password) {
-        super.createUserWithEmailAndPassword(email, password);
+        await super.createUserWithEmailAndPassword(email, password);
         const result = await createUserWithEmailAndPassword(this._auth, email, password);
         const user = toUserData(result?.user, this._createUserData);
         return this._loadUserData(user);
     }
 
     async onAuthStateChanged(callback, onError) {
-        super.onAuthStateChanged(callback, onError);
+        await super.onAuthStateChanged(callback, onError);
         return observeAuthState({
-            auth: this, callback, onError,
+            auth: this,
+            callback,
+            onError,
             subscribe: (next, error) => onAuthStateChanged(this._auth, user => {
                 try {
                     next(toUserData(user, this._createUserData));
@@ -65,7 +67,7 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async resolveCurrentUser(options) {
-        super.resolveCurrentUser(options);
+        await super.resolveCurrentUser(options);
         await this._auth.authStateReady();
         const user = this._auth.currentUser;
         return this._userData(user);
@@ -77,48 +79,48 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async sendEmailVerification(options) {
-        super.sendEmailVerification(options);
+        await super.sendEmailVerification(options);
         return sendEmailVerification(this._currentUser(), emailOptions(options));
     }
 
     async sendPasswordResetEmail(email, options) {
-        super.sendPasswordResetEmail(email, options);
+        await super.sendPasswordResetEmail(email, options);
         return sendPasswordResetEmail(this._auth, email, emailOptions(options));
     }
 
     async sendSignInLinkToEmail(email, options) {
-        super.sendSignInLinkToEmail(email, options);
+        await super.sendSignInLinkToEmail(email, options);
         const actionCodeSettings = emailOptions(options, email);
         return sendSignInLinkToEmail(this._auth, email, actionCodeSettings)
     }
 
     async signInWithCredential(token) {
-        super.signInWithCredential(token);
+        await super.signInWithCredential(token);
         const credential = GoogleAuthProvider.credential(token);
         return signInWithCredential(this._auth, credential)
             .then(result => this._userData(result?.user));
     }
 
     async signInWithEmailAndPassword(email, password) {
-        super.signInWithEmailAndPassword(email, password);
+        await super.signInWithEmailAndPassword(email, password);
         return signInWithEmailAndPassword(this._auth, email, password)
             .then(result => this._userData(result?.user));
     }
 
     async signInWithEmailLink(email) {
-        super.signInWithEmailLink(email);
+        await super.signInWithEmailLink(email);
         return signInWithEmailLink(this._auth, email, window.location.href)
             .then(result => this._userData(result?.user));
     }
 
     async signInWithPopup(provider, options) {
-        super.signInWithPopup(provider, options);
+        await super.signInWithPopup(provider, options);
         return signInWithPopup(this._auth, this._provider(provider))
             .then(result => this._userData(result?.user));
     }
 
     async signInWithRedirect(provider, options) {
-        super.signInWithRedirect(provider, options);
+        await super.signInWithRedirect(provider, options);
         return signInWithRedirect(this._auth, this._provider(provider))
     }
 
@@ -127,12 +129,12 @@ export default class FirebaseAuth extends AuthBase {
     }
 
     async updatePassword(password) {
-        super.updatePassword(password);
+        await super.updatePassword(password);
         return updatePassword(this._currentUser(), password)
     }
 
     async updateProfile(fields) {
-        super.updateProfile(fields);
+        await super.updateProfile(fields);
         await saveCurrentProfile(this, fields);
     }
 
