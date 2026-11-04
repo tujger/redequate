@@ -3,12 +3,14 @@ import {getStorage} from "firebase-admin/storage";
 import {fail} from "../../../../common";
 
 export default class FirebaseServerStorage extends StorageBase {
-    constructor(getStorageInstance = getStorage) {
+    readonly getStorageInstance: typeof getStorage;
+
+    constructor(getStorageInstance: typeof getStorage = getStorage) {
         super();
         this.getStorageInstance = getStorageInstance;
     }
 
-    async delete(pathOrURL) {
+    async delete(pathOrURL: string): Promise<void> {
         if (typeof pathOrURL !== "string" || !pathOrURL.trim()) {
             fail("storage/invalid-argument", "Expected a non-empty file path or URL.");
         }
