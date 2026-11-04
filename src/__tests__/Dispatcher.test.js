@@ -53,16 +53,33 @@ afterEach(() => unmount(container));
 
 const start = async (resolveUser, values = {}) => {
     const database = {
+        setAuth: vi.fn(), setBackend: vi.fn(),
         read: vi.fn(async path => values[path.map(segment => typeof segment === "string" ? segment : Object.values(segment)[0]).join("/")]),
         addEventListener: vi.fn(() => ({remove: vi.fn()})),
         create: vi.fn().mockResolvedValue("error-key"),
         TIMESTAMP: {".sv": "timestamp"},
     };
+    const backend = {setAuth: vi.fn(), setDatabase: vi.fn(), setStorage: vi.fn()};
+    const auth = {
+        setDatabase: vi.fn(),
+        resolveCurrentUser: () => {
+            expect(backend.setAuth).toHaveBeenCalledWith(auth);
+            expect(backend.setDatabase).toHaveBeenCalledWith(database);
+            expect(backend.setStorage).toHaveBeenCalledWith(storage);
+            expect(database.setAuth).toHaveBeenCalledWith(auth);
+            expect(database.setBackend).toHaveBeenCalledWith(backend);
+            expect(auth.setDatabase).toHaveBeenCalledWith(database);
+            expect(storage.setAuth).toHaveBeenCalledWith(auth);
+            expect(database.read).not.toHaveBeenCalled();
+            return resolveUser(database);
+        },
+    };
+    const storage = {setAuth: vi.fn()};
     await act(async () => {
         render(
             <Dispatcher
-                auth={{resolveCurrentUser: () => resolveUser(database)}} database={database}
-                firebase={{}} backend={{}} messaging={{checkIfSubscribed: async () => false}} storage={{}}
+                auth={auth} database={database}
+                firebase={{}} backend={backend} messaging={{checkIfSubscribed: async () => false}} storage={storage}
                 title="Startup test" pages={() => ({})} menu={() => []}
             />,
             container

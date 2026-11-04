@@ -4,6 +4,7 @@ import LocalDatabase from "../../../database/src/local";
 import FirebaseBackendClient from "../firebase-client/FirebaseBackendClient";
 import StorageBase from "../../../storage/src/StorageBase";
 import {httpsCallable} from "firebase/functions";
+vi.mock("../firebase-server/src/common/firebase", () => ({database: {}, messaging: {}}));
 vi.mock("firebase/functions", () => ({getFunctions: vi.fn(() => ({})), httpsCallable: vi.fn()}));
 import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
 import FirebaseServerStorage from "../firebase-server/src/FirebaseServerStorage";
@@ -15,7 +16,8 @@ it("filters Local records by to while retaining unfiltered reads", async () => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     try {
         const storageId = "read-query"; const backend = new LocalBackend({storageId});
-        const database = new LocalDatabase({storageId, backend});
+        const database = new LocalDatabase({storageId});
+        database.setBackend(backend);
         await database.read(["posts"]);
         for (const [post_id, to] of [["a", "parent"], ["b", "elsewhere"], ["c", "parent"]]) {
             await backend.request("database.create", ["posts", {post_id}], {to});
@@ -41,20 +43,21 @@ it.each([null, [], {limit: 10}])("rejects unsupported read options %j", async op
 });
 it("LocalBackend exposes the exact supplied Storage instance", async () => {
     const storage = {delete: vi.fn().mockResolvedValue("deleted")};
-    const backend = new LocalBackend({storage});
+    const backend = new LocalBackend();
+    backend.setStorage(storage);
     expect(backend.storage).toBe(storage);
     expect(await backend.storage.delete("https://files.test/one")).toBe("deleted");
     expect(storage.delete).toHaveBeenCalledExactlyOnceWith("https://files.test/one");
     await expect(backend.request("storage.delete", "one")).rejects.toMatchObject({code: "backend/not-implemented"});
 });
-it("FirebaseBackendClient logs ignored deletion without calling Storage or callable", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => {});
-    const storage = {delete: vi.fn()};
-    const backend = new FirebaseBackendClient({firebase: {app: {}}, storage});
-    expect(backend.storage).toBeInstanceOf(StorageBase);
-    await expect(backend.storage.delete("one")).resolves.toBeUndefined();
-    expect(log).toHaveBeenCalledExactlyOnceWith("[FirebaseClientStorage] delete ignored", {pathOrURL: "one"});
-    expect(storage.delete).not.toHaveBeenCalled();
+it("FirebaseBackendClient uses explicitly linked Storage without calling a callable", async () => {
+    const backend = new FirebaseBackendClient({firebase: {app: {}}});
+    expect(backend.storage).toBeUndefined();
+    const storage = {delete: vi.fn().mockResolvedValue("deleted")};
+    backend.setStorage(storage);
+    expect(backend.storage).toBe(storage);
+    await expect(backend.storage.delete("one")).resolves.toBe("deleted");
+    expect(storage.delete).toHaveBeenCalledExactlyOnceWith("one");
     expect(httpsCallable).not.toHaveBeenCalled();
 });
 

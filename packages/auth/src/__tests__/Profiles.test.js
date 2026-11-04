@@ -170,7 +170,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         await expect(run(auth.createUserWithEmailAndPassword("profile@example.test", "password")))
             .rejects.toMatchObject({code: "auth/database-required"});
         expect(sdk.createUserWithEmailAndPassword).not.toHaveBeenCalled();
-        auth.database = createDatabase();
+        auth.setDatabase(createDatabase());
         await expect(run(auth.updateProfile({public: {name: "No session"}})))
             .rejects.toMatchObject({code: "auth/no-current-user"});
     });

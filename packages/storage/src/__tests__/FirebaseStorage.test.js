@@ -22,6 +22,7 @@ beforeEach(() => {
     modularStorage.uploadBytesResumable.mockImplementation((reference, ...args) => reference.put(...args));
     firebase = {app: sdk};
     storage = new FirebaseStorage({firebase});
+    storage.setAuth({resolveCurrentUser: vi.fn().mockResolvedValue({id: "user"})});
 });
 it.each(["user/file", "gs://bucket/file", "https://files/file", "http://files/file"])("reads and deletes %s through the correct reference", async path => {
     expect(await storage.resolveDownloadURL(path)).toBe("https://files/file");
@@ -38,7 +39,8 @@ it("uploads through Auth and reports progress without exposing tasks", async () 
     const auth = {resolveCurrentUser: vi.fn().mockResolvedValue({id: "user"})};
     const blob = new File(["bytes"], "photo.png", {type: "image/png"});
     const onProgress = vi.fn();
-    const pending = storage.upload({auth, blob, name: "preview", metadata: {custom: "value"}, onProgress});
+    storage.setAuth(auth);
+    const pending = storage.upload({blob, name: "preview", metadata: {custom: "value"}, onProgress});
     await vi.waitFor(() => expect(task.on).toHaveBeenCalled());
     expect(modularStorage.ref.mock.calls[0][1]).toMatch(/^user\/image\/preview-[\w-]+-photo\.png$/);
     expect(modularStorage.uploadBytesResumable).toHaveBeenCalledWith(ref, blob, {contentType: "image/png", customMetadata: {custom: "value", uid: "user", filename: "photo.png"}});
@@ -54,12 +56,13 @@ it("passes upload and reference failures through unchanged", async () => {
     await expect(storage.resolveMetadata("path")).rejects.toBe(error);
     await expect(storage.delete("path")).rejects.toBe(error);
     ref.put = () => ({on: (event, progress, onError) => onError(error)});
-    await expect(storage.upload({auth: "user", blob: new File(["x"], "x", {type: "text/plain"})})).rejects.toBe(error);
+    await expect(storage.upload({blob: new File(["x"], "x", {type: "text/plain"})})).rejects.toBe(error);
 });
 it("does not start an upload when Auth rejects", async () => {
     const error = new Error("Auth failed");
     const auth = {resolveCurrentUser: vi.fn().mockRejectedValue(error)};
-    await expect(storage.upload({auth, blob: new File(["x"], "x")})).rejects.toBe(error);
+    storage.setAuth(auth);
+    await expect(storage.upload({blob: new File(["x"], "x")})).rejects.toBe(error);
     expect(modularStorage.ref).not.toHaveBeenCalled();
 });
 it.each(["getDownloadURL", "getMetadata"])("rejects when %s fails after upload completion", async method => {
@@ -67,6 +70,35 @@ it.each(["getDownloadURL", "getMetadata"])("rejects when %s fails after upload c
     ref[method].mockRejectedValue(error);
 
     ref.put = vi.fn(() => ({snapshot: {ref}, on: (event, progress, onError, finish) => finish()}));
-    await expect(storage.upload({auth: "user", blob: new File(["x"], "x")})).rejects.toBe(error);
+    await expect(storage.upload({blob: new File(["x"], "x")})).rejects.toBe(error);
     if (method === "getDownloadURL") expect(ref.getMetadata).not.toHaveBeenCalled();
+});
+
+it("requires a linked Auth before creating a Firebase reference", async () => {
+    const unlinked = new FirebaseStorage({firebase});
+    await expect(unlinked.upload({blob: new File(["x"], "x")})).rejects.toMatchObject({code: "storage/auth-required"});
+    expect(modularStorage.ref).not.toHaveBeenCalled();
+    expect(modularStorage.uploadBytesResumable).not.toHaveBeenCalled();
+});
+
+it.each([null, undefined, {}, {id: ""}])("rejects an unauthenticated identity %j before upload", async user => {
+    storage.setAuth({resolveCurrentUser: async () => user});
+    await expect(storage.upload({blob: new File(["x"], "x")})).rejects.toMatchObject({code: "storage/unauthenticated"});
+    expect(modularStorage.ref).not.toHaveBeenCalled();
+    expect(modularStorage.uploadBytesResumable).not.toHaveBeenCalled();
+});
+
+it("reads the current identity for every upload and uses replacement Auth", async () => {
+    let id = "alice";
+    storage.setAuth({resolveCurrentUser: async () => ({id})});
+    ref.put = vi.fn(() => ({snapshot: {ref}, on: (event, progress, error, finish) => finish()}));
+    const blob = new File(["x"], "x.txt", {type: "text/plain"});
+    await storage.upload({blob});
+    expect(modularStorage.ref.mock.calls.at(-1)[1]).toMatch(/^alice\//);
+    id = "bob";
+    await storage.upload({blob});
+    expect(modularStorage.ref.mock.calls.at(-1)[1]).toMatch(/^bob\//);
+    storage.setAuth({resolveCurrentUser: async () => ({id: "replacement"})});
+    await storage.upload({blob});
+    expect(modularStorage.ref.mock.calls.at(-1)[1]).toMatch(/^replacement\//);
 });

@@ -107,7 +107,7 @@ it.each([AuthBase, LocalAuth, FirebaseAuth])("keeps implementation methods prefi
         "constructor", "checkSignInWithEmailLink", "createUserWithEmailAndPassword", "onAuthStateChanged",
         "resolveRedirectResult", "resolveCurrentUser", "sendEmailVerification", "sendPasswordResetEmail", "sendSignInLinkToEmail",
         "signInWithEmailAndPassword", "signInWithPopup", "signInWithRedirect", "signInWithCredential", "signInWithEmailLink",
-        "signOut", "updatePassword", "updateProfile"
+        "signOut", "updatePassword", "updateProfile", "setDatabase"
     ]);
     const internal = Object.getOwnPropertyNames(Auth.prototype).filter(name => !operations.has(name));
     expect(internal.every(name => name.startsWith("_"))).toBe(true);

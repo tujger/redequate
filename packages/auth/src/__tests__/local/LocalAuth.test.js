@@ -1,3 +1,4 @@
+import createProvider from "../fixtures/createProvider";
 import {IDBObjectStore} from "fake-indexeddb";
 import {vi} from "vitest";
 import {UserData} from "../../../../common";
@@ -19,7 +20,7 @@ async function run(promise) {
 
 let database;
 let auth;
-const createAuth = (options = {}) => new LocalAuth({database, ...options});
+const createAuth = (options = {}) => createProvider(LocalAuth, {database, ...options});
 let unsubscribes;
 beforeEach(() => {
     installIndexedDB();
