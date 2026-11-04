@@ -252,9 +252,9 @@ export default function ChatMeta(database) {
             _onlineRef = null;
         },
         updateVisit: uid => {
-            if (!_persisted) return;
-            if (_activeUids.indexOf(uid) >= 0) return;
             console.log(`[ChatMeta] update visit for ${_id}`);
+            if (!_persisted) return;
+            if (!_activeUids.includes(uid)) return;
             return database.update(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], () => database.TIMESTAMP);
         },
         watch: onChange => {
