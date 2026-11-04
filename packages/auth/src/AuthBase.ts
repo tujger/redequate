@@ -68,7 +68,7 @@ export interface AuthOptions<User extends UserData = UserData> {
 
 // Base supermethods validate only; providers return the operation result.
 export default class AuthBase {
-    database?: DatabaseBase;
+    protected _database?: DatabaseBase;
     #UserData: AuthUserDataConstructor;
 
     constructor(options: AuthOptions = {}) {
@@ -77,14 +77,14 @@ export default class AuthBase {
     }
 
     setDatabase(database: DatabaseBase): void {
-        this.database = database;
+        this._database = database;
     }
 
     protected _createUserData = (data?: AuthUserDataJSON): UserData => {
         if (data !== undefined && (typeof data.id !== "string" || !data.id)) {
             fail("auth/invalid-user-data", "Auth user has no identifier.");
         }
-        const user = new this.#UserData(this.database);
+        const user = new this.#UserData(this._database);
         if (data === undefined) {
             return user;
         } else {
@@ -104,8 +104,8 @@ export default class AuthBase {
     }
 
     protected _requireDatabase(): DatabaseBase {
-        if (!this.database) return fail("auth/database-required", "A database is required to save the user profile.");
-        return this.database;
+        if (!this._database) return fail("auth/database-required", "A database is required to save the user profile.");
+        return this._database;
     }
 
     async checkSignInWithEmailLink(): Promise<boolean> {
@@ -206,7 +206,7 @@ export default class AuthBase {
     }
 
     _loadUserData(user: UserData): UserData | Promise<UserData> {
-        return loadUserData(user, this.database, () => this._saveInitialProfile(user));
+        return loadUserData(user, this._database, () => this._saveInitialProfile(user));
     }
 
     async _saveInitialProfile(user: UserData, fields: AuthProfileFields = {
