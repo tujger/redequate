@@ -1,5 +1,6 @@
 import {getDatabase, ServerValue} from "firebase-admin/database";
 import {getMessaging} from "firebase-admin/messaging";
+import type {getStorage} from "firebase-admin/storage";
 import {fail} from "../../../../common";
 import BackendBase from "../../common/BackendBase";
 import create from "./database/admin/create";
@@ -20,15 +21,26 @@ const requests = {
 };
 
 export default class FirebaseServerBackend extends BackendBase {
-    constructor(getDatabaseInstance = getDatabase, createIncrement = ServerValue.increment, options = {}) {
+    readonly getDatabaseInstance: typeof getDatabase;
+    readonly getMessagingInstance: typeof getMessaging;
+    readonly createIncrement: typeof ServerValue.increment;
+
+    constructor(
+        getDatabaseInstance: typeof getDatabase = getDatabase,
+        createIncrement: typeof ServerValue.increment = ServerValue.increment,
+        options: NonNullable<ConstructorParameters<typeof BackendBase>[0]> & {
+            getStorageInstance?: typeof getStorage;
+            getMessagingInstance?: typeof getMessaging;
+        } = {},
+    ) {
         super(options);
-        this.storage = new FirebaseServerStorage(options.getStorageInstance);
+        this.setStorage(new FirebaseServerStorage(options.getStorageInstance));
         this.getMessagingInstance = options.getMessagingInstance ?? getMessaging;
         this.getDatabaseInstance = getDatabaseInstance;
         this.createIncrement = createIncrement;
     }
 
-    get projectUrl() {
+    get projectUrl(): string {
         return this._projectUrl ?? `https://${this.getDatabaseInstance().app.options.projectId}.web.app`;
     }
 
@@ -36,11 +48,11 @@ export default class FirebaseServerBackend extends BackendBase {
         return ServerValue.TIMESTAMP;
     }
 
-    increment(n) {
+    increment(n: number) {
         return this.createIncrement(n);
     }
 
-    async request(name, ...args) {
+    async request(name: string, ...args: unknown[]): Promise<unknown> {
         if (!Object.hasOwn(requests, name)) {
             fail("backend/not-implemented", `Backend request ${name} is not implemented.`);
         }
