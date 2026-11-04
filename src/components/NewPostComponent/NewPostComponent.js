@@ -5,7 +5,7 @@ import {flushSync} from "react-dom";
 import {useTranslation} from "react-i18next";
 import {connect} from "react-redux";
 import {useHistory} from "react-router-dom";
-import {useAuth, useDatabase, useStorage} from "../../controllers";
+import {useDatabase, useStorage} from "../../controllers";
 import {usePages, useWindowData} from "../../controllers/General";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
@@ -51,7 +51,6 @@ const NewPostComponent = props => {
         type = "posts",
         UploadProps = {}
     } = props;
-    const auth = useAuth();
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const history = useHistory();
@@ -153,7 +152,6 @@ const NewPostComponent = props => {
             let newImages = [];
             if (uppy) {
                 const publish = await uploadComponentPublish({
-                    auth,
                     files: uppy._uris,
                     onprogress: progress => {
                         dispatch({...ProgressView.SHOW, value: progress});
