@@ -1,13 +1,12 @@
 import {handlers} from "../../../common";
-import FirebaseServerBackend from "../FirebaseServerBackend";
+import backend from "../backend";
 import create from "./callable/create";
 import deleteRecord from "./callable/delete";
-import onEvents from "./onEvents";
 import update from "./callable/update";
+import onEvents from "./onEvents";
 
 export {create, update, deleteRecord as delete};
 
-const backend = new FirebaseServerBackend();
 const triggers = Object.entries(handlers).reduce((acc, [name, Listener]) => {
     acc[name] = onEvents(new Listener(backend));
     return acc;

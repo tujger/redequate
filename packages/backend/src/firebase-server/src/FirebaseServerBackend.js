@@ -1,7 +1,7 @@
 import {getDatabase, ServerValue} from "firebase-admin/database";
 import {getMessaging} from "firebase-admin/messaging";
 import {fail} from "../../../../common";
-import BackendBase from "../../common/BackendBase.ts";
+import BackendBase from "../../common/BackendBase";
 import create from "./database/admin/create";
 import cursor from "./database/admin/cursor";
 import deleteRecord from "./database/admin/delete";
