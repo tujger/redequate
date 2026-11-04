@@ -25,11 +25,11 @@ export interface DatabaseGroupEntry {
 }
 
 export interface DatabaseOptions extends Record<string, unknown> {
-    backend?: BackendBase;
     onError?: DatabaseErrorHandler;
 }
 
 export interface DatabaseListenerOptions extends DatabaseOptions {
+    backend?: BackendBase;
     onChange?: (value: DatabaseValue | undefined) => void;
     /** Only children whose keys sort strictly after the initial maximum key; no initial replay. */
     onChildAdd?: (entry: DatabaseEntry) => void;
@@ -39,6 +39,7 @@ export interface DatabaseListenerOptions extends DatabaseOptions {
 }
 
 export interface DatabaseReadOptions extends DatabaseOptions {
+    backend?: BackendBase;
     equalTo?: DatabaseQueryValue;
     /** Defaults to ascending order. */
     order?: DatabaseOrder;

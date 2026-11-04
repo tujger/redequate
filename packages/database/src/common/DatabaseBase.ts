@@ -1,3 +1,4 @@
+import type AuthBase from "../../../auth/src/AuthBase";
 import type BackendBase from "../../../backend/src/common/BackendBase";
 import {notImplemented} from "../../../common"
 import DatabaseCursor from "./DatabaseCursor";
@@ -32,16 +33,23 @@ type CreateMethodOptions = {
 export default class DatabaseBase {
     onError: DatabaseErrorHandler;
     protected _backend?: BackendBase;
+    protected _auth?: AuthBase;
 
     constructor(
         {
-            backend,
             onError = error => {
                 throw error;
             }
         }: DatabaseOptions = {}) {
-        this._backend = backend;
         this.onError = onError;
+    }
+
+    setAuth(auth: AuthBase): void {
+        this._auth = auth;
+    }
+
+    setBackend(backend: BackendBase): void {
+        this._backend = backend;
     }
 
     protected handleError(error: unknown, options: DatabaseOptions | undefined,
