@@ -134,7 +134,6 @@ function EditProfile(props) {
         const publishImage = async () => {
             if (uppy) {
                 const publishing = await uploadComponentPublish({
-                    auth,
                     files: uppy._uris,
                     name: "profile",
                     onprogress: progress => {
