@@ -1,12 +1,18 @@
-import {fail, notImplemented, UserData as DefaultUserData, UserRole} from "../../common";
 import type {UserData} from "../../common";
+import {fail, notImplemented, UserData as DefaultUserData, UserRole} from "../../common";
 import type DatabaseBase from "../../database/src/common/DatabaseBase";
 import type {DatabaseValue} from "../../database/src/common/DatabaseTypes";
-import saveUserData from "./common/saveUserData";
 import loadUserData from "./common/loadUserData";
+import saveUserData from "./common/saveUserData";
 import {
-    validateString, validateEmailOptions, validateProvider, validateProviderOptions,
-    validateCurrentUserOptions, validateCallbacks, validateProfile, validateConstructorOptions
+    validateCallbacks,
+    validateConstructorOptions,
+    validateCurrentUserOptions,
+    validateEmailOptions,
+    validateProfile,
+    validateProvider,
+    validateProviderOptions,
+    validateString
 } from "./common/validateArguments";
 
 export interface AuthProfileSection {
@@ -22,12 +28,14 @@ export interface AuthProfileFields {
 export interface AuthEmailOptions {
     url?: string;
     handleCodeInApp?: boolean;
+
     [option: string]: unknown;
 }
 
 export interface AuthProviderOptions {
     scopes?: string[];
     parameters?: Record<string, string>;
+
     [option: string]: unknown;
 }
 
@@ -55,38 +63,21 @@ export interface AuthUserDataConstructor<User extends UserData = UserData> {
 }
 
 export interface AuthOptions<User extends UserData = UserData> {
-    database?: DatabaseBase;
     UserData?: AuthUserDataConstructor<User>;
 }
 
-/** Async contract implemented by providers; AuthBase methods validate their arguments. */
-export interface AuthImplementation<User extends UserData = UserData> {
-    checkSignInWithEmailLink(): Promise<boolean>;
-    createUserWithEmailAndPassword(email: string, password: string): Promise<User>;
-    onAuthStateChanged(callback: AuthStateCallback<User>, onError?: AuthErrorCallback): Promise<AuthUnsubscribe>;
-    resolveRedirectResult(): Promise<User | null>;
-    resolveCurrentUser(options?: AuthCurrentUserOptions): Promise<User>;
-    sendEmailVerification(options?: AuthEmailOptions): Promise<void>;
-    sendPasswordResetEmail(email: string, options?: AuthEmailOptions): Promise<void>;
-    sendSignInLinkToEmail(email: string, options?: AuthEmailOptions): Promise<void>;
-    signInWithEmailAndPassword(email: string, password: string): Promise<User>;
-    signInWithPopup(provider: AuthProvider, options?: AuthProviderOptions): Promise<User>;
-    signInWithRedirect(provider: AuthProvider, options?: AuthProviderOptions): Promise<void>;
-    signInWithCredential(token: AuthCredential): Promise<User>;
-    signInWithEmailLink(email: string): Promise<User>;
-    signOut(): Promise<void>;
-    updatePassword(password: string): Promise<void>;
-    updateProfile(fields: AuthProfileFields): Promise<void>;
-}
-
+// Base supermethods validate only; providers return the operation result.
 export default class AuthBase {
     database?: DatabaseBase;
     #UserData: AuthUserDataConstructor;
 
     constructor(options: AuthOptions = {}) {
         validateConstructorOptions(options);
-        this.database = options.database;
         this.#UserData = options.UserData ?? DefaultUserData;
+    }
+
+    setDatabase(database: DatabaseBase): void {
+        this.database = database;
     }
 
     protected _createUserData = (data?: AuthUserDataJSON): UserData => {
@@ -94,13 +85,17 @@ export default class AuthBase {
             fail("auth/invalid-user-data", "Auth user has no identifier.");
         }
         const user = new this.#UserData(this.database);
-        return data === undefined ? user : user.fromJSON({
-            ...data,
-            role: data.role ?? null,
-            private: data.private ?? {},
-            requested: data.requested ?? Date.now(),
-            loaded: data.loaded ?? {public: true, name: true, email: true, image: true}
-        });
+        if (data === undefined) {
+            return user;
+        } else {
+            return user.fromJSON({
+                ...data,
+                role: data.role ?? null,
+                private: data.private ?? {},
+                requested: data.requested ?? Date.now(),
+                loaded: data.loaded ?? {public: true, name: true, email: true, image: true}
+            });
+        }
     };
 
     protected _requireCurrentUser<Identity>(user: Identity | null | undefined): Identity {
@@ -117,67 +112,74 @@ export default class AuthBase {
         return notImplemented("checkSignInWithEmailLink");
     }
 
-    createUserWithEmailAndPassword(email: string, password: string): void {
+    async createUserWithEmailAndPassword(email: string, password: string): Promise<UserData | undefined> {
         validateString(email, "email");
         validateString(password, "password");
         this._requireDatabase();
+        return undefined;
     }
 
-    onAuthStateChanged(callback: AuthStateCallback, onError?: AuthErrorCallback): void {
+    async onAuthStateChanged(callback: AuthStateCallback, onError?: AuthErrorCallback): Promise<AuthUnsubscribe | undefined> {
         validateCallbacks(callback, onError);
+        return undefined;
     }
 
     async resolveRedirectResult(): Promise<UserData | null> {
         return notImplemented("resolveRedirectResult");
     }
 
-    resolveCurrentUser(options?: AuthCurrentUserOptions): void {
+    async resolveCurrentUser(options?: AuthCurrentUserOptions): Promise<UserData | undefined> {
         validateCurrentUserOptions(options);
+        return undefined;
     }
 
-    sendEmailVerification(options?: AuthEmailOptions): void {
+    async sendEmailVerification(options?: AuthEmailOptions): Promise<void> {
         validateEmailOptions(options);
         this._requireDatabase();
     }
 
-    sendPasswordResetEmail(email: string, options?: AuthEmailOptions): void {
+    async sendPasswordResetEmail(email: string, options?: AuthEmailOptions): Promise<void> {
         validateString(email, "email");
         validateEmailOptions(options);
     }
 
-    sendSignInLinkToEmail(email: string, options?: AuthEmailOptions): void {
+    async sendSignInLinkToEmail(email: string, options?: AuthEmailOptions): Promise<void> {
         validateString(email, "email");
         validateEmailOptions(options);
     }
 
-    signInWithEmailAndPassword(email: string, password: string): void {
+    async signInWithEmailAndPassword(email: string, password: string): Promise<UserData | undefined> {
         validateString(email, "email");
         validateString(password, "password");
+        return undefined;
     }
 
-    signInWithPopup(provider: AuthProvider, options?: AuthProviderOptions): void {
+    async signInWithPopup(provider: AuthProvider, options?: AuthProviderOptions): Promise<UserData | undefined> {
+        validateProvider(provider, "provider");
+        validateProviderOptions(options);
+        return undefined;
+    }
+
+    async signInWithRedirect(provider: AuthProvider, options?: AuthProviderOptions): Promise<void> {
         validateProvider(provider, "provider");
         validateProviderOptions(options);
     }
 
-    signInWithRedirect(provider: AuthProvider, options?: AuthProviderOptions): void {
-        validateProvider(provider, "provider");
-        validateProviderOptions(options);
-    }
-
-    signInWithCredential(token: AuthCredential): void {
+    async signInWithCredential(token: AuthCredential): Promise<UserData | undefined> {
         validateProvider(token, "credential");
+        return undefined;
     }
 
-    signInWithEmailLink(email: string): void {
+    async signInWithEmailLink(email: string): Promise<UserData | undefined> {
         validateString(email, "email");
+        return undefined;
     }
 
     async signOut(): Promise<void> {
         return notImplemented("signOut");
     }
 
-    updatePassword(password: string): void {
+    async updatePassword(password: string): Promise<void> {
         validateString(password, "password");
     }
 
@@ -207,13 +209,20 @@ export default class AuthBase {
         return loadUserData(user, this.database, () => this._saveInitialProfile(user));
     }
 
-    async _saveInitialProfile(user: UserData, fields: AuthProfileFields = {public: user.public, private: user.private}): Promise<void> {
+    async _saveInitialProfile(user: UserData, fields: AuthProfileFields = {
+        public: user.public,
+        private: user.private
+    }): Promise<void> {
         if (!user?.id) fail("auth/no-current-user", "An authenticated user is required.");
         validateProfile(fields);
         const database = this._requireDatabase();
-        const options = {onError: (error: unknown) => { throw error; }};
+        const options = {
+            onError: (error: unknown) => {
+                throw error;
+            }
+        };
         const permissionDenied = (error: unknown) => ["permission-denied", "database/permission-denied"]
-            .includes(String((error as {code?: string})?.code).toLowerCase().replaceAll("_", "-"));
+            .includes(String((error as { code?: string })?.code).toLowerCase().replaceAll("_", "-"));
         let initialFields = fields;
         try {
             if (await database.read(["users_public", {user_id: user.id}], options) != null) return;
@@ -224,13 +233,17 @@ export default class AuthBase {
             }
         } catch (error) {
             if (!permissionDenied(error)) throw error;
-            console.warn("[AuthBase] Initial ADMIN check denied; saving an ordinary profile.", (error as {code?: string}).code);
+            console.warn("[AuthBase] Initial ADMIN check denied; saving an ordinary profile.", (error as {
+                code?: string
+            }).code);
         }
         try {
             await saveUserData(user, initialFields, database, options);
         } catch (error) {
             if (initialFields === fields || !permissionDenied(error)) throw error;
-            console.warn("[AuthBase] Initial ADMIN write denied; saving an ordinary profile.", (error as {code?: string}).code);
+            console.warn("[AuthBase] Initial ADMIN write denied; saving an ordinary profile.", (error as {
+                code?: string
+            }).code);
             initialFields = fields;
             await saveUserData(user, fields, database, options);
         }
@@ -241,7 +254,7 @@ export default class AuthBase {
         }
     }
 
-    updateProfile(fields: AuthProfileFields): void {
+    async updateProfile(fields: AuthProfileFields): Promise<void> {
         validateProfile(fields);
         this._requireDatabase();
     }
