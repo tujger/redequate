@@ -1,3 +1,4 @@
+import type {StorageMetadata} from "../StorageBase";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import {delay, fail, identifier} from "../../../common";
 import StorageBase from "../StorageBase";
@@ -5,7 +6,9 @@ import {fileOperation, toDataURL} from "./common";
 
 // Local simulation only: IndexedDB is used for store blobs
 export default class LocalStorage extends StorageBase {
-    constructor({storageId = LOCAL_DATABASE_NAME} = {}) {
+    readonly storageId: string;
+
+    constructor({storageId = LOCAL_DATABASE_NAME}: {storageId?: string} = {}) {
         super();
         if (typeof storageId !== "string" || !storageId.trim()) {
             fail("storage/invalid-argument", "storageId must be a non-empty string.");
@@ -13,15 +16,17 @@ export default class LocalStorage extends StorageBase {
         this.storageId = storageId;
     }
 
-    async upload({auth, blob, metadata = {}, name, onProgress} = {}) {
+    async upload(options?: Parameters<StorageBase["upload"]>[0]): Promise<{url: string; metadata: StorageMetadata}> {
+        const {blob, metadata = {}, name, onProgress} = options ?? {};
         await delay("LocalStorage", "upload");
-        if (!auth || !(auth.resolveCurrentUser instanceof Function) || !(blob instanceof window.Blob) ||
+        if (!(blob instanceof window.Blob) ||
             !metadata || typeof metadata !== "object" || metadata instanceof Array ||
             (name !== undefined && typeof name !== "string") ||
             (onProgress !== undefined && !(onProgress instanceof Function))) {
-            fail("storage/invalid-argument", "Upload requires Auth, Blob, metadata and an optional name/progress callback.");
+            return fail("storage/invalid-argument", "Upload requires Blob, metadata and an optional name/progress callback.");
         }
-        const user = await auth.resolveCurrentUser();
+        if (!this._auth) return fail("storage/auth-required", "An Auth provider is required.");
+        const user = await this._auth.resolveCurrentUser();
         if (!user || typeof user.id !== "string" || !user.id) {
             fail("storage/unauthenticated", "An authenticated user is required.");
         }
@@ -44,17 +49,17 @@ export default class LocalStorage extends StorageBase {
         return {url, metadata: fileMetadata};
     }
 
-    async resolveDownloadURL(pathOrURL) {
+    async resolveDownloadURL(pathOrURL: string): Promise<string> {
         await delay("LocalStorage", "resolveDownloadURL");
-        return (await fileOperation(this, "read", pathOrURL)).url;
+        return ((await fileOperation(this, "read", pathOrURL)) as {url: string}).url;
     }
 
-    async resolveMetadata(pathOrURL) {
+    async resolveMetadata(pathOrURL: string): Promise<StorageMetadata> {
         await delay("LocalStorage", "resolveMetadata");
-        return (await fileOperation(this, "read", pathOrURL)).metadata;
+        return ((await fileOperation(this, "read", pathOrURL)) as {metadata: StorageMetadata}).metadata;
     }
 
-    async delete(pathOrURL) {
+    async delete(pathOrURL: string): Promise<void> {
         await delay("LocalStorage", "delete");
         await fileOperation(this, "delete", pathOrURL);
     }
