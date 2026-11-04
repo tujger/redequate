@@ -10,8 +10,13 @@ export interface StorageMetadata {
 }
 
 export default class StorageBase {
-    async upload({auth, blob, metadata, name, onProgress}: {
-        auth: string | Pick<AuthBase, "resolveCurrentUser">;
+    protected _auth?: AuthBase;
+
+    setAuth(auth: AuthBase): void {
+        this._auth = auth;
+    }
+
+    async upload({blob, metadata, name, onProgress}: {
         blob: Blob & {name?: string};
         metadata?: Record<string, string>;
         name?: string;
