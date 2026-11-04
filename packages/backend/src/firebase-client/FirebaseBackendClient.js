@@ -12,8 +12,11 @@ class FirebaseClientStorage extends StorageBase {
 export default class FirebaseBackendClient extends BackendBase {
     _functions = undefined;
 
-    constructor({firebase, ...options}) {
-        super({...options, storage: new FirebaseClientStorage()});
+    constructor({firebase, storage, ...options}) {
+        super({
+            ...options,
+            storage: storage ?? new FirebaseClientStorage(),
+        });
         this._functions = getFunctions(firebase.app);
     }
 
