@@ -6,9 +6,9 @@ import {notImplemented} from "../../../common";
 export default class BackendBase {
     protected readonly _projectUrl?: string;
     readonly projectTitle: string;
-    storage?: StorageBase;
-    auth?: AuthBase;
-    database?: DatabaseBase;
+    protected _storage?: StorageBase;
+    protected _auth?: AuthBase;
+    protected _database?: DatabaseBase;
 
     constructor({projectTitle = "Redequate", projectUrl}: {projectTitle?: string; projectUrl?: string} = {}) {
         this.projectTitle = projectTitle;
@@ -16,19 +16,23 @@ export default class BackendBase {
     }
 
     setAuth(auth: AuthBase): void {
-        this.auth = auth;
+        this._auth = auth;
     }
 
     setDatabase(database: DatabaseBase): void {
-        this.database = database;
+        this._database = database;
     }
 
     setStorage(storage: StorageBase): void {
-        this.storage = storage;
+        this._storage = storage;
+    }
+
+    get storage(): StorageBase | undefined {
+        return this._storage;
     }
 
     async getCurrentUser(): Promise<string | undefined> {
-        const user = await this.auth?.resolveCurrentUser({skipDelay: true});
+        const user = await this._auth?.resolveCurrentUser({skipDelay: true});
         return user?.id || undefined;
     }
 
