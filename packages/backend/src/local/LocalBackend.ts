@@ -7,17 +7,14 @@ import requestHandlers from "./requestHandlers";
 import TIMESTAMP from "./timestamp";
 
 export default class LocalBackend extends BackendBase {
-    #storageId;
+    #storageId: string;
 
-    constructor(
-        {
-            projectTitle,
-            projectUrl = globalThis.location?.origin ?? "",
-            storage,
-            storageId = LOCAL_DATABASE_NAME,
-        } = {}) {
-
-        super({projectTitle, projectUrl, storage});
+    constructor(options: NonNullable<ConstructorParameters<typeof BackendBase>[0]> & { storageId?: string } = {}) {
+        super({
+            ...options,
+            projectUrl: options.projectUrl === undefined ? globalThis.location?.origin ?? "" : options.projectUrl,
+        });
+        const {storageId = LOCAL_DATABASE_NAME} = options;
         if (typeof storageId !== "string" || !storageId.trim()) {
             fail("database/invalid-argument", "storageId must be a non-empty string.");
         }
@@ -25,7 +22,7 @@ export default class LocalBackend extends BackendBase {
         installListeners(this);
     }
 
-    get storageId() {
+    get storageId(): string {
         return this.#storageId;
     }
 
@@ -33,11 +30,11 @@ export default class LocalBackend extends BackendBase {
         return TIMESTAMP;
     }
 
-    increment(n) {
+    increment(n: number) {
         return createIncrement(n);
     }
 
-    async request(name, ...args) {
+    async request(name: string, ...args: unknown[]): Promise<unknown> {
         if (!Object.hasOwn(requestHandlers, name)) {
             fail("backend/not-implemented", `Backend request ${name} is not implemented.`);
         }
