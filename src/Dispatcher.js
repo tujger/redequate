@@ -73,6 +73,16 @@ export default (props) => {
             document.cookie = "g_state=''";
             return props;
         }
+        const initAuth = async props => {
+            const {database} = props;
+            try {
+                const auth = await resolveAuth(authGiven, {database, UserData});
+                console.log("[Dispatcher]", "auth resolved", {auth});
+                return {...props, auth};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
         const initBackend = async props => {
             try {
                 const backend = await resolveBackend(backendGiven);
@@ -88,16 +98,6 @@ export default (props) => {
                 const database = await resolveDatabase(databaseGiven, {backend});
                 console.log("[Dispatcher]", "database resolved", {database});
                 return {...props, database};
-            } catch (error) {
-                throw {...props, fatal: error};
-            }
-        }
-        const initAuth = async props => {
-            const {database} = props;
-            try {
-                const auth = await resolveAuth(authGiven, {database, UserData});
-                console.log("[Dispatcher]", "auth resolved", {auth});
-                return {...props, auth};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -120,6 +120,17 @@ export default (props) => {
                 throw {...props, fatal: error};
             }
         }
+        const linkProviders = props => {
+            const {backend, database, auth, storage} = props;
+            auth.setDatabase(database);
+            backend.setAuth(auth);
+            backend.setDatabase(database);
+            backend.setStorage(storage);
+            database.setAuth(auth);
+            database.setBackend(backend);
+            storage.setAuth(auth);
+            return props;
+        };
         const initConsoleHandler = props => {
             const {database} = props;
             consoleHandler = installConsoleError(database);
@@ -332,11 +343,12 @@ export default (props) => {
 
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
+            .then(initAuth)
             .then(initBackend)
             .then(initDatabase)
-            .then(initAuth)
             .then(initMessaging)
             .then(initStorage)
+            .then(linkProviders)
             .then(initConsoleHandler)
             .then(initStore)
             .then(restoreAuth)
