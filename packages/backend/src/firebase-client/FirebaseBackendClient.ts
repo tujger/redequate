@@ -1,22 +1,14 @@
+import type {FirebaseApp} from "firebase/app";
+import type {Functions} from "firebase/functions";
 import {increment, serverTimestamp} from "firebase/database";
 import {getFunctions, httpsCallable} from "firebase/functions";
-import {StorageBase} from "../../../storage";
 import {BackendBase} from "../common";
 
-class FirebaseClientStorage extends StorageBase {
-    async delete(pathOrURL) {
-        console.log("[FirebaseClientStorage] delete ignored", {pathOrURL});
-    }
-}
-
 export default class FirebaseBackendClient extends BackendBase {
-    _functions = undefined;
+    protected _functions: Functions;
 
-    constructor({firebase, storage, ...options}) {
-        super({
-            ...options,
-            storage: storage ?? new FirebaseClientStorage(),
-        });
+    constructor({firebase}: {firebase: {app: FirebaseApp}}) {
+        super();
         this._functions = getFunctions(firebase.app);
     }
 
@@ -24,11 +16,11 @@ export default class FirebaseBackendClient extends BackendBase {
         return serverTimestamp();
     }
 
-    increment(n) {
+    increment(n: number) {
         return increment(n);
     }
 
-    async request(name, ...args) {
+    async request(name: string, ...args: unknown[]): Promise<unknown> {
         const endpoint = name.replaceAll(".", "-");
         const func = httpsCallable(this._functions, endpoint);
         const payload = args.length > 1 ? args : args[0];
