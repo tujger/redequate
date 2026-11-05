@@ -3,7 +3,7 @@ import FirebaseCursorBase, {type QueryMethod} from "../../../../database/src/com
 import type {DatabasePath, DatabaseCursorOptions, DatabaseValue} from "../../../../database/src/common/DatabaseTypes";
 import type BackendBase from "../../common/BackendBase";
 
-export default class FirebaseServerCursor extends FirebaseCursorBase {
+export default class FirebaseCursorServer extends FirebaseCursorBase {
     readonly #database: Database;
 
     constructor(database: Database, path: DatabasePath, options: DatabaseCursorOptions = {}, backend?: BackendBase) {
