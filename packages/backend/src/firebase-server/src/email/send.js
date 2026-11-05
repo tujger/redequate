@@ -1,28 +1,25 @@
 import {defineSecret} from "firebase-functions/params";
 import {HttpsError} from "firebase-functions/v2/https";
-import onCall from "../common/onCall";
 import nodemailer from "nodemailer";
-import authorize from "../common/authorize";
-import {database} from "../common/firebase";
 
 const gmailEmail = defineSecret("GMAIL_EMAIL");
 const gmailPassword = defineSecret("GMAIL_PASSWORD");
 
-export default onCall({secrets: [gmailEmail, gmailPassword]}, async request => {
-    await authorize(request, database, {adminOnly: true});
-    const fields = request.data;
+export default async function sendMail({secrets: [email, password] = [gmailEmail, gmailPassword], ...payload}) {
+
+    const {data, ...fields} = payload;
     for (const field of ["from", "to", "subject", "message"]) {
         if (typeof fields[field] !== "string" || !fields[field].trim()) {
-            throw new HttpsError("invalid-argument", `${field} is required.`);
+            throw new HttpsError("invalid-argument", `${field} is required.`, {code: "email-send/invalid-argument"},);
         }
     }
     if (process.env.FUNCTIONS_EMULATOR === "true") {
-        console.info("[Emulator] Email", fields);
+        console.info("[Email:Send] sent with emulator", fields);
         return {info: {messageId: "emulator-mail", accepted: [fields.to], rejected: []}};
     }
     const transport = nodemailer.createTransport({
         service: "gmail",
-        auth: {user: gmailEmail.value(), pass: gmailPassword.value()},
+        auth: {user: email.value(), pass: password.value()},
     });
     const info = await transport.sendMail({
         from: fields.from,
@@ -33,4 +30,4 @@ export default onCall({secrets: [gmailEmail, gmailPassword]}, async request => {
         html: `<p>${fields.message}`,
     });
     return {info};
-});
+}

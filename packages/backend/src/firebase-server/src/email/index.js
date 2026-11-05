@@ -1,3 +1,1 @@
-import send from "./send";
-
-export {send};
+export {default as send} from "./callable";
