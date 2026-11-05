@@ -51,8 +51,8 @@ const _updateMutualStamps = async (backend, {userId, mutualId}, payload) => {
     const mutualTypes = await backend.request("database.read", ["mutual", "mutual_type"], {shallow: true})
 
     const updates = new Map();
+    updates.set(["mutualstamps", "_my", {user_id: userId}, {mutual_id: mutualId}], payload);
     for (const mutualType of mutualTypes) {
-        updates.set(["mutualstamps", "_my", {user_id: userId}, {mutual_id: mutualId}], payload);
         const path = ["mutual", {mutual_type: mutualType}, "mutual_id"];
         const query = {orderBy: ["id"], equalTo: userId};
         const cursor = await backend.request("database.cursor", path, query);
