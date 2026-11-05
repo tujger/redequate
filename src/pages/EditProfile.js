@@ -22,7 +22,6 @@ import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
-import {updateActivity} from "./admin/audit/auditReducer";
 import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import styles from "./styles/EditProfile.module.css";
 
@@ -182,18 +181,6 @@ function EditProfile(props) {
                 updates.set(["users_public", {user_id: userData.id}, "updated"], database.TIMESTAMP);
                 await userData.updateRole(
                     (role === UserRole.USER || role === UserRole.USER_NOT_VERIFIED) ? null : role, updates);
-                if (role !== userData.role) {
-                    updateActivity({
-                        database,
-                        uid: currentUserData.id,
-                        type: "User role change",
-                        details: {
-                            role: role || null,
-                            previousRole: userData.role || null,
-                            uid: userData.id,
-                        },
-                    }).catch(console.error);
-                }
             }
         }
         const refreshUserData = async () => {
@@ -274,14 +261,6 @@ function EditProfile(props) {
             }
             isMount = false;
         }
-        const publishActivity = async () => {
-            updateActivity({
-                database,
-                uid: currentUserData.id,
-                type: "User delete",
-                details: userData.toJSON(),
-            }).catch(console.error);
-        }
         const finalizeDeleting = async () => {
             dispatch(ProgressView.HIDE);
             isMount && setState(state => ({...state, disabled: false, deleteOpen: false}));
@@ -290,7 +269,6 @@ function EditProfile(props) {
         prepareDeleting()
             .then(deleteUserData)
             .then(onDeleteComplete)
-            .then(publishActivity)
             .catch(notifySnackbar)
             .finally(finalizeDeleting);
     }
