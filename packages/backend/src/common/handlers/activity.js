@@ -33,7 +33,8 @@ export default class ActivityListener extends BackendListener {
     }
 }
 
-export const createActivity = (backend, {uid = 0, type = null, details = null} = {}) => {
+export const createActivity = async (backend, {type = null, details = null} = {}) => {
+    const uid = (await backend.getCurrentUser()) || 0;
     return backend.request("database.create",
         ["activity", "activity_id"],
         {
