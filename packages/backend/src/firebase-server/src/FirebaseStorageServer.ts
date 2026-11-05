@@ -2,7 +2,7 @@ import StorageBase from "../../../../storage/src/StorageBase";
 import {getStorage} from "firebase-admin/storage";
 import {fail} from "../../../../common";
 
-export default class FirebaseServerStorage extends StorageBase {
+export default class FirebaseStorageServer extends StorageBase {
     readonly getStorageInstance: typeof getStorage;
 
     constructor(getStorageInstance: typeof getStorage = getStorage) {
