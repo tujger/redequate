@@ -1,5 +1,6 @@
 import {defineSecret} from "firebase-functions/params";
-import {HttpsError, onCall} from "firebase-functions/v2/https";
+import {HttpsError} from "firebase-functions/v2/https";
+import onCall from "../common/onCall";
 import nodemailer from "nodemailer";
 import authorize from "../common/authorize";
 import {database} from "../common/firebase";

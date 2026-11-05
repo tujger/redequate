@@ -1,4 +1,4 @@
-import {onCall} from "firebase-functions/v2/https";
+import onCall from "../common/onCall";
 import backend from "../backend";
 import authorize from "../common/authorize.js";
 import {database} from "../common/firebase";

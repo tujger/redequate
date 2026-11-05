@@ -1,5 +1,6 @@
 import {getDatabase} from "firebase-admin/database";
-import {HttpsError, onCall} from "firebase-functions/v2/https";
+import {HttpsError} from "firebase-functions/v2/https";
+import onCall from "../../common/onCall";
 import parsePath from "../../../../../../database/src/firebase/parsePath";
 import checkResponse from "../../common/checkResponse";
 import createDatabaseUrl from "../../common/createDatabaseUrl";
