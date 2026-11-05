@@ -22,7 +22,6 @@ import UserData, {matchRole, normalizeSortName, UserRole} from "../controllers/U
 import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
-import {updateActivity} from "../pages/admin/audit/auditReducer";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/EditTag.module.css";
 
@@ -115,7 +114,7 @@ export default ({allowOwner = true}) => {
             if (uppy) {
                 console.log("[EditTag] publish image", uppy)
                 publishing = await uploadComponentPublish({
-                    auth: ".main",
+                    uid: ".main",
                     files: uppy._uris,
                     name: tag.label,
                     onprogress: progress => {
@@ -165,23 +164,6 @@ export default ({allowOwner = true}) => {
             }
             return key;
         }
-        const auditActivity = async key => {
-            if (ownerChanged !== null) {
-                updateActivity({
-                    database,
-                    uid: currentUserData.id,
-                    type: "Tag owner changed",
-                    details: {
-                        id: tag.id,
-                        uid: {
-                            new: tag.uid,
-                            old: ownerChanged,
-                        }
-                    }
-                });
-            }
-            return key;
-        }
         const removeCachedTag = async key => {
             cacheDatas.remove(key);
             return key;
@@ -220,7 +202,6 @@ export default ({allowOwner = true}) => {
             .then(updateSortName)
             .then(extractTagKey)
             .then(publishTag)
-            .then(auditActivity)
             .then(removeCachedTag)
             .then(subscribeToTag)
             .then(onPublishSuccess)
