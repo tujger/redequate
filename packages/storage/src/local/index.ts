@@ -17,7 +17,7 @@ export default class LocalStorage extends StorageBase {
     }
 
     async upload(options?: Parameters<StorageBase["upload"]>[0]): Promise<{url: string; metadata: StorageMetadata}> {
-        const {blob, metadata = {}, name, onProgress} = options ?? {};
+        const {blob, metadata = {}, name, onProgress, uid: uidGiven} = options ?? {};
         await delay("LocalStorage", "upload");
         if (!(blob instanceof window.Blob) ||
             !metadata || typeof metadata !== "object" || metadata instanceof Array ||
@@ -35,7 +35,8 @@ export default class LocalStorage extends StorageBase {
         const contentType = blob.type || "application/octet-stream";
         const type = blob.type.split("/")[0] || "application";
         const filename = blob.name || name || "file";
-        const fullPath = `${user.id}/${type}/${name ? `${name}-` : ""}${uuid}-${filename}`;
+        const uid = uidGiven ?? user.id;
+        const fullPath = `${uid}/${type}/${name ? `${name}-` : ""}${uuid}-${filename}`;
         const fileMetadata = window.structuredClone({
             contentType,
             fullPath,

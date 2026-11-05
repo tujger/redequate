@@ -25,13 +25,13 @@ export default class FirebaseStorage extends StorageBase {
         return getMetadata(ref(this._storage, pathOrURL));
     }
 
-    async upload({blob, metadata, name, onProgress}: Parameters<StorageBase["upload"]>[0]): Promise<{url: string; metadata: FullMetadata}> {
+    async upload({blob, metadata, name, onProgress, uid: uidGiven}: Parameters<StorageBase["upload"]>[0]): Promise<{url: string; metadata: FullMetadata}> {
         if (!this._auth) return fail("storage/auth-required", "An Auth provider is required.");
         const user = await this._auth.resolveCurrentUser();
         if (!user || typeof user.id !== "string" || !user.id) {
             return fail("storage/unauthenticated", "An authenticated user is required.");
         }
-        const uid = user.id;
+        const uid = uidGiven ?? user.id;
         const uuid = Uuid();
         const type = blob.type.split("/")[0];
         const reference = ref(this._storage, uid + "/" + type + "/" + name + "-" + uuid + "-" + blob.name);
@@ -40,7 +40,7 @@ export default class FirebaseStorage extends StorageBase {
             contentType: blob.type,
             customMetadata: {
                 ...metadata,
-                uid,
+                uid: user.id,
                 // message: Uuid(),
                 filename: blob.name ?? name
             }

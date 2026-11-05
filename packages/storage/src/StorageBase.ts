@@ -16,11 +16,12 @@ export default class StorageBase {
         this._auth = auth;
     }
 
-    async upload({blob, metadata, name, onProgress}: {
+    async upload({blob, metadata, name, onProgress, uid}: {
         blob: Blob & {name?: string};
         metadata?: Record<string, string>;
         name?: string;
         onProgress?: (percent: string) => void;
+        uid?: string;
     }): Promise<{url: string; metadata: StorageMetadata}> {
         return notImplemented("upload");
     }
