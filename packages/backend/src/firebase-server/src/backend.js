@@ -1,3 +1,3 @@
-import FirebaseBackendServer from "./FirebaseBackendServer.ts";
+import FirebaseBackendServer from "./FirebaseBackendServer";
 
 export default new FirebaseBackendServer();

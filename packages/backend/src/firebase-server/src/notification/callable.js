@@ -1,6 +1,6 @@
 import onCall from "../common/onCall";
 import backend from "../backend";
-import authorize from "../common/authorize.js";
+import authorize from "../common/authorize";
 import {database} from "../common/firebase";
 
 export default onCall(async request => {
