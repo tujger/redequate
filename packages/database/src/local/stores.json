@@ -122,6 +122,7 @@
             "autoIncrement": true
         },
         "storeSchema": [
+            {"name": "setting", "keypath": "setting", "options": {"unique": true}}
         ]
     },
     {

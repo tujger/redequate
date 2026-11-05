@@ -92,7 +92,8 @@
             "$extra_id": {}
         },
         "meta": {
-            ".read": true
+            ".read": true,
+            "$setting": {}
         },
         "mutual": {
             "$mutual_type": {
