@@ -180,7 +180,7 @@ export default (props) => {
         }
         const fetchMetaInfo = async props => {
             const {database} = props;
-            const settings = (await database.read(["meta", {settings: "settings"}])) || {};
+            const settings = (await database.read(["meta", {setting: "settings"}])) || {};
             return {...props, metaInfo: {settings}};
         }
         const initTextTranslation = async props => {
