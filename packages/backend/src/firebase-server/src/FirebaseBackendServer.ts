@@ -3,14 +3,15 @@ import {getMessaging} from "firebase-admin/messaging";
 import type {getStorage} from "firebase-admin/storage";
 import {fail} from "../../../../common";
 import BackendBase from "../../common/BackendBase";
+import userContext from "./common/userContext";
 import create from "./database/admin/create";
 import cursor from "./database/admin/cursor";
 import deleteRecord from "./database/admin/delete";
 import read from "./database/admin/read";
 import update from "./database/admin/update";
+import sendEmail from "./email/send";
 import FirebaseStorageServer from "./FirebaseStorageServer";
-import {send} from "./notification/send";
-import userContext from "./common/userContext";
+import sendNotification from "./notification/send";
 
 const requests = {
     "database.create": create,
@@ -18,7 +19,8 @@ const requests = {
     "database.delete": deleteRecord,
     "database.read": read,
     "database.update": update,
-    "notification.send": send,
+    "email.send": sendEmail,
+    "notification.send": sendNotification,
 };
 
 export default class FirebaseBackendServer extends BackendBase {
