@@ -10,6 +10,7 @@ import read from "./database/admin/read";
 import update from "./database/admin/update";
 import FirebaseServerStorage from "./FirebaseServerStorage";
 import {send} from "./notification/send";
+import userContext from "./common/userContext";
 
 const requests = {
     "database.create": create,
@@ -50,6 +51,10 @@ export default class FirebaseServerBackend extends BackendBase {
 
     increment(n: number) {
         return this.createIncrement(n);
+    }
+
+    async getCurrentUser(): Promise<string | undefined> {
+        return userContext.getStore();
     }
 
     async request(name: string, ...args: unknown[]): Promise<unknown> {
