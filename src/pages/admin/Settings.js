@@ -106,16 +106,16 @@ export default ({uploadable}) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, maintenanceOpen: false}));
         if (value) {
-            updates.set(["meta", "maintenance"], {
+            updates.set(["meta", {setting: "maintenance"}], {
                 message: message || "",
                 timestamp: database.TIMESTAMP,
                 person: {name: currentUserData.public.name, email: currentUserData.public.email}
             })
         } else {
-            updates.set(["meta", "maintenance"], null);
+            updates.set(["meta", {setting: "maintenance"}], null);
         }
         database.update(updates)
-            .then(() => database.read(["meta", "maintenance"]))
+            .then(() => database.read(["meta", {setting: "maintenance"}]))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
             .catch(notifySnackbar)
@@ -176,13 +176,13 @@ export default ({uploadable}) => {
         }
         const addSupport = async token => {
             if (token.type === "user") {
-                updates.set(["meta", "support"], token.id || null);
+                updates.set(["meta", {setting: "support"}], token.id || null);
                 return;
             }
             throw Error(`Incorrect token: ${JSON.stringify(token)}`);
         }
         const addBlockedNames = async () => {
-            updates.set(["meta", "blockedNames"], blockedNames || null);
+            updates.set(["meta", {setting: "blockedNames"}], blockedNames || null);
         }
         const addPreferenceDynamicLinksUrlPrefix = async () => {
             settings.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix || null;
@@ -218,7 +218,7 @@ export default ({uploadable}) => {
             settings.uploadsQuality = uploadsAllow ? +uploadsQuality || 75 : null;
         }
         const publish = async () => {
-            updates.set(["meta", "settings"], settings);
+            updates.set(["meta", {setting: "settings"}], settings);
             console.log(updates);
             return database.update(updates);
         }
@@ -265,19 +265,19 @@ export default ({uploadable}) => {
             return {};
         }
         const fetchBlockedNames = async props => {
-            const blockedNames = (await database.read(["meta", {blockedNames: "blockedNames"}])) || "";
+            const blockedNames = (await database.read(["meta", {setting: "blockedNames"}])) || "";
             return {...props, blockedNames};
         }
         const fetchMaintenance = async props => {
-            const meta = await database.read(["meta", {maintenance: "maintenance"}]);
+            const meta = await database.read(["meta", {setting: "maintenance"}]);
             return {...props, maintenance: Boolean(meta), ...(meta || {})};
         }
         const fetchSettings = async props => {
-            const settings = (await database.read(["meta", {settings: "settings"}])) || {};
+            const settings = (await database.read(["meta", {setting: "settings"}])) || {};
             return {...props, ...settings};
         }
         const fetchSupport = async props => {
-            const supportId = await database.read(["meta", {support: "support"}]);
+            const supportId = await database.read(["meta", {setting: "support"}]);
             if (supportId) {
                 return new UserData(database).fetch(supportId)
                     .then(userData => ({

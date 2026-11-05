@@ -85,7 +85,7 @@ function EditProfile(props) {
             }
         }
         const checkIfNameIsBlocked = async () => {
-            const blockedNames = (await database.read(["meta", {blockedNames: "blockedNames"}]) || "").split(/[\s\r\n]+/)
+            const blockedNames = (await database.read(["meta", {setting: "blockedNames"}]) || "").split(/[\s\r\n]+/)
                 .map(item => normalizeSortName(item));
             if (blockedNames.indexOf(normalizeSortName(state.name)) >= 0) {
                 throw Error("This user user name is reserved for distilleries. If you are a distillery, please contact us using Contacts page.")
