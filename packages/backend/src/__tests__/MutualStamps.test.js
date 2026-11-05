@@ -15,8 +15,8 @@ const counterPath = (type, user) => ["_counters", {id: user}, "mutualstamps", {m
 function setup(types = ["following", "friend"]) {
     const cursors = new Map(types.map(type => [type, {
         next: vi.fn().mockResolvedValue([
-            {key: "relation", value: {uid: "author", id: "reader"}},
-            {key: "unrelated", value: {uid: "other", id: "stranger"}}
+            {key: "relation", value: {uid: "reader", id: "author"}},
+            {key: "self", value: {uid: "author", id: "author"}}
         ])
     }]));
     const backend = {
@@ -35,7 +35,7 @@ it.each([["create", createMutualStamps, "author"], ["delete", deleteMutualStamps
         expect(backend.request.mock.calls[0]).toEqual(["database.read", ["mutual", "mutual_type"], {shallow: true}]);
         for (const [type, cursor] of cursors) {
             expect(backend.request).toHaveBeenCalledWith("database.cursor", ["mutual", {mutual_type: type}, "mutual_id"],
-                {orderBy: ["uid"], equalTo: "author"});
+                {orderBy: ["id"], equalTo: "author"});
             expect(cursor.next).toHaveBeenCalledWith(10000);
         }
         const writes = backend.request.mock.calls.filter(([method]) => method === "database.update");
@@ -117,7 +117,9 @@ it("LocalBackend counts stamp creation once, ignores replacement and clears coun
     try {
         const storageId = `mutual-stamps-${++sequence}`;
         const backend = new LocalBackend({storageId});
-        const database = new LocalDatabase({storageId, backend});
+        const database = new LocalDatabase({storageId});
+        database.setBackend(backend);
+        backend.setDatabase(database);
         await database.read(["mutualstamps"]);
         const batch = new Map([["_my", "author"], ["_", "reader"], ["following", "reader"]]
             .map(([type, user]) => [stampPath(type, user), "author"]));
@@ -142,13 +144,36 @@ it("distributes stamps through the real LocalBackend using declared path identit
     try {
         const storageId = `mutual-stamps-distribution-${++sequence}`;
         const backend = new LocalBackend({storageId});
-        const database = new LocalDatabase({storageId, backend});
+        const database = new LocalDatabase({storageId});
+        database.setBackend(backend);
+        backend.setDatabase(database);
         await database.read(["mutualstamps"]);
-        await database.create(["mutual", {mutual_type: "following"}, {mutual_id: "relation"}], {uid: "author", id: "reader"});
+        await database.create(["mutual", {mutual_type: "following"}, {mutual_id: "relation"}], {uid: "reader", id: "author"});
         await createMutualStamps(backend, args);
         expect(await database.read(stampPath("_my", "author"))).toBe("author");
         expect(await database.read(stampPath("following", "reader"))).toBe("author");
         await deleteMutualStamps(backend, args);
         expect(await database.read(stampPath("following", "reader"))).toBeUndefined();
     } finally { vi.unstubAllGlobals(); }
+});
+
+it.each([createMutualStamps, deleteMutualStamps])("deduplicates full stamp addresses across types and repeated recipients", async operation => {
+    const {backend, cursors} = setup();
+    for (const cursor of cursors.values()) {
+        cursor.next.mockResolvedValue(Array.from({length: 2}, () => ({value: {uid: "reader", id: "author"}})));
+    }
+    await operation(backend, args);
+    const batch = backend.request.mock.calls.at(-1)[2];
+    const addresses = [...batch.keys()].map(address);
+    expect(addresses).toEqual([
+        "mutualstamps/_my/author/post", "mutualstamps/_/reader/post",
+        "mutualstamps/following/reader/post", "mutualstamps/friend/reader/post"
+    ]);
+});
+
+it.each([createMutualStamps, deleteMutualStamps])("writes the author stamp without any mutual types", async operation => {
+    const {backend} = setup([]);
+    await operation(backend, args);
+    const batch = backend.request.mock.calls.at(-1)[2];
+    expect([...batch.keys()].map(address)).toEqual(["mutualstamps/_my/author/post"]);
 });
