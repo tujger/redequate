@@ -4,7 +4,7 @@ import deleteRecord from "./database/callable/delete";
 import migrate from "./database/callable/migrate";
 import read from "./database/callable/read";
 import update from "./database/callable/update";
-import send from "./notification/send";
+import sendNotification from "./notification/send";
 
 export default {
     "database.create": create,
@@ -13,5 +13,5 @@ export default {
     "database.migrate": migrate,
     "database.read": read,
     "database.update": update,
-    "notification.send": send,
+    "notification.send": sendNotification,
 };
