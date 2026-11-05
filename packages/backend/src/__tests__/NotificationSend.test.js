@@ -1,6 +1,6 @@
 import {IDBFactory} from "fake-indexeddb";
 import {sendToTokens} from "../firebase-server/src/notification/send";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import LocalBackend from "../local/LocalBackend";
 import {subscribeToken, deleteToken} from "../../../messaging/src/local/database";
 import {messageType} from "../../../messaging/src/local/common";
@@ -29,13 +29,13 @@ it("dispatches internal Firebase notifications with configured metadata", async 
     const messaging = {sendEachForMulticast: vi.fn().mockResolvedValue({responses: [{messageId: "sent"}]})};
     const getDatabaseInstance = vi.fn(() => { throw new Error("Notifications must not initialize Database."); });
     const getMessagingInstance = vi.fn(() => messaging);
-    const backend = new FirebaseServerBackend(getDatabaseInstance, undefined,
+    const backend = new FirebaseBackendServer(getDatabaseInstance, undefined,
         {projectTitle: "App", projectUrl: "https://custom.test", getMessagingInstance});
     expect(backend.projectTitle).toBe("App"); expect(backend.projectUrl).toBe("https://custom.test");
     expect(await backend.request("notification.send", ["t"], {data: {body: "hi"}})).toEqual([{token: "t", messageId: "sent"}]);
     expect(getDatabaseInstance).not.toHaveBeenCalled();
     expect(getMessagingInstance).toHaveBeenCalledOnce();
-    expect(new FirebaseServerBackend(() => ({app: {options: {projectId: "demo-test"}}})).projectUrl).toBe("https://demo-test.web.app");
+    expect(new FirebaseBackendServer(() => ({app: {options: {projectId: "demo-test"}}})).projectUrl).toBe("https://demo-test.web.app");
 });
 it("only posts matching subscribed Local tokens within their storage", async () => {
     const post = vi.spyOn(window, "postMessage").mockImplementation(() => {});

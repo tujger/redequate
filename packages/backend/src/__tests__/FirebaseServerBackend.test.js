@@ -1,6 +1,6 @@
 import ExtraListener from "../common/handlers/extra";
 import BackendBase from "../common/BackendBase";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 
 let backend, getDatabase, createIncrement, database, references, records, generated;
 const reference = path => {
@@ -31,7 +31,7 @@ beforeEach(() => {
     database = {ref: vi.fn(reference)};
     getDatabase = vi.fn(() => database);
     createIncrement = vi.fn(n => ({".sv": {increment: n}}));
-    backend = new FirebaseServerBackend(getDatabase, createIncrement, {
+    backend = new FirebaseBackendServer(getDatabase, createIncrement, {
         getMessagingInstance: vi.fn(() => { throw new Error("Database commands must not initialize Messaging."); }),
     });
 });

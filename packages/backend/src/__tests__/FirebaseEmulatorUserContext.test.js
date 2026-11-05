@@ -1,6 +1,6 @@
 vi.mock("../firebase-server/src/common/firebase", () => ({database: {}, messaging: {}}));
 
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import onEvents from "../firebase-server/src/database/onEvents";
 import {createActivity} from "../common/handlers/activity";
 
@@ -14,7 +14,7 @@ afterEach(() => vi.unstubAllEnvs());
 
 for (const name of ["onCreate", "onUpdate", "onDelete"]) {
     it(`${name} uses the snapshot owner for an emulator activity`, async () => {
-        const backend = new FirebaseServerBackend();
+        const backend = new FirebaseBackendServer();
         const request = vi.spyOn(backend, "request").mockResolvedValue("activity-key");
         const value = {uid: "snapshot-owner", text: "record"};
         const callback = vi.fn(async payload => {
@@ -33,7 +33,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
 
     it.each(["false", "TRUE", undefined])(`${name} does not use the owner outside explicit emulator mode %j`, async mode => {
         vi.stubEnv("FUNCTIONS_EMULATOR", mode);
-        const backend = new FirebaseServerBackend();
+        const backend = new FirebaseBackendServer();
         const callback = vi.fn(async () => expect(await backend.getCurrentUser()).toBeUndefined());
         await onEvents({path: ["posts", "post_id"], [name]: callback})[name].run({
             data: dataFor(name, {uid: "owner"}), params: {}, authType: "unknown",
@@ -42,7 +42,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
     });
 
     it(`${name} preserves native identity ahead of the owner`, async () => {
-        const backend = new FirebaseServerBackend();
+        const backend = new FirebaseBackendServer();
         const callback = vi.fn(async () => expect(await backend.getCurrentUser()).toBe("native-actor"));
         await onEvents({path: ["posts", "post_id"], [name]: callback})[name].run({
             data: dataFor(name, {uid: "owner"}), params: {}, authType: "app_user", authId: "native-actor",
@@ -52,7 +52,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
 
     it.each([null, 0, false, "text", {}, {uid: ""}, {uid: 0}, {uid: false}, {uid: {id: "owner"}}])(
         `${name} ignores missing or invalid owner in %j`, async value => {
-            const backend = new FirebaseServerBackend();
+            const backend = new FirebaseBackendServer();
             await onEvents({path: ["posts", "post_id"], async [name]() {
                 expect(await backend.getCurrentUser()).toBeUndefined();
             }})[name].run({data: dataFor(name, value), params: {}, authType: "unknown"});
@@ -60,7 +60,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
     );
 
     it(`${name} isolates concurrent substituted users`, async () => {
-        const backend = new FirebaseServerBackend();
+        const backend = new FirebaseBackendServer();
         const request = vi.spyOn(backend, "request").mockResolvedValue("activity-key");
         let entered = 0, release;
         const ready = new Promise(resolve => { release = resolve; });

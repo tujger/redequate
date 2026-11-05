@@ -1,6 +1,6 @@
 vi.mock("../firebase-server/src/common/firebase", () => ({database: {}, messaging: {}}));
 
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import onEvents from "../firebase-server/src/database/onEvents";
 import onCall from "../firebase-server/src/common/onCall";
 import {createActivity} from "../common/handlers/activity";
@@ -23,7 +23,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
         [{authType: "unknown", authId: "unexpected"}, "unexpected"],
         [{}, undefined],
     ])(`${name} exposes the native event actor %j without changing the listener payload`, async (auth, uid) => {
-        const backend = new FirebaseServerBackend();
+        const backend = new FirebaseBackendServer();
         const callback = vi.fn(async payload => {
             await Promise.resolve();
             expect(await backend.getCurrentUser()).toBe(uid);
@@ -40,7 +40,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
     });
 
     it(`${name} keeps concurrent events and the activity author isolated`, async () => {
-        const backend = new FirebaseServerBackend();
+        const backend = new FirebaseBackendServer();
         const request = vi.spyOn(backend, "request").mockResolvedValue("activity-key");
         let entered = 0, release;
         const ready = new Promise(resolve => { release = resolve; });
@@ -59,7 +59,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
     });
 
     it(`${name} clears context after rejection and masks any enclosing callable user`, async () => {
-        const backend = new FirebaseServerBackend();
+        const backend = new FirebaseBackendServer();
         const failure = new Error("handler failed");
         const trigger = onEvents({path: ["posts", "post_id"], async [name]() {
             expect(await backend.getCurrentUser()).toBeUndefined();
@@ -76,7 +76,7 @@ for (const name of ["onCreate", "onUpdate", "onDelete"]) {
 }
 
 it("writes system activities as uid 0 when the event has no user", async () => {
-    const backend = new FirebaseServerBackend();
+    const backend = new FirebaseBackendServer();
     const request = vi.spyOn(backend, "request").mockResolvedValue("activity-key");
     await onEvents({path: ["posts", "post_id"], onCreate: () => createActivity(backend)})
         .onCreate.run({data: snapshot(value), params, authType: "unknown"});

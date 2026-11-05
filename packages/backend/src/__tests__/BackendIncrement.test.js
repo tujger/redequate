@@ -1,6 +1,6 @@
 import {IDBFactory} from "fake-indexeddb";
 import {increment as firebaseIncrement} from "firebase/database";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import BackendBase from "../common/BackendBase";
 import LocalBackend from "../local/LocalBackend";
 import FirebaseBackendClient from "../firebase-client/FirebaseBackendClient";
@@ -168,7 +168,7 @@ it("delegates Firebase marker construction to the SDK and returns its object", a
 it("shares BackendBase across local, Firebase client and Firebase server backends", async () => {
     expect(await setup("local")).toBeInstanceOf(BackendBase);
     expect(await setup("firebase")).toBeInstanceOf(BackendBase);
-    expect(new FirebaseServerBackend()).toBeInstanceOf(BackendBase);
+    expect(new FirebaseBackendServer()).toBeInstanceOf(BackendBase);
     expect((await import("../common")).BackendBase).toBe(BackendBase);
     expect((await import("../index")).BackendBase).toBe(BackendBase);
 });

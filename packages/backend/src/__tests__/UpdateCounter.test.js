@@ -3,7 +3,7 @@ import update from "../../../database/src/common/methods/update";
 import {updateCounter} from "../common/handlers/utils";
 import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import onEvents from "../local/database/onEvents";
 import {observeWrites} from "../local/database/callable/createHelpers";
 
@@ -29,7 +29,7 @@ const setup = async (provider, initial = null) => {
         return {committed: true, snapshot: {val: () => value}};
     });
     const ref = vi.fn(() => ({transaction, on: (event, callback) => callback(), off: vi.fn(), get: async () => { const current = value; return {val: () => current}; }}));
-    const backend = new FirebaseServerBackend(() => ({ref}));
+    const backend = new FirebaseBackendServer(() => ({ref}));
     return {backend, read: async () => value, transaction, ref};
 };
 
@@ -98,7 +98,7 @@ it("recomputes the counter from fresh data after an Admin transaction conflict",
             expect(callback(1)).toBeNull();
             return {committed: true, snapshot: {val: () => null}};
         });
-    const backend = new FirebaseServerBackend(() => ({ref: () => ({
+    const backend = new FirebaseBackendServer(() => ({ref: () => ({
         get: async () => ({val: () => 10}), transaction, on: (event, callback) => callback(), off: vi.fn(),
     })}));
     expect(await updateCounter(backend, relative, -1)).toBeNull();
@@ -110,7 +110,7 @@ it.each(["get", "transaction"])("Admin SDK %s errors propagate unchanged", async
     const error = new Error("SDK unavailable");
     const ref = {get: async () => ({val: () => 1}), transaction: vi.fn(), on: (event, callback) => callback(), off: vi.fn()};
     ref[method] = vi.fn().mockRejectedValue(error);
-    const backend = new FirebaseServerBackend(() => ({ref: () => ref}));
+    const backend = new FirebaseBackendServer(() => ({ref: () => ref}));
     await expect(updateCounter(backend, relative, -1)).rejects.toBe(error);
 });
 

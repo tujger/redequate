@@ -6,7 +6,7 @@ const serverRequire = createRequire(`${process.env.SHALLOW_TEST_FRAMEWORK_ROOT ?
 const {initializeApp: initializeAdminApp, deleteApp: deleteAdminApp} = serverRequire("firebase-admin/app");
 const {getDatabase: getAdminDatabase} = serverRequire("firebase-admin/database");
 import FirebaseDatabase from "../../firebase";
-import FirebaseServerBackend from "../../../../backend/src/firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../../../../backend/src/firebase-server/src/FirebaseBackendServer";
 
 it("reads only immediate keys through authenticated Client/Admin REST and enforces Rules", async () => {
     const host = process.env.FIREBASE_DATABASE_EMULATOR_HOST;
@@ -41,7 +41,7 @@ it("reads only immediate keys through authenticated Client/Admin REST and enforc
         expect(await database.read(["mutual", {mutual_type: "scalar"}], {shallow: true})).toEqual([]);
         const denied = new FirebaseDatabase({firebase: {app: anonymousApp}});
         await expect(denied.read(["mutual", "mutual_type"], {shallow: true})).rejects.toMatchObject({code: "database/permission-denied"});
-        const backend = new FirebaseServerBackend(() => getAdminDatabase(adminApp));
+        const backend = new FirebaseBackendServer(() => getAdminDatabase(adminApp));
         expect((await backend.request("database.read", ["mutual", "mutual_type"], {shallow: true})).sort()).toEqual(["following", "friend", "scalar"]);
     } finally {
         await setRules(savedRules);

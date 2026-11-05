@@ -1,5 +1,5 @@
 import FirebaseDatabase from "../../firebase";
-import FirebaseServerBackend from "../../../../backend/src/firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../../../../backend/src/firebase-server/src/FirebaseBackendServer";
 import {getAuth} from "firebase/auth";
 import {createFirebase} from "../fixtures/firebase";
 vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
@@ -33,7 +33,7 @@ for (const emulator of [false, true]) it(`admin uses ${emulator ? "emulator owne
     const db = {app: {options: {databaseURL: "https://demo-shallow-default-rtdb.firebaseio.com", credential: {getAccessToken}}},
         ref: path => ({toString: () => `https://demo-shallow-default-rtdb.firebaseio.com/${path}`, get})};
     const fetch = vi.fn(async () => response({friend: true})); vi.stubGlobal("fetch", fetch);
-    const backend = new FirebaseServerBackend(() => db);
+    const backend = new FirebaseBackendServer(() => db);
     expect(await backend.request("database.read", ["mutual", "mutual_type"], {shallow: true})).toEqual(["friend"]);
     const [url, options] = fetch.mock.calls[0];
     expect(url.searchParams.get("shallow")).toBe("true");

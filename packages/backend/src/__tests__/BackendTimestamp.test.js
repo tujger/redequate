@@ -4,7 +4,7 @@ import BackendBase from "../common/BackendBase";
 import {isTimestamp} from "../local/timestamp";
 import LocalBackend from "../local/LocalBackend";
 import FirebaseBackendClient from "../firebase-client/FirebaseBackendClient";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import DatabaseBase from "../../../database/src/common/DatabaseBase";
 import LocalDatabase from "../../../database/src/local";
 import FirebaseDatabase from "../../../database/src/firebase";
@@ -44,7 +44,7 @@ it("FirebaseBackendClient delegates marker creation to its SDK", () => {
 
 it("FirebaseServerBackend exposes the Admin SDK timestamp without opening the database", () => {
     const getDatabase = vi.fn();
-    const backend = new FirebaseServerBackend(getDatabase);
+    const backend = new FirebaseBackendServer(getDatabase);
     expect(backend.TIMESTAMP).toBe(ServerValue.TIMESTAMP);
     expect(getDatabase).not.toHaveBeenCalled();
 });

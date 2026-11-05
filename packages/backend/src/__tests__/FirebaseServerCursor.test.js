@@ -1,6 +1,6 @@
 import {vi} from "vitest";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
-import FirebaseServerCursor from "../firebase-server/src/FirebaseServerCursor";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
+import FirebaseCursorServer from "../firebase-server/src/FirebaseCursorServer";
 import DatabaseCursor from "../../../database/src/common/DatabaseCursor";
 import {key as dateKey} from "firebase-key";
 import ComposedDatabaseCursor from "../../../database/src/common/ComposedDatabaseCursor";
@@ -32,7 +32,7 @@ const setup = () => {
         return selection;
     }
     const database = {ref: vi.fn(reference)};
-    const backend = new FirebaseServerBackend(() => database, undefined, {
+    const backend = new FirebaseBackendServer(() => database, undefined, {
         getMessagingInstance: () => { throw new Error("Cursor must not initialize Messaging."); },
     });
     return {backend, database, records, queries, sdk, page, snapshot};
@@ -137,7 +137,7 @@ it("propagates composition validation errors even with onError", async () => {
 
 it("creates a DatabaseCursor subclass directly with readonly initial metadata", async () => {
     const {database, backend} = setup();
-    const cursor = new FirebaseServerCursor(database, ["records", "record_id"], {}, backend);
+    const cursor = new FirebaseCursorServer(database, ["records", "record_id"], {}, backend);
     expect(cursor).toBeInstanceOf(DatabaseCursor);
     expect(cursor.path).toBe("records");
     expect(cursor.position).toEqual({index: -1, key: undefined, finished: false});

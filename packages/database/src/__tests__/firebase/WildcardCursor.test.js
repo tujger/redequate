@@ -1,7 +1,7 @@
 import FirebaseCursorBase from "../../common/FirebaseCursorBase";
 import FirebaseCursorClient from "../../firebase/cursor";
 import FirebaseDatabase from "../../firebase";
-import FirebaseServerCursor from "../../../../backend/src/firebase-server/src/FirebaseServerCursor";
+import FirebaseCursorServer from "../../../../backend/src/firebase-server/src/FirebaseCursorServer";
 import {createFirebase} from "../fixtures/firebase";
 vi.mock("firebase/database", () => import("../fixtures/firebase").then(module => module.firebaseDatabaseMock()));
 
@@ -20,7 +20,7 @@ for (const provider of ["firebase", "admin"]) it(`${provider} discovers branches
             for (const method of ["orderByChild", "orderByValue", "orderByKey", "equalTo", "startAt", "endAt", "limitToFirst", "limitToLast"]) reference[method] = () => reference;
             return reference;
         }};
-        cursor = new FirebaseServerCursor(database, pattern, {orderBy: "uid", equalTo: "u"});
+        cursor = new FirebaseCursorServer(database, pattern, {orderBy: "uid", equalTo: "u"});
     }
     expect(await cursor.next(1)).toEqual([{key: "r1", params: {mutual_type: "a"}, value: {uid: "u", id: "a"}}]);
     expect(await cursor.next(1)).toEqual([{key: "r1", params: {mutual_type: "b"}, value: {uid: "u", id: "b"}}]);
@@ -30,12 +30,12 @@ for (const provider of ["firebase", "admin"]) it(`${provider} discovers branches
 for (const path of ["records", pattern]) it(`keeps native Firebase cursor types for ${JSON.stringify(path)}`, () => {
     const fixture = createFirebase();
     const client = new FirebaseCursorClient(fixture.firebase, path);
-    const server = new FirebaseServerCursor({ref: vi.fn()}, path);
+    const server = new FirebaseCursorServer({ref: vi.fn()}, path);
     expect(client.constructor).toBe(FirebaseCursorClient);
-    expect(server.constructor).toBe(FirebaseServerCursor);
+    expect(server.constructor).toBe(FirebaseCursorServer);
     expect(client).toBeInstanceOf(FirebaseCursorBase);
     expect(server).toBeInstanceOf(FirebaseCursorBase);
-    expect(client).not.toBeInstanceOf(FirebaseServerCursor);
+    expect(client).not.toBeInstanceOf(FirebaseCursorServer);
     expect(server).not.toBeInstanceOf(FirebaseCursorClient);
     expect(fixture.sdk.refs).toHaveLength(0);
 });

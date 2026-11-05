@@ -1,6 +1,6 @@
 import rebuild from "../common/rebuild";
 import localRequests from "../local/requestHandlers";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import LocalBackend from "../local/LocalBackend";
 import callable from "../firebase-server/src/database/callable/rebuild";
 
@@ -43,7 +43,7 @@ it("routes Local and Firebase server requests to the optional handler without ar
     const local = new LocalBackend({storageId: "rebuild-routing"});
     expect(await local.request("database.rebuild", path)).toEqual({rebuilding: false});
     expect(run).toHaveBeenLastCalledWith(local);
-    const server = new FirebaseServerBackend(getDatabase);
+    const server = new FirebaseBackendServer(getDatabase);
     expect(await server.request("database.rebuild", path)).toEqual({rebuilding: false});
     expect(run).toHaveBeenLastCalledWith(server);
     expect(run).toHaveBeenCalledTimes(2);
@@ -52,7 +52,7 @@ it("routes Local and Firebase server requests to the optional handler without ar
 it("rejects extra options and paths without a rebuild method", async () => {
     const backend = {};
     expect(() => localRequests["database.rebuild"]({args: [path, {}], backend})).toThrow("Expected (path).");
-    await expect(new FirebaseServerBackend(getDatabase).request("database.rebuild", path, {}))
+    await expect(new FirebaseBackendServer(getDatabase).request("database.rebuild", path, {}))
         .rejects.toMatchObject({code: "database/invalid-argument"});
     expect(() => rebuild(backend, ["posts", "post_id"])).toThrow();
     expect(() => rebuild(backend, ["activity", "different_id"])).toThrow();

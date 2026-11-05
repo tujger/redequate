@@ -1,11 +1,11 @@
 vi.mock("../firebase-server/src/common/firebase", () => ({database: {}, messaging: {}}));
 
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import backend from "../firebase-server/src/backend";
 import onCall from "../firebase-server/src/common/onCall";
 
 it("isolates concurrent callable users and restores context after success and failure", async () => {
-    const server = new FirebaseServerBackend();
+    const server = new FirebaseBackendServer();
     const seen = [];
     const anonymous = onCall(async () => {
         expect(await server.getCurrentUser()).toBeUndefined();
@@ -61,7 +61,7 @@ it("routes server requests with injected Admin SDK factories", async () => {
     const ref = {get: vi.fn(async () => ({val: () => value}))};
     const database = {ref: vi.fn(() => ref)};
     const increment = vi.fn(n => ({increment: n}));
-    const server = new FirebaseServerBackend(() => database, increment);
+    const server = new FirebaseBackendServer(() => database, increment);
     await expect(server.request("database.read", ["posts", {post_id: "post"}])).resolves.toBe(value);
     expect(database.ref).toHaveBeenCalledExactlyOnceWith("posts/post");
     expect(server.increment(2)).toEqual({increment: 2});

@@ -1,7 +1,7 @@
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 
 vi.mock("../common", async original => ({...await original(), handlers: {}}));
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
@@ -43,7 +43,7 @@ const setup = async provider => {
         references.push(query);
         return query;
     })};
-    return {backend: new FirebaseServerBackend(() => database), database, references};
+    return {backend: new FirebaseBackendServer(() => database), database, references};
 };
 
 for (const provider of ["local", "admin"]) describe(provider, () => {

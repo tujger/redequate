@@ -1,6 +1,6 @@
 import status from "../common/status";
 import localRequests from "../local/requestHandlers";
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import LocalBackend from "../local/LocalBackend";
 import callable from "../firebase-server/src/database/callable/status";
 
@@ -79,7 +79,7 @@ it("rejects unknown handlers, derived paths, and malformed requests before readi
 
 it("requires two paths in Local and Firebase server routing", async () => {
     expect(() => localRequests["database.status"]({args: [handler], backend: {}})).toThrow();
-    const server = new FirebaseServerBackend(getDatabase);
+    const server = new FirebaseBackendServer(getDatabase);
     await expect(server.request("database.status", handler)).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(server.request("database.status", handler, ["_activity"], "extra"))
         .rejects.toMatchObject({code: "database/invalid-argument"});

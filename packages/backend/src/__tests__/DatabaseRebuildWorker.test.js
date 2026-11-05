@@ -1,4 +1,4 @@
-import FirebaseServerBackend from "../firebase-server/src/FirebaseServerBackend";
+import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import {runRebuildTask} from "../firebase-server/src/database/rebuildWorker";
 
 const {enqueue, portion} = vi.hoisted(() => ({enqueue: vi.fn(), portion: vi.fn()}));
@@ -25,7 +25,7 @@ it("waits for durable enqueue before resolving the server request", async () => 
     let release;
     enqueue.mockImplementation(() => new Promise(resolve => { release = resolve; }));
     portion.mockResolvedValue({status: state, conflict: false});
-    const request = new FirebaseServerBackend(() => ({})).request("database.rebuild", path);
+    const request = new FirebaseBackendServer(() => ({})).request("database.rebuild", path);
     let settled = false;
     request.then(() => { settled = true; });
     await vi.waitFor(() => expect(enqueue).toHaveBeenCalledOnce());
@@ -60,6 +60,6 @@ it("stops on an unrelated CAS conflict and does not queue another task", async (
 
 it("does not enqueue after completion in the first portion", async () => {
     portion.mockResolvedValue({status: {rebuilding: false}, conflict: false});
-    expect(await new FirebaseServerBackend(() => ({})).request("database.rebuild", path)).toEqual({rebuilding: false});
+    expect(await new FirebaseBackendServer(() => ({})).request("database.rebuild", path)).toEqual({rebuilding: false});
     expect(enqueue).not.toHaveBeenCalled();
 });
