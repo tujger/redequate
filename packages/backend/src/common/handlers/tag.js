@@ -37,5 +37,21 @@ export default class ExtraListener extends BackendListener {
 
     async onUpdate({params, value, previous}) {
         console.debug("[Backend:Tag]", `updated [${params.tag_id}]`, {params, previous, value});
+
+        const previousOwner = previous?.uid;
+        const valueOwner = value?.uid;
+
+        if (valueOwner !== previousOwner) {
+            await createActivity(this.backend, {
+                type: "tag.change.owner",
+                details: {
+                    id: value.id,
+                    uid: {
+                        new: valueOwner,
+                        old: previousOwner
+                    }
+                },
+            });
+        }
     }
 }
