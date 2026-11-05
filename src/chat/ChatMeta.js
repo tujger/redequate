@@ -57,7 +57,7 @@ export default function ChatMeta(database) {
         fetch: async (id) => {
             _id = _id || id;
             if (!_meta) {
-                const value = await database.read(["chats", {chat_id: _id}, {"!meta": "!meta"}])
+                const value = await database.read(["chats", {chat_id: _id}, {message_id: "!meta"}])
                 if (value !== undefined) {
                     _persisted = true;
                     _meta = value;
@@ -97,7 +97,7 @@ export default function ChatMeta(database) {
         },
         fetchFor: async (currentUid, oppositeUid) => {
             let chats = [];
-            const value = await database.read(["chats", {chat_id: oppositeUid}, {"!meta": "!meta"}]);
+            const value = await database.read(["chats", {chat_id: oppositeUid}, {message_id: "!meta"}]);
             if (value !== undefined) {
                 chats.push({key: oppositeUid, meta: value, persisted: true});
             }
@@ -108,7 +108,7 @@ export default function ChatMeta(database) {
                 }).next(10);
                 for (let i = chats.length - 1; i >= 0; i--) {
                     let chat = chats[i];
-                    chat.meta = await database.read(["chats", {chat_id: chat.key}, {"!meta": "!meta"}]);
+                    chat.meta = await database.read(["chats", {chat_id: chat.key}, {message_id: "!meta"}]);
                     chat.redirect = true;
                     if (chat.meta && chat.meta.members) {
                         let remove = false;
@@ -190,7 +190,7 @@ export default function ChatMeta(database) {
         },
         removeUid: async uid => {
             const updates = new Map();
-// updates.set(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], null);
+// updates.set(["chats", {chat_id: _id}, {message_id"!meta"}, "members", {user_id: uid}], null);
             updates.set(["_chats", {user_id: uid}, {chat_id: _id}], null);
             delete _meta.members[uid];
             if (_activeUids.indexOf(uid) >= 0) _activeUids.splice(_activeUids.indexOf(uid), 1);
@@ -214,7 +214,7 @@ export default function ChatMeta(database) {
             const updatesMeta = new Map();
             if (!_persisted) {
                 try {
-                    updatesMeta.set(["chats", {chat_id: _id}, "!meta", "members"], _meta.members);
+                    updatesMeta.set(["chats", {chat_id: _id}, {message_id: "!meta"}, "members"], _meta.members);
                     _activeUids = Object.keys(_meta.members || {});
                     console.log("META", _id, updatesMeta);
                     await database.update(updatesMeta);
@@ -230,7 +230,7 @@ export default function ChatMeta(database) {
                 }
             }
 
-            await database.update(["chats", {chat_id: _id}, "!meta", "timestamp"], () => database.TIMESTAMP);
+            await database.update(["chats", {chat_id: _id}, {message_id: "!meta"}, "timestamp"], () => database.TIMESTAMP);
 
             const updatesIndex = new Map();
             await _body.forEachUid(async uid => {
@@ -255,7 +255,7 @@ export default function ChatMeta(database) {
             console.log(`[ChatMeta] update visit for ${_id}`);
             if (!_persisted) return;
             if (!_activeUids.includes(uid)) return;
-            return database.update(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], () => database.TIMESTAMP);
+            return database.update(["chats", {chat_id: _id}, {message_id: "!meta"}, "members", {user_id: uid}], () => database.TIMESTAMP);
         },
         watch: onChange => {
             const watchListener = ({value}) => {
@@ -278,7 +278,7 @@ export default function ChatMeta(database) {
                 onChildAdd: watchListener,
                 orderBy: "created"
             });
-            _visitRef = database.addEventListener(["chats", {chat_id: _id}, "!meta", {members: "members"}], {
+            _visitRef = database.addEventListener(["chats", {chat_id: _id}, {message_id: "!meta"}, {members: "members"}], {
                 onChildChange: visitListener,
                 onChildRemove: removeListener
             })
@@ -299,7 +299,7 @@ export default function ChatMeta(database) {
                     onChange({online: false, timestamp});
                 }
             }
-            _onlineRef = database.addEventListener(["chats", {chat_id: _id}, "!meta", "members", {user_id: uid}], {
+            _onlineRef = database.addEventListener(["chats", {chat_id: _id}, {message_id: "!meta"}, "members", {user_id: uid}], {
                 onChange: onlineListener
             });
         },
