@@ -268,6 +268,32 @@ export const readStoreMatches = async (store, {path, variables, params}) => {
         const value = await readStore(store, path);
         return value === undefined || value === null ? [] : [{path, params, value}];
     }
+    if (!store.indexNames.length) {
+        const document = recordValue(store, await singleton(store));
+        const matches = [];
+        const visit = (value, index, concrete, bindings) => {
+            if (value === undefined || value === null) return;
+            if (index === path.length) {
+                matches.push({path: concrete, params: bindings, value});
+                return;
+            }
+            if (typeof value !== "object") return;
+            const variable = variables.find(variable => variable.index === index);
+            if (variable) {
+                for (const key of Object.keys(value)) {
+                    const nextBindings = {...bindings};
+                    set(nextBindings, variable.parameter, key);
+                    visit(value[key], index + 1, [...concrete, {[variable.field]: key}], nextBindings);
+                }
+            } else {
+                const segment = path[index];
+                const key = typeof segment === "string" ? segment : segment[Object.keys(segment)[0]];
+                if (Object.hasOwn(value, key)) visit(value[key], index + 1, [...concrete, segment], bindings);
+            }
+        };
+        visit(document, 1, [path[0]], params);
+        return matches;
+    }
     const indexed = new Set(indexes(store).flatMap(({fields}) => fields));
     indexed.add("_id");
     for (const {field} of variables) {
