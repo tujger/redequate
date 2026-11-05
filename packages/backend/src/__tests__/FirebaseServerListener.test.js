@@ -14,7 +14,7 @@ const types = [
     ["update", "onUpdate", "updated", {text: "before"}, {text: "after"}],
 ];
 const payload = (type, before, after, params = {extra_id: "e1"}) => type === "update"
-    ? {value: after, previous: before, params} : {value: type === "delete" ? before : after, params};
+    ? {value: after, previous: before, params, currentUser: undefined} : {value: type === "delete" ? before : after, params, currentUser: undefined};
 
 it.each([
     ["/posts//p1/", "posts/p1"],
@@ -124,8 +124,8 @@ it("keeps Firebase listener contexts isolated between registrations", async () =
     const first = new ContextListener(firstBackend), second = new ContextListener(secondBackend);
     await listener(first).onCreate.run(event("create", null, {id: "one"}));
     await listener(second).onCreate.run(event("create", null, {id: "two"}));
-    expect(first.seen).toEqual([{backend: firstBackend, props: {value: {id: "one"}, params: {extra_id: "e1"}}}]);
-    expect(second.seen).toEqual([{backend: secondBackend, props: {value: {id: "two"}, params: {extra_id: "e1"}}}]);
+    expect(first.seen).toEqual([{backend: firstBackend, props: {value: {id: "one"}, params: {extra_id: "e1"}, currentUser: undefined}}]);
+    expect(second.seen).toEqual([{backend: secondBackend, props: {value: {id: "two"}, params: {extra_id: "e1"}, currentUser: undefined}}]);
 });
 
 
@@ -141,5 +141,5 @@ it("includes fixed named parameters alongside captured Firebase parameters", asy
     const callback = vi.fn();
     const triggers = listener({path: ["alerts", {user_id: "u1"}, "alert_id"], onCreate: callback});
     await triggers.onCreate.run(event("create", null, {new: true}, {alert_id: "a1"}));
-    expect(callback).toHaveBeenCalledExactlyOnceWith({value: {new: true}, params: {user_id: "u1", alert_id: "a1"}});
+    expect(callback).toHaveBeenCalledExactlyOnceWith({value: {new: true}, params: {user_id: "u1", alert_id: "a1"}, currentUser: undefined});
 });

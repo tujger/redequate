@@ -642,11 +642,11 @@ migrated or deleted; the new default keys start with fresh local state.
 ### Auth contract
 
 `AuthBase`, exported from `redequate/auth`, supplies shared profile persistence
-and model construction. Its operation supermethods check arguments; implementations
-then load profiles and deliver auth-state updates using common utilities.
-`AuthImplementation` in the same TypeScript file describes the async provider
-contract; validation-only supermethods return void. Operations with no shared
-validation or implementation retain `Not implemented` defaults. Email
+and model construction. Its async validation supermethods resolve without a value
+on success and reject on invalid arguments. Providers await `super.method(...)`
+before accessing their SDK or storage, then return the operation result.
+Operations without shared validation retain asynchronous `Not implemented` defaults.
+The contract is declared directly in AuthBase without a separate interface. Email
 normalization and password policies remain provider-specific; Firebase SDK errors
 pass through unchanged. Argument shape failures use `auth/invalid-argument`.
 The current
