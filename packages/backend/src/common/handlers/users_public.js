@@ -16,7 +16,7 @@ export default class UserListener extends BackendListener {
         await createActivity(this.backend, {
             type: "user.delete",
             details: {
-                uid: params.user_id || null,
+                uid: params.user_id ?? null,
                 public: value,
             },
         });

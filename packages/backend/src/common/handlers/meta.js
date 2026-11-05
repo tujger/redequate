@@ -1,7 +1,7 @@
 import BackendListener from "../BackendListener";
 import {createActivity} from "./activity";
 
-export default class ExampleListener extends BackendListener {
+export default class MetaListener extends BackendListener {
     constructor(backend) {
         super(["meta", "setting"], backend);
     }
@@ -13,7 +13,7 @@ export default class ExampleListener extends BackendListener {
             await createActivity(this.backend, {
                 type: "settings.maintenance",
                 details: {
-                    message: value.message || null,
+                    message: value.message ?? null,
                     state: "on",
                 },
             });
@@ -27,7 +27,7 @@ export default class ExampleListener extends BackendListener {
             await createActivity(this.backend, {
                 type: "settings.maintenance",
                 details: {
-                    message: value.message || null,
+                    message: value.message ?? null,
                     state: "off",
                 },
             });

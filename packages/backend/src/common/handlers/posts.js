@@ -129,7 +129,7 @@ export default class PostListener extends BackendListener {
         await createActivity(this.backend, {
             type: "post.update",
             details: {
-                path: `${value.root ? value.root + "/" : ""}${value.to ? value.to + "/" : ""}${params.post_id}` || null,
+                path: `${value.root ? value.root + "/" : ""}${value.to ? value.to + "/" : ""}${params.post_id}` ?? null,
                 postId: params.post_id,
                 uid: value.uid,
             },
