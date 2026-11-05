@@ -25,7 +25,7 @@ async function uploadComponentDelete(deleteFile, storage) {
     }
 }
 
-export function uploadComponentPublish({files, name, metadata, onprogress, deleteFile, storage}) {
+export function uploadComponentPublish({files, name, metadata, onprogress, deleteFile, storage, uid}) {
     return new Promise((resolve, reject) => {
         if (!files) {
             resolve();
@@ -34,7 +34,7 @@ export function uploadComponentPublish({files, name, metadata, onprogress, delet
 
         const promises = Object.keys(files).map(key => {
             const importVariables = async () => {
-                return {deleteFile, files, key, metadata, name, onprogress};
+                return {deleteFile, files, key, metadata, name, onprogress, uid};
             }
             const extractItem = async props => {
                 const {files, key} = props;
@@ -67,12 +67,13 @@ export function uploadComponentPublish({files, name, metadata, onprogress, delet
                 return props;
             }
             const publishBlob = async props => {
-                const {blob, onprogress, name} = props;
+                const {blob, onprogress, name, uid} = props;
                 const result = await storage.upload({
                     name,
                     blob,
                     metadata,
-                    onProgress: onprogress
+                    onProgress: onprogress,
+                    uid
                 })
                 return {...props, ...result}
             }
