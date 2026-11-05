@@ -53,7 +53,7 @@ const parseNotificationsResults = async (backend, devices, results) => {
     console.info("[Backend:Notification] TOREMOVE", toRemove);
 }
 
-export function send(payload) {
+export default function sendNotification(payload) {
     const {data, ...rest} = payload;
     const updated = {
         icon: this.projectUrl + "/logo-192.png",
