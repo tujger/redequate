@@ -67,3 +67,13 @@ it("routes server requests with injected Admin SDK factories", async () => {
     expect(server.increment(2)).toEqual({increment: 2});
     await expect(server.request("unknown.operation")).rejects.toMatchObject({code: "backend/not-implemented"});
 });
+
+it("forwards callable response arguments and preserves return values", async () => {
+    const response = {};
+    const endpoint = onCall((request, actualResponse) => {
+        expect(actualResponse).toBe(response);
+        return request.data;
+    });
+    expect(await endpoint.run({data: "value", auth: {uid: "caller"}}, response)).toBe("value");
+    expect(await backend.getCurrentUser()).toBeUndefined();
+});

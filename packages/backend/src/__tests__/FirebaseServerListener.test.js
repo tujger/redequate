@@ -1,3 +1,5 @@
+vi.mock("../firebase-server/src/common/firebase", () => ({database: {}, messaging: {}}));
+
 import listener from "../firebase-server/src/database/onEvents";
 import {oncreate, ondelete, onupdate} from "../firebase-server/src/database";
 import {alerts as AlertListener, extra as ExtraListener, posts as PostListener} from "../common/handlers";
@@ -14,7 +16,7 @@ const types = [
     ["update", "onUpdate", "updated", {text: "before"}, {text: "after"}],
 ];
 const payload = (type, before, after, params = {extra_id: "e1"}) => type === "update"
-    ? {value: after, previous: before, params, currentUser: undefined} : {value: type === "delete" ? before : after, params, currentUser: undefined};
+    ? {value: after, previous: before, params} : {value: type === "delete" ? before : after, params};
 
 it.each([
     ["/posts//p1/", "posts/p1"],
@@ -71,9 +73,9 @@ it.each(types)("keeps the listener instance as this for %s", async (type, name, 
 });
 
 it("exports the supported production trigger groups", () => {
-    expect(Object.keys(oncreate)).toEqual(["activity", "alerts", "chats", "extra", "mutual", "mutualrequests", "mutualstamps", "posts", "tag", "users_public"]);
-    expect(Object.keys(ondelete)).toEqual(["activity", "chats", "extra", "mutual", "mutualrequests", "mutualstamps", "posts", "tag", "users_public"]);
-    expect(Object.keys(onupdate)).toEqual(["activity", "chats", "mutual", "mutualrequests", "mutualstamps", "posts", "tag", "users_public"]);
+    expect(Object.keys(oncreate)).toEqual(["activity", "alerts", "chats", "extra", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "tag", "users_public"]);
+    expect(Object.keys(ondelete)).toEqual(["activity", "chats", "extra", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "tag", "users_public"]);
+    expect(Object.keys(onupdate)).toEqual(["activity", "chats", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "tag", "users_public"]);
 });
 
 it.each(types.filter(([type]) => type !== "update"))("runs the extra %s behavior", async (type, name, suffix, before, after) => {
@@ -90,7 +92,7 @@ it.each(types.filter(([type]) => type !== "update"))("runs the extra %s behavior
 });
 
 it.each(types)("runs the post %s counters in order", async (type, name) => {
-    const backend = {request: vi.fn(async (name, path, value, options) => name === "database.read" ? value?.shallow ? [] : null
+    const backend = {getCurrentUser: vi.fn().mockResolvedValue(undefined), request: vi.fn(async (name, path, value, options) => name === "database.read" ? value?.shallow ? [] : null
         : options?.mode === "read" ? {value: 1, etag: "initial"} : {committed: true, value})};
     const value = {uid: "u"};
     await new PostListener(backend)[name](payload(type, value, value, {post_id: "p"}));
@@ -124,8 +126,8 @@ it("keeps Firebase listener contexts isolated between registrations", async () =
     const first = new ContextListener(firstBackend), second = new ContextListener(secondBackend);
     await listener(first).onCreate.run(event("create", null, {id: "one"}));
     await listener(second).onCreate.run(event("create", null, {id: "two"}));
-    expect(first.seen).toEqual([{backend: firstBackend, props: {value: {id: "one"}, params: {extra_id: "e1"}, currentUser: undefined}}]);
-    expect(second.seen).toEqual([{backend: secondBackend, props: {value: {id: "two"}, params: {extra_id: "e1"}, currentUser: undefined}}]);
+    expect(first.seen).toEqual([{backend: firstBackend, props: {value: {id: "one"}, params: {extra_id: "e1"}}}]);
+    expect(second.seen).toEqual([{backend: secondBackend, props: {value: {id: "two"}, params: {extra_id: "e1"}}}]);
 });
 
 
@@ -141,5 +143,5 @@ it("includes fixed named parameters alongside captured Firebase parameters", asy
     const callback = vi.fn();
     const triggers = listener({path: ["alerts", {user_id: "u1"}, "alert_id"], onCreate: callback});
     await triggers.onCreate.run(event("create", null, {new: true}, {alert_id: "a1"}));
-    expect(callback).toHaveBeenCalledExactlyOnceWith({value: {new: true}, params: {user_id: "u1", alert_id: "a1"}, currentUser: undefined});
+    expect(callback).toHaveBeenCalledExactlyOnceWith({value: {new: true}, params: {user_id: "u1", alert_id: "a1"}});
 });

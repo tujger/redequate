@@ -1086,9 +1086,9 @@ Provider dependencies are linked through synchronous setters after Dispatcher re
 Backend, Database, Auth and Storage, before any authentication restoration or reads.
 Preconstructed Firebase providers need only `{firebase}`; legacy constructor injection
 remains supported. Backend.getCurrentUser() resolves the linked Auth identity for
-Local. Firebase Server overrides it with AsyncLocalStorage scoped to callable
-invocations; standalone RTDB triggers have no user context and return undefined.
-The callable context does not propagate across separately delivered RTDB events.
+Local. Firebase Server overrides it with AsyncLocalStorage scoped to each callable
+or RTDB invocation. RTDB identity comes from that event's native auth fields;
+callable context does not propagate across separately delivered RTDB events.
 
 Provider references in base classes use protected `_name` fields and public
 setters. Backend exposes its existing storage read access through a getter;
@@ -1100,41 +1100,34 @@ an Auth object or UID string. Missing Auth yields storage/auth-required, and a
 missing authenticated identity yields storage/unauthenticated. Tag uploads now
 use the current user namespace instead of an explicitly supplied .main UID.
 
-The Firebase RTDB adapter forwards optional currentUser (UID) in handler events,
-using documented DatabaseEvent.authId only when authType is app_user. Admin,
-unauthenticated, unknown and missing identity events carry undefined. No profile
-lookup or callable-to-trigger process context is used for this identity.
+The Firebase RTDB adapter exposes native event identity through
+backend.getCurrentUser(), keeping listener payloads unchanged. Production events
+without authId resolve to undefined. The emulator-only record-owner fallback is
+described below. No callable-to-trigger context propagation is used.
 
 
-### Firebase create actor context
+### Server current-user context
 
-Callable `database.create` adds `_context: {actorUid: request.auth.uid}` only at
-registered create-listener paths. `_context` is reserved: caller-supplied fields
-are rejected, and unauthenticated creates remain unstamped. Writes still use the
-caller's REST token and absence-only conditional PUT; Rules remain authoritative.
-The context physically persists in RTDB and is visible to ordinary database reads.
+`FirebaseServerBackend.getCurrentUser()` asynchronously returns the user of the
+current server invocation, using server-only `AsyncLocalStorage`. Framework
+callables use the shared `common/onCall` wrapper, which scopes `request.auth.uid`
+and preserves callable options and callback arguments. RTDB listener adapters
+scope native `event.authId` for create/update/delete.
+Their existing `{value, params}` and `{value, previous, params}` payloads remain
+unchanged. Async server calls within a handler inherit its user context.
 
-Base Rules validate optional context at all registered record paths, including
-chat `!meta`: the initial actor must equal `auth.uid`, must be a string, and no
-additional context keys are allowed. Existing actor fields may remain unchanged
-on later authorized writes, so preserving context does not forbid another user
-from editing a record. Missing context remains allowed for existing SDK clients.
-Deploy these Rules before enabling the handler fallback; applications overriding
-them must retain equivalent validation. No Rules or Functions deployment is part
-of this change.
+Each invocation, including one without an identity, creates its own scope.
+Concurrent users do not share a mutable user field; nested scopes restore their
+parent and failures do not leak identity. Outside an invocation, or when no
+identity is available, the server returns `undefined` rather than consulting an
+injected client Auth. Local/client backends keep their Auth provider behavior. `createActivity` uses this method and records uid 0 when there
+is no application-user identity.
 
-The v2 listener adapter uses native `app_user` identity first. On create only,
-`authType: unknown` may fall back to the validated actor at registered paths; it
-never treats the record's domain `uid` as the actor. Explicit admin and
-unauthenticated events do not use metadata. The adapter passes optional
-`currentUser` beside `value` and `params`, removes `_context` from handler values
-and previous values without mutating snapshots, and never reuses the creator for
-unknown update/delete actors. Native identity is still supported for those events.
-Direct SDK creates without metadata continue to work but have no actor when the
-emulator omits auth context. SDK writes with metadata are constrained by the same
-Rules as callable writes. Trusted Admin writes bypass Rules and must not forge
-actor metadata; an unknown emulator event cannot distinguish their provenance.
-
-Only RTDB triggers dispatch domain handlers; the callable does not dispatch them
-again. There is no exactly-once delivery promise beyond Firebase's existing
-trigger semantics. Emulator binaries and production transport remain unchanged.
+The context does not cross REST writes into separately delivered RTDB events.
+Production events must supply their own native auth fields. For local testing
+only (`FUNCTIONS_EMULATOR === "true"`), an absent native authId falls back to a
+nonempty string uid from the record: the created/deleted snapshot, or the after
+snapshot for updates. This substitutes the record owner, not the actual actor.
+Native authId always takes precedence; no Rules or stored data changes are
+needed. External callable endpoints must use the wrapper to receive this implicit
+backend context.
