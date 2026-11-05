@@ -27,7 +27,6 @@ import Switch from "../../controls/Switch/Switch";
 import Tabs from "../../controls/Tabs/Tabs";
 import TextField from "../../controls/TextField/TextField";
 import baseStyles from "../../themes/Base.module.css";
-import {updateActivity} from "./audit/auditReducer";
 import styles from "./styles/Settings.module.css";
 
 export default ({uploadable}) => {
@@ -119,15 +118,6 @@ export default ({uploadable}) => {
             .then(() => database.read(["meta", "maintenance"]))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
-            .then(() => updateActivity({
-                database,
-                uid: currentUserData.id,
-                type: "Maintenance",
-                details: {
-                    message: message || null,
-                    state: value ? "on" : "off",
-                }
-            }))
             .catch(notifySnackbar)
             .finally(finallyCallback)
     }
@@ -232,16 +222,6 @@ export default ({uploadable}) => {
             console.log(updates);
             return database.update(updates);
         }
-        const updateServiceActivity = async () => {
-            if (Object.keys(details).length > 0) {
-                updateActivity({
-                    database,
-                    uid: currentUserData.id,
-                    type: "Settings updated",
-                    details
-                });
-            }
-        }
         const notifyAboutSaved = async () => {
             notifySnackbar("Saved");
         }
@@ -263,7 +243,6 @@ export default ({uploadable}) => {
             .then(addPreferenceUploads)
             .then(publish)
             .then(notifyAboutSaved)
-            .then(updateServiceActivity)
             .catch(notifySnackbar)
             .finally(finalizeSaving);
     }
