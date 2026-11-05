@@ -8,7 +8,7 @@ import cursor from "./database/admin/cursor";
 import deleteRecord from "./database/admin/delete";
 import read from "./database/admin/read";
 import update from "./database/admin/update";
-import FirebaseServerStorage from "./FirebaseServerStorage";
+import FirebaseStorageServer from "./FirebaseStorageServer";
 import {send} from "./notification/send";
 import userContext from "./common/userContext";
 
@@ -21,7 +21,7 @@ const requests = {
     "notification.send": send,
 };
 
-export default class FirebaseServerBackend extends BackendBase {
+export default class FirebaseBackendServer extends BackendBase {
     readonly getDatabaseInstance: typeof getDatabase;
     readonly getMessagingInstance: typeof getMessaging;
     readonly createIncrement: typeof ServerValue.increment;
@@ -35,7 +35,7 @@ export default class FirebaseServerBackend extends BackendBase {
         } = {},
     ) {
         super(options);
-        this.setStorage(new FirebaseServerStorage(options.getStorageInstance));
+        this.setStorage(new FirebaseStorageServer(options.getStorageInstance));
         this.getMessagingInstance = options.getMessagingInstance ?? getMessaging;
         this.getDatabaseInstance = getDatabaseInstance;
         this.createIncrement = createIncrement;
