@@ -8,7 +8,7 @@ import del from "rollup-plugin-delete";
 import json from "@rollup/plugin-json";
 
 const source = path => fileURLToPath(new URL(path, import.meta.url));
-const sharedModules = [source("../common/index.js"), source("../storage/src/StorageBase.js")];
+const sharedModules = [source("../common/index.js"), source("../storage/src/StorageBase.ts")];
 const sharedSources = [source("../common/src/"), source("../database/src/"), source("../backend/src/common/")];
 const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
     .filter(entry => entry.isDirectory() && entry.name.endsWith("-server"))
@@ -91,7 +91,7 @@ const createBuild = ({input, output, sources, clean = [output]}, dependencies) =
             babelrc: false,
             configFile: false,
             extensions: [".ts", ".tsx"],
-            include: sources.map(directory => `${directory}**/*.{ts,tsx}`),
+            include: [...sources.map(directory => `${directory}**/*.{ts,tsx}`), ...sharedModules],
             presets: ["@babel/preset-react", ["@babel/preset-typescript", {allowDeclareFields: true}]],
         }),
         json(),
