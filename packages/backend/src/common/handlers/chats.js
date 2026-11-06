@@ -18,12 +18,17 @@ export default class ChatListener extends BackendListener {
             type: "chat",
         };
 
-        const members = await this.backend.request("database.read", ["chats", {chat_id: params.chat_id}, "!meta", "members"]);
-
+        const members = await this.backend.request("database.read", ["chats", {chat_id: params.chat_id}, {message_id: "!meta"}, "members"]);
+console.log("MEMPERS", members);
         if (!Object.keys(members?.members || {}).length) {
             fail("database/invalid-argument", "Expected members in the chat.");
         }
-        await this.backend.request("notification.send", {userId: uid, data}, {});
+        for (const userId of Object.keys(members?.members)) {
+            if (userId === uid) continue;
+            const active = await this.backend.request("database.read", ["_chats", {user_id: userId}, {chat_id: params.chat_id}]);
+            if (active == null) continue;
+            await this.backend.request("notification.send", {userId, data});
+        }
     }
 
     async onDelete({params, value}) {
