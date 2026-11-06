@@ -1,3 +1,4 @@
+import {key as generateKey} from "firebase-key";
 import {fail, notImplemented} from "../../../../common";
 import parsePath from "../parsePath";
 
@@ -11,7 +12,18 @@ export default async function createRecord(backend, path, value, implementation)
     const fieldName = typeof last === "string" ? last : parsed.segments.at(-1).name;
     const suppliedKey = typeof last === "string" ? undefined : last[fieldName];
     const recordKey = suppliedKey ?? key;
-    const preparedValue = value instanceof Function ? value(recordKey) : value;
+    let preparedPath = recordKey === undefined ? path : [...parentPath, {[fieldName]: recordKey}];
+    let preparedValue = value;
+    if (value instanceof Function) {
+        const keys = [];
+        preparedPath = parsed.path.map((segment, index) => {
+            if (!index || typeof segment !== "string") return segment;
+            const generatedKey = index === parsed.path.length - 1 ? recordKey : generateKey();
+            keys.push(generatedKey);
+            return {[segment]: generatedKey};
+        });
+        preparedValue = value(...(keys.length ? keys : [recordKey]));
+    }
     if (preparedValue?.then instanceof Function) {
         Promise.resolve(preparedValue).catch(() => {});
         fail("database/invalid-argument", "create callback must be synchronous.");
@@ -19,7 +31,6 @@ export default async function createRecord(backend, path, value, implementation)
     if (preparedValue === null || typeof preparedValue !== "object" || Array.isArray(preparedValue)) {
         fail("database/invalid-argument", "value must be a record object.");
     }
-    const preparedPath = recordKey === undefined ? path : [...parentPath, {[fieldName]: recordKey}];
     try {
         return await backend.request("database.create", preparedPath, preparedValue);
     } catch (error) {
