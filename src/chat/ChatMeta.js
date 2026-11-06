@@ -151,14 +151,15 @@ export default function ChatMeta(database) {
                         redirect: true,
                         meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
                     }
-                    await database.create(["chats", "chat_id", "message_id"], key => ({
-                        key,
-                        ...payload
-                    })).then(key => {
+                    await database.create(["chats", "chat_id", "message_id"], key => {
                         chats.push({
                             key,
                             ...payload
-                        })
+                        });
+                        return ({
+                            key,
+                            ...payload
+                        });
                     });
                 }
             }
