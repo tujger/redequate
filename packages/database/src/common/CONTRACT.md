@@ -54,7 +54,8 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   field; `equalTo` without `orderBy` selects child values; otherwise range bounds
   select child keys. `order` is `asc` or `desc`; `equalTo` excludes `start`/`end`.
 - `create(path, valueOrCallback)` creates only when absent and returns
-  the permanent string key; its synchronous callback receives that string. Its path
+  the permanent final string key;
+  its synchronous callback receives generated keys in path order, once before insertion. Its path
   uses `DatabasePath`, with a collection path followed by a key field name or
   a named string ID segment; create validates that shape at runtime. There is
   no create options argument. The
@@ -320,3 +321,12 @@ current user's ID token. Admin reads use credential OAuth tokens, or emulator-on
 owner authorization on the configured emulator endpoint. Database namespaces are
 preserved when routing to emulators. Local enumerates distinct indexed identity
 keys; reads inside a native stored object return that object's own keys.
+
+
+For create calls with a callback, intermediate bare path segments generate IDs
+through firebase-key; the final key remains prepared by the provider as before.
+The callback receives only generated IDs as positional arguments, in path order.
+Named segments remain fixed. If all keys are supplied, the callback receives the
+final key. It runs once before the backend request; its synchronous object result
+and the concrete path are sent to the backend. Ordinary object values and direct
+backend calls retain their existing behavior. Return values remain the final key string.
