@@ -8,12 +8,18 @@ import {captureWrites, publishWrites} from "../writeEvents";
 
 export {validateCollectionPath};
 
-const invalid = message => fail("database/invalid-argument", message);
+const invalid = (message, data) => fail("database/invalid-argument", message, data);
 const isRecord = value => value !== null && typeof value === "object" && !Array.isArray(value);
 const set = (object, name, value) => Object.defineProperty(object, name,
     {value, enumerable: true, writable: true, configurable: true});
-const at = (object, names) => names.reduce((value, name) => value !== null && typeof value === "object" &&
-Object.hasOwn(value, name) ? value[name] : undefined, object);
+
+const at = (object, names) => {
+    return names.reduce((value, name) => {
+        return value !== null && typeof value === "object" && Object.hasOwn(value, name)
+            ? value[name]
+            : undefined;
+    }, object);
+};
 const parts = name => name.split(".");
 const assign = (object, names, value, remove = false) => {
     let node = object;
@@ -100,8 +106,14 @@ const address = (store, rawPath) => {
     const segments = path.slice(1);
     if (!store.indexNames.length) {
         return {
-            conditions: {}, property: segments.map(segment => typeof segment === "string" ? segment :
-                segment[Object.keys(segment)[0]]), single: true, singleton: true
+            conditions: {},
+            property: segments.map(segment => {
+                return typeof segment === "string"
+                    ? segment
+                    : segment[Object.keys(segment)[0]];
+            }),
+            single: true,
+            singleton: true
         };
     }
     const conditions = {};
@@ -143,9 +155,15 @@ const address = (store, rawPath) => {
 };
 
 const queryRows = async (store, conditions, options = {}) => {
-    const field = options.orderBy === undefined ? undefined : (typeof options.orderBy === "string"
-        ? options.orderBy : options.orderBy.map(segment => typeof segment === "string" ? segment :
-            segment[Object.keys(segment)[0]]).join("/")).replaceAll("/", ".");
+    const field = options.orderBy === undefined
+        ? undefined
+        : (typeof options.orderBy === "string"
+            ? options.orderBy
+            : options.orderBy.map(segment => {
+                return typeof segment === "string"
+                    ? segment
+                    : segment[Object.keys(segment)[0]];
+            }).join("/")).replaceAll("/", ".");
     const bounded = options.equalTo !== undefined || options.start !== undefined || options.end !== undefined;
     if (field && bounded) {
         const source = indexes(store).find(({fields}) => {
@@ -162,15 +180,22 @@ const queryRows = async (store, conditions, options = {}) => {
         if (options.equalTo !== undefined) {
             if (!valid(options.equalTo)) return [];
             const key = bound(options.equalTo);
-            range = position === fields.length - 1 ? IDBKeyRange.only(key)
+            range = position === fields.length - 1
+                ? IDBKeyRange.only(key)
                 : IDBKeyRange.bound(key, [...key, []], false, true);
         } else {
             const lower = options.start === undefined ? (prefix.length ? prefix : undefined) : bound(options.start);
-            const upper = options.end === undefined ? (prefix.length ? [...prefix, []] : undefined)
-                : position === fields.length - 1 ? bound(options.end) : [...bound(options.end), []];
+            const upper = options.end === undefined
+                ? (prefix.length ? [...prefix, []] : undefined)
+                : position === fields.length - 1
+                    ? bound(options.end)
+                    : [...bound(options.end), []];
             if ([options.start, options.end].some(value => value !== undefined && !valid(value))) invalid("Native range bounds must be strings or finite numbers.");
-            range = lower === undefined ? IDBKeyRange.upperBound(upper)
-                : upper === undefined ? IDBKeyRange.lowerBound(lower) : IDBKeyRange.bound(lower, upper);
+            range = lower === undefined
+                ? IDBKeyRange.upperBound(upper)
+                : upper === undefined
+                    ? IDBKeyRange.lowerBound(lower)
+                    : IDBKeyRange.bound(lower, upper);
         }
         const rows = await requestResult(index.getAll(range));
         return [...new Map(rows.map(row => [row._id, row])).values()]
@@ -191,7 +216,8 @@ const queryRows = async (store, conditions, options = {}) => {
     const {index, fields, count} = candidates[0];
     const values = fields.slice(0, count).map(field => conditions[field]);
     const key = Array.isArray(index.keyPath) ? values : values[0];
-    const range = count === fields.length ? IDBKeyRange.only(key)
+    const range = count === fields.length
+        ? IDBKeyRange.only(key)
         : IDBKeyRange.bound(values, [...values, []], false, true);
     const rows = await requestResult(index.getAll(range));
     return rows.filter(row => names.every(name => Object.is(at(row, parts(name)), conditions[name])));
@@ -203,10 +229,10 @@ const singleton = async store => {
     return rows[0];
 };
 
-const identityField = (store, conditions, requested) => {
+const identityField = (store, data, conditions, requested) => {
     if (requested) {
         if (requested !== "_id" && !indexes(store).some(({fields}) => fields.includes(requested))) {
-            invalid(`No declared index for field ${requested}.`);
+            invalid(`No declared index for field ${requested}.`, {conditions, data});
         }
         return requested;
     }
@@ -225,7 +251,7 @@ const recordValue = (store, row, conditions = {}, keyField) => {
 
 const collectionValue = (store, rows, conditions, keyField) => {
     if (!rows.length) return undefined;
-    const field = identityField(store, conditions, keyField);
+    const field = identityField(store, rows, conditions, keyField);
     const result = {};
     for (const row of rows) {
         const key = at(row, parts(field));
@@ -243,8 +269,11 @@ const checkQuery = (store, options) => {
         }
         return;
     }
-    const path = typeof options.orderBy === "string" ? options.orderBy : options.orderBy.map(segment =>
-        typeof segment === "string" ? segment : segment[Object.keys(segment)[0]]).join("/");
+    const path = typeof options.orderBy === "string"
+        ? options.orderBy
+        : options.orderBy.map(segment => {
+            return typeof segment === "string" ? segment : segment[Object.keys(segment)[0]];
+        }).join("/");
     const field = path.replaceAll("/", ".");
     if (!field && store.indexNames.length) return;
     if (!indexes(store).some(({fields}) => fields.includes(field))) invalid(`No declared index for field ${path}.`);
@@ -355,7 +384,7 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
     const target = address(store, rawPath);
     if (!target.singleton && !target.single && !target.property.length && !create) {
         const rows = await queryRows(store, target.conditions);
-        const field = identityField(store, target.conditions);
+        const field = identityField(store, rows, target.conditions);
         if (value !== null && !isRecord(value)) invalid("Collection changes must be an object or null.");
         const primaryKeys = new Map(rows.map(row => [String(at(row, parts(field))), row._id]));
         if (!merge && value !== null) value = resolveValue(value, collectionValue(store, rows, target.conditions), now);
@@ -394,10 +423,12 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
         next = resolveValue(merge && isRecord(value) ? mergeValue(decoded, value) : value, decoded, now);
     }
     next = encodeRecordValue(next);
-    for (const {fields} of indexes(store)) for (const field of fields) {
-        const prior = at(previous, parts(field));
-        if (at(decoded, parts(field)) === undefined && at(next, parts(field)) === undefined && prior !== undefined) {
-            setRecordField(next, parts(field), prior);
+    for (const {fields} of indexes(store)) {
+        for (const field of fields) {
+            const prior = at(previous, parts(field));
+            if (at(decoded, parts(field)) === undefined && at(next, parts(field)) === undefined && prior !== undefined) {
+                setRecordField(next, parts(field), prior);
+            }
         }
     }
     next = withIdentity(next, target.conditions, previous);
@@ -411,13 +442,20 @@ export const assertNonOverlapping = (transaction, entries) => {
         const collection = validateCollectionPath(path)[0];
         return {collection, ...address(transaction.objectStore(collection), path)};
     });
-    for (let i = 0; i < targets.length; i++) for (let j = i + 1; j < targets.length; j++) {
-        const a = targets[i], b = targets[j];
-        if (a.collection !== b.collection) continue;
-        const conflicting = Object.keys(a.conditions).some(name => Object.hasOwn(b.conditions, name) && a.conditions[name] !== b.conditions[name]);
-        if (conflicting) continue;
-        const n = Math.min(a.property.length, b.property.length);
-        if (a.property.slice(0, n).every((name, index) => name === b.property[index])) invalid("Batch paths must not overlap.");
+    for (let i = 0; i < targets.length; i++) {
+        for (let j = i + 1; j < targets.length; j++) {
+            const a = targets[i];
+            const b = targets[j];
+            if (a.collection !== b.collection) {
+                continue;
+            }
+            const conflicting = Object.keys(a.conditions).some(name => Object.hasOwn(b.conditions, name) && a.conditions[name] !== b.conditions[name]);
+            if (conflicting) {
+                continue;
+            }
+            const n = Math.min(a.property.length, b.property.length);
+            if (a.property.slice(0, n).every((name, index) => name === b.property[index])) invalid("Batch paths must not overlap.");
+        }
     }
 };
 
@@ -425,7 +463,7 @@ export const childRecordPath = (store, path, key, keyField) => {
     const target = address(store, path);
     const base = [store.name, ...Object.entries(target.conditions).map(([name, value]) => ({[name]: String(value)})), ...target.property];
     if (target.singleton || target.single) return [...base, {[key]: key}];
-    return [...base, {[identityField(store, target.conditions, keyField)]: key}];
+    return [...base, {[identityField(store, null, target.conditions, keyField)]: key}];
 };
 
 const writeObservers = new Map();
@@ -483,11 +521,16 @@ export const readStoreKeys = async (store, path, {keyField} = {}) => {
         return value !== null && typeof value === "object" ? Object.keys(value) : [];
     }
     const nextIdentity = uniqueIndexes(store).flatMap(({fields}) => fields).find(name => !Object.hasOwn(target.conditions, name));
-    const field = keyField ?? nextIdentity ?? identityField(store, target.conditions);
+    const field = keyField ?? nextIdentity ?? identityField(store, null, target.conditions);
     const names = Object.keys(target.conditions);
     const candidates = indexes(store).map(entry => ({...entry, position: entry.fields.indexOf(field)}))
-        .filter(({fields, position}) => position >= 0 && fields.slice(0, position).every(name => Object.hasOwn(target.conditions, name)) &&
-            names.every(name => fields.slice(0, position).includes(name)))
+        .filter(({fields, position}) => {
+            return position >= 0 && fields.slice(0, position).every(name => {
+                return Object.hasOwn(target.conditions, name);
+            }) && names.every(name => {
+                return fields.slice(0, position).includes(name);
+            });
+        })
         .sort((a, b) => a.fields.length - b.fields.length);
     const source = field === "_id" && !names.length ? {index: store, fields: ["_id"], position: 0} : candidates[0];
     if (!source) invalid(`No declared index supports shallow keys for ${field}.`);
@@ -499,7 +542,10 @@ export const readStoreKeys = async (store, path, {keyField} = {}) => {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
             const cursor = request.result;
-            if (!cursor) { resolve([...keys]); return; }
+            if (!cursor) {
+                resolve([...keys]);
+                return;
+            }
             const key = Array.isArray(source.index.keyPath) ? cursor.key[source.position] : cursor.key;
             keys.add(String(key));
             cursor.continue();
