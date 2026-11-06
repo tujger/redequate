@@ -129,8 +129,8 @@ export default class DatabaseBase {
         }, registrationOptions, "addEventListener", {path});
     }
 
-    /** Atomically creates an absent record and returns its permanent key. The callback receives that key synchronously before insertion. */
-    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((key: string) => DatabaseValue), implementation?: CreateMethodOptions): Promise<string | undefined> {
+    /** Atomically creates an absent record and returns its permanent key. The synchronous callback receives generated IDs in path order, or the final key when all IDs are supplied. */
+    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((...keys: string[]) => DatabaseValue), implementation?: CreateMethodOptions): Promise<string | undefined> {
         return createRecord(this._backend, path, valueOrCallback, implementation);
     }
 
