@@ -8,8 +8,8 @@ export async function delay(providerName, method) {
     await new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-export const fail = (code, message) => {
-    throw Object.assign(new Error(message), {code});
+export const fail = (code, message, cause) => {
+    throw Object.assign(new Error(message), {code, cause});
 };
 export const notImplemented = method => {
     throw new Error(`Not implemented: ${method}`);
