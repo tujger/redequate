@@ -23,7 +23,7 @@ export {default as PlacesTextField} from "./PlacesTextField";
 export {default as PostComponent} from "./PostComponent/PostComponent";
 export {default as postItemTransform} from "./PostComponent/postItemTransform";
 export * from "./PostComponent/PostData";
-export {default as ProfileComponent} from "./ProfileComponent";
+export * from "./ProfileComponent";
 export {default as ProgressView} from "./ProgressView";
 export {default as RichSnackbarContent} from "./RichSnackbarContent";
 export {default as ServiceComponent} from "./ServiceComponent";
