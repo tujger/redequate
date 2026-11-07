@@ -5,6 +5,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
+import {userAdminFields, userPublicFields} from "../components";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
@@ -22,7 +23,6 @@ import Button from "../controls/Button/Button";
 import Switch from "../controls/Switch/Switch";
 import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
-import {adminFields, publicFields as publicFieldsDefault} from "./Profile";
 import styles from "./styles/EditProfile.module.css";
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -30,10 +30,10 @@ const isSameUser = (userData, currentUserData) => userData && currentUserData &&
 
 function EditProfile(props) {
     const {
-        adminFields: adminFieldsGiven = adminFields,
+        adminFields: adminFieldsGiven = userAdminFields,
         allowDelete = true,
         notifications = true,
-        publicFields = publicFieldsDefault,
+        publicFields = userPublicFields,
         uploadable = true,
     } = props;
     const auth = useAuth();
@@ -74,9 +74,9 @@ function EditProfile(props) {
         }
         const checkForRequiredFields = async () => {
             const requiredError = [];
-            publicFields.forEach(field => {
-                if (field && field.required && (!state[field.id] || !state[field.id].toString().trim().length)) {
-                    requiredError.push(field.id);
+            Object.entries(publicFields || {}).forEach(([id, field]) => {
+                if (field && field.required && (!state[id] || !state[id].toString().trim().length)) {
+                    requiredError.push(id);
                 }
             })
             if (requiredError.length > 0) {
@@ -93,15 +93,16 @@ function EditProfile(props) {
         }
         const checkForUniqueFields = async () => {
             const uniqueError = [];
-            for (const field of publicFields) {
+            for (const id in publicFields) {
+                const field = publicFields[id];
                 if (field.unique) {
                     const values = await database.cursor(["users_public", "user_id"], {
-                        equalTo: (state[field.id] || "").trim(),
+                        equalTo: (state[id] || "").trim(),
                         orderBy: ["name"]
                     }).next(10);
                     for (const value of (values || [])) {
                         if (value.key && value.key !== userData.id) {
-                            uniqueError.push(field.id);
+                            uniqueError.push(id);
                         }
                     }
                 }
@@ -154,9 +155,9 @@ function EditProfile(props) {
         }
         const processPublicFields = async () => {
             const additionalPublic = {};
-            publicFields.forEach(field => {
-                if (state[field.id] !== undefined) {
-                    additionalPublic[field.id] = state[field.id];
+            Object.entries(publicFields || {}).forEach(([id, field]) => {
+                if (state[id] !== undefined) {
+                    additionalPublic[id] = state[id];
                 }
             })
             userData.set({
@@ -316,7 +317,7 @@ function EditProfile(props) {
     const isAdmin = matchRole([UserRole.ADMIN], currentUserData);
     const isDeleteAllowed = isAdmin || (allowDelete && isSameUser(userData, currentUserData));
     const isNotificationsAvailable = !iOS && isSameUser(userData, currentUserData) && notifications && matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
-    const fields = [...publicFields, ...(isAdmin ? adminFieldsGiven : [])];
+    const fields = {...publicFields, ...(isAdmin ? adminFieldsGiven : {})};
 
     React.useEffect(() => {
         if (shouldRedirectToLogin) return;
@@ -413,16 +414,16 @@ function EditProfile(props) {
                         />
                     </div>
                 </div>
-                {userData.public && fields && fields.map(field => {
+                {userData.public && fields && Object.entries(fields).map(([id, field]) => {
                     if (field.editComponent === null) return null;
                     const editComponent = field.editComponent || <TextField/>;
-                    const missedRequired = requiredError.indexOf(field.id) >= 0;
-                    const uniqueRequired = uniqueError.indexOf(field.id) >= 0;
+                    const missedRequired = requiredError.indexOf(id) >= 0;
+                    const uniqueRequired = uniqueError.indexOf(id) >= 0;
                     const handleChange = ev => {
                         const value = ev.target.value || "";
-                        setState(state => ({...state, [field.id]: value}));
+                        setState(state => ({...state, [id]: value}));
                     };
-                    return <React.Fragment key={field.id}>
+                    return <React.Fragment key={id}>
                         <div className={styles.fieldSpacer}/>
                         <div className={styles.fieldRow}>
                             <div className={styles.fieldIcon}>
@@ -439,7 +440,7 @@ function EditProfile(props) {
                                         label: t(field.label),
                                         onChange: handleChange,
                                         required: field.required,
-                                        value: state[field.id] || ""
+                                        value: state[id] || ""
                                     })
                                     : <editComponent.type
                                         {...editComponent.props}
@@ -450,7 +451,7 @@ function EditProfile(props) {
                                         label={t(field.label)}
                                         onChange={handleChange}
                                         required={field.required}
-                                        value={state[field.id] || ""}
+                                        value={state[id] || ""}
                                     />}
                                 {(missedRequired || uniqueRequired) &&
                                     <span className={styles.helperError}>{missedRequired

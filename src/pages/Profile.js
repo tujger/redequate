@@ -1,101 +1,30 @@
 import FixIcon from "@mui/icons-material/BugReport";
 import ChatIcon from "@mui/icons-material/ChatBubbleOutlined";
 import EditIcon from "@mui/icons-material/Edit";
-import InfoIcon from "@mui/icons-material/Info";
-import AddressIcon from "@mui/icons-material/LocationCity";
-import NameIcon from "@mui/icons-material/Person";
-import PhoneIcon from "@mui/icons-material/Phone";
-import RoleIcon from "@mui/icons-material/Security";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
+import {userPrivateFields, userPublicFields} from "../components";
 import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
-import PlacesTextField from "../components/PlacesTextField";
-import ProfileComponentOrigin from "../components/ProfileComponent";
+import ProfileComponentOrigin from "../components/ProfileComponent/ProfileComponent";
 import ProgressView from "../components/ProgressView";
 import SystemAlert from "../components/SystemAlert";
 import {useAuth, useBackend, useDatabase, useRedirectToLogin} from "../controllers";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
-import {TextMaskPhone} from "../controllers/TextMasks";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import UserData, {matchRole, UserRole} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
-import Select from "../controls/Select/Select";
-import TextField from "../controls/TextField/TextField";
 import baseStyles from "../themes/Base.module.css";
 import styles from "./styles/Profile.module.css";
 
-export const publicFields = [
-    {
-        icon: <NameIcon/>,
-        id: "name",
-        label: "User.Name",
-        required: true,
-        unique: true,
-        viewComponent: userData => <h6 className={styles.name}>{userData.name}</h6>
-    },
-    {
-        id: "created",
-        label: "User.Date since",
-        editComponent: null,
-        viewComponent: userData => <>
-            <small className={styles.caption}>Since {userData.created}</small>
-            <div className={styles.fieldSpacer}/>
-        </>
-    },
-    {
-        id: "address",
-        label: "User.Address",
-        icon: <AddressIcon/>,
-        editComponent: <PlacesTextField
-            type={"formatted"}
-        />
-    },
-    {
-        id: "phone",
-        label: "User.Phone",
-        icon: <PhoneIcon/>,
-        editComponent: <TextField
-            inputComponent={TextMaskPhone}
-        />
-    },
-]
-
-export const adminFields = [
-    {
-        id: "updated",
-        label: "",
-        icon: <InfoIcon/>,
-        editComponent: ({value}) => <div>
-            User data updated: {new Date(value).toLocaleString()}
-        </div>
-    },
-    {
-        id: "role",
-        label: "Role",
-        icon: <RoleIcon/>,
-        editComponent: props => <label className={styles.roleField}>
-            <span className={styles.roleLabel} id={"profile-role-label"}>Role</span>
-            <Select
-                aria-labelledby={"profile-role-label"}
-                className={styles.roleSelect}
-                disabled={props.disabled}
-                onChange={props.onChange}
-                options={Object.keys(UserRole).map(key => ({label: key, value: UserRole[key]}))}
-                value={props.value}
-            />
-        </label>
-    },
-]
-
 export default (
     {
-        publicFields: publicFieldsApplied = publicFields,
-        privateFields,
+        publicFields: publicFieldsApplied = userPublicFields,
+        privateFields = userPrivateFields,
         ProfileComponent = <ProfileComponentOrigin/>,
         provider,
     }) => {
@@ -177,6 +106,7 @@ export default (
             <ProfileComponent.type
                 {...ProfileComponent.props}
                 provider={provider}
+                privateFields={privateFields}
                 publicFields={publicFieldsApplied}
                 userData={userData}
             />

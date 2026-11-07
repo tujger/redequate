@@ -9,7 +9,7 @@ export {default as Home} from "./Home";
 export {default as NewPost} from "./NewPost";
 export {default as Post} from "./Post";
 export {default as NotFound} from "./NotFound";
-export {default as Profile, publicFields} from "./Profile";
+export {default as Profile} from "./Profile";
 export {default as RestorePassword} from "./RestorePassword";
 export {default as Search} from "./search/Search";
 export {default as Settings} from "./admin/Settings";
