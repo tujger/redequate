@@ -10,16 +10,14 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {tokenizeText} from "../../components";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import LoadingComponent from "../../components/LoadingComponent";
 import MentionedSelectComponent from "../../components/MentionedSelectComponent";
-import {tokenizeText} from "../../components/MentionedTextComponent";
 import ProgressView from "../../components/ProgressView";
-import {useDatabase, useRedirectToLogin} from "../../controllers";
-import {useMetaInfo, useWindowData} from "../../controllers/General";
+import {useCurrentUserDataValue, useDatabase, useMetaInfo, useRedirectToLogin, useWindowData} from "../../controllers";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import UserData from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import Select from "../../controls/Select/Select";
@@ -68,14 +66,15 @@ export default ({uploadable}) => {
         postsAllowEdit,
         postsRotateReplies,
         support,
-        details,
         tab,
         translateLimit,
         uploadsAllow,
         uploadsMaxHeight,
         uploadsMaxSize,
         uploadsMaxWidth,
-        uploadsQuality
+        uploadsQuality,
+        userProfileFollowing,
+        userProfileFriend,
     } = state;
     const uploadsTypes = Array.isArray(state.uploadsTypes) ? state.uploadsTypes : [];
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
@@ -206,8 +205,8 @@ export default ({uploadable}) => {
             settings.oneTapCliendId = oneTapCliendId || null;
         }
         const addPreferencePosts = async () => {
-            settings.postsRotateReplies = postsRotateReplies || null;
             settings.postsAllowEdit = postsAllowEdit || null;
+            settings.postsRotateReplies = postsRotateReplies || null;
         }
         const addPreferenceUploads = async () => {
             settings.uploadsAllow = uploadsAllow || null;
@@ -216,6 +215,10 @@ export default ({uploadable}) => {
             settings.uploadsMaxSize = uploadsAllow ? +uploadsMaxSize || 100 : null;
             settings.uploadsMaxWidth = uploadsAllow ? +uploadsMaxWidth || 1000 : null;
             settings.uploadsQuality = uploadsAllow ? +uploadsQuality || 75 : null;
+        }
+        const addPreferenceUserProfile = async () => {
+            settings.userProfileFollowing = userProfileFollowing || false;
+            settings.userProfileFriend = userProfileFriend || false;
         }
         const publish = async () => {
             updates.set(["meta", {setting: "settings"}], settings);
@@ -241,6 +244,7 @@ export default ({uploadable}) => {
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
             .then(addPreferenceUploads)
+            .then(addPreferenceUserProfile)
             .then(publish)
             .then(notifyAboutSaved)
             .catch(notifySnackbar)
@@ -365,6 +369,16 @@ export default ({uploadable}) => {
             </>}
             {(tab === 2 || tab === -1) && <>
                 {isNarrow && <h2 className={styles.sectionHeading}>User profiles</h2>}
+                <Option
+                    checked={userProfileFollowing || false}
+                    disabled={disabled}
+                    label={"Allow following"}
+                    onChange={handleSwitch("userProfileFollowing")}/>
+                <Option
+                    checked={userProfileFriend || false}
+                    disabled={disabled}
+                    label={"Allow friends"}
+                    onChange={handleSwitch("userProfileFriend")}/>
                 <Option
                     disabled={disabled}
                     label={"Blocked names"}
