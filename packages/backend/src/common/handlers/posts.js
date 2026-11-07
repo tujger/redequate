@@ -14,23 +14,9 @@ export default class PostListener extends BackendListener {
     async onCreate({params, value}) {
         console.log("[Backend:Post]", `created [${params.post_id}]`, {params, value});
 
-        const visited = new Set([params.post_id]);
-        let toId = value.to;
-        let parent;
-        let root;
-        let rootKey;
-        while (toId) {
-            if (visited.has(toId)) throw new Error(`Cyclic post chain at ${toId}`);
-            visited.add(toId);
-            const ancestor = await this.backend.request("database.read", ["posts", {post_id: toId}]);
-            if (!ancestor) throw new Error(`Not found post ${toId}`);
-            parent ??= ancestor;
-            root = ancestor;
-            rootKey = toId;
-            toId = ancestor.to;
-        }
-
         if (value.to) {
+            const {parent, rootKey, root} = await findRoot.call(this, value);
+
             const notified = new Set([value.uid]);
             const alert = {uid: value.uid, type: "replies", id: params.post_id, context: rootKey};
             await updateCounter(this.backend, [{id: value.uid}, "replies"], 1);
@@ -106,6 +92,10 @@ export default class PostListener extends BackendListener {
     }
 
     async onUpdate({previous, value, params}) {
+        if (previous?.root !== value?.root) {
+            return;
+        }
+
         console.log("[Backend:Post]", `updated [${params.post_id}]`, {params, previous, value});
 
         const previousImages = previous.images ?? [];
@@ -144,4 +134,24 @@ const linkPostToTag = ({backend, postId, post, tag}) => {
 
 const unlinkPostFromTag = ({backend, postId, tag}) => {
     return backend.request("database.delete", ["_tag", {tag_id: tag.key}, {post_id: postId}]);
+}
+
+async function findRoot(value) {
+    // const visited = new Set([params.post_id]);
+    const visited = new Set();
+    let toId = value.to;
+    let parent;
+    let root;
+    let rootKey;
+    while (toId) {
+        if (visited.has(toId)) throw new Error(`Cyclic post chain at ${toId}`);
+        visited.add(toId);
+        const ancestor = await this.backend.request("database.read", ["posts", {post_id: toId}]);
+        if (!ancestor) throw new Error(`Not found post ${toId}`);
+        parent ??= ancestor;
+        root = ancestor;
+        rootKey = toId;
+        toId = ancestor.to;
+    }
+    return {parent, rootKey, root};
 }
