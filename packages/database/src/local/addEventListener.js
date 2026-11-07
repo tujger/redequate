@@ -35,6 +35,7 @@ const openChannel = storageId => {
 };
 
 const reportAsyncError = error => {
+    console.error(...[error, error.cause].filter(Boolean));
     if (typeof globalThis.reportError === "function") globalThis.reportError(error);
     else queueMicrotask(() => { throw error; });
 };
