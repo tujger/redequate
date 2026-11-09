@@ -1,5 +1,6 @@
 import {fail} from "../../../../common";
 import update from "../../../../database/src/common/methods/update";
+import resolvePath from "../../../../database/src/common/resolvePath";
 import BackendListener from "../BackendListener";
 import {updateCounter} from "./utils";
 
@@ -51,7 +52,14 @@ const _updateMutualStamps = async (backend, {userId, mutualId}, payload) => {
     const mutualTypes = await backend.request("database.read", ["mutual", "mutual_type"], {shallow: true})
 
     const updates = new Map();
-    updates.set(["mutualstamps", "_my", {user_id: userId}, {mutual_id: mutualId}], payload);
+    const object = {};
+    const addUpdate = path => {
+        const address = resolvePath(path);
+        if (object[address]) return;
+        updates.set(path, payload);
+        object[address] = true;
+    };
+    addUpdate(["mutualstamps", {mutual_type: "_my"}, {user_id: userId}, {mutual_id: mutualId}]);
     for (const mutualType of mutualTypes) {
         const path = ["mutual", {mutual_type: mutualType}, "mutual_id"];
         const query = {orderBy: ["id"], equalTo: userId};
@@ -60,8 +68,8 @@ const _updateMutualStamps = async (backend, {userId, mutualId}, payload) => {
         await cursor.next(10000).then(records => {
             records.forEach(({value}) => {
                 if (value.uid === userId) return;
-                updates.set(["mutualstamps", "_", {user_id: value.uid}, {mutual_id: mutualId}], payload);
-                updates.set(["mutualstamps", {mutual_type: mutualType}, {user_id: value.uid}, {mutual_id: mutualId}], payload)
+                addUpdate(["mutualstamps", {mutual_type: "_"}, {user_id: value.uid}, {mutual_id: mutualId}]);
+                addUpdate(["mutualstamps", {mutual_type: mutualType}, {user_id: value.uid}, {mutual_id: mutualId}]);
             });
         });
     }
