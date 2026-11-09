@@ -151,16 +151,12 @@ export default function ChatMeta(database) {
                         redirect: true,
                         meta: {members: {[currentUid]: 0, [oppositeUid]: 0}}
                     }
-                    await database.create(["chats", "chat_id", "message_id"], key => {
-                        chats.push({
-                            key,
-                            ...payload
-                        });
-                        return ({
-                            key,
-                            ...payload
-                        });
+                    let chatId;
+                    await database.create(["chats", "chat_id", {message_id: "!meta"}], key => {
+                        chatId = key;
+                        return payload.meta;
                     });
+                    chats.push({key: chatId, ...payload});
                 }
             }
             if (!chats.length) {
@@ -236,7 +232,9 @@ export default function ChatMeta(database) {
             const updatesIndex = new Map();
             await _body.forEachUid(async uid => {
                 const value = await database.read(["_chats", {user_id: uid}, {chat_id: _id}]);
-                if (value === undefined) return;
+                if (value === undefined) {
+                    updatesIndex.set(["_chats", {user_id: uid}, {chat_id: _id}, "private"], _body.uidOtherThan(uid));
+                }
                 updatesIndex.set(["_chats", {user_id: uid}, {chat_id: _id}, "timestamp"], database.TIMESTAMP);
             });
             await database.update(updatesIndex);
