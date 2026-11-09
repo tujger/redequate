@@ -23,7 +23,7 @@ export default ({clearText = text => text}) => {
         const metas = {};
         const chatsWithNewMessages = [];
         const newMessage = (data, chatId) => {
-            if (data.uid === currentUserData.id) return;
+            if (typeof data?.uid !== "string" || !data.uid || data.uid === currentUserData.id) return;
             console.log(`[ChatsDaemon] new message: ${JSON.stringify(data)}`)
             // if (!document.hasFocus()) return;
             const userData = cacheDatas.put(data.uid, new UserData(database));
@@ -39,6 +39,7 @@ export default ({clearText = text => text}) => {
         }
         const installListenerIfNeeded = (id, live) => ChatMeta(database).fetch(id)
             .then(meta => {
+                if (typeof meta.lastMessage?.uid !== "string" || !meta.lastMessage.uid) return;
                 if (meta.lastMessage.uid === currentUserData.id) return;
                 if (meta.lastVisit(currentUserData.id) > meta.timestamp) return;
                 const match = matchPath(window.location.pathname, {
@@ -80,7 +81,7 @@ export default ({clearText = text => text}) => {
                     .catch(console.error);
             });
 
-        const listener = database.addEventListener(["_chats", {user_id: currentUserData.id}, "message_id"], {
+        const listener = database.addEventListener(["_chats", {user_id: currentUserData.id}, "chat_id"], {
             onChildAdd({key, value}) {
                 return installListenerIfNeeded(key);
             },
