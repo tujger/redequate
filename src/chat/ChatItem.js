@@ -15,7 +15,7 @@ export default (props) => {
     const userData = isItemOut ? currentUserData : authorData;
 
     React.useEffect(() => {
-        if (skeleton || isItemOut) return;
+        if (skeleton || !uid || isItemOut) return;
         let isMounted = true;
         // const authorData = cacheDatas.put(uid, new UserData(database));
         const authorData = new UserData(database);
@@ -31,6 +31,7 @@ export default (props) => {
     }, [skeleton, uid, database, isItemOut]);
 
     if (skeleton) return <ItemPlaceholderComponent/>;
+    if (!uid) return null;
 
     if (!userData || userData.id !== uid) return <ItemPlaceholderComponent/>;
 
