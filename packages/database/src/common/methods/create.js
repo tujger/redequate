@@ -7,23 +7,21 @@ export default async function createRecord(backend, path, value, implementation)
     const {key, mapError} = implementation;
     const parsed = parsePath(path);
     if (parsed.literal || parsed.path.length < 2) fail("database/invalid-argument", "create requires a collection path followed by a key field name.");
-    const parentPath = parsed.path.slice(0, -1);
     const last = parsed.path.at(-1);
-    const fieldName = typeof last === "string" ? last : parsed.segments.at(-1).name;
-    const suppliedKey = typeof last === "string" ? undefined : last[fieldName];
+    const suppliedKey = typeof last === "string" ? undefined : last[parsed.segments.at(-1).name];
     const recordKey = suppliedKey ?? key;
-    let preparedPath = recordKey === undefined ? path : [...parentPath, {[fieldName]: recordKey}];
-    let preparedValue = value;
-    if (value instanceof Function) {
-        const keys = [];
-        preparedPath = parsed.path.map((segment, index) => {
-            if (!index || typeof segment !== "string") return segment;
-            const generatedKey = index === parsed.path.length - 1 ? recordKey : generateKey();
-            keys.push(generatedKey);
-            return {[segment]: generatedKey};
-        });
-        preparedValue = value(...(keys.length ? keys : [recordKey]));
-    }
+    const keys = [];
+    const preparedPath = parsed.path.map((segment, index) => {
+        if (!index || typeof segment !== "string") return segment;
+        const generatedKey = index === parsed.path.length - 1 ? recordKey : generateKey();
+        // Firebase can allocate the final key on the backend for an ordinary value.
+        if (generatedKey === undefined) return segment;
+        keys.push(generatedKey);
+        return {[segment]: generatedKey};
+    });
+    const preparedValue = value instanceof Function
+        ? value(...(keys.length ? keys : [recordKey]))
+        : value;
     if (preparedValue?.then instanceof Function) {
         Promise.resolve(preparedValue).catch(() => {});
         fail("database/invalid-argument", "create callback must be synchronous.");
