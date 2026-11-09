@@ -5,7 +5,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory, useParams} from "react-router-dom";
-import {userPrivateFields, userPublicFields} from "../components";
+import {userProfilePrivateFields, userProfilePublicFields} from "../components";
 import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
@@ -23,8 +23,8 @@ import styles from "./styles/Profile.module.css";
 
 export default (
     {
-        publicFields: publicFieldsApplied = userPublicFields,
-        privateFields = userPrivateFields,
+        publicFields: publicFieldsApplied = userProfilePublicFields,
+        privateFields = userProfilePrivateFields,
         ProfileComponent = <ProfileComponentOrigin/>,
         provider,
     }) => {
@@ -78,7 +78,7 @@ export default (
         }
     }, [id, currentUserData, database, history, shouldRedirectToLogin]);
 
-    if (shouldRedirectToLogin || !userData) return <LoadingComponent/>;
+    if (shouldRedirectToLogin) return <LoadingComponent/>;
     return <>
         <NavigationToolbar
             mediumButton={isCurrentUserAdmin && <Button

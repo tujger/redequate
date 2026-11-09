@@ -5,7 +5,7 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {Redirect, useHistory, useParams} from "react-router-dom";
-import {userAdminFields, userPublicFields} from "../components";
+import {userProfileAdminFields, userProfilePublicFields} from "../components";
 import ConfirmComponent from "../components/ConfirmComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import ProgressView from "../components/ProgressView";
@@ -30,10 +30,10 @@ const isSameUser = (userData, currentUserData) => userData && currentUserData &&
 
 function EditProfile(props) {
     const {
-        adminFields: adminFieldsGiven = userAdminFields,
+        adminFields: adminFieldsGiven = userProfileAdminFields,
         allowDelete = true,
         notifications = true,
-        publicFields = userPublicFields,
+        publicFields = userProfilePublicFields,
         uploadable = true,
     } = props;
     const auth = useAuth();
