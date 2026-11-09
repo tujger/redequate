@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import * as pathValidation from "../../common/validatePath";
 import LocalDatabase from "../../local";
@@ -12,7 +13,7 @@ it.each(["delete", "update"])("validates the generic path once in the %s supercl
     const backend = {request: vi.fn().mockResolvedValueOnce({value: null, etag: "initial"})
         .mockResolvedValueOnce({committed: true, value: {text: "A"}})};
     const path = ["posts", {post_id: "p1"}];
-    const database = new LocalDatabase({backend});
+    const database = createService(LocalDatabase, {backend});
     if (method === "delete") await database.delete(path);
     else await database.update(path, {text: "A"});
     expect(validatePath).toHaveBeenCalledExactlyOnceWith(path);
@@ -28,7 +29,7 @@ it("validates only Local collection rules without invoking generic path validati
 });
 
 it("reports malformed inputs safely even before superclass validation", async () => {
-    const backend = {request: vi.fn()}, database = new LocalDatabase({backend});
+    const backend = {request: vi.fn()}, database = createService(LocalDatabase, {backend});
     const invalid = [null, undefined, 1, {}, [], [null], [1], [{collection: 1}], ["$auth"], [{collection: "a/b"}]];
     for (const path of invalid) {
         expect(() => validateCollectionPath(path)).toThrow(expect.objectContaining({code: "database/invalid-argument"}));
@@ -38,7 +39,7 @@ it("reports malformed inputs safely even before superclass validation", async ()
 });
 
 it("validates independent read, listener and cursor entrypoints before accessing IndexedDB", async () => {
-    const database = new LocalDatabase({backend: {request: vi.fn()}});
+    const database = createService(LocalDatabase, {backend: {request: vi.fn()}});
     const path = ["posts", {post_id: "p1"}, {}];
     const open = vi.spyOn(globalThis.indexedDB, "open");
     await expect(database.read(path)).rejects.toMatchObject({code: "database/invalid-argument"});

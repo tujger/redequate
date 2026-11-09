@@ -1,3 +1,4 @@
+import createService from "../createService";
 /* eslint react/jsx-uses-vars: "error", react/jsx-uses-react: "error" */
 import React, {act} from "react";
 import {vi} from "vitest";
@@ -122,7 +123,7 @@ async function mountLogin({ios = false, disabled = false, firstLogin = false, si
         }),
         write: vi.fn().mockResolvedValue(),
     };
-    const auth = new AuthBase({database});
+    const auth = createService(AuthBase, {database});
     auth.signInWithEmailAndPassword = vi.fn(() => auth._loadUserData(authUser));
     vi.spyOn(auth, "_saveInitialProfile");
     const messaging = {subscribe: vi.fn().mockResolvedValue("notification-token")};

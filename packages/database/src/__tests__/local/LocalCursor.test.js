@@ -1,3 +1,5 @@
+import {singletonMetaStore} from "../../../../../src/__tests__/createService";
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
@@ -5,7 +7,7 @@ import LocalBackend from "../../../../backend/src/local/LocalBackend";
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 const setup = async (storageId = "native-cursors") => {
-    const database = new LocalDatabase({storageId, backend: new LocalBackend({storageId})});
+    const database = createService(LocalDatabase, {stores: [singletonMetaStore], storageId, backend: new LocalBackend({storageId})});
     await database.read(["posts"]);
     return database;
 };
@@ -84,19 +86,19 @@ it("subscribes to native query collections and keeps independent subscription ha
 it("refreshes the unindexed singleton document after changes to its fields", async () => {
     const database = await setup();
     const values = [];
-    const listener = database.addEventListener(["meta"], {onChange: value => values.push(value)});
+    const listener = database.addEventListener(["singleton"], {onChange: value => values.push(value)});
     try {
         await vi.waitFor(() => expect(values).toHaveLength(1));
-        await database.update(new Map([[["meta", "settings"], {theme: "dark"}]]));
+        await database.update(new Map([[["singleton", "settings"], {theme: "dark"}]]));
         expect(values.at(-1)).toEqual({settings: {theme: "dark"}});
-        await database.update(["meta", "settings"], {locale: "en"});
+        await database.update(["singleton", "settings"], {locale: "en"});
         expect(values.at(-1)).toEqual({settings: {theme: "dark", locale: "en"}});
     } finally { listener.remove(); }
 });
 
 it("sends a complete handler replacement through the supplied backend and rereads resolved markers", async () => {
     const storageId = "cursor-backend-replacement", backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {stores: [singletonMetaStore], storageId, backend});
     await database.read(["posts"]);
     await database.create(["posts", {post_id: "p1"}], {count: 3, obsolete: true});
     const request = vi.spyOn(backend, "request");
@@ -115,7 +117,7 @@ it("sends a complete handler replacement through the supplied backend and reread
 
 it("skips backend writes for undefined handler results and propagates backend failures without local fallback", async () => {
     const storageId = "cursor-backend-failure", backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {stores: [singletonMetaStore], storageId, backend});
     await database.read(["posts"]);
     await database.create(["posts", {post_id: "p1"}], {text: "original"});
     const request = vi.spyOn(backend, "request");
@@ -132,7 +134,7 @@ it("skips backend writes for undefined handler results and propagates backend fa
 it("requires backend only when a cursor handler requests a replacement", async () => {
     const writer = await setup("cursor-missing-backend");
     await writer.create(["posts", {post_id: "p1"}], {text: "original"});
-    const database = new LocalDatabase({storageId: "cursor-missing-backend"});
+    const database = new LocalDatabase({stores: [singletonMetaStore], storageId: "cursor-missing-backend"});
     expect(await database.cursor(["posts", "post_id"]).next(10)).toEqual([{key: "p1", value: {text: "original"}}]);
     const cursor = database.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
     await expect(cursor.next(10)).rejects.toBeInstanceOf(TypeError);
@@ -141,7 +143,7 @@ it("requires backend only when a cursor handler requests a replacement", async (
 
 it("routes compound-scope handler writes through backend without changing sibling scopes", async () => {
     const storageId = "cursor-backend-scope", backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {stores: [singletonMetaStore], storageId, backend});
     await database.read(["chats"]);
     for (const chat_id of ["c1", "c2"]) await database.create(["chats", {chat_id}, {message_id: "m1"}], {text: "original"});
     const request = vi.spyOn(backend, "request");

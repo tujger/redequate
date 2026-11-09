@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {getFunctions} from "firebase/functions";
 import DatabaseBase from "../../common/DatabaseBase";
 import FirebaseDatabase from "../../firebase";
@@ -12,8 +13,8 @@ beforeEach(() => vi.clearAllMocks());
 const path = ["posts", {post_id: "p1"}];
 const address = provider => provider === "firebase" ? "posts/p1" : path;
 const forProvider = (provider, backend, onError) => provider === "firebase"
-    ? new FirebaseDatabase({firebase: {app: {}}, backend, onError})
-    : new LocalDatabase({backend, onError});
+    ? createService(FirebaseDatabase, {firebase: {app: {}}, backend, onError})
+    : createService(LocalDatabase, {backend, onError});
 
 describe.each(["local", "firebase"])("%s delete preparation", provider => {
     it("prepares its path and delegates deletion to the superclass using the constructor backend", async () => {
@@ -89,7 +90,7 @@ describe.each(["local", "firebase"])("%s delete preparation", provider => {
 
 it("implements backend deletion and common validation directly in DatabaseBase", async () => {
     const backend = {request: vi.fn().mockResolvedValue(null)};
-    const database = new DatabaseBase({backend});
+    const database = createService(DatabaseBase, {backend});
     expect(await database.delete(path)).toBeUndefined();
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.delete", path);
     backend.request.mockClear();

@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory, IDBIndex} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
@@ -5,7 +6,7 @@ import LocalBackend from "../../../../backend/src/local/LocalBackend";
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 const setup = async () => {
-    const database = new LocalDatabase({storageId: "native-queries", backend: new LocalBackend({storageId: "native-queries"})});
+    const database = createService(LocalDatabase, {storageId: "native-queries", backend: new LocalBackend({storageId: "native-queries"})});
     await database.read(["posts"]);
     for (const [post_id, uid, to] of [["p1", "a", 1], ["p2", "b", 2], ["p3", "a", 3]]) {
         await database.create(["posts", {post_id}], {uid, to});

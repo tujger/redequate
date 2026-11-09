@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {vi} from "vitest";
 import {key as dateKey} from "firebase-key";
 import FirebaseDatabase from "../../firebase";
@@ -15,7 +16,7 @@ beforeEach(() => {
     backend = {request: vi.fn(async (_name, _path, value, options) => options.mode === "read"
         ? {value: null, etag: "initial"}
         : {committed: true, value})};
-    database = new FirebaseDatabase({firebase: fixture.firebase, backend});
+    database = createService(FirebaseDatabase, {firebase: fixture.firebase, backend});
 });
 const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
 
@@ -138,7 +139,7 @@ it.each([false, 0, "", [1, 2]])("writes handle replacement %j", async value => {
 });
 it.each(["", "groups/g1/records"])("uses the injected backend for cursor path %j", async path => {
     const request = vi.fn(backend.request.getMockImplementation());
-    const customDatabase = new FirebaseDatabase({firebase: fixture.firebase, backend: {request}});
+    const customDatabase = createService(FirebaseDatabase, {firebase: fixture.firebase, backend: {request}});
     fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: {old: true}}))
         .mockResolvedValueOnce(fixture.snapshot({saved: true}));
     expect(await customDatabase.cursor(path, {handle: () => ({saved: true})}).next(2))

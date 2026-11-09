@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
@@ -8,7 +9,7 @@ let backend, database;
 beforeEach(async () => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     backend = new LocalBackend({storageId: "resolve-tags"});
-    database = new LocalDatabase({storageId: "resolve-tags", backend});
+    database = createService(LocalDatabase, {storageId: "resolve-tags", backend});
     await database.read(["tag"]);
 });
 afterEach(() => vi.unstubAllGlobals());

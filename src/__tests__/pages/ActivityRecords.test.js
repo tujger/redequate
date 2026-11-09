@@ -1,3 +1,4 @@
+import createService from "../createService";
 import React, {act, useEffect, useState} from "react";
 import {IDBFactory} from "fake-indexeddb";
 import {vi} from "vitest";
@@ -35,7 +36,7 @@ vi.mock("../../components/MentionedSelectComponent", () => ({default: ({mention,
 it("selects the original type from real Local Activity records", async () => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     const backend = new LocalBackend({storageId: "activity-ui-records"});
-    state.database = new LocalDatabase({storageId: "activity-ui-records", backend});
+    state.database = createService(LocalDatabase, {storageId: "activity-ui-records", backend});
     state.dispatch.mockClear();
     const container = document.createElement("div");
     document.body.appendChild(container);

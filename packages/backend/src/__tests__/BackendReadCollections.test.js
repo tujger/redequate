@@ -1,3 +1,5 @@
+import {singletonMetaStore} from "../../../../src/__tests__/createService";
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
@@ -15,15 +17,15 @@ const setup = async provider => {
     if (provider === "local") {
         const storageId = `backend-read-${crypto.randomUUID()}`;
         const backend = new LocalBackend({storageId});
-        const database = new LocalDatabase({storageId, backend});
+        const database = createService(LocalDatabase, {storageId, backend, stores: [singletonMetaStore]});
         await database.read(["_activity"]);
         for (const [key, value] of Object.entries(records)) {
             await backend.request("database.create", ["_activity", {activity_type_id: key}], value);
         }
-        await backend.request("database.update", ["meta"], {settings: {theme: "dark"}});
+        await backend.request("database.update", ["singleton"], {settings: {theme: "dark"}});
         return {backend, database};
     }
-    const root = {_activity: records, meta: {settings: {theme: "dark"}}};
+    const root = {_activity: records, singleton: {settings: {theme: "dark"}}};
     const references = [];
     const database = {ref: vi.fn(address => {
         let field, bound, hasBound = false;
@@ -69,8 +71,8 @@ for (const provider of ["local", "admin"]) describe(provider, () => {
         expect(await backend.request("database.read", ["_activity", {activity_type_id: "first"}, {value: "value"}])).toBe(1);
         expect(await backend.request("database.read", "_activity", {orderBy: ["type"], equalTo: "tag.delete"}))
             .toEqual({third: records.third});
-        expect(await backend.request("database.read", ["meta", {settings: "settings"}])).toEqual({theme: "dark"});
-        expect(await backend.request("database.read", "meta/settings")).toEqual({theme: "dark"});
+        expect(await backend.request("database.read", ["singleton", {settings: "settings"}])).toEqual({theme: "dark"});
+        expect(await backend.request("database.read", "singleton/settings")).toEqual({theme: "dark"});
     });
 });
 
@@ -78,7 +80,7 @@ it("matches LocalDatabase collection reads without changing unindexed singleton 
     const {backend, database} = await setup("local");
     const path = ["_activity", "activity_type_id"], options = {orderBy: ["type"], equalTo: "tag.create"};
     expect(await backend.request("database.read", path, options)).toEqual(await database.read(path, options));
-    expect(await backend.request("database.read", ["meta", "settings"])).toEqual(await database.read(["meta", "settings"]));
+    expect(await backend.request("database.read", ["singleton", "settings"])).toEqual(await database.read(["singleton", "settings"]));
 });
 
 it("supports scoped compound-key collections in Local backend reads", async () => {

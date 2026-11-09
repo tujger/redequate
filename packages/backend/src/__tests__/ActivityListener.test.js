@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import ActivityListener, {createActivity} from "../common/handlers/activity";
 import LocalBackend from "../local/LocalBackend";
@@ -9,24 +10,33 @@ const fakeBackend = (initial = null) => {
     return {
         TIMESTAMP: {".sv": "timestamp"},
         request: vi.fn(async (name, path, value, options) => {
+            if (name === "database.read") {
+                expect(path).toEqual(["_activity", "activity_type_id"]);
+                return Object.fromEntries(Object.entries(records ?? {}).filter(([, record]) => record.type === value.equalTo));
+            }
+            if (name === "database.create") {
+                const key = `a${++revision}`;
+                records = {...records, [key]: {activity_type_id: key, ...value}};
+                return key;
+            }
             expect(name).toBe("database.update");
-            expect(path).toEqual(["_activity"]);
-            if (options.mode === "read") return {value: structuredClone(records), etag: String(revision)};
-            if (options.etag !== String(revision)) return {committed: false, value: structuredClone(records), etag: String(revision)};
-            records = value;
+            const key = path[1].activity_type_id;
+            if (options.mode === "read") return {value: records[key], etag: String(revision)};
+            if (options.etag !== String(revision)) return {committed: false, value: records[key], etag: String(revision)};
+            records[key] = value;
             revision++;
-            return {committed: true, value: records};
+            return {committed: true, value};
         }),
         records: () => records,
     };
 };
 
-it("stores the original type in a record value and timestamps it through a conditional write", async () => {
+it("creates a timestamped service record for a previously unseen type", async () => {
     const backend = fakeBackend();
     await new ActivityListener(backend).onCreate({params, value: {type: "tag.create"}});
     expect(backend.records()).toEqual({a1: {activity_type_id: "a1", type: "tag.create", value: backend.TIMESTAMP}});
-    expect(backend.request).toHaveBeenLastCalledWith("database.update", ["_activity"],
-        {a1: {activity_type_id: "a1", type: "tag.create", value: backend.TIMESTAMP}}, {mode: "replace", etag: "0"});
+    expect(backend.request).toHaveBeenLastCalledWith("database.create", ["_activity", "activity_type_id"],
+        {type: "tag.create", value: backend.TIMESTAMP});
 });
 it.each([null, undefined, "", 0, {}, []])("rejects an invalid type %j before writing", async type => {
     const backend = {request: vi.fn()};
@@ -67,7 +77,7 @@ afterEach(() => vi.unstubAllGlobals());
 it("updates type records through the real Local creation chain and reads their types through a cursor", async () => {
     const storageId = "activity-listener";
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     await database.read(["activity"]);
     await backend.request("database.update", ["_activity", {activity_type_id: "other"}],
         {activity_type_id: "other", type: "tag.delete", value: 2});
@@ -91,7 +101,7 @@ it("updates type records through the real Local creation chain and reads their t
 it("commits concurrent Local events as one record per type", async () => {
     const storageId = "activity-concurrent";
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     await database.read(["_activity"]);
     vi.spyOn(Math, "random").mockReturnValue(0);
     const listener = new ActivityListener(backend);
@@ -105,7 +115,7 @@ it("commits concurrent Local events as one record per type", async () => {
 it("restores a cleared derived activity index from the source journal on explicit rebuild", async () => {
     const storageId = "activity-rebuild";
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     await database.read(["activity"]);
     const first = await createActivity(backend, {type: "tag.create"});
     await createActivity(backend, {type: "tag.create"});

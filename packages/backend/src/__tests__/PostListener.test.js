@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import PostListener from "../common/handlers/posts";
 import LocalBackend from "../local/LocalBackend";
@@ -93,7 +94,7 @@ it("creates replies and alerts through LocalBackend while preserving complete po
     try {
         const storageId = "post-replies";
         const backend = new LocalBackend({storageId});
-        const database = new LocalDatabase({storageId, backend});
+        const database = createService(LocalDatabase, {storageId, backend});
         await database.read(["posts"]);
         await database.create(postPath("root"), {uid: "root-author", text: "root content"});
         await vi.waitFor(async () => expect(await backend.request("database.read", counterReadPath("total", "posts"))).toBe(1));

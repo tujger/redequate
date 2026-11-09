@@ -1,3 +1,4 @@
+import createService from "./createService";
 import {deleteApp} from "firebase/app";
 import {connectDatabaseEmulator, getDatabase, goOffline} from "firebase/database";
 import {connectAuthEmulator, getAuth} from "firebase/auth";
@@ -27,8 +28,8 @@ connectAuthEmulator(sdkAuth, `http://${authHost}`, {disableWarnings: true});
 export const sdkDatabase = getDatabase(firebase.app);
 connectDatabaseEmulator(sdkDatabase, "127.0.0.1", Number(databaseHost.split(":")[1]));
 export const backend = createEmulatorBackend(firebase);
-export const database = new FirebaseDatabase({firebase, backend});
-export const auth = new FirebaseAuth({firebase, database, UserData});
+export const database = createService(FirebaseDatabase, {firebase, backend});
+export const auth = createService(FirebaseAuth, {firebase, database, UserData});
 
 export async function emulatorRequest(path, options = {}) {
     const response = await fetch(`http://${authHost}/emulator/v1/projects/${projectId}/${path}`, options);

@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
@@ -10,7 +11,7 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 const setup = async (storageId = "backend-cursor") => {
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     await database.read(["posts"]);
     return {backend, database};
 };

@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {installIndexedDB, flushIndexedDB} from "./fixtures/indexedDB";
 import {vi} from "vitest";
 import {read} from "../local/common";
@@ -38,7 +39,7 @@ const createAuth = (Auth, database) => {
             return {user};
         }),
     };
-    return {auth: new Auth({database, firebase: {app: sdk}}), sdk};
+    return {auth: createService(Auth, {database, firebase: {app: sdk}}), sdk};
 };
 
 beforeEach(() => {

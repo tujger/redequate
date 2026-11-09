@@ -23,7 +23,7 @@ import create from "../firebase-server/src/database/callable/create";
 import update from "../firebase-server/src/database/callable/update";
 import deleteRecord from "../firebase-server/src/database/callable/delete";
 import notification from "../firebase-server/src/notification/callable";
-import email from "../firebase-server/src/email/send";
+import email from "../firebase-server/src/email/callable";
 
 beforeEach(() => {
     seen.length = 0;

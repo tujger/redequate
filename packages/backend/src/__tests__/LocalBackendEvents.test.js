@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../local/LocalBackend";
 import onEvents from "../local/database/onEvents";
@@ -50,7 +51,7 @@ afterEach(() => {
 const setup = async () => {
     const storageId = `events-${++nextId}`;
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     await database.read(["extra"]);
     return {backend, database, storageId};
 };
@@ -171,9 +172,9 @@ it("isolates storage IDs and executes reactions only in the writing context", as
     const OtherBackend = (await import("../local/LocalBackend")).default;
     const OtherDatabase = (await import("../../../database/src/local")).default;
     const remote = new OtherBackend({storageId});
-    const remoteDatabase = new OtherDatabase({storageId, backend: remote});
+    const remoteDatabase = createService(OtherDatabase, {storageId, backend: remote});
     const separate = new OtherBackend({storageId: `${storageId}-other`});
-    new OtherDatabase({storageId: separate.storageId, backend: separate});
+    createService(OtherDatabase, {storageId: separate.storageId, backend: separate});
     await database.create(target("a"), {type: "like"});
     expect(callbacks.extra.create).toHaveBeenCalledTimes(1);
     expect(callbacks.extra.create.mock.contexts[0].backend).toBe(backend);

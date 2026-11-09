@@ -1,3 +1,4 @@
+import {singletonMetaStore} from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../local/LocalBackend";
 import LocalDatabase from "../../../database/src/local";
@@ -11,7 +12,7 @@ afterEach(() => { for (const stop of stops.splice(0)) stop(); vi.unstubAllGlobal
 async function setup() {
     const storageId = `singleton-listeners-${++sequence}`;
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId});
+    const database = new LocalDatabase({stores: [singletonMetaStore], storageId});
     database.setBackend(backend);
     backend.setDatabase(database);
     await database.read(["meta"]);
@@ -23,7 +24,7 @@ function observe(backend, path) {
     return listener;
 }
 const patch = (backend, entries) => backend.request("database.update", "", new Map(entries));
-const field = key => ["meta", {[key]: key}];
+const field = key => ["meta", {setting: key}];
 
 it("delivers maintenance events and activity through the real MetaListener", async () => {
     const create = vi.spyOn(MetaListener.prototype, "onCreate");
@@ -65,8 +66,8 @@ it("matches separate batch fields including falsy values without exposing _id", 
 
 it("matches nested variables and fixed segments, skipping missing and scalar branches", async () => {
     const {backend} = await setup();
-    const listener = observe(backend, ["meta", {settings: "settings"}, "group", "entry", {enabled: "enabled"}]);
-    await patch(backend, [[field("settings"), {
+    const listener = observe(backend, ["singleton", {settings: "settings"}, "group", "entry", {enabled: "enabled"}]);
+    await patch(backend, [[["singleton", {settings: "settings"}], {
         first: {one: {enabled: false}, two: {enabled: 0}, missing: {}, scalar: 1},
         second: {three: {enabled: ""}}, scalar: true,
     }]]);
@@ -76,8 +77,8 @@ it("matches nested variables and fixed segments, skipping missing and scalar bra
         {params: {settings: "settings", group: "first", entry: "two", enabled: "enabled"}, value: 0},
         {params: {settings: "settings", group: "second", entry: "three", enabled: "enabled"}, value: ""},
     ]);
-    const absent = observe(backend, ["meta", {absent: "absent"}, "key"]);
-    await patch(backend, [[field("unrelated"), true]]);
+    const absent = observe(backend, ["singleton", {absent: "absent"}, "key"]);
+    await patch(backend, [[["singleton", {unrelated: "unrelated"}], true]]);
     expect(absent.onCreate).not.toHaveBeenCalled();
 });
 

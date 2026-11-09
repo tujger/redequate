@@ -1,3 +1,4 @@
+import createService from "../createService";
 import createLocalDatabase from "../../../packages/database/src/__tests__/createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
@@ -53,7 +54,7 @@ it("uses scalar roles and protects the last active administrator through LocalDa
 it("loads an authenticated profile and saves private devices again without physical fields", async () => {
     const database = createLocalDatabase({storageId: "private-login-roundtrip"});
     await database.read(["posts"]);
-    const auth = new AuthBase({database, UserData});
+    const auth = createService(AuthBase, {database, UserData});
     const first = new UserData(database).create("retained-user", {name: "Original", email: "user@example.test"});
     await first.setPrivate("phone", {locale: "en", browserName: "Chrome"});
     await auth._saveInitialProfile(first);

@@ -39,7 +39,7 @@ describe("Activity type selector", () => {
         expect(state.mention.transform({key: "service-id", value: {type: "tag.create", value: 123}}))
             .toEqual({id: "tag.create", display: "tag.create"});
         state.mention.cursor();
-        expect(state.database.cursor).toHaveBeenLastCalledWith(["_activity", "activity_type_id"]);
+        expect(state.database.cursor).toHaveBeenLastCalledWith(["_activity", "activity_type_id"], {orderBy: ["type"]});
         act(() => container.querySelector("button").click());
         expect(state.dispatch).toHaveBeenLastCalledWith(expect.objectContaining({activityFilterItem: "tag.create"}));
         render(<Activity activityMode="type" activityFilterItem="tag.create"/>, container);

@@ -1,3 +1,5 @@
+import {singletonMetaStore} from "../../../../src/__tests__/createService";
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory, IDBDatabase} from "fake-indexeddb";
 import ExtraListener from "../common/handlers/extra";
 import LocalBackend from "../local/LocalBackend";
@@ -67,7 +69,7 @@ const local = async () => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     const storageId = `extra-alert-${++nextId}`;
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {stores: [singletonMetaStore], storageId, backend});
     await database.read(["posts"]);
     return {backend, database};
 };
@@ -100,10 +102,10 @@ it.each(["self", "missing", "no-author"])("suppresses Local alerts for %s reacti
 
 it("Local internal reads preserve falsy values, require one path and do not publish writes", async () => {
     const {database, backend} = await local();
-    await database.update(new Map([[["meta", "settings"], {zero: 0, flag: false}]]));
-    expect(await backend.request("database.read", ["meta", "settings", "zero"])).toBe(0);
-    expect(await backend.request("database.read", ["meta", "settings", "flag"])).toBe(false);
-    expect(await backend.request("database.read", ["meta", "settings", "missing"])).toBeNull();
+    await database.update(new Map([[["singleton", "settings"], {zero: 0, flag: false}]]));
+    expect(await backend.request("database.read", ["singleton", "settings", "zero"])).toBe(0);
+    expect(await backend.request("database.read", ["singleton", "settings", "flag"])).toBe(false);
+    expect(await backend.request("database.read", ["singleton", "settings", "missing"])).toBeNull();
     await expect(backend.request("database.read")).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(backend.request("database.read", ownerPath, {unexpected: true})).rejects.toMatchObject({code: "database/invalid-argument"});
 });

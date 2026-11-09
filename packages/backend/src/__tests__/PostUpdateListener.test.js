@@ -7,7 +7,7 @@ const params = {post_id: "post"};
 let backend, listener;
 beforeEach(() => {
     vi.mocked(resolveTags).mockReset().mockResolvedValue([]);
-    backend = {TIMESTAMP: {".sv": "timestamp"}, request: vi.fn(async (name, path, value, options) => options?.mode === "read"
+    backend = {getCurrentUser: vi.fn().mockResolvedValue(undefined), TIMESTAMP: {".sv": "timestamp"}, request: vi.fn(async (name, path, value, options) => options?.mode === "read"
         ? {value: null, etag: "current"} : {committed: true, value})};
     listener = new PostListener(backend);
 });

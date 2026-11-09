@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {vi} from "vitest";
 import DatabaseBase from "../../common/DatabaseBase";
 import DatabaseCursor from "../../common/DatabaseCursor";
@@ -13,7 +14,7 @@ let fixture, database, backend;
 beforeEach(() => {
     fixture = createFirebase();
     backend = createBackend();
-    database = new FirebaseDatabase({firebase: fixture.firebase, backend});
+    database = createService(FirebaseDatabase, {firebase: fixture.firebase, backend});
 });
 
 it("resolves named segment values and normalizes slashes", () => {
@@ -58,7 +59,7 @@ it("uses named segments in reads, writes, updates, deletes and creation", async 
         ["database.update", "users_public/u123", {email: "c@example.com"}, {mode: "replace", etag: "initial"}],
         ["database.delete", "users_public/u123/email"]
     ]);
-    const createPath = ["users_public", {user_id: "u123"}, "posts", "id"];
+    const createPath = ["users_public", {user_id: "u123"}, {posts: "posts"}, "id"];
     expect(await database.create(createPath, {text: "Post"})).toBe("backend-key");
     expect(backend.request).toHaveBeenLastCalledWith("database.create", createPath, {text: "Post"});
 });

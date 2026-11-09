@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import createLocalDatabase, {readNativeStore} from "../createLocalDatabase";
@@ -9,7 +10,7 @@ const snapshot = (value, etag = "initial") => ({value, etag});
 const commit = value => ({committed: true, value});
 const client = () => {
     const backend = {request: vi.fn()};
-    return {backend, database: new LocalDatabase({backend})};
+    return {backend, database: createService(LocalDatabase, {backend})};
 };
 
 it("merges in Database and sends a complete replacement without opening IndexedDB", async () => {

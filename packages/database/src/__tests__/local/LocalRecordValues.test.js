@@ -1,3 +1,4 @@
+import {singletonMetaStore} from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
 import createLocalDatabase, {readNativeStore} from "../createLocalDatabase";
@@ -67,16 +68,16 @@ it("reads and modifies nested arrays while permitting nested reserved names", as
 });
 
 it("encodes a singleton document without introducing indexes", async () => {
-    const database = createLocalDatabase({storageId: "value-singleton"});
+    const database = createLocalDatabase({storageId: "value-singleton", stores: [singletonMetaStore]});
     await database.read(["posts"]);
-    await put(database, false, ["meta"]);
-    expect(await database.read(["meta"])).toBe(false);
-    await put(database, ["a", "b"], ["meta"]);
-    await put(database, "changed", ["meta", {index: "1"}]);
-    expect(await database.read(["meta"])).toEqual(["a", "changed"]);
-    await put(database, {settings: {_value: true}}, ["meta"]);
-    expect(await readNativeStore("value-singleton", "meta")).toEqual([{_id: 1, settings: {_value: true}}]);
-    await expect(database.read(["meta"], {equalTo: false})).rejects.toMatchObject({code: "database/invalid-argument"});
+    await put(database, false, ["singleton"]);
+    expect(await database.read(["singleton"])).toBe(false);
+    await put(database, ["a", "b"], ["singleton"]);
+    await put(database, "changed", ["singleton", {index: "1"}]);
+    expect(await database.read(["singleton"])).toEqual(["a", "changed"]);
+    await put(database, {settings: {_value: true}}, ["singleton"]);
+    expect(await readNativeStore("value-singleton", "singleton")).toEqual([{_id: 1, settings: {_value: true}}]);
+    await expect(database.read(["singleton"], {equalTo: false})).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
 it("filters and pages decoded values, and passes them to cursor handles", async () => {
@@ -362,7 +363,7 @@ it.each(["_value", "_record", "_encoded"])("rejects reserved root field %s, but 
 
 
 it("discards callback mutations without writes or notifications unless a value is returned", async () => {
-    const storageId = "callback-no-change", database = createLocalDatabase({storageId});
+    const storageId = "callback-no-change", database = createLocalDatabase({storageId, stores: [singletonMetaStore]});
     await database.read(["posts"]);
     await put(database, {nested: {keep: true}, list: [1, 2]});
     const before = await readNativeStore(storageId, "posts");
@@ -386,7 +387,7 @@ it("discards callback mutations without writes or notifications unless a value i
 });
 
 it("leaves missing storage untouched when an update callback returns undefined", async () => {
-    const storageId = "callback-missing", database = createLocalDatabase({storageId});
+    const storageId = "callback-missing", database = createLocalDatabase({storageId, stores: [singletonMetaStore]});
     await database.read(["posts"]);
     expect(await database.update(path, () => undefined)).toBeNull();
     expect(await database.read(path)).toBeUndefined();

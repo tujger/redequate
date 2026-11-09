@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {vi} from "vitest";
 import FirebaseDatabase from "../../firebase";
 import DatabaseBase from "../../common/DatabaseBase";
@@ -12,7 +13,7 @@ beforeEach(() => {
     fixture = createFirebase();
     sdk = fixture.sdk;
     backend = createBackend();
-    database = new FirebaseDatabase({firebase: fixture.firebase, backend});
+    database = createService(FirebaseDatabase, {firebase: fixture.firebase, backend});
 });
 
 it("exports the same order enum through the base and source entrypoints", async () => {
@@ -60,7 +61,7 @@ it("throws by default and reports effective operation errors once with context",
     const error = new Error("offline"), onError = vi.fn(), override = vi.fn();
     backend.request.mockRejectedValue(error);
     await expect(database.update("records/a", () => 1)).rejects.toBe(error);
-    const handled = new FirebaseDatabase({firebase: fixture.firebase, backend, onError});
+    const handled = createService(FirebaseDatabase, {firebase: fixture.firebase, backend, onError});
     await expect(handled.update("records/a", () => 2)).resolves.toBeUndefined();
     expect(onError).toHaveBeenCalledExactlyOnceWith(error, "update", {path: "records/a", changes: expect.any(Function)});
     await handled.delete("records/a", {onError: override});
@@ -73,7 +74,7 @@ it("throws by default and reports effective operation errors once with context",
 });
 it("reports create and error-handler failures without recursive handling", async () => {
     const onError = vi.fn();
-    const handled = new FirebaseDatabase({firebase: fixture.firebase, backend, onError});
+    const handled = createService(FirebaseDatabase, {firebase: fixture.firebase, backend, onError});
     await expect(handled.create(["records", "record_id"], undefined)).resolves.toBeUndefined();
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({code: "database/invalid-argument"}), "create", {path: ["records", "record_id"], value: undefined});
     const failure = new Error("handler failed");

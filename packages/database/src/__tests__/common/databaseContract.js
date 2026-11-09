@@ -380,9 +380,9 @@ export function databaseContract(makeProvider) {
     it("reads a selected record with its nested collections and explicit scalar fields", async () => {
         const user = [provider.path, {user_id: "u1"}];
         await provider.db.create(user, {name: "User", email: "user@example.test"});
-        const child = await provider.db.create([...user, "devices", "device_id"], {locale: "en"});
+        const child = await provider.db.create([...user, {devices: "devices"}, "device_id"], {locale: "en"});
         expect(await provider.db.read(user)).toEqual({name: "User", email: "user@example.test", devices: {[child]: {locale: "en"}}});
-        expect(await provider.db.read([...user, "devices", "device_id"])).toEqual({[child]: {locale: "en"}});
+        expect(await provider.db.read([...user, {devices: "devices"}, "device_id"])).toEqual({[child]: {locale: "en"}});
         expect(await provider.db.read([...user, {devices: "devices"}, {device_id: child}, {locale: "locale"}])).toBe("en");
         expect(await provider.db.read(`${provider.path}/u1/email`)).toBe("user@example.test");
     });

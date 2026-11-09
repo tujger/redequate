@@ -1,3 +1,5 @@
+import {singletonMetaStore} from "../../../../../src/__tests__/createService";
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory, IDBDatabase} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
@@ -8,7 +10,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 const setup = async (storageId = "native", stores) => {
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, stores, backend});
+    const database = createService(LocalDatabase, {storageId, stores: [singletonMetaStore, ...(stores ?? [])], backend});
     await database.read(["posts"]);
     return {database, backend};
 };
@@ -56,7 +58,7 @@ it("keeps nested properties inside their parent object", async () => {
     const {database} = await setup();
     await database.create(["posts", {post_id: "p1"}], {title: "A", edits: {e1: {text: "old"}}});
     await database.update(["posts", {post_id: "p1"}, "edits", {edit_id: "e1"}], () => ({text: "new"}));
-    await database.create(["posts", {post_id: "p1"}, "edits", {edit_id: "e2"}], {text: "second"});
+    await database.create(["posts", {post_id: "p1"}, {edits: "edits"}, {edit_id: "e2"}], {text: "second"});
     expect(await database.read(["posts", {post_id: "p1"}, {edits: "edits"}, {edit_id: "e1"}])).toEqual({text: "new"});
     const {rows} = await raw("native", "posts");
     expect(rows).toHaveLength(1);
@@ -68,20 +70,20 @@ it("keeps nested properties inside their parent object", async () => {
 it("stores one small document in unindexed stores and updates properties without record lookup", async () => {
     const {database} = await setup();
     await database.update(new Map([
-        [["meta", "settings"], {theme: "dark"}],
-        [["meta", "maintenance"], false],
-        [["meta", "support"], "user-1"]
+        [["singleton", "settings"], {theme: "dark"}],
+        [["singleton", "maintenance"], false],
+        [["singleton", "support"], "user-1"]
     ]));
-    expect(await database.read(["meta", {settings: "settings"}])).toEqual({theme: "dark"});
-    expect(await database.read(["meta", "maintenance"])).toBe(false);
-    await database.update(["meta", "settings"], {locale: "en"});
-    const stored = await raw("native", "meta");
+    expect(await database.read(["singleton", {settings: "settings"}])).toEqual({theme: "dark"});
+    expect(await database.read(["singleton", "maintenance"])).toBe(false);
+    await database.update(["singleton", "settings"], {locale: "en"});
+    const stored = await raw("native", "singleton");
     expect(stored.indexes).toEqual([]);
     const document = {settings: {theme: "dark", locale: "en"}, maintenance: false, support: "user-1"};
     expect(stored.rows).toEqual([{...document, _id: 1}]);
-    await database.delete(["meta", "maintenance"]);
-    expect(await database.read(["meta", "maintenance"])).toBeUndefined();
-    await expect(database.read(["meta"], {orderBy: "settings"})).rejects.toMatchObject({code: "database/invalid-argument"});
+    await database.delete(["singleton", "maintenance"]);
+    expect(await database.read(["singleton", "maintenance"])).toBeUndefined();
+    await expect(database.read(["singleton"], {orderBy: "settings"})).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
 it("rejects undeclared searches instead of introducing fallback indexes", async () => {

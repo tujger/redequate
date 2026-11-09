@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import LocalCursor from "../../local/cursor";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
@@ -8,7 +9,7 @@ afterEach(() => vi.unstubAllGlobals());
 async function setup() {
     const storageId = `wildcard-review-${++sequence}`;
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     await database.read(["mutual"]);
     const rows = [
         ["a", "same", {uid: "u", id: "x", timestamp: 3}],

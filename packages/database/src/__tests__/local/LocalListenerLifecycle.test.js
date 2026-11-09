@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
@@ -52,7 +53,7 @@ it("reports an asynchronous read error handler failure to the host once", async 
 
 it("observes rejected callback promises without awaiting writes through the same listener queue", async () => {
     const storageId = "listener-reentrant", backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     await database.read(["posts"]);
     const failure = new Error("async handler failed"), callbackFailure = new Error("async callback failed");
     const onError = vi.fn(() => { throw failure; });
@@ -70,7 +71,7 @@ it("observes rejected callback promises without awaiting writes through the same
 });
 
 it("isolates a failing listener and leaves successful committed writes intact", async () => {
-    const storageId = "listener-isolation", database = new LocalDatabase({storageId, backend: new LocalBackend({storageId})});
+    const storageId = "listener-isolation", database = createService(LocalDatabase, {storageId, backend: new LocalBackend({storageId})});
     await database.read(["posts"]);
     const original = new Error("callback failed"), failure = new Error("handler failed");
     const onError = vi.fn(() => { throw failure; }), healthy = vi.fn();

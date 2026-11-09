@@ -42,7 +42,7 @@ it("publishing a Local post updates its author's persisted count", async () => {
     expect(await database.read(["posts", {post_id: post.id}])).toMatchObject({uid: "author", to: 0});
     await vi.waitFor(async () => expect(await counterControl({database, path: [{id: "author"}, "posts"]})).toBe(1));
 });
-knownCounterFailure("C8: creating a Local friend request updates the pending count", async () => {
+it("C8: creating a Local friend request updates the pending count", async () => {
     const database = createLocalDatabase({storageId: "local-request-writers"});
     await database.read(["_counters"]);
     const result = await mutualRequest({database, currentUserData: {id: "reader"}, mutualId: "author",

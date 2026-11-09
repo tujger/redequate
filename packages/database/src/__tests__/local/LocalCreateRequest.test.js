@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import {milliseconds, resetLastTimestamp} from "firebase-key";
 import LocalDatabase from "../../local";
@@ -17,7 +18,7 @@ it("prepares a callback with its final key and sends only the prepared path and 
         expect(prepared).toBe(value);
         return path.at(-1).post_id;
     })};
-    const database = new LocalDatabase({backend, storageId: "create-request"});
+    const database = createService(LocalDatabase, {backend, storageId: "create-request"});
     let callbackKey;
     const key = await database.create(["posts", "post_id"], id => {
         callbackKey = id;
@@ -32,7 +33,7 @@ it("prepares a callback with its final key and sends only the prepared path and 
 it("uses the supplied key, returns the backend result and reports backend errors once", async () => {
     const onError = vi.fn();
     const backend = {request: vi.fn().mockResolvedValue("committed-key")};
-    const database = new LocalDatabase({backend, storageId: "create-result", onError});
+    const database = createService(LocalDatabase, {backend, storageId: "create-result", onError});
     const callback = vi.fn(key => ({key}));
     const path = ["posts", {post_id: "manual"}];
     expect(await database.create(path, callback)).toBe("committed-key");
@@ -46,7 +47,7 @@ it("uses the supplied key, returns the backend result and reports backend errors
 
 it("rejects invalid prepared values and failed callbacks before contacting backend", async () => {
     const backend = {request: vi.fn()};
-    const database = new LocalDatabase({backend, storageId: "create-invalid"});
+    const database = createService(LocalDatabase, {backend, storageId: "create-invalid"});
     const path = ["posts", "post_id"];
     const error = new Error("callback failed");
     await expect(database.create(path, () => { throw error; })).rejects.toBe(error);
@@ -56,11 +57,12 @@ it("rejects invalid prepared values and failed callbacks before contacting backe
     expect(backend.request).not.toHaveBeenCalled();
 });
 
-it("has no fallback backend and resolveDatabase forwards the supplied dependency", async () => {
+it("has no fallback backend and resolveDatabase returns an instance wired explicitly through setBackend", async () => {
     const database = new LocalDatabase({storageId: "missing-backend"});
     await expect(database.create(["posts", "post_id"], {})).rejects.toBeInstanceOf(TypeError);
     const backend = {request: vi.fn().mockResolvedValue("returned")};
     const resolved = await resolveDatabase(undefined, {backend});
+    resolved.setBackend(backend);
     expect(await resolved.create(["posts", {post_id: "manual"}], {})).toBe("returned");
     expect(await resolveDatabase(resolved, {backend: new LocalBackend()})).toBe(resolved);
 });
@@ -94,7 +96,7 @@ it("only prepares arguments and delegates without opening IndexedDB", async () =
     const open = vi.fn(() => { throw new Error("database.create must not access IndexedDB"); });
     vi.stubGlobal("indexedDB", {open});
     const backend = {request: vi.fn().mockResolvedValue("saved-key")};
-    const database = new LocalDatabase({backend, storageId: "delegated-only"});
+    const database = createService(LocalDatabase, {backend, storageId: "delegated-only"});
     const value = {title: "prepared"};
     expect(await database.create(["custom", {id: "manual"}], () => value)).toBe("saved-key");
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create", ["custom", {id: "manual"}], value);

@@ -1,3 +1,5 @@
+import {singletonMetaStore} from "../../../../../src/__tests__/createService";
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
@@ -7,13 +9,13 @@ afterEach(() => vi.unstubAllGlobals());
 async function setup() {
     const storageId = `shallow-${crypto.randomUUID()}`;
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {stores: [singletonMetaStore], storageId, backend});
     await database.read(["mutual"]);
     await backend.request("database.update", "", new Map([
         [["mutual", {mutual_type: "friend"}, {mutual_id: "r1"}], {uid: "a", id: "b"}],
         [["mutual", {mutual_type: "friend"}, {mutual_id: "r2"}], {uid: "a", id: "c"}],
         [["mutual", {mutual_type: "following"}, {mutual_id: "r1"}], {uid: "a", id: "b"}],
-        [["meta"], {settings: {theme: "dark"}, scalar: "text"}]
+        [["singleton"], {settings: {theme: "dark"}, scalar: "text"}]
     ]));
     return {database, backend};
 }
@@ -26,8 +28,8 @@ for (const provider of ["database", "backend"]) describe(provider, () => {
         expect((await read("mutual")).sort()).toEqual(["following", "friend"]);
         expect((await read(["mutual", {mutual_type: "friend"}, "mutual_id"])).sort()).toEqual(["r1", "r2"]);
         expect(await read(["mutual", {mutual_type: "missing"}, "mutual_id"])).toEqual([]);
-        expect(await read(["meta", {field: "scalar"}])).toEqual([]);
-        expect(await read(["meta", {field: "settings"}])).toEqual(["theme"]);
+        expect(await read(["singleton", {field: "scalar"}])).toEqual([]);
+        expect(await read(["singleton", {field: "settings"}])).toEqual(["theme"]);
     });
 });
 it("validates shallow and query incompatibility before reading", async () => {

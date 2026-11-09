@@ -1,3 +1,5 @@
+import {singletonMetaStore} from "../../../../src/__tests__/createService";
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import {increment as firebaseIncrement} from "firebase/database";
 import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
@@ -24,8 +26,8 @@ vi.mock("firebase/functions", () => ({
         if (!options) {
             // A callable PATCH must carry the marker under a field, not at its root.
             expect(path).toBe("");
-            expect(Object.keys(value)).toEqual(["meta/count"]);
-            const delta = value["meta/count"][".sv"].increment;
+            expect(Object.keys(value)).toEqual(["singleton/count"]);
+            const delta = value["singleton/count"][".sv"].increment;
             transport.value = (typeof transport.value === "number" ? transport.value : 0) + delta;
             transport.version++;
             return {data: null};
@@ -45,12 +47,12 @@ beforeEach(() => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 });
 afterEach(() => vi.unstubAllGlobals());
-const path = ["meta", {count: "count"}];
+const path = ["singleton", {count: "count"}];
 const setup = async provider => {
     if (provider === "firebase") return new FirebaseBackendClient({firebase: {app: {}}});
     const storageId = `increment-${++nextId}`;
     const backend = new LocalBackend({storageId});
-    await new LocalDatabase({storageId, backend}).read(["meta"]);
+    await createService(LocalDatabase, {storageId, backend, stores: [singletonMetaStore]}).read(["singleton"]);
     return backend;
 };
 const seed = async (backend, value) => {
@@ -112,7 +114,7 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
         const marker = provider === "local" ? backend.increment(2) : structuredClone(backend.increment(2));
         expect(await backend.request("database.update", path, marker)).toBe(provider === "local" ? 3 : null);
         expect(request).toHaveBeenCalledExactlyOnceWith("database.update", path, marker);
-        if (provider === "firebase") expect(transport.calls).toEqual([["", {"meta/count": marker}]]);
+        if (provider === "firebase") expect(transport.calls).toEqual([["", {"singleton/count": marker}]]);
     });
 
     it("preserves increments under concurrent updates", async () => {
@@ -130,7 +132,7 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
 it("updates post counters through a real local reaction chain", async () => {
     const storageId = `post-counter-${++nextId}`;
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend, stores: [singletonMetaStore]});
     const post = ["posts", {post_id: "p1"}];
     const total = ["_counters", {id: "total"}], user = ["_counters", {id: "u1"}];
     await database.read(["posts"]);

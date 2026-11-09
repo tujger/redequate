@@ -1,3 +1,4 @@
+import {singletonMetaStore} from "../../../../src/__tests__/createService";
 import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
 import createLocalDatabase, {readNativeStore} from "../../../database/src/__tests__/createLocalDatabase";
 import LocalBackend from "../local/LocalBackend";
@@ -6,7 +7,7 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 const post = ["posts", {post_id: "p1"}];
 const setup = async (storageId = "backend-update", stores) => {
-    const database = createLocalDatabase({storageId, stores});
+    const database = createLocalDatabase({storageId, stores: [singletonMetaStore, ...(stores ?? [])]});
     await database.read(["posts"]);
     const backend = new LocalBackend({storageId});
     const request = (...args) => backend.request("database.update", ...args);
@@ -36,8 +37,8 @@ it("patches collections, scoped compound paths, and unindexed singleton fields",
     await request(scope, {"m1/text": "Changed", m2: null});
     expect(await database.read([...scope, "message_id"])).toEqual({m1: {text: "Changed"}});
     expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({text: "Other"});
-    await request(["meta"], {maintenance: false, "settings/theme": "dark"});
-    expect(await database.read(["meta"])).toEqual({maintenance: false, settings: {theme: "dark"}});
+    await request(["singleton"], {maintenance: false, "settings/theme": "dark"});
+    expect(await database.read(["singleton"])).toEqual({maintenance: false, settings: {theme: "dark"}});
     await request(["posts"], {p1: null});
     expect(await database.read(["posts"])).toEqual({p2: {title: "B"}});
 });
@@ -49,12 +50,12 @@ it("supports root objects and Maps of named Local paths in atomic multi-store pa
         [[...post, {title: "title"}], "Changed"],
         [["users_private", {user_id: "u"}, {device_id: "phone"}], {locale: "en"}],
         [["roles", {user_id: "u"}], "admin"],
-        [["meta", "maintenance"], false]
+        [["singleton", "maintenance"], false]
     ]));
     expect(await database.read(post)).toEqual({title: "Changed"});
     expect(await database.read(["roles", {user_id: "u"}])).toBe("admin");
     expect(await database.read(["users_private", {user_id: "u"}])).toEqual({phone: {locale: "en"}});
-    expect(await database.read(["meta"])).toEqual({maintenance: false});
+    expect(await database.read(["singleton"])).toEqual({maintenance: false});
 });
 
 it("resolves timestamp and increment markers once per committed batch", async () => {
@@ -64,11 +65,11 @@ it("resolves timestamp and increment markers once per committed batch", async ()
     await request("", new Map([
         [[...post, "count"], backend.increment(3)],
         [[...post, "time"], backend.TIMESTAMP],
-        [["meta", "time"], database.TIMESTAMP]
+        [["singleton", "time"], database.TIMESTAMP]
     ]));
     const result = await database.read(post);
     expect(result).toEqual({count: 5, time: expect.any(Number)});
-    expect((await database.read(["meta"])).time).toBe(result.time);
+    expect((await database.read(["singleton"])).time).toBe(result.time);
 });
 
 it("resolves nested increments and reuses one marker across fields and writes", async () => {
@@ -82,10 +83,10 @@ it("resolves nested increments and reuses one marker across fields and writes", 
     expect(await database.read(post)).toEqual({nested: {left: 5, right: [7]}});
     await request("", new Map([
         [[...post, "nested", "left"], marker],
-        [["meta", "count"], marker]
+        [["singleton", "count"], marker]
     ]));
     expect(await database.read(post)).toEqual({nested: {left: 7, right: [7]}});
-    expect(await database.read(["meta"])).toEqual({count: 2});
+    expect(await database.read(["singleton"])).toEqual({count: 2});
 });
 
 it("rejects malformed symbol values without changing a stored record", async () => {
@@ -266,28 +267,28 @@ it("resolves nested and reused timestamp markers while leaving Firebase-shaped o
 
 it("writes a timestamp directly to a missing or existing field, preserving siblings", async () => {
     const {database, backend, request} = await setup("direct-timestamp");
-    await request(["meta", "type_timestamps"], {other: 7});
-    const path = ["meta", "type_timestamps", "service"];
+    await request(["singleton", "type_timestamps"], {other: 7});
+    const path = ["singleton", "type_timestamps", "service"];
     const first = await request(path, backend.TIMESTAMP);
     expect(first).toEqual(expect.any(Number));
-    expect(await database.read(["meta", "type_timestamps"])).toEqual({other: 7, service: first});
+    expect(await database.read(["singleton", "type_timestamps"])).toEqual({other: 7, service: first});
     await request(path, {old: true});
     const second = await request(path, backend.TIMESTAMP);
     expect(second).toEqual(expect.any(Number));
-    expect(await database.read(["meta", "type_timestamps"])).toEqual({other: 7, service: second});
+    expect(await database.read(["singleton", "type_timestamps"])).toEqual({other: 7, service: second});
 });
 
 it("logs the original patch value instead of undefined", async () => {
     const {request} = await setup("patch-log");
     const log = vi.spyOn(console, "debug").mockImplementation(() => {});
     const changes = {service: 42};
-    await request(["meta", "type_timestamps"], changes);
-    expect(log).toHaveBeenCalledWith("[Backend:Update]", "patch [meta/type_timestamps]", {value: changes});
+    await request(["singleton", "type_timestamps"], changes);
+    expect(log).toHaveBeenCalledWith("[Backend:Update]", "patch [singleton/type_timestamps]", {value: changes});
 });
 
 it("validates explicit timestamp mode and rejects timestamps as patches", async () => {
     const {database, backend, request} = await setup("timestamp-mode");
-    const path = ["meta", "type_timestamps", "service"];
+    const path = ["singleton", "type_timestamps", "service"];
     for (const value of [undefined, null, 123, {}, {".sv": "timestamp"}]) {
         await expect(request(path, value, {mode: "timestamp"})).rejects.toMatchObject({code: "database/invalid-argument"});
     }

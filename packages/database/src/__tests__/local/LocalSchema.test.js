@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
@@ -12,14 +13,14 @@ const audit = {store: "audit", storeConfig: {keyPath: "_id", autoIncrement: true
     {name: "audit_id", keypath: "audit_id", options: {unique: true}},
     {name: "code", keypath: "code", options: {unique: true}}
 ]};
-const make = storageId => new LocalDatabase({storageId, stores: [audit], backend: new LocalBackend({storageId})});
+const make = storageId => createService(LocalDatabase, {storageId, stores: [audit], backend: new LocalBackend({storageId})});
 
 it("converts exactly the indexes declared by the caller and built-in schema", () => {
     const schema = convertStores([audit]);
     for (const definition of [...stores, audit]) {
         expect(Object.keys(schema[definition.store].indexes)).toEqual(definition.storeSchema.map(index => index.name));
     }
-    expect(schema.meta.indexes).toEqual({});
+    expect(schema.meta.indexes).toEqual({setting: {keyPath: "setting", unique: true}});
     expect(LOCAL_SCHEMA.posts.indexes.post_id).toMatchObject({keyPath: "post_id", unique: true});
     expect(Object.keys(LOCAL_SCHEMA.mutualrequests.indexes)).toEqual([
         "mutual_type", "mutual_id", "mutual_type_mutual_id", "mutual_type_id", "mutual_type_uid"
@@ -35,7 +36,7 @@ it("keeps old physical mutualrequests indexes when reopening existing Local data
     legacy.mutualrequests.indexes.mutual_type_uid_id = {keyPath: ["mutual_type", "uid_id"], unique: false};
     const connection = await openDatabase(storageId, legacy);
     connection.close();
-    const database = new LocalDatabase({storageId, backend: new LocalBackend({storageId})});
+    const database = createService(LocalDatabase, {storageId, backend: new LocalBackend({storageId})});
     await database.applySchema({mutualrequests: LOCAL_SCHEMA.mutualrequests});
     const reopened = await openDatabase(storageId);
     const indexes = reopened.transaction("mutualrequests").objectStore("mutualrequests").indexNames;
@@ -112,7 +113,7 @@ it("keeps configured collections instance-scoped and provider stores separate", 
     const database = make("schema-scope");
     await database.read(["audit"]);
     await database.create(["audit", {audit_id: "a"}], {code: "one"});
-    const plain = new LocalDatabase({storageId: "schema-scope", backend: new LocalBackend({storageId: "schema-scope"})});
+    const plain = createService(LocalDatabase, {storageId: "schema-scope", backend: new LocalBackend({storageId: "schema-scope"})});
     await expect(plain.read(["audit"])).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(database.applySchema({$auth: {keyPath: "id", autoIncrement: false, indexes: {}}})).rejects.toBeInstanceOf(TypeError);
     await expect(new LocalBackend({storageId: "schema-scope"}).request("database.create", ["$auth", {id: "a"}], {}))
@@ -137,7 +138,7 @@ it("discards only the legacy Activity index while upgrading to type records", as
     });
     connection.close();
     const backend = new LocalBackend({storageId});
-    const database = new LocalDatabase({storageId, backend});
+    const database = createService(LocalDatabase, {storageId, backend});
     expect(await database.read(["_activity"])).toBeUndefined();
     const upgraded = await openDatabase(storageId);
     expect(await new Promise((resolve, reject) => {
@@ -149,7 +150,7 @@ it("discards only the legacy Activity index while upgrading to type records", as
     expect(await database.read(["activity", {activity_id: "a1"}])).toMatchObject({type: "tag.create"});
     expect(Object.keys(await database.read(["activity"]))).toHaveLength(3);
     await new ActivityListener(backend).rebuild();
-    const reopened = new LocalDatabase({storageId, backend});
+    const reopened = createService(LocalDatabase, {storageId, backend});
     expect(await reopened.read(["_activity"])).toEqual({
         a1: {activity_type_id: "a1", type: "tag.create", value: expect.any(Number)},
         a3: {activity_type_id: "a3", type: "tag.delete", value: expect.any(Number)},

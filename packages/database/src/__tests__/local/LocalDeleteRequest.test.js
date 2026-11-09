@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import createLocalDatabase from "../createLocalDatabase";
@@ -10,7 +11,7 @@ it.each([path, [...path, "text"], ["posts"], "posts/p1"].map(path => ({path})))(
     "forwards $path to its supplied backend without accessing IndexedDB", async ({path: target}) => {
         const backend = {request: vi.fn().mockResolvedValue(null)};
         const open = vi.spyOn(globalThis.indexedDB, "open");
-        const database = new LocalDatabase({backend});
+        const database = createService(LocalDatabase, {backend});
         expect(await database.delete(target)).toBeUndefined();
         expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.delete", target);
         expect(open).not.toHaveBeenCalled();
@@ -20,7 +21,7 @@ it.each([path, [...path, "text"], ["posts"], "posts/p1"].map(path => ({path})))(
 it("uses the configured operation error handler once with the original path", async () => {
     const failure = new Error("delete failed"), onError = vi.fn(), override = vi.fn();
     const backend = {request: vi.fn().mockRejectedValue(failure)};
-    const database = new LocalDatabase({backend, onError});
+    const database = createService(LocalDatabase, {backend, onError});
     expect(await database.delete(path)).toBeUndefined();
     expect(onError).toHaveBeenCalledExactlyOnceWith(failure, "delete", {path});
     expect(await database.delete(path, {onError: override})).toBeUndefined();
@@ -31,7 +32,7 @@ it("uses the configured operation error handler once with the original path", as
 it("propagates backend errors and does not handle an error-handler failure twice", async () => {
     const failure = new Error("delete failed"), handlerFailure = new Error("handler failed");
     const backend = {request: vi.fn().mockRejectedValue(failure)};
-    const database = new LocalDatabase({backend});
+    const database = createService(LocalDatabase, {backend});
     await expect(database.delete(path)).rejects.toBe(failure);
     const onError = vi.fn(() => { throw handlerFailure; });
     await expect(database.delete(path, {onError})).rejects.toBe(handlerFailure);
@@ -39,7 +40,7 @@ it("propagates backend errors and does not handle an error-handler failure twice
 });
 
 it("rejects invalid paths before requesting the backend and reports validation errors once", async () => {
-    const backend = {request: vi.fn()}, database = new LocalDatabase({backend});
+    const backend = {request: vi.fn()}, database = createService(LocalDatabase, {backend});
     for (const target of [null, undefined, "", [], ["$auth"], ["posts", {}], ["posts", {post_id: 1}]]) {
         await expect(database.delete(target)).rejects.toMatchObject({code: "database/invalid-argument"});
     }

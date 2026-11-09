@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import localIncrement from "../../../../backend/src/local/increment";
 import {increment as firebaseIncrement} from "firebase/database";
 import {getFunctions} from "firebase/functions";
@@ -13,8 +14,8 @@ vi.mock("firebase/functions", () => ({
 beforeEach(() => vi.clearAllMocks());
 const path = ["posts", {post_id: "p1"}];
 const forProvider = (provider, backend, onError) => provider === "firebase"
-    ? new FirebaseDatabase({firebase: {app: {}}, backend, onError})
-    : new LocalDatabase({backend, onError});
+    ? createService(FirebaseDatabase, {firebase: {app: {}}, backend, onError})
+    : createService(LocalDatabase, {backend, onError});
 const address = provider => provider === "firebase" ? "posts/p1" : path;
 const snapshot = (value, etag = "initial") => ({value, etag});
 const commit = value => ({committed: true, value});
@@ -235,7 +236,7 @@ describe.each(["local", "firebase"])("%s update preparation", provider => {
 
 it("implements common saving in DatabaseBase and retains the prepared batch format", async () => {
     const backend = {request: vi.fn().mockResolvedValueOnce(snapshot({keep: true})).mockResolvedValueOnce(commit({keep: true, added: 1}))};
-    const database = new DatabaseBase({backend});
+    const database = createService(DatabaseBase, {backend});
     await database.update(path, {added: 1});
     expect(backend.request.mock.calls[1]).toEqual([
         "database.update", path, {keep: true, added: 1}, {mode: "replace", etag: "initial"}

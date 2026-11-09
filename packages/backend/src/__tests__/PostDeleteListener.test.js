@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import PostListener from "../common/handlers/posts";
 import LocalBackend from "../local/LocalBackend";
@@ -7,7 +8,7 @@ const params = {post_id: "deleted"};
 const path = (id, name) => ["_counters", {id}, {[name]: name}];
 const setup = () => {
     const counters = new Map(); const deleted = []; const images = [];
-    const backend = {storage: {delete: vi.fn(async url => { images.push(url); })}, request: vi.fn(async (name, target, value, options) => {
+    const backend = {getCurrentUser: vi.fn().mockResolvedValue(undefined), storage: {delete: vi.fn(async url => { images.push(url); })}, request: vi.fn(async (name, target, value, options) => {
         if (name === "database.read") return value?.shallow ? [] : target[0] === "posts" ? {child: {to: "deleted"}} : null;
         if (name === "database.create" || target === "") return;
         if (name === "database.delete") { deleted.push(target); return null; }
@@ -71,8 +72,8 @@ it("cascades through LocalBackend and leaves an unrelated branch intact", async 
     try {
         const storage = {delete: vi.fn().mockResolvedValue(undefined)};
         const storageId = "post-delete-chain";
-        const backend = new LocalBackend({storageId, storage});
-        const database = new LocalDatabase({storageId, backend});
+        const backend = createService(LocalBackend, {storageId, storage});
+        const database = createService(LocalDatabase, {storageId, backend});
         await database.read(["posts"]);
         const post = id => ["posts", {post_id: id}];
         await database.create(post("root"), {uid: "a", text: "root", images: ["root-image"]});

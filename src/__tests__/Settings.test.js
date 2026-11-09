@@ -8,13 +8,13 @@ const context = vi.hoisted(() => ({database: {}, settings: {}, dispatch: vi.fn()
 vi.mock("react-redux", () => ({useDispatch: () => context.dispatch}));
 vi.mock("react-router-dom", () => ({useHistory: () => ({goBack: vi.fn()})}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value}), getI18n: () => undefined}));
-vi.mock("../controllers", () => ({useDatabase: () => context.database, useRedirectToLogin: () => false}));
+vi.mock("../controllers", () => ({useDatabase: () => context.database, useRedirectToLogin: () => false, useCurrentUserDataValue: () => ({id: "admin"}), useMetaInfo: () => ({}), useWindowData: () => ({isNarrow: () => false})}));
 vi.mock("../controllers/General", () => ({useMetaInfo: () => ({}), useWindowData: () => ({isNarrow: () => false})}));
 vi.mock("../controllers/useCurrentUserData", () => ({useCurrentUserDataValue: () => ({id: "admin"})}));
 vi.mock("../controllers/mentionTypes", () => ({mentionUsers: []}));
 vi.mock("../controllers/notifySnackbar", () => ({default: vi.fn()}));
 vi.mock("../controllers/UserData", () => ({default: class { async fetch() { return {name: "Support"}; } }}));
-vi.mock("../components/MentionedTextComponent", () => ({tokenizeText: () => [{type: "user", id: "support"}]}));
+vi.mock("../components", () => ({tokenizeText: () => [{type: "user", id: "support"}]}));
 vi.mock("../components/MentionedSelectComponent", () => ({default: () => null}));
 vi.mock("../components/ProgressView", () => ({default: {SHOW: "show", HIDE: "hide"}}));
 vi.mock("../components/ConfirmComponent", () => ({default: () => null}));
@@ -31,9 +31,9 @@ beforeEach(() => {
     container = document.createElement("div");
     context.settings = {uploadsAllow: true};
     context.database = {
-        read: vi.fn(async path => path[1].settings ? context.settings : path[1].support ? "support" : null),
+        read: vi.fn(async path => path[1].setting === "settings" ? context.settings : path[1].setting === "support" ? "support" : null),
         update: vi.fn(async updates => {
-            for (const [path, value] of updates) if (path[1] === "settings") context.settings = value;
+            for (const [path, value] of updates) if (path[1].setting === "settings") context.settings = value;
         }),
     };
 });

@@ -139,7 +139,7 @@ it("LocalBackend counts stamp creation once, ignores replacement and clears coun
     } finally { vi.unstubAllGlobals(); }
 });
 
-it("distributes stamps through the real LocalBackend using declared path identities", async () => {
+it("deduplicates stamps and counters through the real LocalBackend across repeated recipients and types", async () => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     try {
         const storageId = `mutual-stamps-distribution-${++sequence}`;
@@ -148,12 +148,24 @@ it("distributes stamps through the real LocalBackend using declared path identit
         database.setBackend(backend);
         backend.setDatabase(database);
         await database.read(["mutualstamps"]);
-        await database.create(["mutual", {mutual_type: "following"}, {mutual_id: "relation"}], {uid: "reader", id: "author"});
+        for (const type of ["following", "friend"]) {
+            for (const mutual_id of ["relation-1", "relation-2"]) {
+                await database.create(["mutual", {mutual_type: type}, {mutual_id}], {uid: "reader", id: "author"});
+            }
+        }
+        const targets = [["_my", "author"], ["_", "reader"], ["following", "reader"], ["friend", "reader"]];
         await createMutualStamps(backend, args);
-        expect(await database.read(stampPath("_my", "author"))).toBe("author");
-        expect(await database.read(stampPath("following", "reader"))).toBe("author");
+        for (const [type, user] of targets) {
+            expect(await database.read(stampPath(type, user))).toBe("author");
+            await vi.waitFor(async () => expect(await database.read(counterPath(type, user))).toBe(1));
+        }
+        await createMutualStamps(backend, args);
+        for (const [type, user] of targets) expect(await database.read(counterPath(type, user))).toBe(1);
         await deleteMutualStamps(backend, args);
-        expect(await database.read(stampPath("following", "reader"))).toBeUndefined();
+        for (const [type, user] of targets) {
+            expect(await database.read(stampPath(type, user))).toBeUndefined();
+            await vi.waitFor(async () => expect(await database.read(counterPath(type, user))).toBeUndefined());
+        }
     } finally { vi.unstubAllGlobals(); }
 });
 
@@ -164,6 +176,10 @@ it.each([createMutualStamps, deleteMutualStamps])("deduplicates full stamp addre
     }
     await operation(backend, args);
     const batch = backend.request.mock.calls.at(-1)[2];
+    expect([...batch.keys()]).toEqual([
+        stampPath("_my", "author"), stampPath("_", "reader"),
+        stampPath("following", "reader"), stampPath("friend", "reader")
+    ]);
     const addresses = [...batch.keys()].map(address);
     expect(addresses).toEqual([
         "mutualstamps/_my/author/post", "mutualstamps/_/reader/post",

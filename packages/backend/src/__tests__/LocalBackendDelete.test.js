@@ -1,3 +1,4 @@
+import {singletonMetaStore} from "../../../../src/__tests__/createService";
 import {IDBFactory, IDBDatabase, IDBObjectStore} from "fake-indexeddb";
 import createLocalDatabase, {readNativeStore} from "../../../database/src/__tests__/createLocalDatabase";
 import LocalBackend from "../local/LocalBackend";
@@ -7,7 +8,7 @@ beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 const post = ["posts", {post_id: "p1"}];
 const setup = async (storageId = "backend-delete") => {
-    const database = createLocalDatabase({storageId});
+    const database = createLocalDatabase({storageId, stores: [singletonMetaStore]});
     await database.read(["posts"]);
     const backend = new LocalBackend({storageId});
     const remove = (...args) => backend.request("database.delete", ...args);
@@ -36,21 +37,21 @@ it("deletes nested properties, array items and unindexed singleton fields", asyn
     expect(value.list).toHaveLength(2);
     expect(Object.hasOwn(value.list, 0)).toBe(false);
     expect(value.list[1]).toBe(2);
-    await database.update(["meta"], {settings: {theme: "dark"}, maintenance: false});
-    await remove(["meta", "maintenance"]);
-    expect(await database.read(["meta"])).toEqual({settings: {theme: "dark"}});
-    await remove(["meta"]);
-    expect(await readNativeStore("backend-delete", "meta")).toEqual([]);
+    await database.update(["singleton"], {settings: {theme: "dark"}, maintenance: false});
+    await remove(["singleton", "maintenance"]);
+    expect(await database.read(["singleton"])).toEqual({settings: {theme: "dark"}});
+    await remove(["singleton"]);
+    expect(await readNativeStore("backend-delete", "singleton")).toEqual([]);
 });
 
 it("does not create records or empty branches when deleting absent nested values", async () => {
     const {database, remove} = await setup();
-    for (const path of [[...post, "missing", "child"], ["meta", "missing", "child"]]) {
+    for (const path of [[...post, "missing", "child"], ["singleton", "missing", "child"]]) {
         expect(await remove(path)).toBeNull();
         expect(await remove(path)).toBeNull();
     }
     expect(await readNativeStore("backend-delete", "posts")).toEqual([]);
-    expect(await readNativeStore("backend-delete", "meta")).toEqual([]);
+    expect(await readNativeStore("backend-delete", "singleton")).toEqual([]);
     await database.create(post, {keep: true});
     await remove([...post, "missing", "child"]);
     expect(await database.read(post)).toEqual({keep: true});

@@ -32,8 +32,11 @@ const context = async () => {
 it("notifies across independent contexts for UI and backend reactions without echo", async () => {
     const A = await context(), B = await context();
     const writer = new A.Database({storageId: "shared-native", backend: new A.Backend({storageId: "shared-native"})});
+    writer.setBackend(new A.Backend({storageId: writer.storageId}));
     const reader = new B.Database({storageId: "shared-native", backend: new B.Backend({storageId: "shared-native"})});
+    reader.setBackend(new B.Backend({storageId: reader.storageId}));
     const isolated = new B.Database({storageId: "separate-native", backend: new B.Backend({storageId: "separate-native"})});
+    isolated.setBackend(new B.Backend({storageId: isolated.storageId}));
     await writer.read(["posts"]);
     const events = [], wrong = vi.fn();
     const one = reader.cursor(["posts", "post_id"]).subscribe(event => events.push(event));
@@ -66,7 +69,9 @@ it("broadcasts backend updates and deletes after commit, remaining silent on con
     const A = await context(), B = await context();
     const storageId = "shared-backend-update";
     const writer = new A.Database({storageId, backend: new A.Backend({storageId})});
+    writer.setBackend(new A.Backend({storageId: writer.storageId}));
     const reader = new B.Database({storageId, backend: new B.Backend({storageId})});
+    reader.setBackend(new B.Backend({storageId: reader.storageId}));
     const backend = new A.Backend({storageId});
     await writer.read(["posts"]);
     const initial = vi.fn(), added = vi.fn(), changed = vi.fn(), removed = vi.fn();
@@ -102,7 +107,9 @@ it("broadcasts cursor handler replacement and deletion once across independent c
     const A = await context(), B = await context();
     const storageId = "shared-cursor-backend";
     const writer = new A.Database({storageId, backend: new A.Backend({storageId})});
+    writer.setBackend(new A.Backend({storageId: writer.storageId}));
     const reader = new B.Database({storageId, backend: new B.Backend({storageId})});
+    reader.setBackend(new B.Backend({storageId: reader.storageId}));
     await writer.read(["posts"]);
     await writer.create(["posts", {post_id: "p1"}], {text: "original"});
     const onChange = vi.fn(), changed = vi.fn(), removed = vi.fn();

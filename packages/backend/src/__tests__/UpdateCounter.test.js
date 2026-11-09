@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import update from "../../../database/src/common/methods/update";
 import {updateCounter} from "../common/handlers/utils";
@@ -16,10 +17,10 @@ const setup = async (provider, initial = null) => {
     if (provider === "local") {
         const storageId = `counter-update-${++nextId}`;
         const backend = new LocalBackend({storageId});
-        const database = new LocalDatabase({storageId, backend});
+        const database = createService(LocalDatabase, {storageId, backend});
         await database.read(["_counters"]);
         if (initial !== null) await backend.request("database.update", "", new Map([[path, initial]]));
-        return {backend, database, read: () => backend.request("database.read", path)};
+        return {backend, database, read: () => backend.request("database.read", ["_counters", {id: "p1"}, {like: "like"}])};
     }
     let value = initial;
     const transaction = vi.fn(async callback => {

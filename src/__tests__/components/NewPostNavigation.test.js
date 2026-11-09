@@ -1,3 +1,4 @@
+import createService from "../createService";
 import LocalDatabase from "../../../packages/database/src/local";
 import LocalBackend from "../../../packages/backend/src/local/LocalBackend";
 import onEvents from "../../../packages/backend/src/local/database/onEvents";
@@ -72,8 +73,8 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
         return "backend-key";
     })};
     context.database = provider === "local"
-        ? new LocalDatabase({storageId, backend: context.backend})
-        : new FirebaseDatabase({firebase: fixture.firebase, backend: context.backend});
+        ? createService(LocalDatabase, {storageId, backend: context.backend})
+        : createService(FirebaseDatabase, {firebase: fixture.firebase, backend: context.backend});
     const database = context.database;
     if (provider === "local") {
         await database.read(["posts"]);
@@ -130,7 +131,7 @@ it.each(["local", "firebase"])("releases the composer blocker before navigating 
 it("passes a server creation error to onError without completing publication", async () => {
     const failure = Object.assign(new Error("Not allowed"), {code: "functions/permission-denied"});
     context.backend = {request: vi.fn().mockRejectedValue(failure)};
-    context.database = new FirebaseDatabase({backend: context.backend});
+    context.database = createService(FirebaseDatabase, {backend: context.backend});
     const complete = vi.fn();
     const error = vi.fn();
     const history = createMemoryHistory({initialEntries: ["/discover"]});
@@ -163,7 +164,7 @@ const editComposer = async (provider, {failure} = {}) => {
     if (provider === "local") {
         const storageId = `post-edit-${crypto.randomUUID()}`;
         context.backend = new LocalBackend({storageId});
-        context.database = new LocalDatabase({storageId, backend: context.backend});
+        context.database = createService(LocalDatabase, {storageId, backend: context.backend});
         await context.database.read(["posts"]);
         await context.backend.request("database.create", ["posts", {post_id: editPostData.id}], initial);
         unsubscribe = onEvents({path: ["posts", "post_id"], onUpdate: changed})(context.backend);
@@ -191,7 +192,7 @@ const editComposer = async (provider, {failure} = {}) => {
             saved = next;
             return null;
         })};
-        context.database = new FirebaseDatabase({firebase: fixture.firebase, backend: context.backend});
+        context.database = createService(FirebaseDatabase, {firebase: fixture.firebase, backend: context.backend});
     }
     const creates = vi.spyOn(context.database, "create");
     const updates = vi.spyOn(context.database, "update");

@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import createLocalDatabase from "../../../../database/src/__tests__/createLocalDatabase";
 import FirebaseAuth from "../../firebase";
 
@@ -83,7 +84,7 @@ it("initializes ADMIN with real FirebaseAuth and a cleared LocalDatabase while r
     const account = await auth.createUserWithEmailAndPassword("mixed-reset@example.test", "password");
     await auth.signOut();
     const local = createLocalDatabase({storageId: "auth-bootstrap-emulator-mixed"});
-    const mixed = new FirebaseAuth({firebase, database: local, UserData});
+    const mixed = createService(FirebaseAuth, {firebase, database: local, UserData});
     const user = await mixed.signInWithEmailAndPassword(account.email, "password");
     expect(user.persisted).toBe(true);
     expect(user.role).toBe("admin");

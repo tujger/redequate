@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {serverTimestamp} from "firebase/database";
 import {ServerValue} from "../firebase-server/node_modules/firebase-admin/lib/esm/database/index.js";
 import BackendBase from "../common/BackendBase";
@@ -53,7 +54,7 @@ it.each([DatabaseBase, LocalDatabase, FirebaseDatabase])("Database delegates tim
     const marker = {};
     const timestamp = vi.fn(() => marker);
     const backend = {get TIMESTAMP() { return timestamp(); }};
-    const database = new Database({backend, firebase: {app: {}}});
+    const database = createService(Database, {backend, firebase: {app: {}}});
     expect(database.TIMESTAMP).toBe(marker);
     expect(timestamp).toHaveBeenCalledTimes(1);
 });

@@ -98,7 +98,7 @@ it("refreshes the authenticated profile and publishes the restored device data",
     });
     expect(database.read.mock.calls.map(([path]) => path)).toEqual([
         ["users_public", {user_id: "u1"}], ["roles", {user_id: "u1"}],
-        ["users_private", {user_id: "u1"}], ["meta", {settings: "settings"}],
+        ["users_private", {user_id: "u1"}], ["meta", {setting: "settings"}],
         ["users_public", {user_id: "u1"}], ["roles", {user_id: "u1"}],
         ["users_private", {user_id: "u1"}, {device_id: "device"}],
     ]);
@@ -118,7 +118,7 @@ it.each([
         "users_private/u1/device": {locale: "en"},
     });
     expect(database.read.mock.calls.map(([path]) => path)).toEqual([
-        ["meta", {settings: "settings"}],
+        ["meta", {setting: "settings"}],
         ["users_public", {user_id: "u1"}], ["roles", {user_id: "u1"}],
         ["users_private", {user_id: "u1"}, {device_id: "device"}],
     ]);
@@ -130,7 +130,7 @@ it.each([
 it("initializes a guest without profile reads", async () => {
     const guest = new UserData();
     const database = await start(() => guest);
-    expect(database.read).toHaveBeenCalledExactlyOnceWith(["meta", {settings: "settings"}]);
+    expect(database.read).toHaveBeenCalledExactlyOnceWith(["meta", {setting: "settings"}]);
     expect(context.setUser).toHaveBeenCalledWith(guest);
 });
 
