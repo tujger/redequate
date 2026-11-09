@@ -1,5 +1,5 @@
-export {default as userAdminFields} from "./userAdminFields";
-export {default as userMutualFields} from "./userMutualFields";
-export {default as userPrivateFields} from "./userPrivateFields";
-export {default as userPublicFields} from "./userPublicFields";
+export {default as userProfileAdminFields} from "./userProfileAdminFields";
+export {default as userProfileMutualFields} from "./userProfileMutualFields";
+export {default as userProfilePrivateFields} from "./userProfilePrivateFields";
+export {default as userProfilePublicFields} from "./userProfilePublicFields";
 export {default as ProfileComponent} from "./ProfileComponent";
