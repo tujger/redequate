@@ -79,6 +79,8 @@ export default (
     }, [id, currentUserData, database, history, shouldRedirectToLogin]);
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
+    if (!userData) return <LoadingComponent/>;
+
     return <>
         <NavigationToolbar
             mediumButton={isCurrentUserAdmin && <Button
