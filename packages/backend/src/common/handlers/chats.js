@@ -7,10 +7,11 @@ export default class ChatListener extends BackendListener {
     }
 
     async onCreate({params, value}) {
+        if (params.message_id === "!meta" || typeof value?.uid !== "string" || !value.uid) return;
         console.debug("[Backend:Chat]", `created [${params.chat_id}/${params.message_id}]`, {params, value});
 
         const {text = "", uid} = value;
-        const senderName = await this.backend.request("database.read", ["users_public", {user_id: uid}, "name"]);
+        const senderName = await this.backend.request("database.read", ["users_public", {user_id: uid}, {name: "name"}]);
 
         const data = {
             body: `${senderName}: ${text}`.replace(/\$\[.*?:.*?:(.*?)]/g, "$1"),
@@ -18,12 +19,11 @@ export default class ChatListener extends BackendListener {
             type: "chat",
         };
 
-        const members = await this.backend.request("database.read", ["chats", {chat_id: params.chat_id}, {message_id: "!meta"}, "members"]);
-console.log("MEMPERS", members);
-        if (!Object.keys(members?.members || {}).length) {
+        const members = await this.backend.request("database.read", ["chats", {chat_id: params.chat_id}, {message_id: "!meta"}, {members: "members"}]);
+        if (!Object.keys(members || {}).length) {
             fail("database/invalid-argument", "Expected members in the chat.");
         }
-        for (const userId of Object.keys(members?.members)) {
+        for (const userId of Object.keys(members)) {
             if (userId === uid) continue;
             const active = await this.backend.request("database.read", ["_chats", {user_id: userId}, {chat_id: params.chat_id}]);
             if (active == null) continue;
