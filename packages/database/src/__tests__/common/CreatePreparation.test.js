@@ -13,9 +13,13 @@ vi.mock("firebase/database", async importOriginal => ({
 beforeEach(() => vi.clearAllMocks());
 
 const firebase = {app: {name: "test"}};
-const databaseFor = (provider, backend, onError) => provider === "firebase"
-    ? new FirebaseDatabase({firebase, backend, onError})
-    : new LocalDatabase({backend, onError});
+const databaseFor = (provider, backend, onError) => {
+    const database = provider === "firebase"
+        ? new FirebaseDatabase({firebase, onError})
+        : new LocalDatabase({onError});
+    database.setBackend(backend);
+    return database;
+};
 const create = (provider, backend, path, value) => databaseFor(provider, backend).create(path, value);
 
 it.each(["local", "firebase"])("%s passes its ready key in options to super and sends the prepared value", async provider => {
@@ -44,14 +48,14 @@ it.each(["local", "firebase"])("%s passes its ready key in options to super and 
 it.each(["local", "firebase"])("%s supplies its generated final key to the common preparation", async provider => {
     const backend = {request: vi.fn(async (_name, path) => path.at(-1).id)};
     let callbackKey;
-    const path = ["chats", {chat_id: "c1"}, "messages", "id"];
+    const path = ["chats", {chat_id: "c1"}, {messages: "messages"}, "id"];
     const superCreate = vi.spyOn(DatabaseBase.prototype, "create");
     const callback = id => { callbackKey = id; return {id}; };
     const key = await create(provider, backend, path, callback);
     expect(key).toBe(callbackKey);
     expect(superCreate).toHaveBeenCalledWith(path, callback, expect.objectContaining({key}));
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create",
-        ["chats", {chat_id: "c1"}, "messages", {id: key}], {id: key});
+        ["chats", {chat_id: "c1"}, {messages: "messages"}, {id: key}], {id: key});
     if (provider === "firebase") {
         expect(key).toBe("firebase-generated");
         expect(getDatabase).toHaveBeenCalledExactlyOnceWith(firebase.app);
@@ -67,7 +71,7 @@ it("Firebase leaves ordinary values without a key for its supplied backend", asy
     const path = ["posts", "post_id"];
     const value = {title: "ready"};
     const backend = {request: vi.fn().mockResolvedValue("backend-key")};
-    const database = new FirebaseDatabase({backend});
+    const database = databaseFor("firebase", backend);
     expect(await database.create(path, value)).toBe("backend-key");
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create", path, value);
     expect(getDatabase).not.toHaveBeenCalled();
@@ -152,11 +156,51 @@ it("keeps the bare base method unimplemented without provider options", async ()
     await expect(new DatabaseBase().create(["posts", "post_id"], {})).rejects.toThrow("Not implemented: create");
 });
 
-it("uses the backend stored by the superclass constructor", async () => {
+it("uses the backend supplied through setBackend", async () => {
     const backend = {request: vi.fn().mockResolvedValue("base-key")};
-    const database = new DatabaseBase({backend});
+    const database = new DatabaseBase();
+    database.setBackend(backend);
     const callback = vi.fn(key => ({key}));
     expect(await database.create(["posts", "post_id"], callback, {key: "prepared-key"})).toBe("base-key");
     expect(callback).toHaveBeenCalledExactlyOnceWith("prepared-key");
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create", ["posts", {post_id: "prepared-key"}], {key: "prepared-key"});
+});
+
+it.each(["local", "firebase"])("%s generates intermediate IDs for ordinary values without changing fixed segments", async provider => {
+    const backend = {request: vi.fn(async (_name, path) => typeof path.at(-1) === "string" ? "server-key" : path.at(-1).message_id)};
+    const path = ["chats", "chat_id", {branch: "fixed"}, "message_id"];
+    const value = {text: "new"};
+    const key = await create(provider, backend, path, value);
+    const prepared = backend.request.mock.calls[0][1];
+    expect(prepared[1]).toEqual({chat_id: expect.stringMatching(/^[-0-9A-Z_a-z]{20}$/)});
+    expect(prepared[2]).toEqual({branch: "fixed"});
+    expect(prepared[3]).toEqual(provider === "firebase" ? "message_id" : {message_id: key});
+    expect(key).toBe(provider === "firebase" ? "server-key" : prepared[3].message_id);
+    expect(backend.request.mock.calls[0][2]).toBe(value);
+    expect(path).toEqual(["chats", "chat_id", {branch: "fixed"}, "message_id"]);
+    expect(push).not.toHaveBeenCalled();
+});
+
+it.each(["local", "firebase"])("%s passes both generated IDs to callbacks in path order", async provider => {
+    const backend = {request: vi.fn(async (_name, path) => path.at(-1).message_id)};
+    const callback = vi.fn((chatId, messageId) => ({chatId, messageId}));
+    const key = await create(provider, backend, ["chats", "chat_id", "message_id"], callback);
+    const [chatId, messageId] = callback.mock.calls[0];
+    expect(chatId).toMatch(/^[-0-9A-Z_a-z]{20}$/);
+    expect(messageId).toBe(key);
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create",
+        ["chats", {chat_id: chatId}, {message_id: messageId}], {chatId, messageId});
+});
+
+it.each(["local", "firebase"])("%s generates only the chat ID when the metadata key is fixed", async provider => {
+    const backend = {request: vi.fn(async (_name, path) => path.at(-1).message_id)};
+    const callback = vi.fn(chatId => ({members: {alice: 0, bob: 0}}));
+    expect(await create(provider, backend, ["chats", "chat_id", {message_id: "!meta"}], callback)).toBe("!meta");
+    const [chatId] = callback.mock.calls[0];
+    expect(chatId).toMatch(/^[-0-9A-Z_a-z]{20}$/);
+    expect(callback).toHaveBeenCalledExactlyOnceWith(chatId);
+    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create",
+        ["chats", {chat_id: chatId}, {message_id: "!meta"}], {members: {alice: 0, bob: 0}});
+    expect(push).not.toHaveBeenCalled();
 });

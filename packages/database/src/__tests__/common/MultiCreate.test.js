@@ -42,10 +42,10 @@ it("returns the final supplied key when only an intermediate key is generated", 
     expect(callback.mock.calls[0]).toHaveLength(1);
     expect(service.request.mock.calls[0][1][1]).toEqual({parent_id: callback.mock.calls[0][0]});
 });
-it("leaves ordinary values and their existing path preparation unchanged", async () => {
+it("generates intermediate IDs for ordinary values and preserves fixed branches", async () => {
     const service = backend(); const value = {text: "unchanged"};
-    expect(await createRecord(service, ["records", "parent_id", "id"], value, {key: "final"})).toBe("final");
-    expect(service.request).toHaveBeenCalledExactlyOnceWith("database.create", ["records", "parent_id", {id: "final"}], value);
+    expect(await createRecord(service, ["records", "parent_id", {edit: "edit"}, "id"], value, {key: "final"})).toBe("final");
+    expect(service.request).toHaveBeenCalledExactlyOnceWith("database.create", ["records", {parent_id: expect.stringMatching(/^[-0-9A-Z_a-z]{20}$/)}, {edit: "edit"}, {id: "final"}], value);
 });
 it("does not request a write when a callback fails or returns an invalid value", async () => {
     const service = backend();
