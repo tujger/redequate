@@ -10,9 +10,10 @@ import FlexFabComponent from "../components/FlexFabComponent";
 import LoadingComponent from "../components/LoadingComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ProfileComponentOrigin from "../components/ProfileComponent/ProfileComponent";
+import ProfileSubscriptions from "../components/ProfileComponent/ProfileSubscriptions";
 import ProgressView from "../components/ProgressView";
 import SystemAlert from "../components/SystemAlert";
-import {useAuth, useBackend, useDatabase, useRedirectToLogin} from "../controllers";
+import {useAuth, useBackend, useDatabase, useMetaInfo, useRedirectToLogin} from "../controllers";
 import {usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
@@ -34,6 +35,7 @@ export default (
     const database = useDatabase();
     const dispatch = useDispatch();
     const history = useHistory();
+    const {settings = {}} = useMetaInfo() || {};
     const pages = usePages();
     const {id} = useParams();
     const shouldRedirectToLogin = useRedirectToLogin();
@@ -80,7 +82,7 @@ export default (
 
     if (shouldRedirectToLogin) return <LoadingComponent/>;
     if (!userData) return <LoadingComponent/>;
-
+console.log(userData)
     return <>
         <NavigationToolbar
             mediumButton={isCurrentUserAdmin && <Button
@@ -130,6 +132,10 @@ export default (
                     </Button>}
             </div>
         </div>
+        {settings?.userProfileSubscriptions && <ProfileSubscriptions
+            publicFields={publicFieldsApplied}
+            userData={userData}
+        />}
         {(isSameUser || !pages.chat || pages.chat.disabled)
             ? null
             : <FlexFabComponent
