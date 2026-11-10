@@ -10,7 +10,15 @@ export default ({counter, path, prefix, suffix, live = false, onChange, showZero
     React.useEffect(() => {
         if (counter !== undefined) setState(state => ({...state, value: counter}));
         if (!path) return;
-        if (counter === undefined && !live) return;
+        if (counter === undefined && !live) {
+            counterControl({
+                database,
+                path
+            }).then(value => {
+                setState(state => ({...state, value}));
+            });
+            return;
+        }
         const listener = counterControl({
             database,
             onchange: newValue => {
