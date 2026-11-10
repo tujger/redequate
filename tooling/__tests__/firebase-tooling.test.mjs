@@ -173,3 +173,115 @@ test('process teardown waits for CLI cleanup without interrupting it again', asy
     assert.equal(existsSync(marker), false)
   } finally { if (!task.exited) await group.stop() }
 })
+
+
+for (const target of ['dev', 'prod']) {
+  test(`${target} starts Vite only after core readiness without launching local services`, async t => {
+    const { directory, write, config } = fixture(t)
+    write('node_modules/vite/package.json', { name: 'vite', exports: { './package.json': './package.json' } })
+    let coreReady = false
+    let stopped = false
+    const calls = []
+    t.mock.method(Processes.prototype, 'start', function (command, args, options) {
+      calls.push(args)
+      assert(args[0].endsWith('/watch-redequate-core.mjs'))
+      queueMicrotask(() => { coreReady = true; options.onLine('[Core watch] Ready.') })
+      return { completed: new Promise(() => {}) }
+    })
+    t.mock.method(Processes.prototype, 'run', async function (command, args) {
+      assert.equal(coreReady, true)
+      calls.push(args)
+    })
+    const originalStop = Processes.prototype.stop
+    t.mock.method(Processes.prototype, 'stop', async function () { stopped = true; await originalStop.call(this) })
+    assert.equal(await runFirebase(config, ['start', target]), 0)
+    assert.equal(stopped, true)
+    assert(calls.some(args => args.includes('server-' + target)))
+    assert(!calls.some(args => args.some(arg => /emulators:start|watch-redequate-server|prepare-redequate-server/.test(arg))))
+  })
+}
+
+test('initial core failure prevents Vite and local service startup', async t => {
+  const { config } = fixture(t)
+  let calls = 0
+  t.mock.method(Processes.prototype, 'start', function (command, args) {
+    calls++
+    assert(args[0].endsWith('/watch-redequate-core.mjs'))
+    return { completed: Promise.resolve({ code: 1 }) }
+  })
+  t.mock.method(Processes.prototype, 'run', async () => { assert.fail('No consumer should start before core readiness.') })
+  assert.equal(await runFirebase(config, ['start', 'emulator']), 1)
+  assert.equal(calls, 1)
+})
+
+test('unexpected core exit terminates a running development launcher', async t => {
+  const { write, config } = fixture(t)
+  write('node_modules/vite/package.json', { name: 'vite', exports: { './package.json': './package.json' } })
+  let finishCore
+  let stopped = false
+  t.mock.method(Processes.prototype, 'start', function (command, args, options) {
+    queueMicrotask(() => options.onLine('[Core watch] Ready.'))
+    return { completed: new Promise(resolve => { finishCore = resolve }) }
+  })
+  t.mock.method(Processes.prototype, 'run', async function (command, args) {
+    if (args[0].endsWith('/vite.js')) {
+      finishCore({ code: 2 })
+      await this.interrupted
+    }
+  })
+  const originalStop = Processes.prototype.stop
+  t.mock.method(Processes.prototype, 'stop', async function () {
+    stopped = true
+    this.interrupt({ code: 1 })
+    await originalStop.call(this)
+  })
+  assert.equal(await runFirebase(config, ['start', 'dev']), 2)
+  assert.equal(stopped, true)
+})
+
+
+test('emulator starts core first and owns server watch plus Vite after service readiness', async t => {
+  const { directory, write, config } = fixture(t)
+  for (const name of ['vite', 'firebase-tools']) {
+    write(`node_modules/${name}/package.json`, { name, exports: { './package.json': './package.json' } })
+  }
+  const calls = []
+  let coreReady = false
+  t.mock.method(Processes.prototype, 'start', function (command, args, options) {
+    calls.push(args)
+    if (args[0].endsWith('/watch-redequate-core.mjs')) {
+      queueMicrotask(() => { coreReady = true; options.onLine('[Core watch] Ready.') })
+      return { completed: new Promise(() => {}) }
+    }
+    assert(coreReady)
+    const task = { child: { pid: process.pid }, exited: false, completed: new Promise(() => {}) }
+    if (args.includes('emulators:start')) options.onLine('All emulators ready!', task)
+    return task
+  })
+  t.mock.method(Processes.prototype, 'run', async function (command, args) {
+    assert(coreReady)
+    calls.push(args)
+  })
+  t.mock.method(globalThis, 'fetch', async url => ({
+    status: 401,
+    json: async () => url.endsWith('/emulators')
+      ? { functions: {}, database: {}, auth: {}, storage: {} }
+      : url.endsWith('/configuredCallable')
+        ? { error: { status: 'UNAUTHENTICATED' } }
+        : { pid: process.pid }
+  }))
+  t.mock.method(Processes.prototype, 'wait', async () => ({ code: 0 }))
+  const originalStop = Processes.prototype.stop
+  t.mock.method(Processes.prototype, 'stop', async function () {
+    write('.firebase/emulator-data/firebase-export-metadata.json', {})
+    await originalStop.call(this)
+  })
+  assert.equal(await runFirebase(config, ['start', 'emulator']), 0)
+  assert(calls[0][0].endsWith('/watch-redequate-core.mjs'))
+  assert(calls.some(args => args.includes('emulators:start')))
+  const server = calls.findIndex(args => args[0].endsWith('/watch-redequate-server.mjs'))
+  const vite = calls.findIndex(args => args[0].endsWith('/vite.js'))
+  assert(server > 0)
+  assert(vite > server)
+  assert.equal(readFileSync(join(directory, '.firebase/emulator-data/firebase-export-metadata.json'), 'utf8'), '{}')
+})

@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
 import { setTimeout as delay } from 'node:timers/promises'
 import Processes from './processes.mjs'
+import { startCoreWatcher } from './core-lifecycle.mjs'
 import { observeEmulatorLine, emulatorReady } from './emulator-lifecycle.mjs'
 import seedEmulator, { validateSeedConfig } from './seed-emulator.mjs'
 import emulatorConfig from './emulator-config.mjs'
@@ -158,21 +159,30 @@ export default async function runFirebase(input, argv = process.argv.slice(2)) {
 
   try {
     console.info(`[Firebase] ${emulator ? 'EMULATOR' : 'SERVER'} | ${project} | ${action}`)
-    if (emulator) {
-      local = emulatorConfig(settings, { isolated: action === 'test' })
-      if (action === 'start') rulesWatcher = watchRules(join(root, 'database-rules.config.json'))
-      await Promise.resolve(local).then(prepareServer).then(startEmulators).then(waitForEmulators).then(seed).then(runLocal)
-    } else if (action === 'start') {
-      await group.run('sh', [ownFile('./link-redequate-react.sh'), root], options)
-      await vite()
-    } else if (action === 'build') {
-      await vite('build')
-    } else if (action === 'deploy-hosting') {
-      await vite('build')
-      await cli('deploy', '--only', 'hosting')
-    } else if (action === 'deploy-functions') {
-      await cli('deploy', '--only', 'functions')
+    const coreTask = action === 'start' ? await startCoreWatcher(group, options) : undefined
+    const execute = async () => {
+      if (emulator) {
+        local = emulatorConfig(settings, { isolated: action === 'test' })
+        if (action === 'start') rulesWatcher = watchRules(join(root, 'database-rules.config.json'))
+        await Promise.resolve(local).then(prepareServer).then(startEmulators).then(waitForEmulators).then(seed).then(runLocal)
+      } else if (action === 'start') {
+        await group.run('sh', [ownFile('./link-redequate-react.sh'), root], options)
+        await vite()
+      } else if (action === 'build') {
+        await vite('build')
+      } else if (action === 'deploy-hosting') {
+        await vite('build')
+        await cli('deploy', '--only', 'hosting')
+      } else if (action === 'deploy-functions') {
+        await cli('deploy', '--only', 'functions')
+      }
     }
+    await Promise.race([
+      execute(),
+      ...(coreTask ? [coreTask.completed.then(({ code }) => {
+        throw Object.assign(new Error(`Redequate core watcher stopped (code ${code}).`), { exitCode: code || 1 })
+      })] : [])
+    ])
   } catch (error) {
     console.error(error.message)
     exitCode = group.stopping ? 130 : (error.exitCode || 1)
