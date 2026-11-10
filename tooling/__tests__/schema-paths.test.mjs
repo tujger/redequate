@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { analyzePath, UNKNOWN } from '../schema-paths.mjs'
+import { analyzePath, UNKNOWN } from '../eslint/schema-paths.mjs'
 
 const stores = JSON.parse(readFileSync(new URL('../../packages/database/src/local/stores.json', import.meta.url)))
 const rules = JSON.parse(readFileSync(new URL('../../src/__tests__/fixtures/database.rules.json', import.meta.url)))

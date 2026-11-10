@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { Linter, ESLint } from 'eslint'
 import { fileURLToPath } from 'node:url'
-import queries from '../eslint-database-queries.mjs'
+import queries from '../eslint/database-queries.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const lint = (source, settings = {}) => new Linter().verify(source, [{
@@ -111,8 +111,8 @@ test('query configuration failures are reported and repository checks retain war
   const messages = lint(source, { redequateDatabase: { firebaseRules: '/missing/database.rules.json' } })
   assert.equal(messages.length, 1)
   assert.match(messages[0].message, /Cannot resolve Firebase Rules/)
-  const conflicting = lint(source, { redequateDatabase: { rulesConfig: 'one', firebaseRules: 'two' } })
-  assert.match(conflicting[0].message, /Choose rulesConfig or firebaseRules, not both/)
+  const conflicting = lint(source, { redequateDatabase: { projectConfig: 'one', firebaseRules: 'two' } })
+  assert.match(conflicting[0].message, /Choose projectConfig or firebaseRules, not both/)
   const eslint = new ESLint({ cwd: root })
   assert.equal((await eslint.calculateConfigForFile('packages/database/src/local/stores.json')).rules['redequate/local-stores'][0], 1)
   assert.equal((await eslint.calculateConfigForFile('src/example.js')).rules['redequate/database-queries'][0], 1)

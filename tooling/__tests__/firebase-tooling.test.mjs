@@ -5,57 +5,47 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
-import runFirebase, { validateFirebaseConfig, firebaseCLI } from '../firebase.mjs'
-import emulatorConfig from '../emulator-config.mjs'
-import seedEmulator from '../seed-emulator.mjs'
-import Processes from '../processes.mjs'
+import runFirebase, { validateFirebaseConfig } from '../app/run.mjs'
+import { loadProjectConfig } from '../app-config.mjs'
+import { prepareProjectRuntime } from '../app/runtime.mjs'
+import seedEmulator from '../app/seed.mjs'
+import Processes from '../app/processes.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
-const settings = directory => ({
-  root: directory,
-  projects: { dev: 'configured-dev', prod: 'configured-prod', emulator: 'demo-configured' },
-  modes: { dev: 'server-dev', prod: 'server-prod', emulator: 'emulator' },
-  emulator: { clientConfig: 'config/firebase-emulator.json', testProjectId: 'demo-configured-test', readyCallable: 'configuredCallable', testFile: 'scripts/__tests__/configured.test.mjs' }
-})
 const fixture = t => {
   const directory = mkdtempSync(join(tmpdir(), 'firebase-tooling-test-'))
   t.after(() => rmSync(directory, { recursive: true, force: true }))
   const write = (path, data) => { const file = join(directory, path); mkdirSync(join(file, '..'), { recursive: true }); writeFileSync(file, typeof data === 'string' ? data : JSON.stringify(data)); return file }
   write('package.json', '{"name":"fixture","private":true}')
-  write('config/firebase-emulator.json', { projectId: 'demo-configured', apiKey: 'demo-configured', storageBucket: 'demo-configured.appspot.com' })
-  write('firebase.json', {
-    database: { rules: '.firebase/generated/database.rules.json' },
-    storage: { rules: 'storage.rules' },
-    functions: { source: 'functions' },
-    emulators: { database: { host: '127.0.0.1', port: 9000 }, auth: { host: '127.0.0.1', port: 9099 }, functions: { host: '127.0.0.1', port: 5001 }, storage: { host: '127.0.0.1', port: 9199 }, hub: { host: '127.0.0.1', port: 4400 } }
-  })
+  write('dev.json', { projectId: 'configured-dev', apiKey: 'public', databaseURL: 'https://configured-dev-default-rtdb.firebaseio.com', storageBucket: 'configured-dev.appspot.com' })
+  write('prod.json', { projectId: 'configured-prod' })
+  write('redequate.config.json', { defaultEnvironment: 'dev', server: { port: 3002, https: true }, testing: { file: 'scripts/__tests__/configured.test.mjs' }, environments: { dev: { firebaseConfig: 'dev.json', mode: 'server-dev' }, prod: { firebaseConfig: 'prod.json', mode: 'server-prod' }, emulator: { readyCallable: 'configuredCallable' } } })
+  write('firebase.json', { functions: { source: 'functions' }, storage: { rules: 'storage.rules' } })
   write('storage.rules', 'rules_version = "2"; service firebase.storage {match /b/{bucket}/o {match /{path=**} {allow read: if false;}}}')
-  write('database-rules.config.json', { providers: [{ file: 'src/App.js', binding: 'database' }], output: '.firebase/generated/database.rules.json' })
-  write('src/App.js', 'import Database from "redequate/database/firebase"; const database = new Database({});')
-  mkdirSync(join(directory, 'functions'))
-  return { directory, write, config: settings(directory) }
+  write('functions/package.json', { private: true })
+  return { directory, write, config: loadProjectConfig(join(directory, 'redequate.config.json')) }
 }
 
-test('validates supported actions and configured targets without application-specific identifiers', () => {
-  const config = settings('/tmp/example')
-  for (const action of ['start', 'build', 'deploy-hosting', 'deploy-functions']) assert.equal(validateFirebaseConfig(config, [action, 'dev']).projects.dev, 'configured-dev')
-  assert.equal(validateFirebaseConfig(config, ['test', 'emulator']).emulator.testProjectId, 'demo-configured-test')
+test('validates supported actions and configured targets without application-specific identifiers', t => {
+  const { config } = fixture(t)
+  for (const action of ['start', 'build', 'deploy-hosting', 'deploy-functions']) assert.equal(validateFirebaseConfig(config, [action, 'dev']).environments.dev.projectId, 'configured-dev')
+  assert.equal(validateFirebaseConfig(config, ['test', 'emulator']).environments.emulator.projectId, 'configured-dev')
   for (const argv of [[], ['start'], ['test', 'prod'], ['deploy-hosting', 'emulator'], ['build', 'unknown'], ['start', 'dev', 'extra']]) assert.throws(() => validateFirebaseConfig(config, argv))
-  for (const change of [{ testProjectId: 'production' }, { testProjectId: 'demo-configured' }, { clientConfig: '' }, { testFile: '' }, { readyCallable: '../callable' }, { seed: {} }]) {
-    assert.throws(() => validateFirebaseConfig({ ...config, emulator: { ...config.emulator, ...change } }, ['start', 'emulator']))
+  for (const change of [{ readyCallable: '../callable' }, { seed: {} }]) {
+    assert.throws(() => validateFirebaseConfig({ ...config, environments: { ...config.environments, emulator: { ...config.environments.emulator, ...change } } }, ['start', 'emulator']))
   }
 })
 
-test('rejects invalid CLI and runner requests before creating process listeners or temp files', async () => {
+test('rejects invalid CLI and runner requests before creating process listeners or temp files', async t => {
+  const { config } = fixture(t)
   const count = process.listenerCount('SIGINT')
-  await assert.rejects(runFirebase(settings('/tmp/example'), ['test', 'prod']))
-  await assert.rejects(firebaseCLI([]), /Usage/)
+  await assert.rejects(runFirebase(config, ['test', 'prod']))
   assert.equal(process.listenerCount('SIGINT'), count)
 })
 
 test('importing runner is inert and symlink CLI entry still executes validation', t => {
   const { directory } = fixture(t)
-  const module = join(root, 'tooling/firebase.mjs')
+  const module = join(root, 'tooling/app.mjs')
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', `const before = process.listenerCount('SIGINT'); await import(${JSON.stringify(module)}); if (process.listenerCount('SIGINT') !== before) throw Error('side effects'); console.log('imported');`], { encoding: 'utf8', timeout: 5000 })
   assert.equal(result.status, 0, result.stderr)
   assert.match(result.stdout, /imported/)
@@ -65,42 +55,21 @@ test('importing runner is inert and symlink CLI entry still executes validation'
   assert.match(invalid.stderr, /Usage/)
 })
 
-test('developer configuration generates Rules and preserves its snapshot', t => {
+test('developer and isolated runtimes preserve SDK files, source config and persistent snapshots', t => {
   const { directory, write, config } = fixture(t)
-  const snapshot = write('.firebase/emulator-data/marker', 'keep')
+  const snapshot = write('.firebase/emulator-data/configured-dev/marker', 'keep')
   const original = readFileSync(join(directory, 'firebase.json'), 'utf8')
-  const result = emulatorConfig(config)
-  assert.equal(result.directory, join(directory, '.firebase/emulator-data'))
-  assert(existsSync(join(directory, result.config.database.rules)))
-  assert.equal(readFileSync(snapshot, 'utf8'), 'keep')
-  assert.equal(readFileSync(join(directory, 'firebase.json'), 'utf8'), original)
-})
-
-test('isolated configuration uses configured demo project, independent ports and disposable Rules', t => {
-  const { directory, write, config } = fixture(t)
-  const marker = write('.firebase/emulator-data/marker', 'keep')
-  const result = emulatorConfig(config, { isolated: true })
-  t.after(() => rmSync(result.temporaryDirectory, { recursive: true, force: true }))
-  assert.equal(result.configuration.projectId, 'demo-configured-test')
-  assert.equal(result.configuration.databaseURL, 'https://demo-configured-test-default-rtdb.firebaseio.com')
-  assert.notEqual(result.directory, join(directory, '.firebase/emulator-data'))
-  assert(result.runtimeDirectory.startsWith(result.temporaryDirectory))
-  assert.equal(result.config.emulators.database.port, 19000)
-  for (const name of ['auth', 'database', 'functions', 'storage', 'hub', 'logging', 'eventarc', 'tasks']) assert(result.config.emulators[name].port >= 10000)
-  assert.equal(readFileSync(marker, 'utf8'), 'keep')
-  assert(existsSync(join(result.temporaryDirectory, result.config.database.rules)))
-  assert(!existsSync(join(directory, result.config.database.rules)))
-})
-
-test('invalid project and unsafe Rules paths fail without escaping the temporary directory', t => {
-  const { write, config } = fixture(t)
-  write('config/firebase-emulator.json', { projectId: 'demo-another' })
-  assert.throws(() => emulatorConfig(config), /Unexpected/)
-  write('config/firebase-emulator.json', { projectId: 'demo-configured' })
-  const firebase = JSON.parse(readFileSync(join(config.root, 'firebase.json')))
-  firebase.database.rules = '../escape.json'; write('firebase.json', firebase)
-  assert.throws(() => emulatorConfig(config, { isolated: true }), /escapes/)
-  assert(!existsSync(join(config.root, 'escape.json')))
+  const sdk = readFileSync(join(directory, 'dev.json'), 'utf8')
+  for (const isolated of [false, true]) {
+    const result = prepareProjectRuntime(config, { environment: 'emulator', isolated })
+    t.after(() => rmSync(result.temporaryDirectory, { recursive: true, force: true }))
+    assert.equal(result.configuration.projectId, 'configured-dev')
+    assert.equal(result.config.emulators.database.port, isolated ? 19000 : 9000)
+    assert(existsSync(join(result.temporaryDirectory, result.config.database.rules)))
+    assert.equal(readFileSync(snapshot, 'utf8'), 'keep')
+    assert.equal(readFileSync(join(directory, 'firebase.json'), 'utf8'), original)
+    assert.equal(readFileSync(join(directory, 'dev.json'), 'utf8'), sdk)
+  }
 })
 
 const account = { localId: 'fixture-admin', email: 'fixture@example.test', displayName: 'Fixture Admin', role: 'admin' }
@@ -141,9 +110,8 @@ test('process manager removes its own signal handlers even after a failed child'
   assert.equal(process.listenerCount('SIGINT'), count)
 })
 
-
 test('CLI readiness requires full startup and is revoked on shutdown', async () => {
-  const { observeEmulatorLine, emulatorReady } = await import('../emulator-lifecycle.mjs')
+  const { observeEmulatorLine, emulatorReady } = await import('../app/run.mjs')
   const task = { exited: false }
   observeEmulatorLine('functions: callable initialized', task)
   assert.equal(emulatorReady(task), false)
@@ -160,10 +128,11 @@ test('process teardown waits for CLI cleanup without interrupting it again', asy
   const group = new Processes()
   let observe
   const observed = new Promise(resolve => { observe = resolve })
-  const { observeEmulatorLine } = await import('../emulator-lifecycle.mjs')
+  const { observeEmulatorLine } = await import('../app/run.mjs')
   const script = `process.on('SIGINT', () => { require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'bad'); process.exit(2) }); process.stdout.write('emulators: Shutting '); setTimeout(() => { console.log('down emulators.'); setTimeout(() => process.exit(0), 200) }, 20)`
   const task = group.start(process.execPath, ['-e', script], {
-    cwd: directory, signalGroup: false,
+    cwd: directory,
+    signalGroup: false,
     onLine(line, task) { observeEmulatorLine(line, task); if (task.shutdownStarted) observe() }
   })
   try {
@@ -174,58 +143,67 @@ test('process teardown waits for CLI cleanup without interrupting it again', asy
   } finally { if (!task.exited) await group.stop() }
 })
 
+const pendingLease = () => ({ completed: new Promise(() => {}), release() {} })
 
 for (const target of ['dev', 'prod']) {
-  test(`${target} starts Vite only after core readiness without launching local services`, async t => {
-    const { directory, write, config } = fixture(t)
+  test(`${target} starts Vite only after core readiness and releases after consumer teardown`, async t => {
+    const { write, config } = fixture(t)
     write('node_modules/vite/package.json', { name: 'vite', exports: { './package.json': './package.json' } })
     let coreReady = false
     let stopped = false
+    let released = false
     const calls = []
-    t.mock.method(Processes.prototype, 'start', function (command, args, options) {
-      calls.push(args)
-      assert(args[0].endsWith('/watch-redequate-core.mjs'))
-      queueMicrotask(() => { coreReady = true; options.onLine('[Core watch] Ready.') })
-      return { completed: new Promise(() => {}) }
-    })
     t.mock.method(Processes.prototype, 'run', async function (command, args) {
       assert.equal(coreReady, true)
       calls.push(args)
     })
     const originalStop = Processes.prototype.stop
     t.mock.method(Processes.prototype, 'stop', async function () { stopped = true; await originalStop.call(this) })
-    assert.equal(await runFirebase(config, ['start', target]), 0)
-    assert.equal(stopped, true)
+    const startCore = async () => {
+      coreReady = true
+      return { ...pendingLease(), release() { assert(stopped); released = true } }
+    }
+    assert.equal(await runFirebase(config, ['start', target], { startCore }), 0)
+    assert.equal(released, true)
     assert(calls.some(args => args.includes('server-' + target)))
-    assert(!calls.some(args => args.some(arg => /emulators:start|watch-redequate-server|prepare-redequate-server/.test(arg))))
+    assert(!calls.some(args => args.some(arg => /emulators:start|server\/(watch|prepare)\.mjs/.test(arg))))
   })
 }
+
+test('start uses JSON server settings despite conflicting ambient HTTPS and PORT', async t => {
+  const { write, config } = fixture(t)
+  write('node_modules/vite/package.json', { name: 'vite', exports: { './package.json': './package.json' } })
+  const previous = { HTTPS: process.env.HTTPS, PORT: process.env.PORT }
+  process.env.HTTPS = 'false'; process.env.PORT = '9999'
+  t.after(() => { for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value } })
+  const check = options => { assert.equal(options.env.HTTPS, 'true'); assert.equal(options.env.PORT, '3002') }
+  t.mock.method(Processes.prototype, 'run', async (command, args, options) => check(options))
+  const startCore = async (group, options) => { check(options); return pendingLease() }
+  assert.equal(await runFirebase(config, ['start', 'dev'], { startCore }), 0)
+})
 
 test('initial core failure prevents Vite and local service startup', async t => {
   const { config } = fixture(t)
   let calls = 0
-  t.mock.method(Processes.prototype, 'start', function (command, args) {
-    calls++
-    assert(args[0].endsWith('/watch-redequate-core.mjs'))
-    return { completed: Promise.resolve({ code: 1 }) }
-  })
+  const startCore = async () => { calls++; throw new Error('Initial core build failed') }
   t.mock.method(Processes.prototype, 'run', async () => { assert.fail('No consumer should start before core readiness.') })
-  assert.equal(await runFirebase(config, ['start', 'emulator']), 1)
+  assert.equal(await runFirebase(config, ['start', 'emulator'], { startCore }), 1)
   assert.equal(calls, 1)
 })
 
-test('unexpected core exit terminates a running development launcher', async t => {
+test('unexpected core disconnect terminates a development launcher and releases its lease', async t => {
   const { write, config } = fixture(t)
   write('node_modules/vite/package.json', { name: 'vite', exports: { './package.json': './package.json' } })
   let finishCore
   let stopped = false
-  t.mock.method(Processes.prototype, 'start', function (command, args, options) {
-    queueMicrotask(() => options.onLine('[Core watch] Ready.'))
-    return { completed: new Promise(resolve => { finishCore = resolve }) }
+  let released = false
+  const startCore = async () => ({
+    completed: new Promise(resolve => { finishCore = resolve }),
+    release() { assert(stopped); released = true }
   })
   t.mock.method(Processes.prototype, 'run', async function (command, args) {
     if (args[0].endsWith('/vite.js')) {
-      finishCore({ code: 2 })
+      finishCore({ code: 1 })
       await this.interrupted
     }
   })
@@ -235,24 +213,25 @@ test('unexpected core exit terminates a running development launcher', async t =
     this.interrupt({ code: 1 })
     await originalStop.call(this)
   })
-  assert.equal(await runFirebase(config, ['start', 'dev']), 2)
-  assert.equal(stopped, true)
+  assert.equal(await runFirebase(config, ['start', 'dev'], { startCore }), 1)
+  assert.equal(released, true)
 })
 
-
-test('emulator starts core first and owns server watch plus Vite after service readiness', async t => {
+test('emulator acquires core first and owns only server watch plus local services', async t => {
   const { directory, write, config } = fixture(t)
   for (const name of ['vite', 'firebase-tools']) {
     write(`node_modules/${name}/package.json`, { name, exports: { './package.json': './package.json' } })
   }
   const calls = []
   let coreReady = false
+  let released = false
+  const startCore = async () => {
+    calls.push(['core-lease'])
+    coreReady = true
+    return { ...pendingLease(), release() { released = true } }
+  }
   t.mock.method(Processes.prototype, 'start', function (command, args, options) {
     calls.push(args)
-    if (args[0].endsWith('/watch-redequate-core.mjs')) {
-      queueMicrotask(() => { coreReady = true; options.onLine('[Core watch] Ready.') })
-      return { completed: new Promise(() => {}) }
-    }
     assert(coreReady)
     const task = { child: { pid: process.pid }, exited: false, completed: new Promise(() => {}) }
     if (args.includes('emulators:start')) options.onLine('All emulators ready!', task)
@@ -273,15 +252,16 @@ test('emulator starts core first and owns server watch plus Vite after service r
   t.mock.method(Processes.prototype, 'wait', async () => ({ code: 0 }))
   const originalStop = Processes.prototype.stop
   t.mock.method(Processes.prototype, 'stop', async function () {
-    write('.firebase/emulator-data/firebase-export-metadata.json', {})
+    write('.firebase/emulator-data/configured-dev/firebase-export-metadata.json', {})
     await originalStop.call(this)
   })
-  assert.equal(await runFirebase(config, ['start', 'emulator']), 0)
-  assert(calls[0][0].endsWith('/watch-redequate-core.mjs'))
+  assert.equal(await runFirebase(config, ['start', 'emulator'], { startCore }), 0)
+  assert.equal(released, true)
+  assert.deepEqual(calls[0], ['core-lease'])
   assert(calls.some(args => args.includes('emulators:start')))
-  const server = calls.findIndex(args => args[0].endsWith('/watch-redequate-server.mjs'))
+  const server = calls.findIndex(args => args[0].endsWith('/server/watch.mjs'))
   const vite = calls.findIndex(args => args[0].endsWith('/vite.js'))
   assert(server > 0)
   assert(vite > server)
-  assert.equal(readFileSync(join(directory, '.firebase/emulator-data/firebase-export-metadata.json'), 'utf8'), '{}')
+  assert.equal(readFileSync(join(directory, '.firebase/emulator-data/configured-dev/firebase-export-metadata.json'), 'utf8'), '{}')
 })

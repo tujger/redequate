@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Linter } from 'eslint'
-import plugin, { storesJsonParser } from '../eslint-local-stores.mjs'
+import plugin, { storesJsonParser } from '../eslint/local-stores.mjs'
 
 const lint = (stores, rulesPath) => new Linter().verify(JSON.stringify(stores, null, 2), [{
   files: ['**/*.json'],
@@ -154,7 +154,6 @@ test('shows the actual rules source location for missing indexes', () => {
   } finally { rmSync(directory, { recursive: true }) }
 })
 
-
 test('allows simple indexes for wildcard path keys without requiring them', () => withRules({
   mutualrequests: { $mutual_type: { $mutual_id: {} } }
 }, path => {
@@ -181,7 +180,6 @@ test('does not map wildcard keys below literal branches', () => withRules({
   assert.equal(messages.length, 1)
   assert.match(messages[0].message, /mutual_id.*no matching Firebase/)
 }))
-
 
 test('allows full wildcard paths and their prefixes without requiring indexes', () => withRules({
   mutualstamps: { $mutual_type: { $user_id: { $mutual_id: {} } } }

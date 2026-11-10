@@ -5,16 +5,17 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Linter } from 'eslint'
 import { baseRules, resolveRules } from '../../packages/database/src/firebase/rules.mjs'
-import { extractRules, resolveConfiguration, buildRules, loadRules } from '../firebase-rules.mjs'
-import queries from '../eslint-database-queries.mjs'
-import localStores, { storesJsonParser } from '../eslint-local-stores.mjs'
+import { resolveConfiguration, buildRules, loadRules } from '../firebase-rules.mjs'
+import queries from '../eslint/database-queries.mjs'
+import localStores, { storesJsonParser } from '../eslint/local-stores.mjs'
 
 const fixture = fn => {
   const directory = mkdtempSync(join(tmpdir(), 'rules-tooling-'))
   const write = (name, source) => { const path = join(directory, name); writeFileSync(path, source); return path }
-  const app = source => write('App.js', `import Database from "redequate/database/firebase"; ${source}`)
-  const config = providers => write('rules.config.json', JSON.stringify({ providers: providers ?? [{ file: 'App.js', binding: 'database' }], output: 'generated/rules.json' }))
-  try { return fn({ directory, write, app, config }) } finally { rmSync(directory, { recursive: true, force: true }) }
+  write('sdk.json', '{"projectId":"rules-fixture"}')
+  const config = () => write('redequate.config.json', JSON.stringify({ defaultEnvironment: 'remote', environments: { remote: { firebaseConfig: 'sdk.json' }, emulator: {} } }))
+  const supplement = rules => write('database.rules.json', JSON.stringify({ rules }))
+  try { return fn({ directory, write, supplement, config }) } finally { rmSync(directory, { recursive: true, force: true }) }
 }
 
 test('base loads without SDK, is frozen and empty composition is equivalent', () => {
@@ -75,58 +76,24 @@ test('rejects invalid format, directives, keys, unsafe objects and ambiguous wil
   assert.throws(() => resolveRules({ rules: {} }, { unexpected: true }), /option/)
 })
 
-test('extracts inline literals without executing App.js, even when SDK setup is dynamic', () => fixture(({ app }) => {
-  const file = app('throw new Error("must not execute"); const database = new Database({firebase: initializeSDK(), rules: {additions: {posts: {".indexOn": ["created"]}}}});')
-  assert.deepEqual(extractRules(file, 'database'), { additions: { posts: { '.indexOn': ['created'] } } })
-}))
-
-test('supports imported JSON, exported constants and static spread', () => fixture(({ app, write }) => {
-  write('indexes.json', '["created"]')
-  write('options.mjs', 'import fields from "./indexes.json"; export const options = {additions: {posts: {".indexOn": fields}}};')
-  const file = app('import {options} from "./options.mjs"; const database = new Database({rules: {...options}});')
-  assert.deepEqual(extractRules(file, 'database').additions.posts['.indexOn'], ['created'])
-}))
-
-test('rejects dynamic expressions, duplicate properties, cycles and unknown providers', () => fixture(({ app, write }) => {
-  for (const source of ['const database = new Database({rules: getRules()});', 'const database = new Database({rules: flag ? {} : {}});',
-    'let options = {}; const database = new Database({rules: options});', 'const database = new Database({rules: {}, rules: {}});',
-    'const database = new OtherDatabase({rules: {}});',
-    'const options = {}; options.additions = {}; const database = new Database({rules: options});',
-    'const options = {}; const alias = options; alias.x = 1; const database = new Database({rules: options});',
-    'const options = {}; mutate(options); const database = new Database({rules: options});',
-    'const options = {}; const {a} = options; mutate(a); const database = new Database({rules: options});',
-    'const options = {}; const container = {options}; container.options.x = 1; const database = new Database({rules: options});']) assert.throws(() => extractRules(app(source), 'database'))
-  write('cycle.mjs', 'import {options} from "./cycle.mjs"; export {options};')
-  assert.throws(() => extractRules(app('import {options} from "./cycle.mjs"; const database = new Database({rules: options});'), 'database'), /cyclic/)
-}))
-
-test('builds atomically and deterministically and never leaves a partial output on failure', () => fixture(({ app, config, directory }) => {
-  app('const database = new Database({rules: {additions: {posts: {".indexOn": ["created"]}}}});')
+test('builds atomically and deterministically and never leaves a partial output on failure', () => fixture(({ supplement, config, directory }) => {
+  supplement({ posts: { '.indexOn': ['created'] } })
   const path = config()
   const output = buildRules(path)
   const first = readFileSync(output, 'utf8')
   assert.equal(readFileSync(buildRules(path), 'utf8'), first)
   assert.deepEqual(JSON.parse(first), resolveConfiguration(path).rules)
-  assert.deepEqual(loadRules({ rulesConfig: path }).rules, JSON.parse(first))
-  app('const database = new Database({rules: dynamic()});')
-  assert.throws(() => buildRules(path), /dynamic/)
+  assert.deepEqual(loadRules({ projectConfig: path }).rules, JSON.parse(first))
+  writeFileSync(join(path, '../database.rules.json'), '{broken')
+  assert.throws(() => buildRules(path))
   assert.equal(readFileSync(output, 'utf8'), first)
-  assert(!existsSync(join(directory, 'generated/rules.json.' + process.pid + '.tmp')))
+  assert(!existsSync(join(directory, '.firebase/generated/database.rules.json.' + process.pid + '.tmp')))
 }))
 
-test('shared database sources are complete, ordered, conflict checked and required', () => fixture(({ app, write, config }) => {
-  app('const database = new Database({rules: {overrides: {"users_public/.read": false}}});')
-  write('Other.js', 'import Database from "redequate/database/firebase"; const database = new Database({rules: {overrides: {"users_public/.read": true}}});')
-  assert.throws(() => resolveConfiguration(config([{ file: 'App.js', binding: 'database' }, { file: 'Other.js', binding: 'database' }])), /Conflicting application/)
-  assert.throws(() => resolveConfiguration(config([{ file: 'Missing.js', binding: 'database' }])), /ENOENT/)
-  assert.throws(() => resolveConfiguration(config([])), /every application/)
-  assert.throws(() => loadRules({ rulesConfig: 'a', firebaseRules: 'b' }), /not both/)
-}))
-
-test('both ESLint validators use configured composed Rules and report invalid application configuration', () => fixture(({ app, config }) => {
-  app('const database = new Database({rules: {additions: {posts: {".indexOn": ["created"]}}}});')
+test('both ESLint validators use configured composed Rules and report invalid application configuration', () => fixture(({ supplement, config }) => {
+  supplement({ posts: { '.indexOn': ['created'] } })
   const path = config()
-  const settings = { redequateDatabase: { rulesConfig: path } }
+  const settings = { redequateDatabase: { projectConfig: path } }
   const queryConfig = [{
     languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
     settings,
@@ -144,18 +111,22 @@ test('both ESLint validators use configured composed Rules and report invalid ap
     rules: { 'redequate/local-stores': 'error' }
   }]
   assert.deepEqual(new Linter().verify(JSON.stringify(stores), localConfig, { filename: 'stores.json' }), [])
-  app('const database = new Database({rules: dynamic()});')
+  writeFileSync(join(path, '../database.rules.json'), '{broken')
   assert.match(new Linter().verify(code, queryConfig)[0].message, /Cannot resolve Firebase Rules/)
   assert.match(new Linter().verify(JSON.stringify(stores), localConfig, { filename: 'stores.json' })[0].message, /Cannot read Firebase rules/)
 }))
 
-test('refuses to overwrite imported source JSON', () => fixture(({ app, write, config, directory }) => {
-  write('options.json', '{}')
-  app('import options from "./options.json"; const database = new Database({rules: options});')
+test('refuses to overwrite the project, SDK or supplement source', () => fixture(({ supplement, config, directory }) => {
+  supplement({ records: { '.read': true } })
   const path = config()
-  const content = JSON.parse(readFileSync(path, 'utf8'))
-  content.output = 'options.json'
-  writeFileSync(path, JSON.stringify(content))
-  assert.throws(() => buildRules(path), /overwrite a source/)
-  assert.equal(readFileSync(join(directory, 'options.json'), 'utf8'), '{}')
+  for (const source of [path, join(directory, 'sdk.json'), join(directory, 'database.rules.json')]) {
+    const previous = readFileSync(source, 'utf8')
+    assert.throws(() => buildRules(path, { output: source }), /overwrite a source/)
+    assert.equal(readFileSync(source, 'utf8'), previous)
+  }
+}))
+
+test('provider manifests are rejected rather than silently supported', () => fixture(({ write }) => {
+  const file = write('database-rules.config.json', '{"providers":["App.js"]}')
+  assert.throws(() => resolveConfiguration(file), /Invalid redequate/)
 }))

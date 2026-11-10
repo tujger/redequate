@@ -61,3 +61,13 @@ it("propagates deletion errors without reinitializing or reloading", async () =>
     expect(initializeApp).toHaveBeenCalledOnce();
     expect(reload).not.toHaveBeenCalled();
 });
+
+it("preserves an immutable SDK config and suppresses Analytics through reinitialization", async () => {
+    const source = Object.freeze({...config, measurementId: "original-measurement"});
+    Firebase(source, {analytics: false});
+    await forceFirebaseReinit();
+    expect(initializeApp).toHaveBeenLastCalledWith(source);
+    expect(isSupported).not.toHaveBeenCalled();
+    expect(getAnalytics).not.toHaveBeenCalled();
+    expect(source.projectId).toBe("demo-firebase");
+});
