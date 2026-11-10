@@ -911,3 +911,12 @@ start/end bounds, prefix search and equalTo follow cursor query semantics. With 
 bounds, all eligible pages are returned. Handle and date bounds are unsupported.
 It has no live subscription implementation. PagesPagination remains available.
 Empty group headings are filtered by composition after traversal and deduplication.
+
+
+Client development can be launched by a consumer's shared Firebase launcher: it
+starts the core watcher and waits for a complete successful initial build before
+starting Vite. The Whisky Talks commands are `npm run start:emulator`,
+`npm run start:dev`, and `npm run start:prod`. For standalone core development,
+use `npm run "start core"`; the duplicate `npm run core` command has been removed.
+Only one managed watcher may run per checkout. Stop an old manually started
+Rollup watcher before switching; launchers never stop another session's watcher.

@@ -1131,3 +1131,26 @@ snapshot for updates. This substitutes the record owner, not the actual actor.
 Native authId always takes precedence; no Rules or stored data changes are
 needed. External callable endpoints must use the wrapper to receive this implicit
 backend context.
+
+
+### Client core watcher ownership
+
+The shared Firebase launcher starts `tooling/watch-redequate-core.mjs` for all
+`start` targets. It waits for the first successful complete Rollup watch cycle
+before starting consumers; initial compilation failure aborts startup. Later
+compilation errors leave the watcher running for source fixes. Unexpected watcher
+exit tears down the launcher's other processes. Emulator test, build and deploy
+commands retain their one-shot behavior and do not start the client watcher.
+
+The watcher uses the existing client Rollup configuration and linked `core`
+outputs, with no client archive installation. `npm run "start core"` uses the same
+watcher; the redundant `core` command is removed. An exclusive PID lock under the
+checkout's `node_modules` prevents concurrent managed watchers; stale locks are
+removed only when their recorded process no longer exists. Unverifiable locks
+fail closed. Stop pre-existing unmanaged Rollup watchers manually before switching.
+The launcher owns only the children it starts. React linking, server archive
+preparation, server watcher behavior and graceful emulator export remain intact.
+
+The Whisky Talks exposes `start:emulator`, `start:dev`, and `start:prod`; the old
+`start:server:dev/prod` names are removed. Dev/prod remain local Vite development
+servers using their configured remote Firebase variants, not deployment commands.
