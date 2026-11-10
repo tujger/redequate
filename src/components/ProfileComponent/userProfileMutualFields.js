@@ -1,11 +1,13 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
-import {InfoComponent, mentionTags, mentionUsers, postItemTransform} from "../../components";
 import {MutualComponent, MutualList, MutualListMode, MutualMode} from "../../components/MutualComponent";
 import {useMetaInfo} from "../../controllers";
 import useDatabase from "../../controllers/AppContext/useDatabase";
+import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import CounterComponent from "../CounterComponent";
+import InfoComponent from "../InfoComponent";
 import PostComponent from "../PostComponent/PostComponent";
+import postItemTransform from "../PostComponent/postItemTransform";
 
 export default {
     _my: {
