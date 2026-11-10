@@ -127,7 +127,7 @@ export default () => {
                 PlacesTextField: 'src/components/PlacesTextField.js',
                 PostComponent: 'src/components/PostComponent/PostComponent.js',
                 ProgressView: 'src/components/ProgressView.js',
-                ProfileComponent: 'src/components/ProfileComponent.js',
+                ProfileComponent: 'src/components/ProfileComponent/ProfileComponent.js',
                 ShareComponent: 'src/components/ShareComponent.js',
                 SystemAlert: 'src/components/SystemAlert.js',
                 UploadComponent: 'src/components/UploadComponent/UploadComponent.js',
