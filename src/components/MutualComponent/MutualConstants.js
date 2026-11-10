@@ -9,6 +9,7 @@ export const MutualError = {
 }
 
 export const MutualListMode = {
+    INVITATIONS: "invitations",
     REQUESTS: "requests",
     SELF: "self",
     STAMPS: "stamps",

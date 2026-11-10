@@ -62,19 +62,25 @@ export default props => {
             cursor = database.cursor(["mutualstamps", {mutual_type: typeId}, {user_id: mutualId}, "mutual_id"], {
                 order,
             })
-        } else if (mode === MutualListMode.REQUESTS) {
+        } else if (mode === MutualListMode.INVITATIONS) {
             cursor = database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
                 equalTo: mutualId,
                 order,
                 orderBy: ["id"]
+            })
+        } else if (mode === MutualListMode.REQUESTS) {
+            cursor = database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+                equalTo: mutualId,
+                order,
+                orderBy: ["uid"]
             })
         }
     }
 
     const fetchItemComponent = () => {
         if (itemComponent) return itemComponent;
-        if (mode === MutualListMode.REQUESTS) {
-            return item => <MutualRequestItem
+        if ([MutualListMode.INVITATIONS, MutualListMode.REQUESTS].includes(mode)) {
+            return item => <MutualSubscribeItem
                 {...ItemProps}
                 data={item}
                 key={item.key + "_" + mixedId}
@@ -84,7 +90,7 @@ export default props => {
                 }}
                 pattern={pattern}
             />
-        } else if (mode === MutualListMode.SUBSCRIBERS || mode === MutualListMode.SUBSCRIBES) {
+        } else if ([MutualListMode.SUBSCRIBERS, MutualListMode.SUBSCRIBES].includes(mode)) {
             return item => <MutualSubscribeItem
                 {...ItemProps}
                 data={item}
@@ -111,7 +117,7 @@ export default props => {
 
     const fetchItemTransform = () => {
         if (itemTransform) return itemTransform;
-        if (mode === MutualListMode.REQUESTS) {
+        if (mode === MutualListMode.INVITATIONS) {
             return item => {
                 return cacheDatas.put(item.value.uid, new UserData(database))
                     .fetch(item.value.uid, [UserData.NAME, UserData.IMAGE])
@@ -124,6 +130,12 @@ export default props => {
                     .then(userData => ({...item, userData}));
             }
         } else if (mode === MutualListMode.SUBSCRIBES) {
+            return item => {
+                return cacheDatas.put(item.value.id, new UserData(database))
+                    .fetch(item.value.id, [UserData.NAME, UserData.IMAGE])
+                    .then(userData => ({...item, userData}));
+            }
+        } else if (mode === MutualListMode.REQUESTS) {
             return item => {
                 return cacheDatas.put(item.value.id, new UserData(database))
                     .fetch(item.value.id, [UserData.NAME, UserData.IMAGE])
