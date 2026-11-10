@@ -75,6 +75,7 @@ export default ({uploadable}) => {
         uploadsQuality,
         userProfileFollowing,
         userProfileFriend,
+        userProfileSubscriptions,
     } = state;
     const uploadsTypes = Array.isArray(state.uploadsTypes) ? state.uploadsTypes : [];
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
@@ -219,6 +220,7 @@ export default ({uploadable}) => {
         const addPreferenceUserProfile = async () => {
             settings.userProfileFollowing = userProfileFollowing || false;
             settings.userProfileFriend = userProfileFriend || false;
+            settings.userProfileSubscriptions = userProfileSubscriptions || false;
         }
         const publish = async () => {
             updates.set(["meta", {setting: "settings"}], settings);
@@ -379,6 +381,11 @@ export default ({uploadable}) => {
                     disabled={disabled}
                     label={"Allow friends"}
                     onChange={handleSwitch("userProfileFriend")}/>
+                <Option
+                    checked={userProfileSubscriptions || false}
+                    disabled={disabled}
+                    label={"Show subscriptions in profile"}
+                    onChange={handleSwitch("userProfileSubscriptions")}/>
                 <Option
                     disabled={disabled}
                     label={"Blocked names"}
