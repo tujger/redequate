@@ -63,10 +63,10 @@ export default {
                     label={"Definitions.Tags"}
                     path={[{id: userData.id}, "mutual", {mutual_type: "watching"}]}
                 />,
-                List: ({header, userData, ...props}) => {
+                List: ({header, userData}) => {
                     const database = useDatabase();
-                    const {t} = useTranslation();
-                    return <MutualList
+                    return <ListWithItems
+                        header={header}
                         itemTransform={item => {
                             return database.read([item.value.type, {tag_id: item.value.id}])
                                 .then(value => {
@@ -84,10 +84,9 @@ export default {
                                 })
                         }}
                         mode={MutualListMode.SUBSCRIBES}
-                        mutualId={userData.id}
                         typeId={"watching"}
-                        unsubscribeLabel={t("Tag.Unfollow")}
-                        {...props}
+                        userData={userData}
+                        unsubscribeLabel={"Tag.Unfollow"}
                     />
                 }
             },
@@ -100,7 +99,7 @@ export default {
                     label={"Definitions.Watching"}
                     path={[{id: userData.id}, "mutualstamps", {mutual_type: "watching"}]}
                 />,
-                List: ({header, userData, ...props}) => <ListWithPosts
+                List: ({header, userData}) => <ListWithPosts
                     header={header}
                     mode={MutualListMode.STAMPS}
                     typeId={"watching"}
@@ -141,7 +140,7 @@ export default {
                     mode={MutualListMode.SUBSCRIBES}
                     typeId={"following"}
                     userData={userData}
-                    unsubscribeLabel={t("Tag.Unfollow")}
+                    unsubscribeLabel={"Tag.Unfollow"}
                 />,
             },
             {
@@ -224,7 +223,7 @@ export default {
                     mode={MutualListMode.INVITATIONS}
                     typeId={"friend"}
                     userData={userData}
-                    unsubscribeLabel={t("Tag.Unfollow")}
+                    unsubscribeLabel={"Tag.Unfollow"}
                 />
             },
             {
@@ -241,7 +240,7 @@ export default {
                     mode={MutualListMode.REQUESTS}
                     typeId={"friend"}
                     userData={userData}
-                    unsubscribeLabel={t("Tag.Unfollow")}
+                    unsubscribeLabel={"Tag.Unfollow"}
                 />,
             },
         ]
@@ -263,6 +262,7 @@ const Label = ({label, path}) => {
 const ListWithItems = (
     {
         header = undefined,
+        unsubscribeLabel = undefined,
         userData,
         ...props
     }) => {
@@ -272,7 +272,7 @@ const ListWithItems = (
         {header}
         <MutualList
             mutualId={userData.id}
-            unsubscribeLabel={null}
+            unsubscribeLabel={unsubscribeLabel ? t(unsubscribeLabel) : undefined}
             {...props}
         />
     </>
@@ -281,6 +281,7 @@ const ListWithItems = (
 const ListWithPosts = (
     {
         header = undefined,
+        unsubscribeLabel = undefined,
         userData,
         ...props
     }) => {
@@ -303,7 +304,7 @@ const ListWithPosts = (
             />}
             itemTransform={postItemTransform({backend, database, onItemError})}
             mutualId={userData.id}
-            unsubscribeLabel={null}
+            unsubscribeLabel={unsubscribeLabel ? t(unsubscribeLabel) : undefined}
             {...props}
         />
     </>
