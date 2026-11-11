@@ -136,7 +136,7 @@ Root paths are supported. The callable returns `null`; the client adapter return
 ## Prepare the Functions archive
 
 ```sh
-node /path/to/redequate/tooling/prepare-redequate-server.mjs /path/to/application/functions
+node /path/to/redequate/tooling/server/prepare.mjs /path/to/application/functions
 ```
 
 Preparation requires Node.js 24.12+, the framework checkout, and root build tools.
@@ -152,7 +152,7 @@ the generated runtime manifest, rather than the source package directory.
 After preparing the archive once, run this alongside an existing emulator:
 
 ```sh
-node /path/to/redequate/tooling/watch-redequate-server.mjs /path/to/application/functions
+node /path/to/redequate/tooling/server/watch.mjs /path/to/application/functions
 ```
 
 The Whisky Talks starts this watcher automatically with `npm run start:emulator`.

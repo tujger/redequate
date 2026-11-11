@@ -112,7 +112,7 @@ mixing browser and Node Auth exports breaks popup resolver initialization
 in jsdom. This resolution is test-only; application Vite configs are unchanged.
 
 Consumer applications own their tests, Firebase rules and local linking commands.
-The generic `tooling/link-redequate-react.sh` helper accepts a consumer directory; it has
+The generic `tooling/app/link-react.sh` helper accepts a consumer directory; it has
 no knowledge of specific applications. Consumer validation is separate from the
 framework's standalone test gate.
 
@@ -134,7 +134,7 @@ https://stackoverflow.com/questions/56021112/react-hooks-in-react-library-giving
 When developing a consumer against this local package, shared dependencies must resolve to the same physical packages. After installing dependencies in both repositories, call the generic helper with the consumer directory from the framework root:
 
 ```sh
-sh ./tooling/link-redequate-react.sh /absolute/path/to/consumer
+sh ./tooling/app/link-react.sh /absolute/path/to/consumer
 npm run "start core"
 ```
 
@@ -913,10 +913,30 @@ It has no live subscription implementation. PagesPagination remains available.
 Empty group headings are filtered by composition after traversal and deduplication.
 
 
-Client development can be launched by a consumer's shared Firebase launcher: it
-starts the core watcher and waits for a complete successful initial build before
-starting Vite. The Whisky Talks commands are `npm run start:emulator`,
-`npm run start:dev`, and `npm run start:prod`. For standalone core development,
-use `npm run "start core"`; the duplicate `npm run core` command has been removed.
-Only one managed watcher may run per checkout. Stop an old manually started
-Rollup watcher before switching; launchers never stop another session's watcher.
+Client development can be launched by a consumer's shared Firebase launcher. It
+connects to the checkout's core watcher, or starts one, and waits for a complete
+successful build before starting Vite. Demo and The Whisky Talks can use the same
+watcher concurrently. A launcher releases its connection after stopping its own
+services; the shared watcher stops five seconds after its last client disconnects.
+A crash also releases that client's connection. The single writer lock still
+prevents competing builds into the same core directory.
+
+For standalone core development use `npm run "start core"`. This manual owner
+stays alive without connected applications. Stopping it disconnects its consumers,
+which shut down rather than continuing with an unmonitored build. New subscribers
+wait through a rebuild or build error until a complete successful cycle. Existing
+applications keep running during recoverable rebuild errors.
+
+Watchers predating the connection protocol require one manual restart. A live
+incompatible or unreachable lock is preserved; do not delete it or terminate an
+unrelated process. Only a confirmed dead PID allows stale-lock recovery. Shared
+watcher diagnostic output is in `node_modules/.redequate-core-watch.log`.
+
+
+Project tooling for both web consumers is configured only by root
+`redequate.config.json`. Start/build/test/rules/deployment actions call
+`node node_modules/redequate/tooling/app.mjs --config redequate.config.json ...`.
+Redequate generates Vite, Firebase CLI and browser runtime context. A root
+`database.rules.json`, if present, supplements the common base; no provider list
+or App.js extraction is used. Library-specific Hosting, Storage, SDK, Vitest and
+Vite customizations keep their own formats. See [project tooling](tooling/docs/firebase.md).

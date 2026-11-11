@@ -21,7 +21,7 @@
         "test:watch core": "vitest --watch --config src/__tests__/vitest.config.mjs",
         "build core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs",
         "build server": "rollup -c packages/server/build.mjs",
-        "start core": "cross-env NODE_OPTIONS=--openssl-legacy-provider node tooling/watch-redequate-core.mjs",
+        "start core": "cross-env NODE_OPTIONS=--openssl-legacy-provider node tooling/core-watch/index.mjs",
         "prepare core": "npm run build core",
         "predeploy core": "npm run \"build core\" && npm --prefix example ci --legacy-peer-deps && npm --prefix example run build",
         "deploy core": "gh-pages -d example/build",
@@ -48,8 +48,7 @@
         "react-mentions": "^4.4.10",
         "react-text-mask": "^5.5.0",
         "text-mask-addons": "^3.8.0",
-        "uuid": "^14.0.3",
-        "@babel/parser": "^7.29.9"
+        "uuid": "^14.0.3"
     },
     "peerDependencies": {
         "@emotion/react": "^11.14.0",
@@ -75,7 +74,10 @@
         "react-router-dom": "^5.2.0",
         "react-smart-gallery": "^0.2.0",
         "react-timekeeper": "^2.2.1",
-        "redux": "^4.2.1"
+        "redux": "^4.2.1",
+        "vite": "^8.3.5",
+        "@vitejs/plugin-react": "^6.1.2",
+        "vite-plugin-pwa": "^2.0.0"
     },
     "devDependencies": {
         "@babel/core": "^7.29.7",
@@ -143,13 +145,16 @@
         "rollup-plugin-postcss": "^4.0.2",
         "typescript": "^5.9.3",
         "vite": "8.3.5",
-        "vitest": "5.0.5"
+        "vitest": "5.0.5",
+        "@vitejs/plugin-react": "^6.1.2",
+        "vite-plugin-pwa": "^2.0.0"
     },
     "files": [
         "core",
         "tooling",
         "packages/database/src/firebase/rules.mjs",
-        "packages/database/src/firebase/database.rules.json"
+        "packages/database/src/firebase/database.rules.json",
+        "packages/database/src/local/stores.json"
     ],
     "exports": {
         ".": {
@@ -240,6 +245,20 @@
             "require": "./core/database/firebase/rules.cjs"
         },
         "./tooling/firebase-rules": "./tooling/firebase-rules.mjs",
-        "./tooling/firebase": "./tooling/firebase.mjs"
+        "./tooling/vite": "./tooling/vite.mjs",
+        "./tooling/firebase-test": "./tooling/firebase-test.mjs",
+        "./tooling/app": "./tooling/app.mjs",
+        "./tooling/app-config": "./tooling/app-config.mjs"
+    },
+    "peerDependenciesMeta": {
+        "vite": {
+            "optional": true
+        },
+        "@vitejs/plugin-react": {
+            "optional": true
+        },
+        "vite-plugin-pwa": {
+            "optional": true
+        }
     }
 }

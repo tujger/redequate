@@ -1008,25 +1008,19 @@ Request Rules use only uid/id for participant identity; uid_id/id_uid are not
 part of the request format or its validation. Deploy the generated Rules with this framework
 change before claiming deployed end-to-end compatibility.
 
-The Database Firebase provider owns the authoritative TheWhiskyTalks-derived base and pure `resolveRules` implementation. Static provider arguments are resolved by one Node loader shared by CLI preparation and both ESLint validators; construction never deploys Rules. Shared RTDB instances require a complete database-owned provider manifest. Existing broad grants are retained; new inherited access conflicts require explicit overrides. See `tooling/FIREBASE_RULES.md`. Consumer migration patches are prepared but not applied; demo legacy `_activity` access differs from the accepted base.
+The Database Firebase provider owns the common base and pure conservative
+resolveRules API. Project tooling uses one root redequate.config.json and an
+optional ordinary database.rules.json supplement. Objects merge, indexes union,
+and explicit same-path directives from the supplement take precedence. No provider
+manifest or App.js extraction participates in the consumer workflow. Builds and
+emulator starts generate Rules; create/change/delete of the supplement is watched.
+Malformed edits retain the previous generated artifact. See tooling/FIREBASE_RULES.md.
 
-### Automatic Rules generation for local development and builds
-
-TheWhiskyTalks now uses a database-owned manifest and generated Rules. Its emulator
-launcher generates before startup and owns a polling watcher that closes before
-shutdown; Firebase CLI performs its normal Rules hot reload. Vite build generates
-the same Rules via a build-only plugin. Node tooling reads base JSON afresh and
-skips identical output writes. Test suites generate into isolated temporary paths.
-No deployment target or runtime data contract changes. Demo remains unapplied.
-
-### Shared Firebase application tooling
-
-Firebase orchestration, Emulator configuration, process management and seed logic
-now live in tooling. TheWhiskyTalks invokes the common CLI with firebase.config.mjs,
-which owns project IDs, Vite modes, readiness callable, test file and seed accounts.
-The CLI resolves its own scripts relative to the framework and Firebase/Vite through
-the application, preserving existing npm names, Rules automation and lifecycle.
-No application-specific IDs or callable names are embedded in these common modules.
+Firebase orchestration, process management and seed live in Redequate. Both apps
+pass the root JSON to tooling/app.mjs; server, environment and test parameters are
+not repeated in .env or Vite. Library-specific SDK/Hosting/Storage/Vitest options
+keep their own formats. Existing npm command names and shared watcher ownership
+are retained. No deployment is performed during start, build or tests.
 
 Emulator startup waits for the Firebase CLI's full ready message as well as service
 and callable checks; callable availability alone precedes Rules validation. CLI
@@ -1135,22 +1129,164 @@ backend context.
 
 ### Client core watcher ownership
 
-The shared Firebase launcher starts `tooling/watch-redequate-core.mjs` for all
-`start` targets. It waits for the first successful complete Rollup watch cycle
-before starting consumers; initial compilation failure aborts startup. Later
-compilation errors leave the watcher running for source fixes. Unexpected watcher
-exit tears down the launcher's other processes. Emulator test, build and deploy
-commands retain their one-shot behavior and do not start the client watcher.
+All Firebase `start` targets acquire a connection to one core watcher per canonical
+framework checkout. The launcher starts a detached shared daemon only when needed;
+concurrent starts converge on the atomic single-writer lock. The loopback TCP
+protocol authenticates a versioned PID/token/port/root record. Tokens and logs stay
+under ignored node_modules; live unverifiable locks are never removed. Legacy
+watchers need a one-time manual restart to adopt the protocol.
 
-The watcher uses the existing client Rollup configuration and linked `core`
-outputs, with no client archive installation. `npm run "start core"` uses the same
-watcher; the redundant `core` command is removed. An exclusive PID lock under the
-checkout's `node_modules` prevents concurrent managed watchers; stale locks are
-removed only when their recorded process no longer exists. Unverifiable locks
-fail closed. Stop pre-existing unmanaged Rollup watchers manually before switching.
-The launcher owns only the children it starts. React linking, server archive
-preparation, server watcher behavior and graceful emulator export remain intact.
+Applications wait for a complete successful cycle. New subscribers wait through
+rebuilds and rebuild errors; existing applications keep running during recoverable
+errors. Initial build failure, fatal shutdown or a lost connection ends startup or
+shuts down dependent services. Emulator test, build and deploy remain one-shot.
 
-The Whisky Talks exposes `start:emulator`, `start:dev`, and `start:prod`; the old
-`start:server:dev/prod` names are removed. Dev/prod remain local Vite development
-servers using their configured remote Firebase variants, not deployment commands.
+Launchers own their app services and a core lease, not the shared daemon's process
+group. Release follows app teardown/export. An authenticated socket counts as a
+client, so crashes release subscriptions too. The daemon stops five seconds after
+the last client leaves (also cleaning up an orphaned spawn). A manual npm run
+"start core" owner remains alive at zero clients; its explicit shutdown stops
+connected consumers. No competing watcher writes the same core outputs.
+
+The existing Rollup outputs, React linking, server package preparation/watch and
+emulator export behaviour remain unchanged. The Whisky Talks exposes start:emulator,
+start:dev and start:prod; demo exposes its remote/emulator commands. HTTP/HTTPS
+and application project selection remain consumer settings.
+
+
+### Demo Firebase tooling integration
+
+The demo uses the shared launcher with one `remote` target (its existing Firebase
+project) for remote and emulator SDK initialization without mutating the SDK JSON.
+Its frontend port 3002 and HTTPS settings come from the project JSON; npm start
+selects HTTP with a one-invocation flag. Tests isolate ports and data, not projectId. Existing The Whisky Talks commands keep their default behaviour.
+Development starts share one core watcher per checkout; closing one application
+does not stop other subscribers.
+
+The demo selects Firebase config by Vite mode, attaches emulators before provider
+construction, and relies on Dispatcher setters for provider dependencies. LAN
+clients reach loopback services through HTTPS/WSS Vite proxies. LocalMessaging
+avoids browser FCM in emulator mode. Emulator ports differ from The Whisky Talks.
+Rules derive from the current provider base plus demo-specific additions/overrides;
+public `_activity` reads and current mutual-request restrictions are intentional.
+Storage remains public-read/owner-write. No remote Rules or data migration is
+performed by this integration. Server package preparation remains explicit and
+updates the demo archive and Functions lockfile. Android wire contracts are unchanged.
+
+
+### Development launcher shutdown isolation
+
+Shared core startup uses a short-lived detached bootstrap. Clients subscribe only
+once that bootstrap has exited, so the daemon is no longer a descendant of the
+first launcher and survives IDE process-tree termination. Launcher shutdown releases
+only its own lease; the shared daemon stops after its last client disconnects.
+Manual watcher ownership is unchanged.
+
+`Processes.stop()` is idempotent and signals spawned children and verified
+process identities individually, never arbitrary saved process groups. Emulator
+Hub PIDs are retained only when they are descendants of the owned Firebase CLI.
+PID, start time and command are checked again before signalling tracked leftovers.
+Unverifiable or reused identities are skipped. The CLI retains its graceful export
+window before leftover emulator processes are terminated. No application runtime,
+Firebase configuration or Dispatcher behavior changes.
+
+
+### Single project configuration
+
+Root redequate.config.json is the only project-level Redequate settings source in
+both web consumers. It owns server, environments, emulator offsets/ports, readiness,
+seed and test settings. The app runner receives that path explicitly and resolves
+all paths from its directory. Remote project IDs come from referenced SDK library
+JSON and remain unchanged in all modes. Only local endpoint artifacts and test context are generated. Environment variables
+and library configs do not supply a second set of project server settings.
+
+firebase.config.mjs, database-rules.config.json and static emulator SDK JSON are
+removed from consumers. App.js and messaging workers use ordinary immutable SDK JSON imports; library
+configuration remains in library-owned files (SDK JSON, Storage Rules, Hosting,
+Vitest and TWT-specific Vite define/sourcemap). Firebase CLI configs and emulator
+state isolation are prepared by the runner. Functions preparation/lint belong to
+its explicit Functions deploy action, not duplicate app predeploy scripts.
+
+Rules use the framework base plus optional root database.rules.json. Supplement
+objects merge, indexes union, and explicit access/validation directives override
+at the same address. Input and combined output are validated. No App.js AST or
+provider ownership manifest is consulted by this workflow. The low-level pure
+resolver and explicit legacy fixture loader keep their old contracts. A missing
+supplement is watched so create/delete events update active emulator Rules.
+No historical full Rules file is automatically restored. Android wire formats,
+PWA update handling and shared watcher ownership are unchanged.
+
+
+### Immutable Firebase SDK files
+
+Demo imports ./firebase-config.json directly in App.js and the messaging worker.
+TWT uses an ordinary file alias to its existing SDK variants. There is no virtual
+runtime module and no synthesized SDK config. Emulator sourceEnvironment defaults
+to the project's default remote environment. CLI, seed and tests must agree with
+that original project ID and database namespace. Test isolation uses loopback
+ports plus temporary configs/data. A snapshot under a previous demo-prefixed ID
+is not imported automatically. Developer snapshots are now namespaced by projectId.
+Analytics is disabled by an explicit Firebase initialization option in emulator
+mode, including reinitialization; the SDK object is not mutated. Local secret
+placeholders exist only in generated emulator Functions directories. Public local
+endpoint JSON does not contain seed credentials or SDK configuration.
+
+
+### Build artifacts and web deployment
+
+Demo exposes start emulator, start, test emulator, deploy functions, build, serve,
+deploy and check updates. TWT qualifies start/build/deploy functions with dev/prod;
+serve and deploy always consume the existing build artifact without an environment.
+They do not select defaultEnvironment or rebuild implicitly. Successful build
+records its environment/project and a hash of the captured Rules snapshot in hidden
+build files; a new attempt removes the previous receipt before compilation.
+Invalid/missing receipts and changed Rules snapshots require rebuilding. Web deploy
+publishes the captured Rules first, then Hosting, aborting before Hosting on Rules
+failure. Hidden artifact metadata is excluded from Hosting. Functions stay separate
+because they are not part of the web bundle. No separate deploy rules script remains.
+
+
+### Tooling consolidation (November 2026)
+
+Application tooling accepts only root redequate.config.json. Removed the former
+JS Firebase config runner, provider manifests and source-expression extraction.
+Rules composition uses the framework base plus optional database.rules.json; the
+pure programmatic resolveRules API is unchanged. The Babel parser is no longer a
+direct runtime dependency. Unused local-store-metadata.json is removed; ESLint
+reads the canonical local stores.json, which is included in the package. Normalized settings retain a single environments map
+rather than parallel project/mode tables.
+
+Five public tooling modules remain at the root: app, app-config, vite,
+firebase-rules and firebase-test. Internal implementations live in app/,
+core-watch/, server/ and eslint/; obsolete internal paths and the legacy
+redequate/tooling/firebase export are removed. The Vite preset also supplies its
+CLI configuration entry. Documentation is consolidated in tooling/docs/firebase.md.
+
+Shared watcher ownership, authentication, verified process cleanup, detached
+bootstrap and idle shutdown are unchanged. Rules deploy before Hosting from the
+last confirmed build, and Functions remain separate. Demo and TWT continue using
+the same commands and immutable SDK JSON files; runtime and Android contracts are
+unaffected.
+
+Validation: all 92 tooling tests and ESLint passed. Demo and TWT dev build and
+HTTPS preview passed without rebuilding the preview artifact. Demo Emulator tests
+passed 3/3; TWT passed 4/8 with the previously recorded push result, Activity
+legacy record, post-history TIMESTAMP injection and increment-shape failures.
+Live Database Rules reload, invalid-artifact retention and recovery passed. All
+three original Firebase SDK JSON hashes are unchanged. No deployment was run.
+A multi-project shared Emulator Suite was considered and explicitly deferred by
+the user: Firebase Functions and cross-service triggers are project-bound; this
+cleanup retains the existing independent application emulators.
+
+
+### Explicit emulator SDK configuration
+
+`environments.emulator.firebaseConfig` optionally selects a separate SDK JSON,
+resolved relative to redequate.config.json and tracked as a configuration source.
+It takes precedence over sourceEnvironment/defaultEnvironment inheritance; omission
+preserves existing consumers. The selected SDK configuration is unchanged and
+shared by CLI, Vite, Functions runtime and isolated test context. Developer data
+continues to live in `.firebase/emulator-data/<projectId>`.
+The Whisky Talks selects demo-thewhiskytalks to match its preserved snapshot;
+dev/prod variants are unchanged. Its legacy snapshot is retained and copied once
+into the matching project directory without overwriting another snapshot.
