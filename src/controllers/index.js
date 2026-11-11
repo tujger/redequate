@@ -30,3 +30,4 @@ export * from "./useCurrentUserData";
 export {default as useCurrentUserData} from "./useCurrentUserData";
 export * from "./useRedirectToLogin";
 export {default as useRedirectToLogin} from "./useRedirectToLogin";
+export {default as connectFirebaseEmulators} from "./connectFirebaseEmulators";

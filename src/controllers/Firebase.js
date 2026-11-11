@@ -6,10 +6,13 @@ const firebase = {
     config: undefined,
 };
 
-const Firebase = firebaseConfig => {
+let firebaseOptions = {};
+
+const Firebase = (firebaseConfig, {analytics = true} = {}) => {
+    firebaseOptions = {analytics};
     firebase.app = initializeApp(firebaseConfig);
     firebase.config = firebaseConfig;
-    if (firebaseConfig.measurementId) {
+    if (analytics && firebaseConfig.measurementId) {
         isSupported().then(supported => {
             if (supported) getAnalytics(firebase.app);
         }).catch(error => console.error("[Firebase] Analytics initialization failed", error));
@@ -21,8 +24,9 @@ export default Firebase;
 
 export const forceFirebaseReinit = async () => {
     const config = firebase.config;
+    const options = firebaseOptions;
     await deleteApp(firebase.app);
-    Firebase(config);
+    Firebase(config, options);
     window.location.reload();
     return firebase;
 };
