@@ -1,12 +1,11 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {MutualComponent, MutualList, MutualListMode, MutualMode} from "../../components/MutualComponent";
-import {useMetaInfo} from "../../controllers";
+import {useBackend, useMetaInfo} from "../../controllers";
 import useDatabase from "../../controllers/AppContext/useDatabase";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import CounterComponent from "../CounterComponent";
 import InfoComponent from "../InfoComponent";
-import MentionedTextComponent from "../MentionedTextComponent";
 import PostComponent from "../PostComponent/PostComponent";
 import postItemTransform from "../PostComponent/postItemTransform";
 
@@ -25,6 +24,7 @@ export default {
                     </React.Fragment>
                 },
                 List: ({userData}) => {
+                    const backend = useBackend();
                     const database = useDatabase();
 
                     const onItemError = (error, options) => {
@@ -38,7 +38,7 @@ export default {
                             postData={item}
                             userData={item._userData}
                         />}
-                        itemTransform={postItemTransform({database, onItemError})}
+                        itemTransform={postItemTransform({backend, database, onItemError})}
                         mode={MutualListMode.SELF}
                         mutualId={userData.id}
                         typeId={"_my"}
@@ -62,6 +62,7 @@ export default {
                     </React.Fragment>
                 },
                 List: ({userData}) => {
+                    const backend = useBackend();
                     const database = useDatabase();
 
                     const onItemError = (error, options) => {
@@ -75,7 +76,7 @@ export default {
                             postData={item}
                             userData={item._userData}
                         />}
-                        itemTransform={postItemTransform({database, onItemError})}
+                        itemTransform={postItemTransform({backend, database, onItemError})}
                         mode={MutualListMode.STAMPS}
                         mutualId={userData.id}
                         typeId={"_"}
@@ -89,8 +90,8 @@ export default {
         label: "Tags",
         listComponents: [
             {
-                test: ({isSameUser}) => {
-                    return !!isSameUser;
+                test: ({isCurrentUserAdmin, isSameUser}) => {
+                    return isSameUser || isCurrentUserAdmin;
                 },
                 Label: ({userData}) => {
                     return <React.Fragment>
@@ -107,35 +108,25 @@ export default {
                     const {t} = useTranslation();
                     return <MutualList
                         itemTransform={item => {
-                            return database.read(["tag", {tag_id: item.value.id}])
+                            return database.read([item.value.type, {tag_id: item.value.id}])
                                 .then(value => {
                                     if (value !== undefined) {
-                                        if (value.hidden) return null;
                                         return {
                                             key: item.key,
-                                            value: {
-                                                ...item.value,
-                                                message: value.description
-                                                    ? <MentionedTextComponent
-                                                        maxLength={25}
-                                                        mentions={[mentionTags, mentionUsers]}
-                                                        text={value.description}
-                                                    /> : null,
-                                                timestamp: null,
-                                            },
+                                            value: item.value,
                                             userData: {
-                                                image: value.image || null,
-                                                initials: value.label,
                                                 name: value.label,
+                                                image: value.image || "",
+                                                initials: value.label,
                                             },
                                         };
                                     }
                                 })
                         }}
-                        mutualId={userData.id}
                         mode={MutualListMode.SUBSCRIBES}
+                        mutualId={userData.id}
                         typeId={"watching"}
-                        unsubscribeLabel={null}
+                        unsubscribeLabel={t("Tag.Unfollow")}
                     />
                 }
             },
