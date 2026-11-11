@@ -23,6 +23,7 @@ export default {
         </label>
     },
     provider: {
-        viewComponent: Provider
+        viewComponent: Provider,
+        editComponent: null,
     }
 }

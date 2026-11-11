@@ -6,6 +6,7 @@ import useDatabase from "../../controllers/AppContext/useDatabase";
 import {mentionTags, mentionUsers} from "../../controllers/mentionTypes";
 import CounterComponent from "../CounterComponent";
 import InfoComponent from "../InfoComponent";
+import MentionedTextComponent from "../MentionedTextComponent";
 import PostComponent from "../PostComponent/PostComponent";
 import postItemTransform from "../PostComponent/postItemTransform";
 
@@ -81,6 +82,63 @@ export default {
                     />
                 }
             }
+        ]
+    },
+    watching: {
+        id: "watching",
+        label: "Tags",
+        listComponents: [
+            {
+                test: ({isSameUser}) => {
+                    return !!isSameUser;
+                },
+                Label: ({userData}) => {
+                    return <React.Fragment>
+                        Tags
+                        <CounterComponent
+                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
+                            live
+                            path={[{id: userData.id}, "mutual", {mutual_type: "watching"}]}
+                            prefix={" ("} suffix={")"}/>
+                    </React.Fragment>
+                },
+                List: ({userData}) => {
+                    const database = useDatabase();
+                    const {t} = useTranslation();
+                    return <MutualList
+                        itemTransform={item => {
+                            return database.read(["tag", {tag_id: item.value.id}])
+                                .then(value => {
+                                    if (value !== undefined) {
+                                        if (value.hidden) return null;
+                                        return {
+                                            key: item.key,
+                                            value: {
+                                                ...item.value,
+                                                message: value.description
+                                                    ? <MentionedTextComponent
+                                                        maxLength={25}
+                                                        mentions={[mentionTags, mentionUsers]}
+                                                        text={value.description}
+                                                    /> : null,
+                                                timestamp: null,
+                                            },
+                                            userData: {
+                                                image: value.image || null,
+                                                initials: value.label,
+                                                name: value.label,
+                                            },
+                                        };
+                                    }
+                                })
+                        }}
+                        mutualId={userData.id}
+                        mode={MutualListMode.SUBSCRIBES}
+                        typeId={"watching"}
+                        unsubscribeLabel={null}
+                    />
+                }
+            },
         ]
     },
     following: {
@@ -237,5 +295,5 @@ export default {
                 }
             },
         ]
-    }
+    },
 }
