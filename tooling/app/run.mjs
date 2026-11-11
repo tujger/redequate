@@ -183,7 +183,7 @@ export default async function runFirebase(input, argv = process.argv.slice(2), {
       } else if (action === 'preview') {
         await vite('preview')
       } else if (action === 'test-unit') {
-        await group.run(process.execPath, [packageFile('vitest', 'vitest.mjs'), 'run', '--config', join(root, 'vitest.config.mjs')], options)
+        await group.run(process.execPath, [packageFile('vitest', 'vitest.mjs'), 'run', '--config', ownFile('../vite.mjs')], options)
       } else if (action === 'build') {
         invalidateBuild(settings)
         await vite('build')
