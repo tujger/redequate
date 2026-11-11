@@ -4,8 +4,8 @@ import { FlatCompat } from '@eslint/eslintrc'
 import { fileURLToPath } from 'node:url'
 import babelParser from '@babel/eslint-parser'
 import globals from 'globals'
-import databaseQueries from './tooling/eslint-database-queries.mjs'
-import localStores, { storesJsonParser } from './tooling/eslint-local-stores.mjs'
+import databaseQueries from './tooling/eslint/database-queries.mjs'
+import localStores, { storesJsonParser } from './tooling/eslint/local-stores.mjs'
 
 const files = ['**/*.{js,mjs,cjs,ts}']
 const compat = new FlatCompat({ baseDirectory: fileURLToPath(new URL('.', import.meta.url)) })
@@ -54,7 +54,7 @@ export default [
       'packages/storage/src/**/*.{js,mjs,cjs,ts}', 'packages/storage/build.mjs',
       'packages/common/src/**/*.{js,mjs,cjs,ts}',
       'packages/_common/src/**/*.{js,mjs,cjs,ts}',
-      'tooling/__tests__/test-emulators.mjs', 'tooling/watch-redequate-server.mjs'
+      'tooling/__tests__/test-emulators.mjs', 'tooling/server/watch.mjs'
     ],
     languageOptions: { globals: globals.jest },
     rules: {
