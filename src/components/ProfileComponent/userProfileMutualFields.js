@@ -16,7 +16,7 @@ export default {
                 Label: ({userData}) => {
                     const {t} = useTranslation();
                     return <React.Fragment>
-                        {t("Definitions.Posts")}
+                        {t("Definitions.My Posts")}
                         <CounterComponent
                             // onChange={handleRefresh(typeId, MutualListMode.SELF)}
                             path={[{id: userData.id}, "mutualstamps", {mutual_type: "_my"}]}
@@ -50,7 +50,10 @@ export default {
     _: {
         listComponents: [
             {
-                test: ({isSameUser}) => !!isSameUser,
+                test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing, userProfileFriend}) => {
+                    if (!userProfileFollowing && !userProfileFriend) return false;
+                    return isSameUser || isCurrentUserAdmin;
+                },
                 Label: ({userData}) => {
                     const {t} = useTranslation();
                     return <React.Fragment>
@@ -69,7 +72,10 @@ export default {
                         console.error(error)
                     }
 
-                    return <MutualList
+                    return <>
+                        <h5>Merges all follow lists.</h5>
+                        <p/>
+                        <MutualList
                         itemComponent={item => <PostComponent
                             key={item.id}
                             mentions={[mentionUsers, mentionTags]}
@@ -81,6 +87,7 @@ export default {
                         mutualId={userData.id}
                         typeId={"_"}
                     />
+                    </>
                 }
             }
         ]
@@ -90,7 +97,8 @@ export default {
         label: "Tags",
         listComponents: [
             {
-                test: ({isCurrentUserAdmin, isSameUser}) => {
+                test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
+                    if (!userProfileFollowing) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
                 Label: ({userData}) => {
@@ -127,6 +135,44 @@ export default {
                         mutualId={userData.id}
                         typeId={"watching"}
                         unsubscribeLabel={t("Tag.Unfollow")}
+                    />
+                }
+            },
+            {
+                test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
+                    if (!userProfileFollowing) return false;
+                    return isSameUser || isCurrentUserAdmin;
+                },
+                Label: ({userData}) => {
+                    return <React.Fragment>
+                        Watching
+                        <CounterComponent
+                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
+                            live
+                            path={[{id: userData.id}, "mutualstamps", {mutual_type: "watching"}]}
+                            prefix={" ("} suffix={")"}/>
+                    </React.Fragment>
+                },
+                List: ({userData}) => {
+                    const backend = useBackend();
+                    const database = useDatabase();
+                    const {t} = useTranslation();
+
+                    const onItemError = (error, options) => {
+                        console.error(error)
+                    }
+                    return <MutualList
+                        itemComponent={item => <PostComponent
+                            key={item.id}
+                            mentions={[mentionUsers, mentionTags]}
+                            postData={item}
+                            userData={item._userData}
+                        />}
+                        itemTransform={postItemTransform({backend, database, onItemError})}
+                        mode={MutualListMode.STAMPS}
+                        mutualId={userData.id}
+                        typeId={"watching"}
+                        unsubscribeLabel={null}
                     />
                 }
             },
@@ -172,6 +218,44 @@ export default {
                         mode={MutualListMode.SUBSCRIBES}
                         typeId={"following"}
                         unsubscribeLabel={t("Tag.Unfollow")}
+                    />
+                }
+            },
+            {
+                test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
+                    if (!userProfileFollowing) return false;
+                    return isSameUser || isCurrentUserAdmin;
+                },
+                Label: ({userData}) => {
+                    return <React.Fragment>
+                        Follow
+                        <CounterComponent
+                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
+                            live
+                            path={[{id: userData.id}, "mutualstamps", {mutual_type: "following"}]}
+                            prefix={" ("} suffix={")"}/>
+                    </React.Fragment>
+                },
+                List: ({userData}) => {
+                    const backend = useBackend();
+                    const database = useDatabase();
+                    const {t} = useTranslation();
+
+                    const onItemError = (error, options) => {
+                        console.error(error)
+                    }
+                    return <MutualList
+                        itemComponent={item => <PostComponent
+                            key={item.id}
+                            mentions={[mentionUsers, mentionTags]}
+                            postData={item}
+                            userData={item._userData}
+                        />}
+                        itemTransform={postItemTransform({backend, database, onItemError})}
+                        mode={MutualListMode.STAMPS}
+                        mutualId={userData.id}
+                        typeId={"following"}
+                        unsubscribeLabel={null}
                     />
                 }
             },
@@ -241,8 +325,8 @@ export default {
                 }
             },
             {
-                test: ({isSameUser, isCurrentUserAdmin, userProfileFollowing}) => {
-                    if (!userProfileFollowing) return false;
+                test: ({isSameUser, isCurrentUserAdmin, userProfileFriend}) => {
+                    if (!userProfileFriend) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
                 Label: ({userData}) => {
@@ -266,8 +350,8 @@ export default {
                 }
             },
             {
-                test: ({isSameUser, isCurrentUserAdmin, userProfileFollowing}) => {
-                    if (!userProfileFollowing) return false;
+                test: ({isSameUser, isCurrentUserAdmin, userProfileFriend}) => {
+                    if (!userProfileFriend) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
                 Label: ({userData}) => {
