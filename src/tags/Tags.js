@@ -59,7 +59,7 @@ const Tags = (props) => {
         {label: "Hidden", value: "hidden"},
     ];
 
-    let itemTransform = item => {
+    const itemTransform = item => {
         return {
             key: item.key,
             value: {
