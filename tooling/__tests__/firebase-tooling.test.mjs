@@ -265,3 +265,26 @@ test('emulator acquires core first and owns only server watch plus local service
   assert(vite > server)
   assert.equal(readFileSync(join(directory, '.firebase/emulator-data/configured-dev/firebase-export-metadata.json'), 'utf8'), '{}')
 })
+
+
+test('test-unit runs JSX/jsdom tests through shared config without application Vite or Vitest files', t => {
+  const { directory, write } = fixture(t)
+  write('package.json', { name: 'unit-fixture', version: '1.0.0' })
+  symlinkSync(join(root, 'node_modules'), join(directory, 'node_modules'), 'dir')
+  write('src/shared.test.js', `
+    it('supports JSX, jsdom and test globals', () => {
+      expect((<div>shared</div>).props.children).toBe('shared');
+      expect(document.createElement('div').tagName).toBe('DIV');
+      vi.spyOn(Math, 'random').mockReturnValue(0.123456789);
+    });
+    it('restores mocks between tests', () => {
+      expect(vi.isMockFunction(Math.random)).toBe(false);
+    });
+  `)
+  const result = spawnSync(process.execPath, [join(root, 'tooling/app.mjs'), '--config', join(directory, 'redequate.config.json'), 'test-unit'], {
+    cwd: root, encoding: 'utf8', timeout: 20000,
+    env: { ...process.env, TMPDIR: directory, TMP: directory, TEMP: directory }
+  })
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+  assert.match(result.stdout, /2 passed/)
+})

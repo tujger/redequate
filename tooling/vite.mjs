@@ -16,7 +16,7 @@ function createFirebaseViteConfig(configUrl, settings) {
   return defineConfig(({ mode, command }) => {
     const secured = command === 'serve' && settings.server.https
     const emulator = settings.environment === 'emulator' && command === 'serve'
-    const sourcemap = app.sourcemap === true
+    const sourcemap = app.sourcemap !== false
     const { emulators } = settings
     const emulatorProject = settings.environments.emulator.projectId
     const target = service => `http://127.0.0.1:${emulators[service].port}`
@@ -28,7 +28,9 @@ function createFirebaseViteConfig(configUrl, settings) {
       : undefined
 
     return {
+      root,
       base: '/',
+      ...(mode === 'test' ? { test: { environment: 'jsdom', globals: true, include: ['src/**/*.test.js'], restoreMocks: true } } : {}),
       worker: {
         format: 'es',
         rolldownOptions: { output: { entryFileNames: '[name]-[hash].js' } }
@@ -72,6 +74,7 @@ function createFirebaseViteConfig(configUrl, settings) {
         })
       ],
       define: {
+        global: 'globalThis',
         'process.env.PUBLIC_URL': JSON.stringify(''),
         'process.env.REACT_APP_VERSION': JSON.stringify(version)
       },
@@ -79,7 +82,10 @@ function createFirebaseViteConfig(configUrl, settings) {
         rolldownOptions: { moduleTypes: { '.js': 'jsx' } }
       },
       resolve: {
-        alias: [{ find: '#firebase-config', replacement: settings.environments[settings.environment].configurationFile }],
+        alias: [
+          { find: '#firebase-config', replacement: settings.environments[settings.environment].configurationFile },
+          ...(mode === 'test' ? [{ find: /^redequate$/, replacement: fileURLToPath(import.meta.resolve('redequate')) }] : [])
+        ],
         dedupe: [...Object.keys(peerDependencies).filter(name => !peerDependenciesMeta[name]?.optional), 'firebase', '@firebase/app', '@firebase/auth', '@firebase/database', '@firebase/storage', '@firebase/functions', '@firebase/messaging', '@firebase/analytics', '@firebase/installations', '@firebase/component', '@firebase/util']
       },
       server: {
@@ -157,7 +163,7 @@ export function createProjectViteConfig(configFile, selection = {}) {
       if (local.server?.[key] !== undefined) throw new Error(`Move server.${key} from Vite to redequate.config.json.`)
     }
     if (local.build?.outDir !== undefined) throw new Error('Project output belongs to Redequate, not the Vite customization.')
-    settings.vite = { sourcemap: local.build?.sourcemap === true }
+    settings.vite = { sourcemap: local.build?.sourcemap ?? true }
     const configUrl = pathToFileURL(configFile).href
     const base = createFirebaseViteConfig(configUrl, settings)(context)
     return mergeConfig(base, local)

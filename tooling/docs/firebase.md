@@ -194,3 +194,10 @@ and branches to additions. Provider manifests and extraction from application so
 Tests cover base-only resolution, supplements, atomic output, appearance/deletion,
 indexed queries, validation and actual emulator access. See `npm run test:tooling`
 and each application's `npm run "test emulator"`.
+
+
+The shared Vite config supplies `global: globalThis` and source maps (including
+PWA output). In Vitest's test mode it also supplies jsdom, global test helpers,
+`src/**/*.test.js`, mock restoration and the exact Redequate ESM alias. `test-unit`
+uses this same config, with no required application Vite/Vitest files. The app root
+is explicit; unitEnvironment selects the default unit-test SDK environment.

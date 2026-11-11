@@ -19,7 +19,7 @@ const fixture = t => {
 test('preset keeps PWA, version, dedupe and remote defaults without sibling assumptions', async t => {
   const { root, configure } = fixture(t)
   const config = await configure()({ mode: 'remote', command: 'build' })
-  assert.equal(config.build.sourcemap, false)
+  assert.equal(config.build.sourcemap, true)
   assert.equal(config.build.outDir, 'build')
   assert.equal(config.server.port, 3002)
   assert.equal(config.server.proxy, undefined)
@@ -60,4 +60,27 @@ test('library customizations and environment SDK selection survive project prese
     assert.equal(config.resolve.alias[0].replacement, join(root, sdk))
   }
   await assert.rejects(configure({ environment: 'unknown' })({ mode: 'remote', command: 'build' }), /Unknown project environment/)
+})
+
+
+test('shared config includes unit defaults only in test mode without local config files', async t => {
+  const { root, configure } = fixture(t)
+  const config = await configure()({ mode: 'test', command: 'serve' })
+  assert.equal(config.root, root + '/')
+  assert.equal(config.define.global, 'globalThis')
+  assert.equal(config.build.sourcemap, true)
+  assert.equal(config.server.https, undefined)
+  assert.deepEqual(config.test, { environment: 'jsdom', globals: true, include: ['src/**/*.test.js'], restoreMocks: true })
+  const alias = config.resolve.alias.find(entry => entry.find instanceof RegExp && entry.find.test('redequate'))
+  assert(alias.replacement.endsWith('/core/index.es.js'))
+  assert.equal(alias.find.test('redequate/database/local'), false)
+  const normal = await configure()({ mode: 'remote', command: 'build' })
+  assert.equal(normal.test, undefined)
+})
+
+test('optional Vite customizations can still disable source maps', async t => {
+  const { write, configure } = fixture(t)
+  write('vite.config.mjs', 'export default {build:{sourcemap:false}}')
+  const config = await configure()({ mode: 'remote', command: 'build' })
+  assert.equal(config.build.sourcemap, false)
 })

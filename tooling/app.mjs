@@ -14,7 +14,7 @@ export async function appCLI(argv = process.argv.slice(2)) {
   const requested = args[0] && !args[0].startsWith('--') ? args.shift() : undefined
   const usesBuild = ['preview', 'deploy-hosting'].includes(action)
   if (usesBuild && requested) throw new Error('serve and deploy use the build target; do not specify an environment.')
-  const target = usesBuild ? readBuild(settings).environment : requested ?? settings.defaultEnvironment
+  const target = usesBuild ? readBuild(settings).environment : requested ?? (action === 'test-unit' ? settings.testing.unitEnvironment ?? settings.defaultEnvironment : settings.defaultEnvironment)
   if (args.some(arg => !['--http', '--https'].includes(arg)) || args.length > 1) throw new Error('Unknown project command option.')
   if (args.length) settings.server.https = args[0] === '--https'
   if (action === 'rules') { console.info(buildRules(settings.configFile)); return 0 }
