@@ -4,7 +4,7 @@ import {useCurrentUserDataValue} from "../../controllers";
 import AvatarView from "../AvatarView";
 import styles from "./styles/ProfileComponent.module.css";
 
-const ProfileComponent = (props) => {
+export default (props) => {
     const currentUserData = useCurrentUserDataValue();
     const {userData, privateFields, publicFields} = props;
     const {t} = useTranslation();
@@ -18,17 +18,17 @@ const ProfileComponent = (props) => {
                 verified={userData.verified}/>
         </div>}
         <div className={styles.profileFields}>
-            {Object.entries(publicFields || {}).map(([_, field]) => {
+            {Object.entries(publicFields || {}).map(([key, field]) => {
                 if (!userData.public[field.id] && !field.viewComponent) return null;
-                return <div className={styles.profileField} key={field.id}>
+                return <div className={styles.profileField} key={key}>
                     {field.viewComponent
                         ? <field.viewComponent userData={userData}/>
                         : <div className={styles.bodyText}>{userData.public[field.id]}</div>}
                 </div>
             })}
-            {currentUserData?.id === userData?.id && Object.entries(privateFields || {}).map(([_, field]) => {
+            {currentUserData?.id === userData?.id && Object.entries(privateFields || {}).map(([key, field]) => {
                 if (!userData.private[field.id] && !field.viewComponent) return null;
-                return <div className={styles.profileField} key={field.id}>
+                return <div className={styles.profileField} key={key}>
                     {field.viewComponent
                         ? <field.viewComponent userData={userData}/>
                         : <div className={styles.bodyText}>{userData.private[field.id]}</div>}
@@ -37,5 +37,3 @@ const ProfileComponent = (props) => {
         </div>
     </div>
 };
-
-export default ProfileComponent;
