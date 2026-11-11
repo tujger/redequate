@@ -117,3 +117,51 @@ test('old config locations are not silently used and CLI validates before launch
   await assert.rejects(appCLI(['--config', file, 'start', 'missing']), /Unknown/)
   await assert.rejects(appCLI(['--config', file, 'start', 'remote', '--unknown']), /Unknown/)
 })
+
+
+test('explicit emulator SDK config aligns CLI runtime, Vite, tests and snapshot directory', async t => {
+  const { file, root, input, write } = fixture(t)
+  const sdk = { projectId: 'demo-restored', apiKey: 'demo-restored', databaseURL: 'https://demo-restored-default-rtdb.firebaseio.com', storageBucket: 'demo-restored.appspot.com', authDomain: 'localhost', appId: 'demo-restored' }
+  write('config/emulator.json', sdk)
+  input.environments.emulator.firebaseConfig = 'config/emulator.json'
+  input.environments.emulator.sourceEnvironment = 'remote'
+  write('redequate.config.json', input)
+  const settings = loadProjectConfig(file)
+  assert.deepEqual(settings.environments.emulator.configuration, sdk)
+  assert.equal(settings.environments.remote.projectId, 'configured-remote')
+  assert.equal(settings.testing.projectId, sdk.projectId)
+  assert(settings.sources.includes(join(root, 'config/emulator.json')))
+  const selected = selectProjectEnvironment(settings, 'emulator')
+  for (const isolated of [false, true]) {
+    const runtime = prepareProjectRuntime(selected, { isolated })
+    t.after(() => rmSync(runtime.temporaryDirectory, { recursive: true, force: true }))
+    assert.deepEqual(runtime.configuration, sdk)
+    assert.deepEqual(JSON.parse(readFileSync(runtime.clientConfigFile)).configuration, sdk)
+    assert.equal(runtime.directory, isolated ? join(runtime.temporaryDirectory, 'data') : join(root, '.firebase/emulator-data/demo-restored'))
+    assert.equal(runtime.config.emulators.database.port, isolated ? 19010 : 9010)
+  }
+  write('vite.config.mjs', 'export default {};')
+  const vite = await createProjectViteConfig(file, { environment: 'emulator', https: false })({ mode: 'emulator', command: 'serve' })
+  assert.equal(vite.resolve.alias[0].replacement, join(root, 'config/emulator.json'))
+  assert.deepEqual(JSON.parse(readFileSync(join(root, 'config/emulator.json'))), sdk)
+  assert.equal(JSON.parse(readFileSync(join(root, 'src/firebase-config.json'))).projectId, 'configured-remote')
+})
+
+test('an omitted emulator SDK config still honors sourceEnvironment', t => {
+  const { file, input, write } = fixture(t)
+  write('config/alternative.json', { projectId: 'alternative' })
+  input.environments.other = { firebaseConfig: 'config/alternative.json' }
+  input.environments.emulator.sourceEnvironment = 'other'
+  write('redequate.config.json', input)
+  assert.equal(loadProjectConfig(file).environments.emulator.projectId, 'alternative')
+})
+
+test('invalid explicit emulator SDK paths and project IDs fail instead of silently inheriting', t => {
+  const { file, input, write } = fixture(t)
+  for (const value of ['', null, false, 42, 'missing.json', 'config/invalid.json']) {
+    write('config/invalid.json', {})
+    input.environments.emulator.firebaseConfig = value
+    write('redequate.config.json', input)
+    assert.throws(() => loadProjectConfig(file))
+  }
+})

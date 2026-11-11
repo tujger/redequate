@@ -1,3 +1,18 @@
+# Tooling
+
+The supported application interface is `app.mjs --config redequate.config.json`.
+Public imports: `redequate/tooling/app`, `app-config`, `vite`, `firebase-rules` and
+`firebase-test`. Internal filesystem paths are not public APIs.
+
+- `app/`: command execution, disposable Firebase runtime, build receipts, seeding
+  and process ownership.
+- `core-watch/`: Rollup watcher, subscriber client, lock protocol and detached bootstrap.
+- `server/`: Functions package preparation and live synchronization.
+- `eslint/`: query and local-store validators and their path analysis.
+- `__tests__/`: tooling tests, integration runners and historical verification reports.
+- `docs/`: configuration, Firebase lifecycle and Database Rules documentation.
+- `migrations/`: explicit one-off migrations.
+
 # Database query lint suggestions
 
 `redequate/database-queries` checks statically known `read` and `cursor` paths for
@@ -18,10 +33,10 @@ Suggestions are omitted when expressions are dynamic or the provider is unknown.
 
 ## Centralized Firebase Rules
 
-See [FIREBASE_RULES.md](FIREBASE_RULES.md) for composition, static provider argument extraction, CLI generation, shared databases and consumer migration patches. Both validators default to the framework base and accept `settings.redequateDatabase.rulesConfig`.
+See [Firebase and Rules](docs/firebase.md) for the framework base plus optional application database.rules.json supplement. The root redequate.config.json is the only project tooling config. Both validators default to the framework base and accept `settings.redequateDatabase.projectConfig`.
 
 Tooling tests, the Emulator runner and verification reports live in `tooling/__tests__/`. Run them with `npm run test:tooling` and `npm run test:integration`.
 
 ## Firebase application orchestration
 
-The common runner, Emulator configuration, process manager and seed implementation are in tooling. Applications provide `firebase.config.mjs` and invoke the common CLI directly. See [FIREBASE.md](FIREBASE.md).
+The common runner, Emulator configuration, process manager and seed implementation are in tooling. Applications pass root `redequate.config.json` to `redequate/tooling/app`; library-specific files remain separate. See [Firebase and Rules](docs/firebase.md).
