@@ -1,1292 +1,212 @@
-# Redequate Development
-
-Persistent architectural memory: current decisions, their reasons, and constraints
-that are not reliably recoverable from source alone. This is not a changelog.
-Superseded implementations and individual verification runs belong in Git history
-or the linked investigation reports. Development rules are in [AGENTS.md](AGENTS.md).
-
-## 1. Project and modernization
-
-Redequate is the core framework for an application ecosystem. Its main consumers
-are the reference application `tujger/edeqa-pwa-react-demo`, production application
-`tujger/thewhiskytalks`, and native client `tujger/thewhiskytalks-android`.
-Cross-repository architectural decisions belong here.
-
-The modernization sequence remains:
-
-1. CSS Modules and UI-library isolation: completed.
-2. React 19 migration and stabilization: current milestone.
-3. Web build migration to Vite.
-4. Full application SSR.
-5. Business-oriented framework capabilities, customer demos, and customer validation.
-
-Keep React runtime, build-system, and rendering changes independently reviewable:
-`React 19 → Vite → SSR`. A successful build does not establish runtime stability
-or authorize starting the next milestone.
-
-Vite configuration already exists in both web consumers on the development
-branches. This reflects separately authorized build work; it does not complete
-React 19 stabilization or authorize full application SSR. Redequate still uses
-Rollup for library packaging. Request-local state support exists, but full
-Dispatcher/application SSR remains deferred.
-
-Exact dependency versions and executable commands belong in
-[package.json](package.json) and [README.md](README.md), rather than a second
-version inventory here. Legacy peer compatibility does not imply upstream
-React 19 support; installation currently uses `--legacy-peer-deps`.
-
-## 2. Repository workflow and compatibility
-
-Development normally uses `story/*` or `bugfix/*`; do not treat `master` as the
-current development state. Check corresponding consumer branches before a
-significant framework change. Prefer incremental validation through:
-
-`redequate → edeqa-pwa-react-demo → thewhiskytalks`
-
-Both web consumers matter: the demo exercises a controlled reference integration;
-The Whisky Talks exposes production-specific behavior. Assess Android when APIs,
-authentication, URLs, persisted records, callable envelopes, or application
-behavior change. Browser-local storage details alone do not change native formats.
-
-Framework installation, tests, and builds must work without sibling applications.
-Consumer scripts own local linking and application security-rule validation.
-Do not import a consumer's Firebase configuration or business rules into framework
-tests. Framework fixtures are deliberately minimal and are not production policies.
-
-Unit and Auth/RTDB integration tests use the framework-owned configuration and
-emulator lifecycle under `src/__tests__`; see [Tests](README.md#tests).
-Integration fixtures require a demo project and loopback endpoints, so missing
-emulators cannot silently turn an integration test into a production request.
-The runner copies rules into its temporary configuration directory and owns
-emulator/watch shutdown. Restart integration watch after changing fixture rules.
-
-Use the manifest's Node.js baseline (currently 24.12+ for framework tooling).
-The Firebase CLI emulator toolchain requires Java 21+. The launcher can select
-the project-specific Temurin installation for its child process; do not replace
-system Java or another project's configuration to run these tests.
-
-Builds and isolated tests complement browser/device verification. Changes around
-login, media, upload, dates, routing, notifications, or PWA updates require the
-corresponding consumer flow. Record the specific remaining gap instead of
-presenting a passing build as proof of complete compatibility.
-
-## 3. Build, exports, and UI boundaries
-
-### Module formats and package ownership
-
-Publish web ESM and CommonJS through the existing package export map. The web
-entry remains `core/index.es.js`; service entries use `.mjs`/`.cjs`. Do not
-change the package's default module type merely to accommodate one dependency.
-Module-specific build helpers own their entries and source matching; root Rollup
-configuration combines them. Runtime modules live under `packages/*/src`.
-
-Keep browser and server packaging independent. The main package contains UI,
-common, database, and client services. The maintained private
-[server package](packages/server/README.md) owns its package metadata and ESM/CommonJS build. Runtime dependencies belong
-to Backend manifests; consumer lockfiles pin installed versions. It exposes only
-explicit common, database and server Backend subpaths; there is no root entry.
-Import `DatabaseCursor` from `redequate-server/database`. Browser builds reject Node server
-sources, and Node server builds reject browser and UI sources. LocalBackend
-is a browser adapter shipped in `redequate`, outside `redequate-server`.
-
-Functions install the generated server archive under the `redequate-server` dependency
-name; consumers must use that name for server imports. This affects both
-The Whisky Talks and demo Functions. The shared preparation script takes an
-explicit Functions directory, builds/packs the archive, and refreshes installed dependency integrity. Preparation
-needs the framework checkout and its build toolchain; the uploaded archive must
-install independently in Cloud Build. Server runtime support is defined by its
-own manifest. Do not restore the retired standalone common package or duplicate
-preparation logic in each consumer.
-
-Local Functions development can attach `tooling/watch-redequate-server.mjs`
-to a prepared Functions directory. Rollup builds into a watcher-owned temporary
-directory; only successful complete cycles replace the installed package. Touching
-the consumer entry point then triggers Functions reload, since Firebase ignores
-`node_modules`. Each target has one watcher, owned by its development launcher or
-an explicitly started command. Source edits do not repack or alter lockfiles;
-changed runtime dependency requirements require preparation and a watcher restart.
-The Whisky Talks enables this for developer emulator starts; isolated test runs
-retain one-shot preparation. Archive deployment remains the shared consumer path.
-
-Node Server Backends own manifests and independent build commands using the root
-toolchain. `packages/server` assembles isolated outputs and merges Backend runtime
-dependencies into `dist/package.json`, rejecting conflicting versions. Pack the
-standalone `dist` directory (`npm run pack`), not the source manifest. The Node
-archive excludes the client Firebase database adapter and its SDK dependencies.
-Watch mode tracks imported sources and runtime manifests. Subpackage manifests contain only type, dependencies and build/watch commands;
-these modules are not standalone npm packages and need no separate installs or
-lockfiles. Functions import the Firebase backend through
-`redequate-server/backend/firebase-server`; source directory names are internal.
-Firebase `database.create` accepts `(path, value)` with an object value and returns
-a string key. FirebaseDatabase routes create through its injected Backend or a
-default FirebaseBackendClient using the same Firebase app. Synchronous value
-callbacks run on the client with a supplied or locally allocated push key; the
-request carries the resulting object and an explicit key path, never the callback.
-The adapter maps callable `already-exists` failures to `database/conflict`.
-Its grouped callable deploys as `database-create`; the Firebase client
-maps that name. REST conditional PUT with the caller's ID token keeps Security
-Rules authoritative, including anonymous access and validation. Like SDK
-transactions, it requires read/write permission. Consumers initialize the default
-Admin app; importing server entry points does not initialize Firebase.
-
-Firebase and Local single-path `database.update` share common/methods/update.
-Database reads a logical snapshot, applies Firebase-style shallow/relative-path
-changes or a synchronous callback, then sends the entire prepared value in an
-ETag-conditional replacement. Supplied child objects replace their previous value;
-there is no special Local collection merge. Both providers require the explicit
-backend, and Firebase update no longer constructs a fallback client. Firebase paths
-are normalized to strings; Local named paths remain intact. Object updates now
-require read and write permission, just like callback updates. Object/Map batches
-remain one root-relative atomic patch of full replacement values for each address.
-ETag conflicts rerun preparation up to 25 times with bounded jittered backoff.
-Null callback results delete; undefined leaves storage unchanged without a replacement request.
-Callbacks receive copies. No-change callbacks return the original snapshot (null when absent);
-replacement callbacks return the confirmed backend value.
-The protocol keeps Security Rules authoritative and never serializes callbacks.
-
-DatabaseBase.delete validates the prepared path and sends database.delete through
-its injected backend. Providers prepare the path and call super.delete: Firebase
-resolves a string address, while Local retains its validated named path. Their
-single operation boundary preserves the original error context and options.onError.
-Both providers require a supplied backend; delete never creates a fallback client.
-
-Firebase `database.delete` uses this shared backend routing.
-Its single path argument is the direct callable payload, and `database-delete`
-performs an unconditional Rules-authorized REST DELETE with the caller's ID token.
-It needs write permission only, supports root and absent paths, and returns null
-to the transport while the database adapter resolves to undefined.
-
-TypeScript migration is incremental. Babel strips TS/TSX types; existing JS and
-extensionless imports remain supported. Source contracts do not imply mandatory
-type checking or published declarations. Public `.d.ts` generation is currently
-absent. Keep type-only dependencies from becoming runtime imports.
-
-### Consumer bundling and dependency constraints
-
-Web consumers resolve the ESM entry and deduplicate shared peers from the
-application root. Local linking must share React and i18next instances: duplicate
-instances break hooks/context even when installation and compilation succeed.
-Keep Rollup CommonJS `interop: 'auto'`. Normalize a legacy package's default
-export only where required; linked CommonJS namespaces have previously produced
-invalid React elements. Verify rendering, not just importability.
-
-Dual-format output also prevents CRA from treating a transitive `.cjs` dependency
-as an asset URL, as happened with date-fns through react-datepicker. Packaging
-changes must preserve both entry formats and be checked in both web consumers.
-
-React source files retain `.js` extensions, including JSX. Consumer Vite configs
-transform application JSX before ordinary processing and enable JSX in dependency
-optimization. Framework/server Rollup packaging remains a separate concern.
-
-PWA builds retain the classic service worker through `injectManifest`. Redequate
-owns the update prompt and `SKIP_WAITING`; do not introduce generated replacement
-workers, automatic update activation, or duplicate registration. Preserve hosting
-paths, root URLs, Firebase messaging workers, and the application's version source.
-Legacy `PUBLIC_URL`/`REACT_APP_VERSION` definitions are compatibility inputs.
-
-Babel 8, ESLint 10, TypeScript 7, Router major upgrades, and replacement of legacy
-widgets remain separate compatibility work. Avoid broad dependency migrations
-while correcting an individual runtime issue.
-
-### UI and lifecycle decisions
-
-Redequate-owned controls form the UI-library boundary. Use CSS Modules and the
-selector ownership rules in AGENTS.md; keep Material icon imports/usage through
-`@mui/icons-material`. Component conversions must preserve interaction contracts,
-including which element owns ripple feedback.
-
-Themes are mounted CSS through the existing Theme components and CSS variables.
-Do not restore a public MUI theme object or external component `classes` overrides.
-See [Usage](README.md#usage) for stylesheet and consumer integration.
-
-Uppy performs local file preparation; Storage owns upload. Do not restore unused
-transport plugins merely to obtain progress UI. Preserve the upload input/result
-contract and existing cleanup behavior when replacing a widget.
-
-One Tap shares script loading, initializes per active mount, and cancels prompts
-and timers on cleanup. FedCM display-moment callbacks are not a reliable lifecycle
-signal. Disabled/unconfigured prompts must not leave the invitation flow pending.
-
-Known legacy constraints include React 19 peer exclusions and the Lightbox
-`global.window` incompatibility under Vite. Do not hide these with an unrelated
-global shim or infer support from a dependency version change. Migration evidence
-is historical in [MIGRATION_VERIFICATION.md](MIGRATION_VERIFICATION.md).
-
-## 4. Service boundaries and models
-
-### Provider construction and common code
-
-Applications construct stable provider instances and pass them to Dispatcher.
-Resolvers preserve supplied instances and lazily construct Local defaults when
-omitted. Dispatcher resolves Database before Auth and supplies it to the default
-Auth constructor. Custom model selection belongs in the Auth constructor, not
-post-construction mutation of provider internals.
-
-Built-in providers expose their classes as default exports. Base classes provide
-shared contracts/validation; SDK references, credentials, tasks, and snapshots
-stay inside implementations. Extend contracts for actual application scenarios,
-not by mirroring an SDK or adding speculative operations.
-
-`packages/common` is runtime-neutral shared source. Its UserData class owns model
-state, serialization, role policies, and formatting without React, Firebase, browser
-controllers, or module-level model instances. The web UserData subclass adds
-persistence/cache behavior and keeps its database/bookkeeping in private fields.
-Use `new UserData`; the former callable/extend API is removed.
-
-Timestamp sentinels belong to database providers. Common UserData formats resolved
-numeric dates and must not recognize Firebase `.sv` shapes. The web model handles
-its injected database's `TIMESTAMP` marker before delegating ordinary formatting.
-Do not restore the removed shared `SERVER_TIMESTAMP` export.
-
-### Authentication and profiles
-
-Auth operations return detached UserData models rather than SDK user/credential
-objects; signed-out restoration/subscriptions use anonymous models.
-`resolveCurrentUser` owns session restoration. There is no separate cached-current
-user getter or public Auth JSON parser/token-retrieval API. Provider errors retain
-their codes, and subscription registration returns a promise of an unsubscribe.
-
-AuthBase owns constructor/model configuration, shared argument validation, and
-profile persistence using UserData role policies. Provider operations call
-validation supermethods before side effects. These supermethods validate synchronously; provider operations
-implement the asynchronous work. Registration, profile updates, and verification
-require an injected database; saving must not silently disappear when it is absent.
-
-Profile writes use the established `users_public`, `roles`, and `users_private`
-paths in a database batch. Omitted sections remain unchanged. Initial null roles
-and empty private sections are not writes, so ordinary Firebase signup does not
-require permission to modify protected roles. Auth secrets remain provider-owned.
-
-LocalAuth persists namespaced accounts, session, links, and simulated mail in
-IndexedDB, separately from LocalDatabase. Writes notify observers only after
-success. Revision checks and conditional rollback protect the existing state
-transition; failed profile creation restores the previous auth state. Legacy
-localStorage auth data is not automatically migrated or deleted.
-
-AuthBase initializes missing profiles before returning or notifying an authenticated
-model, including session restoration and redirect. Login does not initialize profiles.
-Login treats a profile already persisted by AuthBase as an ordinary existing
-profile: no first-login transformation, onLogin(false), and home navigation.
-If no public profiles exist (checked with a one-entry cursor), it attempts to save
-ADMIN with the initial profile in one batch. This applies to every Auth/Database
-combination and does not depend on retained LocalAuth accounts. Database permissions
-remain authoritative: permission denial during the emptiness check or ADMIN write
-logs a console warning and falls back to an ordinary profile; other failures
-propagate. Existing profiles are not overwritten. Database implementations contain no role policy.
-
-Local registration is sequential by requirement. Do not add registration queues,
-Web Locks, or guarantees for concurrent registrations. Failed profile persistence
-must not leave an installed Local account/session behind. UserData guards demotion,
-disabling, and deletion of the last administrator with an existing public profile.
-Check ADMIN-filtered roles, then individual candidate profiles; do not load all
-profiles. This client check does not establish atomic bootstrap ownership across
-concurrent clients; retain existing database security rules.
-
-### Provider storage configuration
-
-Provider options/properties use storageId; the common default is LOCAL_DATABASE_NAME
-(`redequate:local`). Missing or undefined selects the default; explicit invalid IDs
-reject. The ID names the physical IndexedDB shared by local Database/Auth/Storage/
-Messaging. Service stores are `$auth` (typed records, unique account email, atomic
-revision checks), `$storage` (fullPath key, unique URL), and `$messaging` (token key).
-All store names beginning with `$` are reserved for providers and excluded from
-application collections/schema changes. Database recognizes that prefix without
-knowing individual providers or their legacy store names. Existing modules
-retain their locations. Each provider owns its local/stores.json: Auth, Messaging
-and Storage pass their schema to common/openLocalDatabase only on storage access.
-Common knows no provider schemas and imports no database/local modules. Without a
-schema it opens the database without creating stores. Database keeps its existing
-local/stores.json format and application collection/index/row-migration logic;
-it neither creates nor alters other providers' stores. Initialization order and
-concurrent schema additions must preserve all existing stores. There is no automatic migration or deletion.
-
-LocalMessaging token persistence uses IndexedDB; FirebaseMessaging keeps localStorage
-with key `<storageId>:notification-token`. Its saved token is removed only after SDK
-success. Non-provider framework keys and SDK internals are outside this change.
-Backend methods, dependencies and CRUD routing remain unchanged.
-
-### Storage and messaging
-
-Storage exposes upload, URL/metadata resolution, and deletion. Upload receives
-Auth plus a Blob/File and returns `{url, metadata}`; progress is a percentage
-string. Providers own naming and SDK conversion; image processing, replacement
-cleanup, and upload UI remain caller responsibilities.
-
-Local Storage persists files/metadata in IndexedDB and returns data URLs with
-unique fragments. This is an explicit browser simulation: URLs duplicate data,
-remain usable after record deletion, and do not provide access-control semantics.
-Keep namespace isolation and commit-before-resolution; do not add a memory fallback.
-
-Messaging has four async operations: `checkIfSubscribed`, `subscribe`,
-`unsubscribe`, and `addMessageListener`. Registration returns a disposer;
-subscription and listener attachment are separate actions. The fast subscription
-check reads the persisted token without prompts or SDK work. For Firebase, save
-it only after successful acquisition and remove it only after successful deletion.
-A saved token expresses application subscription choice, not server validity.
-
-Dispatcher attaches foreground receiving only for subscribed clients, retaining
-its iOS guard and Android bridge fallback. Token persistence in profiles,
-notification UI, and background workers remain application responsibilities.
-Do not change native subscribe/unsubscribe bridge names or existing token formats.
-
-Local Messaging uses a persisted UUID token and same-origin `postMessage` envelopes
-shared with Local Backend notification delivery. Validate origin, source, namespace,
-and subscription; give each listener its own message copy. Unsubscribed/absent
-listeners drop messages without a queue. This is foreground simulation, not push
-or a system notification service. The console sender is a Local-only helper.
-
-### Backend and Functions
-
-Backend exposes `request(name, ...args)` and returns application payloads. The Firebase
-client unwraps the callable SDK envelope once. `useBackend` from the framework
-root and backend subpath shares the same Dispatcher context within a module format.
-Do not leak SDK result wrappers into UI or change existing callable response shapes.
-Firebase request names use dotted logical operations (for example, `database.create`).
-The Firebase client maps every dot to a hyphen for the deployed endpoint, keeping
-the original name available for future audit metadata. Existing endpoint names
-without dots remain valid; callers do not perform transport-specific mapping.
-Multiple positional arguments travel as an array; a single argument keeps its
-existing payload shape for legacy callables. `database.create` accepts exactly
-`(path, value)` through a two-element array and rejects the old object envelope.
-
-LocalBackend from `redequate/backend/local` accepts `{storageId}` and owns no
-LocalDatabase instance. Its create/update/delete handlers open IndexedDB by storageId and write
-only to prepared application stores. Missing stores fail; schema initialization
-remains separate, and collection notifications are published after commit. resolveBackend
-caches one default instance; explicit backends remain as supplied.
-Atomic numeric changes use backend.increment(n). BackendBase declares the
-contract only; FirebaseBackendClient delegates marker construction to the Firebase
-database SDK, while LocalBackend owns its finite-number validation and factory.
-Firebase produces the JSON-compatible {".sv": {increment: n}} wire format.
-Local returns a fresh object whose finite delta is stored under a private, module-scoped
-Symbol key. No global registry retains markers. The marker stays within the local
-request path in one JS space; a clone loses its Symbol key. Reusing one marker applies
-its delta again.
-Database providers have no increment method. Local resolves markers against the
-stored value inside the write transaction, including nested record/batch values.
-Local direct database.update requests with an increment marker return the saved
-number. FirebaseBackendClient wraps ordinary nonempty-path writes as root PATCH
-batches, without inspecting values or increment markers, and returns null. Root
-batches and explicit patch/read/conditional replace modes pass through unchanged.
-The Firebase Functions update handler retains its existing PATCH/GET/CAS PUT contract.
-Callable requests never transport executable callbacks. Counter callbacks run in
-common/handlers/utils using the existing Database update read/conditional replace
-loop, which retries conflicts against the returned snapshot. Local commits the
-replacement in one readwrite transaction and publishes after commit. Admin uses
-its native SDK transaction inside database.update's conditional replacement.
-Conditional replacement holds a temporary value subscription through completion
-to populate the SDK cache before comparing tokens, and removes it in finally.
-A one-shot get alone does not retain the cache and can cause false conflicts.
-There is no separate database.transaction command.
-The helper common/handlers/utils.updateCounter(backend, counterPath, increment)
-accepts a nonempty array path relative to _counters and adds that collection itself.
-String paths are not accepted. It applies
-the legacy counter rules atomically: missing/nonpositive counters reset to a
-positive step or delete; a positive counter deletes when the sum is nonpositive.
-Only ordinary named Local counter paths are unambiguous for its declared indexes.
-TIMESTAMP markers belong to BackendBase's provider contract. LocalBackend owns a
-stable frozen timestamp object with a private module-scoped Symbol key and
-recognizes it during native writes. Like Local increment, the marker is valid only
-in the local JS context; JSON and structured clones lose its Symbol key. Ordinary
-Firebase-shaped timestamp objects have no special Local meaning;
-Firebase client and server backends use their respective SDK timestamp values.
-DatabaseBase retains the single compatibility getter delegating to its injected
-backend, so models and components can keep using database.TIMESTAMP. Database
-providers no longer create or re-export timestamp markers.
-LocalBackend and FirebaseServerBackend provide internal database.read(path),
-returning null for missing values and preserving falsy values. Local directly uses readStore in a readonly transaction without an ETag;
-the server uses Admin SDK get(). Firebase client reading
-remains unchanged.
-ExtraListener creation/deletion uses utils.updateCounter with relative paths and
-steps +1/-1; missing deleted extras are ignored. onCreate then reads the
-post author's uid. For an existing different author it creates alerts/{uid}/{key}
-with the original alert.create payload and backend.TIMESTAMP; missing authors and
-self-reactions create no alert. Deletion only updates its counter and preserves
-existing alerts; onUpdate and application Functions registrations are unchanged.
-FirebaseServerBackend extends backend/common/BackendBase and dispatches internal
-create/update/delete operations to firebase-server/src/database/admin. These use
-Admin SDK privileges; external callable REST handlers live in the adjacent
-database/callable directory and retain caller-token authorization. Both groups
-keep separate entry points; exported Functions names remain unchanged.
-Admin create uses an absence-only transaction and returns its explicit or push key;
-conflicts use database/conflict. Admin update replaces one value with set(), or
-applies root object/normalized Map batches with update(); delete uses remove().
-Both write operations return null and propagate SDK errors.
-Local onWrite subscriptions use provider-neutral definitions from backend/common/handlers.
-Backend listener array paths use the first segment as the collection and every
-subsequent bare string as a captured field. For example ["alerts", "user_id",
-"alert_id"] means all alerts of all users; fixed objects constrain values and
-{field: "text"} selects a literal nested field. Shared database/common/parsePath
-also recognizes explicit {user_id: "{owner}"} aliases. Firebase compiles captures
-into its native wildcard ref. Local uses declared index fields (or _id), captures
-identities from physical rows before decoding, and compares matches by full
-concrete path. Unindexed captures and nonunique matches are rejected. Both
-providers include captured and fixed named parameters.
-Cursor array paths now also capture bare string segments: the last capture is
-the entry key and intermediate captures are entry.params. Database reads, UI
-subscriptions and CRUD paths retain their existing rules. No schema migration is needed.
-Readwrite transactions capture logical before/after snapshots for subscribed paths and
-publish source-tagged changes only after commit and connection close. Their source
-context delivers backend reactions once; other tabs still receive collection-only UI
-notifications. Callback promises are observed but never awaited by delivery, allowing
-reactions to await further backend writes without deadlock. A request confirms its
-write, not completion of the reaction chain. Unchanged values and rollbacks emit no
-backend event. Shared handler definitions are exported by backend/common; browser
-packaging rejects all common-server and firebase-server modules.
-
-Native transaction, index-query and write primitives live in one adjacent
-createHelpers module. Database/local retains schema initialization, native reads and listener delivery. Cursor handler replacements use common/methods/update with the supplied backend, matching Firebase; database performs no direct record writes. The adjacent recordValue module encapsulates encoding and restoring Local record values without duplicating object payloads. Common/localDatabase.js is unchanged;
-there is no additional common storage layer or context registry.
-
-LocalDatabase receives backend explicitly; it never constructs or resolves a
-replacement. create prepares its final key, synchronous callback and record before
-request("database.create", preparedPath, preparedValue). The backend accepts only a
-record object and returns the committed key or throws. The create method retains only preparation, delegation and its error boundary.
-It performs no schema preparation, collection checks, IndexedDB access or mutate
-notifications; backend stores must already be prepared separately.
-Dispatcher resolves backend before database, passing it through resolveDatabase.
-
-New automatic Local IDs use firebase-key.key() for both object and callback values;
-backend requests without a supplied key use the same generator. IDs sort by generation
-time, monotonically within one generator despite same-millisecond calls/clock rollback.
-They are not commit timestamps or a globally synchronized order. Existing/explicit keys
-and numeric physical _id remain unchanged. The numerical logical-key allocator is removed.
-Callbacks run before storage requests, including requests that later conflict; failed
-saves roll back records, while generated logical IDs are not reserved or reused.
-
-The former local-server worker and its package export/build have been removed.
-IndexedDB is already asynchronous; a separate worker added a message protocol,
-configuration transfer and marker encoding without a current CPU-bound task.
-Heavy computation may justify a worker later; backend requests currently require
-no worker lifecycle, readiness protocol or serialization.
-
-Functions common/database imports come from the server archive without browser
-initialization. Preserve deployed RTDB paths, trigger scope, callable envelopes,
-and Android compatibility when modernizing SDKs or Gen2 deployment configuration.
-Use the injected Firebase database facade; importing a package must not initialize
-an SDK. Detailed server packaging belongs in its README.
-
-### Firebase Web SDK
-
-Firebase Web initialization and the Firebase Database provider use the modular SDK;
-do not restore `firebase/compat` imports or namespaced database calls. The shared
-Firebase handle retains `app` and `config`; providers receive that handle.
-One-shot RTDB snapshots use `onValue` with `onlyOnce: true` to retain the previous
-cache/event behavior. Subscriptions retain their own SDK unsubscribe functions.
-Android wrapper resume reconnects `getDatabase(firebase.app)` through modular
-`goOffline`/`goOnline`; refresh deletes and reinitializes the app before reloading.
-
-## 5. Database and cursor architecture
-
-The behavioral source of truth is the existing
-[Database/Cursor contract](packages/database/src/common/CONTRACT.md), backed by
-shared Local and real-emulator scenarios. Public source types live in
-`packages/database/src/common/DatabaseTypes.ts`. Keep this section focused on
-choices that are easy to accidentally reverse.
-
-### Address and operation semantics
-
-Paths accept strings or arrays with string/named segments. A named segment has
-exactly one string-valued field; the old _ metadata is removed. The shared
-parsePath normalizes paths and describes segments as {name, value, parameter?};
-unbound array fields and explicit wildcard aliases use its PATH_VARIABLE Symbol.
-The original serializable path is retained: markers never travel in backend
-requests or BroadcastChannel messages. Operation-specific create/read/listener
-rules remain at the call sites; resolvePath keeps concrete address semantics.
-There are no separate parseCreatePath, parseReadPath or parseListenerPath modules.
-Provider adaptation is implemented by SDK-independent module functions in
-Database/local/parsePath.ts and Database/firebase/parsePath.ts, used by both
-Database and Backend. They take address (default), collection, create or listener
-mode. Address mode preserves concrete native backend reads and writes; collection
-mode selects the final bare key field for Database reads, cursors and UI listeners.
-Create mode supplies parent/key information. Listener mode produces Local index
-captures or Firebase wildcard refs and fixed params. No parser method is installed
-on provider classes. Local store-only validation is also exported from its adapter
-for the update/delete superclass pipeline, where generic validation already runs.
-resolveParsedPath renders an already parsed result without validating it again.
- Named segment values
-form the Firebase address; Local also uses their names to select record fields. Shared validation/normalization must not mutate caller input.
-The first Local segment selects a configured physical store, not a virtual collection.
-
-A trailing string in a Database array read/cursor/UI-listener path of at least two segments names an
-identity field. It is not a literal final branch:
-
-- `["users_public", "user_id"]` reads the user collection.
-- `["users_public", {user_id: uid}]` selects a user and its subtree.
-- `["users_public", {user_id: uid}, {email: "email"}]` reads a concrete field.
-- String paths remain literal; a single-root array selects its collection.
-
-This operation-specific rule does not redefine create/update/delete or
-`orderBy` grammar. Preserve `PostData.fetchExtras` targeting the extra collection
-with its identity marker; querying a literal `extra/extra_id` branch loses the
-consumer's existing `id_uid` index. Root reads reject; root cursors are valid.
-
-Create allocates/writes an absent record and returns its permanent string key.
-A synchronous callback can compute the value from that final key. Duplicate keys
-fail atomically. Firebase uses a transaction and needs read plus write permission;
-Local allocation and insertion share a native IndexedDB transaction.
-
-Object update is a shallow merge, retaining unspecified fields and deleting null
-fields. Callback update atomically replaces/returns the whole value; null deletes,
-undefined leaves the original value unchanged without a write. Mutations to the callback's
-copy are discarded unless it returns a value, matching cursor.handle. Firebase and Local may retry the callback, so it must be synchronous and
-free of external side effects. Batch paths are root relative; callbacks belong
-only to the single-path overload. Delete is idempotent; public `write` is removed.
-
-Reads return plain values or undefined for absence, without an iteration-order
-guarantee. Use cursors for ordering. Query options select immediate children;
-`equalTo` excludes start/end, and explicit value ordering differs from key ordering.
-Neither provider invents a timestamp field or changes the caller's value shape.
-
-DatabaseBase centralizes synchronous `onError(error, reason, context)` policy.
-The operation override wins over the database default, which throws the original
-error. A normally returning handler suppresses failure and yields undefined;
-its return value is ignored. Handler exceptions propagate once. Cursors/listeners
-retain the effective policy, including deferred callbacks and cleanup failures.
-
-### Cursor ownership and subscriptions
-
-DatabaseCursor is a runtime class shared by root/database exports of `redequate`
-within each format; `redequate-server` exposes it only through `/database`.
-Custom cursors must extend that constructor and call base methods;
-structural lookalikes are unsupported. Do not mix constructors from separate
-installations or ESM/CommonJS formats: their `instanceof` identities differ.
-
-Cursors own a stable id, path, count, and readonly `{index, key, finished}` position.
-Traversal is sequential through `next(n)`; restarting requires a new cursor.
-Records are `{key, value}`; synthetic group headings are `{key}` without value.
-Headings appear once, count as returned entries, and do not consume data page size
-or invoke handle. Detailed group inheritance belongs in the behavioral contract.
-
-Handle runs sequentially on copies. Undefined keeps the original read value and
-storage; null deletes; another result replaces and is reread for resolved values.
-A failed page does not roll back completed actions. Keep scanned continuation
-state separate from the last returned entry: filtering and writes can move/delete it.
-
-Provider cursor factories return compositions, including a single path. Fresh
-source cursors are exclusively owned by the composition. Deduplicate by normalized
-leaf path plus key, falling back to cursor id plus key when no path exists.
-Separate queries over the same collection must still suppress overlapping records.
-Composition does not globally sort sources or rerun their handlers.
-
-Firebase continuation uses inclusive boundaries and retains buffered extra rows;
-exclusive SDK boundaries previously caused premature exhaustion. Preserve that
-workaround when changing pagination. Date bounds use Firebase key time but Local
-explicit timestamp fields. No cross-page transaction or exact concurrent snapshot
-is promised; a moved record can be handled before composition deduplication.
-
-Subscriptions report add/change/remove without replaying their initial contents.
-Handles are independent; removal is idempotent and cleanup attempts all sources.
-Count includes returned entries and delivered adds minus removes. Standalone
-`onChildAdd` uses the initial maximum key as its strict addition boundary.
-Do not replace that with initial replay or a bounded listener that can miss events.
-
-### Local storage and schema
-
-Application stores and their indexes come exclusively from local/stores.json and
-constructor stores. There are no generated identity, path, type or cursor indexes.
-Object records store actual fields directly, with native _id and address fields.
-Do not add _record, _encoded, _local, restoration lists, shadow values or duplicate
-payloads. Reading excludes only the native _id. Unique and compound indexed fields,
-including nested fields and identities injected from addresses, remain visible in
-records, collections, cursor entries, subscriptions and update callbacks. A field
-may both identify an entry and appear inside its value. No origin metadata is
-stored. Incompatible indexed parents reject rather than being overwritten.
-Strings, numbers, booleans and arrays use _value as their single payload, without a
-type marker. _value is reserved at the record root; _record and _encoded are reserved
-legacy service fields. Nested fields with these names are ordinary data. Old wrappers
-reject with VersionError; never migrate or delete them automatically.
-
-Lookups use declared simple/compound indexes, including compound-prefix scopes, or
-native primary keys. Missing lookup indexes and ambiguous addresses reject explicitly.
-Native unique indexes enforce uniqueness. Record updates retain their native primary
-keys; multi-store batches are atomic and reject overlapping addresses.
-
-Stores without secondary indexes intentionally hold one small document. Field access
-reads/updates that document; these stores do not support search or query options.
-Do not add indexes or record registries to them. Provider stores beginning with $
-remain isolated from application CRUD and schema updates.
-
-Schema preparation remains available through read/listener/cursor paths and explicit applySchema. Local-only applySchema changes
-declared indexes/stores without rewriting data, migrating old formats or deleting
-unrelated indexes. Create and update prepare their values and delegate to the explicit
-backend; delete forwards its validated path through request("database.delete", path).
-All three operations require prepared stores. Observers refresh ordinary collection
-snapshots after committed writes; broadcasts carry collection names only.
-
-The old encoded record format is unsupported. No migration script, startup/Dispatcher
-migration or compatibility decoder is shipped or run. Tests use fresh disposable
-IndexedDB factories; developer data is not deleted or converted.
-
-## 6. State, navigation, and retained constraints
-
-### Immutable models and SSR boundary
-
-New state uses internal GlobalStore/UseAbstract/AppState through AppContext and
-`useSyncExternalStore`; existing Redux slices migrate incrementally. Different
-keys own independent stores. Object.is suppresses unchanged references, so edits
-require a replacement model rather than mutation followed by assigning it again.
-
-Stores normalize and deeply freeze snapshots in production as well as development,
-preserving object identity/prototypes. Descriptor traversal must not invoke getters
-or freeze shared service dependencies. Reject mutable built-ins whose internal
-slots survive Object.freeze, including values from other realms. Model authors
-keep services/bookkeeping in private fields and observable data in own fields.
-
-The current-user hook stores the actual web UserData instance with its methods.
-It starts with an anonymous model and normalizes null/undefined to a new anonymous
-model. Do not restore the removed current-user Redux cache, accessor bridge, or
-snapshot wrapper. Auth restoration identifies the user; enrich the same session's
-profile before publishing it. Logout clears it only after successful sign-out.
-
-Prepare login notification data and profile saves before publishing the model:
-publication freezes its public data. Later changes require replacement models.
-Notification failures retain the existing nonfatal behavior; disabled users follow
-the existing profile redirect without subscription. UserData.toJSON provides a
-detached export for reconstruction/editing; store writes do not clone models.
-
-Request-local state support does not mean application SSR is complete. Create
-AppState after server preload and supply it explicitly for server imperative access.
-Global browser state must not serve server requests. Hydration uses the same
-prepared initial snapshot; serialization/model reconstruction belongs to the app.
-Do not use `set` as server preload or add automatic class serialization.
-
-Provider state/initialState is selected once per mount. Fork/reset preserve the
-prepared immutable baseline; registration keys are unique. Registry HMR requires
-a full reload, not implicit duplicate-key reuse. State audit rationale is retained
-in [STATE_AUDIT.md](STATE_AUDIT.md).
-
-### Lists and publication navigation
-
-LazyList retains the cursor prop and defaults to `live=false`. Owners create fresh
-cursors during render; cursor replacement invalidates the previous loading session.
-Do not add revision counters, list caches, or automatic refresh actions in mount/
-filter effects. Loaded rows are not retained across unmounts. Explicit
-`Layout.REFRESH` remounts the routed tree; visibility `REFRESH_CONTENT` does not.
-
-Rearm the observer after each completed page, including pages whose transformations
-all return null. Enrichment can read independent counters/extras/author data in
-parallel, but failures must settle rather than leave pagination pending indefinitely.
-Live subscriptions remain opt-in; page work and notifications are not serialized
-through a component-level operation queue.
-
-Root publications use numeric `to: 0`; replies use their parent ID. A null marker
-is removed by RTDB and cannot satisfy Discover's equality query. After publishing,
-commit the composer's close with flushSync before calling onComplete: otherwise
-ModalComponent's history blocker can cancel Home's immediate post navigation.
-Returning to Discover then creates a fresh cursor without enabling live updates.
-
-This shared correction was verified in both Firebase and Local browser flows.
-The historical provider-specific refresh difference was not reproduced or proven.
-No writer for `discover/{uid}` was identified in the checked-out Functions code;
-do not invent a Local discover store or infer a remote writer from a listener.
-Temporary tracing has been removed. Captured evidence is archived in
-[the Discover report](DISCOVER-REFRESH-DIAGNOSIS.md).
-
-### Consumer repair compatibility
-
-Post transformations using missing-post repair require the consumer's Backend.
-Legacy replies can contribute to counters without migration/deletion; repair must
-finish reading its inputs before writing baselines. Tag repair must preserve links
-that changed after its initial snapshot rather than replacing an entire feed.
-
-Mutual repair retains directional relationship and request semantics: friendship
-requires approval, following does not. Baseline repairs must not pre-apply deltas
-that existing triggers will add. Atomic snapshots across repairs/triggers or
-concurrent text edits are not guaranteed; keep that limitation explicit instead
-of adding an unrelated concurrency protocol.
-
-Roles remain scalar strings for all database callers. Local uses its general record-value codec; auth and UI do not handle Local storage formats. Value queries operate on decoded values without new service indexes. No existing browser data is migrated.
-
-LocalDatabase.update delegates all saving to LocalBackend database.update, without
-opening IndexedDB, preparing schema, or emitting notifications. It merges object
-changes in Database (shallow or relative-path updates, replacing supplied child objects),
-or executes a synchronous callback to prepare a full replacement. ETag conflicts
-rerun preparation up to 25 times with the same retry policy as Firebase. Batch values
-are full replacements sent in one root Map. Delete and cursor write paths are unchanged. It accepts `(path, changes, options?)` with
-patch/read/replace modes. Patch expands child paths and root-relative object/Map
-batches into a single native transaction. Read returns a logical snapshot and a
-canonical, type-sensitive string ETag without stored revisions. Replace compares
-that token and writes inside one readwrite transaction; a mismatch returns the
-current snapshot without writing. Both read and conflict responses contain only
-the logical value and ETag (plus committed:false for conflicts).
-The backend never executes update callbacks.
-Empty paths are only supported for batch patches. Prepared stores, the existing
-record codec, overlap validation, and post-commit collection notifications are reused.
-No automatic schema initialization, migration or Firebase changes are added.
-
-LocalDatabase.update and FirebaseDatabase.update perform provider-specific path
-preparation and batch encoding, then explicitly call super.update. Local retains
-named paths in a Map; Firebase normalizes paths to strings and builds an object.
-A single this.run boundary in each provider covers preparation and the superclass
-call, preserving original error context and invoking onError only once. As with
-create, DatabaseBase.update validates prepared arguments and uses its injected
-_backend without another error boundary. Single updates call common/methods/update
-for full-value preparation and ETag retries. There are no path/batch hook methods.
-Provider-specific update logic lives in firebase/update.js and local/update.js,
-including path/batch preparation and the error boundary. Both classes only delegate
-arguments and bound run and super.update functions. Firebase cursor replacements use the same common single-update helper with
-the explicitly passed backend.
-
-### Alert push delivery
-
-AlertListener sends the original alert data payload when an alerts record is created;
-updates and deletions do not send notifications. Author lookup failures use Somebody.
-BackendBase exposes projectTitle (default Redequate) and projectUrl. LocalBackend accepts
-both in its existing options object and defaults the URL to the current origin.
-FirebaseServerBackend accepts a third options argument with projectTitle/projectUrl
-and an optional getMessagingInstance factory; its default URL is the database app's
-Firebase Hosting origin. Existing constructor arguments remain compatible.
-
-The internal notification.send request takes tokens, payload, and optional options.
-AlertListener calls this request directly. Firebase internal delivery and the
-admin-only callable share the named sendToTokens export from notification/send.js, including emulator simulation and batches of
-500. Local delivery posts only for the current subscription token in the same storageId;
-it remains foreground simulation. Push payload fields and alert records remain compatible
-with web and Android consumers. No new callable endpoint is exposed.
-
-### Explicit Local key migration
-
-Only LocalBackend implements database.migrate({collection, sourceField, targetField}).
-It copies nonempty string keys into absent/null target fields using native IndexedDB
-rows, preserving the source, _id and all payload fields. The target must have an
-existing single-field unique index. Source-field indexes absent from the current
-framework schema are removed in the same atomic version upgrade as the data repair;
-declared indexes are preserved. Migration does not run on read or generate keys. Validation/conflicts abort the whole transaction; repeat runs leave
-existing targets unchanged. It returns {scanned, repaired, unchanged} and notifies
-collection readers after commit. Native migration avoids business create/update
-listeners and their side effects. No Firebase command or common Database API is added.
-The Whisky Talks exposes it only for LocalBackend in Admin → Database fixes, behind
-its existing acknowledgement checkbox. Defaults repair activity_uid → activity_id.
-The operator must explicitly invoke it; no developer database is migrated by tests.
-
-### Direct Local timestamp updates
-
-LocalBackend database.update recognizes a direct backend.TIMESTAMP marker and writes
-its resolved value at the requested non-root path. It uses the timestamp mode
-(also accepted explicitly only with that marker).
-Explicit patch mode rejects a direct timestamp marker; nested markers in patch values
-remain supported. Patch preparation retains the original value for diagnostic logging.
-Firebase backend behavior is unchanged.
-
-### Post creation reactions without tags
-
-PostListener.onCreate counts top-level posts with updateCounter and resolves reply
-ancestors before writing. Replies increment the writer's replies, the immediate
-parent author's replied counter when notified, and the root post's replied counter.
-Alerts target the parent/root authors once each, excluding the reply writer; they use
-type replies, the reply id and root context, preserving the original payload contract.
-The root field is merged through the common conditional update helper so both Local
-and Firebase retain all post fields. Missing ancestors and cycles fail before effects.
-Tag processing is not included. Delete/update behavior is unchanged; the operations
-remain sequential, without an enclosing transaction or event deduplication.
-
-### Post deletion without tags
-
-PostListener deletes ordinary-post counters (author then total), or reply counters
-(author replies and root replied). Missing reply roots warn without guessing a root.
-It reads direct children using database.read(path, {orderBy, equalTo}), then deletes
-them through database.delete so their own delete events cascade to deeper replies.
-Both internal backend readers support these optional query arguments; older path-only
-calls retain their results. Parent/root author replied counts and existing alerts are
-not removed, matching the original delete handler. No tag processing is included.
-
-PostListener calls backend.storage.delete(pathOrURL) directly; storage.delete is
-not a backend request command. LocalBackend uses the passed storage instance.
-FirebaseBackendClient exposes the supplied storage instance unchanged; direct storage
-calls use that provider without invoking a callable. It installs no backend listeners. FirebaseServerBackend always owns a
-FirebaseServerStorage extending StorageBase, ignores options.storage, and uses Admin
-Storage in its configured default bucket. Only the exact object is deleted, not a prefix. Image errors are
-logged independently without interrupting other image deletes; database errors stop
-the sequence. The Whisky Talks passes its existing Storage instance to LocalBackend.
-
-### Local backend cursor command
-
-LocalBackend supports await backend.request("database.cursor", path, options?) and
-returns a live ComposedDatabaseCursor, not a serializable page. It reuses the database provider's
-pagination, filtering, handle and subscribe behavior. The request context includes the
-current backend so cursor handle replacements/deletions use that same instance.
-The factory creates no new providers or listeners; callers own subscription cleanup.
-No Firebase callable or transport-level cursor format is introduced.
-
-### Frontend and Admin Firebase cursors
-
-FirebaseCursorClient(firebase, path, options, backend) and
-FirebaseServerCursor(database, path, options, backend) extend the SDK-neutral
-FirebaseCursorBase. The shared superclass owns RTDB query policy, buffering,
-pagination, date bounds, handle writes/rereads and wildcard branch queues. The
-subclasses override reference creation, query constraints and snapshot reads with
-their native Client or Admin SDK. Queries initialize lazily after subclass SDK
-fields are available. Only FirebaseCursorClient implements live subscriptions.
-No Client SDK is imported into the superclass or Admin implementation.
-
-Wildcard paths are a DatabaseCursor contract. FirebaseCursorBase and LocalCursor
-implement traversal within their own instances; constructors never return a
-different cursor type. Local uses its native branch scopes and scan positions.
-There is no external WildcardDatabaseCursor or constructor callback adapter.
-The default-export module path for the client cursor is unchanged.
-
-### Backend cursor composition
-
-Both local and Firebase server database.cursor commands use the shared backend
-createCursor factory and return ComposedDatabaseCursor even for a single path.
-The factory is a plain function using the existing composeCursor implementation.
-Backend cursor errors propagate directly to the caller; onError does not suppress
-them. Frontend Database.cursor error handling is unchanged.
-Inputs match Database.cursor: a path, query descriptions with
-inline options, or fresh cursor instances. A single-path cursor retains its
-resolved collection path; composed inputs retain the existing grouping,
-deduplication, subscriptions and source ownership rules. Backend request remains
-asynchronous, so callers must await cursor creation.
-
-
-### Firebase server command context
-
-All internal Firebase server commands share one requests registry and execute via
-handler.call(backend, ...args). Admin CRUD and cursor handlers resolve Database
-through this.getDatabaseInstance(); notification.send resolves only Messaging
-through this.getMessagingInstance(). Unknown commands resolve neither service.
-The low-level sendToTokens(messaging, ...) API remains available to the callable.
-
-
-### Test ownership after backend handler migration
-
-Post/tag/alert/extra reaction coverage belongs to packages/backend tests; consumer
-Functions suites no longer invoke disabled -prefixed copies. Applications retain
-checks for their active triggers, fixes, callable authorization and actual backend
-namespace registration. Provider fixtures supply the required backend explicitly.
-The library's Auth/RTDB-only integration suite uses an emulator REST backend with
-real rules and ETags; callable transport is covered by the consumer emulator suite.
-Its runner allocates non-default ports for all services and a dedicated demo project
-and temp directory, without importing developer data.
-
-
-### Activity type index
-
-`DerivedDataRebuilder` is an opt-in `BackendListener` base. The public call is
-`backend.request("database.rebuild", listener.path)` with no options. Firebase
-requires an authenticated administrator; Local routes the same path to the same
-optional `handler.onRebuildDerivedData()` method. It applies exactly one portion,
-including its conditional checkpoint advance or deletion, before returning the
-same status shape as `database.status`: `{rebuilding: false}` or
-`{rebuilding: true, run, revision, cursor}`. A listener with more than one
-declared derived checkpoint needs a distinct rebuild path for each store. A missing checkpoint is
-conditionally created and starts at the beginning; an existing checkpoint is
-resumed from its cursor. The caller supplies a concrete checkpoint record path, a positive
-fixed batch size, and `readBatch(cursor, limit)` / `applyBatch(items, checkpoint)`.
-The checkpoint path must exist in the Local schema before use; the framework
-does not create a new Local collection or install a startup rebuild. A subclass
-must ensure that pagination is stable under source mutations and that its
-checkpoint path is dedicated to its job.
-
-`backend.request("database.status", listener.path, derivedPath)` reports only
-the selected derived store's checkpoint. A handler explicitly declares allowed
-`derivedCheckpoints` entries `{path: derivedPath, checkpointPath}`. The
-`DerivedDataRebuilder` constructor accepts an optional fifth `derivedPath`
-argument and declares its single checkpoint when provided; a handler managing
-several stores can declare several entries. Undeclared paths cannot access
-checkpoints. The response is `{rebuilding: false}` when the checkpoint is absent,
-or `{rebuilding: true, run, revision, cursor}` when present. This read-only
-request does not modify checkpoints or infer whether a runner is alive. The
-Firebase callable requires an authenticated administrator, as rebuild does.
-
-Each runner reads the checkpoint ETag before a portion and conditionally
-replaces it after the portion; the final conditional replacement deletes it.
-Client-facing conditional updates use REST GET with `X-Firebase-ETag` and PUT
-with `If-Match`; a stale ETag returns a 412 conflict. The rebuild callable runs
-through the Firebase server backend and uses an Admin SDK transaction at the
-checkpoint path. Local compares the full
-logical value inside one IndexedDB readwrite transaction. These are atomic
-checkpoint operations, including final deletion. They do not make writes to
-another derived branch atomic with the checkpoint. After a failure or lost CAS,
-the same portion can run again, and two runners may both apply one portion
-before one loses the checkpoint CAS. `applyBatch` must therefore be idempotent,
-must tolerate another runner writing the same portion, and must merge
-safely with concurrent `onCreate`/`onUpdate`/`onDelete` writes (for example,
-conditional per-record updates against current source state). The base class
-cannot guarantee this for arbitrary derived data, cannot undo a partially
-applied portion, and must not be used for a destructive clear-and-replace
-rebuild. Local subclasses may implement a stronger single-transaction
-write-plus-checkpoint operation, but this base uses the common provider CAS.
-
-For an unfinished Firebase portion, the server awaits Cloud Tasks enqueue to
-`database-rebuildWorker` before answering. Each task awaits one portion and the
-enqueue of its successor. A retried task can repair a successor enqueue that
-failed after its CAS advance. Deploy the exported worker with the callable and
-grant the Functions service identity Cloud Tasks enqueue and invoke permissions.
-If the initial enqueue fails after the callable advanced its portion, the
-callable returns an error and leaves the checkpoint for an explicit retry; there
-is no automatic recovery from that narrow gap. Queue delivery is also subject
-to its configured finite retries. Local runs remaining portions in a managed
-worker and checks declared checkpoints when a new backend starts, resuming any
-unfinished run. A worker failure retains the checkpoint for a later resume.
-
-
-All stores whose names begin with `_` are derived, disposable data. Their source
-records must remain untouched during schema migrations or index repair. A migration
-may clear an underscore store only when its rebuild path from source records is
-defined and the caller arranges to run it; clearing alone does not restore data.
-For each such store, document the source, rebuild entry point, and initiator before
-using a destructive migration. This is an architectural rule, not an automatic
-rebuild feature of LocalDatabase or Firebase.
-The current Local schema also declares `_counters`, `_chats`, and `_tag`.
-Their complete rebuild entry points have not been verified; do not clear these
-stores in a migration until their source data and rebuild initiators are specified.
-
-`_activity` is a disposable collection keyed by a service `activity_type_id`.
-Each record is `{activity_type_id, type, value}`, with the service key also stored
-in `activity_type_id`, the unmodified activity type in `type`, and
-its last indexing timestamp in `value`. Types such as `tag.create` are values,
-never Firebase keys. ActivityListener uses the existing conditional update helper
-on the collection to preserve one record per type during concurrent events. A new
-type uses the source activity ID as its service ID; later events reuse that ID.
-Local declares a unique `activity_type_id` index and an ordinary `type` index.
-The schema upgrade removes only disposable `_activity` rows without a service ID;
-the activity journal is untouched. Existing Local records without an explicit-value
-marker retain their prior identity decoding, while new records preserve identity
-fields supplied in the value. Firebase restores missing service IDs from record keys
-and discards the former nested types map on the next index write. The audit selector
-reads original types from record values; journal filtering still compares
-`activity.type` without encoding. Both
-web consumers declare `_activity/.indexOn: ["type"]`. There is no journal migration.
-`ActivityListener.rebuild()` explicitly reads the source `activity` collection and
-conditionally reconstructs one `_activity` record per type. A caller must invoke
-it after clearing the index; no startup or migration hook currently does so.
-The index is therefore not automatically restored after a schema cleanup. Before
-clearing it in a deployed migration, add a maintenance or startup invocation of
-this method and verify completion. The Local schema upgrade currently removes only
-legacy rows lacking a service ID; those rows are not automatically reconstructed.
-
-
-### Atomic post editing
-
-NewPostComponent generates an edit history ID locally with firebase-key, then
-submits the new `edit/<edit_id>` entry, text and images in one root batch update.
-It performs no separate history create and never mutates the supplied PostData
-history. Both providers therefore commit one post change with its history; a
-rejected database update leaves all three database paths unchanged. History keeps
-its `{timestamp, uid}` shape and existing entries. PostListener's logging and
-content-change guard remain unchanged; it creates one `post.update` Activity for
-a content change. Upload/file cleanup retains its existing lifecycle.
-
-
-### Local reads retain identity fields
-
-Local object decoding now hides only the native `_id`. Every other stored field
-remains in read results, cursor entries, subscriptions and update callback values,
-including unique/compound index fields and identity fields injected from paths.
-A collection entry can expose the same value as both its key and an object field.
-No origin metadata, schema/data migration or Firebase key-to-field synthesis is
-introduced. Primitive and array values still use the existing `_value` wrapper.
-
-
-### Backend collection reads
-
-Local and Firebase Admin `database.read` requests now share Database.read's
-collection path grammar. A final string in an array identifies the collection key,
-not a nested property: `["_activity", "activity_type_id"]` queries `_activity`.
-Named final segments still select concrete records; literal string paths retain
-their original addresses. Local preserves singleton-document addressing for
-unindexed stores. The existing `{orderBy, equalTo}` options filter collection
-records and return a map keyed by record ID (null when no records match).
-ActivityListener consumes that map and updates an existing matching ID. The current
-application handler creates a missing type through database.create; that separate
-read/create sequence does not guarantee uniqueness during concurrent events.
-Activity type strings remain unencoded stored values. Scalar backend reads of the
-post author and profile name use explicit named field segments.
-
-### Centralized Firebase Database Rules
-
-The mutualrequests migration stores only `uid` and `id` as participant lookup fields.
-Accepted requests derive `uid_id` and `id_uid` when creating both `mutual` directions;
-direct simplex mutual creation and mutual indexes retain those fields. The Local
-schema no longer declares the two mutualrequests compound indexes. Its additive
-schema upgrader does not drop physical indexes in existing IndexedDB databases,
-so those old indexes remain until an explicit future cleanup. The Whisky Talks
-application now uses the provider-owned request Rules without App.js overrides.
-Request Rules use only uid/id for participant identity; uid_id/id_uid are not
-part of the request format or its validation. Deploy the generated Rules with this framework
-change before claiming deployed end-to-end compatibility.
-
-The Database Firebase provider owns the common base and pure conservative
-resolveRules API. Project tooling uses one root redequate.config.json and an
-optional ordinary database.rules.json supplement. Objects merge, indexes union,
-and explicit same-path directives from the supplement take precedence. No provider
-manifest or App.js extraction participates in the consumer workflow. Builds and
-emulator starts generate Rules; create/change/delete of the supplement is watched.
-Malformed edits retain the previous generated artifact. See tooling/FIREBASE_RULES.md.
-
-Firebase orchestration, process management and seed live in Redequate. Both apps
-pass the root JSON to tooling/app.mjs; server, environment and test parameters are
-not repeated in .env or Vite. Library-specific SDK/Hosting/Storage/Vitest options
-keep their own formats. Existing npm command names and shared watcher ownership
-are retained. No deployment is performed during start, build or tests.
-
-Emulator startup waits for the Firebase CLI's full ready message as well as service
-and callable checks; callable availability alone precedes Rules validation. CLI
-output is forwarded unchanged and observed for its shutdown message. Once the CLI
-is already cleaning up, process teardown waits without sending a second SIGINT
-(which could start export after Storage has deleted its temporary files). Export
-verification applies only to a successfully started developer suite.
-
-Mutual-request access restrictions belong to the Firebase database provider's base
-Rules, not application constructor overrides. Senders and recipients may read
-individual requests or query by their own uid/id; unfiltered collection reads are
-not granted. Sender writes require accepted to be absent; only recipients may
-write any accepted value, including false. Null removes the field and remains
-allowed for senders. The write rule checks access and acceptance, while the record validation
-keeps uid/id immutable. Both participants may delete even an accepted request.
-
-The common backend exposes mutualstamps.createStamp({backend, mutualType, userId,
-mutualId, value}). It conditionally creates a scalar stamp and increments its
-matching counter only for the winning creation, preserving existing values. This
-operation has no post-specific logic and is not yet wired into listeners. Stamp
-and counter writes remain separate: crash recovery between them is not covered.
-
-### Cursor wildcard traversal
-
-Cursor-only patterns such as ["mutual", "mutual_type", "mutual_id"] expand
-intermediate branches and merge leaf cursors in query order, breaking ties by
-full concrete path. Named segments fix values, including literal fields such as
-{edits: "edits"}; orderBy continues to address ordinary nested value fields.
-The final segment of an expanded pattern must be a key wildcard. Capture names
-must be distinct. Ordinary results retain {key, value}; expanded results also
-include params, excluding the capture represented by key.
-
-Branch discovery occurs on first next and does not track newly appearing branches.
-The queue keeps one candidate per concrete collection. Firebase discovery reads
-parent snapshots and requires permission to read those parents; this is not one
-server-side wildcard query. Local discovery uses declared identity indexes.
-Handle runs at delivery, with params, and writes to a concrete named path.
-Composition deduplicates by concrete record address, so identical leaf keys in
-different branches survive. Intermediate-wildcard subscriptions are rejected.
-LazyList still uses key alone: do not feed it cross-branch results with duplicate
-keys until its identity contract is separately updated.
-
-Wildcard cursor identity is derived from the public pattern, captured params and
-leaf key; no per-entry address registry is needed. Composition deduplicates by
-resolved collection plus key. The merge chooses its next candidate in one pass,
-and leaf options are prepared once. A handled record that loses its ordered field
-is consumed and skipped, allowing the remaining queue to continue.
-
-Database read options now include shallow. The true mode returns unique immediate
-child keys as string[], with [] for absent/scalar values and no ordering promise.
-It rejects query selection options and uses authenticated REST in Firebase,
-including emulator namespace routing; Local uses key-only index cursors for
-logical collections. Normal reads, cursors and application handlers are unchanged.
-
-
-Provider dependencies are linked through synchronous setters after Dispatcher resolves
-Backend, Database, Auth and Storage, before any authentication restoration or reads.
-Preconstructed Firebase providers need only `{firebase}`; legacy constructor injection
-remains supported. Backend.getCurrentUser() resolves the linked Auth identity for
-Local. Firebase Server overrides it with AsyncLocalStorage scoped to each callable
-or RTDB invocation. RTDB identity comes from that event's native auth fields;
-callable context does not propagate across separately delivered RTDB events.
-
-Provider references in base classes use protected `_name` fields and public
-setters. Backend exposes its existing storage read access through a getter;
-subclasses install storage with setStorage rather than assigning that property.
-
-Storage receives Auth through setAuth in Dispatcher before uploads. Local and
-Firebase uploads resolve the linked Auth on every call; upload no longer accepts
-an Auth object or UID string. Missing Auth yields storage/auth-required, and a
-missing authenticated identity yields storage/unauthenticated. Tag uploads now
-use the current user namespace instead of an explicitly supplied .main UID.
-
-The Firebase RTDB adapter exposes native event identity through
-backend.getCurrentUser(), keeping listener payloads unchanged. Production events
-without authId resolve to undefined. The emulator-only record-owner fallback is
-described below. No callable-to-trigger context propagation is used.
-
-
-### Server current-user context
-
-`FirebaseServerBackend.getCurrentUser()` asynchronously returns the user of the
-current server invocation, using server-only `AsyncLocalStorage`. Framework
-callables use the shared `common/onCall` wrapper, which scopes `request.auth.uid`
-and preserves callable options and callback arguments. RTDB listener adapters
-scope native `event.authId` for create/update/delete.
-Their existing `{value, params}` and `{value, previous, params}` payloads remain
-unchanged. Async server calls within a handler inherit its user context.
-
-Each invocation, including one without an identity, creates its own scope.
-Concurrent users do not share a mutable user field; nested scopes restore their
-parent and failures do not leak identity. Outside an invocation, or when no
-identity is available, the server returns `undefined` rather than consulting an
-injected client Auth. Local/client backends keep their Auth provider behavior. `createActivity` uses this method and records uid 0 when there
-is no application-user identity.
-
-The context does not cross REST writes into separately delivered RTDB events.
-Production events must supply their own native auth fields. For local testing
-only (`FUNCTIONS_EMULATOR === "true"`), an absent native authId falls back to a
-nonempty string uid from the record: the created/deleted snapshot, or the after
-snapshot for updates. This substitutes the record owner, not the actual actor.
-Native authId always takes precedence; no Rules or stored data changes are
-needed. External callable endpoints must use the wrapper to receive this implicit
-backend context.
-
-
-### Client core watcher ownership
-
-All Firebase `start` targets acquire a connection to one core watcher per canonical
-framework checkout. The launcher starts a detached shared daemon only when needed;
-concurrent starts converge on the atomic single-writer lock. The loopback TCP
-protocol authenticates a versioned PID/token/port/root record. Tokens and logs stay
-under ignored node_modules; live unverifiable locks are never removed. Legacy
-watchers need a one-time manual restart to adopt the protocol.
-
-Applications wait for a complete successful cycle. New subscribers wait through
-rebuilds and rebuild errors; existing applications keep running during recoverable
-errors. Initial build failure, fatal shutdown or a lost connection ends startup or
-shuts down dependent services. Emulator test, build and deploy remain one-shot.
-
-Launchers own their app services and a core lease, not the shared daemon's process
-group. Release follows app teardown/export. An authenticated socket counts as a
-client, so crashes release subscriptions too. The daemon stops five seconds after
-the last client leaves (also cleaning up an orphaned spawn). A manual npm run
-"start core" owner remains alive at zero clients; its explicit shutdown stops
-connected consumers. No competing watcher writes the same core outputs.
-
-The existing Rollup outputs, React linking, server package preparation/watch and
-emulator export behaviour remain unchanged. The Whisky Talks exposes start:emulator,
-start:dev and start:prod; demo exposes its remote/emulator commands. HTTP/HTTPS
-and application project selection remain consumer settings.
-
-
-### Demo Firebase tooling integration
-
-The demo uses the shared launcher with one `remote` target (its existing Firebase
-project) for remote and emulator SDK initialization without mutating the SDK JSON.
-Its frontend port 3002 and HTTPS settings come from the project JSON; npm start
-selects HTTP with a one-invocation flag. Tests isolate ports and data, not projectId. Existing The Whisky Talks commands keep their default behaviour.
-Development starts share one core watcher per checkout; closing one application
-does not stop other subscribers.
-
-The demo selects Firebase config by Vite mode, attaches emulators before provider
-construction, and relies on Dispatcher setters for provider dependencies. LAN
-clients reach loopback services through HTTPS/WSS Vite proxies. LocalMessaging
-avoids browser FCM in emulator mode. Emulator ports differ from The Whisky Talks.
-Rules derive from the current provider base plus demo-specific additions/overrides;
-public `_activity` reads and current mutual-request restrictions are intentional.
-Storage remains public-read/owner-write. No remote Rules or data migration is
-performed by this integration. Server package preparation remains explicit and
-updates the demo archive and Functions lockfile. Android wire contracts are unchanged.
-
-
-### Development launcher shutdown isolation
-
-Shared core startup uses a short-lived detached bootstrap. Clients subscribe only
-once that bootstrap has exited, so the daemon is no longer a descendant of the
-first launcher and survives IDE process-tree termination. Launcher shutdown releases
-only its own lease; the shared daemon stops after its last client disconnects.
-Manual watcher ownership is unchanged.
-
-`Processes.stop()` is idempotent and signals spawned children and verified
-process identities individually, never arbitrary saved process groups. Emulator
-Hub PIDs are retained only when they are descendants of the owned Firebase CLI.
-PID, start time and command are checked again before signalling tracked leftovers.
-Unverifiable or reused identities are skipped. The CLI retains its graceful export
-window before leftover emulator processes are terminated. No application runtime,
-Firebase configuration or Dispatcher behavior changes.
-
-
-### Single project configuration
-
-Root redequate.config.json is the only project-level Redequate settings source in
-both web consumers. It owns server, environments, emulator offsets/ports, readiness,
-seed and test settings. The app runner receives that path explicitly and resolves
-all paths from its directory. Remote project IDs come from referenced SDK library
-JSON and remain unchanged in all modes. Only local endpoint artifacts and test context are generated. Environment variables
-and library configs do not supply a second set of project server settings.
-
-firebase.config.mjs, database-rules.config.json and static emulator SDK JSON are
-removed from consumers. App.js and messaging workers use ordinary immutable SDK JSON imports; library
-configuration remains in library-owned files (SDK JSON, Storage Rules, Hosting,
-Vitest and TWT-specific Vite define/sourcemap). Firebase CLI configs and emulator
-state isolation are prepared by the runner. Functions preparation/lint belong to
-its explicit Functions deploy action, not duplicate app predeploy scripts.
-
-Rules use the framework base plus optional root database.rules.json. Supplement
-objects merge, indexes union, and explicit access/validation directives override
-at the same address. Input and combined output are validated. No App.js AST or
-provider ownership manifest is consulted by this workflow. The low-level pure
-resolver and explicit legacy fixture loader keep their old contracts. A missing
-supplement is watched so create/delete events update active emulator Rules.
-No historical full Rules file is automatically restored. Android wire formats,
-PWA update handling and shared watcher ownership are unchanged.
-
-
-### Immutable Firebase SDK files
-
-Demo imports ./firebase-config.json directly in App.js and the messaging worker.
-TWT uses an ordinary file alias to its existing SDK variants. There is no virtual
-runtime module and no synthesized SDK config. Emulator sourceEnvironment defaults
-to the project's default remote environment. CLI, seed and tests must agree with
-that original project ID and database namespace. Test isolation uses loopback
-ports plus temporary configs/data. A snapshot under a previous demo-prefixed ID
-is not imported automatically. Developer snapshots are now namespaced by projectId.
-Analytics is disabled by an explicit Firebase initialization option in emulator
-mode, including reinitialization; the SDK object is not mutated. Local secret
-placeholders exist only in generated emulator Functions directories. Public local
-endpoint JSON does not contain seed credentials or SDK configuration.
-
-
-### Build artifacts and web deployment
-
-Demo exposes start emulator, start, test emulator, deploy functions, build, serve,
-deploy and check updates. TWT qualifies start/build/deploy functions with dev/prod;
-serve and deploy always consume the existing build artifact without an environment.
-They do not select defaultEnvironment or rebuild implicitly. Successful build
-records its environment/project and a hash of the captured Rules snapshot in hidden
-build files; a new attempt removes the previous receipt before compilation.
-Invalid/missing receipts and changed Rules snapshots require rebuilding. Web deploy
-publishes the captured Rules first, then Hosting, aborting before Hosting on Rules
-failure. Hidden artifact metadata is excluded from Hosting. Functions stay separate
-because they are not part of the web bundle. No separate deploy rules script remains.
-
-
-### Tooling consolidation (November 2026)
-
-Application tooling accepts only root redequate.config.json. Removed the former
-JS Firebase config runner, provider manifests and source-expression extraction.
-Rules composition uses the framework base plus optional database.rules.json; the
-pure programmatic resolveRules API is unchanged. The Babel parser is no longer a
-direct runtime dependency. Unused local-store-metadata.json is removed; ESLint
-reads the canonical local stores.json, which is included in the package. Normalized settings retain a single environments map
-rather than parallel project/mode tables.
-
-Five public tooling modules remain at the root: app, app-config, vite,
-firebase-rules and firebase-test. Internal implementations live in app/,
-core-watch/, server/ and eslint/; obsolete internal paths and the legacy
-redequate/tooling/firebase export are removed. The Vite preset also supplies its
-CLI configuration entry. Documentation is consolidated in tooling/docs/firebase.md.
-
-Shared watcher ownership, authentication, verified process cleanup, detached
-bootstrap and idle shutdown are unchanged. Rules deploy before Hosting from the
-last confirmed build, and Functions remain separate. Demo and TWT continue using
-the same commands and immutable SDK JSON files; runtime and Android contracts are
-unaffected.
-
-Validation: all 92 tooling tests and ESLint passed. Demo and TWT dev build and
-HTTPS preview passed without rebuilding the preview artifact. Demo Emulator tests
-passed 3/3; TWT passed 4/8 with the previously recorded push result, Activity
-legacy record, post-history TIMESTAMP injection and increment-shape failures.
-Live Database Rules reload, invalid-artifact retention and recovery passed. All
-three original Firebase SDK JSON hashes are unchanged. No deployment was run.
-A multi-project shared Emulator Suite was considered and explicitly deferred by
-the user: Firebase Functions and cross-service triggers are project-bound; this
-cleanup retains the existing independent application emulators.
-
-
-### Explicit emulator SDK configuration
-
-`environments.emulator.firebaseConfig` optionally selects a separate SDK JSON,
-resolved relative to redequate.config.json and tracked as a configuration source.
-It takes precedence over sourceEnvironment/defaultEnvironment inheritance; omission
-preserves existing consumers. The selected SDK configuration is unchanged and
-shared by CLI, Vite, Functions runtime and isolated test context. Developer data
-continues to live in `.firebase/emulator-data/<projectId>`.
-The Whisky Talks selects demo-thewhiskytalks to match its preserved snapshot;
-dev/prod variants are unchanged. Its legacy snapshot is retained and copied once
-into the matching project directory without overwriting another snapshot.
+# Redequate development decisions
+
+Persistent architectural memory, not a changelog or test report. Executable commands
+are in [README.md](README.md); repository rules are in [AGENTS.md](AGENTS.md).
+Public database behavior is specified in the
+[Database/Cursor contract](packages/database/src/common/CONTRACT.md).
+
+## Ecosystem and scope
+
+The validation chain is Redequate → demo → The Whisky Talks. Changes to URLs,
+authentication, APIs or data formats also require consideration of the Android
+consumer. Develop on the appropriate story/bugfix branch; master is not assumed
+to be the current development state. Architectural decisions spanning consumers
+belong here rather than in repeated app notes.
+
+CSS Modules/UI isolation is completed; React 19 stabilization remains the current
+framework milestone. Vite exists in the web consumers, while library packaging
+remains Rollup. Keep React, build-system and rendering changes separately reviewable.
+Request-local state support does not establish full application SSR. SSR and later
+business/demo milestones require a separate task. Peer overrides and successful
+builds do not establish upstream React compatibility or release readiness.
+
+## Packaging and UI boundary
+
+- Public exports come from package.json. Web root ESM uses core/index.es.js;
+  package services use .mjs/.cjs. Do not change the package type to accommodate
+  one dependency or mix constructor identities from different formats/installations.
+- Runtime modules live under packages/*/src. Build helpers declare entrypoints and
+  source ownership; Rollup assembles them. TypeScript conversion is incremental:
+  Babel strips types, and source types do not imply published declarations.
+- Browser packages must not pull Node server/UI-incompatible modules across the
+  boundary. Functions install redequate-server, whose common/database/backend
+  exports and runtime dependencies are independently packaged. There is no server
+  root export. LocalBackend belongs to the browser package.
+- Consumer React/react-dom/i18next/react-i18next must resolve to the canonical
+  linked framework copies with matching versions. The link helper does not replace
+  canonical packages when another consumer starts. Do not add incidental consumer
+  aliases or global shims to disguise dependency or interop failures.
+- Controls own their CSS Module selectors. Preserve Material icon usage and
+  interaction contracts, including ripple ownership, under AGENTS rules. Themes
+  mount CSS and custom properties; consumers own any MUI ThemeProvider.
+- Uppy prepares files; Storage owns upload/progress. Do not restore unused transport
+  plugins to supply UI. Shared One Tap loading must clean up per-mount prompts and
+  timers; FedCM display callbacks alone are not reliable lifecycle completion.
+
+## Provider wiring and authentication
+
+Providers are stable objects selected once per Dispatcher mount. Dispatcher wires
+resolved database/backend/auth dependencies through setter methods. Standalone
+consumers and tests must do this themselves; obsolete constructor injection is not
+an alternative. Custom structural providers need not inherit a registry base.
+Changing implementation requires remounting; repeated render must not construct
+new SDK/provider instances.
+
+AuthBase owns model construction, shared validation and profile persistence.
+Providers await validation before effects. Auth returns detached UserData rather
+than SDK credentials; signed-out restoration yields an anonymous model. Subscription
+registration returns a Promise of a synchronous unsubscribe function. Provider
+errors retain their codes. No public token/parser API is added to UserData.
+
+Profile writes use users_public, roles and users_private in a database batch.
+Omitted fields remain unchanged; null roles/empty private state need no signup
+write. Credentials stay with Auth; profile roles remain governed by Rules.
+Registration, verification and profile updates require a linked database. AuthBase
+initializes missing profiles before returning/notifying an authenticated model;
+Login treats persisted profiles as existing, without repeating first-login setup.
+
+The first-profile check attempts an initial ADMIN write; permission denial falls
+back to an ordinary profile with a warning, while unrelated errors propagate.
+This is not an atomic cross-client bootstrap claim. Local registration remains
+sequential by requirement: do not add registration queues/Web Locks as a side task.
+A failed profile save must not leave an installed Local account/session. Guards for
+demotion/disabling/deleting the last administrator inspect eligible role/profile
+records, not all profiles. Preserve server authorization; client guards do not
+provide an atomic security boundary.
+
+LocalAuth uses revision checks and conditional rollback for account/session changes.
+Observers are notified only after successful transitions. Auth and profile Database
+do not share an atomic transaction. Legacy auth data is not implicitly migrated.
+Local credentials, email/link/provider login and tokens are disposable simulations.
+
+## Storage, messaging and Local schema
+
+storageId selects a physical IndexedDB; omitted/undefined uses redequate:local,
+while explicit invalid IDs reject. Local Database/Auth/Storage/Messaging share it
+when configured alike. Provider stores begin with $, including $auth, $storage and
+$messaging; application collection/schema APIs cannot address that namespace.
+
+Each provider supplies its own service schema lazily. Common schema code must not
+import Database or individual provider schemas. LocalDatabase owns application
+stores/indexes and recognizes the reserved prefix, not specific provider names.
+Initialization order and concurrent additions must preserve existing stores/data.
+Schema repair is explicit: do not delete or recreate developer data as a fallback.
+
+LocalStorage persists files/metadata and provides data URLs; a URL is not proof
+that an object belongs to the current user. Validate inputs and ownership before
+writes/deletes. Commit must precede successful upload completion and notification.
+Firebase Storage uses its SDK; Local behavior does not validate cloud Rules.
+
+LocalMessaging persists the token in IndexedDB and checks the saved subscription
+before delivery; it does not use service workers or real system push. Firebase
+Messaging uses its provider token key and removes saved state only after SDK success.
+Avoid duplicate registration/listeners across context replacement and unmount.
+Emulator email/push simulation is controlled by FUNCTIONS_EMULATOR; real SDK
+services outside that mode must not be treated as mocks.
+
+Application Local objects store ordinary fields; scalars/arrays use _value. Legacy
+_record/_encoded wrappers reject rather than being silently converted. Native _id
+and selected storage identity fields are removed by the current record decoder;
+source declarations/tests for identity retention need the follow-up in the backlog.
+Declared indexes control queries and record addresses. No implicit new index,
+compound-field synthesis or Firebase-to-Local data conversion is promised.
+
+Local generated logical keys use firebase-key and are time-sortable within their
+generator, not a global commit-time ordering guarantee. Existing/explicit keys are
+unchanged. Service-owned activity indexes are distinct from source activity events;
+legacy rows or missing keys need deliberate repair, not an undocumented reset.
+
+## Database, backends and cursors
+
+Keep one shared path grammar plus SDK-independent provider adapters. Named segments
+contain exactly one string-valued field; wildcard markers stay internal and never
+travel over callable/BroadcastChannel payloads. The operation decides address,
+collection, create or listener interpretation. A final bare field in a collection
+path selects child identity. Firebase string addresses and Local indexed paths
+must retain their intentional differences.
+
+Database prepares arguments and delegates CRUD to its linked Backend; it must not
+duplicate backend storage writes or notifications. Local native transactions commit
+before observers are notified. No root read, implicit collection conversion or
+unindexed lookup should be invented merely to make a consumer path work.
+
+Single-path update callbacks stay with the caller: read value/etag, prepare a value,
+and conditionally replace it. Conflicts rerun preparation up to the existing bound.
+Object patches preserve unspecified children but replace supplied child objects;
+relative paths and root Map batches retain their explicit semantics. Undefined
+callback results are no-change, null deletes. Batches are atomic replacements at
+their addressed entries. Callback side effects must tolerate retries.
+
+Firebase client writes use caller-authorized REST/callable operations, not Admin
+privileges. Their read/CAS sequence needs read as well as write permission; direct
+delete needs write permission. Firebase server-admin is a separate execution context.
+Consumers initialize Admin themselves. Shared server invocation context is scoped
+with AsyncLocalStorage; it must not leak users across requests. Native event authId
+takes precedence; emulator-only owner fallback is not proof of the actual actor.
+External callables use the shared wrapper when they need that implicit context.
+
+DatabaseCursor is a runtime class; custom cursors extend the exported constructor.
+Each owns id/path/count and a readonly position. Traversal is sequential; restart
+with a new cursor. Handle runs on copies in scan order: undefined keeps, null
+deletes, another value replaces and is reread. A failed page does not roll back
+completed actions. Keep scan continuation separate from the last emitted entry.
+
+Compositions exclusively own fresh source cursors, deduplicate by normalized
+leaf path plus key, preserve source ordering and do not globally sort or rerun
+handlers. Synthetic headings do not consume the data page size. Firebase inclusive
+boundaries and buffering prevent premature exhaustion; Local timestamp queries and
+Firebase key time are not identical snapshots. No exact concurrent snapshot or
+cross-page transaction is promised.
+
+Subscriptions do not replay initial contents as new additions. Removal is
+idempotent and attempts all sources. Standalone onChildAdd uses the initial maximum
+key as its addition boundary. Keep this behavior when adjusting cursor/listeners.
+Detailed path, query-bound and grouping semantics remain in the behavioral contract.
+
+## State, navigation and retained lifecycle constraints
+
+State snapshots and selectors must be immutable and model reads must not retain
+mutable SDK objects. Preserve frozen publication/initial-state baselines, unique
+registration keys and provider-local stores. Provider state is selected once per
+mount; registry HMR needs a full reload rather than duplicate-key reuse.
+Request-local AppState is supplied explicitly after server preload; browser globals
+must not serve requests. Hydration uses the prepared snapshot; automatic model
+serialization and using set as preload are outside the contract.
+
+LazyList keeps its cursor prop and defaults to live=false. Cursor replacement
+invalidates the previous loading session. Owners create fresh cursors; do not
+reintroduce revision counters, list caches or automatic refresh in mount/filter
+effects. Layout.REFRESH remounts the routed tree; visibility refresh does not.
+Rearm observation after every completed page, including a page whose transforms
+all return null. Enrichment failures must settle rather than stall pagination.
+
+Root publications use numeric to:0; replies use their parent ID. NewPost must
+release its modal history blocker before onComplete navigates; the retained
+flushSync ordering prevents a swallowed route transition. Publication navigation,
+return-to-list behavior and real subscription cleanup need functional checks.
+Do not restore the removed diagnostic tracing helpers.
+
+## Tooling and validation ownership
+
+[Tooling reference](tooling/docs/firebase.md) is the single source for project JSON,
+SDK selection, Rules, shared Vite/Vitest, build artifacts and lifecycle commands.
+The project JSON owns settings; SDK JSON remains immutable. Emulator firebaseConfig
+can explicitly select its snapshot's project; inheritance remains the default.
+Independent app emulators are supported; a multi-project shared suite is deferred.
+
+Starts acquire authenticated core leases; the daemon is independent of its first
+app's process tree. Each launcher stops only its services and releases its lease
+after export. Never kill another session by port or a stale PID. Server watch
+replaces only complete successful packages; changed dependencies require archive
+preparation. Developer snapshots are persistent; tests use dedicated temporary
+configs/data/ports and TMPDIR/TMP/TEMP. Do not use developer snapshots for checks.
+
+Build captures its target and Rules; preview/deploy consume that artifact. Web
+deploy publishes captured Rules before Hosting without rebuilding. Functions
+remain separate. No implicit deployment or data migration is part of documentation
+or tooling maintenance.
+
+[AUDIT_BACKLOG.md](AUDIT_BACKLOG.md) retains historical unverified issues, not a
+current test report. Reproduce against the current checkout before fixing or closing
+a finding. Historical run counts, temporary log paths and superseded implementation
+sequences belong in Git history. Do not weaken tests to hide runtime defects.

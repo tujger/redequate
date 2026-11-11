@@ -54,7 +54,7 @@ export {database} from "redequate-server/backend/firebase-server";
 Importing the entry point does not initialize Firebase. The callable uses the
 consumer's configured database; `FIREBASE_DATABASE_EMULATOR_HOST` selects the emulator.
 
-The Firebase Backend client maps `request("database.create", {path, value})` to
+The Firebase Backend client maps `request("database.create", path, value)` to
 `database-create`. The path follows the database create contract: a collection
 followed by a key field name, or a named explicit key. `value` is a record object;
 callbacks are unsupported. Success returns the permanent string key without
@@ -70,32 +70,26 @@ Existing records are preserved. Errors use `permission-denied`, `already-exists`
 ## Firebase database.update
 
 The `database` callable group also exports `update` as `database-update`.
-FirebaseBackendClient converts `request("database.update", path, value)` for a
-nonempty path to a root PATCH batch `{[resolvedPath]: value}`, replacing that value
-without inspecting its contents. Root batches and explicit modes pass through
-unchanged. The Functions handler still defaults to PATCH; `{mode: "patch"}` supports
-partial updates at a nonempty path. Patch responses return `null`. The Database
-adapter preserves its public return contract.
+FirebaseBackendClient forwards positional arguments as the callable payload without
+rewriting paths or values. The handler defaults to PATCH, accepting an object of
+changes at the supplied path; PATCH returns `null`. `{mode: "read"}` returns
+`{value, etag}`, and `{mode: "replace", etag}` performs a conditional PUT.
 
-Synchronous update callbacks execute in the client adapter. It obtains a snapshot
-with `request("database.update", path, null, {mode: "read"})`, returning
-`{value, etag}`, then sends the callback result using
-`request("database.update", path, value, {mode: "replace", etag})`.
-Conditional PUT returns `{committed: true, value}` with resolved server values.
-A conflicting write returns `{committed: false, value, etag}` for another callback
-attempt, up to 25 attempts with bounded jittered backoff. Null/undefined callback
-results delete the value. Callback exceptions and Promise results prevent writes.
+The Database adapter uses read/replace for both shallow object updates and
+synchronous callbacks. Conditional PUT returns `{committed: true, value}` with
+resolved server values. A conflicting write returns
+`{committed: false, value, etag}` for another attempt, up to 25 attempts with
+bounded jittered backoff. Callback `null` deletes the value; `undefined` leaves
+storage unchanged. Callback exceptions and Promise results prevent writes.
+Root batch updates use PATCH directly.
 
 All reads and writes forward the caller's ID token to preserve Security Rules.
 Patch needs write access; callback updates need both read and write access.
 `backend.increment(n)` produces the native `{".sv": {"increment": n}}` value.
-A direct `request("database.update", path, backend.increment(n))` uses one root
-PATCH with the marker at the target path and returns `null`. Firebase performs the
-increment atomically; missing or nonnumeric values start at zero. No preliminary
-read or callback serialization is needed.
-Nested increment markers in ordinary PATCH/conditional PUT values remain native
-Firebase server values. The adapter does not inspect increment markers; Firebase
-resolves them as part of an ordinary write.
+For a direct PATCH increment, put the marker under the child path in the changes
+object, for example `request("database.update", "", {"counts/posts": backend.increment(1)})`.
+Firebase resolves increment markers atomically, including nested markers in
+PATCH and conditional PUT values. Missing or nonnumeric values start at zero.
 
 The public `database.update` overloads and error handlers are unchanged.
 
@@ -155,9 +149,8 @@ After preparing the archive once, run this alongside an existing emulator:
 node /path/to/redequate/tooling/server/watch.mjs /path/to/application/functions
 ```
 
-The Whisky Talks starts this watcher automatically with `npm run start:emulator`.
-To attach it to an already running session, run
-`npm --prefix functions run watch:redequate-server` in that application.
+The Whisky Talks starts this watcher automatically with `npm run "start emulator"`.
+To attach it to an already running session, use the explicit watcher command above.
 Only one watcher can own a Functions directory at a time.
 
 The watcher builds imported server sources and manifests in a private temporary
@@ -169,5 +162,5 @@ watcher leaves that last build installed and removes its temporary files.
 
 Ordinary edits do not update the archive or lockfile. If runtime dependency
 requirements change, synchronization pauses: stop the watcher, run
-`prepare-redequate-server`, then start it again. Prepare the archive before deploy;
+the explicit preparation command above, then start it again. Prepare the archive before deploy;
 live updates are a local development path, not a replacement for packaging.

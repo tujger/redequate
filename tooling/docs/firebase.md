@@ -1,8 +1,8 @@
-# Project tooling: one JSON configuration
+# Application tooling and Firebase
 
-Each application has one root `redequate.config.json`. All project settings owned
-by Redequate live there. No JavaScript config factory, provider manifest, manually
-maintained emulator SDK config or framework settings in `.env` are required.
+Each application supplies a root `redequate.config.json`. Paths resolve from that
+file, not the shell directory. The same resolved context feeds Vite, Firebase CLI,
+Functions, seeding and tests.
 
 ```json
 {
@@ -15,189 +15,142 @@ maintained emulator SDK config or framework settings in `.env` are required.
 }
 ```
 
-Paths resolve relative to the JSON, regardless of the shell working directory.
-Remote project IDs are read from the referenced Firebase SDK JSON. The emulator may reference its own SDK JSON with environments.emulator.firebaseConfig;
-that file takes precedence and is read unchanged, including projectId. Without it, optional
-sourceEnvironment selects an existing remote environment; otherwise defaultEnvironment
-is used. No separate emulator SDK configuration is generated.
-`mode` can preserve a library mode name such as `server-dev` within one environment.
-There are no separate project/mode/configuration mapping tables.
+## Configuration
 
-## Settings and defaults
+| Setting | Default / meaning |
+| --- | --- |
+| `defaultEnvironment` | Required configured environment |
+| `server` | port 3000, host 0.0.0.0, https true, allowedHosts [], polling false |
+| `server.cert`, `server.key` | server.crt and server.key, relative to the JSON |
+| `environments.<name>.firebaseConfig` | Existing immutable Firebase SDK JSON |
+| `environments.<name>.mode` | Environment name unless explicitly supplied |
+| `environments.emulator.firebaseConfig` | Optional separate SDK JSON; takes precedence over inheritance |
+| `environments.emulator.sourceEnvironment` | Inherit a remote SDK; otherwise defaultEnvironment |
+| `environments.emulator.portOffset`, `ports` | Offset all default ports, or override named ports |
+| `environments.emulator.readyCallable`, `region` | Optional readiness probe; region defaults to us-central1 |
+| `environments.emulator.seed` | Local accounts and password; existing marker prevents reseeding |
+| `testing.file` | scripts/__tests__/emulator.test.mjs |
+| `testing.unitEnvironment` | Unit-test SDK environment; otherwise defaultEnvironment |
 
-- `server`: port 3000, host `0.0.0.0`, HTTPS true, empty allowedHosts, polling false,
-  cert `server.crt`, key `server.key`. Custom paths and values belong in this object.
-- `environments.<remote>`: `firebaseConfig`, optional `mode` (defaults to the key).
-- `environments.emulator`: optional firebaseConfig (SDK JSON path), sourceEnvironment, mode, portOffset (0), individual
-  `ports` overrides, readyCallable, region (`us-central1`) and seed.
-- `testing`: optional file (`scripts/__tests__/emulator.test.mjs`) and unitEnvironment (otherwise defaultEnvironment).
+SDK fields and projectId are read unchanged. The project JSON does not duplicate
+project IDs or manufacture SDK credentials. Emulator initialization disables
+Analytics explicitly; local FCM/email behavior belongs to the application/backend.
 
-Default emulator ports: Auth 9099, Database 9000, Functions 5001, Storage 9199,
-Hub 4400, UI 4000, Logging 4500, Eventarc 9299, Tasks 9499. portOffset applies to
-all of them; isolated tests add 10000 and disable UI. Services listen on loopback.
-Project settings in HOST/PORT/HTTPS/SSL_* or polling environment variables do not
-override this JSON. `--http` and `--https` select a protocol for a single invocation.
-Environment variables for library secrets remain separate; never commit real secrets.
+Default emulator ports are Auth 9099, Database 9000, Functions 5001, Storage 9199,
+Hub 4400, UI 4000, Logging 4500, Eventarc 9299 and Tasks 9499. Services bind to
+loopback. Isolated application tests add 10000 and disable UI. Separate applications
+must configure nonconflicting frontend and emulator ports.
 
-Optional seed has `accounts` (localId, email, displayName, role) and password.
-It is restricted to the expected SDK project ID and strictly loopback endpoints. An existing seed marker
-prevents reinitializing persisted developer data. Optional readyCallable must reject
-an anonymous empty request with 401/UNAUTHENTICATED; otherwise readiness checks the
-four registered services. Seeding, SDK file selection and test isolation
-all consume this same resolved context.
+Server settings come from JSON; ambient HOST/PORT/HTTPS/SSL variables are not a
+second project configuration. `--http` or `--https` changes one invocation.
+Builds and unit tests do not need local HTTPS certificates. Real secrets remain
+outside Git; SDK configuration and generated local endpoints are public settings.
+
+Optional readyCallable must reject an anonymous empty request with
+401/UNAUTHENTICATED. Without it, readiness uses registered emulator services.
+Seed requests are restricted to loopback and the expected SDK project/namespace.
 
 ## Commands
 
-```sh
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json start emulator
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json start remote --http
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json build remote
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json preview
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json test emulator
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json test-unit remote
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json rules
-```
-
-Web deployment is explicit: `deploy-hosting` without an environment publishes the
-last confirmed build. It never rebuilds. `preview` also uses that same artifact.
-After successful build, build/.redequate-build.json records the environment/project
-and hash of build/.redequate-rules.json, the prepared Rules snapshot. A new build
-invalidates the previous receipt before compilation; failed builds cannot be served
-or deployed. Missing/corrupt receipts, a changed Rules snapshot or a project mismatch
-require rebuilding. These are generated build outputs, not configuration files.
-
-The web deploy pipeline publishes the snapshot Database Rules first, then Hosting.
-Rules failure prevents Hosting publication. Neither source Rules nor Vite are rerun
-at deploy time. Both hidden metadata files are excluded from Hosting content.
-Functions remain separately deployed with `deploy-functions <environment>`;
-preparation and lint run before that explicit action. There is no separate
-project deploy-rules action. Other commands do not publish anything.
-
-The runner configures Vite, PWA, provider SDK routing, Rules and emulator lifecycle.
-Generated configs are implementation artifacts, not additional manual settings.
-
-## Library-specific files
-
-Keep Firebase SDK JSON, Storage Rules, Hosting rewrites, ESLint and Vitest settings
-in their own library formats. A `vite.config.mjs`, when needed, exports only Vite
-customizations such as `define`, sourcemaps or extra plugins. Project server fields
-in that file are rejected; most applications need no local Vite config.
-The default output is `build`, used by Hosting. The runner preserves application
-Hosting and Storage settings while supplying generated Database and emulator sections.
-The source `firebase.json` must not duplicate those framework-owned sections.
-
-The runner uses its own Vite entry. Vitest can integrate library-specific settings
-with `createProjectViteConfig(configFile)` from `redequate/tooling/vite`; it returns
-an async config callback. Unit tests need no local HTTPS certificates. Browser and messaging worker sources use ordinary JSON imports: demo reads its
-existing ./firebase-config.json; TWT uses a file alias to the selected existing
-variant. No SDK JSON or its fields are rewritten, including in tests. The optional
-endpoint artifact .firebase/generated/emulators.json contains only public local
-service endpoints. It is generated from the project JSON, not manually configured.
-There is no virtual runtime module. Analytics is disabled explicitly in emulator
-mode without altering the SDK configuration.
-
-
-## Rules and lifecycle
-
-Rules composition uses the framework base and optional root `database.rules.json`.
-There is no provider list or application-source execution/extraction in this flow.
-Builds and the rules action write
-`.firebase/generated/database.rules.json`; emulator starts and isolated tests use
-runtime-owned Rules files. Appearance, edits and deletion of the optional supplement
-are watched. Invalid changes retain the previous generated Rules and report an error.
-
-The runner owns the core lease, Rules watcher, server watcher, Vite and emulator
-processes. Core compilation must be ready before development services start.
-Developer data lives in `.firebase/emulator-data/<projectId>`; graceful shutdown waits for export.
-Test ports, generated configs and data are isolated in short temporary
-paths, then removed. Test helpers receive this context from the runner rather than
-hardcoding project IDs or endpoints. Local email and push handlers use emulator
-behaviour instead of real SMTP/FCM; browser FCM is replaced with LocalMessaging.
-
-The core watcher is shared by canonical checkout. Each launcher disconnects after
-its own app teardown. The daemon stops five seconds after its last subscriber;
-a manual `start core` remains alive without apps. Incompatible live locks require
-one manual restart, never forced deletion. Diagnostics remain in ignored node_modules.
-
-Tests keep the original SDK project ID and all SDK fields, using separate local
-ports and temporary data, never importing a developer snapshot. Historical
-snapshots with another ID are not automatically imported or removed. Emulator
-Functions receive temporary placeholder Gmail secrets so registration does not
-fetch cloud secrets. This source directory and its local secret file are disposable;
-application Functions sources are not modified.
-
-Only the root project JSON is accepted; the former JS config runner and provider
-manifests are no longer supported.
-
-Verification and remaining consumer gaps: [report](../__tests__/PROJECT_JSON_REPORT.md).
-
-# Database Rules
-
-## Base plus optional supplement
-
-Redequate owns the common base in `packages/database/src/firebase/database.rules.json`.
-The runner checks for an ordinary Firebase `database.rules.json` beside the project
-JSON. If absent, the base is used unchanged. If present, it is a supplement:
-
-```json
-{
-  "rules": {
-    "appRecords": {".read": "auth != null", ".indexOn": ["created"]}
-  }
-}
-```
-
-Objects merge recursively. `.indexOn` values are unioned without duplicates.
-Explicit `.read`, `.write` and `.validate` directives in the supplement take
-precedence at the same path. Firebase's own inherited-grant semantics still apply:
-a child denial does not revoke a grant on its parent. The input and combined Rules
-are validated; a malformed document fails generation without replacing prior output.
-The supplement is never modified or overwritten by the generator.
+Prefix actions with:
 
 ```sh
-node node_modules/redequate/tooling/app.mjs --config redequate.config.json rules
+node node_modules/redequate/tooling/app.mjs --config redequate.config.json
 ```
 
-Builds generate `.firebase/generated/database.rules.json`. Emulator starts and
-isolated tests generate into their disposable runtime configurations. None of these
-operations deploys Rules. Web build captures the generated Rules in its artifact. The explicit Hosting
-deploy action publishes that exact snapshot before Hosting, without regeneration.
-There is no separate Rules deployment command in the application workflow. Existing app Rules files must be reviewed as
-supplements; do not restore retired full policies automatically during migration.
+| Action | Behavior |
+| --- | --- |
+| `start [environment]` | Local frontend against selected remote Firebase |
+| `start emulator` | Local services, server watcher and frontend |
+| `test-unit [environment]` | Shared Vitest setup, without emulators |
+| `test emulator` | Disposable integration suite |
+| `rules` | Generate composed Database Rules |
+| `build [environment]` | Compile frontend and capture matching Rules |
+| `preview` | Serve the last confirmed artifact |
+| `deploy-hosting` | Deploy captured Rules, then Hosting, without rebuilding |
+| `deploy-functions [environment]` | Prepare/lint and deploy Functions separately |
 
-## Watching and consumers
+Omitted environments use defaultEnvironment; unit tests first use
+ testing.unitEnvironment. Preview and web deploy accept no environment: the build
+receipt selects the target. Other actions do not deploy implicitly.
 
-The watcher subscribes to the base, project config, library inputs and supplement
-path even if the supplement does not exist. Creating, changing or deleting that file
-regenerates Rules. Errors retain the last valid artifact; correcting a source resumes
-generation. Firebase CLI compilation/acceptance is reported separately by the CLI.
-Changing project environments, ports or other startup settings requires a restart.
+Build output is `build`. A successful build records its environment/project and
+Rules hash in `.redequate-build.json` and captures `.redequate-rules.json` there.
+A new build invalidates the previous receipt before compilation. Missing/corrupt
+receipts, changed Rules or mismatched projects require rebuilding. Web deploy uses
+the captured Rules before Hosting; failure prevents Hosting publication. It neither
+rebuilds Vite nor regenerates Rules. Hidden receipt files are excluded from Hosting.
 
-Demo and The Whisky Talks use this flow and retain their own Storage Rules and
-Hosting-specific configuration. Their current missing supplement means the common
-base, including public `_activity` reads and participant-only mutual-request rules.
-On a shared database, the optional supplement describes the database's combined
-application policy; deploying independent incomplete policies is not supported.
+## Vite, unit tests and application files
 
-The ESLint query/index validators use the same Rules loader. They discover a root
-`redequate.config.json` from the application cwd or use the runner's resolved config
-path. An explicit `projectConfig` setting can supply that same JSON when invoked
-from elsewhere. This is a reference to the one project config, not another policy.
+The shared preset owns React/JSX-in-js, version substitution, dependency dedupe,
+PWA, globalThis and enabled source maps. Test mode adds jsdom, test globals,
+`src/**/*.test.js`, restoreMocks and an exact Redequate ESM alias. The launcher uses
+the same preset for Vite and Vitest; local config files are not required.
+An optional vite.config.mjs can customize library settings and plugins; server
+settings and output location remain framework-owned. Unit tests must not depend
+on developer certificates or implicitly connect to running cloud/emulator services.
 
-## Programmatic Rules API
+Applications retain Firebase SDK JSON, firebase.json Hosting/Functions/Storage
+options, Storage Rules, ESLint settings and source code. Source firebase.json must
+not duplicate generated Database or emulator sections. Browser SDK imports use
+ordinary JSON or the #firebase-config file alias, not a virtual runtime module.
+`.firebase/generated/emulators.json` contains only public local endpoints.
 
-The pure `resolveRules(base, {additions, overrides})` API remains conservative for
-existing programmatic users. The project supplement is explicit application policy;
-the loader converts its access/validation directives to overrides and its indexes
-and branches to additions. Provider manifests and extraction from application source are no longer supported.
+## Watchers, shutdown and data
 
-Tests cover base-only resolution, supplements, atomic output, appearance/deletion,
-indexed queries, validation and actual emulator access. See `npm run test:tooling`
-and each application's `npm run "test emulator"`.
+Starts acquire one authenticated core-watcher lease per app. A canonical checkout
+has one writer. Applications wait for a complete build; recoverable rebuild errors
+keep existing clients running while new clients wait. Initial/fatal failure ends
+startup or dependent services. The shared daemon is detached from the first
+launcher's tree; it stops five seconds after its last client leaves. A manual
+`npm run "start core"` remains alive without clients. Stopping that manual owner
+ends its subscribers. Live incompatible/unverifiable locks must not be deleted.
+Diagnostics are in ignored node_modules/.redequate-core-watch.log.
 
+Each launcher tears down only its services and then releases its lease. Cleanup
+checks process ownership/identity; it must not kill other sessions by port or a
+stale PID. Allow Firebase CLI's graceful shutdown/export to finish.
 
-The shared Vite config supplies `global: globalThis` and source maps (including
-PWA output). In Vitest's test mode it also supplies jsdom, global test helpers,
-`src/**/*.test.js`, mock restoration and the exact Redequate ESM alias. `test-unit`
-uses this same config, with no required application Vite/Vitest files. The app root
-is explicit; unitEnvironment selects the default unit-test SDK environment.
+Developer state imports/exports `.firebase/emulator-data/<projectId>`. SIGKILL or
+machine crashes cannot guarantee export. Historical snapshots are not automatically
+imported, renamed or deleted when project IDs change. Database namespace comes
+from the SDK databaseURL and may differ from projectId. Empty service namespaces
+in the UI are not copies of the application's data.
+
+Tests retain their configured SDK project but use independent loopback ports,
+temporary configs and disposable data. Every agent suite needs its own TMPDIR,
+TMP and TEMP; Storage Emulator temporary blobs can otherwise cross suites.
+Never use developer snapshots for tests. Functions emulator runtime gets temporary
+placeholder secrets rather than editing application secrets or fetching cloud ones.
+See each repository's AGENTS.md for additional process rules.
+
+Functions imports use redequate-server/backend/firebase-server. Server sources
+are packaged separately; complete successful watch builds replace the installed
+package and touch the entry point. Ordinary edits do not repack or update lockfiles.
+See [server packaging](../../packages/server/README.md) for dependency changes and
+manual preparation. The root deploy-functions action performs preparation/lint.
+
+## Database Rules
+
+The base is `packages/database/src/firebase/database.rules.json`. An optional root
+`database.rules.json` supplements it. Objects merge recursively, .indexOn values
+are unioned, and explicit .read/.write/.validate at the same path override the base.
+Firebase inherited grants still apply: a child denial cannot revoke a parent grant.
+Input and composed output are validated; invalid changes retain the previous output.
+There is no application-source/provider discovery or automatic restoration of old
+full policies. On a shared remote database, the supplement must represent the
+combined intended policy rather than independent incomplete app policies.
+
+Build/rules actions generate `.firebase/generated/database.rules.json`. Emulator
+starts/tests use their temporary runtime Rules file. Changes to the base, project
+settings and optional supplement regenerate Rules, including supplement creation
+and deletion. Invalid output is not published. Firebase CLI separately reports
+acceptance of generated Rules. Changing project/ports requires a restart.
+
+The pure `resolveRules(base, {additions, overrides})` API remains conservative.
+The project loader converts explicit supplement directives to overrides and
+indexes/branches to additions. Query lint validators use the same composed Rules.
+Run `npm run test:tooling` for generation/validation and the application's
+`npm run "test emulator"` for actual access checks. No separate deploy-rules
+command exists in the application workflow.

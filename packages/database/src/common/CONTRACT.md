@@ -6,7 +6,7 @@ query and event behavior. The shared scenarios are exercised against the real
 Auth/Realtime Database emulators and Local IndexedDB. Run both providers:
 
 ```sh
-npx vitest run --config src/__tests__/vitest.config.mjs packages/database/src/__tests__/local/LocalContract.test.js
+npm run test:unit -- packages/database/src/__tests__/local
 npm run test:integration
 ```
 
