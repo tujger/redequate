@@ -13,37 +13,16 @@ export default {
     _my: {
         listComponents: [
             {
-                Label: ({userData}) => {
-                    const {t} = useTranslation();
-                    return <React.Fragment>
-                        {t("Definitions.My Posts")}
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SELF)}
-                            path={[{id: userData.id}, "mutualstamps", {mutual_type: "_my"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    const backend = useBackend();
-                    const database = useDatabase();
-
-                    const onItemError = (error, options) => {
-                        console.error(error)
-                    }
-
-                    return <MutualList
-                        itemComponent={item => <PostComponent
-                            key={item.id}
-                            mentions={[mentionUsers, mentionTags]}
-                            postData={item}
-                            userData={item._userData}
-                        />}
-                        itemTransform={postItemTransform({backend, database, onItemError})}
-                        mode={MutualListMode.SELF}
-                        mutualId={userData.id}
-                        typeId={"_my"}
-                    />
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.My Posts"}
+                    path={[{id: userData.id}, "mutualstamps", {mutual_type: "_my"}]}
+                />,
+                List: ({header, userData}) => <ListWithPosts
+                    header={header}
+                    mode={MutualListMode.SELF}
+                    typeId={"_my"}
+                    userData={userData}
+                />
             }
         ]
     },
@@ -54,41 +33,20 @@ export default {
                     if (!userProfileFollowing && !userProfileFriend) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
-                Label: ({userData}) => {
-                    const {t} = useTranslation();
-                    return <React.Fragment>
-                        Feed
-                        <CounterComponent
-                            // onChange={handleRefresh("_", MutualListMode.STAMPS)}
-                            path={[{id: userData.id}, "mutualstamps", "_"]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    const backend = useBackend();
-                    const database = useDatabase();
-
-                    const onItemError = (error, options) => {
-                        console.error(error)
-                    }
-
-                    return <>
-                        <h5>Merges all follow lists.</h5>
-                        <p/>
-                        <MutualList
-                        itemComponent={item => <PostComponent
-                            key={item.id}
-                            mentions={[mentionUsers, mentionTags]}
-                            postData={item}
-                            userData={item._userData}
-                        />}
-                        itemTransform={postItemTransform({backend, database, onItemError})}
-                        mode={MutualListMode.STAMPS}
-                        mutualId={userData.id}
-                        typeId={"_"}
-                    />
-                    </>
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.Feed"}
+                    path={[{id: userData.id}, "mutualstamps", {mutual_type: "_"}]}
+                />,
+                List: (
+                    {
+                        header = <><h5>Merges all follow lists.</h5><p/></>,
+                        userData
+                    }) => <ListWithPosts
+                    header={header}
+                    mode={MutualListMode.STAMPS}
+                    typeId={"_"}
+                    userData={userData}
+                />,
             }
         ]
     },
@@ -101,17 +59,11 @@ export default {
                     if (!userProfileFollowing) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
-                Label: ({userData}) => {
-                    return <React.Fragment>
-                        Tags
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
-                            live
-                            path={[{id: userData.id}, "mutual", {mutual_type: "watching"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
+                Label: ({userData}) => <Label
+                    label={"Definitions.Tags"}
+                    path={[{id: userData.id}, "mutual", {mutual_type: "watching"}]}
+                />,
+                List: ({header, userData, ...props}) => {
                     const database = useDatabase();
                     const {t} = useTranslation();
                     return <MutualList
@@ -135,6 +87,7 @@ export default {
                         mutualId={userData.id}
                         typeId={"watching"}
                         unsubscribeLabel={t("Tag.Unfollow")}
+                        {...props}
                     />
                 }
             },
@@ -143,38 +96,16 @@ export default {
                     if (!userProfileFollowing) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
-                Label: ({userData}) => {
-                    return <React.Fragment>
-                        Watching
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
-                            live
-                            path={[{id: userData.id}, "mutualstamps", {mutual_type: "watching"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    const backend = useBackend();
-                    const database = useDatabase();
-                    const {t} = useTranslation();
-
-                    const onItemError = (error, options) => {
-                        console.error(error)
-                    }
-                    return <MutualList
-                        itemComponent={item => <PostComponent
-                            key={item.id}
-                            mentions={[mentionUsers, mentionTags]}
-                            postData={item}
-                            userData={item._userData}
-                        />}
-                        itemTransform={postItemTransform({backend, database, onItemError})}
-                        mode={MutualListMode.STAMPS}
-                        mutualId={userData.id}
-                        typeId={"watching"}
-                        unsubscribeLabel={null}
-                    />
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.Watching"}
+                    path={[{id: userData.id}, "mutualstamps", {mutual_type: "watching"}]}
+                />,
+                List: ({header, userData, ...props}) => <ListWithPosts
+                    header={header}
+                    mode={MutualListMode.STAMPS}
+                    typeId={"watching"}
+                    userData={userData}
+                />
             },
         ]
     },
@@ -201,83 +132,47 @@ export default {
                     if (!userProfileFollowing) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
-                Label: ({userData}) => {
-                    return <React.Fragment>
-                        Following
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
-                            live
-                            path={[{id: userData.id}, "mutual", {mutual_type: "following"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    const {t} = useTranslation();
-                    return <MutualList
-                        mutualId={userData.id}
-                        mode={MutualListMode.SUBSCRIBES}
-                        typeId={"following"}
-                        unsubscribeLabel={t("Tag.Unfollow")}
-                    />
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.Following"}
+                    path={[{id: userData.id}, "mutual", {mutual_type: "following"}]}
+                />,
+                List: ({header, userData}) => <ListWithItems
+                    header={header}
+                    mode={MutualListMode.SUBSCRIBES}
+                    typeId={"following"}
+                    userData={userData}
+                    unsubscribeLabel={t("Tag.Unfollow")}
+                />,
             },
             {
                 test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
                     if (!userProfileFollowing) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
-                Label: ({userData}) => {
-                    return <React.Fragment>
-                        Follow
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
-                            live
-                            path={[{id: userData.id}, "mutualstamps", {mutual_type: "following"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    const backend = useBackend();
-                    const database = useDatabase();
-                    const {t} = useTranslation();
-
-                    const onItemError = (error, options) => {
-                        console.error(error)
-                    }
-                    return <MutualList
-                        itemComponent={item => <PostComponent
-                            key={item.id}
-                            mentions={[mentionUsers, mentionTags]}
-                            postData={item}
-                            userData={item._userData}
-                        />}
-                        itemTransform={postItemTransform({backend, database, onItemError})}
-                        mode={MutualListMode.STAMPS}
-                        mutualId={userData.id}
-                        typeId={"following"}
-                        unsubscribeLabel={null}
-                    />
-                }
+                Label: ({userData}) =>
+                    <Label
+                        label={"Definitions.Follow"}
+                        path={[{id: userData.id}, "mutualstamps", {mutual_type: "following"}]}
+                    />,
+                List: ({header, userData}) => <ListWithPosts
+                    header={header}
+                    mode={MutualListMode.STAMPS}
+                    typeId={"following"}
+                    userData={userData}
+                />
             },
             {
                 test: ({userProfileFollowing}) => !!userProfileFollowing,
-                Label: ({userData}) => {
-                    return <React.Fragment>
-                        Followers
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
-                            live
-                            path={[{id: userData.id}, "mutual", {mutual_type: "following_s"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    return <MutualList
-                        mutualId={userData.id}
-                        mode={MutualListMode.SUBSCRIBERS}
-                        typeId={"following"}
-                    />
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.Followers"}
+                    path={[{id: userData.id}, "mutual", {mutual_type: "following_s"}]}
+                />,
+                List: ({header, userData}) => <ListWithItems
+                    header={header}
+                    mode={MutualListMode.SUBSCRIBERS}
+                    userData={userData}
+                    typeId={"following"}
+                />,
             }
         ]
     },
@@ -304,71 +199,112 @@ export default {
         listComponents: [
             {
                 test: ({userProfileFriend}) => !!userProfileFriend,
-                Label: ({userData}) => {
-                    const {t} = useTranslation();
-                    return <React.Fragment>
-                        Friends
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
-                            live
-                            path={[{id: userData.id}, "mutual", {mutual_type: "friend"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    return <MutualList
-                        cached={true}
-                        mutualId={userData.id}
-                        mode={MutualListMode.SUBSCRIBES}
-                        typeId={"friend"}
-                    />
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.Friends"}
+                    path={[{id: userData.id}, "mutual", {mutual_type: "friend"}]}
+                />,
+                List: ({header, userData}) => <ListWithItems
+                    header={header}
+                    mode={MutualListMode.SUBSCRIBES}
+                    userData={userData}
+                    typeId={"friend"}
+                />
             },
             {
                 test: ({isSameUser, isCurrentUserAdmin, userProfileFriend}) => {
                     if (!userProfileFriend) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
-                Label: ({userData}) => {
-                    const {t} = useTranslation();
-                    return <React.Fragment>
-                        Invitations
-                        <CounterComponent
-                            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
-                            live
-                            path={[{id: userData.id}, "mutualrequests", {mutual_type: "friend"}]}
-                            prefix={" ("} suffix={")"}/>
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    return <MutualList
-                        cached={true}
-                        mutualId={userData.id}
-                        mode={MutualListMode.INVITATIONS}
-                        typeId={"friend"}
-                    />
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.Invitations"}
+                    path={[{id: userData.id}, "mutualrequests", {mutual_type: "friend"}]}
+                />,
+                List: ({header, userData}) => <ListWithItems
+                    header={header}
+                    mode={MutualListMode.INVITATIONS}
+                    typeId={"friend"}
+                    userData={userData}
+                    unsubscribeLabel={t("Tag.Unfollow")}
+                />
             },
             {
                 test: ({isSameUser, isCurrentUserAdmin, userProfileFriend}) => {
                     if (!userProfileFriend) return false;
                     return isSameUser || isCurrentUserAdmin;
                 },
-                Label: ({userData}) => {
-                    const {t} = useTranslation();
-                    return <React.Fragment>
-                        Requests
-                    </React.Fragment>
-                },
-                List: ({userData}) => {
-                    return <MutualList
-                        cached={true}
-                        mutualId={userData.id}
-                        mode={MutualListMode.REQUESTS}
-                        typeId={"friend"}
-                    />
-                }
+                Label: ({userData}) => <Label
+                    label={"Definitions.Requests"}
+                    path={[{id: userData.id}, "mutualrequests", {mutual_type: "friend_s"}]}
+                />,
+                List: ({header, userData}) => <ListWithItems
+                    header={header}
+                    mode={MutualListMode.REQUESTS}
+                    typeId={"friend"}
+                    userData={userData}
+                    unsubscribeLabel={t("Tag.Unfollow")}
+                />,
             },
         ]
     },
+}
+
+const Label = ({label, path}) => {
+    const {t} = useTranslation();
+    return <React.Fragment>
+        {t(label)}
+        <CounterComponent
+            // onChange={handleRefresh(typeId, MutualListMode.SUBSCRIBES)}
+            live
+            path={path}
+            prefix={" ("} suffix={")"}/>
+    </React.Fragment>
+}
+
+const ListWithItems = (
+    {
+        header = undefined,
+        userData,
+        ...props
+    }) => {
+    const {t} = useTranslation();
+
+    return <>
+        {header}
+        <MutualList
+            mutualId={userData.id}
+            unsubscribeLabel={null}
+            {...props}
+        />
+    </>
+}
+
+const ListWithPosts = (
+    {
+        header = undefined,
+        userData,
+        ...props
+    }) => {
+    const backend = useBackend();
+    const database = useDatabase();
+    const {t} = useTranslation();
+
+    const onItemError = (error, options) => {
+        console.error(error)
+    }
+
+    return <>
+        {header}
+        <MutualList
+            itemComponent={item => <PostComponent
+                key={item.id}
+                mentions={[mentionUsers, mentionTags]}
+                postData={item}
+                userData={item._userData}
+            />}
+            itemTransform={postItemTransform({backend, database, onItemError})}
+            mutualId={userData.id}
+            unsubscribeLabel={null}
+            {...props}
+        />
+    </>
 }
