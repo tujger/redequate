@@ -25,8 +25,8 @@ export default {
             unsubscribeLabel={"Leave friends"}
         />;
     },
-    listComponents: [
-        {
+    listComponents: {
+        [MutualListMode.SUBSCRIBES]: {
             test: ({userProfileFriend}) => !!userProfileFriend,
             Label: ({userData}) => <MutualLabel
                 label={"Definitions.Friends"}
@@ -40,7 +40,7 @@ export default {
                 {...props}
             />
         },
-        {
+        [MutualListMode.INVITATIONS]: {
             test: ({isSameUser, isCurrentUserAdmin, userProfileFriend}) => {
                 if (!userProfileFriend) return false;
                 return isSameUser || isCurrentUserAdmin;
@@ -58,7 +58,7 @@ export default {
                 {...props}
             />
         },
-        {
+        [MutualListMode.REQUESTS]: {
             test: ({isSameUser, isCurrentUserAdmin, userProfileFriend}) => {
                 if (!userProfileFriend) return false;
                 return isSameUser || isCurrentUserAdmin;
@@ -76,5 +76,5 @@ export default {
                 {...props}
             />,
         },
-    ]
+    }
 }

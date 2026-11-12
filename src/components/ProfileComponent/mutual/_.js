@@ -4,8 +4,8 @@ import MutualLabel from "./MutualLabel";
 import MutualListWithPosts from "./MutualListWithPosts";
 
 export default {
-    listComponents: [
-        {
+    listComponents: {
+        [MutualListMode.STAMPS]: {
             test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing, userProfileFriend}) => {
                 if (!userProfileFollowing && !userProfileFriend) return false;
                 return isSameUser || isCurrentUserAdmin;
@@ -27,5 +27,5 @@ export default {
                 {...props}
             />,
         }
-    ]
+    }
 }

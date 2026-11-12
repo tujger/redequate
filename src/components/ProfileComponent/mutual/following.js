@@ -23,8 +23,8 @@ export default {
             unsubscribeLabel={"Unfollow"}
         />;
     },
-    listComponents: [
-        {
+    listComponents: {
+        [MutualListMode.SUBSCRIBES]: {
             test: ({isSameUser, isCurrentUserAdmin, userProfileFollowing}) => {
                 if (!userProfileFollowing) return false;
                 return isSameUser || isCurrentUserAdmin;
@@ -42,7 +42,7 @@ export default {
                 {...props}
             />,
         },
-        {
+        [MutualListMode.STAMPS]: {
             test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
                 if (!userProfileFollowing) return false;
                 return isSameUser || isCurrentUserAdmin;
@@ -59,7 +59,7 @@ export default {
                 {...props}
             />
         },
-        {
+        [MutualListMode.SUBSCRIBERS]: {
             test: ({userProfileFollowing}) => !!userProfileFollowing,
             Label: ({userData}) => <MutualLabel
                 label={"Definitions.Followers"}
@@ -73,5 +73,5 @@ export default {
                 {...props}
             />,
         }
-    ]
+    }
 }

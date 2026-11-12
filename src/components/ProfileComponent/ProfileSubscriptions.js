@@ -36,7 +36,7 @@ export default (props) => {
     let value = 0;
     const items = Object.entries(publicFields || {}).flatMap(([_, field]) => {
         if (!field.listComponents) return [];
-        return field.listComponents.map(({Label, List, test}) => {
+        return Object.values(field.listComponents).map(({Label, List, test}) => {
             if (test?.({
                 ...settings,
                 isCurrentUserAdmin,

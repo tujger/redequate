@@ -8,8 +8,8 @@ import MutualListWithPosts from "./MutualListWithPosts";
 export default {
     id: "watching",
     label: "Tags",
-    listComponents: [
-        {
+    listComponents: {
+        [MutualListMode.SUBSCRIBES]: {
             test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
                 if (!userProfileFollowing) return false;
                 return isSameUser || isCurrentUserAdmin;
@@ -46,7 +46,7 @@ export default {
                 />
             }
         },
-        {
+        [MutualListMode.STAMPS]: {
             test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
                 if (!userProfileFollowing) return false;
                 return isSameUser || isCurrentUserAdmin;
@@ -63,5 +63,5 @@ export default {
                 {...props}
             />
         },
-    ]
+    }
 }
