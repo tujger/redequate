@@ -1,7 +1,7 @@
 import BackendListener from "../BackendListener";
 import {createActivity} from "./activity";
 
-export default class ExtraListener extends BackendListener {
+export default class TagListener extends BackendListener {
     constructor(backend) {
         super(["tag", "tag_id"], backend);
     }
