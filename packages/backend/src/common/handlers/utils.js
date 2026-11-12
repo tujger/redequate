@@ -17,3 +17,11 @@ export const updateCounter = (backend, counterPath, increment) => {
         return next <= 0 ? null : next;
     });
 };
+
+export const registerError = async (backend, error) => {
+    return backend.request("database.create", ["errors", "error_id"], {
+        error: error?.message ?? String(error),
+        timestamp: backend.TIMESTAMP,
+        uid: await backend.getCurrentUser(),
+    });
+};
