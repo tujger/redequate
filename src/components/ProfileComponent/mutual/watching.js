@@ -57,6 +57,7 @@ export default {
             />,
             List: ({header, userData, ...props}) => <MutualListWithPosts
                 header={header}
+                live
                 mode={MutualListMode.STAMPS}
                 typeId={"watching"}
                 userData={userData}
