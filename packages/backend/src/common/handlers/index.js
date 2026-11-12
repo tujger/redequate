@@ -8,6 +8,7 @@ export {default as mutualrequests} from "./mutualrequests";
 export {default as mutualstamps} from "./mutualstamps";
 export {default as posts} from "./posts";
 export {default as roles} from "./roles";
+export {default as _tag} from "./_tag";
 export {default as tag} from "./tag";
 // eslint-disable-next-line camelcase
 export {default as users_public} from "./users_public";
