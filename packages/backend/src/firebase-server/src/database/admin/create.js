@@ -13,7 +13,7 @@ export default async function (path, value, ...args) {
     if (invalidPath.test(parent) || key !== undefined && (invalidPath.test(key) || key.includes("/"))) {
         fail("database/invalid-argument", "Invalid Firebase path or record key.");
     }
-    console.debug("[Backend:Admin:Create]", `create [${parent}]`, {value});
+    console.debug("[Backend:Admin:Create]", `create [${parent}]`);
     const collection = database.ref(parent);
     const reference = key === undefined ? collection.push() : collection.child(key);
     const {committed} = await _transaction(reference, current => current === null ? value : undefined);

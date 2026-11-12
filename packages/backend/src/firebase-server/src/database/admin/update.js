@@ -12,7 +12,7 @@ export default async function (path, value, options = {}, ...args) {
         fail("database/invalid-argument", "Invalid update options.");
     }
     if (options.mode !== undefined) return conditionalUpdate(database, address, value, options);
-    console.debug("[Backend:Admin:Update]", `update [${address}]`, {value: stringify(value)});
+    console.debug("[Backend:Admin:Update]", `update [${address}]`);
     if (address) {
         await database.ref(address).set(value);
     } else {
