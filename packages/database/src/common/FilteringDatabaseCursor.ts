@@ -8,7 +8,8 @@ export default class FilteringDatabaseCursor extends DatabaseCursor {
     readonly #source: DatabaseCursor;
     readonly #matches: (entry: DatabaseEntry) => boolean;
     #pending: Entry[] = [];
-    readonly #included = new Set<string>();
+    readonly #included = new Map<string, string>();
+    readonly #subscriptions = new Set<Map<string, string>>();
 
     constructor(source: DatabaseCursor, matches: (entry: DatabaseEntry) => boolean) {
         if (!(source instanceof DatabaseCursor) || !(matches instanceof Function)) {
@@ -42,7 +43,6 @@ export default class FilteringDatabaseCursor extends DatabaseCursor {
             if (this.#pending.length) {
                 const entry = this.#pending.shift()!;
                 result.push(entry);
-                if ("value" in entry) this.#included.add(entry.key);
                 continue;
             }
             if (this.#source.position.finished) break;
@@ -61,26 +61,57 @@ export default class FilteringDatabaseCursor extends DatabaseCursor {
             key: result.length ? result.at(-1)!.key : this.position.key,
             finished: !this.#pending.length && this.#source.position.finished
         });
+        for (const entry of result) {
+            if (!("value" in entry)) continue;
+            const value = JSON.stringify(entry);
+            this.#included.set(entry.key, value);
+            for (const included of this.#subscriptions) included.set(entry.key, value);
+        }
         this._count += result.length;
         return result;
     }
 
     subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined {
         super.subscribe(listener);
+        const included = new Map(this.#included);
+        const subscription = {
+            id: this.id,
+            subscribed: new Date(),
+            active: true,
+            added: 0,
+            changed: 0,
+            removed: 0,
+            unsubscribe: () => {
+                if (!subscription.active) return;
+                subscription.active = false;
+                this.#subscriptions.delete(included);
+                included.clear();
+                sourceSubscription?.unsubscribe();
+            }
+        };
         const sourceSubscription = this.#source.subscribe(event => {
-            const matches = this.#matches(event.entry);
-            const wasIncluded = this.#included.has(event.entry.key);
-            if (event.type === "remove" || !matches) this.#included.delete(event.entry.key);
-            else this.#included.add(event.entry.key);
-            if (event.type === "remove" && !wasIncluded && !matches) return;
-            if (!matches && !wasIncluded) return;
-            const type = event.type === "remove" || !matches
-                ? "remove"
-                : event.type === "change" && !wasIncluded ? "change" : event.type;
+            if (!subscription.active) return;
+            this._started = true;
+            const {key} = event.entry;
+            const previous = included.get(key);
+            const matches = event.type !== "remove" && this.#matches(event.entry);
+            if (!matches && previous === undefined) return;
+            const value = matches ? JSON.stringify(event.entry) : undefined;
+            if (matches && previous === value) return;
+            const type = !matches ? "remove" : previous === undefined ? "add" : "change";
+            if (matches) {
+                included.set(key, value!);
+                this.#included.set(key, value!);
+            } else {
+                included.delete(key);
+                this.#included.delete(key);
+            }
+            subscription[type === "add" ? "added" : type === "change" ? "changed" : "removed"]++;
             this._count += type === "add" ? 1 : type === "remove" ? -1 : 0;
             listener({...event, type});
         });
         if (!sourceSubscription) return undefined;
-        return sourceSubscription;
+        this.#subscriptions.add(included);
+        return subscription;
     }
 }
