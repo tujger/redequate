@@ -249,18 +249,23 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         let isMutualRequestsCheckMount = true;
-        new FilteringDatabaseCursor(
+        Promise.resolve().then(() => new FilteringDatabaseCursor(
             database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
                 orderBy: ["id"],
                 equalTo: currentUserData.id
             }),
             ({value}) => value?.uid === mutualId
-        ).next()
+        ).next())
             .then(items => items && items[0])
             .then(hasRequest => {
                 if (isMutualRequestsCheckMount) {
                     setState(state => ({...state, hasRequest: hasRequest ?? null}));
                 }
+            })
+            .catch(error => {
+                if (!isMutualRequestsCheckMount) return;
+                setState(state => ({...state, hasRequest: null}));
+                notifySnackbar(error);
             });
         return () => {
             isMutualRequestsCheckMount = false;
