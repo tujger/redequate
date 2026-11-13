@@ -86,7 +86,7 @@ it("cascades through LocalBackend and leaves an unrelated branch intact", async 
         await vi.waitFor(async () => expect(await backend.request("database.read", path("total", "posts"))).toBe(2));
         await database.delete(post("root"));
         await vi.waitFor(async () => {
-            expect(await database.read(["posts", "post_id"])).toEqual({unrelated: {uid: "d", text: "keep", images: ["keep-image"]}});
+            expect(await database.read(["posts", "post_id"])).toEqual({unrelated: {post_id: "unrelated", uid: "d", text: "keep", images: ["keep-image"]}});
             expect(await backend.request("database.read", path("total", "posts"))).toBe(1);
             expect(await backend.request("database.read", path("b", "replies"))).toBeNull();
             expect(await backend.request("database.read", path("c", "replies"))).toBeNull();

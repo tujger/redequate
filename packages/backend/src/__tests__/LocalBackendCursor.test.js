@@ -38,8 +38,8 @@ it("supports filters and keeps storageId scopes independent", async () => {
     const options = {orderBy: "to", equalTo: "parent", order: "desc"};
     const a = await first.backend.request("database.cursor", path, options);
     const b = await second.backend.request("database.cursor", path, options);
-    expect(await a.next(10)).toEqual([{key: "a", value: {to: "parent"}}]);
-    expect(await b.next(10)).toEqual([{key: "c", value: {to: "parent"}}]);
+    expect(await a.next(10)).toEqual([{key: "a", value: {post_id: "a", to: "parent"}}]);
+    expect(await b.next(10)).toEqual([{key: "c", value: {post_id: "c", to: "parent"}}]);
     const empty = await first.backend.request("database.cursor", path, {...options, equalTo: "missing"});
     expect(await empty.next(10)).toEqual([]); expect(empty.position.finished).toBe(true);
 });
@@ -50,9 +50,9 @@ it("uses the current backend to persist handle replacements and deletions", asyn
     const cursor = await backend.request("database.cursor", path, {
         handle: ({key, value}) => key === "a" ? null : {...value, text: "changed"},
     });
-    expect(await cursor.next(10)).toEqual([{key: "b", value: {text: "changed"}}]);
+    expect(await cursor.next(10)).toEqual([{key: "b", value: {post_id: "b", text: "changed"}}]);
     expect(await database.read(["posts", {post_id: "a"}])).toBeUndefined();
-    expect(await database.read(["posts", {post_id: "b"}])).toEqual({text: "changed"});
+    expect(await database.read(["posts", {post_id: "b"}])).toEqual({post_id: "b", text: "changed"});
     expect(request.mock.calls.filter(([name]) => name === "database.update")).toHaveLength(4);
 });
 it("delivers live subscription events and stops after unsubscribe", async () => {
@@ -65,7 +65,7 @@ it("delivers live subscription events and stops after unsubscribe", async () => 
         await database.create(["posts", {post_id: "a"}], {to: 1});
         expect(events).toEqual([]);
         await database.update(["posts", {post_id: "a"}], {to: 2});
-        expect(events).toEqual([{type: "add", entry: {key: "a", value: {to: 2}}}]);
+        expect(events).toEqual([{type: "add", entry: {key: "a", value: {post_id: "a", to: 2}}}]);
         subscription.unsubscribe();
         await database.update(["posts", {post_id: "a"}], {to: 3});
         expect(events).toHaveLength(1);

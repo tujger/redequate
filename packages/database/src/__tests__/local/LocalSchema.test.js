@@ -54,7 +54,7 @@ it("creates the declared schema at version one and leaves it stable when reopene
     connection.close();
     await database.create(["audit", {audit_id: "a"}], {code: "one"});
     const reopened = make("schema-native");
-    expect(await reopened.read(["audit", {audit_id: "a"}])).toEqual({code: "one"});
+    expect(await reopened.read(["audit", {audit_id: "a"}])).toEqual({audit_id: "a", code: "one"});
     connection = await openDatabase("schema-native");
     expect(connection.version).toBe(1);
     connection.close();
@@ -158,4 +158,41 @@ it("discards only the legacy Activity index while upgrading to type records", as
     expect((await reopened.cursor(["_activity", "activity_type_id"],
         {orderBy: "type", equalTo: "tag.create"}).next(10)).map(({key}) => key)).toEqual(["a1"]);
     expect(Object.keys(await reopened.read(["activity"]))).toHaveLength(3);
+});
+
+it.each([null, {keyPath: "type", unique: false}])("replaces only an incompatible derived Activity store (%j) and keeps compatible data on reopen", async index => {
+    const storageId = "activity-isolated-upgrade";
+    const legacy = structuredClone(LOCAL_SCHEMA);
+    if (index) legacy._activity.indexes.activity_type_id = index;
+    else delete legacy._activity.indexes.activity_type_id;
+    const connection = await openDatabase(storageId, legacy);
+    await new Promise((resolve, reject) => {
+        const transaction = connection.transaction(["_activity", "activity", "posts"], "readwrite");
+        transaction.oncomplete = resolve;
+        transaction.onabort = () => reject(transaction.error);
+        transaction.objectStore("_activity").put({types: {legacy: 1}});
+        transaction.objectStore("activity").put({activity_id: "a1", type: "tag.create", timestamp: 1});
+        transaction.objectStore("posts").put({post_id: "p1", text: "keep"});
+    });
+    connection.close();
+    const migrated = await openDatabase(storageId);
+    expect(migrated.version).toBe(2);
+    migrated.close();
+    const database = make(storageId);
+    expect(await database.read(["_activity"])).toBeUndefined();
+    expect(await database.read(["activity", {activity_id: "a1"}])).toEqual({activity_id: "a1", type: "tag.create", timestamp: 1});
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({post_id: "p1", text: "keep"});
+    await database.update(["_activity", {activity_type_id: "a1"}], () => ({type: "tag.create", value: 2}));
+    const beforeReopen = await openDatabase(storageId);
+    const version = beforeReopen.version;
+    beforeReopen.close();
+    const reopened = make(storageId);
+    expect(await reopened.read(["_activity"])).toEqual({a1: {activity_type_id: "a1", type: "tag.create", value: 2}});
+    const upgraded = await openDatabase(storageId);
+    try {
+        expect(upgraded.version).toBe(version);
+        const actual = upgraded.transaction("_activity").objectStore("_activity").index("activity_type_id");
+        expect(actual.keyPath).toBe("activity_type_id");
+        expect(actual.unique).toBe(true);
+    } finally { upgraded.close(); }
 });

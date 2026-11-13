@@ -1,4 +1,3 @@
-import {knownCounterFailure} from "./knownCounterFailure";
 import {vi} from "vitest";
 import counterControl from "../../controllers/counterControl";
 
@@ -31,15 +30,13 @@ export function counterScenarios(createDatabases, {local = false} = {}) {
                 expect(await stored()).toBe(result === null ? undefined : result);
             });
         }
-        const negativeIncrement = initial === undefined || initial <= 0 ? knownCounterFailure : it;
-        negativeIncrement(`increment -2 from ${initial} never stores a negative count [C1 for empty/nonpositive]`, async () => {
+        it(`increment -2 from ${initial} never stores a negative count [C1 for empty/nonpositive]`, async () => {
             if (initial !== undefined) await seed(initial);
             const result = await counterControl({database, path, increment: -2});
             expect(await stored()).toBe(result === null ? undefined : result);
             expect(result).toBe(initial > 2 ? initial - 2 : null);
         });
-        const reset = initial > 0 ? knownCounterFailure : it;
-        reset(`value 0 from ${initial} clears the counter [C2 for positive]`, async () => {
+        it(`value 0 from ${initial} clears the counter [C2 for positive]`, async () => {
             if (initial !== undefined) await seed(initial);
             const result = await counterControl({database, path, value: 0});
             expect(await stored()).toBe(result === null ? undefined : result);

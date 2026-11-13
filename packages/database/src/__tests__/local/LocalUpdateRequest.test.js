@@ -143,12 +143,12 @@ it("uses Firebase collection semantics, shallow record merges and full callback 
     await database.read(["posts"]);
     await database.update(new Map([[path, {a: 1, b: 2, nested: {old: true}}], [["posts", {post_id: "p2"}], {keep: true}]]));
     await database.update(["posts"], {p1: {a: 3}});
-    expect(await database.read(path)).toEqual({a: 3});
-    expect(await database.read(["posts", {post_id: "p2"}])).toEqual({keep: true});
+    expect(await database.read(path)).toEqual({post_id: "p1", a: 3});
+    expect(await database.read(["posts", {post_id: "p2"}])).toEqual({post_id: "p2", keep: true});
     await database.update(path, {nested: {next: true}, b: null});
-    expect(await database.read(path)).toEqual({a: 3, nested: {next: true}});
-    expect(await database.update(path, () => ({final: true}))).toEqual({final: true});
-    expect(await database.read(path)).toEqual({final: true});
+    expect(await database.read(path)).toEqual({post_id: "p1", a: 3, nested: {next: true}});
+    expect(await database.update(path, () => ({final: true}))).toEqual({post_id: "p1", final: true});
+    expect(await database.read(path)).toEqual({post_id: "p1", final: true});
 });
 
 it("preserves concurrent updates from independent Database instances without lost fields", async () => {
@@ -157,7 +157,7 @@ it("preserves concurrent updates from independent Database instances without los
     await database.read(["posts"]);
     await database.update(path, {count: 0});
     await Promise.all([database.update(path, {one: true}), other.update(path, {two: true})]);
-    expect(await database.read(path)).toEqual({count: 0, one: true, two: true});
+    expect(await database.read(path)).toEqual({post_id: "p1", count: 0, one: true, two: true});
     const values = await Promise.all(Array.from({length: 6}, (_, index) =>
         (index % 2 ? database : other).update([...path, {field: "count"}], value => value + 1)));
     expect(values.sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6]);
@@ -169,7 +169,7 @@ it("requires separately prepared stores and performs no implicit schema initiali
     await expect(database.update(path, {title: "A"})).rejects.toMatchObject({name: "NotFoundError"});
     await database.read(["posts"]);
     await database.update(path, {title: "A"});
-    expect(await database.read(path)).toEqual({title: "A"});
+    expect(await database.read(path)).toEqual({post_id: "p1", title: "A"});
 });
 
 it("keeps native keys when replacing prepared collection values", async () => {
@@ -178,7 +178,7 @@ it("keeps native keys when replacing prepared collection values", async () => {
     await database.update(new Map([[path, {count: 5, keep: true}], [["posts", {post_id: "p2"}], {other: true}]]));
     const before = await readNativeStore("delegated-collection-markers", "posts");
     await database.update(["posts"], {p1: {count: 7, time: database.TIMESTAMP}});
-    expect(await database.read(path)).toEqual({count: 7, time: expect.any(Number)});
+    expect(await database.read(path)).toEqual({post_id: "p1", count: 7, time: expect.any(Number)});
     const after = await readNativeStore("delegated-collection-markers", "posts");
     expect(after.map(row => [row.post_id, row._id])).toEqual(before.map(row => [row.post_id, row._id]));
     const counter = await database.update([...path, {count: "count"}], value => value + 1);

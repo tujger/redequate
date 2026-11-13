@@ -48,7 +48,7 @@ it("rejects queries without an index and ambiguous string addresses", async () =
     const database = await setup();
     await expect(database.read(["posts", {title: "title"}])).rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(database.read(["posts"], {orderBy: "unknown", equalTo: "a"})).rejects.toMatchObject({code: "database/invalid-argument"});
-    expect(await database.read("posts/p1")).toEqual({uid: "a", to: 1});
+    expect(await database.read("posts/p1")).toEqual({post_id: "p1", uid: "a", to: 1});
     expect(await database.read("posts/p1/uid")).toBe("a");
 });
 
@@ -70,7 +70,7 @@ it("addresses records by a non-unique declared index only when the result is una
     const database = await setup();
     await database.update(["_counters", {gid: "group"}, {id: "one"}], {total: 1});
     await database.update(["_counters", {gid: "group"}, {id: "two"}], {total: 2});
-    expect(await database.read(["_counters", {gid: "group"}, {id: "one"}])).toEqual({total: 1});
+    expect(await database.read(["_counters", {gid: "group"}, {id: "one"}])).toEqual({gid: "group", id: "one", total: 1});
     expect(Object.keys(await database.read(["_counters", {gid: "group"}, "id"]))).toEqual(["one", "two"]);
     await expect(database.read(["_counters", {gid: "group"}])).rejects.toMatchObject({code: "database/invalid-argument"});
 });

@@ -107,8 +107,8 @@ it("creates replies and alerts through LocalBackend while preserving complete po
             const rootAlerts = await database.read(["alerts", {user_id: "root-author"}, "alert_id"]);
             expect(Object.values(rootAlerts ?? {}).filter(alert => alert.id === "new")).toHaveLength(1);
         });
-        expect(await database.read(postPath("new"))).toEqual({...reply, root: "root"});
-        expect(await database.read(postPath("parent"))).toEqual({uid: "parent-author", to: "root", text: "parent content", root: "root"});
+        expect(await database.read(postPath("new"))).toEqual({...reply, post_id: "new", root: "root"});
+        expect(await database.read(postPath("parent"))).toEqual({post_id: "parent", uid: "parent-author", to: "root", text: "parent content", root: "root"});
         expect(await backend.request("database.read", counterReadPath("total", "posts"))).toBe(1);
         expect(await backend.request("database.read", counterReadPath("writer", "replies"))).toBe(1);
         expect(await backend.request("database.read", counterReadPath("parent-author", "replied"))).toBe(1);

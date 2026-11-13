@@ -26,8 +26,8 @@ const pattern = ["mutual", "mutual_type", "mutual_id"];
 it("filters leaves and preserves duplicate keys across pages and composition", async () => {
     const {database} = await setup();
     const cursor = database.cursor(pattern, {orderBy: "uid", equalTo: "u"});
-    expect(await cursor.next()).toEqual([{key: "same", params: {mutual_type: "a"}, value: {uid: "u", id: "x", timestamp: 3}}]);
-    expect(await cursor.next()).toEqual([{key: "same", params: {mutual_type: "b"}, value: {uid: "u", id: "z", timestamp: 1}}]);
+    expect(await cursor.next()).toEqual([{key: "same", params: {mutual_type: "a"}, value: {mutual_type: "a", mutual_id: "same", uid: "u", id: "x", timestamp: 3}}]);
+    expect(await cursor.next()).toEqual([{key: "same", params: {mutual_type: "b"}, value: {mutual_type: "b", mutual_id: "same", uid: "u", id: "z", timestamp: 1}}]);
     expect(await cursor.next()).toEqual([]);
     expect(cursor.position.finished).toBe(true);
     const composed = database.cursor([{path: pattern, orderBy: "uid", equalTo: "u"},
@@ -91,11 +91,11 @@ it("continues after handle removes the ordered field", {timeout: 2000}, async ()
     const handle = vi.fn(({params, value}) => params.mutual_type === "a" ? {id: value.id} : undefined);
     const cursor = database.cursor(pattern, {orderBy: "uid", equalTo: "u", handle});
     expect(await cursor.next(10)).toEqual([
-        {key: "same", params: {mutual_type: "b"}, value: {uid: "u", id: "z", timestamp: 1}}
+        {key: "same", params: {mutual_type: "b"}, value: {mutual_type: "b", mutual_id: "same", uid: "u", id: "z", timestamp: 1}}
     ]);
     expect(handle).toHaveBeenCalledTimes(2);
     expect(cursor.position.finished).toBe(true);
-    expect(await database.read(["mutual", {mutual_type: "a"}, {mutual_id: "same"}])).toEqual({id: "x"});
+    expect(await database.read(["mutual", {mutual_type: "a"}, {mutual_id: "same"}])).toEqual({mutual_type: "a", mutual_id: "same", id: "x"});
 });
 
 it("deduplicates nested wildcard and concrete sources using their public path and params", async () => {

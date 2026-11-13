@@ -22,7 +22,7 @@ it("deletes records directly and leaves siblings intact without calling LocalDat
     const delegated = vi.spyOn(database, "delete").mockImplementation(() => { throw new Error("recursive delete"); });
     expect(await remove(post)).toBeNull();
     expect(await database.read(post)).toBeUndefined();
-    expect(await database.read(["posts"])).toEqual({p2: {text: "B"}});
+    expect(await database.read(["posts"])).toEqual({p2: {post_id: "p2", text: "B"}});
     expect(await remove(post)).toBeNull();
     expect(delegated).not.toHaveBeenCalled();
 });
@@ -54,7 +54,7 @@ it("does not create records or empty branches when deleting absent nested values
     expect(await readNativeStore("backend-delete", "singleton")).toEqual([]);
     await database.create(post, {keep: true});
     await remove([...post, "missing", "child"]);
-    expect(await database.read(post)).toEqual({keep: true});
+    expect(await database.read(post)).toEqual({post_id: "p1", keep: true});
     await database.update(new Map([[post, false]]));
     await remove([...post, "missing", "child"]);
     expect(await database.read(post)).toBe(false);
@@ -68,17 +68,17 @@ it("deletes compound-index scopes and complete collections without touching othe
     await database.create(post, {keep: true});
     await remove(["chats", {chat_id: "c1"}]);
     expect(await database.read(["chats", {chat_id: "c1"}, "message_id"])).toBeUndefined();
-    expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({text: "m1"});
+    expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({chat_id: "c2", message_id: "m1", text: "m1"});
     await remove(["chats"]);
     expect(await readNativeStore("backend-delete", "chats")).toEqual([]);
-    expect(await database.read(post)).toEqual({keep: true});
+    expect(await database.read(post)).toEqual({post_id: "p1", keep: true});
 });
 
 it("supports string and native primary-key addresses, including scalar records", async () => {
     const {database, remove} = await setup();
     await database.create(post, {text: "A"});
     await remove("posts/p1/text");
-    expect(await database.read(post)).toEqual({});
+    expect(await database.read(post)).toEqual({post_id: "p1"});
     await remove(["posts", {_id: "1"}]);
     expect(await readNativeStore("backend-delete", "posts")).toEqual([]);
     await database.update(new Map([[["roles", {user_id: "u"}], "admin"]]));
@@ -101,7 +101,7 @@ it("notifies listeners after commit with decoded removed values", async () => {
         await remove(post);
         expect(committed).toHaveBeenCalledExactlyOnceWith("posts");
         expect(snapshots).toEqual([[]]);
-        expect(onChildRemove).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {text: "A"}});
+        expect(onChildRemove).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", text: "A"}});
         expect(onChange).toHaveBeenLastCalledWith(undefined);
     } finally { listener.remove(); stop(); }
 });
@@ -120,7 +120,7 @@ it("rolls back a failed collection deletion, closes the connection and sends no 
         await expect(remove(["posts"])).rejects.toThrow("delete failed");
         expect(close).toHaveBeenCalledOnce();
         expect(notified).not.toHaveBeenCalled();
-        expect(await database.read(["posts"])).toEqual({p1: {text: "A"}, p2: {text: "B"}});
+        expect(await database.read(["posts"])).toEqual({p1: {post_id: "p1", text: "A"}, p2: {post_id: "p2", text: "B"}});
     } finally { stop(); }
 });
 
@@ -145,7 +145,7 @@ it("rejects ambiguous nested addresses without changing data or notifying", asyn
         await expect(remove(["chats", {chat_id: "c1"}, "text"]))
             .rejects.toMatchObject({code: "database/invalid-argument"});
         expect(notified).not.toHaveBeenCalled();
-        expect(await database.read(["chats", {chat_id: "c1"}, {message_id: "m1"}])).toEqual({text: "A"});
+        expect(await database.read(["chats", {chat_id: "c1"}, {message_id: "m1"}])).toEqual({chat_id: "c1", message_id: "m1", text: "A"});
     } finally { stop(); }
 });
 

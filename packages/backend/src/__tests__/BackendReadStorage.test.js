@@ -22,7 +22,7 @@ it("filters Local records by to while retaining unfiltered reads", async () => {
         for (const [post_id, to] of [["a", "parent"], ["b", "elsewhere"], ["c", "parent"]]) {
             await backend.request("database.create", ["posts", {post_id}], {to});
         }
-        expect(await backend.request("database.read", ["posts"], {orderBy: "to", equalTo: "parent"})).toEqual({a: {to: "parent"}, c: {to: "parent"}});
+        expect(await backend.request("database.read", ["posts"], {orderBy: "to", equalTo: "parent"})).toEqual({a: {post_id: "a", to: "parent"}, c: {post_id: "c", to: "parent"}});
         expect(Object.keys(await backend.request("database.read", ["posts"]))).toEqual(["a", "b", "c"]);
         expect(await backend.request("database.read", ["posts"], {orderBy: "to", equalTo: "absent"})).toBeNull();
     } finally { vi.unstubAllGlobals(); }

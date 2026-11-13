@@ -21,7 +21,7 @@ it("patches nested values and deletes supplied children without invoking LocalDa
     await database.create(post, {text: "old", keep: true, obsolete: true, nested: {a: 1}});
     const update = vi.spyOn(database, "update").mockImplementation(() => { throw new Error("recursive update"); });
     expect(await request(post, {text: "new", obsolete: null, "nested/b": false})).toBeNull();
-    expect(await database.read(post)).toEqual({text: "new", keep: true, nested: {a: 1, b: false}});
+    expect(await database.read(post)).toEqual({post_id: "p1", text: "new", keep: true, nested: {a: 1, b: false}});
     expect(update).not.toHaveBeenCalled();
     expect((await readNativeStore("backend-update", "posts"))[0]).toMatchObject({
         _id: 1, post_id: "p1", text: "new", keep: true, nested: {a: 1, b: false}
@@ -35,12 +35,12 @@ it("patches collections, scoped compound paths, and unindexed singleton fields",
     await request(scope, {m1: {text: "A"}, "m2/text": "B"});
     await request(["chats", {chat_id: "c2"}], {m1: {text: "Other"}});
     await request(scope, {"m1/text": "Changed", m2: null});
-    expect(await database.read([...scope, "message_id"])).toEqual({m1: {text: "Changed"}});
-    expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({text: "Other"});
+    expect(await database.read([...scope, "message_id"])).toEqual({m1: {chat_id: "c1", message_id: "m1", text: "Changed"}});
+    expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({chat_id: "c2", message_id: "m1", text: "Other"});
     await request(["singleton"], {maintenance: false, "settings/theme": "dark"});
     expect(await database.read(["singleton"])).toEqual({maintenance: false, settings: {theme: "dark"}});
     await request(["posts"], {p1: null});
-    expect(await database.read(["posts"])).toEqual({p2: {title: "B"}});
+    expect(await database.read(["posts"])).toEqual({p2: {post_id: "p2", title: "B"}});
 });
 
 it("supports root objects and Maps of named Local paths in atomic multi-store patches", async () => {
@@ -52,9 +52,9 @@ it("supports root objects and Maps of named Local paths in atomic multi-store pa
         [["roles", {user_id: "u"}], "admin"],
         [["singleton", "maintenance"], false]
     ]));
-    expect(await database.read(post)).toEqual({title: "Changed"});
+    expect(await database.read(post)).toEqual({post_id: "p1", title: "Changed"});
     expect(await database.read(["roles", {user_id: "u"}])).toBe("admin");
-    expect(await database.read(["users_private", {user_id: "u"}])).toEqual({phone: {locale: "en"}});
+    expect(await database.read(["users_private", {user_id: "u"}])).toEqual({user_id: "u", phone: {locale: "en"}});
     expect(await database.read(["singleton"])).toEqual({maintenance: false});
 });
 
@@ -68,7 +68,7 @@ it("resolves timestamp and increment markers once per committed batch", async ()
         [["singleton", "time"], database.TIMESTAMP]
     ]));
     const result = await database.read(post);
-    expect(result).toEqual({count: 5, time: expect.any(Number)});
+    expect(result).toEqual({post_id: "p1", count: 5, time: expect.any(Number)});
     expect((await database.read(["singleton"])).time).toBe(result.time);
 });
 
@@ -78,14 +78,14 @@ it("resolves nested increments and reuses one marker across fields and writes", 
     const marker = backend.increment(2);
     const changes = {nested: {left: marker, right: [marker]}};
     await request(post, changes);
-    expect(await database.read(post)).toEqual({nested: {left: 3, right: [5]}});
+    expect(await database.read(post)).toEqual({post_id: "p1", nested: {left: 3, right: [5]}});
     await request(post, changes);
-    expect(await database.read(post)).toEqual({nested: {left: 5, right: [7]}});
+    expect(await database.read(post)).toEqual({post_id: "p1", nested: {left: 5, right: [7]}});
     await request("", new Map([
         [[...post, "nested", "left"], marker],
         [["singleton", "count"], marker]
     ]));
-    expect(await database.read(post)).toEqual({nested: {left: 7, right: [7]}});
+    expect(await database.read(post)).toEqual({post_id: "p1", nested: {left: 7, right: [7]}});
     expect(await database.read(["singleton"])).toEqual({count: 2});
 });
 
@@ -97,7 +97,7 @@ it("rejects malformed symbol values without changing a stored record", async () 
     const [key] = Object.getOwnPropertySymbols(marker);
     for (const invalid of [{[key]: Infinity}, {[key]: "2"}, {[Symbol("other")]: 2}]) {
         await expect(request(post, {count: marker, keep: invalid})).rejects.toMatchObject({code: "database/invalid-argument"});
-        expect(await database.read(post)).toEqual({count: 4, keep: true});
+        expect(await database.read(post)).toEqual({post_id: "p1", count: 4, keep: true});
     }
 });
 
@@ -120,9 +120,9 @@ it("returns fresh snapshots on a conflict and permits retry without executing ca
     const snapshot = await read(post);
     await request(post, {count: 2});
     const conflict = await replace(post, {count: 99}, snapshot.etag);
-    expect(conflict).toEqual({committed: false, value: {count: 2}, etag: expect.any(String)});
-    expect(await database.read(post)).toEqual({count: 2});
-    expect(await replace(post, {count: conflict.value.count + 1}, conflict.etag)).toEqual({committed: true, value: {count: 3}});
+    expect(conflict).toEqual({committed: false, value: {post_id: "p1", count: 2}, etag: expect.any(String)});
+    expect(await database.read(post)).toEqual({post_id: "p1", count: 2});
+    expect(await replace(post, {count: conflict.value.count + 1}, conflict.etag)).toEqual({committed: true, value: {post_id: "p1", count: 3}});
     const callback = vi.fn(() => ({count: 9}));
     await expect(replace(post, callback, conflict.etag)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(callback).not.toHaveBeenCalled();
@@ -160,7 +160,7 @@ it("conditionally replaces a collection and returns resolved values for nested m
     await request(["posts"], {p1: {count: 1}, p2: {count: 2}});
     const snapshot = await read(["posts"]);
     expect(await replace(["posts"], {p3: {time: database.TIMESTAMP}}, snapshot.etag)).toEqual({
-        committed: true, value: {p3: {time: expect.any(Number)}}
+        committed: true, value: {p3: {post_id: "p3", time: expect.any(Number)}}
     });
     const field = [...post, {field: "count"}];
     const missing = await read(field);
@@ -179,7 +179,7 @@ it("rejects overlapping paths and preserves the whole batch on unique-index fail
         .rejects.toMatchObject({code: "database/invalid-argument"});
     await expect(request("", new Map([[post, {title: "new"}], [["audit", {id: "b"}], {code: "unique"}]])))
         .rejects.toMatchObject({name: "ConstraintError"});
-    expect(await database.read(post)).toEqual({title: "old"});
+    expect(await database.read(post)).toEqual({post_id: "p1", title: "old"});
     expect(await database.read(["audit", {id: "b"}])).toBeUndefined();
     expect(log).not.toHaveBeenCalled();
 });
@@ -192,16 +192,16 @@ it("delivers one committed snapshot and decoded child events, without read, conf
         await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
         const initial = await read(post);
         await request(post, {title: "A"});
-        expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "A"}});
+        expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "A"}});
         const snapshot = await read(post);
         await replace(post, {title: "B"}, snapshot.etag);
-        expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "B"}});
+        expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "B"}});
         await replace(post, {title: "stale"}, initial.etag);
         await expect(request(post, {nested: 1, "nested/child": 2})).rejects.toMatchObject({code: "database/invalid-argument"});
         expect(onChange).toHaveBeenCalledTimes(3);
         const beforeDelete = await read(post);
         await replace(post, null, beforeDelete.etag);
-        expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "B"}});
+        expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "B"}});
         expect(onChange).toHaveBeenCalledTimes(4);
     } finally { listener.remove(); }
 });
@@ -255,7 +255,7 @@ it("resolves nested and reused timestamp markers while leaving Firebase-shaped o
     const firebaseValue = {".sv": "timestamp"};
     await request(post, {first: marker, nested: {second: marker}, firebaseValue});
     const saved = await database.read(post);
-    expect(saved).toEqual({first: expect.any(Number), nested: {second: expect.any(Number)}, firebaseValue});
+    expect(saved).toEqual({post_id: "p1", first: expect.any(Number), nested: {second: expect.any(Number)}, firebaseValue});
     expect(saved.first).toBe(saved.nested.second);
     expect(Object.getOwnPropertySymbols(saved)).toEqual([]);
     const field = [...post, {field: "last"}];

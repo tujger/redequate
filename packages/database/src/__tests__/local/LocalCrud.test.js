@@ -32,7 +32,7 @@ it("keeps physical fields inside Local and queries the schema's unique index", a
     const {database} = await setup();
     expect(await database.create(["posts", {post_id: "p1"}], {title: "A"})).toBe("p1");
     const value = await database.read(["posts", {post_id: "p1"}]);
-    expect(value).toEqual({title: "A"});
+    expect(value).toEqual({post_id: "p1", title: "A"});
     expect(await raw("native", "posts")).toEqual({
         indexes: ["post_id", "to", "uid"], rows: [{...value, _id: 1, post_id: "p1"}]
     });
@@ -41,14 +41,14 @@ it("keeps physical fields inside Local and queries the schema's unique index", a
     await expect(database.create(["posts", {post_id: "p2"}], {post_id: "different"})).rejects.toMatchObject({code: "database/invalid-argument"});
 });
 
-it("uses composite indexes for scoped queries without leaking identity fields", async () => {
+it("uses composite indexes for scoped queries with visible identity fields", async () => {
     const {database} = await setup();
     for (const [chat_id, message_id] of [["c1", "m1"], ["c1", "m2"], ["c2", "m1"]]) {
         await database.create(["chats", {chat_id}, {message_id}], {text: message_id});
     }
     expect(await database.read(["chats", {chat_id: "c1"}, "message_id"])).toEqual({
-        m1: {text: "m1"},
-        m2: {text: "m2"}
+        m1: {chat_id: "c1", message_id: "m1", text: "m1"},
+        m2: {chat_id: "c1", message_id: "m2", text: "m2"}
     });
     await database.update(["chats", {chat_id: "c1"}, {message_id: "m1"}], {text: "changed"});
     expect((await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).text).toBe("m1");
@@ -116,13 +116,13 @@ it("resolves prepared numbers and timestamp markers before encoding the record",
     const path = ["posts", {post_id: "p1"}];
     await database.create(path, {count: 2});
     await database.update(path, {count: backend.increment(3), timestamp: database.TIMESTAMP});
-    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({count: 5, timestamp: expect.any(Number)});
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({post_id: "p1", count: 5, timestamp: expect.any(Number)});
 });
 
 it("uses native primary keys when explicitly addressing a record", async () => {
     const {database} = await setup();
     await database.create(["posts", {post_id: "p1"}], {});
-    expect(await database.read(["posts", {_id: "1"}])).toEqual({});
+    expect(await database.read(["posts", {_id: "1"}])).toEqual({post_id: "p1"});
     await database.update(["posts", {_id: "1"}], {title: "native"});
     expect((await database.read(["posts", {post_id: "p1"}])).title).toBe("native");
 });

@@ -32,18 +32,18 @@ it("delivers maintenance events and activity through the real MetaListener", asy
     const remove = vi.spyOn(MetaListener.prototype, "onDelete");
     const {backend, database} = await setup();
     await patch(backend, [[field("maintenance"), {message: "Before"}]]);
-    await vi.waitFor(() => expect(create).toHaveBeenCalledWith({params: {setting: "maintenance"}, value: {message: "Before"}}));
+    await vi.waitFor(() => expect(create).toHaveBeenCalledWith({params: {setting: "maintenance"}, value: {setting: "maintenance", message: "Before"}}));
     const activities = () => database.read(["activity", "activity_id"]);
     await vi.waitFor(async () => expect(Object.values(await activities() ?? {})).toContainEqual(expect.objectContaining({
         type: "settings.maintenance", details: {message: "Before", state: "on"},
     })));
     await patch(backend, [[field("maintenance"), {message: "After"}]]);
-    await vi.waitFor(() => expect(update).toHaveBeenCalledWith({params: {setting: "maintenance"}, previous: {message: "Before"}, value: {message: "After"}}));
+    await vi.waitFor(() => expect(update).toHaveBeenCalledWith({params: {setting: "maintenance"}, previous: {setting: "maintenance", message: "Before"}, value: {setting: "maintenance", message: "After"}}));
     await vi.waitFor(async () => expect(Object.values(await activities() ?? {})).toContainEqual(expect.objectContaining({
         type: "settings.update", details: {message: ["Before", "=>", "After"]},
     })));
     await patch(backend, [[field("maintenance"), null]]);
-    await vi.waitFor(() => expect(remove).toHaveBeenCalledWith({params: {setting: "maintenance"}, value: {message: "After"}}));
+    await vi.waitFor(() => expect(remove).toHaveBeenCalledWith({params: {setting: "maintenance"}, value: {setting: "maintenance", message: "After"}}));
     await vi.waitFor(async () => expect(Object.values(await activities() ?? {})).toContainEqual(expect.objectContaining({
         type: "settings.maintenance", details: {message: "After", state: "off"},
     })));

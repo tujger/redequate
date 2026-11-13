@@ -67,7 +67,7 @@ it("requires separately prepared stores and delegates deletion and notifications
         await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
         expect(await database.delete(path)).toBeUndefined();
         expect(await database.read(path)).toBeUndefined();
-        expect(onChildRemove).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {text: "A"}});
+        expect(onChildRemove).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", text: "A"}});
         expect(onChange).toHaveBeenCalledTimes(2);
     } finally { listener.remove(); }
 });

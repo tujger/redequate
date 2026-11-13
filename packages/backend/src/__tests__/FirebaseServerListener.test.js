@@ -73,9 +73,9 @@ it.each(types)("keeps the listener instance as this for %s", async (type, name, 
 });
 
 it("exports the supported production trigger groups", () => {
-    expect(Object.keys(oncreate)).toEqual(["activity", "alerts", "chats", "extra", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "tag", "users_public"]);
-    expect(Object.keys(ondelete)).toEqual(["activity", "chats", "extra", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "tag", "users_public"]);
-    expect(Object.keys(onupdate)).toEqual(["activity", "chats", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "tag", "users_public"]);
+    expect(Object.keys(oncreate)).toEqual(["activity", "alerts", "chats", "extra", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "_tag", "tag", "users_public"]);
+    expect(Object.keys(ondelete)).toEqual(["activity", "chats", "extra", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "_tag", "tag", "users_public"]);
+    expect(Object.keys(onupdate)).toEqual(["activity", "chats", "meta", "mutual", "mutualrequests", "mutualstamps", "posts", "roles", "_tag", "tag", "users_public"]);
 });
 
 it.each(types.filter(([type]) => type !== "update"))("runs the extra %s behavior", async (type, name, suffix, before, after) => {

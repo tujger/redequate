@@ -24,7 +24,7 @@ it("creates metadata with the real Local chat handler without unidentified user 
         return {members: {alice: 0, bob: 0}};
     });
     await vi.waitFor(() => expect(reaction).toHaveBeenCalledExactlyOnceWith({
-        params: {chat_id: chatId, message_id: "!meta"}, value: {members: {alice: 0, bob: 0}}
+        params: {chat_id: chatId, message_id: "!meta"}, value: {chat_id: chatId, message_id: "!meta", members: {alice: 0, bob: 0}}
     }));
     expect(request.mock.calls.map(([name]) => name)).toEqual(["database.create"]);
     expect(errors).not.toHaveBeenCalled();

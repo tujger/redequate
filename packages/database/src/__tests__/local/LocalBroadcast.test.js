@@ -51,14 +51,14 @@ it("notifies across independent contexts for UI and backend reactions without ec
         });
         await writer.create(["posts", {post_id: "p1"}], {title: "A"});
         await vi.waitFor(() => expect(events).toHaveLength(1));
-        expect(events[0]).toMatchObject({type: "add", entry: {key: "p1", value: {title: "A"}}});
+        expect(events[0]).toMatchObject({type: "add", entry: {key: "p1", value: {post_id: "p1", title: "A"}}});
         await writer.update(["posts", {post_id: "p1"}], {title: "B"});
         await vi.waitFor(() => expect(events).toHaveLength(2));
         expect(events[1].type).toBe("change");
         expect(wrong).not.toHaveBeenCalled();
         expect(writeMessages()).toHaveLength(2);
         expect(writeMessages()[0].data.changes[0]).toMatchObject({
-            params: {post_id: "p1"}, previous: null, value: {title: "A"},
+            params: {post_id: "p1"}, previous: null, value: {post_id: "p1", title: "A"},
         });
         expect(uiMessages().every(message => JSON.stringify(message.data) === '{"collections":["posts"]}')).toBe(true);
     } finally { one.unsubscribe(); two.unsubscribe(); ready.remove(); separateReady.remove(); }
@@ -82,10 +82,10 @@ it("broadcasts backend updates and deletes after commit, remaining silent on con
         const snapshot = await backend.request("database.update", post, null, {mode: "read"});
         expect(uiMessages()).toHaveLength(0);
         await backend.request("database.update", post, {title: "A"});
-        await vi.waitFor(() => expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "A"}}));
+        await vi.waitFor(() => expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "A"}}));
         expect(uiMessages()).toHaveLength(1);
         expect(await backend.request("database.update", post, {title: "stale"}, {mode: "replace", etag: snapshot.etag}))
-            .toMatchObject({committed: false, value: {title: "A"}});
+            .toMatchObject({committed: false, value: {post_id: "p1", title: "A"}});
         expect(uiMessages()).toHaveLength(1);
         const fresh = await backend.request("database.update", post, null, {mode: "read"});
         await backend.request("database.update", post, false, {mode: "replace", etag: fresh.etag});
@@ -117,12 +117,12 @@ it("broadcasts cursor handler replacement and deletion once across independent c
     try {
         await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
         const editing = writer.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
-        expect(await editing.next(10)).toEqual([{key: "p1", value: {text: "changed"}}]);
-        await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {text: "changed"}}));
+        expect(await editing.next(10)).toEqual([{key: "p1", value: {post_id: "p1", text: "changed"}}]);
+        await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", text: "changed"}}));
         expect(uiMessages()).toHaveLength(2);
         const deleting = writer.cursor(["posts", "post_id"], {handle: () => null});
         expect(await deleting.next(10)).toEqual([]);
-        await vi.waitFor(() => expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {text: "changed"}}));
+        await vi.waitFor(() => expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", text: "changed"}}));
         expect(onChange).toHaveBeenCalledTimes(3);
         expect(uiMessages()).toHaveLength(3);
     } finally { listener.remove(); }

@@ -24,15 +24,15 @@ it.each([undefined, "", "ordinary text", "$[user:reader:Reader]", "$[tag:unfinis
 it("normalizes mentions, deduplicates existing records and preserves their author", async () => {
     await backend.request("database.create", tagPath("known"), {id: "whiskytalk", label: "Whisky", uid: "owner"});
     const tags = await resolve("Before $[tag:Whisky-Talk:Label: detail] $[tag:WHISKYTALK:Again]", true);
-    expect(tags).toEqual([{key: "known", value: {id: "whiskytalk", label: "Whisky", uid: "owner"}}]);
+    expect(tags).toEqual([{key: "known", value: {tag_id: "known", id: "whiskytalk", label: "Whisky", uid: "owner"}}]);
     expect(Object.keys(await database.read(["tag", "tag_id"]))).toEqual(["known"]);
 });
 it("creates each absent normalized tag once and rereads its resolved timestamp", async () => {
     const tags = await resolve("$[tag:Whisky-Talk:First] $[tag:WHISKYTALK:Again] $[tag:other:Other]", true);
     expect(tags).toHaveLength(2);
     expect(tags.map(({value}) => value)).toEqual([
-        {id: "whiskytalk", label: "First", _sort_name: "whiskytalk", timestamp: expect.any(Number), uid: "0"},
-        {id: "other", label: "Other", _sort_name: "other", timestamp: expect.any(Number), uid: "0"},
+        {tag_id: tags[0].key, id: "whiskytalk", label: "First", _sort_name: "whiskytalk", timestamp: expect.any(Number), uid: "0"},
+        {tag_id: tags[1].key, id: "other", label: "Other", _sort_name: "other", timestamp: expect.any(Number), uid: "0"},
     ]);
     expect(await resolve("$[tag:whiskytalk:Again] $[tag:other:Other]", true)).toEqual(tags);
 });
@@ -77,5 +77,5 @@ it("unlinks deleted post tags without creating absent tags or deleting tag recor
         value: {uid: "writer", text: "$[tag:known:Known] $[tag:absent:Absent]"}});
     expect(await database.read(linkPath("known"))).toBeUndefined();
     expect(await database.read(linkPath("known", "other"))).toBe("someone");
-    expect(await database.read(["tag", "tag_id"])).toEqual({known: {id: "known"}});
+    expect(await database.read(["tag", "tag_id"])).toEqual({known: {tag_id: "known", id: "known"}});
 });

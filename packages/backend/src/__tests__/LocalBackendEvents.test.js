@@ -65,9 +65,9 @@ it("delivers creation, nested updates and deletion after commit without physical
     await database.delete(target("a"));
     await vi.waitFor(() => expect(events()).toHaveLength(3));
     expect(events()).toEqual([
-        {value: {type: "like", details: {count: 1}}, params: {extra_id: "a"}},
-        {previous: {type: "like", details: {count: 1}}, value: {type: "like", details: {count: 2}}, params: {extra_id: "a"}},
-        {value: {type: "like", details: {count: 2}}, params: {extra_id: "a"}},
+        {value: {extra_id: "a", type: "like", details: {count: 1}}, params: {extra_id: "a"}},
+        {previous: {extra_id: "a", type: "like", details: {count: 1}}, value: {extra_id: "a", type: "like", details: {count: 2}}, params: {extra_id: "a"}},
+        {value: {extra_id: "a", type: "like", details: {count: 2}}, params: {extra_id: "a"}},
     ]);
     expect(sequence).toEqual(["create", "update", "delete"]);
     for (const event of ["create", "update", "delete"]) expect(callbacks.extra[event]).toHaveBeenCalledTimes(1);
@@ -93,7 +93,7 @@ it("preserves intermediate snapshots during consecutive writes", async () => {
     await Promise.all([1, 2, 3].map(count => backend.request("database.update", target("a"), {count})));
     await vi.waitFor(() => expect(events()).toHaveLength(3));
     expect(events().map(({previous, value}) => [previous?.count ?? null, value.count])).toEqual([[null, 1], [1, 2], [2, 3]]);
-    expect(callbacks.extra.create.mock.calls[0][0]).toEqual({value: {count: 1}, params: {extra_id: "a"}});
+    expect(callbacks.extra.create.mock.calls[0][0]).toEqual({value: {extra_id: "a", count: 1}, params: {extra_id: "a"}});
     expect(sequence).toEqual(["create", "update", "update"]);
     expect(callbacks.extra.create).toHaveBeenCalledTimes(1);
     expect(callbacks.extra.update).toHaveBeenCalledTimes(2);
@@ -107,7 +107,7 @@ it("emits one final record event for a batch and nothing for reads, no-ops or CA
     await backend.request("database.update", "", new Map([
         [[...target("a"), "type"], "dislike"], [[...target("a"), "count"], 2],
     ]));
-    expect(events()).toEqual([{previous: {type: "like", count: 1}, value: {type: "dislike", count: 2}, params: {extra_id: "a"}}]);
+    expect(events()).toEqual([{previous: {extra_id: "a", type: "like", count: 1}, value: {extra_id: "a", type: "dislike", count: 2}, params: {extra_id: "a"}}]);
     expect(callbacks.extra.create).not.toHaveBeenCalled();
     expect(callbacks.extra.delete).not.toHaveBeenCalled();
     for (const callback of Object.values(callbacks.extra)) callback.mockClear();
@@ -126,7 +126,7 @@ it("classifies a patch upsert as create, then update, and a null write as delete
     expect(callbacks.extra.create).toHaveBeenCalledTimes(1);
     expect(callbacks.extra.update).toHaveBeenCalledTimes(1);
     expect(callbacks.extra.delete).toHaveBeenCalledTimes(1);
-    expect(callbacks.extra.delete.mock.calls[0][0]).toEqual({value: {type: "dislike"}, params: {extra_id: "upsert"}});
+    expect(callbacks.extra.delete.mock.calls[0][0]).toEqual({value: {extra_id: "upsert", type: "dislike"}, params: {extra_id: "upsert"}});
 });
 
 it("does not publish an aborted batch", async () => {
@@ -152,7 +152,7 @@ it("allows awaited reactions to produce further writes without deadlock", async 
     await database.create(target("a"), {type: "like"});
     await vi.waitFor(() => expect(events()).toHaveLength(2));
     expect(callbacks.post.create).toHaveBeenCalledTimes(1);
-    expect(await database.read(target("b"))).toEqual({type: "response"});
+    expect(await database.read(target("b"))).toEqual({extra_id: "b", type: "response"});
 });
 
 it("reports rejected reactions without failing the committed request or other reactions", async () => {
@@ -161,7 +161,7 @@ it("reports rejected reactions without failing the committed request or other re
     callbacks.extra.create.mockRejectedValue(error);
     await database.create(target("a"), {type: "like"});
     await vi.waitFor(() => expect(report).toHaveBeenCalledWith(error));
-    expect(await database.read(target("a"))).toEqual({type: "like"});
+    expect(await database.read(target("a"))).toEqual({extra_id: "a", type: "like"});
     await database.create(["posts", {post_id: "p"}], {text: "ok"});
     expect(callbacks.post.create).toHaveBeenCalledTimes(1);
 });
@@ -216,7 +216,7 @@ it("keeps the listener instance and backend context for optional event methods",
         await database.update(target("a"), {type: "dislike"});
         await database.delete(target("a"));
         expect(listener.calls).toEqual([{
-            value: {type: "like"}, params: {extra_id: "a"},
+            value: {extra_id: "a", type: "like"}, params: {extra_id: "a"},
         }]);
         expect(listener.backend).toBe(backend);
     } finally { remove(); }
@@ -273,14 +273,14 @@ it("captures all alert owners and preserves identities for create, update and de
         await database.update(a, {new: false});
         await database.delete(b);
         expect(callbacks.onCreate.mock.calls.map(([event]) => event)).toEqual([
-            {params: {user_id: "u1", alert_id: "a1"}, value: {new: true, text: "first"}},
-            {params: {user_id: "u2", alert_id: "a2"}, value: {new: true, text: "second"}},
+            {params: {user_id: "u1", alert_id: "a1"}, value: {user_id: "u1", alert_id: "a1", new: true, text: "first"}},
+            {params: {user_id: "u2", alert_id: "a2"}, value: {user_id: "u2", alert_id: "a2", new: true, text: "second"}},
         ]);
         expect(callbacks.onUpdate).toHaveBeenCalledExactlyOnceWith({
-            params: {user_id: "u1", alert_id: "a1"}, previous: {new: true, text: "first"}, value: {new: false, text: "first"},
+            params: {user_id: "u1", alert_id: "a1"}, previous: {user_id: "u1", alert_id: "a1", new: true, text: "first"}, value: {user_id: "u1", alert_id: "a1", new: false, text: "first"},
         });
         expect(callbacks.onDelete).toHaveBeenCalledExactlyOnceWith({
-            params: {user_id: "u2", alert_id: "a2"}, value: {new: true, text: "second"},
+            params: {user_id: "u2", alert_id: "a2"}, value: {user_id: "u2", alert_id: "a2", new: true, text: "second"},
         });
     } finally { remove(); }
 });
@@ -298,7 +298,7 @@ it.each(["user_id", {user_id: "{owner}"}])("captures named wildcard %j before de
             {[typeof wildcard === "string" ? "user_id" : "owner"]: "u1", alert_id: "a1"},
             {[typeof wildcard === "string" ? "user_id" : "owner"]: "u2", alert_id: "a2"},
         ]);
-        expect(own).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u1", alert_id: "a1"}, value: {new: true}});
+        expect(own).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u1", alert_id: "a1"}, value: {user_id: "u1", alert_id: "a1", new: true}});
     } finally { removeAll(); removeOwn(); }
 });
 
@@ -310,8 +310,8 @@ it("keeps composite identities separate when different users share the same chil
         await database.create(["_chats", {user_id: "u1"}, {chat_id: "shared"}], {timestamp: 1});
         await database.create(["_chats", {user_id: "u2"}, {chat_id: "shared"}], {timestamp: 2});
         expect(callback.mock.calls.map(([event]) => event)).toEqual([
-            {params: {user_id: "u1", chat_id: "shared"}, value: {timestamp: 1}},
-            {params: {user_id: "u2", chat_id: "shared"}, value: {timestamp: 2}},
+            {params: {user_id: "u1", chat_id: "shared"}, value: {user_id: "u1", chat_id: "shared", timestamp: 1}},
+            {params: {user_id: "u2", chat_id: "shared"}, value: {user_id: "u2", chat_id: "shared", timestamp: 2}},
         ]);
     } finally { remove(); }
 });
@@ -349,9 +349,9 @@ it("emits removal and creation when a record moves between captured owners", asy
         await database.create(["alerts", {user_id: "u1"}, {alert_id: "a1"}], {new: true});
         create.mockClear();
         await database.update(["alerts", {alert_id: "a1"}], {user_id: "u2"});
-        expect(removeEvent).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u1", alert_id: "a1"}, value: {new: true}});
+        expect(removeEvent).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u1", alert_id: "a1"}, value: {user_id: "u1", alert_id: "a1", new: true}});
         expect(create).toHaveBeenCalledExactlyOnceWith({params: {user_id: "u2", alert_id: "a1"},
-            value: {new: true, user_id: "u2"}});
+            value: {new: true, user_id: "u2", alert_id: "a1"}});
         expect(update).not.toHaveBeenCalled();
     } finally { remove(); }
 });
@@ -367,5 +367,33 @@ it("does not publish wildcard matches from an aborted alert batch", async () => 
         ]))).rejects.toThrow();
         expect(callback).not.toHaveBeenCalled();
         expect(await database.read(["alerts", "alert_id"])).toBeUndefined();
+    } finally { remove(); }
+});
+
+
+it("captures nested tag links after indexed selection and leaves unrelated tags and aborted writes silent", async () => {
+    const {database, backend} = await setup();
+    const onCreate = vi.fn(), onUpdate = vi.fn(), onDelete = vi.fn();
+    const remove = onEvents({path: ["_tag", {tag_id: "one"}, "post_id"], onCreate, onUpdate, onDelete})(backend);
+    try {
+        await database.update(["_tag", {tag_id: "one"}], {p1: "writer"});
+        await database.update(["_tag", {tag_id: "two"}], {p1: "other"});
+        expect(onCreate).toHaveBeenCalledExactlyOnceWith({
+            params: {tag_id: "one", post_id: "p1"}, value: "writer",
+        });
+        await database.update(["_tag", {tag_id: "one"}, {post_id: "p1"}], () => "editor");
+        expect(onUpdate).toHaveBeenCalledExactlyOnceWith({
+            params: {tag_id: "one", post_id: "p1"}, previous: "writer", value: "editor",
+        });
+        await expect(backend.request("database.update", "", new Map([
+            [["_tag", {tag_id: "one"}, {post_id: "p1"}], null],
+            [["posts", {post_id: "invalid"}], {post_id: "conflict"}],
+        ]))).rejects.toThrow();
+        expect(onDelete).not.toHaveBeenCalled();
+        await database.delete(["_tag", {tag_id: "one"}, {post_id: "p1"}]);
+        expect(onDelete).toHaveBeenCalledExactlyOnceWith({
+            params: {tag_id: "one", post_id: "p1"}, value: "editor",
+        });
+        expect(await database.read(["_tag", {tag_id: "two"}, {post_id: "p1"}])).toBe("other");
     } finally { remove(); }
 });

@@ -220,9 +220,9 @@ it("cleans concrete paths through real LocalBackend reads, batches and cursors",
                 ? Promise.resolve() : local.request(name, ...args)),
         };
         await run(new UserListener(backend));
-        expect(await database.read(["posts", "post_id"])).toEqual({keep: {uid: "reader"}});
+        expect(await database.read(["posts", "post_id"])).toEqual({keep: {post_id: "keep", uid: "reader"}});
         expect(await database.read(["extra", "extra_id"])).toEqual({
-            keep: {uid: "reader", id: "keep", type: "like"},
+            keep: {extra_id: "keep", uid: "reader", id: "keep", type: "like"},
         });
         expect(await database.read(["roles", {user_id: "gone"}])).toBeUndefined();
         expect(await database.read(["roles", {user_id: "reader"}])).toBe("user");

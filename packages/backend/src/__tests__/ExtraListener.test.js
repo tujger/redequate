@@ -81,7 +81,9 @@ it("persists a Local extra → counter → alert reaction chain with a resolved 
     await database.create(["extra", {extra_id: "e1"}], value);
     await vi.waitFor(async () => {
         const alerts = await database.read(["alerts", {user_id: "author"}, "alert_id"]);
-        expect(Object.values(alerts ?? {})).toEqual([{
+        expect(Object.keys(alerts ?? {})).toHaveLength(1);
+        expect(Object.values(alerts)).toEqual([{
+            alert_id: Object.keys(alerts)[0], user_id: "author",
             uid: "reactor", context: null, id: "p1", message: null,
             new: true, path: null, timestamp: expect.any(Number), type: "like",
         }]);

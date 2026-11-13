@@ -1,4 +1,3 @@
-import {knownCounterFailure} from "../controllers/knownCounterFailure";
 import React, {act} from "react";
 import {createRoot} from "react-dom/client";
 import {vi} from "vitest";
@@ -67,13 +66,13 @@ export function counterUiScenarios(Component, context, createDatabases) {
         expect(container.textContent).toBe("");
         expect(onChange).toHaveBeenCalledTimes(calls);
     });
-    knownCounterFailure("C3: enabling live with the same path starts the subscription", async () => {
+    it("C3: enabling live with the same path starts the subscription", async () => {
         await render({live: false});
         await write({increment: 2});
         await render({live: true});
         await displayed("2");
     });
-    knownCounterFailure("C3: disabling live removes the subscription", async () => {
+    it("C3: disabling live removes the subscription", async () => {
         await render(); await write({increment: 2}); await displayed("2");
         await render({live: false});
         await write({increment: 1});
@@ -82,7 +81,7 @@ export function counterUiScenarios(Component, context, createDatabases) {
         await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
         expect(container.textContent).toBe("2");
     });
-    knownCounterFailure("C4: changing database with the same path follows the new provider", async () => {
+    it("C4: changing database with the same path follows the new provider", async () => {
         await render(); await write({increment: 2}); await displayed("2");
         const [replacement] = await createDatabases("replacement");
         const subscribe = vi.spyOn(replacement, "addEventListener");
@@ -91,7 +90,7 @@ export function counterUiScenarios(Component, context, createDatabases) {
         expect(subscribe).toHaveBeenCalledOnce();
         await write({value: 7}, replacement); await displayed("7");
     });
-    knownCounterFailure("C5: changing only onChange uses the latest callback", async () => {
+    it("C5: changing only onChange uses the latest callback", async () => {
         const old = vi.fn(), latest = vi.fn();
         await render({onChange: old});
         await write({increment: 1}); await displayed("1");

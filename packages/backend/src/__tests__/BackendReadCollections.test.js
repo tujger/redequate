@@ -9,9 +9,9 @@ vi.mock("../common", async original => ({...await original(), handlers: {}}));
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 const records = {
-    first: {type: "tag.create", value: 1, note: {label: "First"}},
-    second: {type: "tag.create", value: 2},
-    third: {type: "tag.delete", value: 3},
+    first: {activity_type_id: "first", type: "tag.create", value: 1, note: {label: "First"}},
+    second: {activity_type_id: "second", type: "tag.create", value: 2},
+    third: {activity_type_id: "third", type: "tag.delete", value: 3},
 };
 const setup = async provider => {
     if (provider === "local") {
@@ -89,5 +89,5 @@ it("supports scoped compound-key collections in Local backend reads", async () =
         await backend.request("database.create", ["chats", {chat_id}, {message_id}], {created});
     }
     expect(await backend.request("database.read", ["chats", {chat_id: "one"}, "message_id"],
-        {orderBy: ["created"], equalTo: 1})).toEqual({a: {created: 1}});
+        {orderBy: ["created"], equalTo: 1})).toEqual({a: {chat_id: "one", message_id: "a", created: 1}});
 });

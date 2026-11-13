@@ -1,5 +1,4 @@
 import createLocalDatabase from "../../../../packages/database/src/__tests__/createLocalDatabase";
-import {knownCounterFailure} from "../../controllers/knownCounterFailure";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 
@@ -23,15 +22,17 @@ it.each(["like", "dislike"])("C8: Local %s updates persisted counters, not only 
     expect((await database.cursor(["extra", "extra_id"]).next(10))).toHaveLength(1);
     expect(await counterControl({database, path: [{id: "p1"}, type]})).toBe(1);
 });
-knownCounterFailure("C8: Local following creates a relation and updates both directional counters", async () => {
+it("C8: Local following creates a relation and updates both directional counters", async () => {
     const database = createLocalDatabase({storageId: "local-follow-writers"});
     await database.read(["_counters"]);
     const result = await mutualRequest({database, currentUserData: {id: "reader"}, mutualId: "author",
         mutualType: "users_public", mutualMode: MutualMode.SIMPLEX_QUIET, typeId: "following"});
     expect(result.key).toEqual(expect.any(String));
     expect(await database.read(["mutual", {mutual_type: "following"}, {mutual_id: result.key}])).toMatchObject({uid: "reader", id: "author"});
-    expect(await counterControl({database, path: [{id: "reader"}, "mutual", {mutual_type: "following"}]})).toBe(1);
-    expect(await counterControl({database, path: [{id: "author"}, "mutual", {mutual_type: "following_s"}]})).toBe(1);
+    await vi.waitFor(async () => {
+        expect(await counterControl({database, path: [{id: "reader"}, "mutual", {mutual_type: "following"}]})).toBe(1);
+        expect(await counterControl({database, path: [{id: "author"}, "mutual", {mutual_type: "following_s"}]})).toBe(1);
+    });
 });
 
 it("publishing a Local post updates its author's persisted count", async () => {

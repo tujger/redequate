@@ -138,15 +138,15 @@ it("updates post counters through a real local reaction chain", async () => {
     await database.read(["posts"]);
     await database.create(post, {uid: "u1", text: "A"});
     await vi.waitFor(async () => {
-        expect(await database.read(user)).toEqual({posts: 1});
-        expect(await database.read(total)).toEqual({posts: 1});
+        expect(await database.read(user)).toEqual({id: "u1", posts: 1, mutualstamps: {_my: 1}});
+        expect(await database.read(total)).toEqual({id: "total", posts: 1});
     });
     await database.update(post, {text: "B"});
-    expect(await database.read(total)).toEqual({posts: 1});
+    expect(await database.read(total)).toEqual({id: "total", posts: 1});
     await database.delete(post);
     await vi.waitFor(async () => {
-        expect(await database.read(user)).toEqual({});
-        expect(await database.read(total)).toEqual({});
+        expect(await database.read(user)).toEqual({id: "u1", mutualstamps: {}});
+        expect(await database.read(total)).toEqual({id: "total"});
     });
 });
 

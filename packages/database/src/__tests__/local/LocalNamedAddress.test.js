@@ -82,9 +82,9 @@ it("subscribes to per-user chat IDs without requiring a message ID", async () =>
         await vi.waitFor(() => expect(onChange).toHaveBeenCalled());
         expect(Object.keys(onChange.mock.calls.at(-1)[0])).toEqual(["a"]);
         await database.update(path("a"), {timestamp: 3});
-        await vi.waitFor(() => expect(onChildChange).toHaveBeenCalledWith({key: "a", value: {timestamp: 3}}));
+        await vi.waitFor(() => expect(onChildChange).toHaveBeenCalledWith({key: "a", value: {user_id: "me", chat_id: "a", timestamp: 3}}));
         await database.create(path("z"), {timestamp: 4});
-        await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledWith({key: "z", value: {timestamp: 4}}));
+        await vi.waitFor(() => expect(onChildAdd).toHaveBeenCalledWith({key: "z", value: {user_id: "me", chat_id: "z", timestamp: 4}}));
         expect(onError).not.toHaveBeenCalled();
     } finally { listener.remove(); }
 });

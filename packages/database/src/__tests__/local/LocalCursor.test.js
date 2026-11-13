@@ -21,7 +21,7 @@ it("pages plain records by indexed fields and applies cursor replacements to the
     const editing = database.cursor(["posts", "post_id"], {handle: ({value}) => ({...value, title: "handled"})});
     const entries = await editing.next(10);
     expect(entries).toHaveLength(3);
-    expect(entries.every(({value}) => value.title === "handled" && !Object.hasOwn(value, "post_id") && !Object.hasOwn(value, "_id"))).toBe(true);
+    expect(entries.every(({value}) => value.title === "handled" && !Object.hasOwn(value, "_id") && typeof value.post_id === "string")).toBe(true);
     expect((await database.read(["posts", {post_id: "p1"}])).title).toBe("handled");
 });
 
@@ -52,11 +52,11 @@ it("delivers committed creates, updates and deletions once with ordinary fields"
         await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
         await database.create(["posts", {post_id: "p1"}], {title: "A"});
         expect(onChange).toHaveBeenCalledTimes(2);
-        expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "A"}});
+        expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "A"}});
         await database.update(["posts", {post_id: "p1"}], {title: "B"});
-        expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "B"}});
+        expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "B"}});
         await database.delete(["posts", {post_id: "p1"}]);
-        expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {title: "B"}});
+        expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "B"}});
         const count = onChange.mock.calls.length;
         await expect(database.update(["posts", {post_id: "p1"}], () => { throw new Error("rollback"); })).rejects.toThrow("rollback");
         expect(onChange).toHaveBeenCalledTimes(count);
@@ -106,12 +106,12 @@ it("sends a complete handler replacement through the supplied backend and reread
     const handle = vi.fn(() => replacement);
     const cursor = database.cursor(["posts", "post_id"], {handle});
     const entries = await cursor.next(10);
-    expect(handle).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {count: 3, obsolete: true}});
+    expect(handle).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", count: 3, obsolete: true}});
     expect(request.mock.calls).toEqual([
         ["database.update", ["posts", {post_id: "p1"}], null, {mode: "read"}],
         ["database.update", ["posts", {post_id: "p1"}], replacement, {mode: "replace", etag: expect.any(String)}]
     ]);
-    expect(entries).toEqual([{key: "p1", value: {count: 5, time: expect.any(Number)}}]);
+    expect(entries).toEqual([{key: "p1", value: {post_id: "p1", count: 5, time: expect.any(Number)}}]);
     expect(await database.read(["posts", {post_id: "p1"}])).toEqual(entries[0].value);
 });
 
@@ -122,23 +122,23 @@ it("skips backend writes for undefined handler results and propagates backend fa
     await database.create(["posts", {post_id: "p1"}], {text: "original"});
     const request = vi.spyOn(backend, "request");
     const unchanged = database.cursor(["posts", "post_id"], {handle: ({value}) => { value.text = "ignored"; }});
-    expect(await unchanged.next(10)).toEqual([{key: "p1", value: {text: "original"}}]);
+    expect(await unchanged.next(10)).toEqual([{key: "p1", value: {post_id: "p1", text: "original"}}]);
     expect(request).not.toHaveBeenCalled();
     const failure = new Error("backend unavailable");
     request.mockRejectedValueOnce(failure);
     const editing = database.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
     await expect(editing.next(10)).rejects.toBe(failure);
-    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({text: "original"});
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({post_id: "p1", text: "original"});
 });
 
 it("requires backend only when a cursor handler requests a replacement", async () => {
     const writer = await setup("cursor-missing-backend");
     await writer.create(["posts", {post_id: "p1"}], {text: "original"});
     const database = new LocalDatabase({stores: [singletonMetaStore], storageId: "cursor-missing-backend"});
-    expect(await database.cursor(["posts", "post_id"]).next(10)).toEqual([{key: "p1", value: {text: "original"}}]);
+    expect(await database.cursor(["posts", "post_id"]).next(10)).toEqual([{key: "p1", value: {post_id: "p1", text: "original"}}]);
     const cursor = database.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
     await expect(cursor.next(10)).rejects.toBeInstanceOf(TypeError);
-    expect(await writer.read(["posts", {post_id: "p1"}])).toEqual({text: "original"});
+    expect(await writer.read(["posts", {post_id: "p1"}])).toEqual({post_id: "p1", text: "original"});
 });
 
 it("routes compound-scope handler writes through backend without changing sibling scopes", async () => {
@@ -148,11 +148,11 @@ it("routes compound-scope handler writes through backend without changing siblin
     for (const chat_id of ["c1", "c2"]) await database.create(["chats", {chat_id}, {message_id: "m1"}], {text: "original"});
     const request = vi.spyOn(backend, "request");
     const cursor = database.cursor(["chats", {chat_id: "c1"}, "message_id"], {handle: () => ({text: "changed"})});
-    expect(await cursor.next(10)).toEqual([{key: "m1", value: {text: "changed"}}]);
+    expect(await cursor.next(10)).toEqual([{key: "m1", value: {chat_id: "c1", message_id: "m1", text: "changed"}}]);
     expect(request.mock.calls[1]).toEqual([
         "database.update", ["chats", {chat_id: "c1"}, {message_id: "m1"}], {text: "changed"}, {mode: "replace", etag: expect.any(String)}
     ]);
-    expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({text: "original"});
+    expect(await database.read(["chats", {chat_id: "c2"}, {message_id: "m1"}])).toEqual({chat_id: "c2", message_id: "m1", text: "original"});
 });
 
 // Storage and delivery tests isolate application reactions; their effects have integration coverage.

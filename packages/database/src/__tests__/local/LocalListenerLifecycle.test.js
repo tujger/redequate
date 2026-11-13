@@ -67,7 +67,7 @@ it("observes rejected callback promises without awaiting writes through the same
     await vi.waitFor(() => expect(globalThis.reportError).toHaveBeenCalledExactlyOnceWith(failure));
     expect(callback).toHaveBeenCalledTimes(2);
     expect(onError).toHaveBeenCalledExactlyOnceWith(callbackFailure, "addEventListener.onChange", {path: ["posts"], value: undefined});
-    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({text: "created in callback"});
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({post_id: "p1", text: "created in callback"});
 });
 
 it("isolates a failing listener and leaves successful committed writes intact", async () => {
@@ -81,10 +81,10 @@ it("isolates a failing listener and leaves successful committed writes intact", 
     keep(database.addEventListener(["posts"], {onChange: healthy}));
     await vi.waitFor(() => expect(healthy).toHaveBeenCalledTimes(1));
     expect(await database.create(["posts", {post_id: "p1"}], {text: "A"})).toBe("p1");
-    expect(healthy).toHaveBeenLastCalledWith({p1: {text: "A"}});
+    expect(healthy).toHaveBeenLastCalledWith({p1: {post_id: "p1", text: "A"}});
     expect(onError).toHaveBeenCalledOnce();
     expect(globalThis.reportError).toHaveBeenCalledExactlyOnceWith(failure);
-    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({text: "A"});
+    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({post_id: "p1", text: "A"});
 });
 
 it("uses an uncaught microtask when the host has no reportError", async () => {
