@@ -1,5 +1,5 @@
 import update from "../../../../database/src/common/methods/update";
-import validatePath from "../../../../database/src/common/validatePath";
+import {fail} from "../../../../common";
 import BackendListener from "../BackendListener";
 
 export default class ActivityListener extends BackendListener {
@@ -9,19 +9,16 @@ export default class ActivityListener extends BackendListener {
 
     async onCreate({params, value}) {
         console.debug("[Backend:Activity]", `created [${params.activity_id}]`, {params, value});
-        validatePath(["_activity", "activity_type_id"]);
-
-        const records = await this.backend.request("database.read", ["_activity", "activity_type_id"], {
-            equalTo: value.type,
-            orderBy: ["type"]
-        });
-        const data = {type: value.type, value: this.backend.TIMESTAMP};
-        const key = Object.keys(records ?? {})[0];
-        if (key) {
-            return update(this.backend, ["_activity", {activity_type_id: key}], data);
-        } else {
-            return this.backend.request("database.create", ["_activity", "activity_type_id"], data);
+        if (typeof value?.type !== "string" || !value.type.trim()) {
+            fail("database/invalid-argument", "Activity type must be a non-empty string.");
         }
+        return update(this.backend, ["_activity"], previous => {
+            const records = {...previous};
+            const key = Object.keys(records).find(key => records[key]?.type === value.type) ?? params.activity_id;
+            return {...records, [key]: {
+                activity_type_id: key, type: value.type, value: this.backend.TIMESTAMP,
+            }};
+        });
     }
 
     async onDelete({params, value}) {
