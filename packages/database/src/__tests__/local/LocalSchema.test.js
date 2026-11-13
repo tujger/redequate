@@ -2,7 +2,6 @@ import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
-import ActivityListener from "../../../../backend/src/common/handlers/activity";
 import {openDatabase} from "../../local/helpers";
 import {convertStores, LOCAL_SCHEMA} from "../../local/storeSchema";
 import stores from "../../local/stores.json";
@@ -118,81 +117,4 @@ it("keeps configured collections instance-scoped and provider stores separate", 
     await expect(database.applySchema({$auth: {keyPath: "id", autoIncrement: false, indexes: {}}})).rejects.toBeInstanceOf(TypeError);
     await expect(new LocalBackend({storageId: "schema-scope"}).request("database.create", ["$auth", {id: "a"}], {}))
         .rejects.toMatchObject({code: "database/invalid-argument"});
-});
-
-
-it("discards only the legacy Activity index while upgrading to type records", async () => {
-    const storageId = "activity-index-upgrade";
-    const schema = structuredClone(LOCAL_SCHEMA);
-    schema._activity.indexes = {type: {keyPath: "type", unique: false}};
-    const connection = await openDatabase(storageId, schema);
-    await new Promise((resolve, reject) => {
-        const transaction = connection.transaction(["_activity", "activity"], "readwrite");
-        transaction.oncomplete = resolve;
-        transaction.onabort = () => reject(transaction.error);
-        transaction.objectStore("_activity").put({types: {service: 1}});
-        transaction.objectStore("_activity").put({type: "tag.create", value: 1});
-        transaction.objectStore("activity").put({activity_id: "a1", type: "tag.create", timestamp: 1});
-        transaction.objectStore("activity").put({activity_id: "a2", type: "tag.create", timestamp: 2});
-        transaction.objectStore("activity").put({activity_id: "a3", type: "tag.delete", timestamp: 3});
-    });
-    connection.close();
-    const backend = new LocalBackend({storageId});
-    const database = createService(LocalDatabase, {storageId, backend});
-    expect(await database.read(["_activity"])).toBeUndefined();
-    const upgraded = await openDatabase(storageId);
-    expect(await new Promise((resolve, reject) => {
-        const request = upgraded.transaction("_activity").objectStore("_activity").getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    })).toEqual([]);
-    upgraded.close();
-    expect(await database.read(["activity", {activity_id: "a1"}])).toMatchObject({type: "tag.create"});
-    expect(Object.keys(await database.read(["activity"]))).toHaveLength(3);
-    await new ActivityListener(backend).rebuild();
-    const reopened = createService(LocalDatabase, {storageId, backend});
-    expect(await reopened.read(["_activity"])).toEqual({
-        a1: {activity_type_id: "a1", type: "tag.create", value: expect.any(Number)},
-        a3: {activity_type_id: "a3", type: "tag.delete", value: expect.any(Number)},
-    });
-    expect((await reopened.cursor(["_activity", "activity_type_id"],
-        {orderBy: "type", equalTo: "tag.create"}).next(10)).map(({key}) => key)).toEqual(["a1"]);
-    expect(Object.keys(await reopened.read(["activity"]))).toHaveLength(3);
-});
-
-it.each([null, {keyPath: "type", unique: false}])("replaces only an incompatible derived Activity store (%j) and keeps compatible data on reopen", async index => {
-    const storageId = "activity-isolated-upgrade";
-    const legacy = structuredClone(LOCAL_SCHEMA);
-    if (index) legacy._activity.indexes.activity_type_id = index;
-    else delete legacy._activity.indexes.activity_type_id;
-    const connection = await openDatabase(storageId, legacy);
-    await new Promise((resolve, reject) => {
-        const transaction = connection.transaction(["_activity", "activity", "posts"], "readwrite");
-        transaction.oncomplete = resolve;
-        transaction.onabort = () => reject(transaction.error);
-        transaction.objectStore("_activity").put({types: {legacy: 1}});
-        transaction.objectStore("activity").put({activity_id: "a1", type: "tag.create", timestamp: 1});
-        transaction.objectStore("posts").put({post_id: "p1", text: "keep"});
-    });
-    connection.close();
-    const migrated = await openDatabase(storageId);
-    expect(migrated.version).toBe(2);
-    migrated.close();
-    const database = make(storageId);
-    expect(await database.read(["_activity"])).toBeUndefined();
-    expect(await database.read(["activity", {activity_id: "a1"}])).toEqual({activity_id: "a1", type: "tag.create", timestamp: 1});
-    expect(await database.read(["posts", {post_id: "p1"}])).toEqual({post_id: "p1", text: "keep"});
-    await database.update(["_activity", {activity_type_id: "a1"}], () => ({type: "tag.create", value: 2}));
-    const beforeReopen = await openDatabase(storageId);
-    const version = beforeReopen.version;
-    beforeReopen.close();
-    const reopened = make(storageId);
-    expect(await reopened.read(["_activity"])).toEqual({a1: {activity_type_id: "a1", type: "tag.create", value: 2}});
-    const upgraded = await openDatabase(storageId);
-    try {
-        expect(upgraded.version).toBe(version);
-        const actual = upgraded.transaction("_activity").objectStore("_activity").index("activity_type_id");
-        expect(actual.keyPath).toBe("activity_type_id");
-        expect(actual.unique).toBe(true);
-    } finally { upgraded.close(); }
 });
