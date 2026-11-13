@@ -48,6 +48,7 @@ export default class UserData extends UserDataCommon {
         if (includePrivate) {
             if (!state.private) throw new Error("[UserData] private section is not ready");
             for (const deviceId in state.private) {
+                if (deviceId === "user_id") continue;
                 for (const x in state.private[deviceId]) {
                     if (state.private[deviceId][x] !== undefined) {
                         if (state.private[deviceId][x] !== undefined && (state.private[deviceId][x] || "").constructor.name === "String") {
