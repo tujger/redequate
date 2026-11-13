@@ -1,6 +1,6 @@
 export * from "./UserData";
 export {default as UserData} from "./UserData";
-export {UserRole} from "./UserRole";
+export {default as UserRole} from "./UserRole";
 
 export async function delay(providerName, method) {
     const milliseconds = Math.floor(Math.random() * 2001);

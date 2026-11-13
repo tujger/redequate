@@ -1,6 +1,6 @@
 import {vi} from "vitest";
 import CommonUserData from "../UserData.js";
-import {UserRole} from "../UserRole";
+import UserRole from "../UserRole";
 
 it("restores request time and loaded state through fromJSON", () => {
     const json = {
