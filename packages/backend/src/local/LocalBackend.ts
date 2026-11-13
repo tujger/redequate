@@ -34,6 +34,8 @@ export default class LocalBackend extends BackendBase {
         return createIncrement(n);
     }
 
+    async changeRole(uid: string, role: string | null): Promise<void> {}
+
     async request(name: string, ...args: unknown[]): Promise<unknown> {
         if (!Object.hasOwn(requestHandlers, name)) {
             fail("backend/not-implemented", `Backend request ${name} is not implemented.`);

@@ -48,6 +48,10 @@ export default class BackendBase {
         return notImplemented("increment");
     }
 
+    async changeRole(uid: string, role: string | null): Promise<void> {
+        return notImplemented("changeRole");
+    }
+
     async request(name: string, ...args: unknown[]): Promise<unknown> {
         return notImplemented("request");
     }

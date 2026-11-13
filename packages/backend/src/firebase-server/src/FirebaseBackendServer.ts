@@ -1,7 +1,8 @@
+import {getAuth} from "firebase-admin/auth";
 import {getDatabase, ServerValue} from "firebase-admin/database";
 import {getMessaging} from "firebase-admin/messaging";
 import type {getStorage} from "firebase-admin/storage";
-import {fail} from "../../../../common";
+import {fail, UserRole} from "../../../../common";
 import BackendBase from "../../common/BackendBase";
 import userContext from "./common/userContext";
 import create from "./database/admin/create";
@@ -24,6 +25,7 @@ const requests = {
 };
 
 export default class FirebaseBackendServer extends BackendBase {
+    readonly getAuthInstance: typeof getAuth;
     readonly getDatabaseInstance: typeof getDatabase;
     readonly getMessagingInstance: typeof getMessaging;
     readonly createIncrement: typeof ServerValue.increment;
@@ -32,12 +34,14 @@ export default class FirebaseBackendServer extends BackendBase {
         getDatabaseInstance: typeof getDatabase = getDatabase,
         createIncrement: typeof ServerValue.increment = ServerValue.increment,
         options: NonNullable<ConstructorParameters<typeof BackendBase>[0]> & {
+            getAuthInstance?: typeof getAuth;
             getStorageInstance?: typeof getStorage;
             getMessagingInstance?: typeof getMessaging;
         } = {},
     ) {
         super(options);
         this.setStorage(new FirebaseStorageServer(options.getStorageInstance));
+        this.getAuthInstance = options.getAuthInstance ?? getAuth;
         this.getMessagingInstance = options.getMessagingInstance ?? getMessaging;
         this.getDatabaseInstance = getDatabaseInstance;
         this.createIncrement = createIncrement;
@@ -53,6 +57,11 @@ export default class FirebaseBackendServer extends BackendBase {
 
     increment(n: number) {
         return this.createIncrement(n);
+    }
+
+    async changeRole(uid: string, role: string | null): Promise<void> {
+        await this.getAuthInstance(this.getDatabaseInstance().app)
+            .setCustomUserClaims(uid, role === UserRole.ADMIN ? {admin: true} : null);
     }
 
     async getCurrentUser(): Promise<string | undefined> {
