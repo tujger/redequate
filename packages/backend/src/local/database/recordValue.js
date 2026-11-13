@@ -7,7 +7,7 @@ const incompatible = () => {
     throw Object.assign(new Error("Incompatible Local record format; recreate the local database explicitly."), {name: "VersionError"});
 };
 
-export const decodeRecordValue = (record, keyFields = []) => {
+export const decodeRecordValue = (record) => {
     if (record === undefined) return undefined;
     if (Object.hasOwn(record, "_record") || Object.hasOwn(record, "_encoded")) return incompatible();
     if (Object.hasOwn(record, "_value")) {
@@ -16,21 +16,6 @@ export const decodeRecordValue = (record, keyFields = []) => {
     }
     const value = structuredClone(record);
     delete value._id;
-    for (const field of new Set(keyFields)) {
-        const path = field.split("."), parents = [];
-        let node = value;
-        for (const name of path.slice(0, -1)) {
-            if (!isObject(node) || !Object.hasOwn(node, name)) { node = undefined; break; }
-            parents.push([node, name]);
-            node = node[name];
-        }
-        if (!isObject(node)) continue;
-        delete node[path.at(-1)];
-        for (const [parent, name] of parents.reverse()) {
-            if (!isObject(parent[name]) || Object.keys(parent[name]).length) break;
-            delete parent[name];
-        }
-    }
     return value;
 };
 

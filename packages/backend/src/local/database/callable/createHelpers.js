@@ -241,13 +241,7 @@ const identityField = (store, data, conditions, requested) => {
     return index?.fields.at(-1) ?? "_id";
 };
 
-const recordValue = (store, row, conditions = {}, keyField) => {
-    const unique = uniqueIndexes(store);
-    const fields = unique.flatMap(({fields}) => fields);
-    if (!unique.length) fields.push(...Object.keys(conditions));
-    if (keyField) fields.push(...(Array.isArray(keyField) ? keyField : [keyField]));
-    return decodeRecordValue(row, fields);
-};
+const recordValue = (_store, row) => decodeRecordValue(row);
 
 const collectionValue = (store, rows, conditions, keyField) => {
     if (!rows.length) return undefined;
@@ -291,15 +285,14 @@ export const readStore = async (store, path, {keyField, ...options} = {}) => {
     return collectionValue(store, rows, target.conditions, keyField);
 };
 
-// Listener identities must be captured before recordValue strips storage keys.
+// Indexed segments select rows; remaining segments traverse their nested values.
 export const readStoreMatches = async (store, {path, variables, params}) => {
     if (!variables.length) {
         const value = await readStore(store, path);
         return value === undefined || value === null ? [] : [{path, params, value}];
     }
-    if (!store.indexNames.length) {
-        const document = recordValue(store, await singleton(store));
-        const matches = [];
+    const matches = [];
+    const visitNested = (document, start, concrete, bindings, identities = {}) => {
         const visit = (value, index, concrete, bindings) => {
             if (value === undefined || value === null) return;
             if (index === path.length) {
@@ -310,6 +303,7 @@ export const readStoreMatches = async (store, {path, variables, params}) => {
             const variable = variables.find(variable => variable.index === index);
             if (variable) {
                 for (const key of Object.keys(value)) {
+                    if (index === start && Object.hasOwn(identities, key)) continue;
                     const nextBindings = {...bindings};
                     set(nextBindings, variable.parameter, key);
                     visit(value[key], index + 1, [...concrete, {[variable.field]: key}], nextBindings);
@@ -320,38 +314,44 @@ export const readStoreMatches = async (store, {path, variables, params}) => {
                 if (Object.hasOwn(value, key)) visit(value[key], index + 1, [...concrete, segment], bindings);
             }
         };
-        visit(document, 1, [path[0]], params);
+        visit(document, start, concrete, bindings);
+    };
+    if (!store.indexNames.length) {
+        visitNested(recordValue(store, await singleton(store)), 1, [path[0]], params);
         return matches;
     }
     const indexed = new Set(indexes(store).flatMap(({fields}) => fields));
     indexed.add("_id");
-    for (const {field} of variables) {
+    const nestedStart = path.findIndex((segment, index) => index > 1 &&
+        !indexed.has(typeof segment === "string" ? segment : Object.keys(segment)[0]));
+    const recordVariables = variables.filter(({index}) => nestedStart < 0 || index < nestedStart);
+    for (const {field} of recordVariables) {
         if (!indexed.has(field)) invalid(`No declared index for listener field ${field}.`);
     }
     const template = path.map((segment, index) => {
         const variable = variables.find(variable => variable.index === index);
         return variable ? {[variable.field]: `{${variable.parameter}}`} : segment;
     });
-    const target = address(store, template);
-    for (const {field} of variables) {
+    const target = address(store, nestedStart < 0 ? template : template.slice(0, nestedStart));
+    for (const {field} of recordVariables) {
         if (!Object.hasOwn(target.conditions, field)) invalid(`Listener field ${field} must identify a record index.`);
     }
-    const fields = new Set(variables.map(({field}) => field));
+    const fields = new Set(recordVariables.map(({field}) => field));
     const conditions = Object.fromEntries(Object.entries(target.conditions).filter(([name]) => !fields.has(name)));
     const rows = await queryRows(store, conditions);
-    const matches = [];
     for (const row of rows) {
-        const values = variables.map(({field}) => at(row, parts(field)));
+        const values = recordVariables.map(({field}) => at(row, parts(field)));
         if (values.some(value => value === undefined || value === null)) continue;
         const bindings = {...params};
         const concrete = [...path];
-        variables.forEach(({index, field, parameter}, position) => {
+        recordVariables.forEach(({index, field, parameter}, position) => {
             const value = String(values[position]);
             Object.defineProperty(bindings, parameter, {value, enumerable: true, configurable: true, writable: true});
             concrete[index] = {[field]: value};
         });
         const value = at(recordValue(store, row, target.conditions, [...fields]), target.property);
-        if (value !== undefined && value !== null) matches.push({path: concrete, params: bindings, value});
+        if (nestedStart >= 0) visitNested(value, nestedStart, concrete.slice(0, nestedStart), bindings, target.conditions);
+        else if (value !== undefined && value !== null) matches.push({path: concrete, params: bindings, value});
     }
     return matches;
 };
@@ -426,7 +426,9 @@ export const writeStore = async (store, rawPath, value, {merge = false, create =
     for (const {fields} of indexes(store)) {
         for (const field of fields) {
             const prior = at(previous, parts(field));
-            if (at(decoded, parts(field)) === undefined && at(next, parts(field)) === undefined && prior !== undefined) {
+            if ((at(decoded, parts(field)) === undefined || Object.hasOwn(next, "_value") ||
+                Object.hasOwn(target.conditions, "_id") && uniqueIndexes(store).some(index => index.fields.includes(field))) &&
+                at(next, parts(field)) === undefined && prior !== undefined) {
                 setRecordField(next, parts(field), prior);
             }
         }
