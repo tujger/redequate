@@ -9,14 +9,14 @@ import {MutualListMode} from "../../../components/MutualComponent/MutualConstant
 import dispatcherRoutedBodyReducer from "../../../reducers/dispatcherRoutedBodyReducer";
 import {Layout} from "../../../controllers/General";
 
-const context = vi.hoisted(() => ({database: {cursor: vi.fn()}, props: undefined, dispatch: vi.fn()}));
+const context = vi.hoisted(() => ({database: {cursor: vi.fn()}, props: undefined, item: undefined, dispatch: vi.fn()}));
 vi.mock("react-i18next", () => ({useTranslation: () => ({t: value => value})}));
 vi.mock("../../../controllers", () => ({useDatabase: () => context.database}));
 vi.mock("../../../controllers/General", () => ({cacheDatas: {}, Layout: {REFRESH: "layout_Refresh"}}));
 vi.mock("../../../controllers/UserData", () => ({default: class {}}));
 vi.mock("../../../components/ItemPlaceholderComponent", () => ({default: () => null}));
 vi.mock("../../../components/MutualComponent/MutualRequestItem", () => ({default: () => null}));
-vi.mock("../../../components/MutualComponent/MutualSubscribeItem", () => ({default: () => null}));
+vi.mock("../../../components/MutualComponent/MutualSubscribeItem", () => ({default: props => { context.item = props; return null; }}));
 vi.mock("../../../components/LazyListComponent/LazyListComponent", () => ({default: props => { context.props = props; return null; }}));
 
 let container, store;
@@ -24,6 +24,7 @@ beforeEach(() => {
     container = document.createElement("div");
     context.database = {cursor: vi.fn(() => ({}))};
     context.dispatch.mockClear();
+    context.item = undefined;
     store = createStore(combineReducers({lazyListComponentReducer: reducer, dispatcherRoutedBodyReducer}));
 });
 afterEach(() => unmount(container));
@@ -64,7 +65,28 @@ it("restarts through the existing layout remount without revision state", () => 
 it("requests page remount after changing a subscription", () => {
     render(<React.Fragment><Provider store={store}><MutualList mode={MutualListMode.SUBSCRIBES} mutualId="u1" typeId="watching"/></Provider></React.Fragment>, container);
     const before = store.getState().dispatcherRoutedBodyReducer.random;
-    act(() => context.props.ItemComponent({key: "m1", value: {type: "tag"}}).props.onDelete());
+    act(() => context.props.ItemComponent({id: "m1", value: {type: "tag"}}).props.onDelete());
     expect(store.getState().dispatcherRoutedBodyReducer.random).not.toBe(before);
     expect(store.getState().lazyListComponentReducer).toEqual({});
+});
+
+it.each([
+    MutualListMode.INVITATIONS, MutualListMode.REQUESTS,
+    MutualListMode.SUBSCRIBERS, MutualListMode.SUBSCRIBES, MutualListMode.SELF,
+])("uses the ordinary item id without reading React key in %s mode", mode => {
+    render(<Provider store={store}><MutualList mode={mode} mutualId="u1" typeId="following"/></Provider>, container);
+    const Item = context.props.ItemComponent;
+    const value = {type: "tag"};
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+        render(<Item key="react-only-key" id="m1" value={value}/>, container);
+        expect(error).not.toHaveBeenCalled();
+        expect(Item({id: "m1", value}).key).toBe(`m1_following_${mode}_u1`);
+        if (mode === MutualListMode.SELF) {
+            expect(JSON.parse(container.textContent)).toEqual({id: "m1", value});
+        } else {
+            expect(context.item.data.id).toBe("m1");
+            expect(context.item.data.value).toBe(value);
+        }
+    } finally { error.mockRestore(); }
 });

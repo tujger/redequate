@@ -83,7 +83,7 @@ export default props => {
             return item => <MutualSubscribeItem
                 {...ItemProps}
                 data={item}
-                key={item.key + "_" + mixedId}
+                key={item.id + "_" + mixedId}
                 onDelete={() => {
                     refreshList();
                     onChanged();
@@ -94,7 +94,7 @@ export default props => {
             return item => <MutualSubscribeItem
                 {...ItemProps}
                 data={item}
-                key={item.key + "_" + mixedId}
+                key={item.id + "_" + mixedId}
                 onDelete={() => {
                     refreshList();
                     onChanged();
@@ -110,7 +110,7 @@ export default props => {
         return item => <div
             {...ItemProps}
             className={[styles.fallbackItem, ItemProps?.className].filter(Boolean).join(" ")}
-            key={item.key + "_" + mixedId}
+            key={item.id + "_" + mixedId}
             style={undefined}
         >{JSON.stringify(item, null, " ")}</div>
     }
