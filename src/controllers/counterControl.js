@@ -27,20 +27,20 @@ export default (
         return database.update(["_counters", ...path], initial => {
             if (!initial) {
                 if (increase) return increase;
-                else if (increment) return increment;
-                else if (value) return value;
+                else if (increment !== undefined) return increment > 0 ? increment : null;
+                else if (value !== undefined) return value > 0 ? value : null;
                 else return null;
             } else if (initial <= 0) {
                 if (increase > 0) return increase;
-                else if (increment) return increment;
-                else if (value) return value;
+                else if (increment !== undefined) return increment > 0 ? increment : null;
+                else if (value !== undefined) return value > 0 ? value : null;
                 else return null;
             } else {
                 let result = initial;
                 if (increase > 0) result += increase;
                 else if (increment) result += increment;
                 else if (decrease > 0) result -= decrease;
-                else if (value) result = value;
+                else if (value !== undefined) result = value;
 
                 if (result <= 0) result = null;
                 return result;
