@@ -208,10 +208,10 @@ export default (props) => {
             }
         }
         const fetchCurrentUserLastVisit = async props => {
-            const {userData} = props;
+            const {userData, database} = props;
             if (userData) {
                 userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
-                cacheDatas.put(userData.id, userData);
+                cacheDatas.put(userData.id, new UserData(database).fromJSON(userData.toJSON()));
                 setCurrentUserData(userData);
             }
             return props;

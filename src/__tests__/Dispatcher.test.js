@@ -2,7 +2,8 @@ import React, {act} from "react";
 import {vi} from "vitest";
 import Dispatcher from "../Dispatcher";
 import UserData, {watchUserChanged} from "../controllers/UserData";
-import {useMetaInfo} from "../controllers/General";
+import {cacheDatas, useMetaInfo} from "../controllers/General";
+import GlobalStore from "../controllers/AppContext/GlobalStore";
 import {refreshAll} from "../controllers/Store";
 import textTranslation from "../controllers/textTranslation";
 import loadUserData from "../../packages/auth/src/common/loadUserData";
@@ -233,4 +234,40 @@ it("cancels the single profile watcher when unmounted", async () => {
     expect(signal.aborted).toBe(false);
     await unmount(container);
     expect(signal.aborted).toBe(true);
+});
+
+it("keeps the cached profile editable after publishing a frozen current-user snapshot", async () => {
+    const store = new GlobalStore(null);
+    context.setUser.mockImplementationOnce(user => store.set(user));
+    const database = await start(() => new UserData().create("u1", {email: "user@example.test"}), {
+        "users_public/u1": {name: "Original", email: "user@example.test", preferences: {theme: "dark"}},
+        "roles/u1": "admin",
+        "users_private/u1/device": {locale: "en"},
+    });
+    const published = store.get();
+    const cached = cacheDatas.put.mock.calls.find(([id]) => id === "u1")[1];
+    const snapshot = published.toJSON();
+    expect(cached.toJSON()).toEqual(snapshot);
+    const reads = database.read.mock.calls.length;
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+        expect(await cached.fetch([UserData.PUBLIC])).toBe(cached);
+        expect(error).not.toHaveBeenCalled();
+        expect(database.read).toHaveBeenCalledTimes(reads);
+        expect(cached).not.toBe(published);
+        for (const key of ["public", "private", "loaded"]) {
+            expect(cached._getState()[key]).not.toBe(published._getState()[key]);
+        }
+        expect(Object.isFrozen(published)).toBe(true);
+        expect(Object.isFrozen(published._getState())).toBe(true);
+        expect(Object.isFrozen(cached._getState())).toBe(false);
+        database.read.mockResolvedValueOnce({name: "Updated", email: "user@example.test"});
+        expect(await cached.fetch([UserData.PUBLIC, UserData.FORCE])).toBe(cached);
+        await cached.setPrivate("device", {locale: "ru"});
+        expect(cached.name).toBe("Updated");
+        expect(cached.private.device.locale).toBe("ru");
+        expect(cached.role).toBe("admin");
+        expect(published.toJSON()).toEqual(snapshot);
+        expect(error).not.toHaveBeenCalled();
+    } finally { error.mockRestore(); }
 });
