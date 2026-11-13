@@ -243,7 +243,7 @@ export default class UserData extends UserDataCommon {
 
         await Promise.all(tasks);
         try {
-            state.public._sort_name = state.sortName;
+            state.public = {...state.public, _sort_name: state.sortName};
             state.requestedTimestamp = new Date().getTime();
         } catch (e) {
             console.error(e)

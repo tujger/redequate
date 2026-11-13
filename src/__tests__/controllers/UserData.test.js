@@ -122,3 +122,24 @@ it("removes the frontend cache entry after deleting a profile", async () => {
     expect(database.delete).toHaveBeenCalledWith(["users_public", {user_id: "deleted"}]);
     expect(remove).toHaveBeenCalledWith("deleted");
 });
+
+it("refreshes a loaded frozen public profile without mutating it or reading it again", async () => {
+    const database = {read: vi.fn()};
+    const user = new UserData(database).create("frozen", {name: "Alice", email: "alice@example.test", custom: "keep"});
+    const state = user._getState();
+    const original = Object.freeze({...user.public, _sort_name: "stale"});
+    state.public = original;
+    state.loaded = {public: true};
+    state.requestedTimestamp = 1;
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+        expect(await user.fetch([UserData.PUBLIC])).toBe(user);
+        expect(error).not.toHaveBeenCalled();
+        expect(database.read).not.toHaveBeenCalled();
+        expect(user.public).not.toBe(original);
+        expect(user.public).toEqual({...original, _sort_name: "alice_frozen"});
+        expect(original._sort_name).toBe("stale");
+        expect(Object.isFrozen(original)).toBe(true);
+        expect(user.toJSON().requested).toBeGreaterThan(1);
+    } finally { error.mockRestore(); }
+});
