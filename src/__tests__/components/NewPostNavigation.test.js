@@ -33,7 +33,6 @@ vi.mock("react-intersection-observer", () => ({
     InView: ({onChange}) => <button data-observer onClick={() => onChange(true)}>Next page</button>
 }));
 vi.mock("../../controllers/notifySnackbar", () => ({default: vi.fn()}));
-vi.mock("../../pages/admin/audit/auditReducer", () => ({updateActivity: vi.fn()}));
 vi.mock("../../components/ProgressView", () => ({default: {SHOW: {type: "show"}, HIDE: {type: "hide"}}}));
 vi.mock("../../components/MentionedTextComponent", () => ({tokenizeText: value => [{type: "text", value}]}));
 vi.mock("../../components/MentionsInputComponent/MentionsInputComponent", () => ({default: ({onChange}) =>

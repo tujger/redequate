@@ -18,7 +18,6 @@ vi.mock("../components", () => ({tokenizeText: () => [{type: "user", id: "suppor
 vi.mock("../components/MentionedSelectComponent", () => ({default: () => null}));
 vi.mock("../components/ProgressView", () => ({default: {SHOW: "show", HIDE: "hide"}}));
 vi.mock("../components/ConfirmComponent", () => ({default: () => null}));
-vi.mock("../pages/admin/audit/auditReducer", () => ({updateActivity: vi.fn()}));
 vi.mock("../controls/Tabs/Tabs", () => ({default: ({items, onChange}) => <nav>{items.map(item =>
     <button key={item.value} onClick={() => onChange(item.value)}>{item.label}</button>)}</nav>}));
 vi.mock("../controls/Switch/Switch", () => ({default: ({checked, disabled, onChange}) =>
