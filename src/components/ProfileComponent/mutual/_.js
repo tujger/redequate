@@ -11,7 +11,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Feed"}
+                label={"Profile.Feed"}
                 path={[{id: userData.id}, "mutualstamps", {mutual_type: "_"}]}
             />,
             List: (
@@ -19,13 +19,15 @@ export default {
                     header = <><h5>Merges all follow lists.</h5><p/></>,
                     userData,
                     ...props
-                }) => <MutualListWithPosts
-                header={header}
-                mode={MutualListMode.STAMPS}
-                typeId={"_"}
-                userData={userData}
-                {...props}
-            />,
+                }) => {
+                return <MutualListWithPosts
+                    header={header}
+                    mode={MutualListMode.STAMPS}
+                    typeId={"_"}
+                    userData={userData}
+                    {...props}
+                />;
+            },
         }
     }
 }

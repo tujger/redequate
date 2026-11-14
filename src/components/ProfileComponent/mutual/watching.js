@@ -7,7 +7,7 @@ import MutualListWithPosts from "./MutualListWithPosts";
 
 export default {
     id: "watching",
-    label: "Tags",
+    label: "Profile.Tags",
     listComponents: {
         [MutualListMode.SUBSCRIBES]: {
             test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
@@ -15,7 +15,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Tags"}
+                label={"Profile.Tags"}
                 path={[{id: userData.id}, "mutual", {mutual_type: "watching"}]}
             />,
             List: ({header, userData, ...props}) => {
@@ -41,7 +41,7 @@ export default {
                     mode={MutualListMode.SUBSCRIBES}
                     typeId={"watching"}
                     userData={userData}
-                    unsubscribeLabel={"Tag.Unfollow"}
+                    unsubscribeLabel={"Profile.Unfollow"}
                     {...props}
                 />
             }
@@ -52,7 +52,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Watching"}
+                label={"Profile.Watching"}
                 path={[{id: userData.id}, "mutualstamps", {mutual_type: "watching"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithPosts

@@ -8,7 +8,7 @@ import MutualListWithPosts from "./MutualListWithPosts";
 
 export default {
     id: "following",
-    label: "Following",
+    label: "Profile.Following",
     editComponent: null,
     viewComponent: ({userData}) => {
         const {settings = {}} = useMetaInfo() || {};
@@ -19,8 +19,8 @@ export default {
             counterComponent={<InfoComponent suffix={"follower(s)"}/>}
             mutualId={userData.id}
             typeId={"following"}
-            subscribeLabel={"Follow"}
-            unsubscribeLabel={"Unfollow"}
+            subscribeLabel={"Profile.Follow"}
+            unsubscribeLabel={"Profile.Unfollow"}
         />;
     },
     listComponents: {
@@ -30,7 +30,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Following"}
+                label={"Profile.Following"}
                 path={[{id: userData.id}, "mutual", {mutual_type: "following"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithItems
@@ -38,7 +38,7 @@ export default {
                 mode={MutualListMode.SUBSCRIBES}
                 typeId={"following"}
                 userData={userData}
-                unsubscribeLabel={"Tag.Unfollow"}
+                unsubscribeLabel={"Profile.Unfollow"}
                 {...props}
             />,
         },
@@ -48,7 +48,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Follow"}
+                label={"Profile.Follow"}
                 path={[{id: userData.id}, "mutualstamps", {mutual_type: "following"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithPosts
@@ -62,7 +62,7 @@ export default {
         [MutualListMode.SUBSCRIBERS]: {
             test: ({userProfileFollowing}) => !!userProfileFollowing,
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Followers"}
+                label={"Profile.Followers"}
                 path={[{id: userData.id}, "mutual", {mutual_type: "following_s"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithItems

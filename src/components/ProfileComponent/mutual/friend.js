@@ -7,7 +7,7 @@ import MutualListWithItems from "./MutualListWithItems";
 
 export default {
     id: "friend",
-    label: "Friends",
+    label: "Profile.Friends",
     editComponent: null,
     viewComponent: ({userData}) => {
         const {settings = {}} = useMetaInfo() || {};
@@ -19,17 +19,17 @@ export default {
             counterRequestsComponent={<InfoComponent suffix={"invite(s)"}/>}
             mutualId={userData.id}
             mutualMode={MutualMode.DUPLEX_APPROVE}
-            pendingLabel={"Waiting for response"}
-            subscribeLabel={"Invite to friends"}
+            pendingLabel={"Profile.Waiting for response"}
+            subscribeLabel={"Profile.Invite to friends"}
             typeId={"friend"}
-            unsubscribeLabel={"Leave friends"}
+            unsubscribeLabel={"Profile.Leave friends"}
         />;
     },
     listComponents: {
         [MutualListMode.SUBSCRIBES]: {
             test: ({userProfileFriend}) => !!userProfileFriend,
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Friends"}
+                label={"Profile.Friends"}
                 path={[{id: userData.id}, "mutual", {mutual_type: "friend"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithItems
@@ -46,7 +46,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Invitations"}
+                label={"Profile.Invitations"}
                 path={[{id: userData.id}, "mutualrequests", {mutual_type: "friend"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithItems
@@ -54,7 +54,7 @@ export default {
                 mode={MutualListMode.INVITATIONS}
                 typeId={"friend"}
                 userData={userData}
-                unsubscribeLabel={"Tag.Unfollow"}
+                unsubscribeLabel={"Profile.Unfollow"}
                 {...props}
             />
         },
@@ -64,7 +64,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.Requests"}
+                label={"Profile.Requests"}
                 path={[{id: userData.id}, "mutualrequests", {mutual_type: "friend_s"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithItems
@@ -72,7 +72,7 @@ export default {
                 mode={MutualListMode.REQUESTS}
                 typeId={"friend"}
                 userData={userData}
-                unsubscribeLabel={"Tag.Unfollow"}
+                unsubscribeLabel={"Profile.Unfollow"}
                 {...props}
             />,
         },

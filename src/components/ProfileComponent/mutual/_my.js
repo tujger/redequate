@@ -10,7 +10,7 @@ export default {
                 return isSameUser || isCurrentUserAdmin;
             },
             Label: ({userData}) => <MutualLabel
-                label={"Definitions.My Posts"}
+                label={"Profile.My Posts"}
                 path={[{id: userData.id}, "mutualstamps", {mutual_type: "_my"}]}
             />,
             List: ({header, userData, ...props}) => <MutualListWithPosts

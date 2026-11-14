@@ -8,7 +8,7 @@ import styles from "./styles/ProfileComponent.module.css";
 export default {
     role: {
         id: "role",
-        label: "Role",
+        label: "User.Role",
         icon: <RoleIcon/>,
         editComponent: props => <label className={styles.roleField}>
             <span className={styles.roleLabel} id={"profile-role-label"}>Role</span>
