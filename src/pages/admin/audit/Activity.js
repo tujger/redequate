@@ -3,8 +3,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import SortIcon from "@mui/icons-material/Sort";
 import StartDateIcon from "@mui/icons-material/Today";
 import React from "react";
-import {connect, useDispatch} from "react-redux";
-import {DatabaseOrder} from "../../../../packages/database/src";
+import {useDispatch} from "react-redux";
+import {DatabaseOrder} from "../../../../packages/database";
 import AvatarView from "../../../components/AvatarView";
 import DateTimePicker from "../../../components/DateTimePicker/DateTimePicker";
 import LazyListComponent from "../../../components/LazyListComponent/LazyListComponent";
@@ -22,16 +22,16 @@ import Chip from "../../../controls/Chip/Chip";
 import Select from "../../../controls/Select/Select";
 import baseStyles from "../../../themes/Base.module.css";
 import ActivityItemComponent from "./ActivityItemComponent";
-import auditReducer from "./auditReducer";
 import activityStyles from "./styles/Activity.module.css";
+import useActivityFilter from "./useActivityFilter";
 
-const Activity = props => {
-    const {
+export default props => {
+    const [{
         activityMode = "all",
         activityFilterItem,
         activityFilter,
         activitySort = "asc"
-    } = props;
+    }, setActivityFilter] = useActivityFilter();
     const database = useDatabase();
     const dispatch = useDispatch();
     const shouldRedirectToLogin = useRedirectToLogin();
@@ -43,29 +43,26 @@ const Activity = props => {
 
     const handleItemClick = activityMode => (event, activityFilterItem) => {
         event && event.stopPropagation();
-        dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activitySort});
+        setActivityFilter(state => ({...state, activityMode, activityFilterItem, activityFilter: undefined}))
     }
 
     const handleMode = evt => {
-        dispatch({type: auditReducer.ACTIVITY, activityMode: evt.target.value, activitySort});
+        setActivityFilter(state => ({
+            ...state,
+            activityMode: evt.target.value,
+            activityFilter: undefined,
+            activityFilterItem: undefined
+        }));
     }
 
     const handleSortClick = evt => {
         const sort = activitySort === DatabaseOrder.ASC ? DatabaseOrder.DESC : DatabaseOrder.ASC;
-
-        dispatch({
-            type: auditReducer.ACTIVITY,
-            activityMode,
-            activityFilterItem,
-            activityFilter,
-            activitySort: sort
-        });
+        setActivityFilter(state => ({...state, activitySort: sort}));
     }
 
     const handleTypeSelect = evt => {
         const activityFilterItem = evt.target.value;
-
-        dispatch({type: auditReducer.ACTIVITY, activityMode, activityFilterItem, activitySort});
+        setActivityFilter(state => ({...state, activityFilter: undefined, activityFilterItem}))
     }
 
     const handleStartDate = startDate => {
@@ -140,11 +137,7 @@ const Activity = props => {
     })();
 
     const clearFilteredItem = () => {
-        dispatch({
-            type: auditReducer.ACTIVITY,
-            activityMode,
-            activitySort
-        });
+        setActivityFilter(state => ({...state, activityFilter: undefined, activityFilterItem: undefined}))
     };
 
     const clearStartDate = () => {
@@ -303,12 +296,3 @@ const Activity = props => {
         </div>}
     </>
 };
-
-const mapStateToProps = ({audit}) => ({
-    activityFilterItem: audit.activityFilterItem,
-    activityFilter: audit.activityFilter,
-    activityMode: audit.activityMode,
-    activitySort: audit.activitySort,
-});
-
-export default connect(mapStateToProps)(Activity);
