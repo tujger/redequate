@@ -142,7 +142,6 @@ export default () => {
                 // AlertsCounter: 'src/alerts/AlertsCounter.js',
                 Activity: 'src/pages/admin/audit/Activity.js',
                 Admin: 'src/pages/admin/Admin.js',
-                Audit: 'src/pages/admin/audit/Audit.js',
                 Chat: 'src/chat/Chat.js',
                 Chats: 'src/chat/Chats.js',
                 // ChatsCounter: 'src/chat/ChatsCounter.js',
@@ -173,7 +172,6 @@ export default () => {
                 // internal
                 __alertsVisitReducer: 'src/alerts/alertsVisitReducer.js',
                 __alertsCounterReducer: 'src/alerts/alertsCounterReducer.js',
-                __auditReducer: 'src/pages/admin/audit/auditReducer.js',
                 __chatsCounterReducer: 'src/chat/chatsCounterReducer.js',
                 __chatMeta: 'src/chat/ChatMeta.js',
                 __dateTimePicker: 'src/components/DateTimePicker/DateTimePicker.js',
