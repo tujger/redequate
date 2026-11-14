@@ -14,6 +14,8 @@ auditReducer.ACTIVITY = "audit_activity";
 auditReducer.SAVE = "audit_save";
 auditReducer.ERRORS = "audit_errors";
 
+export default auditReducer;
+
 export const updateActivity = async ({database, uid = 0, type = null, details = null}) => {
     database.create(["activity", "activity_id"], {
         details,
@@ -22,8 +24,3 @@ export const updateActivity = async ({database, uid = 0, type = null, details = 
         uid,
     }).catch(console.error)
 }
-updateActivity.SERVICE = "service";
-updateActivity.MAINTENANCE_START = "maintenance_start";
-updateActivity.MAINTENANCE_STOP = "maintenance_stop";
-
-export default auditReducer;
