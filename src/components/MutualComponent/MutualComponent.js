@@ -35,10 +35,10 @@ export default props => {
         rejectLabel = t("Mutual.Reject"),
         rejectComponent = <ActionComponent label={rejectLabel} color={"secondary"} variant={"outlined"}/>,
         subscribeLabel = t("Mutual.Subscribe"),
-        subscribeComponent = <ActionComponent label={subscribeLabel}/>,
+        subscribeComponent = <ActionComponent label={t(subscribeLabel)}/>,
         typeId,
         unsubscribeLabel = t("Mutual.Unsubscribe"),
-        unsubscribeComponent = <ActionComponent label={unsubscribeLabel}/>,
+        unsubscribeComponent = <ActionComponent label={t(unsubscribeLabel)}/>,
     } = props;
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
