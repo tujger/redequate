@@ -127,8 +127,8 @@ export default class LocalCursor extends DatabaseCursor {
         return (compared || compareCursorPaths(a.fullPath, b.fullPath)) * (this.order === "desc" ? -1 : 1);
     }
 
-    async next(n = 1) {
-        this.#header.push(...await super.next(n));
+    async next(n = 1, handle = this.handle) {
+        this.#header.push(...await super.next(n, handle));
         if (this.position.finished) return [];
         if (!this.#branches) {
             this.#initializing ??= this.#initialize().catch(error => { this.#initializing = undefined; throw error; });
@@ -147,8 +147,8 @@ export default class LocalCursor extends DatabaseCursor {
             const candidate = candidates.shift();
             const {key, value, branch} = candidate;
             let entry = {key, value, ...(branch.params ? {params: {...branch.params}} : {})};
-            if (this.handle) {
-                const replacement = await this.handle(structuredClone(entry));
+            if (handle) {
+                const replacement = await handle(structuredClone(entry));
                 if (replacement !== undefined) {
                     const recordPath = branch.path.length
                         ? await getChildRecordPath(this.#storageId, branch.path, key, branch.keyField) : [key];
