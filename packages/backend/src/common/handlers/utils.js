@@ -22,6 +22,6 @@ export const registerError = async (backend, error) => {
     return backend.request("database.create", ["errors", "error_id"], {
         error: error?.message ?? String(error),
         timestamp: backend.TIMESTAMP,
-        uid: await backend.getCurrentUser(),
+        uid: (await backend.getCurrentUser()) || null,
     });
 };
