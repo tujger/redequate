@@ -54,7 +54,7 @@ interface CursorRead {
     state: CursorState;
     n: number;
     entries: DatabaseEntry[];
-    handle?: DatabaseCursorOptions["handle"];
+    handle?: DatabaseCursorOptions["handle"] | null;
     child?: CursorChildSnapshot;
     sortValue?: DatabaseValue;
     entry?: DatabaseEntry;
@@ -139,7 +139,7 @@ export default class FirebaseCursorBase extends DatabaseCursor {
         return (compared || compareCursorPaths(path(a), path(b))) * (this.order === "desc" ? -1 : 1);
     }
 
-    async #readWildcard(n: number): Promise<DatabaseEntry[]> {
+    async #readWildcard(n: number, handle?: DatabaseCursorOptions["handle"] | null): Promise<DatabaseEntry[]> {
         const entries: DatabaseEntry[] = [];
         while (entries.length < n) {
             let selected: CursorCandidate | undefined;
@@ -148,22 +148,22 @@ export default class FirebaseCursorBase extends DatabaseCursor {
                 if (candidate && (!selected || this.#compare(candidate, selected) < 0)) selected = candidate;
             }
             if (!selected) break;
-            const handled = await this.handleEntry({...selected, handle: this.handle, entries});
+            const handled = await this.handleEntry({...selected, handle, entries});
             this.advanceScan(handled);
             handled.state.pending = undefined;
         }
         return entries;
     }
 
-    async next(n = 1): Promise<(DatabaseEntry | DatabaseGroupEntry)[]> {
-        this.#header.push(...await super.next(n));
+    async next(n = 1, handle: DatabaseCursorOptions["handle"] | null = this.handle): Promise<(DatabaseEntry | DatabaseGroupEntry)[]> {
+        this.#header.push(...await super.next(n, handle));
         if (this.position.finished) return [];
         if (!this.#states) {
             this.#initializing ??= this.#initialize().catch(error => { this.#initializing = undefined; throw error; });
             await this.#initializing;
         }
-        const entries = this._wildcard ? await this.#readWildcard(n)
-            : (await this.readEntries({state: this.#states[0], handle: this.handle, n, entries: []})).entries;
+        const entries = this._wildcard ? await this.#readWildcard(n, handle)
+            : (await this.readEntries({state: this.#states[0], handle, n, entries: []})).entries;
         const result = [...this.#header.splice(0), ...entries];
         this._position = Object.freeze({index: this.position.index + result.length,
             key: result.at(-1)?.key ?? this.position.key,

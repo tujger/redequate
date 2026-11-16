@@ -1,5 +1,5 @@
 import DatabaseCursor from "./DatabaseCursor";
-import type {DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent, DatabaseCursorSubscription} from "./DatabaseTypes";
+import type {DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent, DatabaseCursorSubscription, DatabaseCursorOptions} from "./DatabaseTypes";
 
 type Entry = DatabaseEntry | DatabaseGroupEntry;
 
@@ -35,9 +35,9 @@ export default class FilteringDatabaseCursor extends DatabaseCursor {
         throw new Error("FilteringDatabaseCursor does not support handle.");
     }
 
-    async next(n = 1): Promise<Entry[] | undefined> {
+    async next(n = 1, handle?: DatabaseCursorOptions["handle"] | null): Promise<Entry[] | undefined> {
         // Validate n with the same base contract, without creating a second heading.
-        await super.next(n);
+        await super.next(n, handle);
         const result: Entry[] = [];
         while (result.length < n) {
             if (this.#pending.length) {
@@ -46,7 +46,7 @@ export default class FilteringDatabaseCursor extends DatabaseCursor {
                 continue;
             }
             if (this.#source.position.finished) break;
-            const batch = await this.#source.next(n - result.length);
+            const batch = await this.#source.next(n - result.length, handle);
             if (batch === undefined) {
                 this.#pending.unshift(...result);
                 return undefined;

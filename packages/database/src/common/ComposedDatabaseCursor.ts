@@ -14,7 +14,8 @@ type Source = {
     offset: number;
     headers: DatabaseGroupEntry[];
 };
-type NextProps = {n: number; byGroup: boolean; entries: (DatabaseEntry | DatabaseGroupEntry)[]};
+type NextProps = {n: number; byGroup: boolean; entries: (DatabaseEntry | DatabaseGroupEntry)[];
+    handle?: DatabaseCursorOptions["handle"] | null};
 type SourceProps = NextProps & {source: Source};
 
 type CreateCursor = (path: DatabasePath, options: DatabaseCursorOptions) => DatabaseCursor | undefined;
@@ -143,8 +144,8 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         this.#sources = sources;
     }
 
-    async next(n = 1): Promise<(DatabaseEntry | DatabaseGroupEntry)[] | undefined> {
-        let props = await this.#prepareNext(n);
+    async next(n = 1, handle?: DatabaseCursorOptions["handle"] | null): Promise<(DatabaseEntry | DatabaseGroupEntry)[] | undefined> {
+        let props = await this.#prepareNext(n, handle);
         if (!props) return undefined;
         try {
             const collected = await this.#collectEntries(props);
@@ -160,13 +161,13 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         return this.#commitNext(formPage({...props, header: this.#header, heading: this._heading}));
     }
 
-    async #prepareNext(n: number): Promise<NextProps | undefined> {
+    async #prepareNext(n: number, handle?: DatabaseCursorOptions["handle"] | null): Promise<NextProps | undefined> {
         const valid = await this.#run(async () => {
-            this.#header.push(...await super.next(n) ?? []);
+            this.#header.push(...await super.next(n, handle) ?? []);
             return true;
         }, {onError: this.onError}, "cursor.next", {...this.#context, n});
         if (!valid) return undefined;
-        const props = {n, byGroup: ComposedDatabaseCursor.#hasGroup(this), entries: this.#pending};
+        const props = {n, byGroup: ComposedDatabaseCursor.#hasGroup(this), entries: this.#pending, handle};
         this.#pending = [];
         return props;
     }
@@ -191,7 +192,7 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
     async #fillSource(props: SourceProps): Promise<SourceProps | undefined> {
         const {source, n} = props;
         if (source.offset < source.entries.length) return props;
-        const read = () => source.cursor.next(n);
+        const read = () => source.cursor.next(n, props.handle);
         const batch = source.cursor instanceof ComposedDatabaseCursor
             ? await read()
             : await this.#run(read, {onError: source.cursor.onError ?? this.onError},
