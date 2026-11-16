@@ -219,7 +219,10 @@ by the development/test workflow.
   numeric key bounds are rejected by both providers. `equalTo: null` remains an
   explicit equality condition and is never treated as an unspecified bound.
 - `next(n)` requires a positive safe integer and returns up to `n` data
-  entries, plus an optional one-time group heading. Handlers run sequentially
+  entries, plus an optional one-time group heading. `next(n, handle)` overrides
+  the configured handler for that call; omitted or undefined uses each source
+  handler, and null disables it. Results follow the same write rules regardless
+  of how the handler was supplied. Handlers run sequentially
   on copies of candidate entries. Returning undefined makes no write and
   returns the original value; null deletes and omits the entry; another value
   replaces it and the cursor rereads the saved value. A replacement that no
