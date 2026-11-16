@@ -76,9 +76,12 @@ export default class DatabaseCursor {
     get position(): DatabaseCursorPosition { return this._position; }
 
     /** Validate and supply the initial heading; subclasses account for their complete result. */
-    async next(n = 1): Promise<(DatabaseEntry | DatabaseGroupEntry)[] | undefined> {
+    async next(n = 1, handle?: DatabaseCursorOptions["handle"] | null): Promise<(DatabaseEntry | DatabaseGroupEntry)[] | undefined> {
         if (!Number.isSafeInteger(n) || n <= 0) {
             fail("database/invalid-argument", "n must be a positive safe integer.");
+        }
+        if (handle !== undefined && handle !== null && !(handle instanceof Function)) {
+            fail("database/invalid-argument", "handle must be a function, null or undefined.");
         }
         this._started = true;
         if (this.group === undefined || this._heading || this._position.finished) return [];
