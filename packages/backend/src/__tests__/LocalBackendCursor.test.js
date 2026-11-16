@@ -55,6 +55,23 @@ it("uses the current backend to persist handle replacements and deletions", asyn
     expect(await database.read(["posts", {post_id: "b"}])).toEqual({post_id: "b", text: "changed"});
     expect(request.mock.calls.filter(([name]) => name === "database.update")).toHaveLength(4);
 });
+it.each(["throw", "reject"])("propagates a %s from backend handle and stops the page without logging", async mode => {
+    const {backend, database} = await setup();
+    for (const post_id of ["a", "b"]) await database.create(["posts", {post_id}], {text: post_id});
+    const error = new Error("handle failed");
+    const handle = vi.fn(() => {
+        if (mode === "throw") throw error;
+        return Promise.reject(error);
+    });
+    const request = vi.spyOn(backend, "request");
+    const cursor = await backend.request("database.cursor", path, {handle});
+    await expect(cursor.next(2)).rejects.toBe(error);
+    expect(handle).toHaveBeenCalledTimes(1);
+    expect(cursor.count).toBe(0);
+    const registrations = request.mock.calls.filter(([name, target]) =>
+        name === "database.create" && target?.[0] === "errors");
+    expect(registrations).toHaveLength(0);
+});
 it("delivers live subscription events and stops after unsubscribe", async () => {
     const {backend, database} = await setup();
     const cursor = await backend.request("database.cursor", path, {orderBy: "to", start: 2});

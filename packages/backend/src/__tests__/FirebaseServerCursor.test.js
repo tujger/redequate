@@ -183,9 +183,28 @@ it("retries the same buffered record after a handle failure", async () => {
     sdk.once.mockResolvedValueOnce(page([["a", 1]]));
     const error = new Error("handle failed"), onError = vi.fn();
     const handle = vi.fn().mockRejectedValueOnce(error).mockResolvedValue(undefined);
+    const request = vi.spyOn(backend, "request");
     const cursor = await backend.request("database.cursor", "records", {handle, onError});
     await expect(cursor.next(2)).rejects.toBe(error);
     expect(cursor.count).toBe(0);
     expect(onError).not.toHaveBeenCalled();
+    expect(request.mock.calls.filter(([name, path]) => name === "database.create" && path?.[0] === "errors")).toHaveLength(0);
     expect(await cursor.next(2)).toEqual([{key: "a", value: 1}]);
+});
+it.each(["throw", "reject"])("propagates a %s from Admin handle and stops the page without logging", async mode => {
+    const {backend, sdk, page} = setup();
+    sdk.once.mockResolvedValueOnce(page([["a", 1], ["b", 2]]));
+    const error = new Error("handle failed");
+    const handle = vi.fn(() => {
+        if (mode === "throw") throw error;
+        return Promise.reject(error);
+    });
+    const request = vi.spyOn(backend, "request");
+    const cursor = await backend.request("database.cursor", "records", {handle});
+    await expect(cursor.next(2)).rejects.toBe(error);
+    expect(handle).toHaveBeenCalledTimes(1);
+    expect(cursor.count).toBe(0);
+    const registrations = request.mock.calls.filter(([name, path]) =>
+        name === "database.create" && path?.[0] === "errors");
+    expect(registrations).toHaveLength(0);
 });

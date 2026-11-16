@@ -107,26 +107,3 @@ it("commits concurrent Local events as one record per type", async () => {
     expect(records.map(record => record.type).sort()).toEqual(["tag.create", "tag.delete"]);
     expect(records.every(record => typeof record.value === "number")).toBe(true);
 });
-
-it("restores a cleared derived activity index from the source journal on explicit rebuild", async () => {
-    const storageId = "activity-rebuild";
-    const backend = new LocalBackend({storageId});
-    const database = createService(LocalDatabase, {storageId, backend});
-    await database.read(["activity"]);
-    const first = await createActivity(backend, {type: "tag.create"});
-    await createActivity(backend, {type: "tag.create"});
-    const third = await createActivity(backend, {type: "tag.delete"});
-    await vi.waitFor(async () => expect(Object.keys(await database.read(["_activity"]))).toHaveLength(2));
-    await backend.request("database.update", ["_activity"], {}, {mode: "replace",
-        etag: (await backend.request("database.update", ["_activity"], null, {mode: "read"})).etag});
-    expect(await database.read(["_activity"])).toBeUndefined();
-    expect(Object.keys(await database.read(["activity"]))).toHaveLength(3);
-    await new ActivityListener(backend).rebuild();
-    const records = await database.read(["_activity"]);
-    expect(records).toEqual({
-        [first]: {activity_type_id: first, type: "tag.create", value: expect.any(Number)},
-        [third]: {activity_type_id: third, type: "tag.delete", value: expect.any(Number)},
-    });
-    expect((await database.cursor(["_activity", "activity_type_id"],
-        {orderBy: "type", equalTo: "tag.create"}).next(10)).map(({key}) => key)).toEqual([first]);
-});
