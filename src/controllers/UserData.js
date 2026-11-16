@@ -48,6 +48,7 @@ export default class UserData extends UserDataCommon {
         if (includePrivate) {
             if (!state.private) throw new Error("[UserData] private section is not ready");
             for (const deviceId in state.private) {
+                if (deviceId === "user_id") continue;
                 for (const x in state.private[deviceId]) {
                     if (state.private[deviceId][x] !== undefined) {
                         if (state.private[deviceId][x] !== undefined && (state.private[deviceId][x] || "").constructor.name === "String") {
@@ -294,54 +295,100 @@ export default class UserData extends UserDataCommon {
         if (state.id && state.persisted && (now - this.#lastVisitUpdate) > 60000) {
             database.read(["users_public", {user_id: state.id}, {email: "email"}])
                 .then(async value => {
-                    if (value === undefined) return;
+                    if (value === undefined) {
+                        return;
+                    }
                     await database.update(["users_public", {user_id: state.id}, "visit"], () => database.TIMESTAMP);
                     this.#lastVisitUpdate = now;
                 })
-                .catch(console.error);
+                .catch(error => console.error("[UserData] updateVisitTimestamp failed", error));
         }
         return this;
     }
+
 }
 
-export function watchUserChanged({auth, database, getUserData, onUserChanged}) {
+export function watchUserChanged({auth, database, getUserData, onUserChanged, signal}) {
     return new Promise(resolve => {
-        const refreshAction = () => {
+        if (signal?.aborted) return;
+        let active = true;
+        let identity;
+        let checking = false;
+        let revision = 0;
+        let unsubscribe;
+        const reportError = error => {
+            if (active) notifySnackbar(error);
+        };
+        const refreshAction = async () => {
+            if (!active) return;
             const snapshot = getUserData();
             if (!snapshot?.id) return;
-            new UserData(database).fromJSON(snapshot.toJSON())
-                .fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE])
-                .then(userData => {
-                    if (getUserData()?.id !== userData.id) return;
-                    onUserChanged(userData);
-                    resolve();
-                })
-                .catch(notifySnackbar)
-        }
-
-        auth.onAuthStateChanged(async userData => {
-            if (!userData?.id) {
+            const current = revision;
+            try {
+                const userData = await new UserData(database).fromJSON(snapshot.toJSON())
+                    .fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
+                if (!active || current !== revision || getUserData()?.id !== userData.id) return;
                 onUserChanged(userData);
-                return;
+                resolve();
+            } catch (error) {
+                reportError(error);
             }
+        };
+        const check = async () => {
+            if (!active || checking || !identity?.id) return;
+            const userData = identity;
             const currentUserData = getUserData();
-            if (currentUserData.id !== userData.id) return;
-            const changed = userData.verified && (
-                currentUserData.role === UserRole.USER_NOT_VERIFIED ||
-                currentUserData.public.emailVerified !== userData.verified
-            ) || (await database.read(["users_public", {user_id: userData.id}, {updated: "updated"}])) > currentUserData.public.updated;
-            if (!changed) return;
-
-            console.warn("[UserData] changed", currentUserData.id, userData.toJSON());
-            return notifySnackbar({
-                title: "Your profile has been changed. Please refresh for update",
-                variant: "warning",
-                priority: "high",
-                buttonLabel: "Refresh",
-                onButtonClick: refreshAction
-            })
-        });
-    })
+            if (currentUserData?.id !== userData.id) return;
+            const current = revision;
+            checking = true;
+            try {
+                const changed = userData.verified && (
+                    currentUserData.role === UserRole.USER_NOT_VERIFIED ||
+                    currentUserData.public.emailVerified !== userData.verified
+                ) || (await database.read(["users_public", {user_id: userData.id}, {updated: "updated"}])) > currentUserData.public.updated;
+                if (!active || current !== revision || getUserData() !== currentUserData || !changed) return;
+                console.warn("[UserData] changed", currentUserData.id, userData.toJSON());
+                notifySnackbar({
+                    title: "Your profile has been changed. Please refresh for update",
+                    variant: "warning",
+                    priority: "high",
+                    buttonLabel: "Refresh",
+                    onButtonClick: refreshAction
+                });
+            } catch (error) {
+                reportError(error);
+            } finally {
+                checking = false;
+            }
+        };
+        const timer = setInterval(check, 30000);
+        const stop = () => {
+            if (!active) return;
+            active = false;
+            clearInterval(timer);
+            signal?.removeEventListener("abort", stop);
+            unsubscribe?.();
+        };
+        signal?.addEventListener("abort", stop, {once: true});
+        try {
+            Promise.resolve(auth.onAuthStateChanged(userData => {
+                if (!active) return;
+                identity = userData;
+                ++revision;
+                if (!userData?.id) onUserChanged(userData);
+                else return check();
+            }, reportError)).then(remove => {
+                if (active) unsubscribe = remove;
+                else remove();
+            }).catch(error => {
+                reportError(error);
+                stop();
+            });
+        } catch (error) {
+            reportError(error);
+            stop();
+        }
+    });
 }
 
 export const logoutUser = async ({auth, onLogout}) => {

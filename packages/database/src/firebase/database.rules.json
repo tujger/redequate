@@ -1,0 +1,208 @@
+{
+    "rules": {
+        ".read": "root.child('roles/' + auth.uid).val() === 'admin'",
+        ".write": "root.child('roles/' + auth.uid).val() === 'admin'",
+        "_counters": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "id",
+                "gid",
+                "uid",
+                "total",
+                "followers",
+                "follows",
+                "watches",
+                "watchers"
+            ],
+            "$id": {}
+        },
+        "_activity": {
+            ".read": true,
+            ".indexOn": ["type"],
+            "$activity_type_id": {}
+        },
+        "activity": {
+            ".indexOn": [
+                "type",
+                "uid"
+            ],
+            "$activity_id": {
+                ".write": "!data.exists()"
+            }
+        },
+        "alerts": {
+            ".indexOn": [
+                "type"
+            ],
+            "$user_id": {
+                ".indexOn": [
+                    "timestamp"
+                ],
+                ".read": "$user_id === auth.uid",
+                ".write": "$user_id === auth.uid",
+                "$alert_id": {}
+            }
+        },
+        "_chats": {
+            "$user_id": {
+                ".indexOn": [
+                    "timestamp",
+                    "private"
+                ],
+                ".read": "$user_id === auth.uid",
+                "$chat_id": {
+                    ".read": "root.child('chats').child($chat_id).child('!meta/members').child(auth.uid).exists()",
+                    ".write": "!data.exists() || root.child('chats').child($chat_id).child('!meta/members').child(auth.uid).exists()"
+                }
+            }
+        },
+        "chats": {
+            ".read": true,
+            ".write": true,
+            "$chat_id": {
+                ".indexOn": [
+                    "created",
+                    "uid"
+                ],
+                "!meta": {
+                    ".write": "!data.exists() || root.child('chats').child($chat_id).child('!meta/members').child(auth.uid).exists()"
+                },
+                "$message_id": {}
+            }
+        },
+        "errors": {
+            ".indexOn": [
+                "uid"
+            ],
+            ".write": true,
+            "$error_id": {}
+        },
+        "extra": {
+            ".read": true,
+            ".write": true,
+            ".indexOn": [
+                "like",
+                "dislike",
+                "gid",
+                "id_uid",
+                "uid",
+                "id"
+            ],
+            "$extra_id": {}
+        },
+        "meta": {
+            ".read": true,
+            "$setting": {}
+        },
+        "mutual": {
+            "$mutual_type": {
+                ".read": true,
+                ".indexOn": [
+                    "id",
+                    "uid",
+                    "id_uid",
+                    "uid_id"
+                ],
+                "$mutual_id": {
+                    ".write": "(newData.child('uid').exists() && newData.child('uid').val() === auth.uid) || root.child('mutual/' + $mutual_type + '/' + $mutual_id + '/uid').val() === auth.uid",
+                    ".read": "root.child('mutual/' + $mutual_type + '/' + $mutual_id + '/uid').val() === auth.uid"
+                }
+            }
+        },
+        "mutualrequests": {
+            "$mutual_type": {
+                ".read": "auth != null && query.equalTo === auth.uid && (query.orderByChild === 'uid' || query.orderByChild === 'id')",
+                ".indexOn": [
+                    "id",
+                    "uid"
+                ],
+                "$mutual_id": {
+                    ".write": "auth != null && (data.child('id').val() === auth.uid || (!newData.child('accepted').exists() && (data.child('uid').val() === auth.uid || (!data.exists() && newData.child('uid').val() === auth.uid && newData.child('id').isString()))))",
+                    ".read": "auth != null && (data.child('uid').val() === auth.uid || data.child('id').val() === auth.uid)",
+                    ".validate": "!data.exists() || (newData.child('uid').val() === data.child('uid').val() && newData.child('id').val() === data.child('id').val())"
+                }
+            }
+        },
+        "mutualstamps": {
+            "$mutual_type": {
+                "$user_id": {
+                    ".read": "auth != null && $user_id === auth.uid",
+                    "$mutual_id": {}
+                }
+            }
+        },
+        "posts": {
+            ".read": true,
+            ".indexOn": [
+                "uid",
+                "to"
+            ],
+            "$post_id": {
+                ".write": "auth.uid !== null && (!data.exists() || data.child('uid').val() === auth.uid)"
+            }
+        },
+        "roles": {
+            ".indexOn": ".value",
+            ".read": true,
+            "$user_id": {}
+        },
+        "_tag": {
+            ".read": true,
+            ".indexOn": [
+                ".value",
+                "score"
+            ],
+            "$tag_id": {
+                "$post_id": {}
+            }
+        },
+        "tag": {
+            ".indexOn": [
+                "_sort_name",
+                "hidden",
+                "id",
+                "label",
+                "uid"
+            ],
+            ".read": true,
+            "$tag_id": {
+                ".write": "!data.exists() || !data.child('uid').exists() || (data.child('uid').val() === auth.uid && (!newData.exists() || data.child('id').val() === newData.child('id').val()))"
+            }
+        },
+        "users_private": {
+            "$user_id": {
+                ".read": "$user_id === auth.uid",
+                ".write": "$user_id === auth.uid"
+            }
+        },
+        "users_public": {
+            ".indexOn": [
+                "_sort_name",
+                "email",
+                "emailVerified",
+                "name",
+                "created",
+                "lastLogin",
+                "visit"
+            ],
+            ".read": "auth.uid !== null",
+            ".write": true,
+            "$user_id": {
+                ".write": "!data.exists() || $user_id === auth.uid",
+                "_sort_name": {
+                    ".read": true
+                },
+                "image": {
+                    ".read": true
+                },
+                "name": {
+                    ".read": true
+                },
+                "role": {
+                    ".read": true
+                }
+            }
+        }
+    }
+}

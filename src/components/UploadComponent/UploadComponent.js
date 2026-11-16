@@ -10,7 +10,6 @@ import "@uppy/core/css/style.css";
 import "@uppy/dashboard/css/style.css";
 import "@uppy/webcam/css/style.css";
 import {useTranslation} from "react-i18next";
-import {connect} from "react-redux";
 import {useMetaInfo} from "../../controllers/General";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import Button from "../../controls/Button/Button";
@@ -20,7 +19,7 @@ import {uploadComponentClean, uploadComponentResize} from "./uploadComponentCont
 
 const MAX_FILE_SIZE = 20 * 1024;
 
-const UploadComponent = (
+export default (
     {
         button,
         camera = true,
@@ -260,8 +259,6 @@ const UploadComponent = (
         />, cameraTarget)}
     </>
 }
-
-export default connect()(UploadComponent);
 
 function CameraSwitch({uppy, onFacingModeChange}) {
     const onPointerDown = useRippleEffect();

@@ -21,23 +21,25 @@
         "test:watch core": "vitest --watch --config src/__tests__/vitest.config.mjs",
         "build core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs",
         "build server": "rollup -c packages/server/build.mjs",
-        "core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs -w",
-        "start core": "cross-env NODE_OPTIONS=--openssl-legacy-provider rollup -c rollup.config.mjs -w",
+        "start core": "cross-env NODE_OPTIONS=--openssl-legacy-provider node tooling/core-watch/index.mjs",
         "prepare core": "npm run build core",
         "predeploy core": "npm run \"build core\" && npm --prefix example ci --legacy-peer-deps && npm --prefix example run build",
         "deploy core": "gh-pages -d example/build",
         "build and publish": "npm version patch --no-git-tag-version&&rollup -c rollup.config.mjs && npm publish --registry=https://registry.npmjs.org/ --access public",
         "test": "npm run test:unit && npm run test:integration",
         "test:unit": "vitest run --config src/__tests__/vitest.config.mjs",
-        "test:integration": "node src/__tests__/test-emulators.mjs",
-        "test:integration:watch": "node src/__tests__/test-emulators.mjs --watch"
+        "test:integration": "node tooling/__tests__/test-emulators.mjs",
+        "test:integration:watch": "node tooling/__tests__/test-emulators.mjs --watch",
+        "check updates": "npx npm-check-updates --dep prod&&npx npm-check-updates --dep dev",
+        "rules:build": "node tooling/firebase-rules.mjs",
+        "test:tooling": "node --test tooling/__tests__/*.test.mjs"
     },
     "dependencies": {
         "@mui/icons-material": "^9.5.0",
-        "axios": "^1.20.0",
+        "axios": "^1.21.0",
         "firebase": "^13.1.0",
         "firebase-key": "^2.0.2",
-        "i18next-browser-languagedetector": "^8.2.1",
+        "i18next-browser-languagedetector": "^8.2.3",
         "react-add-to-calendar-hoc": "^1.0.10",
         "react-device-detect": "^2.2.3",
         "react-image-file-resizer": "^0.4.8",
@@ -72,7 +74,10 @@
         "react-router-dom": "^5.2.0",
         "react-smart-gallery": "^0.2.0",
         "react-timekeeper": "^2.2.1",
-        "redux": "^4.2.1"
+        "redux": "^4.2.1",
+        "vite": "^8.3.5",
+        "@vitejs/plugin-react": "^6.1.2",
+        "vite-plugin-pwa": "^2.0.0"
     },
     "devDependencies": {
         "@babel/core": "^7.29.7",
@@ -95,8 +100,8 @@
         "@rollup/plugin-url": "^8.0.2",
         "@svgr/rollup": "^8.1.0",
         "@testing-library/dom": "10.4.2",
-        "@typescript-eslint/eslint-plugin": "^8.72.0",
-        "@typescript-eslint/parser": "^8.72.0",
+        "@typescript-eslint/eslint-plugin": "^8.72.1",
+        "@typescript-eslint/parser": "^8.72.1",
         "@uppy/core": "^6.3.0",
         "@uppy/dashboard": "^6.0.2",
         "@uppy/webcam": "^6.0.2",
@@ -117,16 +122,16 @@
         "firebase-tools": "15.34.1",
         "gh-pages": "^6.3.0",
         "globals": "^17.13.0",
-        "i18next": "^26.5.4",
+        "i18next": "^26.5.11",
         "jsdom": "30.1.3",
         "moment": "^2.31.0",
         "notistack": "^3.0.2",
-        "postcss": "^8.5.31",
+        "postcss": "^8.5.32",
         "postcss-nested": "^9.0.1",
         "react": "^19.3.1",
         "react-datepicker": "^9.1.0",
         "react-dom": "^19.3.1",
-        "react-i18next": "^17.1.0",
+        "react-i18next": "^17.1.9",
         "react-image-lightbox": "^5.1.4",
         "react-linkify": "^1.0.0-alpha",
         "react-redux": "^8.1.3",
@@ -134,16 +139,22 @@
         "react-smart-gallery": "^0.2.0",
         "react-timekeeper": "2.2.1",
         "redux": "^4.2.1",
-        "rollup": "^4.64.12",
+        "rollup": "^4.65.1",
         "rollup-plugin-delete": "^3.0.2",
         "rollup-plugin-peer-deps-external": "^2.2.4",
         "rollup-plugin-postcss": "^4.0.2",
         "typescript": "^5.9.3",
         "vite": "8.3.5",
-        "vitest": "5.0.5"
+        "vitest": "5.0.5",
+        "@vitejs/plugin-react": "^6.1.2",
+        "vite-plugin-pwa": "^2.0.0"
     },
     "files": [
-        "core"
+        "core",
+        "tooling",
+        "packages/database/src/firebase/rules.mjs",
+        "packages/database/src/firebase/database.rules.json",
+        "packages/database/src/local/stores.json"
     ],
     "exports": {
         ".": {
@@ -174,9 +185,9 @@
             "import": "./core/backend/firebase-client.mjs",
             "require": "./core/backend/firebase-client.cjs"
         },
-        "./backend/local-client": {
-            "import": "./core/backend/local-client.mjs",
-            "require": "./core/backend/local-client.cjs"
+        "./backend/local": {
+            "import": "./core/backend/local.mjs",
+            "require": "./core/backend/local.cjs"
         },
         "./common": {
             "import": "./core/common/index.mjs",
@@ -228,6 +239,26 @@
         "./core/chunks/*": null,
         "./core/*.js": "./core/*.js",
         "./core/*": "./core/*.js",
-        "./package.json": "./package.json"
+        "./package.json": "./package.json",
+        "./database/firebase/rules": {
+            "import": "./core/database/firebase/rules.mjs",
+            "require": "./core/database/firebase/rules.cjs"
+        },
+        "./tooling/firebase-rules": "./tooling/firebase-rules.mjs",
+        "./tooling/vite": "./tooling/vite.mjs",
+        "./tooling/firebase-test": "./tooling/firebase-test.mjs",
+        "./tooling/app": "./tooling/app.mjs",
+        "./tooling/app-config": "./tooling/app-config.mjs"
+    },
+    "peerDependenciesMeta": {
+        "vite": {
+            "optional": true
+        },
+        "@vitejs/plugin-react": {
+            "optional": true
+        },
+        "vite-plugin-pwa": {
+            "optional": true
+        }
     }
 }

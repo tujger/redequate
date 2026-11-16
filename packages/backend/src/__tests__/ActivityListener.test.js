@@ -1,0 +1,109 @@
+import createService from "../../../../src/__tests__/createService";
+import {IDBFactory} from "fake-indexeddb";
+import ActivityListener, {createActivity} from "../common/handlers/activity";
+import LocalBackend from "../local/LocalBackend";
+import LocalDatabase from "../../../database/src/local";
+
+const params = {activity_id: "a1"};
+const fakeBackend = (initial = null) => {
+    let records = initial, revision = 0;
+    return {
+        TIMESTAMP: {".sv": "timestamp"},
+        request: vi.fn(async (name, path, value, options) => {
+            expect(name).toBe("database.update");
+            expect(path).toEqual(["_activity"]);
+            if (options.mode === "read") return {value: structuredClone(records), etag: String(revision)};
+            if (options.etag !== String(revision)) return {committed: false, value: structuredClone(records), etag: String(revision)};
+            records = value;
+            revision++;
+            return {committed: true, value};
+        }),
+        records: () => records,
+    };
+};
+
+it("creates a timestamped service record for a previously unseen type", async () => {
+    const backend = fakeBackend();
+    await new ActivityListener(backend).onCreate({params, value: {type: "tag.create"}});
+    expect(backend.records()).toEqual({a1: {activity_type_id: "a1", type: "tag.create", value: backend.TIMESTAMP}});
+    expect(backend.request).toHaveBeenLastCalledWith("database.update", ["_activity"], backend.records(),
+        {mode: "replace", etag: "0"});
+});
+it.each([null, undefined, "", "   ", 0, {}, []])("rejects an invalid type %j before writing", async type => {
+    const backend = {request: vi.fn()};
+    await expect(new ActivityListener(backend).onCreate({params, value: {type}})).rejects.toMatchObject({code: "database/invalid-argument"});
+    expect(backend.request).not.toHaveBeenCalled();
+});
+it("propagates update failure", async () => {
+    const error = new Error("update failed");
+    const backend = {request: vi.fn().mockRejectedValue(error)};
+    await expect(new ActivityListener(backend).onCreate({params, value: {type: "service"}})).rejects.toBe(error);
+});
+it("keeps updates and deletions free of writes", async () => {
+    const backend = {request: vi.fn()}; const listener = new ActivityListener(backend);
+    await listener.onUpdate({params, value: {type: "service"}, previous: {type: "old"}});
+    await listener.onDelete({params, value: {type: "service"}});
+    expect(backend.request).not.toHaveBeenCalled();
+});
+it("reuses a service ID and preserves other types", async () => {
+    const backend = fakeBackend({first: {activity_type_id: "first", type: "tag.create", value: 1}, other: {activity_type_id: "other", type: "tag.delete", value: 2}});
+    await new ActivityListener(backend).onCreate({params, value: {type: "tag.create"}});
+    expect(backend.records()).toEqual({
+        first: {activity_type_id: "first", type: "tag.create", value: backend.TIMESTAMP},
+        other: {activity_type_id: "other", type: "tag.delete", value: 2},
+    });
+});
+
+it("retries concurrent changes without duplicating types or losing other records", async () => {
+    const backend = fakeBackend();
+    const listener = new ActivityListener(backend);
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    await Promise.all(["tag.create", "tag.create", "tag.delete", "tag.create"].map((type, i) =>
+        listener.onCreate({params: {activity_id: `a${i}`}, value: {type}})));
+    expect(backend.records()).toEqual({
+        a0: {activity_type_id: "a0", type: "tag.create", value: backend.TIMESTAMP},
+        a2: {activity_type_id: "a2", type: "tag.delete", value: backend.TIMESTAMP},
+    });
+    expect(backend.request.mock.calls.filter(([, , , options]) => options.mode === "replace").length).toBeGreaterThan(4);
+});
+
+beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
+afterEach(() => vi.unstubAllGlobals());
+it("updates type records through the real Local creation chain and reads their types through a cursor", async () => {
+    const storageId = "activity-listener";
+    const backend = new LocalBackend({storageId});
+    const database = createService(LocalDatabase, {storageId, backend});
+    await database.read(["activity"]);
+    await backend.request("database.update", ["_activity", {activity_type_id: "other"}],
+        {activity_type_id: "other", type: "tag.delete", value: 2});
+    vi.spyOn(backend, "getCurrentUser").mockResolvedValue("user");
+    const key = await createActivity(backend, { type: "tag.create", details: "hello"});
+    await vi.waitFor(async () => {
+        const records = await database.read(["_activity"]);
+        expect(records[key]).toEqual({activity_type_id: key, type: "tag.create", value: expect.any(Number)});
+        expect(records.other).toEqual({activity_type_id: "other", type: "tag.delete", value: 2});
+    });
+    expect(await database.read(["activity", {activity_id: key}])).toMatchObject({uid: "user", type: "tag.create", details: "hello"});
+    await createActivity(backend, {type: "tag.create"});
+    await vi.waitFor(async () => {
+        expect(Object.keys(await database.read(["activity"]))).toHaveLength(2);
+    });
+    const cursor = database.cursor(["_activity", "activity_type_id"], {orderBy: "type", equalTo: "tag.create"});
+    expect(await cursor.next(10)).toEqual([{key, value: {activity_type_id: key, type: "tag.create", value: expect.any(Number)}}]);
+    const records = await database.read(["_activity"]);
+    expect(Object.keys(records)).toHaveLength(2);
+});
+
+it("commits concurrent Local events as one record per type", async () => {
+    const storageId = "activity-concurrent";
+    const backend = new LocalBackend({storageId});
+    const database = createService(LocalDatabase, {storageId, backend});
+    await database.read(["_activity"]);
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const listener = new ActivityListener(backend);
+    await Promise.all(["tag.create", "tag.create", "tag.delete", "tag.create"].map((type, i) =>
+        listener.onCreate({params: {activity_id: `a${i}`}, value: {type}})));
+    const records = Object.values(await database.read(["_activity"]));
+    expect(records.map(record => record.type).sort()).toEqual(["tag.create", "tag.delete"]);
+    expect(records.every(record => typeof record.value === "number")).toBe(true);
+});

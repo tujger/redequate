@@ -5,7 +5,7 @@ import {useDatabase} from "../controllers";
 import {useMetaInfo, usePages} from "../controllers/General";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import {getScrollPosition} from "../helpers/useScrollPosition";
-import {updateActivity} from "../pages/admin/audit/auditReducer";
+import updateActivity from "../pages/admin/audit/updateActivity";
 import ConfirmComponent from "./ConfirmComponent";
 
 let identityScriptPromise;

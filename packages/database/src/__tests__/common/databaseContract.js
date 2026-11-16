@@ -25,15 +25,14 @@ export function databaseContract(makeProvider) {
         let callbackKey;
         const firstKey = await provider.db.create([provider.path, "id"], key => {
             callbackKey = key;
-            expect(key).toEqual(provider.local ? expect.stringMatching(/^\d+$/) : expect.stringMatching(/^[-0-9A-Z_a-z]{20}$/));
+            expect(key).toEqual(expect.stringMatching(/^[-0-9A-Z_a-z]{20}$/));
             return value;
         });
         expect(firstKey).toBe(callbackKey);
         expect(await provider.db.read((provider.createdRecord ?? provider.record)(firstKey))).toEqual(value);
 
         const secondKey = await provider.db.create([provider.path, "id"], {label: "second", timestamp: 123});
-        if (provider.local) expect(Number(secondKey)).toBeGreaterThan(Number(firstKey));
-        else expect(milliseconds(secondKey)).toBeGreaterThanOrEqual(milliseconds(firstKey));
+        expect(milliseconds(secondKey)).toBeGreaterThanOrEqual(milliseconds(firstKey));
         expect(await provider.db.read((provider.createdRecord ?? provider.record)(secondKey)))
             .toEqual({label: "second", timestamp: 123});
         await provider.db.update((provider.createdRecord ?? provider.record)(secondKey), {label: "updated"});
@@ -381,9 +380,9 @@ export function databaseContract(makeProvider) {
     it("reads a selected record with its nested collections and explicit scalar fields", async () => {
         const user = [provider.path, {user_id: "u1"}];
         await provider.db.create(user, {name: "User", email: "user@example.test"});
-        const child = await provider.db.create([...user, "devices", "device_id"], {locale: "en"});
+        const child = await provider.db.create([...user, {devices: "devices"}, "device_id"], {locale: "en"});
         expect(await provider.db.read(user)).toEqual({name: "User", email: "user@example.test", devices: {[child]: {locale: "en"}}});
-        expect(await provider.db.read([...user, "devices", "device_id"])).toEqual({[child]: {locale: "en"}});
+        expect(await provider.db.read([...user, {devices: "devices"}, "device_id"])).toEqual({[child]: {locale: "en"}});
         expect(await provider.db.read([...user, {devices: "devices"}, {device_id: child}, {locale: "locale"}])).toBe("en");
         expect(await provider.db.read(`${provider.path}/u1/email`)).toBe("user@example.test");
     });

@@ -1,5 +1,10 @@
+import type AuthBase from "../../../auth/src/AuthBase";
+import type BackendBase from "../../../backend/src/common/BackendBase";
 import {notImplemented} from "../../../common"
 import DatabaseCursor from "./DatabaseCursor";
+import createRecord from "./methods/create";
+import updateRecord from "./methods/update";
+import deleteRecord from "./methods/delete";
 import type {
     DatabasePath, DatabaseValue, DatabaseOptions,
     DatabaseErrorHandler,
@@ -16,12 +21,19 @@ export type {
     DatabaseCursorSubscription, DatabaseCursorOptions
 } from "./DatabaseTypes";
 
+type CreateMethodOptions = {
+    key?: string;
+    mapError?: (error: unknown) => unknown;
+};
+
 /**
  * onError may suppress a failure by returning normally; the operation then returns undefined.
  * Cursors and listeners retain their options. Writes resolve after storage confirms them.
  */
 export default class DatabaseBase {
     onError: DatabaseErrorHandler;
+    protected _backend?: BackendBase;
+    protected _auth?: AuthBase;
 
     constructor(
         {
@@ -30,6 +42,14 @@ export default class DatabaseBase {
             }
         }: DatabaseOptions = {}) {
         this.onError = onError;
+    }
+
+    setAuth(auth: AuthBase): void {
+        this._auth = auth;
+    }
+
+    setBackend(backend: BackendBase): void {
+        this._backend = backend;
     }
 
     protected handleError(error: unknown, options: DatabaseOptions | undefined,
@@ -109,9 +129,9 @@ export default class DatabaseBase {
         }, registrationOptions, "addEventListener", {path});
     }
 
-    /** Atomically creates an absent record and returns its permanent key. The callback receives that key synchronously before insertion. */
-    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((key: string) => DatabaseValue)): Promise<string | undefined> {
-        return notImplemented("create")
+    /** Atomically creates an absent record and returns its permanent key. The synchronous callback receives generated IDs in path order, or the final key when all IDs are supplied. */
+    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((...keys: string[]) => DatabaseValue), implementation?: CreateMethodOptions): Promise<string | undefined> {
+        return createRecord(this._backend, path, valueOrCallback, implementation);
     }
 
     /**
@@ -120,6 +140,8 @@ export default class DatabaseBase {
      * concrete records/fields, e.g. {email: "email"}; string paths stay literal.
      * Query options apply to children of the resolved address.
      */
+    read(path: DatabasePath, options: DatabaseReadOptions & {shallow: true}): Promise<string[] | undefined>;
+    read(path: DatabasePath, options?: DatabaseReadOptions): Promise<DatabaseValue | undefined>;
     async read(path: DatabasePath, options: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
         return notImplemented("read")
     }
@@ -127,27 +149,31 @@ export default class DatabaseBase {
     /**
      * Shallow merge: nested values are replaced; null deletes. Non-null values may create records.
      * Batch paths are root-relative. A synchronous callback replaces atomically,
-     * returns the final value, and deletes on null or undefined; it requires read/write access.
+     * returns the resulting value, deletes on null, and leaves storage unchanged on undefined.
+     * The callback receives a copy; mutations without a returned value are discarded.
      */
-    update(path: DatabasePath, callback: (value: DatabaseValue) => DatabaseValue | undefined, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
+    update(path: DatabasePath, callback: (value: DatabaseValue) => DatabaseValue | void, options?: DatabaseOptions): Promise<DatabaseValue | undefined>;
     update(path: DatabasePath, changes: Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
     update(updates: Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, options?: DatabaseOptions): Promise<void>;
-    async update(path: DatabasePath | Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, changes?: Record<string, DatabaseValue> | ((value: DatabaseValue) => DatabaseValue | undefined) | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
-        return notImplemented("update")
+    async update(path: DatabasePath | Map<DatabasePath, DatabaseValue> | Record<string, DatabaseValue>, changes?: Record<string, DatabaseValue> | ((value: DatabaseValue) => DatabaseValue | void) | DatabaseOptions, options: DatabaseOptions = {}): Promise<DatabaseValue | void> {
+        return updateRecord(this._backend, path, changes);
     }
 
     /** Absent records also succeed. */
     async delete(path: DatabasePath, options: DatabaseOptions = {}): Promise<void> {
-        return notImplemented("delete")
+        return deleteRecord(this._backend, path);
     }
 
     /**
-     * Iterates immediate children. Arrays starting with a string are paths;
+     * Array cursor paths capture bare string segments after the collection. Named
+     * segments fix values; literal string paths retain immediate-child traversal.
+     * The final capture is key; preceding captures are entry.params. Intermediate
+     * captures support next/handle, not subscribe. Arrays starting with a string are paths;
      * source lists compose fresh cursors round-robin, skipping null/undefined.
      * Compositions deduplicate by source path + key (or cursor ID + key without a path)
      * and run each source's handle once, before buffering.
      */
-    cursor(path: DatabasePath | ((DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor {
+    cursor(path: DatabasePath | ((DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor | undefined {
         return new DatabaseCursor(options, typeof path === "string" || (path instanceof Array &&
             (path.length === 0 || typeof path[0] === "string"))
             ? path as DatabasePath
@@ -155,10 +181,6 @@ export default class DatabaseBase {
     }
 
     get TIMESTAMP(): DatabaseValue | undefined {
-        return notImplemented("timestamp")
-    }
-
-    increment(delta: number): DatabaseValue | undefined {
-        return notImplemented("increment")
+        return this._backend.TIMESTAMP as DatabaseValue;
     }
 }

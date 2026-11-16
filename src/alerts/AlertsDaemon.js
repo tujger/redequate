@@ -61,7 +61,7 @@ export default ({fetchAlertContent}) => {
             listener.remove();
             dispatch({type: MenuBadge.RESET, page: pages.alerts});
         }
-    }, [currentUserData.id]);
+    }, [currentUserData.id, database]);
 
     return null;
 }

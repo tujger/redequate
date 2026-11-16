@@ -1,8 +1,7 @@
 import {LOCAL_SCHEMA} from "./storeSchema";
-import {IDENTITY_INDEX} from "./row";
 
-const openVersionedDatabase = (storageKey, version, schema) => new Promise((resolve, reject) => {
-    const request = globalThis.indexedDB.open(`redequate:local:${storageKey}`, version);
+const openVersionedDatabase = (storageId, version, schema) => new Promise((resolve, reject) => {
+    const request = globalThis.indexedDB.open(storageId, version);
     let blocked = false;
     request.onupgradeneeded = () => {
         if (blocked) { request.transaction.abort(); return; }
@@ -27,33 +26,24 @@ const openVersionedDatabase = (storageKey, version, schema) => new Promise((reso
 });
 
 // Opening validates the storage model. JSON additions are handled by applySchema.
-export const openDatabase = async (storageKey, initialSchema = LOCAL_SCHEMA) => {
+export const openDatabase = async (storageId, initialSchema = LOCAL_SCHEMA) => {
     let database;
     try {
-        try {
-            database = await openVersionedDatabase(storageKey, 1, initialSchema);
-        } catch (error) {
-            if (error?.name !== "VersionError") throw error;
-            database = await openVersionedDatabase(storageKey, undefined, initialSchema);
-        }
-        const incompatible = !Object.keys(LOCAL_SCHEMA).some(name => database.objectStoreNames.contains(name)) ||
+        database = await openVersionedDatabase(storageId, undefined, initialSchema);
+        const hasKnownStore = [...database.objectStoreNames].some(name =>
+            name.startsWith("$") || Object.hasOwn(initialSchema, name));
+        const incompatible = (database.objectStoreNames.length > 0 && !hasKnownStore) ||
             Object.entries(LOCAL_SCHEMA).some(([name, definition]) => {
                 if (!database.objectStoreNames.contains(name)) return false;
                 const store = database.transaction(name).objectStore(name);
-                if (store.keyPath !== definition.keyPath || store.autoIncrement !== definition.autoIncrement ||
-                    !store.indexNames.contains("_identity")) return true;
-                const index = store.index("_identity");
-                const path = JSON.stringify(index.keyPath);
-                return !index.unique || index.multiEntry ||
-                    (path !== JSON.stringify(IDENTITY_INDEX.keyPath) &&
-                        path !== JSON.stringify(["_local._collection", "_local._key"]));
+                return store.keyPath !== definition.keyPath || store.autoIncrement !== definition.autoIncrement;
             });
         if (incompatible) throw Object.assign(new Error("Existing Local database has an incompatible schema."), {name: "VersionError"});
         return database;
     } catch (error) {
         database?.close();
         if (error?.name !== "VersionError") throw error;
-        const message = `Existing redequate:local:${storageKey} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
+        const message = `Existing ${storageId} IndexedDB database has an incompatible Local schema; repair it explicitly before opening.`;
         throw Object.assign(new Error(message, {cause: error}), {name: "VersionError"});
     }
 };

@@ -1,12 +1,11 @@
-import {useSetCurrentUserData} from "../controllers/useCurrentUserData";
 import React from "react";
 import {useTranslation} from "react-i18next";
-import {connect} from "react-redux";
 import {useHistory, withRouter} from "react-router-dom";
 import LoadingComponent from "../components/LoadingComponent";
-import {useAuth, useDatabase} from "../controllers";
+import {useAuth} from "../controllers";
 import {usePages, useStore} from "../controllers/General";
 import {refreshAll} from "../controllers/Store";
+import {useSetCurrentUserData} from "../controllers/useCurrentUserData";
 import {logoutUser} from "../controllers/UserData";
 import Button from "../controls/Button/Button";
 import baseStyles from "../themes/Base.module.css";
@@ -16,7 +15,6 @@ const Logout = (props) => {
     const {immediate = true} = props;
     const auth = useAuth();
     const setCurrentUserData = useSetCurrentUserData();
-    const database = useDatabase();
     const history = useHistory();
     const pages = usePages();
     const store = useStore();
@@ -56,4 +54,4 @@ const Logout = (props) => {
     </div>
 };
 
-export default connect()(withRouter(Logout));
+export default withRouter(Logout);

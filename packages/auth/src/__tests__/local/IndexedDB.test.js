@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {vi} from "vitest";
 import AuthBase from "../../AuthBase";
 import LocalAuth from "../../local";
@@ -19,29 +20,26 @@ it("opens redequate:local lazily and preserves Auth store keys in the shared sch
     const auth = new LocalAuth();
     expect(open).not.toHaveBeenCalled();
     await auth.resolveCurrentUser({skipDelay: true});
-    expect(open).toHaveBeenCalledWith("redequate:local", 2);
+    expect(open).toHaveBeenCalledWith("redequate:local", undefined);
     const database = await openLocalDatabase();
     try {
-        expect([...database.objectStoreNames]).toEqual(["auth_accounts", "auth_links", "auth_mail", "auth_state", "database_records"]);
+        expect([...database.objectStoreNames]).toEqual(["$auth"]);
         const transaction = database.transaction([...database.objectStoreNames]);
-        for (const name of ["auth_accounts", "auth_links", "auth_mail", "auth_state"]) {
-            expect(transaction.objectStore(name).keyPath).toBe("key");
-        }
-        expect(transaction.objectStore("database_records").keyPath).toEqual(["namespace", "key"]);
-        const index = transaction.objectStore("auth_accounts").index("email");
+        expect(transaction.objectStore("$auth").keyPath).toEqual(["kind", "key"]);
+        const index = transaction.objectStore("$auth").index("email");
         expect(index.unique).toBe(true);
-        expect(index.keyPath).toEqual(["namespace", "email"]);
+        expect(index.keyPath).toBe("accountEmail");
     } finally { database.close(); }
 });
 
 it("uses key across account, session and profile, while keeping mail/link keys stable", async () => {
     const database = createDatabase();
-    const auth = new LocalAuth({database});
+    const auth = createService(LocalAuth, {database});
     const user = await auth.createUserWithEmailAndPassword("key@example.test", "password");
     await auth.sendSignInLinkToEmail(user.email);
     await auth.sendPasswordResetEmail(user.email);
     const before = await read(auth);
-    expect(before.accounts[0]).toMatchObject({key: user.id, namespace: auth.storageKey, email: user.email});
+    expect(before.accounts[0]).toMatchObject({key: user.id, email: user.email});
     expect(before.accounts[0]).not.toHaveProperty("uid");
     expect(before.session.key).toBe(user.id);
     expect(await database.read(["users_public", {user_id: user.id}, {email: "email"}])).toBe(user.email);
@@ -53,16 +51,16 @@ it("uses key across account, session and profile, while keeping mail/link keys s
     expect(after.mail.map(record => record.key)).toEqual(before.mail.map(record => record.key));
     const messages = vi.spyOn(BroadcastChannel.prototype, "postMessage");
     await auth.signOut();
-    expect(messages).toHaveBeenLastCalledWith({namespace: auth.storageKey, revision: expect.any(String)});
+    expect(messages).toHaveBeenLastCalledWith({namespace: auth.storageId, revision: expect.any(String)});
 });
 
 it("retains unique email constraints without merging different namespaces", async () => {
     const database = createDatabase();
-    const auth = new LocalAuth({database});
+    const auth = createService(LocalAuth, {database});
     await auth.createUserWithEmailAndPassword("unique@example.test", "password");
     const account = (await read(auth)).accounts[0];
-    await expect(rawRecord("auth_accounts", {...account, key: "collision"})).rejects.toMatchObject({name: "ConstraintError"});
-    const other = new LocalAuth({database, storageKey: "other"});
+    await expect(rawRecord("$auth", {kind: "accounts", key: "collision", accountEmail: account.email, value: {...account, key: "collision"}})).rejects.toMatchObject({name: "ConstraintError"});
+    const other = createService(LocalAuth, {database, storageId: "other"});
     const user = await other.createUserWithEmailAndPassword(account.email, "password");
     expect(user.id).not.toBe(account.key);
     expect((await read(auth)).accounts).toHaveLength(1);
@@ -84,7 +82,7 @@ it("neither reads nor deletes legacy localStorage and never falls back to it", a
     const get = vi.spyOn(Storage.prototype, "getItem");
     const set = vi.spyOn(Storage.prototype, "setItem");
     const remove = vi.spyOn(Storage.prototype, "removeItem");
-    const auth = new LocalAuth({database: createDatabase()});
+    const auth = createService(LocalAuth, {database: createDatabase()});
     expect((await auth.resolveCurrentUser({skipDelay: true})).id).toBeUndefined();
     await auth.createUserWithEmailAndPassword("fresh@example.test", "password");
     vi.spyOn(indexedDB, "open").mockImplementation(() => { throw new Error("denied"); });
@@ -110,7 +108,7 @@ it.each([AuthBase, LocalAuth, FirebaseAuth])("keeps implementation methods prefi
         "constructor", "checkSignInWithEmailLink", "createUserWithEmailAndPassword", "onAuthStateChanged",
         "resolveRedirectResult", "resolveCurrentUser", "sendEmailVerification", "sendPasswordResetEmail", "sendSignInLinkToEmail",
         "signInWithEmailAndPassword", "signInWithPopup", "signInWithRedirect", "signInWithCredential", "signInWithEmailLink",
-        "signOut", "updatePassword", "updateProfile"
+        "signOut", "updatePassword", "updateProfile", "setDatabase"
     ]);
     const internal = Object.getOwnPropertyNames(Auth.prototype).filter(name => !operations.has(name));
     expect(internal.every(name => name.startsWith("_"))).toBe(true);

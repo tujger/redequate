@@ -8,7 +8,7 @@ import ConfirmComponent from "../components/ConfirmComponent";
 import NavigationToolbar from "../components/NavigationToolbar";
 import ProgressView from "../components/ProgressView";
 import {useDatabase} from "../controllers";
-import {MenuBadge, usePages, Layout} from "../controllers/General";
+import {Layout, MenuBadge, usePages} from "../controllers/General";
 import notifySnackbar from "../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../controllers/useCurrentUserData";
 import Button from "../controls/Button/Button";

@@ -4,13 +4,15 @@ import { FlatCompat } from '@eslint/eslintrc'
 import { fileURLToPath } from 'node:url'
 import babelParser from '@babel/eslint-parser'
 import globals from 'globals'
+import databaseQueries from './tooling/eslint/database-queries.mjs'
+import localStores, { storesJsonParser } from './tooling/eslint/local-stores.mjs'
 
 const files = ['**/*.{js,mjs,cjs,ts}']
 const compat = new FlatCompat({ baseDirectory: fileURLToPath(new URL('.', import.meta.url)) })
 
 export default [
   {
-    ignores: ['**/node_modules/**', 'core/**', 'build/**', 'packages/server/dist/**', '.rpt2_cache/**', '**/.*']
+    ignores: ['**/node_modules/**', '**/core/**', '**/dist/**', '**/build/**', '**/coverage/**', '**/.rpt2_cache/**', '**/.cache/**', '**/.firebase/**', '**/vendor/**', '**/vendors/**', '**/external/**', '**/third_party/**', '**/third-party/**', '**/generated/**', '**/tmp/**', '**/temp/**', '**/*.min.js', '**/.*']
   },
   ...compat.extends('standard', 'standard-react').map(config => ({ ...config, files })),
   {
@@ -34,6 +36,7 @@ export default [
     rules: {
       // Don't force ES6 functions to include a space before parentheses.
       'react/jsx-uses-vars': 'error',
+      'react/prop-types': 'off',
       'space-before-function-paren': 'off',
       // Allow specifying true explicitly for boolean props.
       'react/jsx-boolean-value': 'off'
@@ -41,16 +44,17 @@ export default [
   },
   {
     files: [
-      'src/**/*.{js,mjs,cjs}',
-      'packages/__tests__/**/*.{js,mjs,cjs}',
-      'packages/auth/src/**/*.{js,mjs,cjs}', 'packages/auth/build.mjs',
-      'packages/backend/src/**/*.{js,mjs,cjs}', 'packages/backend/build.mjs',
+      'src/**/*.{js,mjs,cjs,ts}',
+      'packages/__tests__/**/*.{js,mjs,cjs,ts}',
+      'packages/auth/src/**/*.{js,mjs,cjs,ts}', 'packages/auth/build.mjs',
+      'packages/backend/src/**/*.{js,mjs,cjs,ts}', 'packages/backend/build.mjs',
       'packages/database/src/**/*.{js,mjs,cjs,ts}', 'packages/database/build.mjs',
       'packages/server/build.mjs',
-      'packages/messaging/src/**/*.{js,mjs,cjs}', 'packages/messaging/build.mjs',
-      'packages/storage/src/**/*.{js,mjs,cjs}', 'packages/storage/build.mjs',
-      'packages/common/src/**/*.{js,mjs,cjs}',
-      'packages/_common/src/**/*.{js,mjs,cjs}'
+      'packages/messaging/src/**/*.{js,mjs,cjs,ts}', 'packages/messaging/build.mjs',
+      'packages/storage/src/**/*.{js,mjs,cjs,ts}', 'packages/storage/build.mjs',
+      'packages/common/src/**/*.{js,mjs,cjs,ts}',
+      'packages/_common/src/**/*.{js,mjs,cjs,ts}',
+      'tooling/__tests__/test-emulators.mjs', 'tooling/server/watch.mjs'
     ],
     languageOptions: { globals: globals.jest },
     rules: {
@@ -78,6 +82,18 @@ export default [
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }]
     }
+  },
+  {
+    files: ['src/**/*.{js,mjs,cjs,ts}', 'packages/**/*.{js,mjs,cjs,ts}'],
+    ignores: ['**/__tests__/**'],
+    plugins: { redequate: databaseQueries },
+    rules: { 'redequate/database-queries': 'warn' }
+  },
+  {
+    files: ['packages/database/src/local/stores.json'],
+    languageOptions: { parser: storesJsonParser },
+    plugins: { redequate: localStores },
+    rules: { 'redequate/local-stores': 'warn' }
   }
 
 ]

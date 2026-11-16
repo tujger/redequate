@@ -1,3 +1,4 @@
+import createService from "../../../../src/__tests__/createService";
 import {installIndexedDB, flushIndexedDB} from "./fixtures/indexedDB";
 import {vi} from "vitest";
 import {read} from "../local/common";
@@ -38,7 +39,7 @@ const createAuth = (Auth, database) => {
             return {user};
         }),
     };
-    return {auth: new Auth({database, firebase: {app: sdk}}), sdk};
+    return {auth: createService(Auth, {database, firebase: {app: sdk}}), sdk};
 };
 
 beforeEach(() => {
@@ -170,7 +171,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s database p
         await expect(run(auth.createUserWithEmailAndPassword("profile@example.test", "password")))
             .rejects.toMatchObject({code: "auth/database-required"});
         expect(sdk.createUserWithEmailAndPassword).not.toHaveBeenCalled();
-        auth.database = createDatabase();
+        auth.setDatabase(createDatabase());
         await expect(run(auth.updateProfile({public: {name: "No session"}})))
             .rejects.toMatchObject({code: "auth/no-current-user"});
     });

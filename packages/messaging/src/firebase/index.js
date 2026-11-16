@@ -1,3 +1,4 @@
+import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import {deleteToken, getMessaging, getToken, isSupported, onMessage as onFirebaseMessage} from "firebase/messaging";
 import {fail} from "../../../common";
 import MessagingBase from "../MessagingBase";
@@ -7,10 +8,10 @@ export default class FirebaseMessaging extends MessagingBase {
     _registration = undefined;
     _tokenInitialized = false;
 
-    constructor({firebase, storageKey = "notification-token", serviceWorkerURL, serviceWorkerType = "module"}) {
+    constructor({firebase, storageId = LOCAL_DATABASE_NAME, serviceWorkerURL, serviceWorkerType = "module"}) {
         super();
-        if (typeof storageKey !== "string" || !storageKey.trim()) {
-            fail("messaging/invalid-argument", "storageKey must be a non-empty string.");
+        if (typeof storageId !== "string" || !storageId.trim()) {
+            fail("messaging/invalid-argument", "storageId must be a non-empty string.");
         }
         if (serviceWorkerURL !== undefined && (typeof serviceWorkerURL !== "string" || !serviceWorkerURL.trim())) {
             fail("messaging/invalid-argument", "serviceWorkerURL must be a non-empty string.");
@@ -21,7 +22,7 @@ export default class FirebaseMessaging extends MessagingBase {
         this.serviceWorkerURL = serviceWorkerURL;
         this.serviceWorkerType = serviceWorkerType;
         this._firebase = firebase;
-        this.storageKey = storageKey;
+        this.storageId = storageId;
     }
 
     async addMessageListener(onMessage) {
@@ -40,7 +41,7 @@ export default class FirebaseMessaging extends MessagingBase {
     }
 
     async checkIfSubscribed() {
-        return Boolean(window.localStorage.getItem(this.storageKey));
+        return Boolean(window.localStorage.getItem(`${this.storageId}:notification-token`));
     }
 
     async subscribe() {
@@ -52,7 +53,7 @@ export default class FirebaseMessaging extends MessagingBase {
             throw new Error("Notifications denied");
         }
         const token = await this._getToken(messaging);
-        window.localStorage.setItem(this.storageKey, token);
+        window.localStorage.setItem(`${this.storageId}:notification-token`, token);
         return token;
     }
 
@@ -67,7 +68,7 @@ export default class FirebaseMessaging extends MessagingBase {
         }
         const result = await deleteToken(messaging);
         this._tokenInitialized = false;
-        window.localStorage.removeItem(this.storageKey);
+        window.localStorage.removeItem(`${this.storageId}:notification-token`);
         return result;
     }
 

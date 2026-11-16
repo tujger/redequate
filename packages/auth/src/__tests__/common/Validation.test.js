@@ -1,3 +1,4 @@
+import createService from "../../../../../src/__tests__/createService";
 import {vi} from "vitest";
 import LocalAuth from "../../local";
 import FirebaseAuth from "../../firebase";
@@ -55,7 +56,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s argument v
     ])("rejects invalid %s arguments before provider or database access: %j", async (method, args) => {
         const database = {read: vi.fn(), update: vi.fn()};
         const sdk = {authStateReady: vi.fn()};
-        const auth = new Auth({database, firebase: {app: sdk}});
+        const auth = createService(Auth, {database, firebase: {app: sdk}});
         const getItem = vi.spyOn(Storage.prototype, "getItem");
         const setItem = vi.spyOn(Storage.prototype, "setItem");
         await expect(auth[method](...args)).rejects.toMatchObject({code: "auth/invalid-argument"});
@@ -66,7 +67,7 @@ describe.each([["local", LocalAuth], ["firebase", FirebaseAuth]])("%s argument v
         expect(sdk.authStateReady).not.toHaveBeenCalled();
     });
 
-    it.each([null, [], {database: null}, {database: []}, {UserData: {}}, {UserData: () => {}}, {storageKey: 42}])(
+    it.each([null, [], {database: null}, {database: []}, {UserData: {}}, {UserData: () => {}}, {storageId: 42}])(
         "rejects invalid constructor configuration %j before SDK setup", options => {
             expect(() => new Auth(options)).toThrow(expect.objectContaining({code: "auth/invalid-argument"}));
             expect(getAuth).not.toHaveBeenCalled();

@@ -23,6 +23,8 @@
             "autoIncrement": true
         },
         "storeSchema": [
+            {"name": "activity_type_id", "keypath": "activity_type_id", "options": {"unique": true}},
+            {"name": "type", "keypath": "type"}
         ]
     },
     {
@@ -32,7 +34,7 @@
             "autoIncrement": true
         },
         "storeSchema": [
-            {"name": "activity_uid", "keypath": "activity_uid", "options": {"unique": true}},
+            {"name": "activity_id", "keypath": "activity_id", "options": {"unique": true}},
             {"name": "type", "keypath": "type"},
             {"name": "uid", "keypath": "uid"}
         ]
@@ -45,6 +47,7 @@
         },
         "storeSchema": [
             {"name": "user_id", "keypath": "user_id"},
+            {"name": "alert_id", "keypath": "alert_id", "options": {"unique": true}},
             {"name": "user_id_alert_id", "keypath": ["user_id", "alert_id"], "options": {"unique": true}},
             {"name": "user_id_timestamp", "keypath": ["user_id", "timestamp"]}
         ]
@@ -57,6 +60,7 @@
         },
         "storeSchema": [
             {"name": "user_id", "keypath": "user_id"},
+            {"name": "chat_id", "keypath": "chat_id"},
             {
                 "name": "user_id_chat_id",
                 "keypath": ["user_id", "chat_id"],
@@ -74,6 +78,7 @@
         },
         "storeSchema": [
             {"name": "chat_id", "keypath": "chat_id"},
+            {"name": "message_id", "keypath": "message_id"},
             {
                 "name": "chat_id_message_id",
                 "keypath": ["chat_id", "message_id"],
@@ -117,6 +122,7 @@
             "autoIncrement": true
         },
         "storeSchema": [
+            {"name": "setting", "keypath": "setting", "options": {"unique": true}}
         ]
     },
     {
@@ -127,6 +133,7 @@
         },
         "storeSchema": [
             {"name": "mutual_type", "keypath": "mutual_type"},
+            {"name": "mutual_id", "keypath": "mutual_id"},
             {
                 "name": "mutual_type_mutual_id",
                 "keypath": ["mutual_type", "mutual_id"],
@@ -146,15 +153,14 @@
         },
         "storeSchema": [
             {"name": "mutual_type", "keypath": "mutual_type"},
+            {"name": "mutual_id", "keypath": "mutual_id"},
             {
                 "name": "mutual_type_mutual_id",
                 "keypath": ["mutual_type", "mutual_id"],
                 "options": {"unique": true}
             },
             {"name": "mutual_type_id", "keypath": ["mutual_type", "id"]},
-            {"name": "mutual_type_uid", "keypath": ["mutual_type", "uid"]},
-            {"name": "mutual_type_id_uid", "keypath": ["mutual_type", "id_uid"]},
-            {"name": "mutual_type_uid_id", "keypath": ["mutual_type", "uid_id"]}
+            {"name": "mutual_type_uid", "keypath": ["mutual_type", "uid"]}
         ]
     },
     {
@@ -164,7 +170,6 @@
             "autoIncrement": true
         },
         "storeSchema": [
-            {"name": "_my", "keypath": "_my"},
             {"name": "mutual_type", "keypath": "mutual_type"},
             {
                 "name": "mutual_type_user_id",

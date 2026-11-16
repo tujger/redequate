@@ -1,0 +1,7 @@
+{
+    "$messaging": {
+        "keyPath": "key",
+        "autoIncrement": false,
+        "indexes": {}
+    }
+}

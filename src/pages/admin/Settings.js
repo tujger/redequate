@@ -10,16 +10,14 @@ import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
 import {useHistory} from "react-router-dom";
+import {tokenizeText} from "../../components";
 import ConfirmComponent from "../../components/ConfirmComponent";
 import LoadingComponent from "../../components/LoadingComponent";
 import MentionedSelectComponent from "../../components/MentionedSelectComponent";
-import {tokenizeText} from "../../components/MentionedTextComponent";
 import ProgressView from "../../components/ProgressView";
-import {useDatabase, useRedirectToLogin} from "../../controllers";
-import {useMetaInfo, useWindowData} from "../../controllers/General";
+import {useCurrentUserDataValue, useDatabase, useMetaInfo, useRedirectToLogin, useWindowData} from "../../controllers";
 import {mentionUsers} from "../../controllers/mentionTypes";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
 import UserData from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import Select from "../../controls/Select/Select";
@@ -27,7 +25,6 @@ import Switch from "../../controls/Switch/Switch";
 import Tabs from "../../controls/Tabs/Tabs";
 import TextField from "../../controls/TextField/TextField";
 import baseStyles from "../../themes/Base.module.css";
-import {updateActivity} from "./audit/auditReducer";
 import styles from "./styles/Settings.module.css";
 
 export default ({uploadable}) => {
@@ -69,16 +66,18 @@ export default ({uploadable}) => {
         postsAllowEdit,
         postsRotateReplies,
         support,
-        details,
         tab,
         translateLimit,
         uploadsAllow,
-        uploadsTypes = [],
         uploadsMaxHeight,
         uploadsMaxSize,
         uploadsMaxWidth,
-        uploadsQuality
+        uploadsQuality,
+        userProfileFollowing,
+        userProfileFriend,
+        userProfileSubscriptions,
     } = state;
+    const uploadsTypes = Array.isArray(state.uploadsTypes) ? state.uploadsTypes : [];
     const {timestamp: givenTimestamp, person: givenPerson} = maintenanceGiven || {};
 
     const parseUploadables = () => {
@@ -107,27 +106,18 @@ export default ({uploadable}) => {
         dispatch(ProgressView.SHOW);
         setState(state => ({...state, disabled: true, maintenanceOpen: false}));
         if (value) {
-            updates.set(["meta", "maintenance"], {
+            updates.set(["meta", {setting: "maintenance"}], {
                 message: message || "",
                 timestamp: database.TIMESTAMP,
                 person: {name: currentUserData.public.name, email: currentUserData.public.email}
             })
         } else {
-            updates.set(["meta", "maintenance"], null);
+            updates.set(["meta", {setting: "maintenance"}], null);
         }
         database.update(updates)
-            .then(() => database.read(["meta", "maintenance"]))
+            .then(() => database.read(["meta", {setting: "maintenance"}]))
             .then(() => setState(state => ({...state, maintenance: value, disabled: false})))
             .then(() => notifySnackbar(`Maintenance is ${value ? "on" : "off"}.`))
-            .then(() => updateActivity({
-                database,
-                uid: currentUserData.id,
-                type: "Maintenance",
-                details: {
-                    message: message || null,
-                    state: value ? "on" : "off",
-                }
-            }))
             .catch(notifySnackbar)
             .finally(finallyCallback)
     }
@@ -158,6 +148,14 @@ export default ({uploadable}) => {
         }))
     }
 
+    const handleUploadType = type => (event, checked) => {
+        setState(state => {
+            const current = Array.isArray(state.uploadsTypes) ? state.uploadsTypes : [];
+            const uploadsTypes = checked ? [...new Set([...current, type])] : current.filter(item => item !== type);
+            return {...state, uploadsTypes, details: {...state.details, uploadsTypes}};
+        });
+    };
+
     const handleChangeTab = tab => {
         setState(state => ({...state, tab}));
     };
@@ -178,13 +176,13 @@ export default ({uploadable}) => {
         }
         const addSupport = async token => {
             if (token.type === "user") {
-                updates.set(["meta", "support"], token.id || null);
+                updates.set(["meta", {setting: "support"}], token.id || null);
                 return;
             }
             throw Error(`Incorrect token: ${JSON.stringify(token)}`);
         }
         const addBlockedNames = async () => {
-            updates.set(["meta", "blockedNames"], blockedNames || null);
+            updates.set(["meta", {setting: "blockedNames"}], blockedNames || null);
         }
         const addPreferenceDynamicLinksUrlPrefix = async () => {
             settings.dynamicLinksUrlPrefix = dynamicLinksUrlPrefix || null;
@@ -208,35 +206,26 @@ export default ({uploadable}) => {
             settings.oneTapCliendId = oneTapCliendId || null;
         }
         const addPreferencePosts = async () => {
-            settings.postsRotateReplies = postsRotateReplies || null;
             settings.postsAllowEdit = postsAllowEdit || null;
+            settings.postsRotateReplies = postsRotateReplies || null;
         }
         const addPreferenceUploads = async () => {
             settings.uploadsAllow = uploadsAllow || null;
-            settings.uploadsTypes = [];
-            if (settings.uploadsAudio) settings.uploadsTypes.push("audio/*");
-            if (settings.uploadsImages) settings.uploadsTypes.push("images/*");
-            if (settings.uploadsVideo) settings.uploadsTypes.push("video/*");
-            if (!settings.uploadsTypes.length) settings.uploadsTypes = null;
+            settings.uploadsTypes = uploadsTypes.length ? uploadsTypes : null;
             settings.uploadsMaxHeight = uploadsAllow ? +uploadsMaxHeight || 1000 : null;
             settings.uploadsMaxSize = uploadsAllow ? +uploadsMaxSize || 100 : null;
             settings.uploadsMaxWidth = uploadsAllow ? +uploadsMaxWidth || 1000 : null;
             settings.uploadsQuality = uploadsAllow ? +uploadsQuality || 75 : null;
         }
+        const addPreferenceUserProfile = async () => {
+            settings.userProfileFollowing = userProfileFollowing || false;
+            settings.userProfileFriend = userProfileFriend || false;
+            settings.userProfileSubscriptions = userProfileSubscriptions || false;
+        }
         const publish = async () => {
-            updates.set(["meta", "settings"], settings);
+            updates.set(["meta", {setting: "settings"}], settings);
             console.log(updates);
             return database.update(updates);
-        }
-        const updateServiceActivity = async () => {
-            if (Object.keys(details).length > 0) {
-                updateActivity({
-                    database,
-                    uid: currentUserData.id,
-                    type: "Settings updated",
-                    details
-                });
-            }
         }
         const notifyAboutSaved = async () => {
             notifySnackbar("Saved");
@@ -257,9 +246,9 @@ export default ({uploadable}) => {
             .then(addPreferenceJoinUs)
             .then(addPreferencePosts)
             .then(addPreferenceUploads)
+            .then(addPreferenceUserProfile)
             .then(publish)
             .then(notifyAboutSaved)
-            .then(updateServiceActivity)
             .catch(notifySnackbar)
             .finally(finalizeSaving);
     }
@@ -282,19 +271,19 @@ export default ({uploadable}) => {
             return {};
         }
         const fetchBlockedNames = async props => {
-            const blockedNames = (await database.read(["meta", {blockedNames: "blockedNames"}])) || "";
+            const blockedNames = (await database.read(["meta", {setting: "blockedNames"}])) || "";
             return {...props, blockedNames};
         }
         const fetchMaintenance = async props => {
-            const meta = await database.read(["meta", {maintenance: "maintenance"}]);
+            const meta = await database.read(["meta", {setting: "maintenance"}]);
             return {...props, maintenance: Boolean(meta), ...(meta || {})};
         }
         const fetchSettings = async props => {
-            const settings = (await database.read(["meta", {settings: "settings"}])) || {};
+            const settings = (await database.read(["meta", {setting: "settings"}])) || {};
             return {...props, ...settings};
         }
         const fetchSupport = async props => {
-            const supportId = await database.read(["meta", {support: "support"}]);
+            const supportId = await database.read(["meta", {setting: "support"}]);
             if (supportId) {
                 return new UserData(database).fetch(supportId)
                     .then(userData => ({
@@ -382,6 +371,21 @@ export default ({uploadable}) => {
             </>}
             {(tab === 2 || tab === -1) && <>
                 {isNarrow && <h2 className={styles.sectionHeading}>User profiles</h2>}
+                <Option
+                    checked={userProfileFollowing || false}
+                    disabled={disabled}
+                    label={"Allow following"}
+                    onChange={handleSwitch("userProfileFollowing")}/>
+                <Option
+                    checked={userProfileFriend || false}
+                    disabled={disabled}
+                    label={"Allow friends"}
+                    onChange={handleSwitch("userProfileFriend")}/>
+                <Option
+                    checked={userProfileSubscriptions || false}
+                    disabled={disabled}
+                    label={"Show subscriptions in profile"}
+                    onChange={handleSwitch("userProfileSubscriptions")}/>
                 <Option
                     disabled={disabled}
                     label={"Blocked names"}
@@ -503,17 +507,17 @@ export default ({uploadable}) => {
                             checked={uploadsTypes.includes("audio/*")}
                             disabled={disabled}
                             label={"Allow audio/*"}
-                            onChange={handleSwitch("uploadsAudio")}/>}
+                            onChange={handleUploadType("audio/*")}/>}
                         {uploadableTypes.includes("images/*") && <Option
                             checked={uploadsTypes.includes("images/*")}
                             disabled={disabled}
-                            onChange={handleSwitch("uploadsImages")}
+                            onChange={handleUploadType("images/*")}
                             label={"Allow images/*"}/>}
                         {uploadableTypes.includes("video/*") && <Option
                             checked={uploadsTypes.includes("video/*")}
                             disabled={disabled}
                             label={"Allow video/*"}
-                            onChange={handleSwitch("uploadsVideo")}/>}
+                            onChange={handleUploadType("video/*")}/>}
                     </div>
                 </div>}
                 <Option

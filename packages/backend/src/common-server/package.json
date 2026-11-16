@@ -1,0 +1,7 @@
+{
+    "type": "module",
+    "scripts": {
+        "build": "npm --prefix ../../../server run build -- --configBackend common-server",
+        "watch": "npm run build -- --watch"
+    }
+}

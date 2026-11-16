@@ -1,7 +1,7 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import React from "react";
-import {connect, useDispatch} from "react-redux";
+import {useDispatch} from "react-redux";
 import {DatabaseOrder} from "../../../../packages/database/src";
 import AvatarView from "../../../components/AvatarView";
 import ConfirmComponent from "../../../components/ConfirmComponent";
@@ -16,11 +16,11 @@ import Button from "../../../controls/Button/Button";
 import Chip from "../../../controls/Chip/Chip";
 import Select from "../../../controls/Select/Select";
 import baseStyles from "../../../themes/Base.module.css";
-import auditReducer from "./auditReducer";
 import ErrorItemComponent from "./ErrorItemComponent";
+import useErrorsFilter from "./useErrorsFilter";
 
-const Errors = props => {
-    const {errorsMode = "all", errorsFilter} = props;
+export default props => {
+    const [{errorsMode = "all", errorsFilter}, setErrorsFilter] = useErrorsFilter();
     const database = useDatabase();
     const dispatch = useDispatch();
     const shouldRedirectToLogin = useRedirectToLogin();
@@ -29,7 +29,7 @@ const Errors = props => {
     const {deleteOpen} = state;
 
     const handleMode = evt => {
-        dispatch({type: auditReducer.ERRORS, errorsMode: evt.target.value, errorsFilter});
+        setErrorsFilter(state => ({...state, errorsMode: evt.target.value}));
     }
 
     const handleConfirmDeletion = evt => {
@@ -58,14 +58,14 @@ const Errors = props => {
         data,
         onUserClick: (event, errorsFilter) => {
             event && event.stopPropagation();
-            dispatch({type: auditReducer.ERRORS, errorsMode: "all", errorsFilter});
+            setErrorsFilter(state => ({...state, errorsMode: "all", errorsFilter}));
         }
     })
 
     const filteredUserData = errorsFilter ? cacheDatas.get(errorsFilter) : null;
 
     const clearFilteredUser = () => {
-        dispatch({type: auditReducer.ERRORS, errorsMode, errorsFilter: ""});
+        setErrorsFilter(state => ({...state, errorsFilter: ""}));
     };
 
     return <>
@@ -117,10 +117,3 @@ const Errors = props => {
         />}
     </>
 };
-
-const mapStateToProps = ({audit}) => ({
-    errorsFilter: audit.errorsFilter,
-    errorsMode: audit.errorsMode,
-});
-
-export default connect(mapStateToProps)(Errors);

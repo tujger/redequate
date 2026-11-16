@@ -10,9 +10,10 @@ beforeEach(() => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     storage = new LocalStorage();
     auth = {resolveCurrentUser: vi.fn().mockResolvedValue({id: "user"})};
+    storage.setAuth(auth);
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
-const upload = options => storage.upload({auth, blob: new File(["hello"], "file.txt", {type: "text/plain"}), ...options});
+const upload = options => storage.upload({blob: new File(["hello"], "file.txt", {type: "text/plain"}), ...options});
 it("persists files across instances and resolves both path and URL", async () => {
     const onProgress = vi.fn();
     const result = await upload({name: "preview", metadata: {note: "test"}, onProgress});
@@ -34,14 +35,14 @@ it("keeps identical files independent and namespaces isolated", async () => {
     const second = await upload();
     expect(first.url).not.toBe(second.url);
     expect(first.metadata.fullPath).not.toBe(second.metadata.fullPath);
-    const other = new LocalStorage({storageKey: "other"});
+    const other = new LocalStorage({storageId: "other"});
     await expect(other.resolveMetadata(first.url)).rejects.toMatchObject({code: "storage/object-not-found"});
     await storage.delete(first.metadata.fullPath);
     expect(await storage.resolveDownloadURL(second.url)).toBe(second.url);
 });
 it("validates arguments and requires an authenticated user", async () => {
-    for (const key of [null, "", " ", 1]) expect(() => new LocalStorage({storageKey: key})).toThrow("storageKey");
-    for (const options of [{auth: null}, {blob: {}}, {metadata: []}, {name: 3}, {onProgress: "bad"}]) {
+    for (const key of [null, "", " ", 1]) expect(() => new LocalStorage({storageId: key})).toThrow("storageId");
+    for (const options of [{blob: {}}, {metadata: []}, {name: 3}, {onProgress: "bad"}]) {
         await expect(upload(options)).rejects.toMatchObject({code: "storage/invalid-argument"});
     }
     auth.resolveCurrentUser.mockResolvedValue(null);
@@ -109,7 +110,7 @@ it("rejects blocked IndexedDB upgrades and closes a late connection", async () =
     vi.spyOn(window.indexedDB, "open").mockReturnValue(request);
     const onProgress = vi.fn();
     const pending = upload({onProgress});
-    const rejected = expect(pending).rejects.toThrow("LocalStorage database upgrade is blocked.");
+    const rejected = expect(pending).rejects.toThrow("Local database upgrade is blocked.");
     await vi.waitFor(() => expect(request.onblocked).toBeTypeOf("function"));
     request.onblocked();
     await rejected;
@@ -117,4 +118,21 @@ it("rejects blocked IndexedDB upgrades and closes a late connection", async () =
     request.result = {close};
     request.onsuccess();
     expect(close).toHaveBeenCalledOnce();
+});
+
+it("requires a linked Auth before writing files", async () => {
+    storage = new LocalStorage();
+    const open = vi.spyOn(window.indexedDB, "open");
+    await expect(upload()).rejects.toMatchObject({code: "storage/auth-required"});
+    expect(open).not.toHaveBeenCalled();
+});
+
+it("uses changed users and replacement Auth without caching identities", async () => {
+    expect((await upload()).metadata.customMetadata.uid).toBe("user");
+    auth.resolveCurrentUser.mockResolvedValue({id: "other"});
+    expect((await upload()).metadata.customMetadata.uid).toBe("other");
+    auth.resolveCurrentUser.mockResolvedValue(null);
+    await expect(upload()).rejects.toMatchObject({code: "storage/unauthenticated"});
+    storage.setAuth({resolveCurrentUser: async () => ({id: "replacement"})});
+    expect((await upload()).metadata.customMetadata.uid).toBe("replacement");
 });

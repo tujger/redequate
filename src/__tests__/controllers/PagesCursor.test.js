@@ -37,12 +37,12 @@ it("composes PagesCursor with Firebase records while keeping group ordering", as
     expect(cursor.position.finished).toBe(true);
 });
 
-it("uses ready orderBy segments without splitting string fields", async () => {
+it("uses valid named segments and preserves literal string orderBy fields", async () => {
     usePages.mockReturnValue({
         alpha: {_route: "/a", route: "/a", label: "Alpha", details: {rank: 2}, "details/rank": 1},
         beta: {_route: "/b", route: "/b", label: "Beta", details: {rank: 1}, "details/rank": 2}
     });
-    for (const orderBy of [["details", "rank"], ["details", {field: "rank", _: 0}]]) {
+    for (const orderBy of [["details", "rank"], ["details", {field: "rank"}]]) {
         const cursor = new PagesCursor({orderBy, start: 1, end: 2});
         expect((await cursor.next(10)).map(entry => entry.value.name)).toEqual(["Beta", "Alpha"]);
     }

@@ -1,7 +1,6 @@
 export {default as Activity} from "./admin/audit/Activity";
 export {default as AddUser} from "./admin/AddUser";
 export {default as Admin} from "./admin/Admin";
-export {default as Audit} from "./admin/audit/Audit";
 export {default as Login} from "./Login";
 export {default as Logout} from "./Logout";
 export {default as EditProfile} from "./EditProfile";
@@ -9,7 +8,7 @@ export {default as Home} from "./Home";
 export {default as NewPost} from "./NewPost";
 export {default as Post} from "./Post";
 export {default as NotFound} from "./NotFound";
-export {default as Profile, publicFields} from "./Profile";
+export {default as Profile} from "./Profile";
 export {default as RestorePassword} from "./RestorePassword";
 export {default as Search} from "./search/Search";
 export {default as Settings} from "./admin/Settings";

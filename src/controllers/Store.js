@@ -8,7 +8,6 @@ import ProgressView, {progressViewReducer} from "../components/ProgressView";
 import {snackbarReducer} from "../components/Snackbar";
 import mainAppbarReducer from "../layouts/ResponsiveDrawerLayout/mainAppbarReducer";
 import topMenuReducer from "../layouts/TopBottomMenuLayout/topMenuReducer";
-import auditReducer from "../pages/admin/audit/auditReducer";
 import usersReducer from "../pages/admin/users/usersReducer";
 import confirmComponentReducer from "../reducers/confirmComponentReducer";
 import dispatcherRoutedBodyReducer from "../reducers/dispatcherRoutedBodyReducer";
@@ -22,7 +21,6 @@ export default (name, reducers) => {
     reducers = {
         alertsCounter: alertsCounterReducer,
         alertsVisit: alertsVisitReducer,
-        audit: auditReducer,
         chatsCounter: chatsCounterReducer,
         confirmComponentReducer,
         dispatcherRoutedBodyReducer,

@@ -1,6 +1,5 @@
-import {getDatabase, ref, set} from "firebase/database";
-import resolvePath from "../common/resolvePath";
+import parsePath from "./parsePath";
 
-export default function deleteRecord(firebase, path) {
-    return set(ref(getDatabase(firebase.app), resolvePath(path)), null);
+export default async function deleteRecord(path, options, run, superDelete) {
+    return run(() => superDelete(parsePath(path).address), options, "delete", {path});
 }

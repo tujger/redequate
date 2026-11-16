@@ -1,155 +1,120 @@
-import {afterEach, beforeEach, expect, it, vi} from "vitest";
+import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
+import LocalBackend from "../../../../backend/src/local/LocalBackend";
 import {openDatabase} from "../../local/helpers";
-import {LOCAL_SCHEMA} from "../../local/constants";
+import {convertStores, LOCAL_SCHEMA} from "../../local/storeSchema";
+import stores from "../../local/stores.json";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
+const audit = {store: "audit", storeConfig: {keyPath: "_id", autoIncrement: true}, storeSchema: [
+    {name: "audit_id", keypath: "audit_id", options: {unique: true}},
+    {name: "code", keypath: "code", options: {unique: true}}
+]};
+const make = storageId => createService(LocalDatabase, {storageId, stores: [audit], backend: new LocalBackend({storageId})});
 
-const schema = {audit: {keyPath: "id", autoIncrement: false, indexes: {byStatus: {keyPath: "status"}}}};
-const rawOpen = (name, version) => new Promise((resolve, reject) => {
-    const request = indexedDB.open(`redequate:local:${name}`, version);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-});
-
-it("exposes a serializable description of the physical version-one stores", async () => {
-    const db = new LocalDatabase({storageKey: "description"});
-    expect(JSON.parse(JSON.stringify(LOCAL_SCHEMA))).toEqual(LOCAL_SCHEMA);
-    await db.applySchema(LOCAL_SCHEMA);
-    const connection = await openDatabase("description");
-    expect(connection.version).toBe(1);
-    expect([...connection.objectStoreNames].sort()).toEqual(Object.keys(LOCAL_SCHEMA).sort());
-    connection.close();
-});
-
-it("adds a store, updates its indexes, preserves rows, and repeats without a version bump", async () => {
-    const db = new LocalDatabase({storageKey: "migration"});
-    await db.update(["meta", {id: "before", _: true}], () => ({value: 1}));
-    await db.applySchema(schema);
-    let connection = await openDatabase("migration");
-    expect(connection.version).toBe(2);
-    await new Promise((resolve, reject) => {
-        const transaction = connection.transaction("audit", "readwrite");
-        transaction.objectStore("audit").put({id: "a", status: "open", owner: "u1"});
-        transaction.oncomplete = resolve;
-        transaction.onabort = () => reject(transaction.error);
-    });
-    connection.close();
-    await db.applySchema({
-        audit: {
-            keyPath: "id",
-            autoIncrement: false,
-            indexes: {
-                byStatus: {keyPath: "owner", unique: true}, byOwner: {keyPath: "owner"}
-            }
-        }
-    });
-    connection = await openDatabase("migration");
-    expect(connection.version).toBe(3);
-    const store = connection.transaction("audit").objectStore("audit");
-    expect(store.index("byStatus").keyPath).toBe("owner");
-    expect(store.index("byStatus").unique).toBe(true);
-    expect(store.indexNames.contains("byOwner")).toBe(true);
-    expect(await new Promise(resolve => { store.get("a").onsuccess = event => resolve(event.target.result); }))
-        .toEqual({id: "a", status: "open", owner: "u1"});
-    connection.close();
-    await db.applySchema(schema);
-    connection = await openDatabase("migration");
-    expect(connection.version).toBe(4); // Restoring the original byStatus definition is an update.
-    connection.close();
-    await db.applySchema(schema);
-    connection = await openDatabase("migration");
-    expect(connection.version).toBe(4);
-    connection.close();
-    expect(await db.read(["meta", {id: "before", _: true}])).toEqual({value: 1});
-});
-
-it("rejects incompatible store changes without altering data or version", async () => {
-    const db = new LocalDatabase({storageKey: "incompatible"});
-    await db.update(["meta", {id: "safe", _: true}], () => ({value: 7}));
-    await expect(db.applySchema({meta: {keyPath: "other", autoIncrement: false, indexes: {}}}))
-        .rejects.toMatchObject({name: "VersionError"});
-    const connection = await openDatabase("incompatible");
-    expect(connection.version).toBe(1);
-    connection.close();
-    expect(await db.read(["meta", {id: "safe", _: true}])).toEqual({value: 7});
-    await expect(db.applySchema({
-        meta: {
-            ...LOCAL_SCHEMA.meta,
-            indexes: {
-                _identity: {keyPath: "value", unique: false}
-            }
-        }
-    })).rejects.toMatchObject({name: "VersionError"});
-});
-
-it("rolls back a unique index that conflicts with existing rows", async () => {
-    const db = new LocalDatabase({storageKey: "unique-rollback"});
-    await db.applySchema(schema);
-    const connection = await openDatabase("unique-rollback");
-    await new Promise((resolve, reject) => {
-        const transaction = connection.transaction("audit", "readwrite");
-        transaction.objectStore("audit").put({id: "a", status: "same"});
-        transaction.objectStore("audit").put({id: "b", status: "same"});
-        transaction.oncomplete = resolve;
-        transaction.onabort = () => reject(transaction.error);
-    });
-    connection.close();
-    await expect(db.applySchema({
-        audit: {
-            ...schema.audit,
-            indexes: {
-                byStatus: {keyPath: "status", unique: true}
-            }
-        }
-    })).rejects.toThrow();
-    const after = await openDatabase("unique-rollback");
-    expect(after.version).toBe(2);
-    const store = after.transaction("audit").objectStore("audit");
-    expect(store.index("byStatus").unique).toBe(false);
-    expect(await new Promise(resolve => { store.count().onsuccess = event => resolve(event.target.result); })).toBe(2);
-    after.close();
-});
-
-it("closes Local connections on versionchange and reports an external blocker", async () => {
-    const db = new LocalDatabase({storageKey: "connections"});
-    const local = await openDatabase("connections");
-    await db.applySchema(schema);
-    expect(() => local.transaction("meta")).toThrow();
-    const external = await rawOpen("connections");
-    await expect(db.applySchema({
-        audit: {
-            ...schema.audit,
-            indexes: {
-                ...schema.audit.indexes, byOwner: {keyPath: "owner"}
-            }
-        }
-    })).rejects.toThrow(/blocked/);
-    external.close();
-    await db.applySchema({
-        audit: {
-            ...schema.audit,
-            indexes: {
-                ...schema.audit.indexes, byOwner: {keyPath: "owner"}
-            }
-        }
-    });
-    const connection = await openDatabase("connections");
-    expect(connection.transaction("audit").objectStore("audit").indexNames.contains("byOwner")).toBe(true);
-    connection.close();
-});
-
-it("converges when two callers add different stores at the same time", async () => {
-    const first = new LocalDatabase({storageKey: "race"});
-    const second = new LocalDatabase({storageKey: "race"});
-    await Promise.all([
-        first.applySchema(schema),
-        second.applySchema({auditOther: {keyPath: "id", autoIncrement: false, indexes: {}}})
+it("converts exactly the indexes declared by the caller and built-in schema", () => {
+    const schema = convertStores([audit]);
+    for (const definition of [...stores, audit]) {
+        expect(Object.keys(schema[definition.store].indexes)).toEqual(definition.storeSchema.map(index => index.name));
+    }
+    expect(schema.meta.indexes).toEqual({setting: {keyPath: "setting", unique: true}});
+    expect(LOCAL_SCHEMA.posts.indexes.post_id).toMatchObject({keyPath: "post_id", unique: true});
+    expect(Object.keys(LOCAL_SCHEMA.mutualrequests.indexes)).toEqual([
+        "mutual_type", "mutual_id", "mutual_type_mutual_id", "mutual_type_id", "mutual_type_uid"
     ]);
-    const connection = await openDatabase("race");
-    expect(connection.objectStoreNames.contains("audit")).toBe(true);
-    expect(connection.objectStoreNames.contains("auditOther")).toBe(true);
+    expect(LOCAL_SCHEMA.mutual.indexes).toHaveProperty("mutual_type_id_uid");
+    expect(LOCAL_SCHEMA.mutual.indexes).toHaveProperty("mutual_type_uid_id");
+});
+
+it("keeps old physical mutualrequests indexes when reopening existing Local data", async () => {
+    const storageId = "schema-old-request-indexes";
+    const legacy = structuredClone(LOCAL_SCHEMA);
+    legacy.mutualrequests.indexes.mutual_type_id_uid = {keyPath: ["mutual_type", "id_uid"], unique: false};
+    legacy.mutualrequests.indexes.mutual_type_uid_id = {keyPath: ["mutual_type", "uid_id"], unique: false};
+    const connection = await openDatabase(storageId, legacy);
     connection.close();
+    const database = createService(LocalDatabase, {storageId, backend: new LocalBackend({storageId})});
+    await database.applySchema({mutualrequests: LOCAL_SCHEMA.mutualrequests});
+    const reopened = await openDatabase(storageId);
+    const indexes = reopened.transaction("mutualrequests").objectStore("mutualrequests").indexNames;
+    expect([...indexes]).toContain("mutual_type_id_uid");
+    expect([...indexes]).toContain("mutual_type_uid_id");
+    reopened.close();
+});
+
+it("creates the declared schema at version one and leaves it stable when reopened", async () => {
+    const database = make("schema-native");
+    expect(await database.read(["audit"])).toBeUndefined();
+    let connection = await openDatabase("schema-native");
+    expect(connection.version).toBe(1);
+    expect([...connection.transaction("audit").objectStore("audit").indexNames]).toEqual(["audit_id", "code"]);
+    connection.close();
+    await database.create(["audit", {audit_id: "a"}], {code: "one"});
+    const reopened = make("schema-native");
+    expect(await reopened.read(["audit", {audit_id: "a"}])).toEqual({audit_id: "a", code: "one"});
+    connection = await openDatabase("schema-native");
+    expect(connection.version).toBe(1);
+    connection.close();
+});
+
+it("lets native unique indexes abort a cross-store transaction", async () => {
+    const database = make("schema-unique");
+    await database.read(["audit"]);
+    await database.create(["audit", {audit_id: "a"}], {code: "one"});
+    await expect(database.update(new Map([
+        [["posts", {post_id: "p1"}], {title: "must roll back"}],
+        [["audit", {audit_id: "b"}], {code: "one"}]
+    ]))).rejects.toMatchObject({name: "ConstraintError"});
+    expect(await database.read(["posts", {post_id: "p1"}])).toBeUndefined();
+    expect(await database.read(["audit", {audit_id: "b"}])).toBeUndefined();
+});
+
+it("adds declared indexes without rewriting records or changing native primary keys", async () => {
+    const database = make("schema-add-index");
+    await database.read(["audit"]);
+    await database.create(["audit", {audit_id: "a"}], {code: "one", category: "books"});
+    const before = await database.read(["audit", {audit_id: "a"}]);
+    await database.applySchema({audit: {...convertStores([audit]).audit, indexes: {
+        ...convertStores([audit]).audit.indexes, category: {keyPath: "category", unique: false}
+    }}});
+    const after = await database.read(["audit", {audit_id: "a"}]);
+    expect(after).toEqual(before);
+    expect(await database.read(["audit", {category: "books"}], {orderBy: "category", equalTo: "books"}))
+        .toEqual({a: before});
+    let connection = await openDatabase("schema-add-index");
+    const version = connection.version;
+    expect(version).toBe(2);
+    connection.close();
+    await database.applySchema({audit: {...convertStores([audit]).audit, indexes: {
+        ...convertStores([audit]).audit.indexes, category: {keyPath: "category", unique: false}
+    }}});
+    connection = await openDatabase("schema-add-index");
+    expect(connection.version).toBe(version);
+    connection.close();
+});
+
+it("protects required index definitions and native store configuration", async () => {
+    const database = make("schema-constraints");
+    await database.read(["audit"]);
+    await expect(database.applySchema({audit: {...convertStores([audit]).audit, keyPath: "other"}}))
+        .rejects.toMatchObject({name: "VersionError"});
+    await expect(database.applySchema({audit: {...convertStores([audit]).audit, indexes: {
+        audit_id: {keyPath: "audit_id", unique: false}
+    }}})).rejects.toMatchObject({name: "VersionError"});
+    const connection = await openDatabase("schema-constraints");
+    expect(connection.version).toBe(1);
+    connection.close();
+});
+
+it("keeps configured collections instance-scoped and provider stores separate", async () => {
+    const database = make("schema-scope");
+    await database.read(["audit"]);
+    await database.create(["audit", {audit_id: "a"}], {code: "one"});
+    const plain = createService(LocalDatabase, {storageId: "schema-scope", backend: new LocalBackend({storageId: "schema-scope"})});
+    await expect(plain.read(["audit"])).rejects.toMatchObject({code: "database/invalid-argument"});
+    await expect(database.applySchema({$auth: {keyPath: "id", autoIncrement: false, indexes: {}}})).rejects.toBeInstanceOf(TypeError);
+    await expect(new LocalBackend({storageId: "schema-scope"}).request("database.create", ["$auth", {id: "a"}], {}))
+        .rejects.toMatchObject({code: "database/invalid-argument"});
 });

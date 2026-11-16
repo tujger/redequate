@@ -1,160 +1,140 @@
-import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 
-class MockBroadcastChannel {
-    static channels = new Set();
+class Channel {
+    static open = new Set();
     static messages = [];
-
-    constructor(name) {
-        this.name = name;
-        this.closed = false;
-        MockBroadcastChannel.channels.add(this);
-    }
-
+    constructor(name) { this.name = name; Channel.open.add(this); }
     postMessage(data) {
-        MockBroadcastChannel.messages.push({name: this.name, data});
-        for (const peer of MockBroadcastChannel.channels) {
-            if (peer !== this && !peer.closed && peer.name === this.name) {
-                queueMicrotask(() => { if (!peer.closed) peer.onmessage?.({data: structuredClone(data)}); });
-            }
+        Channel.messages.push({name: this.name, data});
+        for (const peer of Channel.open) if (peer !== this && peer.name === this.name) {
+            queueMicrotask(() => peer.onmessage?.({data: structuredClone(data)}));
         }
     }
-
-    close() {
-        this.closed = true;
-        MockBroadcastChannel.channels.delete(this);
-    }
+    close() { Channel.open.delete(this); }
 }
-
-const record = id => ["meta", {id, _: true}];
-const created = value => value;
-const context = async () => {
-    vi.resetModules();
-    return (await import("../../local")).default;
-};
 
 beforeEach(() => {
     vi.stubGlobal("indexedDB", new IDBFactory());
-    vi.stubGlobal("BroadcastChannel", MockBroadcastChannel);
-    MockBroadcastChannel.channels.clear();
-    MockBroadcastChannel.messages.length = 0;
+    vi.stubGlobal("BroadcastChannel", Channel);
+    Channel.open.clear(); Channel.messages.length = 0;
 });
-
 afterEach(() => {
-    for (const channel of MockBroadcastChannel.channels) channel.close();
+    for (const channel of Channel.open) channel.close();
     vi.unstubAllGlobals();
-    vi.restoreAllMocks();
 });
+const uiMessages = () => Channel.messages.filter(message => message.data.collections);
+const writeMessages = () => Channel.messages.filter(message => message.data.changes);
+const context = async () => {
+    vi.resetModules();
+    return {Database: (await import("../../local")).default, Backend: (await import("../../../../backend/src/local/LocalBackend")).default};
+};
 
-it("shares one channel between local instances and refreshes another context once without echo", async () => {
-    const LocalA = await context();
-    const first = new LocalA({storageKey: "shared"});
-    const second = new LocalA({storageKey: "shared"});
-    const LocalB = await context();
-    const remote = new LocalB({storageKey: "shared"});
-    const one = vi.fn(), two = vi.fn(), other = vi.fn();
-    const handles = [first.addEventListener(["meta"], {onChange: one}),
-        second.addEventListener(["meta"], {onChange: two}),
-        remote.addEventListener(["meta"], {onChange: other})];
-    await vi.waitFor(() => expect(other).toHaveBeenCalledOnce());
-    expect(MockBroadcastChannel.channels.size).toBe(2);
-    await first.update(record("a"), () => ({name: "private value"}));
-    await vi.waitFor(() => expect(other).toHaveBeenCalledTimes(2));
-    expect(one).toHaveBeenCalledTimes(2);
-    expect(two).toHaveBeenCalledTimes(2);
-    expect(other).toHaveBeenLastCalledWith({a: created({name: "private value"})});
-    expect(MockBroadcastChannel.messages).toHaveLength(1);
-    expect(JSON.stringify(MockBroadcastChannel.messages[0].data)).not.toContain("private value");
-    await new Promise(resolve => setTimeout(resolve, 0));
-    expect(MockBroadcastChannel.messages).toHaveLength(1);
-    handles.forEach(handle => handle.remove());
-    expect(MockBroadcastChannel.channels.size).toBe(0);
-});
-
-it("applies the same initial key boundary to cross-context child additions", async () => {
-    const LocalA = await context();
-    const writer = new LocalA({storageKey: "child-broadcast"});
-    await writer.update(record("10"), () => ({name: "existing"}));
-    const LocalB = await context();
-    const remote = new LocalB({storageKey: "child-broadcast"});
-    const added = vi.fn();
-    const ready = vi.fn();
-    const handle = remote.addEventListener(["meta"], {onChange: ready, onChildAdd: added});
-    await vi.waitFor(() => expect(ready).toHaveBeenCalledOnce());
-    expect(added).not.toHaveBeenCalled();
-    await writer.update(record("9"), () => ({name: "older"}));
-    await vi.waitFor(() => expect(ready).toHaveBeenCalledTimes(2));
-    expect(added).not.toHaveBeenCalled();
-    await writer.update(record("11"), () => ({name: "newer"}));
-    await vi.waitFor(() => expect(added).toHaveBeenCalledExactlyOnceWith({key: "11", value: created({name: "newer"})}));
-    handle.remove();
-});
-
-it("filters unrelated paths and keeps storage keys isolated", async () => {
-    const LocalA = await context();
-    const writer = new LocalA({storageKey: "alpha"});
-    const LocalB = await context();
-    const remote = new LocalB({storageKey: "alpha"});
-    const isolated = new LocalB({storageKey: "beta"});
-    const exact = vi.fn(), other = vi.fn(), wrongKey = vi.fn();
-    const handles = [remote.addEventListener(record("a"), {onChange: exact}),
-        remote.addEventListener(record("b"), {onChange: other}),
-        isolated.addEventListener(["meta"], {onChange: wrongKey})];
-    await vi.waitFor(() => expect(wrongKey).toHaveBeenCalledOnce());
-    await writer.read(record("a")); // Prepare this instance before measuring notification reads.
-    const open = vi.spyOn(indexedDB, "open");
-    await writer.update(record("a"), () => ({name: "first"}));
-    await vi.waitFor(() => expect(exact).toHaveBeenCalledTimes(2));
-    expect(other).toHaveBeenCalledOnce();
-    expect(wrongKey).toHaveBeenCalledOnce();
-    expect(open).toHaveBeenCalledTimes(2); // committed write and matching remote reread
-    expect(MockBroadcastChannel.messages[0].name).toContain("alpha");
-    expect(MockBroadcastChannel.messages[0].name).not.toContain("beta");
-    handles.forEach(handle => handle.remove());
-});
-
-it("sends one batch notice after commit and none after abort", async () => {
-    const LocalA = await context();
-    const writer = new LocalA({storageKey: "batch"});
-    const LocalB = await context();
-    const remote = new LocalB({storageKey: "batch"});
-    const onChange = vi.fn();
-    const handle = remote.addEventListener(["meta"], {onChange});
-    await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
-    await writer.update(new Map([[record("a"), {score: 1}], [record("b"), {score: 2}]]));
-    await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(2));
-    expect(MockBroadcastChannel.messages).toHaveLength(1);
-    await expect(writer.update(new Map([[record("a"), {score: 3}], [record("b"), {bad: () => 1}]])))
-        .rejects.toBeInstanceOf(Error);
-    expect(MockBroadcastChannel.messages).toHaveLength(1);
-    expect(onChange).toHaveBeenCalledTimes(2);
-    handle.remove();
-});
-
-it("works without BroadcastChannel", async () => {
-    vi.stubGlobal("BroadcastChannel", undefined);
-    const LocalDatabase = await context();
-    const database = new LocalDatabase({storageKey: "offline"});
-    const onChange = vi.fn();
-    const handle = database.addEventListener(["meta"], {onChange});
-    await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
-    await database.update(record("a"), () => ({score: 1}));
-    expect(onChange).toHaveBeenCalledTimes(2);
-    handle.remove();
-});
-
-it("normalizes named collection roots across separate contexts", async () => {
-    const LocalA = await context(), LocalB = await context();
-    const writer = new LocalA({storageKey: "named-root"});
-    const reader = new LocalB({storageKey: "named-root"});
-    const onChange = vi.fn();
-    const listener = reader.addEventListener([{type: "posts"}, {post_id: "p1"}], {onChange});
+it("notifies across independent contexts for UI and backend reactions without echo", async () => {
+    const A = await context(), B = await context();
+    const writer = new A.Database({storageId: "shared-native", backend: new A.Backend({storageId: "shared-native"})});
+    writer.setBackend(new A.Backend({storageId: writer.storageId}));
+    const reader = new B.Database({storageId: "shared-native", backend: new B.Backend({storageId: "shared-native"})});
+    reader.setBackend(new B.Backend({storageId: reader.storageId}));
+    const isolated = new B.Database({storageId: "separate-native", backend: new B.Backend({storageId: "separate-native"})});
+    isolated.setBackend(new B.Backend({storageId: isolated.storageId}));
+    await writer.read(["posts"]);
+    const events = [], wrong = vi.fn();
+    const one = reader.cursor(["posts", "post_id"]).subscribe(event => events.push(event));
+    const two = isolated.cursor(["posts", "post_id"]).subscribe(wrong);
+    const initial = vi.fn(), separateInitial = vi.fn();
+    const ready = reader.addEventListener(["posts"], {onChange: initial});
+    const separateReady = isolated.addEventListener(["posts"], {onChange: separateInitial});
     try {
-        await vi.waitFor(() => expect(onChange).toHaveBeenCalledOnce());
-        await writer.update(["posts", {post_id: "p1"}], () => ({text: "string root"}));
-        await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(created({text: "string root"})));
-        await writer.update([{name: "posts"}, {post_id: "p1"}], () => ({text: "named root"}));
-        await vi.waitFor(() => expect(onChange).toHaveBeenLastCalledWith(created({text: "named root"})));
-        expect(await reader.read(["posts", {post_id: "p1"}])).toEqual(created({text: "named root"}));
-    } finally { listener.remove(); }
+        await vi.waitFor(() => {
+            expect(initial).toHaveBeenCalledTimes(1);
+            expect(separateInitial).toHaveBeenCalledTimes(1);
+        });
+        await writer.create(["posts", {post_id: "p1"}], {title: "A"});
+        await vi.waitFor(() => expect(events).toHaveLength(1));
+        expect(events[0]).toMatchObject({type: "add", entry: {key: "p1", value: {post_id: "p1", title: "A"}}});
+        await writer.update(["posts", {post_id: "p1"}], {title: "B"});
+        await vi.waitFor(() => expect(events).toHaveLength(2));
+        expect(events[1].type).toBe("change");
+        expect(wrong).not.toHaveBeenCalled();
+        expect(writeMessages()).toHaveLength(2);
+        expect(writeMessages()[0].data.changes[0]).toMatchObject({
+            params: {post_id: "p1"}, previous: null, value: {post_id: "p1", title: "A"},
+        });
+        expect(uiMessages().every(message => JSON.stringify(message.data) === '{"collections":["posts"]}')).toBe(true);
+    } finally { one.unsubscribe(); two.unsubscribe(); ready.remove(); separateReady.remove(); }
+    expect(Channel.open.size).toBe(0);
 });
+
+it("broadcasts backend updates and deletes after commit, remaining silent on conflicts and errors", async () => {
+    const A = await context(), B = await context();
+    const storageId = "shared-backend-update";
+    const writer = new A.Database({storageId, backend: new A.Backend({storageId})});
+    writer.setBackend(new A.Backend({storageId: writer.storageId}));
+    const reader = new B.Database({storageId, backend: new B.Backend({storageId})});
+    reader.setBackend(new B.Backend({storageId: reader.storageId}));
+    const backend = new A.Backend({storageId});
+    await writer.read(["posts"]);
+    const initial = vi.fn(), added = vi.fn(), changed = vi.fn(), removed = vi.fn();
+    const listener = reader.addEventListener(["posts"], {onChange: initial, onChildAdd: added, onChildChange: changed, onChildRemove: removed});
+    try {
+        await vi.waitFor(() => expect(initial).toHaveBeenCalledTimes(1));
+        const post = ["posts", {post_id: "p1"}];
+        const snapshot = await backend.request("database.update", post, null, {mode: "read"});
+        expect(uiMessages()).toHaveLength(0);
+        await backend.request("database.update", post, {title: "A"});
+        await vi.waitFor(() => expect(added).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", title: "A"}}));
+        expect(uiMessages()).toHaveLength(1);
+        expect(await backend.request("database.update", post, {title: "stale"}, {mode: "replace", etag: snapshot.etag}))
+            .toMatchObject({committed: false, value: {post_id: "p1", title: "A"}});
+        expect(uiMessages()).toHaveLength(1);
+        const fresh = await backend.request("database.update", post, null, {mode: "read"});
+        await backend.request("database.update", post, false, {mode: "replace", etag: fresh.etag});
+        await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: false}));
+        expect(uiMessages()).toHaveLength(2);
+        expect(await backend.request("database.delete", post)).toBeNull();
+        await vi.waitFor(() => expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: false}));
+        expect(await reader.read(post)).toBeUndefined();
+        expect(uiMessages()).toHaveLength(3);
+        await expect(backend.request("database.delete", ["missing-store"]))
+            .rejects.toMatchObject({name: "NotFoundError"});
+        expect(uiMessages()).toHaveLength(3);
+        expect(uiMessages().every(message => JSON.stringify(message.data) === '{"collections":["posts"]}')).toBe(true);
+    } finally { listener.remove(); }
+    expect(Channel.open.size).toBe(0);
+});
+
+it("broadcasts cursor handler replacement and deletion once across independent contexts", async () => {
+    const A = await context(), B = await context();
+    const storageId = "shared-cursor-backend";
+    const writer = new A.Database({storageId, backend: new A.Backend({storageId})});
+    writer.setBackend(new A.Backend({storageId: writer.storageId}));
+    const reader = new B.Database({storageId, backend: new B.Backend({storageId})});
+    reader.setBackend(new B.Backend({storageId: reader.storageId}));
+    await writer.read(["posts"]);
+    await writer.create(["posts", {post_id: "p1"}], {text: "original"});
+    const onChange = vi.fn(), changed = vi.fn(), removed = vi.fn();
+    const listener = reader.addEventListener(["posts"], {onChange, onChildChange: changed, onChildRemove: removed});
+    try {
+        await vi.waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+        const editing = writer.cursor(["posts", "post_id"], {handle: () => ({text: "changed"})});
+        expect(await editing.next(10)).toEqual([{key: "p1", value: {post_id: "p1", text: "changed"}}]);
+        await vi.waitFor(() => expect(changed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", text: "changed"}}));
+        expect(uiMessages()).toHaveLength(2);
+        const deleting = writer.cursor(["posts", "post_id"], {handle: () => null});
+        expect(await deleting.next(10)).toEqual([]);
+        await vi.waitFor(() => expect(removed).toHaveBeenCalledExactlyOnceWith({key: "p1", value: {post_id: "p1", text: "changed"}}));
+        expect(onChange).toHaveBeenCalledTimes(3);
+        expect(uiMessages()).toHaveLength(3);
+    } finally { listener.remove(); }
+    expect(Channel.open.size).toBe(0);
+});
+
+// Storage and delivery tests isolate application reactions; their effects have integration coverage.
+vi.mock("../../../../backend/src/common", () => ({handlers: {
+    post: class {
+        constructor() { this.path = ["posts", "post_id"]; }
+        onCreate() {}
+        onUpdate() {}
+        onDelete() {}
+    },
+}}));

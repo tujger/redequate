@@ -10,7 +10,7 @@ export default defineConfig(({mode}) => {
     const integration = mode === "integration";
     return {
         root,
-        ...(integration ? {ssr: {noExternal: [/firebase/], resolve: {conditions: ["browser"]}}} : {}),
+        ...(integration ? {ssr: {noExternal: [/^firebase(?:\/|$)/, /^@firebase\//], resolve: {conditions: ["browser"]}}} : {}),
         plugins: [{
             name: "framework-test-source",
             enforce: "pre",
@@ -39,7 +39,7 @@ export default defineConfig(({mode}) => {
         },
         test: {
             environment: "jsdom",
-            setupFiles: ["fake-indexeddb/auto"],
+            setupFiles: ["fake-indexeddb/auto", "src/__tests__/environment.js"],
             globals: true,
             include: ["src", "packages/*/src", "packages"].map(directory =>
                 `${directory}/__tests__/**/*.${integration ? "integration.test" : "test"}.js`),
@@ -47,7 +47,7 @@ export default defineConfig(({mode}) => {
             ...(integration
                 ? {
                     fileParallelism: false,
-                    server: {deps: {inline: [/firebase/, /@firebase/]}},
+                    server: {deps: {inline: [/^firebase(?:\/|$)/, /^@firebase\//]}},
                     testTimeout: 15000,
                     hookTimeout: 30000,
                 }

@@ -1,7 +1,8 @@
+import createLocalDatabase from "../../../../packages/database/src/__tests__/createLocalDatabase";
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
-import LocalDatabase from "../../../../packages/database/src/local";
-import {openDatabase, parseDatabasePath} from "../../../../packages/database/src/local/helpers";
+
+import {openDatabase} from "../../../../packages/database/src/local/helpers";
 import {LOCAL_COLLECTIONS} from "../../../../packages/database/src/local/constants";
 import {PostData} from "../../../components/PostComponent/PostData";
 
@@ -10,8 +11,8 @@ vi.mock("../../../components/MentionedTextComponent", () => ({tokenizeText: text
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());
 
-const storedRows = async (storageKey, name) => {
-    const database = await openDatabase(storageKey);
+const storedRows = async (storageId, name) => {
+    const database = await openDatabase(storageId);
     try {
         return await new Promise((resolve, reject) => {
             const transaction = database.transaction(name);
@@ -23,7 +24,8 @@ const storedRows = async (storageKey, name) => {
 };
 
 it.each(["posts", "replies"])("publishes and fetches %s through PostData in posts", async type => {
-    const database = new LocalDatabase({storageKey: "post-data"});
+    const database = createLocalDatabase({storageId: "post-data"});
+    await database.read(["posts"]);
     const post = await PostData({database, type}).create({uid: "u1", text: "created"});
     await post.publish()();
     const fetched = await PostData({database, type}).fetch(post.id);
@@ -31,7 +33,8 @@ it.each(["posts", "replies"])("publishes and fetches %s through PostData in post
     expect(fetched.created).toEqual(expect.any(Number));
     const rows = await storedRows("post-data", LOCAL_COLLECTIONS.posts.store);
     expect(rows).toHaveLength(1);
-    expect(rows[0]._local.path).toBe(parseDatabasePath([{type}, {post_id: post.id}]).key);
+    expect(rows[0].post_id).toBe(post.id);
+    expect(rows[0]).not.toHaveProperty("_local");
 });
 
 it.each(["fetchCounters", "fetchExtras"])("rejects %s when the database read fails", async method => {

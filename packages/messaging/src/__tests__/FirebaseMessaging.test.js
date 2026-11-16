@@ -28,7 +28,7 @@ it("checks saved state without creating SDK instances, prompting or writing", as
 });
 it("persists successful subscription and removes it on successful deletion", async () => {
     expect(await messaging.subscribe()).toBe("token");
-    expect(window.localStorage.getItem("notification-token")).toBe("token");
+    expect(window.localStorage.getItem("redequate:local:notification-token")).toBe("token");
     expect(await new FirebaseMessaging({firebase}).checkIfSubscribed()).toBe(true);
     expect(await messaging.unsubscribe()).toBe(true);
     expect(await messaging.checkIfSubscribed()).toBe(false);
@@ -41,7 +41,7 @@ it("keeps saved state on SDK errors and isolates configured keys", async () => {
     await expect(messaging.subscribe()).rejects.toBe(error);
     await expect(messaging.unsubscribe()).rejects.toBe(error);
     expect(await messaging.checkIfSubscribed()).toBe(true);
-    expect(await new FirebaseMessaging({firebase, storageKey: "other"}).checkIfSubscribed()).toBe(false);
+    expect(await new FirebaseMessaging({firebase, storageId: "other"}).checkIfSubscribed()).toBe(false);
 });
 it.each(["denied", "default"])("does not request a token when permission is %s", async permission => {
     window.Notification.requestPermission.mockResolvedValue(permission);
@@ -71,7 +71,7 @@ it("normalizes foreground messages and returns the SDK disposer", async () => {
 });
 it("validates callbacks and keys and passes storage errors through", async () => {
     await expect(messaging.addMessageListener(null)).rejects.toMatchObject({code: "messaging/invalid-argument"});
-    for (const key of [null, "", " ", 1]) expect(() => new FirebaseMessaging({firebase, storageKey: key})).toThrow("storageKey");
+    for (const key of [null, "", " ", 1]) expect(() => new FirebaseMessaging({firebase, storageId: key})).toThrow("storageId");
     const error = new Error("blocked");
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw error; });
     await expect(messaging.checkIfSubscribed()).rejects.toBe(error);
@@ -83,10 +83,10 @@ it("validates callbacks and keys and passes storage errors through", async () =>
 it("reports validation errors with complete codes and messages before using the SDK", async () => {
     await expect(messaging.addMessageListener("invalid")).rejects.toMatchObject({code: "messaging/invalid-argument", message: "Message listener must be a function."});
     try {
-        expect(new FirebaseMessaging({firebase, storageKey: ""})).toBeDefined();
+        expect(new FirebaseMessaging({firebase, storageId: ""})).toBeDefined();
         throw new Error("Expected storage key failure");
     } catch (error) {
-        expect(error).toMatchObject({code: "messaging/invalid-argument", message: "storageKey must be a non-empty string."});
+        expect(error).toMatchObject({code: "messaging/invalid-argument", message: "storageId must be a non-empty string."});
     }
     expect(modularMessaging.getMessaging).not.toHaveBeenCalled();
     expect(modularMessaging.isSupported).not.toHaveBeenCalled();

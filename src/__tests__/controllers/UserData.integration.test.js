@@ -3,7 +3,7 @@ import readSnapshot from "../../../packages/database/src/firebase/readSnapshot";
 import {vi} from "vitest";
 import {signInAnonymously} from "firebase/auth";
 import notifySnackbar from "../../controllers/notifySnackbar";
-import {UserRole} from "../../../packages/common/src/UserRole";
+import UserRole from "../../../packages/common/src/UserRole";
 import UserData, {currentRole, logoutUser, matchRole, needAuth, normalizeSortName, watchUserChanged} from "../../controllers/UserData";
 import {auth, database, sdkAuth, sdkDatabase, seedDatabase} from "../common";
 
@@ -52,7 +52,8 @@ test("watchUserChanged", async () => {
         return subscription;
     });
     const read = vi.spyOn(database, "read");
-    const refresh = watchUserChanged({auth, database, getUserData, onUserChanged});
+    const controller = new AbortController();
+    const refresh = watchUserChanged({auth, database, getUserData, onUserChanged, signal: controller.signal});
     try {
         const path = ["users_public", {user_id: user.id}, {updated: "updated"}];
         await vi.waitFor(() => expect(read).toHaveBeenCalledWith(path));
@@ -68,8 +69,8 @@ test("watchUserChanged", async () => {
             id: user.id, public: expect.objectContaining({updated}),
         }));
     } finally {
-        const unsubscribe = await subscription;
-        unsubscribe?.();
+        controller.abort();
+        await subscription;
     }
 });
 test("logoutUser", async () => {

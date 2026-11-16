@@ -7,8 +7,8 @@ export const backendSourcePattern = packageSourcePattern(sourceDirectory, "{js,t
 const entries = {
     "backend/index": fileURLToPath(new URL("./src/index.js", import.meta.url)),
     "backend/common": fileURLToPath(new URL("./src/common/index.js", import.meta.url)),
-    "backend/firebase-client": fileURLToPath(new URL("./src/firebase-client/index.js", import.meta.url)),
-    "backend/local-client": fileURLToPath(new URL("./src/local-client/index.js", import.meta.url)),
+    "backend/firebase-client": fileURLToPath(new URL("./src/firebase-client/FirebaseBackendClient.ts", import.meta.url)),
+    "backend/local": fileURLToPath(new URL("./src/local/LocalBackend.ts", import.meta.url)),
 };
 
 const withBackendPackage = withPackage(entries, sourceDirectory);
@@ -20,7 +20,8 @@ export const withBackend = config => {
         plugins: [...clientConfig.plugins, {
             name: "backend-client-boundary",
             moduleParsed({id}) {
-                if (id.startsWith(sourceDirectory) && /^(common-server|firebase-server|local-server)\//.test(id.slice(sourceDirectory.length))) {
+                const relative = id.slice(sourceDirectory.length);
+                if (id.startsWith(sourceDirectory) && /^(common-server|firebase-server)\//.test(relative)) {
                     this.error(`Browser build cannot import server Backend modules: ${id}`);
                 }
             },

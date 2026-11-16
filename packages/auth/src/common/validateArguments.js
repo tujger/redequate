@@ -57,7 +57,7 @@ export const validateProfile = fields => {
 export const validateConstructorOptions = options => {
     validateOptions(options);
     if (options?.database !== undefined && !isRecord(options.database)) invalid("database must be an object.");
-    if (options?.storageKey !== undefined) validateString(options.storageKey, "storageKey");
+    if (options?.storageId !== undefined) validateString(options.storageId, "storageId");
     if (options?.UserData !== undefined) {
         try {
             Reflect.construct(Object, [], options.UserData);

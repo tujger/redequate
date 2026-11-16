@@ -1,6 +1,11 @@
 import {resolvePackage} from "../../common";
 
-export default async backend => resolvePackage(backend, "backend", async () => {
-    const {default: LocalBackendClient} = await import("./local-client");
-    return new LocalBackendClient();
-});
+let localBackend;
+const resolveLocalBackend = () => localBackend ??= import("./local/LocalBackend")
+    .then(({default: LocalBackend}) => new LocalBackend())
+    .catch(error => {
+        localBackend = undefined;
+        throw error;
+    });
+
+export default async backend => resolvePackage(backend, "backend", resolveLocalBackend);

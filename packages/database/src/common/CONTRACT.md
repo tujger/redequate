@@ -6,7 +6,7 @@ query and event behavior. The shared scenarios are exercised against the real
 Auth/Realtime Database emulators and Local IndexedDB. Run both providers:
 
 ```sh
-npx vitest run --config src/__tests__/vitest.config.mjs packages/database/src/__tests__/local/LocalContract.test.js
+npm run test:unit -- packages/database/src/__tests__/local
 npm run test:integration
 ```
 
@@ -19,9 +19,9 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
 
 - Paths are strings or arrays of nonempty string segments and named segments
   with exactly one nonempty string value. `resolvePath` joins the segment values
-  with `/` and ignores `_`. Firebase uses that resulting address. Local uses
+  with `/`. Firebase uses that resulting address. Local uses
   `path[0]` as a configured physical object store; named segments retain their
-  field name and optional dynamic level as part of Local identity. Root reads
+  field name as part of Local identity. Root reads
   (`''`, `[]`) are invalid; root cursors are valid.
 - Array `read`, `cursor` and `addEventListener` paths share a grammar: a trailing string in
   an array of two or more segments is the collection's identity field. Firebase
@@ -30,6 +30,12 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   `read(["users_public", "user_id"])` therefore reads Firebase `/users_public`
   and the Local user_id collection. Local does not include unrelated identity
   fields from the same physical store. Nested collections use the same rule.
+- Internal backend `database.read` requests use the same collection-path grammar.
+  `read(["_activity", "activity_type_id"], {orderBy: ["type"], equalTo: "tag.create"})`
+  returns a map of matching records keyed by ID, or null when absent. A final
+  string is identity metadata; a scalar field must use a named final segment,
+  such as `["posts", {post_id: id}, {uid: "uid"}]`. Local singleton stores retain
+  their document addressing; literal string paths remain literal.
 - A trailing named segment selects a record and its descendants:
   `read(["users_public", {user_id: uid}])` addresses Firebase `/users_public/<uid>`.
   Concrete fields/branches use named segments too: `read(["meta", {settings:
@@ -48,132 +54,129 @@ Firebase case is silently skipped. Ordinary `npm run test:unit` excludes every
   field; `equalTo` without `orderBy` selects child values; otherwise range bounds
   select child keys. `order` is `asc` or `desc`; `equalTo` excludes `start`/`end`.
 - `create(path, valueOrCallback)` creates only when absent and returns
-  the permanent string key; its synchronous callback receives that string. Its path
+  the permanent final string key;
+  its synchronous callback receives generated keys in path order, once before insertion. Its path
   uses `DatabasePath`, with a collection path followed by a key field name or
   a named string ID segment; create validates that shape at runtime. There is
   no create options argument. The
   database's `onError` handler can suppress a create failure by returning normally,
   in which case create resolves to `undefined`. `update(path, object)` is
   a shallow merge, with null deleting fields; `update(path, callback)` atomically
-  replaces and returns the final value, with null or undefined deleting. Its
-  callback signature is `(value: DatabaseValue) => DatabaseValue | undefined`;
+  replaces and returns the final value: null deletes, undefined leaves storage unchanged. Its
+  callback signature is `(value: DatabaseValue) => DatabaseValue | void`;
   no separate updater type is exported. Batch
   paths are root relative. `delete` succeeds for absent paths. Operation errors
   go to the call's `onError` or the database default; a normally returning
   handler suppresses the error and leaves an undefined result. Listeners and
   cursors retain their error handler.
-- Neither provider adds a `timestamp` field to a record. Local preserves the
-  caller's value shape through create, update, and collection writes. A caller
+- Successful object and batch updates resolve to `undefined`, as does a suppressed
+  failure; their return value alone cannot distinguish those outcomes. Callback
+  updates return the committed value (`null` for deletion), so `undefined` means
+  a suppressed failure. If the callback returns undefined or has no return statement,
+  update returns its original snapshot (null when absent) without a replacement request
+  or write notification. A no-change result after a conflict returns the fresh snapshot.
+  Callbacks receive copies, so mutations are discarded unless a value is returned.
+  The result contract matches `cursor.handle`: null deletes, undefined leaves the
+  original value unchanged, and any other value replaces it, including false, 0,
+  empty strings and arrays. Update callbacks are synchronous; cursor handles may
+  return a Promise.
+- Provider `cursor(...)` factories and `cursor.subscribe(...)` return their handle,
+  or `undefined` after a suppressed construction/registration failure. `next(...)`
+  returns an entry array, or `undefined` after a suppressed page failure. `[]` is
+  an exhausted page, not a failed page; check `position.finished` for completion.
+  Group headings have a `key` and no `value`; data entries have both properties.
+- Neither provider adds a `timestamp` field to a record. Local preserves ordinary
+  data fields through create, update, and collection writes, excluding service keys. A caller
   supplied `timestamp`, including a `TIMESTAMP` marker, remains explicit data;
   queries with `orderBy: "timestamp"` still use that field, not the key.
-- Without a supplied key, Firebase `create` uses Realtime Database `push()`.
-  Local allocates a permanent numeric string
-  during `create` from the native auto-increment primary key of the physical
-  `path[0]` store. All logical collections in that store share this sequence.
-  Allocation and record insertion commit in one IndexedDB transaction; failed
-  creates roll both back. A supplied key is used unchanged. The synchronous
-  create callback receives the final key after allocation and before insertion.
-  The internal numeric `_id` and unique `_local.path` identity index
-  are not exposed through the value API. No allocator stores are created.
-  Incompatible existing databases require explicit repair; compatible schemas upgrade additively, while opening never automatically deletes data. Generated IDs need not be contiguous.
-  Local does not add a timestamp field.
-  Firebase generated keys remain 20-character push keys.
+- Without a supplied key, Firebase create uses Realtime Database push(). Local uses
+  firebase-key.key() for all new automatic keys, including object values and callbacks.
+  Both generate 20-character time-sortable strings. Local keys increase within one
+  generator during the same millisecond and after clock rollback; cross-device clock
+  synchronization and ordering by commit time are not guaranteed. Existing and supplied
+  keys remain unchanged. Old numeric keys do not gain chronological ordering.
+- LocalDatabase requires a supplied backend for create. It prepares the final key and
+  synchronous callback result before request("database.create", preparedPath, value).
+  Callback errors and invalid results prevent the request; a callback can run even when
+  the subsequent save conflicts. The backend accepts only prepared record objects and
+  returns the committed key or rejects. The create adapter only prepares arguments, delegates and handles operation errors;
+  it does not access IndexedDB, initialize schemas or publish notifications. The
+  backend operates independently on stores prepared separately.
+- Failed writes roll back records, but generated logical IDs are not reserved or reused.
+  Native _id stays inside Local; object reads retain all other fields, including
+  fields injected from the address.
+  No allocator stores or implicit timestamps are added; no data migration is performed.
 
 ## Local IndexedDB schema
 
-`local/stores.json` is the source of the built-in physical stores and indexes.
-The file keeps its `store` / `storeConfig` / `storeSchema` format. Add stores or
-indexes through the Local constructor, using the same format:
+`local/stores.json` and constructor `stores` define application stores, their native
+primary key (`_id`, autoIncrement true), and all secondary indexes. The adapter does
+not add framework indexes. Simple and compound `unique` indexes enforce uniqueness.
+Additional configured stores use the same format; provider stores beginning with `$`
+remain outside the application schema and cannot be changed by application CRUD.
 
-```js
-const database = new LocalDatabase({
-    storageKey: "my-app",
-    stores: [{
-        store: "audit",
-        storeConfig: {keyPath: "_id", autoIncrement: true},
-        storeSchema: [
-            {name: "code", keypath: "code", options: {unique: true}},
-            {name: "owner_status", keypath: ["owner", "status"]}
-        ]
-    }]
-});
-await database.create(["audit", "audit_id"], key => ({code: key, status: "open"}));
-```
+Local object records keep fields directly, without `_record`, `_encoded`, `_local`,
+added/overwritten field lists or a duplicate payload. Only the native `_id` is
+omitted from object reads. All other fields remain visible, including unique and
+compound index fields, nested identity fields and fields injected from the path.
+A field may both identify a collection entry and appear inside its value. This
+rule applies to read, cursors, subscriptions, backend reads and update callbacks.
+It does not depend on which path selected the record or whether a field was
+explicitly supplied. Indexed path parents must be compatible objects.
+Strings, numbers, booleans and arrays use only `{_value: value}` plus physical keys;
+there is no type marker. Objects with `_value` at their root are rejected, as are
+legacy root fields `_record` and `_encoded`. Nested fields with these names are
+allowed. `null` deletes, `undefined` is rejected, and create requires an object.
+Old wrappers reject with `VersionError`; there is no automatic conversion or deletion.
+Index definitions do not change.
 
-Constructor stores require `_id` with `autoIncrement: true`. Index options support
-`unique` and `multiEntry`; compound indexes cannot use `multiEntry`. Definitions
-merge by store and index name. Identical repeated definitions are allowed;
-conflicting definitions, reserved metadata keyPaths and invalid definitions reject
-before opening IndexedDB. Inputs are copied and never modified. Additional stores
-support CRUD, nested paths, cursors and subscriptions. Each instance accepts only
-its own configured collections, even when another instance sharing its storageKey
-has created additional physical stores.
+Named field lookups use declared indexes or the native `_id` primary key. A compound
+index can address a full unique record or a prefix scope. Explicit identity fields
+select keys for returned collections; otherwise a suitable unique index determines
+the key, falling back to the native primary key for a full collection read. An
+unindexed search field, ambiguous record lookup, or unsupported range raises
+`database/invalid-argument`; there is no synthetic lookup index or encoded-path scan.
+Literal string record paths require an unambiguous unique index.
 
-The converter adds only one framework index, `_identity`, with the unique keyPath
-`_local.path`. All other indexes come from stores.json and constructor stores.
-The built-in schema has 68 JSON indexes plus 18 identity indexes, for 86 total.
-There are no generated cursor, scope, dynamic-type or unsupported-value indexes.
-When an operation creates children without naming their identity field, it uses
-the generic dynamic id; explicit and existing identities remain authoritative.
+A store with no secondary indexes is intentionally a single small document. Read it
+as a whole, or access its fields (for example `meta/settings`); field writes update
+that document. It supports neither record searches nor query bounds/order fields.
+Multiple physical records in an unindexed store are rejected instead of guessed or
+merged. Deleting the store path clears the document; deleting a field removes only
+that property. No schema indexes are added to make these stores searchable.
 
-Physical object rows contain public fields directly, a numeric `_id` and sparse
-`_local` reconstruction metadata. `_local.path` is the serialized named path;
-the collection name comes from the physical store. `_local.added` lists injected
-address fields, and `_local.originals` holds only public fields overwritten by
-address projections or reserved storage fields. Objects are not copied into a
-second value envelope. Primitive and array values use `_local.value`. Dynamic
-levels, fixed conditions and ordering values are computed in memory when read.
+CRUD writes are native IndexedDB transactions. Local update uses the injected backend:
+Database prepares the complete value from a backend read snapshot, then requests an
+ETag-conditional replacement. Both providers prepare their paths and batch encoding, then call super.update.
+The provider owns the single error boundary and original error context; DatabaseBase
+validates prepared arguments and routes through _backend. common/methods/update
+handles complete-value preparation and retries.
+Object changes shallow-merge at the target address; supplied child objects replace
+their previous values. Relative keys with / update nested addresses. Neither provider
+constructs a fallback backend for update. Firebase object updates require read and
+write permission. Synchronous
+callbacks replace the whole value and may rerun on conflict, up to 25 attempts.
+Callback failures prevent replacement; native index errors roll back the transaction.
+Local update does not initialize schema or open IndexedDB itself. Cross-store
+batches commit atomically, overlapping addresses reject, and timestamp/increment
+markers resolve during the write. Increment markers come from `backend.increment(n)`;
+Database has no `increment` method. Firebase markers are JSON-compatible objects.
+Local markers are symbols whose deltas are kept in a module-owned Map. They work
+within one JS space and can be reused. Neither marker is a callback.
+Backend creates and updates notify observers only after commit.
+Listeners refresh collection snapshots from native rows; cross-context messages carry
+only changed collection names. No path metadata is stored or transmitted.
 
-Only declared native indexes require identity projections. Compound indexes
-including a leaf identity may also project ancestor identities. Parent-only
-identities are not copied onto every descendant row, preserving nested records
-under unique parent indexes. Reads reconstruct the exact original public value,
-including caller-owned `_id`, `_local` and conflicting identity fields. JSON
-`unique` indexes retain native IndexedDB enforcement across each physical store;
-failed writes and upgrades roll back atomically. Native IndexedDB key eligibility
-applies (for example, boolean values are not native index keys).
+`applySchema` adds declared stores/indexes and can replace non-required index
+definitions atomically. Configured indexes and store keyPath/autoIncrement settings
+are protected. Existing rows and unrelated native indexes are not rewritten or
+removed. Schema updates neither compact nor migrate old record formats. New stores
+introduced only through applySchema do not become configured CRUD collections.
 
-Cursors and dynamic-type queries read the selected collection rows and apply the
-shared path filtering, comparisons and ordering in memory. Each page reads fresh
-values and resumes from its `(sort value, child key)` boundary. Handler writes and
-subscriptions keep their existing public behavior. There is no promise of native
-indexed paging or bounded collection reads; large collection queries may be slower.
-
-Schema preparation runs before the first operation, cursor read or listener
-snapshot. Concurrent operations on an instance share preparation; failures follow
-the existing operation/subscription error handling and allow a later retry.
-A new database creates the full merged schema at version 1. A compatible existing
-schema gains missing stores/indexes in one versionchange transaction, increasing
-its current version by 1 only when changes are needed. Existing records are
-reprojected when an added compound index requires ancestor fields. The former
-_local envelope format is compacted in place; obsolete framework indexes using
-the reserved _local namespace are removed in the same transaction. Public data,
-physical primary keys and unrelated native indexes are preserved. Reopening an
-unchanged schema does not increase its version. Local connections close on
-`versionchange`; external blockers produce an error and upgrades can be retried.
-Concurrent upgrades recheck the schema before completing.
-
-`LOCAL_SCHEMA` describes the converted built-in schema. The Local-only API
-`await localDatabase.applySchema(schema)` continues to accept the physical object
-format `{storeName: {keyPath, autoIncrement, indexes: {indexName: {keyPath, unique?,
-multiEntry?}}}}`. It adds stores/indexes and may replace non-required indexes;
-unspecified stores, non-framework indexes and records remain. Required configured indexes and
-existing store keyPath/autoIncrement settings cannot be changed. Physical stores
-added only through applySchema do not become configured CRUD collections.
-DatabaseBase and FirebaseDatabase have no schema method.
-
-Databases from the previous `_rowId` storage model are incompatible and must be
-explicitly removed before this adapter opens them. There is no automatic deletion
-or data migration from that model. For the default dev configuration, close other
-connections and delete only `redequate:local:redequate:database:local` in the dev
-origin's IndexedDB storage. This does not reset the separate Local Auth database.
-
-  `firebase-key`'s `milliseconds(pushKey)` or `date(pushKey)` can recover the
-  key's encoded client-side generation time **when the key is known to be a
-  push key**. This is not the server commit time. The library does not verify
-  provenance: applying it to an arbitrary key may throw or decode unrelated
-  data. Its inverse is `key(timestampOrDate, "min"|"max"|"random")`; it
-  generates a key or a range boundary, not the original key from a timestamp.
+The previous metadata-based local format is no longer supported. There is no migration,
+automatic data deletion, compatibility decoder, startup conversion or Dispatcher hook.
+Use a separate clean database for this format; existing user databases are not modified
+by the development/test workflow.
 
 ## Cursor query and traversal
 
@@ -216,7 +219,10 @@ origin's IndexedDB storage. This does not reset the separate Local Auth database
   numeric key bounds are rejected by both providers. `equalTo: null` remains an
   explicit equality condition and is never treated as an unspecified bound.
 - `next(n)` requires a positive safe integer and returns up to `n` data
-  entries, plus an optional one-time group heading. Handlers run sequentially
+  entries, plus an optional one-time group heading. `next(n, handle)` overrides
+  the configured handler for that call; omitted or undefined uses each source
+  handler, and null disables it. Results follow the same write rules regardless
+  of how the handler was supplied. Handlers run sequentially
   on copies of candidate entries. Returning undefined makes no write and
   returns the original value; null deletes and omits the entry; another value
   replaces it and the cursor rereads the saved value. A replacement that no
@@ -263,6 +269,15 @@ origin's IndexedDB storage. This does not reset the separate Local Auth database
   `unsubscribe()` is idempotent. Live events do not advance `position` or
   cancel an in-flight `next` page.
 
+Local listener registration uses the shared error boundary: an exception from
+`onError` propagates once, and a suppressed registration failure returns `undefined`
+without a dummy subscription. Asynchronous Local delivery reports exceptions from
+`onError` through the host's `reportError` (or an uncaught microtask exception when
+unavailable). It does not invoke `onError` again, stop other listeners, or reject an
+already committed backend write. Callback promises are observed without blocking
+listener queues, so callbacks can perform writes. Completed queue tails are released;
+unsubscribing does not discard pending work or break ordering on resubscription.
+
 ## Verification and limits
 
 The emulator suites run locally with Node 24.21.0 and Java 17. The normal shell's
@@ -287,3 +302,34 @@ first snapshot belong to its baseline. Cross-tab notification tests use simulate
 BroadcastChannels; real browser multi-tab and Android end-to-end checks are
 separate from the automated suites. Date-bound semantics intentionally differ
 between Firebase push keys and Local explicit timestamps, as described above.
+
+The Local physical database name is storageId (default redequate:local). Auth,
+Storage and Messaging share it through reserved stores `$auth`, `$storage` and
+`$messaging`. The `$` prefix is reserved for provider-owned stores, including future providers.
+Application schemas and collection access cannot target provider stores.
+Former physical database names are not migrated or deleted automatically.
+
+## Shallow reads
+
+`read(path, {shallow: true})` returns `string[]`: unique immediate child keys,
+without their values. Missing or scalar locations return `[]`. Key order is not
+guaranteed. `shallow: false` preserves ordinary read behavior. Shallow reads cannot
+combine with ordering, filters or range options. Existing onError suppression may
+return undefined. This is also supported by backend.request("database.read", path,
+options); it does not change cursor options or path interpretation.
+
+Firebase Client and Admin use authenticated REST shallow requests and never fall
+back to downloading the subtree. Client reads await Auth restoration and use the
+current user's ID token. Admin reads use credential OAuth tokens, or emulator-only
+owner authorization on the configured emulator endpoint. Database namespaces are
+preserved when routing to emulators. Local enumerates distinct indexed identity
+keys; reads inside a native stored object return that object's own keys.
+
+
+For create calls with a callback, intermediate bare path segments generate IDs
+through firebase-key; the final key remains prepared by the provider as before.
+The callback receives only generated IDs as positional arguments, in path order.
+Named segments remain fixed. If all keys are supplied, the callback receives the
+final key. It runs once before the backend request; its synchronous object result
+and the concrete path are sent to the backend. Ordinary object values and direct
+backend calls retain their existing behavior. Return values remain the final key string.

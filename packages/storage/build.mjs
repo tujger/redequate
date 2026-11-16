@@ -6,8 +6,8 @@ export const storageSourcePattern = packageSourcePattern(sourceDirectory, "{js,t
 
 const entries = {
     "storage/index": fileURLToPath(new URL("./src/index.js", import.meta.url)),
-    "storage/firebase": fileURLToPath(new URL("./src/firebase/index.js", import.meta.url)),
-    "storage/local": fileURLToPath(new URL("./src/local/index.js", import.meta.url)),
+    "storage/firebase": fileURLToPath(new URL("./src/firebase/index.ts", import.meta.url)),
+    "storage/local": fileURLToPath(new URL("./src/local/index.ts", import.meta.url)),
 };
 
 export const withStorage = withPackage(entries, sourceDirectory);

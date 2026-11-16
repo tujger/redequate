@@ -25,6 +25,7 @@ import {getCurrentUserData, useCurrentUserDataValue, useSetCurrentUserData} from
 import UserData, {matchRole, needAuth, watchUserChanged} from "./controllers/UserData";
 import {installWrapperControl} from "./controllers/WrapperControl";
 import Button from "./controls/Button/Button";
+import installConsoleError from "./helpers/installConsoleError";
 import initInternationalization from "./helpers/initInternationalization";
 import useBreakpoint from "./helpers/useBreakpoint";
 import {getScrollPosition} from "./helpers/useScrollPosition";
@@ -35,37 +36,6 @@ const ResponsiveDrawerLayout = React.lazy(() => import("./layouts/ResponsiveDraw
 const TopBottomMenuLayout = React.lazy(() => import("./layouts/TopBottomMenuLayout/TopBottomMenuLayout"));
 
 const iOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-const installConsoleError = database => {
-    const origin = console.error;
-    const reportError = error => origin.call(console, error);
-    const handler = function (...args) {
-        origin.call(console, ...args);
-        try {
-            if (args.length !== 1) return;
-            const message = String(args[0]);
-            if (["no such file or directory", "Module not found", "memory access out of bounds"].some(filter => message.includes(filter))) return;
-
-            if (!database) {
-                reportError("[Dispatcher] Error was not saved: database is unavailable.");
-                return;
-            }
-            const currentUserData = getCurrentUserData();
-            const saving = database.create(["errors", "error_id"], {
-                error: String(args[0]?.stack || message),
-                timestamp: database.TIMESTAMP,
-                uid: currentUserData?.id || "anonymous"
-            });
-            Promise.resolve(saving).catch(reportError);
-        } catch (error) {
-            reportError(error);
-        }
-    };
-    console.error = handler;
-    return () => {
-        if (console.error === handler) console.error = origin;
-    };
-};
 
 export default (props) => {
     const {
@@ -88,8 +58,6 @@ export default (props) => {
     const setCurrentUserData = useSetCurrentUserData();
     widthRef.current = width;
 
-    const metaInfo = useMetaInfo();
-
     React.useEffect(() => {
         if (previousWidth.current !== width) {
             previousWidth.current = width;
@@ -98,25 +66,17 @@ export default (props) => {
     }, [width, state.store]);
 
     React.useEffect(() => {
+        const userChangeController = new AbortController();
         let maintenanceRef, metaListener;
         let consoleHandler;
         const clearOneTapCookie = async props => {
             document.cookie = "g_state=''";
             return props;
         }
-        const initDatabase = async props => {
-            try {
-                const database = await resolveDatabase(databaseGiven);
-                consoleHandler = installConsoleError(database);
-                console.log("[Dispatcher]", "database resolved", {database});
-                return {...props, consoleHandler, database};
-            } catch (error) {
-                throw {...props, fatal: error};
-            }
-        }
         const initAuth = async props => {
+            const {database} = props;
             try {
-                const auth = await resolveAuth(authGiven, {database: props.database, UserData});
+                const auth = await resolveAuth(authGiven, {database, UserData});
                 console.log("[Dispatcher]", "auth resolved", {auth});
                 return {...props, auth};
             } catch (error) {
@@ -128,6 +88,16 @@ export default (props) => {
                 const backend = await resolveBackend(backendGiven);
                 console.log("[Dispatcher]", "backend resolved", {backend});
                 return {...props, backend};
+            } catch (error) {
+                throw {...props, fatal: error};
+            }
+        }
+        const initDatabase = async props => {
+            const {backend} = props;
+            try {
+                const database = await resolveDatabase(databaseGiven, {backend});
+                console.log("[Dispatcher]", "database resolved", {database});
+                return {...props, database};
             } catch (error) {
                 throw {...props, fatal: error};
             }
@@ -150,6 +120,22 @@ export default (props) => {
                 throw {...props, fatal: error};
             }
         }
+        const linkProviders = props => {
+            const {backend, database, auth, storage} = props;
+            auth.setDatabase(database);
+            backend.setAuth(auth);
+            backend.setDatabase(database);
+            backend.setStorage(storage);
+            database.setAuth(auth);
+            database.setBackend(backend);
+            storage.setAuth(auth);
+            return props;
+        };
+        const initConsoleHandler = props => {
+            const {database} = props;
+            consoleHandler = installConsoleError(database);
+            return {...props, consoleHandler};
+        }
         const initStore = async props => {
             return {...props, store: Store(title, reducers)};
         }
@@ -170,14 +156,6 @@ export default (props) => {
                 isWide: () => widthRef.current === "md" || widthRef.current === "lg" || widthRef.current === "xl",
             }
             return {...props, windowData};
-        }
-        const initTextTranslation = async props => {
-            const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
-            if (firebaseApiKey) {
-                const textTranslationInstance = textTranslation({firebaseApiKey});
-                return {...props, textTranslation: textTranslationInstance};
-            }
-            return props;
         }
         const fetchDeviceId_ = async props => {
             return {...props, deviceId: fetchDeviceId()};
@@ -202,8 +180,17 @@ export default (props) => {
         }
         const fetchMetaInfo = async props => {
             const {database} = props;
-            const settings = (await database.read(["meta", {settings: "settings"}])) || {};
+            const settings = (await database.read(["meta", {setting: "settings"}])) || {};
             return {...props, metaInfo: {settings}};
+        }
+        const initTextTranslation = async props => {
+            const {metaInfo} = props;
+            const firebaseApiKey = metaInfo?.settings?.firebaseApiKey;
+            if (firebaseApiKey) {
+                const textTranslationInstance = textTranslation({firebaseApiKey});
+                return {...props, textTranslation: textTranslationInstance};
+            }
+            return props;
         }
         const fetchCurrentUserData = async props => {
             const {authUser, database, deviceId} = props;
@@ -212,7 +199,6 @@ export default (props) => {
                 return props;
             }
             try {
-                // eslint-disable-next-line react/prop-types -- authUser is a provider model.
                 const userData = new UserData(database).fromJSON(authUser.toJSON());
                 await userData.fetch([UserData.PUBLIC, UserData.ROLE, UserData.FORCE]);
                 await userData.fetchPrivate(deviceId, true);
@@ -222,10 +208,10 @@ export default (props) => {
             }
         }
         const fetchCurrentUserLastVisit = async props => {
-            const {userData} = props;
+            const {userData, database} = props;
             if (userData) {
                 userData.lastVisit = +(window.localStorage.getItem(title + "_last") || 0);
-                cacheDatas.put(userData.id, userData);
+                cacheDatas.put(userData.id, new UserData(database).fromJSON(userData.toJSON()));
                 setCurrentUserData(userData);
             }
             return props;
@@ -271,24 +257,17 @@ export default (props) => {
             })().catch(console.error);
             return initialization;
         }
-        const installUserChangeWatcher = async props => {
-            (async () => {
-                const {auth, database, store} = props;
-                setInterval(() => {
-                    watchUserChanged({
-                        auth,
-                        database,
-                        getUserData: getCurrentUserData,
-                        onUserChanged: setCurrentUserData
-                    }).then(() => refreshAll(store));
-                }, 30000)
-                watchUserChanged({
-                    auth,
-                    database,
-                    getUserData: getCurrentUserData,
-                    onUserChanged: setCurrentUserData
-                }).then(() => refreshAll(store));
-            })().catch(console.error);
+        const installUserChangeWatcher = props => {
+            const {auth, database, store} = props;
+            watchUserChanged({
+                auth,
+                database,
+                getUserData: getCurrentUserData,
+                onUserChanged: setCurrentUserData,
+                signal: userChangeController.signal
+            }).then(() => {
+                if (!userChangeController.signal.aborted) refreshAll(store);
+            }).catch(console.error);
             return props;
         }
         const installMetaWatcher = async props => {
@@ -364,18 +343,20 @@ export default (props) => {
 
         initInternationalization(title, locales)
             .then(clearOneTapCookie)
-            .then(initDatabase)
             .then(initAuth)
             .then(initBackend)
+            .then(initDatabase)
             .then(initMessaging)
             .then(initStorage)
+            .then(linkProviders)
+            .then(initConsoleHandler)
             .then(initStore)
             .then(restoreAuth)
             .then(initWindowData)
-            .then(initTextTranslation)
             .then(fetchDeviceId_)
             .then(checkIfCompatible)
             .then(fetchMetaInfo)
+            .then(initTextTranslation)
             .then(fetchCurrentUserData)
             .then(fetchCurrentUserLastVisit)
             .then(changeCurrentLanguage)
@@ -391,12 +372,13 @@ export default (props) => {
             .catch(onError);
 
         return () => {
+            userChangeController.abort();
             maintenanceRef && maintenanceRef.off();
             metaListener?.remove();
             consoleHandler?.();
         }
         // eslint-disable-next-line
-    }, [metaInfo]);
+    }, []);
 
     if (state.fatal) return <DispatcherInitializationError error={state.fatal} theme={props.theme}/>;
 

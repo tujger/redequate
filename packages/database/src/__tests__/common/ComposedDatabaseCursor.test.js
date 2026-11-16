@@ -220,7 +220,7 @@ it("uses common resolved addresses for named roots, segments and slash variants"
     const cursor = database.cursor([
         new RecordsCursor([record("x"), record("y")], {}, [{type: "posts"}, {post_id: "p1"}]),
         new RecordsCursor([record("x"), record("z")], {}, "/posts//p1/"),
-        new RecordsCursor([record("x")], {}, ["posts", {id: "p1", _: true}]),
+        new RecordsCursor([record("x")], {}, ["posts", {id: "p1"}]),
         new RecordsCursor([record("x", "other")], {}, ["replies", {post_id: "p1"}])
     ]);
     const result = await cursor.next(10);

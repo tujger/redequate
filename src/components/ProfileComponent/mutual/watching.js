@@ -1,0 +1,68 @@
+import React from "react";
+import {MutualListMode} from "../../MutualComponent";
+import useDatabase from "../../../controllers/AppContext/useDatabase";
+import MutualLabel from "./MutualLabel";
+import MutualListWithItems from "./MutualListWithItems";
+import MutualListWithPosts from "./MutualListWithPosts";
+
+export default {
+    id: "watching",
+    label: "Profile.Tags",
+    listComponents: {
+        [MutualListMode.SUBSCRIBES]: {
+            test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
+                if (!userProfileFollowing) return false;
+                return isSameUser || isCurrentUserAdmin;
+            },
+            Label: ({userData}) => <MutualLabel
+                label={"Profile.Tags"}
+                path={[{id: userData.id}, "mutual", {mutual_type: "watching"}]}
+            />,
+            List: ({header, userData, ...props}) => {
+                const database = useDatabase();
+                return <MutualListWithItems
+                    header={header}
+                    itemTransform={item => {
+                        return database.read([item.value.type, {tag_id: item.value.id}])
+                            .then(value => {
+                                if (value !== undefined) {
+                                    return {
+                                        key: item.key,
+                                        value: item.value,
+                                        userData: {
+                                            name: value.label,
+                                            image: value.image || "",
+                                            initials: value.label,
+                                        },
+                                    };
+                                }
+                            })
+                    }}
+                    mode={MutualListMode.SUBSCRIBES}
+                    typeId={"watching"}
+                    userData={userData}
+                    unsubscribeLabel={"Profile.Unfollow"}
+                    {...props}
+                />
+            }
+        },
+        [MutualListMode.STAMPS]: {
+            test: ({isCurrentUserAdmin, isSameUser, userProfileFollowing}) => {
+                if (!userProfileFollowing) return false;
+                return isSameUser || isCurrentUserAdmin;
+            },
+            Label: ({userData}) => <MutualLabel
+                label={"Profile.Watching"}
+                path={[{id: userData.id}, "mutualstamps", {mutual_type: "watching"}]}
+            />,
+            List: ({header, userData, ...props}) => <MutualListWithPosts
+                header={header}
+                live
+                mode={MutualListMode.STAMPS}
+                typeId={"watching"}
+                userData={userData}
+                {...props}
+            />
+        },
+    }
+}

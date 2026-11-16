@@ -1,5 +1,4 @@
 import stores from "./stores.json";
-import {IDENTITY_INDEX} from "./row";
 
 const plain = value => value !== null && typeof value === "object" && !Array.isArray(value) &&
     Object.getPrototypeOf(value) === Object.prototype;
@@ -16,7 +15,7 @@ export const convertStores = (additional = []) => {
     if (!Array.isArray(additional)) throw new TypeError("Local stores must be an array.");
     const result = Object.create(null);
     for (const entry of [...stores, ...additional]) {
-        if (!plain(entry) || typeof entry.store !== "string" || !entry.store || entry.store.includes("/") ||
+        if (!plain(entry) || typeof entry.store !== "string" || !entry.store || entry.store.startsWith("$") || entry.store.includes("/") ||
             !plain(entry.storeConfig) || entry.storeConfig.keyPath !== "_id" ||
             entry.storeConfig.autoIncrement !== true || !Array.isArray(entry.storeSchema)) {
             throw new TypeError("Local stores require a name, keyPath _id, autoIncrement true and storeSchema array.");
@@ -34,10 +33,6 @@ export const convertStores = (additional = []) => {
                 (index.options?.multiEntry && Array.isArray(index.keypath))) {
                 throw new TypeError(`Invalid Local index in store ${name}.`);
             }
-            const paths = Array.isArray(index.keypath) ? index.keypath : [index.keypath];
-            if (paths.some(path => ["_local", "_id"].includes(path.split(".")[0]))) {
-                throw new TypeError(`Reserved Local index keyPath: ${name}.${index.name}`);
-            }
             const description = {
                 keyPath: structuredClone(index.keypath), unique: index.options?.unique ?? false,
                 ...(index.options?.multiEntry ? {multiEntry: true} : {})
@@ -47,10 +42,6 @@ export const convertStores = (additional = []) => {
             }
             definition.indexes[index.name] = description;
         }
-    }
-    for (const definition of Object.values(result)) {
-        if (Object.hasOwn(definition.indexes, "_identity")) throw new TypeError("Reserved Local index: _identity");
-        definition.indexes._identity = {...IDENTITY_INDEX};
     }
     return result;
 };

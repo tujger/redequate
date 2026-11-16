@@ -7,22 +7,27 @@ export default ({counter, path, prefix, suffix, live = false, onChange, showZero
     const [state, setState] = React.useState({});
     const {value} = state;
 
+    const latestOnChange = React.useRef(onChange);
+    React.useEffect(() => { latestOnChange.current = onChange; }, [onChange]);
+
     React.useEffect(() => {
-        if (counter !== undefined) setState(state => ({...state, value: counter}));
+        let active = true;
+        let previous = counter;
+        if (counter !== undefined) setState({value: counter});
         if (!path) return;
-        if (counter === undefined && !live) return;
-        const listener = counterControl({
-            database,
-            onchange: newValue => {
-                setState(state => {
-                    if (state.value !== newValue && onChange) onChange(newValue, state.value);
-                    return ({...state, value: newValue})
-                });
-            },
-            path
-        })
-        return () => listener();
-    }, [path, counter])
+        const receive = newValue => {
+            if (!active) return;
+            if ((live || counter !== undefined) && previous !== newValue) latestOnChange.current?.(newValue, previous);
+            previous = newValue;
+            setState({value: newValue});
+        };
+        if (!live && counter === undefined) {
+            counterControl({database, path}).then(receive);
+            return () => { active = false; };
+        }
+        const stop = counterControl({database, path, onchange: receive});
+        return () => { active = false; stop(); };
+    }, [database, path, counter, live]);
 
     if (!value && !showZero) return null;
     return <>

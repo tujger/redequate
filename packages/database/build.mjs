@@ -6,6 +6,7 @@ export const databaseSourcePattern = packageSourcePattern(sourceDirectory, "{js,
 
 const entries = {
     "database/index": fileURLToPath(new URL("./src/index.js", import.meta.url)),
+    "database/firebase/rules": fileURLToPath(new URL("./src/firebase/rules.mjs", import.meta.url)),
     "database/firebase": fileURLToPath(new URL("./src/firebase/index.js", import.meta.url)),
     "database/local": fileURLToPath(new URL("./src/local/index.js", import.meta.url)),
 };

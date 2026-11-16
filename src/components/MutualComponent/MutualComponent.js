@@ -1,7 +1,8 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {useDispatch} from "react-redux";
-import {useBackend, useDatabase} from "../../controllers";
+import {FilteringDatabaseCursor} from "../../../packages/database/src";
+import {useDatabase} from "../../controllers";
 import counterControl from "../../controllers/counterControl";
 import notifySnackbar from "../../controllers/notifySnackbar";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
@@ -34,12 +35,11 @@ export default props => {
         rejectLabel = t("Mutual.Reject"),
         rejectComponent = <ActionComponent label={rejectLabel} color={"secondary"} variant={"outlined"}/>,
         subscribeLabel = t("Mutual.Subscribe"),
-        subscribeComponent = <ActionComponent label={subscribeLabel}/>,
+        subscribeComponent = <ActionComponent label={t(subscribeLabel)}/>,
         typeId,
         unsubscribeLabel = t("Mutual.Unsubscribe"),
-        unsubscribeComponent = <ActionComponent label={unsubscribeLabel}/>,
+        unsubscribeComponent = <ActionComponent label={t(unsubscribeLabel)}/>,
     } = props;
-    const backend = useBackend();
     const currentUserData = useCurrentUserDataValue();
     const database = useDatabase();
     const dispatch = useDispatch();
@@ -57,7 +57,6 @@ export default props => {
     } = state;
 
     const uidId = `${currentUserData.id}_${mutualId}`;
-    const idUid = `${mutualId}_${currentUserData.id}`;
     const isAllowed = matchRole([UserRole.ADMIN, UserRole.USER], currentUserData);
     const isSameUser = currentUserData.id === mutualId;
 
@@ -74,7 +73,14 @@ export default props => {
                     }))
                 }
             })
-            .catch(notifySnackbar)
+            .catch(error => {
+                notifySnackbar(error);
+                setState(state => ({
+                    ...state,
+                    pending: undefined,
+                    disabled: false
+                }));
+            })
             .finally(() => dispatch(ProgressView.HIDE));
     }
 
@@ -103,24 +109,30 @@ export default props => {
             handle: () => null,
             orderBy: ["uid_id"],
         }).next(10)
-            .catch(notifySnackbar)
+            .catch(error => {
+                notifySnackbar(error);
+                setState(state => ({...state, disabled: false}));
+            })
             .finally(() => dispatch(ProgressView.HIDE));
     }
 
     const handleRequestResponse = isAccept => evt => {
         evt.stopPropagation();
+        if (!hasRequest) return;
+
         dispatch(ProgressView.SHOW);
-        setState(state => ({...state, hasPending: hasRequest, hasRequest: null, disabled: true}));
-        (isAccept ? mutualRequestAccept : mutualRequestReject)({backend, typeId, requestId: hasRequest.key})
-            .then(result => {
-                setState(state => ({...state, disabled: false}));
-                dispatch(ProgressView.HIDE);
-            })
+        setState(state => ({...state, disabled: true}));
+
+        (isAccept ? mutualRequestAccept : mutualRequestReject)({
+            database,
+            typeId,
+            requestId: hasRequest.key
+        })
             .catch(error => {
                 notifySnackbar(error);
                 setState(state => ({...state, disabled: false}));
-                dispatch(ProgressView.HIDE);
             })
+            .finally(() => dispatch(ProgressView.HIDE));
     }
 
     const handleChangeMessage = evt => {
@@ -129,10 +141,13 @@ export default props => {
 
     React.useEffect(() => {
         let isMounted = true;
-        database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
-            equalTo: uidId,
-            orderBy: ["uid_id"]
-        }).next().then(items => items[0])
+        new FilteringDatabaseCursor(
+            database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+                orderBy: ["uid"],
+                equalTo: currentUserData.id
+            }),
+            ({value}) => value?.id === mutualId
+        ).next().then(items => items?.[0])
             .then(hasPending => {
                 if (hasPending && isMounted) {
                     setState(state => ({
@@ -157,12 +172,19 @@ export default props => {
                 }));
             })
             .catch(error => {
-                if (error !== "done") notifySnackbar(error);
+                if (error === "done" || !isMounted) return;
+                notifySnackbar(error);
+                setState(state => ({...state, disabled: false}));
             });
         return () => {
             isMounted = false;
         };
-    }, [uidId, typeId, subscribers]);
+    }, [database,
+        uidId,
+        typeId,
+        subscribers,
+        hasPending?.key,
+        hasRequest?.key]);
 
     // noinspection DuplicatedCode
     React.useEffect(() => {
@@ -171,8 +193,6 @@ export default props => {
             onchange: subscribers => {
                 setState(state => ({
                     ...state,
-                    disabled: false,
-                    ...(state.pending === undefined ? {} : {subscribed: state.pending}),
                     subscribers,
                 }))
             },
@@ -189,8 +209,6 @@ export default props => {
             onchange: subscribes => {
                 setState(state => ({
                     ...state,
-                    disabled: false,
-                    ...(state.pending === undefined ? {} : {subscribed: state.pending}),
                     subscribes,
                 }))
             },
@@ -203,8 +221,14 @@ export default props => {
         if (!hasPending) return;
         const listener = database.addEventListener(["mutualrequests", {mutual_type: typeId}, {mutual_id: hasPending.key}], {
             onChange(value) {
-                if (value === undefined)
-                    setState(state => ({...state, hasPending: null, disabled: false}))
+                if (value === undefined) {
+                    setState(state => ({
+                        ...state,
+                        hasPending: null,
+                        pending: undefined,
+                        disabled: true
+                    }));
+                }
             }
         })
         return () => listener.remove();
@@ -217,7 +241,7 @@ export default props => {
             onchange: requestsCounter => {
                 setState(state => ({...state, requestsCounter}))
             },
-            path: [{id: currentUserData.id}, "mutualrequests", {typeId, _:true}]
+            path: [{id: currentUserData.id}, "mutualrequests", {mutual_type: typeId}]
         });
         return () => listener();
     }, [mutualId, typeId, mutualMode, isSameUser, currentUserData.id])
@@ -225,20 +249,28 @@ export default props => {
     React.useEffect(() => {
         if (mutualMode !== MutualMode.DUPLEX_APPROVE) return;
         let isMutualRequestsCheckMount = true;
-        database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
-            equalTo: idUid,
-            orderBy: ["uid_id"]
-        }).next(10)
+        Promise.resolve().then(() => new FilteringDatabaseCursor(
+            database.cursor(["mutualrequests", {mutual_type: typeId}, "mutual_id"], {
+                orderBy: ["id"],
+                equalTo: currentUserData.id
+            }),
+            ({value}) => value?.uid === mutualId
+        ).next())
             .then(items => items && items[0])
             .then(hasRequest => {
-                if (hasRequest && isMutualRequestsCheckMount) {
-                    setState(state => ({...state, hasRequest}))
+                if (isMutualRequestsCheckMount) {
+                    setState(state => ({...state, hasRequest: hasRequest ?? null}));
                 }
+            })
+            .catch(error => {
+                if (!isMutualRequestsCheckMount) return;
+                setState(state => ({...state, hasRequest: null}));
+                notifySnackbar(error);
             });
         return () => {
             isMutualRequestsCheckMount = false;
         }
-    }, [typeId, mutualMode, requestsCounter, idUid])
+    }, [database, typeId, mutualMode, requestsCounter, currentUserData.id, mutualId])
 
     // console.log(requestsCounter, subscribers, hasPending, hasRequest)
     return <>

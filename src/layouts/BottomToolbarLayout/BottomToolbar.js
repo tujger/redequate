@@ -1,29 +1,12 @@
 import React from "react";
-import {Link, matchPath, useHistory, useLocation} from "react-router-dom";
-import {matchRole} from "../../controllers/UserData";
+import {matchPath, useHistory, useLocation} from "react-router-dom";
 import {useCurrentUserDataValue} from "../../controllers/useCurrentUserData";
+import {matchRole} from "../../controllers/UserData";
 import Button from "../../controls/Button/Button";
 import Menu from "../../controls/Menu/Menu";
 import menuStyles from "../../controls/Menu/Menu.module.css";
-import useRippleEffect from "../../helpers/useRippleEffect";
+import BottomToolbarMenuLink from "./BottomToolbarMenuLink";
 import styles from "./styles/BottomToolbar.module.css";
-
-const MenuLink = ({item, onClose, selected, userData}) => {
-    const onPointerDown = useRippleEffect();
-
-    return <Link
-        aria-current={selected ? "page" : undefined}
-        className={[menuStyles.menuItem, styles.menuItem, selected && styles.selectedItem].filter(Boolean).join(" ")}
-        onClick={onClose}
-        onClickCapture={item.onClick}
-        onPointerDown={onPointerDown}
-        role="menuitem"
-        to={item.route}
-    >
-        {item.label}
-        {item.adornment && userData && item.adornment(userData)}
-    </Link>;
-};
 
 export default ({items, className}) => {
     const currentUserData = useCurrentUserDataValue();
@@ -73,7 +56,7 @@ export default ({items, className}) => {
     const openItems = openSection?.slice(1).filter(item => !item.disabled && matchRole(item.roles, currentUserData)) || [];
     const renderItem = item => {
         const selected = matchesRoute(item._route || item.route);
-        if (item.component) return <MenuLink
+        if (item.component) return <BottomToolbarMenuLink
             item={item}
             onClose={closeMenu}
             selected={selected}

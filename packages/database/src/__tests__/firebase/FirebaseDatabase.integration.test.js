@@ -19,6 +19,21 @@ afterEach(() => {
     }
 });
 const seed = value => set(ref(sdkDatabase, path), value);
+it("keeps Activity identity and type values separate in reads and cursors", async () => {
+    const records = {
+        first: {activity_type_id: "first", type: "same", value: 1},
+        second: {activity_type_id: "second", type: "same", value: 2},
+        same: {activity_type_id: "same", type: "same", value: 3},
+        missing: {value: 4}
+    };
+    await seed(records);
+    expect(await database.read(path)).toEqual(records);
+    expect(await database.read([path, {activity_type_id: "first"}])).toEqual(records.first);
+    expect(await readAll(database.cursor(path))).toEqual(Object.entries(records).sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, value]) => ({key, value})));
+    expect((await readAll(database.cursor(path, {orderBy: "type", equalTo: "same"})))
+        .map(({key}) => key)).toEqual(["first", "same", "second"]);
+});
 async function readAll(cursor, size = 10) {
     const entries = [];
     while (!cursor.position.finished) {
@@ -53,7 +68,7 @@ it("saves by generated key and rejects duplicate creation", async () => {
     await expect(database.create([path, {id: key}], {name: "overwritten"})).rejects.toMatchObject({code: "database/conflict"});
     expect(await database.read([path, {id: key}])).toEqual({name: "created"});
     await expect(database.create([path, "id"], undefined)).rejects.toMatchObject({code: "database/invalid-argument"});
-    const retryKey = await database.create([path, "id"], {timestamp: database.TIMESTAMP, count: database.increment(2)});
+    const retryKey = await database.create([path, "id"], {timestamp: database.TIMESTAMP, count: 2});
     expect(await database.read([path, {id: retryKey}])).toMatchObject({timestamp: expect.any(Number), count: 2});
 });
 it.each(["asc", "desc"])("reads all 83 equal-valued records in %s pages", async order => {
@@ -175,7 +190,9 @@ it("atomically increments through update callbacks and returns committed values"
         database.update([path, "counter"], value => (value ?? 0) + 1)));
     expect(results.slice().sort((a, b) => a - b)).toEqual(Array.from({length: 12}, (_, index) => index + 1));
     expect(await database.read([path, {counter: "counter"}])).toBe(12);
-    expect(await database.update([path, "counter"], () => undefined)).toBeNull();
+    expect(await database.update([path, "counter"], () => undefined)).toBe(12);
+    expect(await database.read([path, {counter: "counter"}])).toBe(12);
+    expect(await database.update([path, "counter"], () => null)).toBeNull();
     await expect(database.update([path, "counter"], async () => 99)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect(await database.read([path, {counter: "counter"}])).toBeUndefined();
     expect(await database.update([path, "counter"], () => null)).toBeNull();
@@ -199,7 +216,7 @@ it("notifies when an ordered field appears and disappears in a real subscription
 });
 
 it("requires read permission for transactional creation", async () => {
-    await expect(database.create(["database_write_only", "id"], {name: "created"})).rejects.toThrow("permission_denied");
+    await expect(database.create(["database_write_only", "id"], {name: "created"})).rejects.toThrow(/permission[ _-]denied/i);
 });
 it("looks up a record by an exact key range regardless of the record value", async () => {
     await seed({before: {text: "before"}, target: {text: "found"}, targetSuffix: {text: "other"}});

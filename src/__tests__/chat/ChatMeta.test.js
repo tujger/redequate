@@ -8,7 +8,7 @@ it("watches online state under the current chat and member", () => {
     const onChange = vi.fn();
     chat.watchOnline({uid: "alice", onChange});
     expect(database.addEventListener).toHaveBeenCalledExactlyOnceWith(
-        ["chats", {chat_id: "chat-1"}, "!meta", "members", {user_id: "alice"}],
+        ["chats", {chat_id: "chat-1"}, {message_id: "!meta"}, "members", {user_id: "alice"}],
         {onChange: expect.any(Function)}
     );
     chat.unwatchOnline();
@@ -62,7 +62,7 @@ const watchModel = () => {
 it("watches new messages, visits and member removal on their respective paths", () => {
     const {database, subscriptions, chat, changed} = watchModel();
     expect(database.addEventListener.mock.calls.map(([path]) => path)).toEqual([
-        ["chats", {chat_id: "chat-1"}, "message_id"], ["chats", {chat_id: "chat-1"}, "!meta", {members: "members"}],
+        ["chats", {chat_id: "chat-1"}, "message_id"], ["chats", {chat_id: "chat-1"}, {message_id: "!meta"}, {members: "members"}],
     ]);
     expect(subscriptions[0].handlers).toEqual({onChildAdd: expect.any(Function), orderBy: "created"});
     const message = {created: 20, text: "newer"};
@@ -94,4 +94,54 @@ it("does not notify twice for the same new-message delivery", () => {
     subscriptions[0].emit("onChildAdd", {key: "a", value: {...message}});
     expect(changed).toHaveBeenCalledExactlyOnceWith(message);
     chat.unwatch();
+});
+
+it("creates metadata with a generated chat ID and a fixed metadata key", async () => {
+    let finish;
+    const database = {
+        read: vi.fn(async path => path[0] === "users_public" ? {name: "Bob"} : undefined),
+        cursor: vi.fn(() => ({next: vi.fn().mockResolvedValue([])})),
+        create: vi.fn(async (_path, callback) => {
+            expect(callback("generated-chat")).toEqual({members: {alice: 0, bob: 0}});
+            await new Promise(resolve => { finish = resolve; });
+            return "!meta";
+        })
+    };
+    const result = ChatMeta(database).fetchFor("alice", "bob");
+    await vi.waitFor(() => expect(finish).toBeTypeOf("function"));
+    expect(database.create).toHaveBeenCalledExactlyOnceWith(
+        ["chats", "chat_id", {message_id: "!meta"}], expect.any(Function));
+    finish();
+    expect(await result).toEqual([expect.objectContaining({key: "generated-chat", redirect: true,
+        meta: {members: {alice: 0, bob: 0}}})]);
+});
+
+it("propagates metadata creation failure without returning a new chat", async () => {
+    const failure = new Error("write failed");
+    const database = {
+        read: vi.fn(async path => path[0] === "users_public" ? {name: "Bob"} : undefined),
+        cursor: vi.fn(() => ({next: vi.fn().mockResolvedValue([])})),
+        create: vi.fn(async (_path, callback) => { callback("unsaved-chat"); throw failure; })
+    };
+    await expect(ChatMeta(database).fetchFor("alice", "bob")).rejects.toBe(failure);
+});
+
+it("creates missing participant indexes when updating an already saved chat", async () => {
+    const database = {
+        TIMESTAMP: "timestamp-marker",
+        read: vi.fn(async path => path[0] === "chats"
+            ? {members: {alice: 0, bob: 0}}
+            : path[1].user_id === "bob" ? {private: "alice", timestamp: 1} : undefined),
+        cursor: vi.fn(() => ({next: vi.fn().mockResolvedValue([])})),
+        update: vi.fn().mockResolvedValue(undefined)
+    };
+    const chat = await ChatMeta(database).fetch("new-chat");
+    expect(chat.persisted).toBe(true);
+    await chat.update();
+    const changes = database.update.mock.calls.at(-1)[0];
+    expect([...changes]).toEqual([
+        [["_chats", {user_id: "alice"}, {chat_id: "new-chat"}, "private"], "bob"],
+        [["_chats", {user_id: "alice"}, {chat_id: "new-chat"}, "timestamp"], database.TIMESTAMP],
+        [["_chats", {user_id: "bob"}, {chat_id: "new-chat"}, "timestamp"], database.TIMESTAMP]
+    ]);
 });

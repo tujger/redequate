@@ -1,3 +1,4 @@
+import createService from "../createService";
 import {vi} from "vitest";
 import AuthBase from "../../../packages/auth/src/AuthBase";
 import {createDatabase} from "../../../packages/auth/src/__tests__/fixtures/database";
@@ -50,7 +51,7 @@ it("rejects the whole profile batch when a role change would remove the last adm
 describe.each([
     ["UserData.updateRole", (database, id) => new UserData(database).create(id).updateRole(null)],
     ["UserData.delete", (database, id) => new UserData(database).create(id).delete()],
-    ["AuthBase profile update", (database, id) => new AuthBase({database})._saveProfile({id}, {role: null})]
+    ["AuthBase profile update", (database, id) => createService(AuthBase, {database})._saveProfile({id}, {role: null})]
 ])("%s administrator lookup", (_, change) => {
     it("reads only ADMIN candidates and stops at the first existing public profile", async () => {
         const database = createDatabase();

@@ -1,13 +1,8 @@
+import type BackendBase from "../../../backend/src/common/BackendBase";
 import type {DatabaseOrder} from "./DatabaseOrder";
 
-/**
- * A literal name or one string-valued field. Local dynamic level _ accepts a
- * non-negative integer; true means 0. Firebase ignores _.
- */
-export type DatabasePathSegment = string | {
-    [key: string]: string | number | true | undefined;
-    _?: number | true;
-};
+/** A literal name or one string-valued field. */
+export type DatabasePathSegment = string | {[key: string]: string};
 /**
  * Reads require a non-empty path. Their trailing array string names an identity
  * field; concrete branches use named segments. Cursors may use '' or [] for root.
@@ -19,6 +14,8 @@ export type DatabaseErrorHandler = (error: unknown, reason: string, context: Rec
 
 export interface DatabaseEntry {
     key: string;
+    /** Captured cursor branches, excluding the final key wildcard. */
+    params?: Record<string, string>;
     value: DatabaseValue;
 }
 
@@ -32,6 +29,7 @@ export interface DatabaseOptions extends Record<string, unknown> {
 }
 
 export interface DatabaseListenerOptions extends DatabaseOptions {
+    backend?: BackendBase;
     onChange?: (value: DatabaseValue | undefined) => void;
     /** Only children whose keys sort strictly after the initial maximum key; no initial replay. */
     onChildAdd?: (entry: DatabaseEntry) => void;
@@ -41,35 +39,38 @@ export interface DatabaseListenerOptions extends DatabaseOptions {
 }
 
 export interface DatabaseReadOptions extends DatabaseOptions {
+    backend?: BackendBase;
     equalTo?: DatabaseQueryValue;
-    orderBy?: DatabasePath;
     /** Defaults to ascending order. */
     order?: DatabaseOrder;
+    orderBy?: DatabasePath;
     /** Inclusive query bounds. */
     start?: DatabaseQueryValue;
     end?: DatabaseQueryValue;
+    /** Return unique immediate child keys, without their values or query filters. */
+    shallow?: boolean;
 }
 
 /** Initial position: index -1, key undefined, finished false. */
 export interface DatabaseCursorPosition {
+    readonly finished: boolean;
     readonly index: number;
     readonly key: string | undefined;
-    readonly finished: boolean;
 }
 
 export interface DatabaseCursorEvent {
-    type: "add" | "change" | "remove";
     entry: DatabaseEntry;
+    type: "add" | "change" | "remove";
 }
 
 export interface DatabaseCursorSubscription {
-    /** Owning cursor ID; independent subscriptions of one cursor share it. */
-    readonly id: string;
-    readonly subscribed: Date;
     readonly active: boolean;
     readonly added: number;
     readonly changed: number;
+    /** Owning cursor ID; independent subscriptions of one cursor share it. */
+    readonly id: string;
     readonly removed: number;
+    readonly subscribed: Date;
 
     unsubscribe(): void;
 }
@@ -81,14 +82,16 @@ export interface DatabaseCursorSubscription {
 export interface DatabaseCursorOptions extends DatabaseReadOptions {
     /** Headings count as entries, in addition to the requested page size. */
     group?: string;
-    /** Inclusive date bounds: Firebase uses key time; Local uses an explicit timestamp field. */
-    startDate?: Date;
-    /** Includes the entire millisecond. */
-    endDate?: Date;
     /**
      * Runs sequentially on deep copies. Undefined leaves storage and the read value
      * unchanged; null deletes; any other result replaces the value and is reread.
      * A record moved beyond the continuation can be handled again before composition deduplication.
      */
     handle?: (entry: DatabaseEntry) => DatabaseValue | void | Promise<DatabaseValue | void>;
+    /** Shallow projection belongs to read, not cursor. */
+    shallow?: never;
+    /** Inclusive date bounds: Firebase uses key time; Local uses an explicit timestamp field. */
+    startDate?: Date;
+    /** Includes the entire millisecond. */
+    endDate?: Date;
 }
