@@ -1,6 +1,7 @@
 import FirebaseBackendClient from "../firebase-client/FirebaseBackendClient";
 import update from "../firebase-server/src/database/callable/update";
 import {increment} from "firebase/database";
+import {httpsCallable} from "firebase/functions";
 
 vi.mock("../firebase-server/node_modules/firebase-admin/lib/esm/database/index.js", () => ({
     getDatabase: () => ({ref: path => ({toString: () => `https://demo.example.test/${path ?? ""}`})}),
@@ -8,10 +9,10 @@ vi.mock("../firebase-server/node_modules/firebase-admin/lib/esm/database/index.j
 
 vi.mock("firebase/functions", () => ({
     getFunctions: () => ({}),
-    httpsCallable: (_, endpoint) => async data => {
+    httpsCallable: vi.fn((_, endpoint) => async data => {
         expect(endpoint).toBe("database-update");
         return {data: await update.run({data})};
-    },
+    }),
 }));
 
 const backend = new FirebaseBackendClient({firebase: {app: {}}});
@@ -25,7 +26,7 @@ afterEach(() => vi.unstubAllGlobals());
 const path = ["_counters", {id: "total"}, "posts"];
 
 it("sends a native increment through a valid root PATCH", async () => {
-    expect(await backend.request("database.update", path, marker)).toBeNull();
+    expect(await backend.request("database.update", "", {"_counters/total/posts": marker})).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, request] = fetchMock.mock.calls[0];
     expect(url.pathname).toBe("/.json");
@@ -34,9 +35,25 @@ it("sends a native increment through a valid root PATCH", async () => {
     expect(request.headers).not.toHaveProperty("X-Firebase-ETag");
 });
 
-it("preserves nested increment markers in ordinary patches", async () => {
-    expect(await backend.request("database.update", ["_counters", {id: "total"}], {posts: marker}, {mode: "patch"})).toBeNull();
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({method: "PATCH", body: JSON.stringify({posts: marker})});
+it.each([undefined, {}, {mode: "patch"}])("preserves nested increment markers with options %j", async options => {
+    const args = [["_counters", {id: "total"}], {posts: marker}];
+    if (options !== undefined) args.push(options);
+    expect(await backend.request("database.update", ...args)).toBeNull();
+    const [url, request] = fetchMock.mock.calls[0];
+    expect(url.pathname).toBe("/_counters/total.json");
+    expect(request).toMatchObject({method: "PATCH", body: JSON.stringify({posts: marker})});
+});
+
+it.each([undefined, {}, {mode: "patch"}])("forwards raw update arguments unchanged with options %j", async options => {
+    const callable = vi.fn().mockResolvedValue({data: null});
+    vi.mocked(httpsCallable).mockReturnValueOnce(callable);
+    const args = [path, marker];
+    if (options !== undefined) args.push(options);
+    await backend.request("database.update", ...args);
+    expect(callable).toHaveBeenCalledExactlyOnceWith(args);
+    const [payload] = callable.mock.calls[0];
+    args.forEach((arg, index) => expect(payload[index]).toBe(arg));
+    expect(fetchMock).not.toHaveBeenCalled();
 });
 
 it("retains conditional replacement behavior for increment values", async () => {

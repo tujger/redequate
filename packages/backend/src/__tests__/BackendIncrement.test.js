@@ -24,10 +24,10 @@ vi.mock("firebase/functions", () => ({
         transport.calls.push(structuredClone(payload));
         const snapshot = () => ({value: transport.value, etag: String(transport.version)});
         if (!options) {
-            // A callable PATCH must carry the marker under a field, not at its root.
-            expect(path).toBe("");
-            expect(Object.keys(value)).toEqual(["singleton/count"]);
-            const delta = value["singleton/count"][".sv"].increment;
+            // A callable PATCH carries the marker under the updated field.
+            expect(path).toEqual(["singleton"]);
+            expect(Object.keys(value)).toEqual(["count"]);
+            const delta = value.count[".sv"].increment;
             transport.value = (typeof transport.value === "number" ? transport.value : 0) + delta;
             transport.version++;
             return {data: null};
@@ -55,6 +55,9 @@ const setup = async provider => {
     await createService(LocalDatabase, {storageId, backend, stores: [singletonMetaStore]}).read(["singleton"]);
     return backend;
 };
+const incrementArgs = (provider, marker) => provider === "firebase"
+    ? [["singleton"], {count: marker}]
+    : [path, marker];
 const seed = async (backend, value) => {
     const snapshot = await backend.request("database.update", path, null, {mode: "read"});
     await backend.request("database.update", path, value, {mode: "replace", etag: snapshot.etag});
@@ -89,7 +92,7 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
         "increments %j by %j and returns %j", async (initial, n, expected) => {
             const backend = await setup(provider);
             if (initial !== null) await seed(backend, initial);
-            expect(await backend.request("database.update", path, backend.increment(n))).toBe(provider === "local" ? expected : null);
+            expect(await backend.request("database.update", ...incrementArgs(provider, backend.increment(n)))).toBe(provider === "local" ? expected : null);
             expect((await backend.request("database.update", path, null, {mode: "read"})).value).toBe(expected);
         }
     );
@@ -112,14 +115,15 @@ for (const provider of ["local", "firebase"]) describe(provider, () => {
         transport.calls.length = 0;
         const request = vi.spyOn(backend, "request");
         const marker = provider === "local" ? backend.increment(2) : structuredClone(backend.increment(2));
-        expect(await backend.request("database.update", path, marker)).toBe(provider === "local" ? 3 : null);
-        expect(request).toHaveBeenCalledExactlyOnceWith("database.update", path, marker);
-        if (provider === "firebase") expect(transport.calls).toEqual([["", {"singleton/count": marker}]]);
+        const args = incrementArgs(provider, marker);
+        expect(await backend.request("database.update", ...args)).toBe(provider === "local" ? 3 : null);
+        expect(request).toHaveBeenCalledExactlyOnceWith("database.update", ...args);
+        if (provider === "firebase") expect(transport.calls).toEqual([args]);
     });
 
     it("preserves increments under concurrent updates", async () => {
         const backend = await setup(provider);
-        await Promise.all(Array.from({length: 10}, () => backend.request("database.update", path, backend.increment(1))));
+        await Promise.all(Array.from({length: 10}, () => backend.request("database.update", ...incrementArgs(provider, backend.increment(1)))));
         expect((await backend.request("database.update", path, null, {mode: "read"})).value).toBe(10);
     });
 
