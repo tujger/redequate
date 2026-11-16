@@ -15,7 +15,7 @@ export default class PostListener extends BackendListener {
         console.log("[Backend:Post]", `created [${params.post_id}]`, {params, value});
 
         if (value.to) {
-            const {parent, rootKey, root} = await findRoot.call(this, value);
+            const {parent, rootKey, root} = await findRoot.call(this, value, params.post_id);
 
             const notified = new Set([value.uid]);
             const alert = {uid: value.uid, type: "replies", id: params.post_id, context: rootKey};
@@ -136,9 +136,8 @@ const unlinkPostFromTag = ({backend, postId, tag}) => {
     return backend.request("database.delete", ["_tag", {tag_id: tag.key}, {post_id: postId}]);
 }
 
-async function findRoot(value) {
-    // const visited = new Set([params.post_id]);
-    const visited = new Set();
+async function findRoot(value, postId) {
+    const visited = new Set([postId]);
     let toId = value.to;
     let parent;
     let root;
