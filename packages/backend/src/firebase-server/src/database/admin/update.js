@@ -5,12 +5,13 @@ import {conditionalUpdate} from "./_transaction";
 
 export default async function (path, value, options = {}, ...args) {
     if (args.length) fail("database/invalid-argument", "Expected (path, value, options?).");
-    const database = this.getDatabaseInstance();
+    if (value === undefined) fail("database/invalid-argument", "Update requires a value.");
     const address = parsePath(path).address;
     if (invalidPath.test(address)) fail("database/invalid-argument", "Invalid Firebase path.");
     if (options === null || typeof options !== "object" || Array.isArray(options)) {
         fail("database/invalid-argument", "Invalid update options.");
     }
+    const database = this.getDatabaseInstance();
     if (options.mode !== undefined) return conditionalUpdate(database, address, value, options);
     console.debug("[Backend:Admin:Update]", `update [${address}]`);
     if (address) {
