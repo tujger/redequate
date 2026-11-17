@@ -31,7 +31,7 @@ export default class PagesCursor extends DatabaseCursor {
     readonly #pages: Page[];
 
     constructor(options: DatabaseCursorOptions = {}) {
-        super(options, "pages");
+        super("pages", options);
         if (this.handle !== undefined || this.startDate !== undefined || this.endDate !== undefined) {
             fail("database/invalid-argument", "PagesCursor does not support handle or date bounds.");
         }
