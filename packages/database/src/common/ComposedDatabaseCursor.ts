@@ -135,10 +135,10 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
 
     constructor(sources: Source[], options: DatabaseCursorOptions, run: CursorRun, path: CursorPath,
         cursorPath?: () => DatabasePath) {
-        super(options, cursorPath?.() ?? (typeof path === "string" || (path instanceof Array &&
+        super(cursorPath?.() ?? (typeof path === "string" || (path instanceof Array &&
             (path.length === 0 || typeof path[0] === "string"))
             ? path as DatabasePath
-            : undefined));
+            : undefined), options);
         this.#context = {path};
         this.#run = run;
         this.#sources = sources;
