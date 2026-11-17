@@ -1,6 +1,6 @@
 import parsePath from "./parsePath";
 import type {ParsedPath} from "./parsePath";
-import type {DatabasePath} from "./DatabaseTypes";
+import type {DatabasePath} from "../DatabaseTypes";
 
 export function resolveParsedPath({path, segments}: ParsedPath): string {
     return path.map((segment, index) => typeof segment === "string"

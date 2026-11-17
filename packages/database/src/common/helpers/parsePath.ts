@@ -1,5 +1,5 @@
 import validatePath from "./validatePath";
-import type {DatabasePath, DatabasePathSegment} from "./DatabaseTypes";
+import type {DatabasePath, DatabasePathSegment} from "../DatabaseTypes";
 
 export const PATH_VARIABLE = Symbol("Path.variable");
 

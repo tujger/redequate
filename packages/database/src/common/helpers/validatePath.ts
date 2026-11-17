@@ -1,5 +1,5 @@
-import {fail} from "../../../common";
-import type {DatabasePath} from "./DatabaseTypes";
+import {fail} from "../../../../common";
+import type {DatabasePath} from "../DatabaseTypes";
 
 export default function validatePath(path: unknown): asserts path is DatabasePath {
     if (typeof path === "string") return;

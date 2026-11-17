@@ -1,9 +1,8 @@
 import compareValues from "./compareValues";
-import {fail} from "../../../common";
+import {fail} from "../../../../common";
 import resolvePath from "./resolvePath";
 import compareKeys from "./compareKeys";
 
-const invalid = message => fail("database/invalid-argument", message);
 export function readQueryOptions(options = {}) {
     const {orderBy, order = "asc", equalTo, start, end} = options;
     if (order !== "asc" && order !== "desc") invalid("order must be asc or desc.");
@@ -40,3 +39,5 @@ export default function applyReadOptions(value, options = {}) {
         (order === "desc" ? -1 : 1));
     return entries.length ? Object.fromEntries(entries.map(({key, item}) => [key, item])) : undefined;
 }
+
+const invalid = message => fail("database/invalid-argument", message);

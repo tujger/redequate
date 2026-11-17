@@ -1,4 +1,4 @@
-import {fail} from "../../../common";
+import {fail} from "../../../../common";
 
 export default function applyUpdate(callback, value) {
     const updated = callback(structuredClone(value));

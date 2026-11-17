@@ -1,4 +1,4 @@
-import {fail} from "../../../common";
+import {fail} from "../../../../common";
 
 export function validateShallowRead(options = {}) {
     if (!options || typeof options !== "object" || Array.isArray(options)) {

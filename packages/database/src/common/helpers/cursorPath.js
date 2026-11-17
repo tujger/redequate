@@ -1,4 +1,4 @@
-import {fail} from "../../../common";
+import {fail} from "../../../../common";
 import compareKeys from "./compareKeys";
 
 export const hasIntermediateWildcard = path => Array.isArray(path) && path.slice(1, -1).some(segment => typeof segment === "string");
