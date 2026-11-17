@@ -17,6 +17,8 @@ const setup = () => {
     function reference(path = "", query = {}) {
         const selection = {path, query,
             once: event => sdk.once(selection, event), get: async () => ({val: () => records.get(path) ?? null}),
+            update: async changes => { for (const [name, value] of Object.entries(changes)) records.set(name, value); },
+            set: async value => { records.set(path, value); },
             // The backend conditional-write helper uses value listeners during transactions.
             on: (event, callback) => callback({val: () => records.get(path) ?? null}),
             off: vi.fn(),
@@ -37,6 +39,35 @@ const setup = () => {
     });
     return {backend, database, records, queries, sdk, page, snapshot};
 };
+
+it("writes all changes and status in one Firebase backend batch", async () => {
+    const {backend, sdk, page, records} = setup();
+    sdk.once.mockResolvedValueOnce(page([["a", {text: "a"}], ["b", {text: "b"}]]));
+    const cursor = await backend.request("database.cursor", "records", {
+        id: "firebase-all", handle: ({key}) => key === "a" ? null : {text: "changed"}
+    });
+    expect(await cursor.status()).toMatchObject({state: "ready", count: 0, checkpoint: null});
+    const request = vi.spyOn(backend, "request");
+    expect(await cursor.all(10)).toBe(2);
+    expect(records.get("records/a")).toBeNull();
+    expect(records.get("records/b")).toEqual({text: "changed"});
+    expect((await cursor.status()).checkpoint).toMatchObject({key: "b", finished: true});
+    const batches = request.mock.calls.filter(([name]) => name === "database.update");
+    expect(batches).toHaveLength(1);
+    expect(batches[0][2]).toBeInstanceOf(Map);
+    expect([...batches[0][2].keys()]).toContainEqual(["meta", {setting: "cursor:firebase-all"}]);
+});
+
+it("all resolves a normalized Firebase identity collection path", async () => {
+    const {backend, sdk, page, records} = setup();
+    sdk.once.mockResolvedValueOnce(page([["a", {text: "old"}]]));
+    const cursor = await backend.request("database.cursor", ["records", "record_id"], {
+        id: "firebase-identity-all", handle: () => ({text: "new"})
+    });
+    expect(cursor.path).toBe("records");
+    expect(await cursor.all()).toBe(1);
+    expect(records.get("records/a")).toEqual({text: "new"});
+});
 
 it.each(["asc", "desc"])("returns the existing cursor and pages %s across equal sort values", async order => {
     const {backend, sdk, page, queries} = setup();

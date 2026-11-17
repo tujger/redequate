@@ -10,7 +10,7 @@ export default function createLocalDatabase(options = {}) {
 }
 
 export async function readNativeStore(storageId, collection) {
-    const {openDatabase} = await import("../local/helpers");
+    const {openDatabase} = await import("../local/helpers/records");
     const database = await openDatabase(storageId);
     try {
         return await new Promise((resolve, reject) => {

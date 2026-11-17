@@ -1,6 +1,6 @@
 import {getAuth} from "firebase/auth";
 import {serverTimestamp, increment, push, ref, getDatabase} from "firebase/database";
-import parsePath from "../../../packages/database/src/firebase/parsePath";
+import parsePath from "../../../packages/database/src/firebase/helpers/parsePath";
 
 // The adapter suite runs Auth/RTDB only. Exercise its writes against real RTDB
 // rules and ETags; Functions transport is covered by the applications' suites.

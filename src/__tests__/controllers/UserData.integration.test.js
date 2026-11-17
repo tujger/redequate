@@ -1,5 +1,5 @@
 import {ref} from "firebase/database";
-import readSnapshot from "../../../packages/database/src/firebase/readSnapshot";
+import readSnapshot from "../../../packages/database/src/firebase/helpers/readSnapshot";
 import {vi} from "vitest";
 import {signInAnonymously} from "firebase/auth";
 import notifySnackbar from "../../controllers/notifySnackbar";

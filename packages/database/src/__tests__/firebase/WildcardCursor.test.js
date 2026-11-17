@@ -39,3 +39,19 @@ for (const path of ["records", pattern]) it(`keeps native Firebase cursor types 
     expect(server).not.toBeInstanceOf(FirebaseCursorClient);
     expect(fixture.sdk.refs).toHaveLength(0);
 });
+
+it("all resolves captured Firebase wildcard parameters into record paths", async () => {
+    const fixture = createFirebase();
+    const rows = {mutual: {a: {r1: {uid: "u"}}, b: {r1: {uid: "u"}}}};
+    fixture.sdk.once.mockImplementation(async ref => fixture.snapshot(ref.path.split("/").filter(Boolean)
+        .reduce((node, key) => node?.[key], rows)));
+    const backend = {request: vi.fn(async () => null)};
+    const cursor = new FirebaseCursorClient(fixture.firebase, pattern, {
+        id: "firebase-wildcard-all", handle: ({value}) => ({...value, edited: true})
+    }, backend);
+    expect(await cursor.all(10)).toBe(2);
+    const paths = backend.request.mock.calls.filter(([name]) => name === "database.update")
+        .flatMap(([, , changes]) => changes instanceof Map ? [...changes.keys()] : []);
+    expect(paths).toContainEqual(["mutual", {mutual_type: "a"}, {mutual_id: "r1"}]);
+    expect(paths).toContainEqual(["mutual", {mutual_type: "b"}, {mutual_id: "r1"}]);
+});

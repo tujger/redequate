@@ -2,7 +2,7 @@ import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
-import {openDatabase} from "../../local/helpers";
+import {openDatabase} from "../../local/helpers/records";
 import {convertStores, LOCAL_SCHEMA} from "../../local/storeSchema";
 import stores from "../../local/stores.json";
 

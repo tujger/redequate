@@ -2,7 +2,7 @@ import createLocalDatabase from "../../../../packages/database/src/__tests__/cre
 import {vi} from "vitest";
 import {IDBFactory} from "fake-indexeddb";
 
-import {openDatabase} from "../../../../packages/database/src/local/helpers";
+import {openDatabase} from "../../../../packages/database/src/local/helpers/records";
 import {LOCAL_COLLECTIONS} from "../../../../packages/database/src/local/constants";
 import {PostData} from "../../../components/PostComponent/PostData";
 

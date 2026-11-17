@@ -1,5 +1,5 @@
-import parseFirebasePath from "../../firebase/parsePath";
-import parseLocalPath from "../../local/parsePath";
+import parseFirebasePath from "../../firebase/helpers/parsePath";
+import parseLocalPath from "../../local/helpers/parsePath";
 
 for (const [name, parsePath] of [["firebase", parseFirebasePath], ["local", parseLocalPath]]) describe(name, () => {
     it("distinguishes concrete backend addresses from collection queries", () => {

@@ -114,3 +114,31 @@ it("keeps the LocalCursor instance for intermediate wildcard paths", () => {
     expect(cursor.constructor).toBe(LocalCursor);
     expect(cursor.path).toEqual(pattern);
 });
+
+it("all writes wildcard replacements to the captured identity branch", async () => {
+    const {database, backend} = await setup();
+    const request = vi.spyOn(backend, "request");
+    const cursor = database.cursor(pattern, {id: "wildcard-all", orderBy: "uid", equalTo: "u",
+        handle: ({params, value}) => params.mutual_type === "a" ? {...value, edited: true} : null});
+    expect(await cursor.all(1)).toBe(2);
+    expect((await database.read(["mutual", {mutual_type: "a"}, {mutual_id: "same"}])).edited).toBe(true);
+    expect(await database.read(["mutual", {mutual_type: "b"}, {mutual_id: "same"}])).toBeUndefined();
+    const paths = request.mock.calls.filter(([name]) => name === "database.update")
+        .flatMap(([, , changes]) => changes instanceof Map ? [...changes.keys()] : []);
+    expect(paths).toContainEqual(["mutual", {mutual_type: "a"}, {mutual_id: "same"}]);
+    expect(paths).toContainEqual(["mutual", {mutual_type: "b"}, {mutual_id: "same"}]);
+});
+
+it("all preserves fixed identity objects in a Local record path", async () => {
+    const {database, backend} = await setup();
+    const request = vi.spyOn(backend, "request");
+    const cursor = database.cursor(["mutual", {mutual_type: "a"}, "mutual_id"], {
+        id: "fixed-identity-all", handle: ({value}) => ({...value, edited: true})
+    });
+    expect(await cursor.all(10)).toBe(2);
+    expect((await database.read(["mutual", {mutual_type: "a"}, {mutual_id: "same"}])).edited).toBe(true);
+    expect((await database.read(["mutual", {mutual_type: "b"}, {mutual_id: "same"}])).edited).toBeUndefined();
+    const paths = request.mock.calls.filter(([name]) => name === "database.update")
+        .flatMap(([, , changes]) => changes instanceof Map ? [...changes.keys()] : []);
+    expect(paths).toContainEqual(["mutual", {mutual_type: "a"}, {mutual_id: "same"}]);
+});

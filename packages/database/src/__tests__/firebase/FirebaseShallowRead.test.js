@@ -43,12 +43,12 @@ for (const emulator of [false, true]) it(`admin uses ${emulator ? "emulator owne
     expect(get).not.toHaveBeenCalled();
 });
 it.each([null, false, 5, "text"])("returns [] for REST scalar or missing data %j", async value => {
-    const {fetchShallowKeys} = await import("../../common/shallowRead");
+    const {fetchShallowKeys} = await import("../../common/helpers/shallowRead");
     vi.stubGlobal("fetch", vi.fn(async () => response(value)));
     expect(await fetchShallowKeys(new URL("https://example.test/mutual.json?shallow=true"))).toEqual([]);
 });
 it("propagates denied reads without a full-data fallback", async () => {
-    const {fetchShallowKeys} = await import("../../common/shallowRead");
+    const {fetchShallowKeys} = await import("../../common/helpers/shallowRead");
     const fetch = vi.fn(async () => ({ok: false, status: 401, json: async () => ({error: "Permission denied"})}));
     vi.stubGlobal("fetch", fetch);
     await expect(fetchShallowKeys(new URL("https://example.test/mutual.json?shallow=true"))).rejects.toMatchObject({code: "database/permission-denied"});

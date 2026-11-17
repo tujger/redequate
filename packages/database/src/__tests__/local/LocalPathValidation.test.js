@@ -1,9 +1,9 @@
 import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
-import * as pathValidation from "../../common/validatePath";
+import * as pathValidation from "../../common/helpers/validatePath";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
-import {validateCollectionPath, readValue, getChildRecordPath} from "../../local/helpers";
+import {validateCollectionPath, readValue, getChildRecordPath} from "../../local/helpers/records";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());

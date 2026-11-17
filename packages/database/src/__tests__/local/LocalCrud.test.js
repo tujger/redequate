@@ -3,7 +3,7 @@ import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory, IDBDatabase} from "fake-indexeddb";
 import LocalDatabase from "../../local";
 import LocalBackend from "../../../../backend/src/local/LocalBackend";
-import {openDatabase} from "../../local/helpers";
+import {openDatabase} from "../../local/helpers/records";
 
 beforeEach(() => vi.stubGlobal("indexedDB", new IDBFactory()));
 afterEach(() => vi.unstubAllGlobals());

@@ -1,5 +1,5 @@
-import parsePath, {PATH_VARIABLE} from "../../common/parsePath";
-import resolvePath from "../../common/resolvePath";
+import parsePath, {PATH_VARIABLE} from "../../common/helpers/parsePath";
+import resolvePath from "../../common/helpers/resolvePath";
 
 it("describes every unbound field with the same Symbol while keeping the wire path intact", () => {
     const path = ["alerts", "user_id", "alert_id"];

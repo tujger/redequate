@@ -22,7 +22,7 @@ const databaseFor = (provider, backend, onError) => {
 };
 const create = (provider, backend, path, value) => databaseFor(provider, backend).create(path, value);
 
-it.each(["local", "firebase"])("%s passes its ready key in options to super and sends the prepared value", async provider => {
+it.each(["local", "firebase"])("%s sends the prepared value with its ready key", async provider => {
     const events = [];
     const preparedValue = {title: "ready"};
     const backend = {request: vi.fn(async () => { events.push("request"); return "saved-key"; })};
@@ -34,10 +34,7 @@ it.each(["local", "firebase"])("%s passes its ready key in options to super and 
     const path = ["posts", {post_id: "manual"}];
     const database = databaseFor(provider, backend);
     const run = vi.spyOn(database, "run");
-    const superCreate = vi.spyOn(DatabaseBase.prototype, "create");
     expect(await database.create(path, callback)).toBe("saved-key");
-    expect(superCreate).toHaveBeenCalledWith(path, callback, expect.objectContaining({key: "manual"}));
-    expect(superCreate.mock.calls[0][2]).not.toHaveProperty("backend");
     expect(callback).toHaveBeenCalledTimes(1);
     expect(events).toEqual(["callback", "request"]);
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create", path, preparedValue);
@@ -49,11 +46,9 @@ it.each(["local", "firebase"])("%s supplies its generated final key to the commo
     const backend = {request: vi.fn(async (_name, path) => path.at(-1).id)};
     let callbackKey;
     const path = ["chats", {chat_id: "c1"}, {messages: "messages"}, "id"];
-    const superCreate = vi.spyOn(DatabaseBase.prototype, "create");
     const callback = id => { callbackKey = id; return {id}; };
     const key = await create(provider, backend, path, callback);
     expect(key).toBe(callbackKey);
-    expect(superCreate).toHaveBeenCalledWith(path, callback, expect.objectContaining({key}));
     expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create",
         ["chats", {chat_id: "c1"}, {messages: "messages"}, {id: key}], {id: key});
     if (provider === "firebase") {
@@ -156,14 +151,14 @@ it("keeps the bare base method unimplemented without provider options", async ()
     await expect(new DatabaseBase().create(["posts", "post_id"], {})).rejects.toThrow("Not implemented: create");
 });
 
-it("uses the backend supplied through setBackend", async () => {
+it("does not expose key preparation through the base create method", async () => {
     const backend = {request: vi.fn().mockResolvedValue("base-key")};
     const database = new DatabaseBase();
     database.setBackend(backend);
     const callback = vi.fn(key => ({key}));
-    expect(await database.create(["posts", "post_id"], callback, {key: "prepared-key"})).toBe("base-key");
-    expect(callback).toHaveBeenCalledExactlyOnceWith("prepared-key");
-    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.create", ["posts", {post_id: "prepared-key"}], {key: "prepared-key"});
+    await expect(database.create(["posts", "post_id"], callback)).rejects.toThrow("Not implemented: create");
+    expect(callback).not.toHaveBeenCalled();
+    expect(backend.request).not.toHaveBeenCalled();
 });
 
 it.each(["local", "firebase"])("%s generates intermediate IDs for ordinary values without changing fixed segments", async provider => {

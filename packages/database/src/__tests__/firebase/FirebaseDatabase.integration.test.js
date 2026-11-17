@@ -1,5 +1,5 @@
 import {ref, set} from "firebase/database";
-import readSnapshot from "../../firebase/readSnapshot";
+import readSnapshot from "../../firebase/helpers/readSnapshot";
 import {vi} from "vitest";
 import {key as dateKey} from "firebase-key";
 import {database, sdkDatabase} from "../../../../../src/__tests__/common";

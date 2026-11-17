@@ -24,6 +24,19 @@ class RecordsCursor extends DatabaseCursor {
     }
 }
 const record = (key, value = key) => ({key, value});
+
+it("delegates all and status to the sole source with unchanged arguments", async () => {
+    const source = new RecordsCursor([record("a")]);
+    const checkpoint = {index: 0, key: "a", finished: false};
+    source.all = vi.fn().mockResolvedValue(7);
+    source.status = vi.fn().mockResolvedValue({state: "ready"});
+    const cursor = database.cursor([source]);
+    expect(await cursor.all(5, checkpoint)).toBe(7);
+    expect(source.all).toHaveBeenCalledExactlyOnceWith(5, checkpoint);
+    expect(await cursor.status()).toEqual({state: "ready"});
+    expect(source.status).toHaveBeenCalledOnce();
+});
+
 let fixture, database;
 beforeEach(() => {
     fixture = createFirebase();

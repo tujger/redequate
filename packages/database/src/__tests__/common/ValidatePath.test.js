@@ -1,4 +1,4 @@
-import validatePath from "../../common/validatePath";
+import validatePath from "../../common/helpers/validatePath";
 import DatabaseCursor from "../../common/DatabaseCursor";
 
 it.each(["", [], "profile/name", ["profile", "name"], ["records", {id: "a"}],

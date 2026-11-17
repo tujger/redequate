@@ -6,10 +6,10 @@ import LocalBackend from "../local/LocalBackend";
 vi.mock("../local/database/installListeners", () => ({installListeners: vi.fn()}));
 
 import UserListener from "../common/handlers/users_public";
-import resolvePath from "../../../database/src/common/resolvePath";
+import resolvePath from "../../../database/src/common/helpers/resolvePath";
 import DatabaseCursor from "../../../database/src/common/DatabaseCursor";
 import createCursor from "../common/helpers/createCursor";
-import parsePath from "../../../database/src/firebase/parsePath";
+import parsePath from "../../../database/src/firebase/helpers/parsePath";
 
 const setup = data => {
     const get = path => path.split("/").filter(Boolean).reduce((node, key) => node?.[key], data) ?? null;

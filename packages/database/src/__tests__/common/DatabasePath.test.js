@@ -2,7 +2,7 @@ import createService from "../../../../../src/__tests__/createService";
 import {vi} from "vitest";
 import DatabaseBase from "../../common/DatabaseBase";
 import DatabaseCursor from "../../common/DatabaseCursor";
-import resolvePath from "../../common/resolvePath";
+import resolvePath from "../../common/helpers/resolvePath";
 import FirebaseDatabase from "../../firebase";
 import {createFirebase} from "../fixtures/firebase";
 import {createBackend} from "../fixtures/backend";

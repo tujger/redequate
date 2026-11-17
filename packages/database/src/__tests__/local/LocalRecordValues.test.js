@@ -203,7 +203,7 @@ it("reads Activity values by service ID with duplicate types, missing type and m
 it("keeps old Local records without an explicit identity marker readable", async () => {
     const database = createLocalDatabase({storageId: "legacy-identity"});
     await database.read(["posts"]);
-    const {openDatabase} = await import("../../local/helpers");
+    const {openDatabase} = await import("../../local/helpers/records");
     const connection = await openDatabase("legacy-identity");
     await new Promise((resolve, reject) => {
         const transaction = connection.transaction("posts", "readwrite");
@@ -262,7 +262,7 @@ it.each([
 ])("rejects old wrappers without migrating or rewriting them: %j", async legacy => {
     const database = createLocalDatabase({storageId: "old-records"});
     await database.read(["posts"]);
-    const {openDatabase} = await import("../../local/helpers");
+    const {openDatabase} = await import("../../local/helpers/records");
     const connection = await openDatabase("old-records");
     try {
         await new Promise((resolve, reject) => {
