@@ -93,9 +93,8 @@ export default (props) => {
             }
         }
         const initDatabase = async props => {
-            const {backend} = props;
             try {
-                const database = await resolveDatabase(databaseGiven, {backend});
+                const database = await resolveDatabase(databaseGiven);
                 console.log("[Dispatcher]", "database resolved", {database});
                 return {...props, database};
             } catch (error) {
