@@ -150,10 +150,10 @@ it("reports invalid paths through the configured operation error handler", async
 });
 
 it("preserves orderBy segments and resolves them only in Firebase", async () => {
-    expect(new DatabaseCursor({orderBy: ["profile", "name"]}, path).orderBy).toEqual(["profile", "name"]);
+    expect(new DatabaseCursor(path, {orderBy: ["profile", "name"]}).orderBy).toEqual(["profile", "name"]);
     const orderBy = ["profile", {field: "name"}];
-    expect(new DatabaseCursor({orderBy}, path).orderBy).toEqual(orderBy);
-    expect(new DatabaseCursor({orderBy: "profile/name"}, path).orderBy).toBe("profile/name");
+    expect(new DatabaseCursor(path, {orderBy}).orderBy).toEqual(orderBy);
+    expect(new DatabaseCursor(path, {orderBy: "profile/name"}).orderBy).toBe("profile/name");
     const cursor = database.cursor(path, {orderBy, start: "Al"});
     await cursor.next();
     expect(fixture.sdk.once.mock.calls[0][0].query).toMatchObject({
@@ -168,7 +168,7 @@ it("preserves orderBy segments and resolves them only in Firebase", async () => 
 
 it.each([[""], ["profile", {}], ["profile", {field: 1}], ["profile", {field: "name", extra: "x"}]])(
     "rejects invalid orderBy segments %j", (...parts) => {
-        expect(() => new DatabaseCursor({orderBy: parts}, path)).toThrow();
+        expect(() => new DatabaseCursor(path, {orderBy: parts})).toThrow();
     }
 );
 

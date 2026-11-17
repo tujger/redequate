@@ -8,7 +8,7 @@ vi.mock("firebase/database", () => import("../fixtures/firebase").then(module =>
 
 class RecordsCursor extends DatabaseCursor {
     constructor(entries, options = {}, path) {
-        super(options, path);
+        super(path, options);
         this.entries = [...entries];
     }
     async next(n = 1) {

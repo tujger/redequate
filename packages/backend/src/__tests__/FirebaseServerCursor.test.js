@@ -2,6 +2,7 @@ import {vi} from "vitest";
 import FirebaseBackendServer from "../firebase-server/src/FirebaseBackendServer";
 import FirebaseCursorServer from "../firebase-server/src/FirebaseCursorServer";
 import DatabaseCursor from "../../../database/src/common/DatabaseCursor";
+import DatabaseBase from "../../../database/src/common/DatabaseBase";
 import {key as dateKey} from "firebase-key";
 import ComposedDatabaseCursor from "../../../database/src/common/ComposedDatabaseCursor";
 
@@ -168,13 +169,26 @@ it("propagates composition validation errors even with onError", async () => {
 
 it("creates a DatabaseCursor subclass directly with readonly initial metadata", async () => {
     const {database, backend} = setup();
-    const cursor = new FirebaseCursorServer(database, ["records", "record_id"], {}, backend);
+    const cursor = new FirebaseCursorServer(["records", "record_id"], {}, {backend});
     expect(cursor).toBeInstanceOf(DatabaseCursor);
     expect(cursor.path).toBe("records");
     expect(cursor.position).toEqual({index: -1, key: undefined, finished: false});
     for (const n of [0, -1, 1.5, NaN, Infinity]) {
         await expect(cursor.next(n)).rejects.toMatchObject({code: "database/invalid-argument"});
     }
+});
+it("keeps the provider database separate from the Admin SDK database", async () => {
+    const {backend, database: sdk} = setup();
+    const database = new DatabaseBase();
+    backend.setDatabase(database);
+    const source = new FirebaseCursorServer("records", {}, {backend, database});
+    expect(source._database).toBe(database);
+    sdk.ref.mockClear();
+    const cursor = await backend.request("database.cursor", "records");
+    expect(backend._database).toBe(database);
+    expect(sdk.ref).not.toHaveBeenCalled();
+    expect(await cursor.next(1)).toEqual([]);
+    expect(sdk.ref).toHaveBeenCalledWith("records");
 });
 it("filters by date keys before invoking handle and leaves undefined replacements unchanged", async () => {
     const {backend, sdk, page} = setup();

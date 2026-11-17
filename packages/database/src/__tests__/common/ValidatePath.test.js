@@ -8,7 +8,7 @@ it.each(["", [], "profile/name", ["profile", "name"], ["records", {id: "a"}],
         const before = structuredClone(path);
         expect(validatePath(path)).toBeUndefined();
         expect(path).toEqual(before);
-        expect(new DatabaseCursor({orderBy: path}, path).orderBy).toEqual(path);
+        expect(new DatabaseCursor(path, {orderBy: path}).orderBy).toEqual(path);
     }
 );
 

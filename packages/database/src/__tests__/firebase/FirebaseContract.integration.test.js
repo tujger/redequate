@@ -7,7 +7,7 @@ databaseContract(() => {
     const path = "database_test";
     return {
         db: database,
-        rawCursor: options => new FirebaseCursor(firebase, path, options, backend),
+        rawCursor: options => new FirebaseCursor(path, options, {backend, database, firebase}),
         path,
         record: key => [path, {id: key}],
         put: (key, value) => set(ref(sdkDatabase, `${path}/${key}`), value),

@@ -58,8 +58,9 @@ it("supports explicit checkpoint and null, and restarts after completion", async
 });
 
 it("uses this.next and consumes the current cursor without creating a fresh cursor", async () => {
-    const {backend, cursor} = await setup();
-    const current = new LocalCursor("cursor-all", ["posts", "post_id"], {id: "all-posts"}, backend);
+    const {backend, database, cursor} = await setup();
+    const current = new LocalCursor(["posts", "post_id"], {id: "all-posts"},
+        {backend, database, context: "cursor-all"});
     const next = vi.spyOn(current, "next");
     expect(current._freshCursor).toBeUndefined();
     expect((await current.next(1)).map(({key}) => key)).toEqual(["a"]);
@@ -72,8 +73,9 @@ it("uses this.next and consumes the current cursor without creating a fresh curs
 });
 
 it("rejects a checkpoint behind an already consumed cursor", async () => {
-    const {backend} = await setup();
-    const current = new LocalCursor("cursor-all", ["posts", "post_id"], {id: "all-posts"}, backend);
+    const {backend, database} = await setup();
+    const current = new LocalCursor(["posts", "post_id"], {id: "all-posts"},
+        {backend, database, context: "cursor-all"});
     await current.next(1);
     await expect(current.all(1, null)).rejects.toMatchObject({code: "database/invalid-argument"});
     expect((await current.next(1)).map(({key}) => key)).toEqual(["b"]);
@@ -89,6 +91,31 @@ it("records a handle failure without hiding it and rejects invalid sizes", async
     expect(await failed.status()).toMatchObject({state: "failed", count: 0,
         checkpoint: null, error: {code: "database/unknown", message: "broken handle"}});
     await expect(failed.all(0)).rejects.toMatchObject({code: "database/invalid-argument"});
+});
+
+it("does not apply changes from a page whose handler fails", async () => {
+    const {database, cursor} = await setup();
+    const error = new Error("stop at b");
+    const failed = await cursor({handle: ({key, value}) => {
+        if (key === "b") throw error;
+        return {...value, text: "changed"};
+    }});
+    await expect(failed.all(2)).rejects.toBe(error);
+    expect(await database.read(["posts", {post_id: "a"}])).toEqual({post_id: "a", text: "a"});
+    expect(await failed.status()).toMatchObject({state: "failed", count: 0, checkpoint: null});
+});
+
+it("rejects a changed checkpoint before applying the page batch", async () => {
+    const {backend, database, cursor} = await setup();
+    const external = {checkpoint: {index: 0, key: "external", finished: false}, count: 1,
+        startedAt: 1, updatedAt: 1, finishedAt: null, state: "running"};
+    const running = await cursor({handle: async ({value}) => {
+        await backend.request("database.update", "", new Map([[["meta", {setting: "cursor:all-posts"}], external]]));
+        return {...value, text: "changed"};
+    }});
+    await expect(running.all(1)).rejects.toMatchObject({code: "database/invalid-argument"});
+    expect(await database.read(["posts", {post_id: "a"}])).toEqual({post_id: "a", text: "a"});
+    expect(await running.status()).toMatchObject(external);
 });
 
 it("resumes a failed multi-page run from its committed checkpoint", async () => {

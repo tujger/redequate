@@ -238,7 +238,7 @@ it("inherits source options and deduplicates equivalent custom cursor paths", as
     const create = (path, effective) => {
         options.push(effective);
         class Source extends DatabaseCursor {
-            constructor() { super(effective, path); }
+            constructor() { super(path, effective); }
             async next(n) {
                 await super.next(n);
                 if (this.position.finished) return [];
@@ -291,7 +291,7 @@ it("retains staged source results across a suppressed composition failure", asyn
             return [{key: "a", value: 1}];
         }
     }
-    const first = new Source({}, "one"), second = new Source({}, "two");second.fail = true;
+    const first = new Source("one", {}), second = new Source("two", {});second.fail = true;
     const owner = new DatabaseBase({onError});
     const cursor = composeCursor([first, second], {onError}, vi.fn(), owner.run.bind(owner));
     expect(await cursor.next(2)).toBeUndefined();
@@ -352,7 +352,8 @@ it("omits a replacement that no longer contains the ordered field", async () => 
 it("accepts the native firebase context directly without an adapter", async () => {
     fixture.sdk.once.mockResolvedValueOnce(fixture.snapshot({a: 1, b: 2}))
         .mockResolvedValueOnce(fixture.snapshot({b: 2, c: 3}));
-    const cursor = new FirebaseCursor(fixture.firebase, ["records", "record_id"], {}, backend);
+    const cursor = new FirebaseCursor(["records", "record_id"], {},
+        {backend, database, firebase: fixture.firebase});
     expect(cursor.path).toBe("records");
     expect(await cursor.next(2)).toEqual([{key: "a", value: 1}, {key: "b", value: 2}]);
     expect(await cursor.next(2)).toEqual([{key: "c", value: 3}]);

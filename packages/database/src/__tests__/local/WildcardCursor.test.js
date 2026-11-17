@@ -110,7 +110,8 @@ it("deduplicates nested wildcard and concrete sources using their public path an
 });
 
 it("keeps the LocalCursor instance for intermediate wildcard paths", () => {
-    const cursor = new LocalCursor("native-wildcard-identity", pattern);
+    const database = new LocalDatabase({storageId: "native-wildcard-identity"});
+    const cursor = new LocalCursor(pattern, {}, {database, context: database.storageId});
     expect(cursor.constructor).toBe(LocalCursor);
     expect(cursor.path).toEqual(pattern);
 });
@@ -141,4 +142,38 @@ it("all preserves fixed identity objects in a Local record path", async () => {
     const paths = request.mock.calls.filter(([name]) => name === "database.update")
         .flatMap(([, , changes]) => changes instanceof Map ? [...changes.keys()] : []);
     expect(paths).toContainEqual(["mutual", {mutual_type: "a"}, {mutual_id: "same"}]);
+});
+
+it("all addresses every captured parameter in a nested wildcard path", async () => {
+    const {database, backend} = await setup();
+    await backend.request("database.update", "", new Map([
+        [["mutualstamps", {mutual_type: "a"}, {user_id: "u"}, {mutual_id: "r"}], "author"],
+        [["mutualstamps", {mutual_type: "b"}, {user_id: "v"}, {mutual_id: "r"}], "author"]
+    ]));
+    const seen = [];
+    const cursor = database.cursor(["mutualstamps", "mutual_type", "user_id", "mutual_id"], {
+        id: "multi-param-all", handle: entry => {
+            seen.push({key: entry.key, params: entry.params});
+            return "edited";
+        }
+    });
+    expect(await cursor.all(2)).toBe(2);
+    expect(seen).toEqual([
+        {key: "r", params: {mutual_type: "a", user_id: "u"}},
+        {key: "r", params: {mutual_type: "b", user_id: "v"}}
+    ]);
+    expect(await database.read(["mutualstamps", {mutual_type: "a"}, {user_id: "u"}, {mutual_id: "r"}])).toBe("edited");
+    expect(await database.read(["mutualstamps", {mutual_type: "b"}, {user_id: "v"}, {mutual_id: "r"}])).toBe("edited");
+});
+
+it.each([["posts"], ["posts", "post_id"]])("all resolves Local implicit or explicit identity for %j", async path => {
+    const {database, backend} = await setup();
+    await database.create(["posts", {post_id: "p"}], {text: "old"});
+    const cursor = database.cursor(path, {id: `identity-${path.length}`, handle: ({value}) => ({...value, text: "new"})});
+    const request = vi.spyOn(backend, "request");
+    expect(await cursor.all(2)).toBe(1);
+    expect(await database.read(["posts", {post_id: "p"}])).toMatchObject({text: "new"});
+    expect(request.mock.calls.filter(([name]) => name === "database.update")
+        .flatMap(([, , changes]) => changes instanceof Map ? [...changes.keys()] : []))
+        .toContainEqual(["posts", {post_id: "p"}]);
 });

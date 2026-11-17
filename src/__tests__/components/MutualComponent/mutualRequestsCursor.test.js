@@ -4,7 +4,7 @@ import {MutualMode} from "../../../components/MutualComponent/MutualConstants";
 
 class RequestCursor extends DatabaseCursor {
     constructor(entries, options) {
-        super(options, ["mutualrequests", {mutual_type: "friend"}]);
+        super(["mutualrequests", {mutual_type: "friend"}], options);
         this.entries = entries;
         this.offset = 0;
     }

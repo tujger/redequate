@@ -4,7 +4,7 @@ import FilteringDatabaseCursor from "../../common/FilteringDatabaseCursor";
 
 class Source extends DatabaseCursor {
     constructor(entries, options = {}) {
-        super(options, "requests");
+        super("requests", options);
         this.entries = entries;
         this.offset = 0;
         this.sizes = [];
