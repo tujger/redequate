@@ -1,5 +1,5 @@
 import {fail} from "../../../../../../common";
-import parsePath from "../../../../../../database/src/firebase/parsePath";
+import parsePath from "../../../../../../database/src/firebase/helpers/parsePath";
 import createCursor from "../../../../common/helpers/createCursor";
 import FirebaseCursorServer from "../../FirebaseCursorServer";
 

@@ -1,5 +1,5 @@
 import {fail} from "../../../../../../common";
-import parsePath from "../../../../../../database/src/firebase/parsePath";
+import parsePath from "../../../../../../database/src/firebase/helpers/parsePath";
 import invalidPath from "../../common/invalidPath";
 
 export default async function (path, ...args) {

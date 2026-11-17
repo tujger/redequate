@@ -1,7 +1,7 @@
 import {applicationDefault} from "firebase-admin/app";
 import {fail} from "../../../../../../common";
-import {fetchShallowKeys, shallowReadUrl} from "../../../../../../database/src/common/shallowRead";
-import parsePath from "../../../../../../database/src/firebase/parsePath";
+import {fetchShallowKeys, shallowReadUrl} from "../../../../../../database/src/common/helpers/shallowRead";
+import parsePath from "../../../../../../database/src/firebase/helpers/parsePath";
 import validateReadOptions from "../../../../common/helpers/validateReadOptions";
 import invalidPath from "../../common/invalidPath";
 
