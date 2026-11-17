@@ -1,5 +1,5 @@
 import {onValueCreated, onValueDeleted, onValueUpdated} from "firebase-functions/v2/database";
-import parsePath from "../../../../../database/src/firebase/parsePath";
+import parsePath from "../../../../../database/src/firebase/helpers/parsePath";
 import userContext from "../common/userContext";
 
 const withUser = handler => event => {
