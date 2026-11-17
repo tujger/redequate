@@ -1,4 +1,4 @@
-import validatePath from "../validatePath";
+import validatePath from "../helpers/validatePath";
 
 export default async function deleteRecord(backend, path) {
     validatePath(path);

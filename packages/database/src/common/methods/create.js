@@ -1,6 +1,6 @@
 import {key as generateKey} from "firebase-key";
 import {fail, notImplemented} from "../../../../common";
-import parsePath from "../parsePath";
+import parsePath from "../helpers/parsePath";
 
 export default async function createRecord(backend, path, value, implementation) {
     if (!implementation) return notImplemented("create");
