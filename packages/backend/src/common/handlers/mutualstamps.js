@@ -1,6 +1,6 @@
 import {fail} from "../../../../common";
 import update from "../../../../database/src/common/methods/update";
-import resolvePath from "../../../../database/src/common/resolvePath";
+import resolvePath from "../../../../database/src/common/helpers/resolvePath";
 import BackendListener from "../BackendListener";
 import {updateCounter} from "./utils";
 

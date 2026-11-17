@@ -1,6 +1,6 @@
 import {fail} from "../../../../common";
 import update from "../../../../database/src/common/methods/update";
-import validatePath from "../../../../database/src/common/validatePath";
+import validatePath from "../../../../database/src/common/helpers/validatePath";
 
 export const updateCounter = (backend, counterPath, increment) => {
     if (!Array.isArray(counterPath) || !counterPath.length) {
