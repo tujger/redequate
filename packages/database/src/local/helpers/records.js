@@ -1,14 +1,11 @@
 import parsePath from "./parsePath";
-import {fail} from "../../../common";
-import {LOCAL_SCHEMA} from "./storeSchema";
-import {applySchema} from "./schema";
-import {openDatabase as openConnection} from "./connection";
+import {fail} from "../../../../common";
+import {LOCAL_SCHEMA} from "../storeSchema";
+import {applySchema} from "../schema";
+import {openDatabase as openConnection} from "../connection";
 import {
     validateCollectionPath, runTransaction, readStore, childRecordPath, cursorWildcardKeys, readStoreKeys
-} from "../../../backend/src/local/database/callable/createHelpers";
-
-const invalid = message => fail("database/invalid-argument", message);
-const storeNames = context => Object.keys(context?.schema ?? LOCAL_SCHEMA);
+} from "../../../../backend/src/local/database/callable/createHelpers";
 
 export const openDatabase = async (context, initialSchema = LOCAL_SCHEMA) => {
     if (typeof context === "string") return openConnection(context, initialSchema);
@@ -23,6 +20,26 @@ export const openDatabase = async (context, initialSchema = LOCAL_SCHEMA) => {
 export const assertCollection = (context, collection) => {
     if (!Object.hasOwn(context?.schema ?? LOCAL_SCHEMA, collection)) invalid(`Unknown Local collection: ${collection}`);
 };
+
+export const readValue = (context, path, options = {}) => read(context, path, options, true);
+export const getSubtree = (context, path, options = {}) => read(context, path, options, false);
+export const getCursorChildren = (context, path, keyField, options = {}) =>
+    read(context, path, {...options, keyField}, false);
+
+export const getChildRecordPath = (context, path, key, keyField) => {
+    const {collection: name} = parsePath(path);
+    return transact(context, "readonly", [name], transaction => childRecordPath(transaction.objectStore(name), path, key, keyField));
+};
+
+export {validateCollectionPath} from "../../../../backend/src/local/database/callable/createHelpers";
+
+export const getCursorWildcardKeys = (context, path, field) => {
+    const name = validateCollectionPath(path)[0];
+    return transact(context, "readonly", [name], transaction => cursorWildcardKeys(transaction.objectStore(name), path, field));
+};
+
+const invalid = message => fail("database/invalid-argument", message);
+const storeNames = context => Object.keys(context?.schema ?? LOCAL_SCHEMA);
 
 const transact = async (context, mode, names, operation) => {
     for (const name of names) assertCollection(context, name);
@@ -47,21 +64,4 @@ const read = (context, rawPath, options, query) => {
         }
         return options.shallow ? readStoreKeys(store, rawPath) : readStore(store, rawPath, options);
     });
-};
-
-export const readValue = (context, path, options = {}) => read(context, path, options, true);
-export const getSubtree = (context, path, options = {}) => read(context, path, options, false);
-export const getCursorChildren = (context, path, keyField, options = {}) =>
-    read(context, path, {...options, keyField}, false);
-
-export const getChildRecordPath = (context, path, key, keyField) => {
-    const {collection: name} = parsePath(path);
-    return transact(context, "readonly", [name], transaction => childRecordPath(transaction.objectStore(name), path, key, keyField));
-};
-
-export {validateCollectionPath} from "../../../backend/src/local/database/callable/createHelpers";
-
-export const getCursorWildcardKeys = (context, path, field) => {
-    const name = validateCollectionPath(path)[0];
-    return transact(context, "readonly", [name], transaction => cursorWildcardKeys(transaction.objectStore(name), path, field));
 };
