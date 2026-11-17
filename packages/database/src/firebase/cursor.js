@@ -1,6 +1,6 @@
 import {getDatabase, ref, query, orderByChild, orderByValue, orderByKey, equalTo, startAt, endAt, limitToFirst, limitToLast, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
 import FirebaseCursorBase from "../common/FirebaseCursorBase";
-import readSnapshot from "./readSnapshot";
+import readSnapshot from "./helpers/readSnapshot";
 
 const constraints = {orderByChild, orderByValue, orderByKey, equalTo, startAt, endAt, limitToFirst, limitToLast};
 

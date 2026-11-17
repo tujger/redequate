@@ -10,7 +10,7 @@ import addEventListener from "./addEventListener";
 import createRecord from "./create";
 import FirebaseCursorClient from "./cursor";
 import deleteRecord from "./delete";
-import parsePath from "./parsePath";
+import parsePath from "./helpers/parsePath";
 import read from "./read";
 import {baseRules, resolveRules} from "./rules.mjs";
 import update from "./update";
@@ -37,7 +37,7 @@ export default class FirebaseDatabase extends DatabaseBase {
     }
 
     async create(path: DatabasePath, value: Parameters<DatabaseBase["create"]>[1]): Promise<string | undefined> {
-        return createRecord(this.#firebase, path, value, this.run.bind(this), super.create.bind(this));
+        return createRecord(this.#firebase, path, value, this.run.bind(this), this._backend);
     }
 
     cursor(path: Parameters<DatabaseBase["cursor"]>[0], options: DatabaseCursorOptions = {}) {

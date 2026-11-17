@@ -1,7 +1,7 @@
 import {getDatabase, ref, query, orderByKey, onValue, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
 import {fail} from "../../../common";
-import parsePath from "./parsePath";
-import compareKeys from "../common/compareKeys";
+import parsePath from "./helpers/parsePath";
+import compareKeys from "../common/helpers/compareKeys";
 
 /**
  * Listen for value and child events, returning an independent remove handle.

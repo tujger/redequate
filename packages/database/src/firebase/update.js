@@ -1,4 +1,4 @@
-import parsePath from "./parsePath";
+import parsePath from "./helpers/parsePath";
 
 export default async function update(path, changes, options, run, superUpdate) {
     const batch = typeof path !== "string" && !Array.isArray(path);

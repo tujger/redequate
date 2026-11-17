@@ -1,5 +1,5 @@
 import {getAuth} from "firebase/auth";
-import {validateShallowRead, shallowReadUrl, fetchShallowKeys} from "../common/shallowRead";
+import {validateShallowRead, shallowReadUrl, fetchShallowKeys} from "../common/helpers/shallowRead";
 import {
     endAt,
     equalTo as equalToConstraint,
@@ -12,9 +12,9 @@ import {
     startAt
 } from "firebase/database";
 import {fail} from "../../../common";
-import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
-import parsePath from "./parsePath";
-import readSnapshot from "./readSnapshot";
+import applyReadOptions, {readQueryOptions} from "../common/helpers/applyReadOptions";
+import parsePath from "./helpers/parsePath";
+import readSnapshot from "./helpers/readSnapshot";
 
 export default async function read(firebase, path, options = {}) {
     const {address: effectivePath} = parsePath(path, "collection");
