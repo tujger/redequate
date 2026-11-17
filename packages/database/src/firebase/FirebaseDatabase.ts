@@ -53,8 +53,9 @@ export default class FirebaseDatabase extends DatabaseBase {
             : {...options, onError: options.onError ?? this.onError};
         // The JS source adapter returns an unsubscribe handle; composition owns the public subscription.
         return composeCursor(queries as Parameters<typeof composeCursor>[0], effective,
-            (path, options) => new FirebaseCursorClient(this.#firebase, path,
-                {...options, onError: options?.onError ?? this.onError}, this._backend) as unknown as ReturnType<DatabaseBase["cursor"]>, run, path,
+            (path, options) => new FirebaseCursorClient(path,
+                {...options, onError: options?.onError ?? this.onError},
+                {backend: this._backend, database: this, firebase: this.#firebase}) as unknown as ReturnType<DatabaseBase["cursor"]>, run, path,
             pathIsDatabasePath ? () => parsePath(path as DatabasePath, "collection").address : undefined);
     }
 
