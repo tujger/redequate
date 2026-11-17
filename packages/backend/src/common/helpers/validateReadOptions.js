@@ -1,6 +1,6 @@
-import {validateShallowRead} from "../../../../database/src/common/shallowRead";
+import {validateShallowRead} from "../../../../database/src/common/helpers/shallowRead";
 import {fail} from "../../../../common";
-import {readQueryOptions} from "../../../../database/src/common/applyReadOptions";
+import {readQueryOptions} from "../../../../database/src/common/helpers/applyReadOptions";
 
 export default options => {
     validateShallowRead(options);
