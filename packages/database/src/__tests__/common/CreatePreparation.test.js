@@ -17,7 +17,7 @@ const databaseFor = (provider, backend, onError) => {
     const database = provider === "firebase"
         ? new FirebaseDatabase({firebase, onError})
         : new LocalDatabase({onError});
-    database.setBackend(backend);
+    if (backend !== undefined) database.setBackend(backend);
     return database;
 };
 const create = (provider, backend, path, value) => databaseFor(provider, backend).create(path, value);

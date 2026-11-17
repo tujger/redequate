@@ -55,6 +55,18 @@ it("keeps provider references unset until linked", () => {
     expect(Object.getOwnPropertyDescriptor(BackendBase.prototype, "storage").set).toBeUndefined();
 });
 
+it("keeps each link setter independent and accepts a request-only backend", () => {
+    const database = new DatabaseBase();
+    const backend = new BackendBase();
+    const requestOnly = {request: vi.fn()};
+    database.setBackend(requestOnly);
+    expect(database._backend).toBe(requestOnly);
+    expect(backend._database).toBeUndefined();
+    backend.setDatabase(database);
+    expect(backend._database).toBe(database);
+    expect(database._backend).toBe(requestOnly);
+});
+
 it("links and replaces Firebase client storage after independent construction", () => {
     const backend = new FirebaseBackendClient({firebase: {app: {}}});
     expect(backend.storage).toBeUndefined();

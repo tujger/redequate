@@ -65,6 +65,10 @@ it("has no fallback backend and resolveDatabase returns an instance wired explic
     resolved.setBackend(backend);
     expect(await resolved.create(["posts", {post_id: "manual"}], {})).toBe("returned");
     expect(await resolveDatabase(resolved, {backend: new LocalBackend()})).toBe(resolved);
+    const localBackend = new LocalBackend();
+    const localDatabase = await resolveDatabase(undefined, {backend: localBackend});
+    expect(localDatabase._backend).toBe(localBackend);
+    expect(localBackend._database).toBe(localDatabase);
 });
 
 it("generates strictly ordered IDs in the same millisecond and after a clock rollback", async () => {
