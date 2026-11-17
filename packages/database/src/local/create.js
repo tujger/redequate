@@ -1,9 +1,10 @@
 import {key as generateKey} from "firebase-key";
-import parsePath from "./parsePath";
+import parsePath from "./helpers/parsePath";
+import createRecord from "../common/methods/create";
 
-export default async function createRecord(path, value, run, superCreate) {
+export default async function create(path, value, run, backend) {
     return run(() => {
         const key = parsePath(path, "create").key ?? generateKey();
-        return superCreate(path, value, {key});
+        return createRecord(backend, path, value, {key});
     }, undefined, "create", {path, value});
 }

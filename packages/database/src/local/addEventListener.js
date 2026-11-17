@@ -1,8 +1,8 @@
 import {observeWrites} from "../../../backend/src/local/database/callable/createHelpers";
-import parsePath from "./parsePath";
-import compareKeys from "../common/compareKeys";
+import parsePath from "./helpers/parsePath";
+import compareKeys from "../common/helpers/compareKeys";
 import {fail} from "../../../common";
-import {assertCollection, getSubtree, readValue, validateCollectionPath} from "./helpers";
+import {assertCollection, getSubtree, readValue, validateCollectionPath} from "./helpers/records";
 
 const listeners = new Map();
 const queues = new Map();

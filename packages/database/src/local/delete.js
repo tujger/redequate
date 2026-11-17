@@ -1,4 +1,4 @@
-import {validateCollectionPath} from "./parsePath";
+import {validateCollectionPath} from "./helpers/parsePath";
 
 export default async function deleteRecord(path, options, run, superDelete) {
     return run(() => {
