@@ -1,21 +1,16 @@
-import {hasIntermediateWildcard, validateCursorPattern, expandCursorBranches, compareCursorPaths} from "../common/cursorPath";
-import resolvePath from "../common/resolvePath";
-import compareValues from "../common/compareValues";
+import {hasIntermediateWildcard, validateCursorPattern, expandCursorBranches, compareCursorPaths} from "../common/helpers/cursorPath";
+import resolvePath from "../common/helpers/resolvePath";
+import compareValues from "../common/helpers/compareValues";
 import {fail} from "../../../common";
 import DatabaseCursor from "../common/DatabaseCursor";
-import compareKeys from "../common/compareKeys";
-import parsePath from "./parsePath";
+import compareKeys from "../common/helpers/compareKeys";
+import parsePath from "./helpers/parsePath";
 import addEventListener from "./addEventListener";
 import update from "../common/methods/update";
-import {getChildRecordPath, getCursorChildren, getSubtree, getCursorWildcardKeys} from "./helpers";
-
-const invalid = message => fail("database/invalid-argument", message);
-const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-const children = value => value !== null && typeof value === "object" ? Object.entries(value) : [];
+import {getChildRecordPath, getCursorChildren, getSubtree, getCursorWildcardKeys} from "./helpers/records";
 
 export default class LocalCursor extends DatabaseCursor {
     #storageId;
-    #backend;
     #path;
     #identityField;
     #field;
@@ -29,14 +24,13 @@ export default class LocalCursor extends DatabaseCursor {
     #pattern;
     #header = [];
 
-    constructor(storageId, path, options = {}, backend) {
+    constructor(path, options = {}, {backend, database, context} = {}) {
         const wildcard = hasIntermediateWildcard(path);
         const {keyField: identityField, effectivePath: resolvedPath} = parsePath(path, "collection");
-        super(options, wildcard ? path : resolvedPath);
+        super(path, options, {backend, database});
         validateCursorPattern(path);
         this.#pattern = wildcard ? path : undefined;
-        this.#storageId = storageId;
-        this.#backend = backend;
+        this.#storageId = context;
         this.#path = resolvedPath;
         this.#identityField = identityField;
         this.#field = this.orderBy === undefined ? undefined : parsePath(this.orderBy).address;
@@ -152,7 +146,7 @@ export default class LocalCursor extends DatabaseCursor {
                 if (replacement !== undefined) {
                     const recordPath = branch.path.length
                         ? await getChildRecordPath(this.#storageId, branch.path, key, branch.keyField) : [key];
-                    await update(this.#backend, recordPath, () => replacement);
+                    await update(this._backend, recordPath, () => replacement);
                     if (replacement === null) entry = undefined;
                     else {
                         const saved = branch.path.length ? await getSubtree(this.#storageId, recordPath) : (await this.#read(branch))[key];
@@ -215,3 +209,7 @@ export default class LocalCursor extends DatabaseCursor {
         return subscription;
     }
 }
+
+const invalid = message => fail("database/invalid-argument", message);
+const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+const children = value => value !== null && typeof value === "object" ? Object.entries(value) : [];
