@@ -1,9 +1,9 @@
 import {fail} from "../../../common";
-import resolvePath from "./resolvePath";
+import resolvePath from "./helpers/resolvePath";
 import DatabaseCursor from "./DatabaseCursor";
 import type {
     DatabasePath, DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent,
-    DatabaseCursorOptions, DatabaseCursorSubscription, DatabaseOptions
+    DatabaseCursorOptions, DatabaseCursorSubscription, DatabaseOptions, DatabaseCursorPosition, CursorStatus
 } from "./DatabaseTypes";
 
 type CursorInput = (DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined;
@@ -142,6 +142,21 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         this.#context = {path};
         this.#run = run;
         this.#sources = sources;
+    }
+
+    #onlySource(): DatabaseCursor {
+        if (this.#sources.length !== 1) {
+            fail("database/invalid-argument", "all/status require exactly one source cursor.");
+        }
+        return this.#sources[0].cursor;
+    }
+
+    override async all(size?: number, checkpoint?: DatabaseCursorPosition | null): Promise<number> {
+        return this.#onlySource().all(size, checkpoint);
+    }
+
+    override async status(): Promise<CursorStatus> {
+        return this.#onlySource().status();
     }
 
     async next(n = 1, handle?: DatabaseCursorOptions["handle"] | null): Promise<(DatabaseEntry | DatabaseGroupEntry)[] | undefined> {
@@ -311,49 +326,49 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         return subscribed;
     }
 
-    static create(queries: CursorInput[], options: DatabaseCursorOptions, createCursor: CreateCursor,
-        run: CursorRun, path: CursorPath, cursorPath?: () => DatabasePath): ComposedDatabaseCursor | undefined {
-        const sources: Source[] = [];
-        const composition = run(() => {
-            const composition = new ComposedDatabaseCursor(sources, options, run, path, cursorPath);
-            const cursors = new Set<DatabaseCursor>();
-            for (const description of queries) {
-                if (description == null) continue;
-                if (description instanceof DatabaseCursor) {
-                    this._assertFresh(description);
-                    if (cursors.has(description)) {
-                        fail("database/invalid-argument", "Composition requires distinct cursor instances.");
-                    }
-                    cursors.add(description);
-                } else if (typeof description !== "object" || description instanceof Array ||
-                    !(typeof description.path === "string" || (description.path instanceof Array &&
-                        (description.path.length === 0 || typeof description.path[0] === "string")))) {
-                    fail("database/invalid-argument", "Each cursor source must be a DatabaseCursor or an object with a path.");
-                }
-            }
-            return composition;
-        }, options, "cursor", {path});
-        if (composition === undefined) return undefined;
-        const shared = {...options};
-        delete shared.group;
-        for (const description of queries) {
-            if (description == null) continue;
-            let cursor: DatabaseCursor | undefined;
-            if (description instanceof DatabaseCursor) cursor = description;
-            else {
-                const {path, ...individual} = description;
-                const effective = {...shared, ...individual};
-                cursor = run(() => createCursor(path, effective), effective, "cursor", {path});
-            }
-            if (cursor === undefined) return undefined;
-            sources.push({cursor, entries: [], offset: 0, headers: []});
-        }
-        return composition;
-    }
 }
 
 export function composeCursor(queries: CursorInput[], options: DatabaseCursorOptions,
     createCursor: CreateCursor, run: CursorRun, path: CursorPath = queries, cursorPath?: () => DatabasePath
 ): ComposedDatabaseCursor | undefined {
-    return ComposedDatabaseCursor.create(queries, options, createCursor, run, path, cursorPath);
+    const prepared = run(() => {
+        validateCursorSources(queries);
+        const sources: Source[] = [];
+        return {sources, composition: new ComposedDatabaseCursor(sources, options, run, path, cursorPath)};
+    }, options, "cursor", {path});
+    if (prepared === undefined) return undefined;
+    const {sources, composition} = prepared;
+    const shared = {...options};
+    delete shared.group;
+    for (const description of queries) {
+        if (description == null) continue;
+        let cursor: DatabaseCursor | undefined;
+        if (description instanceof DatabaseCursor) cursor = description;
+        else {
+            const {path, ...individual} = description;
+            const effective = {...shared, ...individual};
+            cursor = run(() => createCursor(path, effective), effective, "cursor", {path});
+        }
+        if (cursor === undefined) return undefined;
+        sources.push({cursor, entries: [], offset: 0, headers: []});
+    }
+    return composition;
+}
+
+function validateCursorSources(queries: CursorInput[]): void {
+    const cursors = new Set<DatabaseCursor>();
+    for (const query of queries) {
+        if (query == null) continue;
+        if (query instanceof DatabaseCursor) {
+            ComposedDatabaseCursor["_assertFresh"](query);
+            if (cursors.has(query)) {
+                fail("database/invalid-argument", "Composition requires distinct cursor instances.");
+            }
+            cursors.add(query);
+        } else if (typeof query !== "object" || query instanceof Array ||
+            !(typeof query.path === "string" || (query.path instanceof Array &&
+                (query.path.length === 0 || typeof query.path[0] === "string")))) {
+            fail("database/invalid-argument", "Each cursor source must be a DatabaseCursor or an object with a path.");
+        }
+    }
 }
