@@ -21,11 +21,6 @@ export type {
     DatabaseCursorSubscription, DatabaseCursorOptions
 } from "./DatabaseTypes";
 
-type CreateMethodOptions = {
-    key?: string;
-    mapError?: (error: unknown) => unknown;
-};
-
 /**
  * onError may suppress a failure by returning normally; the operation then returns undefined.
  * Cursors and listeners retain their options. Writes resolve after storage confirms them.
@@ -52,7 +47,7 @@ export default class DatabaseBase {
         this._backend = backend;
     }
 
-    protected handleError(error: unknown, options: DatabaseOptions | undefined,
+    private handleError(error: unknown, options: DatabaseOptions | undefined,
         reason: string, context: Record<string, unknown>): void {
         const onError = options?.onError ?? this.onError;
         onError(error, reason, context);
@@ -130,8 +125,8 @@ export default class DatabaseBase {
     }
 
     /** Atomically creates an absent record and returns its permanent key. The synchronous callback receives generated IDs in path order, or the final key when all IDs are supplied. */
-    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((...keys: string[]) => DatabaseValue), implementation?: CreateMethodOptions): Promise<string | undefined> {
-        return createRecord(this._backend, path, valueOrCallback, implementation);
+    async create(path: DatabasePath, valueOrCallback: DatabaseValue | ((...keys: string[]) => DatabaseValue)): Promise<string | undefined> {
+        return createRecord(this._backend, path, valueOrCallback);
     }
 
     /**
