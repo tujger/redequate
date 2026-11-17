@@ -1,8 +1,8 @@
 import validateReadOptions from "../../../common/helpers/validateReadOptions";
-import applyReadOptions from "../../../../../database/src/common/applyReadOptions";
+import applyReadOptions from "../../../../../database/src/common/helpers/applyReadOptions";
 import {fail} from "../../../../../common";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";
-import parsePath from "../../../../../database/src/local/parsePath";
+import parsePath from "../../../../../database/src/local/helpers/parsePath";
 import {runTransaction, readStore, readStoreKeys} from "./createHelpers";
 
 export default async ({storageId, args}) => {

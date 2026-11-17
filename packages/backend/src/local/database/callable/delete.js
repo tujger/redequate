@@ -1,4 +1,4 @@
-import parsePath from "../../../../../database/src/local/parsePath";
+import parsePath from "../../../../../database/src/local/helpers/parsePath";
 
 import {fail} from "../../../../../common";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";

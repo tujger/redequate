@@ -1,6 +1,6 @@
 import {fail} from "../../../../../common";
 import {openLocalDatabase} from "../../../../../common/src/localDatabase";
-import parsePath, {validateCollectionPath} from "../../../../../database/src/local/parsePath";
+import parsePath, {validateCollectionPath} from "../../../../../database/src/local/helpers/parsePath";
 import {incrementDelta, isIncrement} from "../../increment";
 import {isTimestamp} from "../../timestamp";
 import {decodeRecordValue, encodeRecordValue, setRecordField} from "../recordValue";

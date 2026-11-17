@@ -1,6 +1,6 @@
 import {key as generateKey} from "firebase-key";
 import {fail} from "../../../../../common";
-import parsePath from "../../../../../database/src/local/parsePath";
+import parsePath from "../../../../../database/src/local/helpers/parsePath";
 
 import {addRecord, createRecordPath} from "./createHelpers";
 

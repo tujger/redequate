@@ -1,4 +1,4 @@
-import parsePath from "../../../../../database/src/local/parsePath";
+import parsePath from "../../../../../database/src/local/helpers/parsePath";
 
 import {isTimestamp} from "../../timestamp";
 import {isIncrement} from "../../increment";
