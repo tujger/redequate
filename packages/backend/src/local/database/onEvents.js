@@ -1,5 +1,5 @@
 import {fail, identifier} from "../../../../common";
-import parsePath from "../../../../database/src/local/parsePath";
+import parsePath from "../../../../database/src/local/helpers/parsePath";
 import {readStoreMatches} from "./callable/createHelpers";
 import {subscribeWrites} from "./writeEvents";
 
