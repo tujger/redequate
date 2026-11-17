@@ -163,16 +163,10 @@ export default class DatabaseBase {
      * Array cursor paths capture bare string segments after the collection. Named
      * segments fix values; literal string paths retain immediate-child traversal.
      * The final capture is key; preceding captures are entry.params. Intermediate
-     * captures support next/handle, not subscribe. Arrays starting with a string are paths;
-     * source lists compose fresh cursors round-robin, skipping null/undefined.
-     * Compositions deduplicate by source path + key (or cursor ID + key without a path)
-     * and run each source's handle once, before buffering.
+     * captures support next/handle, not subscribe.
      */
-    cursor(path: DatabasePath | ((DatabaseCursorOptions & {path: DatabasePath}) | DatabaseCursor | null | undefined)[], options: DatabaseCursorOptions = {}): DatabaseCursor | undefined {
-        return new DatabaseCursor(options, typeof path === "string" || (path instanceof Array &&
-            (path.length === 0 || typeof path[0] === "string"))
-            ? path as DatabasePath
-            : undefined);
+    cursor(path: DatabasePath, options: DatabaseCursorOptions = {}): DatabaseCursor {
+        return new DatabaseCursor(path, options, {backend: this._backend, database: this});
     }
 
     get TIMESTAMP(): DatabaseValue | undefined {
