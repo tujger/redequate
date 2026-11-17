@@ -72,8 +72,9 @@ export default class LocalDatabase extends DatabaseBase {
             ? options
             : {...options, onError: options.onError ?? this.onError};
         return composeCursor(queries as Parameters<typeof composeCursor>[0], effective,
-            (sourcePath, sourceOptions) => new LocalCursor(this.#context, sourcePath,
-                {...sourceOptions, onError: sourceOptions?.onError ?? this.onError}, this._backend),
+            (sourcePath, sourceOptions) => new LocalCursor(sourcePath,
+                {...sourceOptions, onError: sourceOptions?.onError ?? this.onError},
+                {backend: this._backend, database: this, context: this.#context}),
             this.run.bind(this), path, pathIsDatabasePath ? () => parsePath(path as DatabasePath, "collection").address : undefined);
     }
 
