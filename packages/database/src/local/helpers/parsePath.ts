@@ -1,8 +1,8 @@
-import {fail} from "../../../common";
-import parseCommonPath, {PATH_VARIABLE} from "../common/parsePath";
-import {resolveParsedPath} from "../common/resolvePath";
-import type {DatabasePath, DatabasePathSegment} from "../common/DatabaseTypes";
-import type {ParsedPath} from "../common/parsePath";
+import {fail} from "../../../../common";
+import parseCommonPath, {PATH_VARIABLE} from "../../common/helpers/parsePath";
+import {resolveParsedPath} from "../../common/helpers/resolvePath";
+import type {DatabasePath, DatabasePathSegment} from "../../common/DatabaseTypes";
+import type {ParsedPath} from "../../common/helpers/parsePath";
 
 type PathMode = "address" | "collection" | "create" | "listener";
 interface Variable {index: number; field: string; parameter: string}
