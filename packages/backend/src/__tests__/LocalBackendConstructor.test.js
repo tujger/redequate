@@ -1,4 +1,5 @@
 import LocalBackend from "../local/LocalBackend";
+import requestHandlers from "../local/requestHandlers";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 
 it("uses local defaults without installing provider dependencies", () => {
@@ -14,6 +15,20 @@ it("forwards superclass settings and isolates the local namespace", () => {
     expect(backend.storageId).toBe("constructor-test");
     expect(backend.projectTitle).toBe("App");
     expect(backend.projectUrl).toBe("https://app.test");
+});
+
+it("passes the backend in the request handler payload without binding it as this", async () => {
+    const backend = new LocalBackend({storageId: "handler-context"});
+    const handler = vi.spyOn(requestHandlers, "database.read").mockImplementation(function (payload) {
+        expect(this).not.toBe(backend);
+        expect(payload).toEqual({storageId: "handler-context", args: [["posts"]], backend});
+        return "handled";
+    });
+    try {
+        expect(await backend.request("database.read", ["posts"])).toBe("handled");
+    } finally {
+        handler.mockRestore();
+    }
 });
 
 it.each([{}, {projectUrl: undefined}, {projectUrl: ""}])("preserves URL default semantics for %j", options => {

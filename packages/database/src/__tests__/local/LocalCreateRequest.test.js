@@ -2,7 +2,6 @@ import createService from "../../../../../src/__tests__/createService";
 import {IDBFactory} from "fake-indexeddb";
 import {milliseconds, resetLastTimestamp} from "firebase-key";
 import LocalDatabase from "../../local";
-import LocalBackend from "../../../../backend/src/local/LocalBackend";
 import resolveDatabase from "../../resolveDatabase";
 import createLocalDatabase from "../createLocalDatabase";
 
@@ -57,18 +56,16 @@ it("rejects invalid prepared values and failed callbacks before contacting backe
     expect(backend.request).not.toHaveBeenCalled();
 });
 
-it("has no fallback backend and resolveDatabase returns an instance wired explicitly through setBackend", async () => {
+it("has no fallback backend and resolveDatabase leaves wiring to the producer", async () => {
     const database = new LocalDatabase({storageId: "missing-backend"});
     await expect(database.create(["posts", "post_id"], {})).rejects.toBeInstanceOf(TypeError);
     const backend = {request: vi.fn().mockResolvedValue("returned")};
-    const resolved = await resolveDatabase(undefined, {backend});
+    const resolved = await resolveDatabase();
     resolved.setBackend(backend);
     expect(await resolved.create(["posts", {post_id: "manual"}], {})).toBe("returned");
-    expect(await resolveDatabase(resolved, {backend: new LocalBackend()})).toBe(resolved);
-    const localBackend = new LocalBackend();
-    const localDatabase = await resolveDatabase(undefined, {backend: localBackend});
-    expect(localDatabase._backend).toBe(localBackend);
-    expect(localBackend._database).toBe(localDatabase);
+    expect(await resolveDatabase(resolved)).toBe(resolved);
+    const localDatabase = await resolveDatabase();
+    expect(localDatabase._backend).toBeUndefined();
 });
 
 it("generates strictly ordered IDs in the same millisecond and after a clock rollback", async () => {
