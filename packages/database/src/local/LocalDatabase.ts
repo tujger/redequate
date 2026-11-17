@@ -1,4 +1,4 @@
-import {validateShallowRead} from "../common/shallowRead";
+import {validateShallowRead} from "../common/helpers/shallowRead";
 import {fail} from "../../../common";
 import {LOCAL_DATABASE_NAME} from "../../../common/src/localDatabase";
 import DatabaseBase from "../common/DatabaseBase";
@@ -7,14 +7,14 @@ import type {
     DatabaseListenerOptions, DatabaseReadOptions, DatabaseCursorOptions
 } from "../common/DatabaseTypes";
 import {composeCursor} from "../common/ComposedDatabaseCursor";
-import parsePath from "./parsePath";
-import applyReadOptions, {readQueryOptions} from "../common/applyReadOptions";
+import parsePath from "./helpers/parsePath";
+import applyReadOptions, {readQueryOptions} from "../common/helpers/applyReadOptions";
 import addEventListener from "./addEventListener";
 import LocalCursor from "./cursor";
 import createRecord from "./create";
 import update from "./update";
 import deleteRecord from "./delete";
-import {readValue, getSubtree, openDatabase} from "./helpers";
+import {readValue, getSubtree, openDatabase} from "./helpers/records";
 import {applySchema} from "./schema";
 import {convertStores} from "./storeSchema";
 
@@ -37,8 +37,6 @@ type LocalDatabaseOptions = DatabaseOptions & {
     storageId?: string;
     stores?: LocalStore[];
 };
-
-const invalid = (message: string) => fail("database/invalid-argument", message);
 
 export default class LocalDatabase extends DatabaseBase {
     storageId: string;
@@ -80,7 +78,7 @@ export default class LocalDatabase extends DatabaseBase {
     }
 
     async create(path: DatabasePath, value: Parameters<DatabaseBase["create"]>[1]): Promise<string | undefined> {
-        return createRecord(path, value, this.run.bind(this), super.create.bind(this));
+        return createRecord(path, value, this.run.bind(this), this._backend);
     }
 
     async delete(path: DatabasePath, options: DatabaseOptions = {}): Promise<void> {
@@ -124,3 +122,5 @@ export default class LocalDatabase extends DatabaseBase {
         return update(path, changes, options, this.run.bind(this), super.update.bind(this));
     }
 }
+
+const invalid = (message: string) => fail("database/invalid-argument", message);
