@@ -1,18 +1,11 @@
-import type {Database, DataSnapshot, Query, Reference} from "firebase-admin/database";
+import type {DataSnapshot, Query, Reference} from "firebase-admin/database";
+import type {DatabaseValue} from "../../../../database/src/common/DatabaseTypes";
 import FirebaseCursorBase, {type QueryMethod} from "../../../../database/src/common/FirebaseCursorBase";
-import type {DatabasePath, DatabaseCursorOptions, DatabaseValue} from "../../../../database/src/common/DatabaseTypes";
-import type BackendBase from "../../common/BackendBase";
+import type FirebaseBackendServer from "./FirebaseBackendServer";
 
 export default class FirebaseCursorServer extends FirebaseCursorBase {
-    readonly #database: Database;
-
-    constructor(database: Database, path: DatabasePath, options: DatabaseCursorOptions = {}, backend?: BackendBase) {
-        super(path, options, backend);
-        this.#database = database;
-    }
-
     protected override _reference(address: string): Reference {
-        return this.#database.ref(address);
+        return (this._backend as FirebaseBackendServer).getDatabaseInstance().ref(address);
     }
 
     protected override _query(reference: Query, method: QueryMethod, ...args: DatabaseValue[]): Query {
