@@ -58,6 +58,16 @@ export interface DatabaseCursorPosition {
     readonly key: string | undefined;
 }
 
+export interface CursorStatus {
+    checkpoint: DatabaseCursorPosition | null;
+    count: number;
+    startedAt: number | null;
+    updatedAt: number | null;
+    finishedAt: number | null;
+    state: "ready" | "running" | "failed";
+    error?: {code: string; message: string};
+}
+
 export interface DatabaseCursorEvent {
     entry: DatabaseEntry;
     type: "add" | "change" | "remove";
