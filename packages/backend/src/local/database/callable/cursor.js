@@ -2,5 +2,9 @@ import createCursor from "../../../common/helpers/createCursor";
 import LocalCursor from "../../../../../database/src/local/cursor";
 import parsePath from "../../../../../database/src/local/helpers/parsePath";
 
-export default ({storageId, args, backend}) => createCursor(args,
-    (path, options) => new LocalCursor(storageId, path, options, backend), parsePath);
+export default function ({storageId, args, backend}) {
+    const database = this._database;
+    return createCursor(args,
+        (path, options) => new LocalCursor(path, options,
+            {backend, database, context: storageId}), parsePath);
+}
