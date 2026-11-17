@@ -2,6 +2,7 @@ import {fail, notImplemented} from "../../../common";
 import {key} from "firebase-key";
 import DatabaseCursor from "./DatabaseCursor";
 import type BackendBase from "../../../backend/src/common/BackendBase";
+import type DatabaseBase from "./DatabaseBase";
 import type {
     DatabasePath, DatabaseEntry, DatabaseGroupEntry, DatabaseValue,
     DatabaseCursorOptions, DatabaseCursorEvent, DatabaseCursorSubscription
@@ -38,7 +39,6 @@ interface CursorQueryState {
     endKey?: string;
 }
 interface CursorState extends CursorQueryState {
-    backend?: BackendBase;
     path: string;
     parentPath: DatabasePath;
     keyField?: string;
@@ -81,11 +81,18 @@ export default class FirebaseCursorBase extends DatabaseCursor {
     #header: (DatabaseEntry | DatabaseGroupEntry)[] = [];
     protected readonly _wildcard: boolean;
 
-    constructor(path: DatabasePath, options: DatabaseCursorOptions = {}, backend?: BackendBase) {
+    constructor(path: DatabasePath, options: DatabaseCursorOptions = {},
+        {backend, database}: {backend?: BackendBase; database?: DatabaseBase} = {}) {
         const wildcard = hasIntermediateWildcard(path);
-        super(options, wildcard ? path : parsePath(path, "collection").address, backend);
+        super(path, options, {backend, database});
         validateCursorPattern(path);
         this._wildcard = wildcard;
+    }
+
+    override get path(): DatabasePath | undefined {
+        const path = super.path;
+        return path !== undefined && !this._database && !this._wildcard
+            ? parsePath(path, "collection").address : path;
     }
 
     protected _reference(_address: string): CursorQuery { return notImplemented("cursor reference"); }
@@ -94,7 +101,7 @@ export default class FirebaseCursorBase extends DatabaseCursor {
     #createState(path: DatabasePath, params?: Record<string, string>): CursorState {
         const parsed = parsePath(path, "collection");
         return {...this.createCursorQuery(parsed.effectivePath, this),
-            backend: this._backend, path: parsed.address,
+            path: parsed.address,
             parentPath: parsed.effectivePath, keyField: parsed.keyField, params,
             scanKey: undefined, scanValue: undefined, buffer: [], offset: 0, exhausted: false};
     }
@@ -297,7 +304,7 @@ export default class FirebaseCursorBase extends DatabaseCursor {
         const path = state.params
             ? [...state.parentPath, {[state.keyField]: child.key}]
             : state.path ? `${state.path}/${child.key}` : child.key;
-        await update(state.backend, path, () => replacement);
+        await update(this._backend, path, () => replacement);
         return {...props, entry: undefined};
     }
 
