@@ -7,11 +7,11 @@ import type {
     DatabaseCursorOptions, DatabaseCursorEvent, DatabaseCursorSubscription
 } from "./DatabaseTypes";
 import {DatabaseOrder} from "./DatabaseOrder";
-import compareValues from "./compareValues";
-import compareKeys from "./compareKeys";
-import {hasIntermediateWildcard, validateCursorPattern, expandCursorBranches, compareCursorPaths} from "./cursorPath";
+import compareValues from "./helpers/compareValues";
+import compareKeys from "./helpers/compareKeys";
+import {hasIntermediateWildcard, validateCursorPattern, expandCursorBranches, compareCursorPaths} from "./helpers/cursorPath";
 import update from "./methods/update";
-import parsePath from "../firebase/parsePath";
+import parsePath from "../firebase/helpers/parsePath";
 
 // Queries are opaque SDK handles; both SDKs expose the snapshot operations below.
 type CursorQuery = object;
@@ -76,8 +76,6 @@ type CursorPageResult = CursorPage & {children: CursorChildSnapshot[]};
 
 /** Shared RTDB cursor engine; subclasses supply SDK operations only. */
 export default class FirebaseCursorBase extends DatabaseCursor {
-    readonly #inputPath: DatabasePath;
-    readonly #backend?: BackendBase;
     #states?: CursorState[];
     #initializing?: Promise<void>;
     #header: (DatabaseEntry | DatabaseGroupEntry)[] = [];
@@ -85,34 +83,31 @@ export default class FirebaseCursorBase extends DatabaseCursor {
 
     constructor(path: DatabasePath, options: DatabaseCursorOptions = {}, backend?: BackendBase) {
         const wildcard = hasIntermediateWildcard(path);
-        super(options, wildcard ? path : parsePath(path, "collection").address);
+        super(options, wildcard ? path : parsePath(path, "collection").address, backend);
         validateCursorPattern(path);
         this._wildcard = wildcard;
-        this.#inputPath = path;
-        this.#backend = backend;
     }
 
     protected _reference(_address: string): CursorQuery { return notImplemented("cursor reference"); }
     protected _query(_reference: CursorQuery, _method: QueryMethod, ..._args: DatabaseValue[]): CursorQuery { return notImplemented("cursor query"); }
     protected _readSnapshot(_reference: CursorQuery): Promise<CursorSnapshot> { return notImplemented("cursor read"); }
-
     #createState(path: DatabasePath, params?: Record<string, string>): CursorState {
         const parsed = parsePath(path, "collection");
         return {...this.createCursorQuery(parsed.effectivePath, this),
-            backend: this.#backend, path: parsed.address,
+            backend: this._backend, path: parsed.address,
             parentPath: parsed.effectivePath, keyField: parsed.keyField, params,
             scanKey: undefined, scanValue: undefined, buffer: [], offset: 0, exhausted: false};
     }
 
     protected _queryState(): CursorState {
         if (this._wildcard) fail("database/invalid-argument", "Subscriptions to intermediate cursor wildcards are not supported.");
-        this.#states ??= [this.#createState(this.#inputPath)];
+        this.#states ??= [this.#createState(this.path!)];
         return this.#states[0];
     }
 
     async #initialize(): Promise<void> {
         if (!this._wildcard) { this._queryState(); return; }
-        const branches = await expandCursorBranches(this.#inputPath, async path => {
+        const branches = await expandCursorBranches(this.path, async path => {
             const snapshot = await this._readSnapshot(this._reference(parsePath(path).address));
             const keys: string[] = [];
             snapshot.forEach(child => { keys.push(child.key); });
