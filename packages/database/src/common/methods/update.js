@@ -1,6 +1,37 @@
 import {fail} from "../../../../common";
-import applyUpdate from "../applyUpdate";
-import validatePath from "../validatePath";
+import applyUpdate from "../helpers/applyUpdate";
+import validatePath from "../helpers/validatePath";
+
+export default async function update(backend, path, changes) {
+    const batch = typeof path !== "string" && !Array.isArray(path);
+    if (batch) {
+        if (path === null || typeof path !== "object") {
+            invalid("Batch updates require an object or Map.");
+        }
+        const entries = path instanceof Map ? [...path] : Object.entries(path);
+        for (const [target, value] of entries) {
+            validatePath(target);
+            if (value instanceof Function) invalid("Batch updates do not accept callbacks.");
+        }
+        await backend.request("database.update", "", path);
+        return;
+    }
+    validatePath(path);
+    const callback = changes instanceof Function;
+    const entries = callback ? undefined : prepareChanges(changes);
+    let snapshot = await backend.request("database.update", path, null, {mode: "read"});
+    for (let attempt = 0; attempt < 25; attempt++) {
+        const value = callback ? applyUpdate(changes, snapshot.value) : merge(snapshot.value, entries);
+        if (callback && value === undefined) return snapshot.value ?? null;
+        snapshot = await backend.request("database.update", path, value, {mode: "replace", etag: snapshot.etag});
+        if (snapshot.committed) return callback ? snapshot.value : undefined;
+        if (attempt < 24) {
+            const maximum = Math.min(1000, 25 * 2 ** attempt);
+            await new Promise(resolve => setTimeout(resolve, Math.random() * maximum));
+        }
+    }
+    fail("database/conflict", "Update was not committed after 25 attempts.");
+}
 
 const invalid = message => fail("database/invalid-argument", message);
 const isObject = value => value !== null && typeof value === "object";
@@ -44,34 +75,3 @@ const merge = (previous, entries) => {
     }
     return value;
 };
-
-export default async function update(backend, path, changes) {
-    const batch = typeof path !== "string" && !Array.isArray(path);
-    if (batch) {
-        if (path === null || typeof path !== "object") {
-            invalid("Batch updates require an object or Map.");
-        }
-        const entries = path instanceof Map ? [...path] : Object.entries(path);
-        for (const [target, value] of entries) {
-            validatePath(target);
-            if (value instanceof Function) invalid("Batch updates do not accept callbacks.");
-        }
-        await backend.request("database.update", "", path);
-        return;
-    }
-    validatePath(path);
-    const callback = changes instanceof Function;
-    const entries = callback ? undefined : prepareChanges(changes);
-    let snapshot = await backend.request("database.update", path, null, {mode: "read"});
-    for (let attempt = 0; attempt < 25; attempt++) {
-        const value = callback ? applyUpdate(changes, snapshot.value) : merge(snapshot.value, entries);
-        if (callback && value === undefined) return snapshot.value ?? null;
-        snapshot = await backend.request("database.update", path, value, {mode: "replace", etag: snapshot.etag});
-        if (snapshot.committed) return callback ? snapshot.value : undefined;
-        if (attempt < 24) {
-            const maximum = Math.min(1000, 25 * 2 ** attempt);
-            await new Promise(resolve => setTimeout(resolve, Math.random() * maximum));
-        }
-    }
-    fail("database/conflict", "Update was not committed after 25 attempts.");
-}
