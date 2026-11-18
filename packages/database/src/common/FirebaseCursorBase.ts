@@ -91,7 +91,7 @@ export default class FirebaseCursorBase extends DatabaseCursor {
 
     override get path(): DatabasePath | undefined {
         const path = super.path;
-        if (path === undefined || this._database || this._wildcard) return path;
+        if (path === undefined || this._wildcard) return path;
         return parsePath(path, "collection").address;
     }
 

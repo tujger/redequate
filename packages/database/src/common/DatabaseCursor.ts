@@ -6,7 +6,6 @@ import type DatabaseBase from "./DatabaseBase";
 import parseFirebasePath from "../firebase/helpers/parsePath";
 import parseLocalPath from "../local/helpers/parsePath";
 import {getChildRecordPath} from "../local/helpers/records";
-import {hasIntermediateWildcard} from "./helpers/cursorPath";
 import type {
     DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent, DatabaseCursorPosition,
     DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath, DatabaseValue, CursorStatus
@@ -79,13 +78,7 @@ export default class DatabaseCursor {
     }
 
     get path(): DatabasePath | undefined {
-        if (this.#path === undefined || !this._database || hasIntermediateWildcard(this.#path)) {
-            return this.#path;
-        }
-        if ("storageId" in this._database) {
-            return parseLocalPath(this.#path, "collection").effectivePath;
-        }
-        return parseFirebasePath(this.#path, "collection").address;
+        return this.#path;
     }
 
     get group(): string | undefined {

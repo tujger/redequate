@@ -57,6 +57,12 @@ export default class LocalCursor extends DatabaseCursor {
         }
     }
 
+    get path() {
+        const path = super.path;
+        if (path === undefined || !this._database || this.#pattern) return path;
+        return parsePath(path, "collection").effectivePath;
+    }
+
     async next(n = 1, handle = this.handle) {
         this.#header.push(...await super.next(n, handle));
         if (this.position.finished) return [];
