@@ -8,7 +8,17 @@ import del from "rollup-plugin-delete";
 import json from "@rollup/plugin-json";
 
 const source = path => fileURLToPath(new URL(path, import.meta.url));
-const sharedModules = [source("../common/index.js"), source("../storage/src/StorageBase.ts")];
+// Cursor record-path resolution imports these exact Local helpers transitively.
+// Keep TypeScript transformation and the server source boundary on the same list.
+const sharedModules = [
+    source("../common/index.js"),
+    source("../storage/src/StorageBase.ts"),
+    source("../backend/src/local/increment.ts"),
+    source("../backend/src/local/timestamp.ts"),
+    source("../backend/src/local/database/callable/createHelpers.js"),
+    source("../backend/src/local/database/recordValue.js"),
+    source("../backend/src/local/database/writeEvents.js"),
+];
 const sharedSources = [source("../common/src/"), source("../database/src/"), source("../backend/src/common/")];
 const backends = readdirSync(source("../backend/src/"), {withFileTypes: true})
     .filter(entry => entry.isDirectory() && entry.name.endsWith("-server"))
