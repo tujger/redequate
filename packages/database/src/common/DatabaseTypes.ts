@@ -59,6 +59,8 @@ export interface DatabaseCursorPosition {
 }
 
 export interface CursorStatus {
+    /** Authenticated user for the last checkpoint write, if available. */
+    userId: string | null;
     checkpoint: DatabaseCursorPosition | null;
     count: number;
     startedAt: number | null;
