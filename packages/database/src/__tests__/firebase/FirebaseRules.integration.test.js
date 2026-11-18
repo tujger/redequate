@@ -39,6 +39,7 @@ it("loads composed production Rules and preserves real REST access, validation a
         [`alerts/${uid}/alert1`, "self", "self"],
         ["chats/rules-test/message1", "all", "all"],
         ["chats/rules-test/!meta", "all", "all"],
+        ["_checkpoints/chats:rules-test", "admin", "admin"],
         [`mutualstamps/follows/${uid}/mutual1`, "self", "admin"],
         [`mutualstamps/_my/${uid}/mutual1`, "self", "admin"],
         ["_tag/rules-test/post1", "all", "admin"]
@@ -102,7 +103,7 @@ it("loads composed production Rules and preserves real REST access, validation a
         expect((await request("posts", "GET", undefined, users.Admin.idToken, {orderBy: "created", equalTo: 123})).body)
             .toEqual({"rules-index": {created: 123}});
     } finally {
-        for (const path of [`alerts/${uid}`, "chats/rules-test", `mutualstamps/follows/${uid}`,
+        for (const path of [`alerts/${uid}`, "chats/rules-test", "_checkpoints/chats:rules-test", `mutualstamps/follows/${uid}`,
             `mutualstamps/_my/${uid}`, "_tag/rules-test", "mutualrequests/rules-test", `roles/${admin}`, "rule_validation", "posts/rules-index"]) {
             await request(path, "DELETE");
         }

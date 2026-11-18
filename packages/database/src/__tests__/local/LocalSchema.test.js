@@ -139,17 +139,44 @@ it("upgrades an existing database and resumes a checkpoint by path with a new cu
         }
     });
     await expect(first.all(1)).rejects.toThrow("Second page failed");
-    expect(await backend.request("database.read", ["_checkpoints", {path: "chats:room-1"}])).toMatchObject({
-        cursorId: first.id, initiator: "alice", state: "failed", checkpoint: {key: "a"}, count: 1
+    const failed = await backend.request("database.read", ["_checkpoints", {path: "chats:room-1"}]);
+    expect(failed).toMatchObject({
+        userId: "alice", state: "failed", checkpoint: {key: "a"}, count: 1
     });
+    expect(failed).not.toHaveProperty("cursorId");
+    expect(failed).not.toHaveProperty("initiator");
     const handle = vi.fn();
     const resumed = await backend.request("database.cursor", path, {handle});
     expect(resumed.id).not.toBe(first.id);
     expect(await resumed.all(1)).toBe(2);
     expect(handle.mock.calls.map(([entry]) => entry.key)).toEqual(["b"]);
-    expect(await resumed.status()).toMatchObject({
-        cursorId: resumed.id, initiator: "bob", state: "ready", checkpoint: {key: "b"}, count: 2
+    const completed = await resumed.status();
+    expect(completed).toMatchObject({
+        userId: "bob", state: "ready", checkpoint: {key: "b"}, count: 2
     });
+    expect(completed).not.toHaveProperty("cursorId");
+    expect(completed).not.toHaveProperty("initiator");
     expect(await backend.request("database.read", ["chats", {chat_id: "room-1"}, {message_id: "a"}]))
         .toMatchObject({text: "first saved"});
+});
+
+it("uses a compound Local record path for both next() and all() through the backend", async () => {
+    const storageId = "schema-backend-cursor-record-path";
+    (await openDatabase(storageId)).close();
+    const backend = new LocalBackend({storageId});
+    const record = ["chats", {chat_id: "room-1"}, {message_id: "a"}];
+    await backend.request("database.update", "", new Map([[record, {text: "original"}]]));
+    const request = vi.spyOn(backend, "request");
+    const path = ["chats", {chat_id: "room-1"}];
+
+    const paged = await backend.request("database.cursor", path, {handle: () => ({text: "next"})});
+    expect(await paged.next(1)).toMatchObject([{key: "a", value: {text: "next"}}]);
+    const full = await backend.request("database.cursor", path, {handle: () => ({text: "all"})});
+    expect(await full.all(1)).toBe(1);
+
+    expect(request).toHaveBeenCalledWith("database.update", record, null, {mode: "read"});
+    const batch = request.mock.calls.find(([name, path, value]) =>
+        name === "database.update" && path === "" && value instanceof Map);
+    expect([...batch[2].keys()]).toEqual([record, ["_checkpoints", {path: "chats:room-1"}]]);
+    expect(await backend.request("database.read", record)).toMatchObject({text: "all"});
 });

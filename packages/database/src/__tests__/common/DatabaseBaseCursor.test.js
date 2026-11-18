@@ -35,10 +35,20 @@ it("uses readable checkpoint keys without collisions between path segments", asy
     for (const path of ["chats/room-1", ["chats", {chat_id: "room-1"}, "message_id"],
         "a:b/c", "a/b:c", "a%3Ab/c", "", "!root"]) {
         expect(await new DatabaseCursor(path, {}, {backend}).status()).toMatchObject({
-            cursorId: null, initiator: null, state: "ready"
+            userId: null, state: "ready"
         });
     }
     expect(backend.request.mock.calls.map(([, [, {path}]]) => path)).toEqual([
         "chats:room-1", "chats:room-1", "a%3Ab:c", "a:b%3Ac", "a%253Ab:c", "!root", "%21root"
     ]);
+});
+
+it("rejects root all() before reading checkpoint status", async () => {
+    const backend = {request: vi.fn()};
+    const cursor = new DatabaseCursor("", {}, {backend});
+    await expect(cursor.all()).rejects.toMatchObject({
+        code: "database/invalid-argument",
+        message: "Cursor all() requires a non-empty path."
+    });
+    expect(backend.request).not.toHaveBeenCalled();
 });

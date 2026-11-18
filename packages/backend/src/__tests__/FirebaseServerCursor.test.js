@@ -56,7 +56,7 @@ it("writes all changes and status in one Firebase backend batch", async () => {
     const batches = request.mock.calls.filter(([name]) => name === "database.update");
     expect(batches).toHaveLength(1);
     expect(batches[0][2]).toBeInstanceOf(Map);
-    expect([...batches[0][2].keys()]).toContainEqual(["meta", {setting: "cursor:firebase-all"}]);
+    expect([...batches[0][2].keys()]).toEqual(["records/a", "records/b", ["_checkpoints", {path: "records"}]]);
 });
 
 it("all resolves a normalized Firebase identity collection path", async () => {
