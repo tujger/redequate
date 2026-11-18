@@ -2,6 +2,8 @@
 
 ## Code style
 
+- Avoid complex multiline `return` expressions, nested ternaries, and long `&&`/`||` chains; prefer sequential `if` statements and early returns, without `else` when it is unnecessary.
+- Place exported and public class methods above ordinary internal methods (`protected`, `private`, and `#`), without changing their behavior when reordering.
 - Do not replace or remove Material UI icons during component conversions; keep their imports and usage unchanged.
 - Always structure CSS by selector ownership: keep shared properties in the owning class; nest pseudo-classes, attribute selectors, modifiers, global descendants, and other dependent selectors under that class; keep independent component classes at the top level.
 - Use CSS Module classes directly in the component. Remove `classes` from component props when external styling overrides are not needed.

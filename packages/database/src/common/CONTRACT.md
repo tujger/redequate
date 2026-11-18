@@ -248,6 +248,30 @@ by the development/test workflow.
   cursors), and runs each source's handler before deduplication. Group headings
   count as returned entries.
 
+- `DatabaseCursor` defines `all(size = 1, checkpoint?)` and `status()`;
+  a composed cursor delegates them only when it has exactly one source.
+  Concrete Firebase and Local cursors store status under `meta/cursor:<id>`;
+  use a stable source cursor `id`
+  to resume from a new instance. An absent status reads as ready with zero count,
+  null checkpoint and null timestamps without creating a record. Omitting the
+  checkpoint resumes an unfinished pass; a completed pass starts afresh on a new
+  cursor instance. Explicit null starts at the beginning, and an explicit position
+  resumes strictly after that position. `all()` consumes the current cursor and
+  leaves `next()` at its final position. A cursor already past the requested
+  checkpoint (including a finished cursor) rejects the pass. Without a checkpoint
+  or unfinished saved pass, it continues from the current position. Otherwise it replays
+  earlier entries without handlers to recover its scan position; if the saved key
+  no longer matches at that index it fails
+  instead of guessing. Defined handler results (including null) are collected
+  per page; `next()` does not write them. One backend root batch writes them with the
+  checkpoint and status. On the Firebase frontend, `all()` reads pages without
+  status writes; a handler replacement or deletion rejects with
+  `database/invalid-argument`. A failed backend page records a failed status while preserving
+  the original error when possible. This provides atomic page writes in Firebase
+  and Local, but no compare-and-swap, concurrent-run protection, exactly-once
+  delivery, or stable snapshot across pages. Compositions with zero or multiple
+  sources reject `all/status` with `database/invalid-argument`.
+
 ## Events
 
 - `addEventListener` gives `onChange` the initial value (or undefined) and
