@@ -17,6 +17,16 @@
         ]
     },
     {
+        "store": "_checkpoints",
+        "storeConfig": {
+            "keyPath": "_id",
+            "autoIncrement": true
+        },
+        "storeSchema": [
+            {"name": "path", "keypath": "path", "options": {"unique": true}}
+        ]
+    },
+    {
         "store": "_activity",
         "storeConfig": {
             "keyPath": "_id",
