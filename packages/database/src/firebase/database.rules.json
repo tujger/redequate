@@ -2,6 +2,10 @@
     "rules": {
         ".read": "root.child('roles/' + auth.uid).val() === 'admin'",
         ".write": "root.child('roles/' + auth.uid).val() === 'admin'",
+        "_checkpoints": {
+            ".read": "auth != null && root.child('roles/' + auth.uid).val() === 'admin'",
+            ".write": "auth != null && root.child('roles/' + auth.uid).val() === 'admin'"
+        },
         "_counters": {
             ".read": true,
             ".write": true,
