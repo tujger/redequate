@@ -128,11 +128,6 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
     #pending: (DatabaseEntry | DatabaseGroupEntry)[] = [];
     #turn = 0;
 
-    static #hasGroup(cursor: DatabaseCursor): boolean {
-        return cursor.group !== undefined || (cursor instanceof ComposedDatabaseCursor &&
-            cursor.#sources.some(source => ComposedDatabaseCursor.#hasGroup(source.cursor)));
-    }
-
     constructor(sources: Source[], options: DatabaseCursorOptions, run: CursorRun, path: CursorPath,
         cursorPath?: () => DatabasePath) {
         super(cursorPath?.() ?? (typeof path === "string" || (path instanceof Array &&
@@ -142,13 +137,6 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         this.#context = {path};
         this.#run = run;
         this.#sources = sources;
-    }
-
-    #onlySource(): DatabaseCursor {
-        if (this.#sources.length !== 1) {
-            fail("database/invalid-argument", "all/status require exactly one source cursor.");
-        }
-        return this.#sources[0].cursor;
     }
 
     override async all(size?: number, checkpoint?: DatabaseCursorPosition | null): Promise<number> {
@@ -174,6 +162,69 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
             throw error;
         }
         return this.#commitNext(formPage({...props, header: this.#header, heading: this._heading}));
+    }
+
+    subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined {
+        const valid = this.#run(() => {
+            super.subscribe(listener);
+            return true;
+        }, {onError: this.onError}, "cursor.subscribe", this.#context);
+        if (!valid) return undefined;
+
+        const subscriptions: {subscription: DatabaseCursorSubscription; cursor: DatabaseCursor}[] = [];
+        const counters = {add: "added", change: "changed", remove: "removed"} as const;
+        const cursor = this;
+        const subscribed = {
+            get id() { return cursor.id; },
+            subscribed: new Date(),
+            active: true,
+            added: 0,
+            changed: 0,
+            removed: 0,
+            unsubscribe: () => {
+                if (!subscribed.active) return;
+                subscribed.active = false;
+                unsubscribeSources(subscriptions, this.#run, this.onError);
+            }
+        };
+        try {
+            for (const {cursor} of this.#sources) {
+                const context = {path: cursor.path};
+                const notify = (event: DatabaseCursorEvent) => {
+                    if (!subscribed.active) return;
+                    this._started = true;
+                    subscribed[counters[event.type]]++;
+                    this._count += event.type === "add" ? 1 : event.type === "remove" ? -1 : 0;
+                    return listener(event);
+                };
+                const onError = cursor.onError ?? this.onError ?? ((error: unknown) => { throw error; });
+                let callbackFailure: {error: unknown} | undefined;
+                const subscription = cursor instanceof ComposedDatabaseCursor
+                    ? cursor.subscribe(notify)
+                    : this.#run(() => cursor.subscribe(event => {
+                        try {
+                            return this.#run(() => notify(event), {onError}, "cursor.subscribe", context);
+                        } catch (error) {
+                            callbackFailure = {error};
+                            throw error;
+                        }
+                    }), {
+                        onError: (error, reason, context) => {
+                            if (callbackFailure && Object.is(callbackFailure.error, error)) throw error;
+                            onError(error, reason, context);
+                        }
+                    }, "cursor.subscribe", context);
+                if (subscription === undefined) {
+                    subscribed.unsubscribe();
+                    return undefined;
+                }
+                subscriptions.push({subscription, cursor});
+            }
+        } catch (error) {
+            subscribed.unsubscribe();
+            throw error;
+        }
+        return subscribed;
     }
 
     async #prepareNext(n: number, handle?: DatabaseCursorOptions["handle"] | null): Promise<NextProps | undefined> {
@@ -263,67 +314,16 @@ export default class ComposedDatabaseCursor extends DatabaseCursor {
         return result;
     }
 
-    subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined {
-        const valid = this.#run(() => {
-            super.subscribe(listener);
-            return true;
-        }, {onError: this.onError}, "cursor.subscribe", this.#context);
-        if (!valid) return undefined;
+    static #hasGroup(cursor: DatabaseCursor): boolean {
+        return cursor.group !== undefined || (cursor instanceof ComposedDatabaseCursor &&
+            cursor.#sources.some(source => ComposedDatabaseCursor.#hasGroup(source.cursor)));
+    }
 
-        const subscriptions: {subscription: DatabaseCursorSubscription; cursor: DatabaseCursor}[] = [];
-        const counters = {add: "added", change: "changed", remove: "removed"} as const;
-        const cursor = this;
-        const subscribed = {
-            get id() { return cursor.id; },
-            subscribed: new Date(),
-            active: true,
-            added: 0,
-            changed: 0,
-            removed: 0,
-            unsubscribe: () => {
-                if (!subscribed.active) return;
-                subscribed.active = false;
-                unsubscribeSources(subscriptions, this.#run, this.onError);
-            }
-        };
-        try {
-            for (const {cursor} of this.#sources) {
-                const context = {path: cursor.path};
-                const notify = (event: DatabaseCursorEvent) => {
-                    if (!subscribed.active) return;
-                    this._started = true;
-                    subscribed[counters[event.type]]++;
-                    this._count += event.type === "add" ? 1 : event.type === "remove" ? -1 : 0;
-                    return listener(event);
-                };
-                const onError = cursor.onError ?? this.onError ?? ((error: unknown) => { throw error; });
-                let callbackFailure: {error: unknown} | undefined;
-                const subscription = cursor instanceof ComposedDatabaseCursor
-                    ? cursor.subscribe(notify)
-                    : this.#run(() => cursor.subscribe(event => {
-                        try {
-                            return this.#run(() => notify(event), {onError}, "cursor.subscribe", context);
-                        } catch (error) {
-                            callbackFailure = {error};
-                            throw error;
-                        }
-                    }), {
-                        onError: (error, reason, context) => {
-                            if (callbackFailure && Object.is(callbackFailure.error, error)) throw error;
-                            onError(error, reason, context);
-                        }
-                    }, "cursor.subscribe", context);
-                if (subscription === undefined) {
-                    subscribed.unsubscribe();
-                    return undefined;
-                }
-                subscriptions.push({subscription, cursor});
-            }
-        } catch (error) {
-            subscribed.unsubscribe();
-            throw error;
+    #onlySource(): DatabaseCursor {
+        if (this.#sources.length !== 1) {
+            fail("database/invalid-argument", "all/status require exactly one source cursor.");
         }
-        return subscribed;
+        return this.#sources[0].cursor;
     }
 
 }
