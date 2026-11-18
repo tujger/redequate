@@ -63,7 +63,7 @@ test('developer and isolated runtimes preserve SDK files, source config and pers
   for (const isolated of [false, true]) {
     const result = prepareProjectRuntime(config, { environment: 'emulator', isolated })
     t.after(() => rmSync(result.temporaryDirectory, { recursive: true, force: true }))
-    assert.equal(result.configuration.projectId, 'configured-dev')
+    assert.equal(result.configuration.projectId, isolated ? config.testing.projectId : 'configured-dev')
     assert.equal(result.config.emulators.database.port, isolated ? 19000 : 9000)
     assert(existsSync(join(result.temporaryDirectory, result.config.database.rules)))
     assert.equal(readFileSync(snapshot, 'utf8'), 'keep')

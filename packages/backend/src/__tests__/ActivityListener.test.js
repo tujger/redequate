@@ -107,3 +107,13 @@ it("commits concurrent Local events as one record per type", async () => {
     expect(records.map(record => record.type).sort()).toEqual(["tag.create", "tag.delete"]);
     expect(records.every(record => typeof record.value === "number")).toBe(true);
 });
+
+it("removes only the legacy numeric types map during an atomic update", async()=>{
+ const backend=fakeBackend({types:{legacy:1},existing:{activity_type_id:"existing",type:"keep",value:1}});
+ await new ActivityListener(backend).onCreate({params,value:{type:"new"}});
+ expect(backend.records().types).toBeUndefined();expect(backend.records().existing.type).toBe("keep");
+});
+it("preserves an actual current record whose key is types", async()=>{
+ const current={activity_type_id:"types",type:"keep",value:1};const backend=fakeBackend({types:current});
+ await new ActivityListener(backend).onCreate({params,value:{type:"new"}});expect(backend.records().types).toEqual(current);
+});

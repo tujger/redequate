@@ -35,7 +35,7 @@ test('one JSON resolves all project context without environment-variable overrid
   assert.equal(settings.environments.remote.projectId, 'configured-remote')
   assert.equal(settings.server.port, 3002)
   assert.equal(settings.emulators.auth.port, 9109)
-  assert.equal(settings.testing.projectId, 'configured-remote')
+  assert.equal(settings.testing.projectId, 'demo-configured-remote-test')
   assert.equal(settings.server.cert, join(root, 'server.crt'))
   assert.equal(selectProjectEnvironment(settings, 'emulator').configuration.projectId, 'configured-remote')
   assert.throws(() => selectProjectEnvironment(settings, 'missing'), /Unknown/)
@@ -83,7 +83,7 @@ test('generated Firebase configs preserve library settings and isolate test stat
   assert(existsSync(join(runtime.temporaryDirectory, 'functions/package.json')))
   const isolated = prepareProjectRuntime(settings, { isolated: true, environment: 'emulator' })
   t.after(() => rmSync(isolated.temporaryDirectory, { recursive: true, force: true }))
-  assert.equal(isolated.configuration.projectId, 'configured-remote')
+  assert.equal(isolated.configuration.projectId, settings.testing.projectId)
   assert.equal(isolated.config.emulators.database.port, 19010)
   assert.equal(isolated.config.hosting, undefined)
   assert.equal(existsSync(join(root, '.firebase/emulator-data', 'configured-remote')), false)
@@ -129,14 +129,16 @@ test('explicit emulator SDK config aligns CLI runtime, Vite, tests and snapshot 
   const settings = loadProjectConfig(file)
   assert.deepEqual(settings.environments.emulator.configuration, sdk)
   assert.equal(settings.environments.remote.projectId, 'configured-remote')
-  assert.equal(settings.testing.projectId, sdk.projectId)
+  assert.equal(settings.testing.projectId, 'demo-restored-test')
   assert(settings.sources.includes(join(root, 'config/emulator.json')))
   const selected = selectProjectEnvironment(settings, 'emulator')
   for (const isolated of [false, true]) {
     const runtime = prepareProjectRuntime(selected, { isolated })
     t.after(() => rmSync(runtime.temporaryDirectory, { recursive: true, force: true }))
-    assert.deepEqual(runtime.configuration, sdk)
-    assert.deepEqual(JSON.parse(readFileSync(runtime.clientConfigFile)).configuration, sdk)
+    const expected = isolated ? { ...sdk, projectId: settings.testing.projectId, apiKey: settings.testing.projectId,
+      authDomain: 'localhost', databaseURL: `https://${settings.testing.projectId}-default-rtdb.firebaseio.com`, storageBucket: `${settings.testing.projectId}.appspot.com` } : sdk
+    assert.deepEqual(runtime.configuration, expected)
+    assert.deepEqual(JSON.parse(readFileSync(runtime.clientConfigFile)).configuration, expected)
     assert.equal(runtime.directory, isolated ? join(runtime.temporaryDirectory, 'data') : join(root, '.firebase/emulator-data/demo-restored'))
     assert.equal(runtime.config.emulators.database.port, isolated ? 19010 : 9010)
   }

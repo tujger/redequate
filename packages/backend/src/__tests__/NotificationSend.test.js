@@ -34,7 +34,7 @@ it("batches Firebase user devices, stringifies data and preserves per-token erro
         Object.fromEntries(Array.from({length: 501}, (_, i) => [i, {notification: String(i)}])))};
     const info = vi.spyOn(console, "info").mockImplementation(() => {});
     await sendFirebaseNotification.call(backend, {userId: "recipient", data: {body: "hi", count: 2, absent: null}, options: {priority: "high"}});
-    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.read", ["users_private", {user_id: "recipient"}, "device"]);
+    expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.read", ["users_private", {user_id: "recipient"}, {device: "device"}]);
     expect(messaging.sendEachForMulticast.mock.calls.map(([arg]) => arg.tokens.length)).toEqual([500, 1]);
     expect(messaging.sendEachForMulticast.mock.calls[0][0]).toMatchObject({data: {body: "hi", count: "2", title: "App", icon: "https://custom.test/logo-192.png"},
         android: {priority: "high"}, webpush: {headers: {Urgency: "high"}}});
@@ -44,7 +44,7 @@ it("batches Firebase user devices, stringifies data and preserves per-token erro
 it("simulates Firebase emulator delivery without contacting FCM", async () => {
     vi.stubEnv("FUNCTIONS_EMULATOR", "true");
     const backend = {request: vi.fn().mockResolvedValue({one: {notification: "token"}})};
-    await sendFirebaseNotification.call(backend, payload);
+    expect(await sendFirebaseNotification.call(backend, payload)).toEqual([{token: "token", messageId: "emulator-0"}]);
     expect(messaging.sendEachForMulticast).not.toHaveBeenCalled();
 });
 
