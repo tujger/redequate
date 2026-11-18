@@ -247,3 +247,13 @@ it("uses common resolved addresses for named roots, segments and slash variants"
     expect(result).toEqual(expect.arrayContaining([record("x"), record("y"), record("z"), record("x", "other")]));
     expect(cursor.count).toBe(4);
 });
+
+it('propagates all() failure from its sole source without substituting a new cursor', async () => {
+    const error = new Error('source page failed');
+    const source = new RecordsCursor([record('a')]);
+    source.all = vi.fn().mockRejectedValue(error);
+    const checkpoint = {index: 0, key: 'a', finished: false};
+    const current = database.cursor([source]);
+    await expect(current.all(2, checkpoint)).rejects.toBe(error);
+    expect(source.all).toHaveBeenCalledExactlyOnceWith(2, checkpoint);
+});
