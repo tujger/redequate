@@ -47,8 +47,12 @@ export default class DatabaseBase {
         this._backend = backend;
     }
 
-    private handleError(error: unknown, options: DatabaseOptions | undefined,
-                        reason: string, context: Record<string, unknown>): void {
+    private handleError(
+        error: unknown,
+        options: DatabaseOptions | undefined,
+        reason: string,
+        context: Record<string, unknown>
+    ): void {
         const onError = options?.onError ?? this.onError;
         onError(error, reason, context);
     }
