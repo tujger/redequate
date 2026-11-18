@@ -12,23 +12,19 @@ import FirebaseCursorClient from "./cursor";
 import deleteRecord from "./delete";
 import parsePath from "./helpers/parsePath";
 import read from "./read";
-import {baseRules, resolveRules} from "./rules.mjs";
 import update from "./update";
 
 type FirebaseDatabaseOptions = DatabaseOptions & {
     backend?: Parameters<DatabaseBase["setBackend"]>[0];
     firebase: {app: FirebaseApp};
-    rules?: {additions?: Record<string, unknown>; overrides?: Record<string, unknown>};
 };
 
 export default class FirebaseDatabase extends DatabaseBase {
     #firebase: {app: FirebaseApp};
-    rules: ReturnType<typeof resolveRules>;
 
-    constructor({backend, firebase, onError, rules = {}}: FirebaseDatabaseOptions) {
+    constructor({backend, firebase, onError}: FirebaseDatabaseOptions) {
         super({backend, onError});
         this.#firebase = firebase;
-        this.rules = resolveRules(baseRules, rules);
     }
 
     addEventListener(path: DatabasePath, options: DatabaseListenerOptions = {}) {

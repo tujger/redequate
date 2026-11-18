@@ -1,4 +1,4 @@
-import {baseRules, resolveRules} from "../../firebase/rules.mjs";
+import {baseRules, resolveRules} from "../../../../../tooling/resolve-firebase-rules.mjs";
 
 it("loads composed production Rules and preserves real REST access, validation and index behavior", async () => {
     const host = process.env.FIREBASE_DATABASE_EMULATOR_HOST;
