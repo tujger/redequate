@@ -8,28 +8,48 @@ import resolvePath from "../common/helpers/resolvePath";
 import compareValues from "../common/helpers/compareValues";
 import {fail} from "../../../common";
 import DatabaseCursor from "../common/DatabaseCursor";
+import type {
+    DatabaseCursorEvent, DatabaseCursorOptions, DatabaseCursorPosition, DatabaseCursorSubscription,
+    DatabaseEntry, DatabaseGroupEntry, DatabasePath, DatabasePathSegment, DatabaseQueryValue, DatabaseValue
+} from "../common/DatabaseTypes";
+import type {LocalStorageContext} from "./LocalDatabase";
 import compareKeys from "../common/helpers/compareKeys";
 import parsePath from "./helpers/parsePath";
 import addEventListener from "./addEventListener";
 import update from "../common/methods/update";
 import {getChildRecordPath, getCursorChildren, getSubtree, getCursorWildcardKeys} from "./helpers/records";
 
-export default class LocalCursor extends DatabaseCursor {
-    #storageId;
-    #path;
-    #identityField;
-    #field;
-    #byValue;
-    #start;
-    #end;
-    #startTime;
-    #endTime;
-    #branches;
-    #initializing;
-    #pattern;
-    #header = [];
+type CursorContext = NonNullable<ConstructorParameters<typeof DatabaseCursor>[2]> & {
+    context?: string | LocalStorageContext;
+};
 
-    constructor(path, options = {}, {backend, database, context} = {}) {
+type SortKey = {key: string; sort: DatabaseValue};
+type Branch = {
+    path: DatabasePath;
+    keyField?: string;
+    params?: DatabaseEntry["params"];
+    scan?: SortKey;
+};
+type OrderedEntry = DatabaseEntry & SortKey;
+type Candidate = OrderedEntry & {branch: Branch; fullPath: string};
+
+export default class LocalCursor extends DatabaseCursor {
+    #storageId?: CursorContext["context"];
+    #path: DatabasePath;
+    #identityField?: string;
+    #field?: string;
+    #byValue: boolean;
+    #start?: DatabaseQueryValue;
+    #end?: DatabaseQueryValue;
+    #startTime?: number;
+    #endTime?: number;
+    #branches?: Branch[];
+    #initializing?: Promise<void>;
+    #pattern?: DatabasePath;
+    #header: DatabaseGroupEntry[] = [];
+
+    constructor(path: DatabasePath, options: ConstructorParameters<typeof DatabaseCursor>[1] = {},
+        {backend, database, context}: CursorContext = {}) {
         const wildcard = hasIntermediateWildcard(path);
         const {keyField: identityField, effectivePath: resolvedPath} = parsePath(path, "collection");
         super(path, options, {backend, database});
@@ -44,7 +64,7 @@ export default class LocalCursor extends DatabaseCursor {
         this.#end = this.end === undefined && typeof this.start === "string"
             ? `${this.start}\uf8ff`
             : this.end;
-        const dateValue = value => value instanceof Date ? value.getTime() : value;
+        const dateValue = (value: Date | number) => value instanceof Date ? value.getTime() : value;
         this.#startTime = this.startDate === undefined ? undefined : dateValue(this.startDate);
         this.#endTime = this.endDate === undefined ? undefined : dateValue(this.endDate);
         if ([this.#startTime, this.#endTime].some(value => {
@@ -57,13 +77,13 @@ export default class LocalCursor extends DatabaseCursor {
         }
     }
 
-    get path() {
+    override get path(): DatabasePath | undefined {
         const path = super.path;
         if (path === undefined || !this._database || this.#pattern) return path;
         return parsePath(path, "collection").effectivePath;
     }
 
-    async all(size, checkpoint) {
+    override async all(size?: number, checkpoint?: DatabaseCursorPosition | null): Promise<number> {
         return super._all(size, checkpoint, {
             recordPath: (branch, key) => {
                 const {effectivePath, keyField} = parsePath(branch, "collection");
@@ -72,8 +92,9 @@ export default class LocalCursor extends DatabaseCursor {
         });
     }
 
-    async next(n = 1, handle = this.handle) {
-        this.#header.push(...await super.next(n, handle));
+    override async next(n = 1, handle: DatabaseCursorOptions["handle"] | null = this.handle):
+        Promise<(DatabaseEntry | DatabaseGroupEntry)[]> {
+        this.#header.push(...(await super.next(n, handle))!);
         if (this.position.finished) return [];
         if (!this.#branches) {
             this.#initializing ??= this.#initialize().catch(error => {
@@ -82,8 +103,8 @@ export default class LocalCursor extends DatabaseCursor {
             });
             await this.#initializing;
         }
-        const candidates = [];
-        for (const branch of this.#branches) {
+        const candidates: Candidate[] = [];
+        for (const branch of this.#branches!) {
             for (const candidate of this.#entries(await this.#read(branch))) {
                 if (branch.scan && this.#compare(candidate, branch.scan) <= 0) continue;
                 candidates.push({
@@ -94,11 +115,11 @@ export default class LocalCursor extends DatabaseCursor {
             }
         }
         candidates.sort((a, b) => this.#compareCandidates(a, b));
-        const result = [];
+        const result: DatabaseEntry[] = [];
         while (candidates.length && result.length < n) {
-            const candidate = candidates.shift();
+            const candidate = candidates.shift()!;
             const {key, value, branch} = candidate;
-            let entry = {key, value, ...(branch.params ? {params: {...branch.params}} : {})};
+            let entry: DatabaseEntry | undefined = {key, value, ...(branch.params ? {params: {...branch.params}} : {})};
             if (handle) {
                 const replacement = await handle(structuredClone(entry));
                 if (replacement !== undefined) {
@@ -106,7 +127,9 @@ export default class LocalCursor extends DatabaseCursor {
                     await update(this._backend, recordPath, () => replacement);
                     if (replacement === null) entry = undefined;
                     else {
-                        const saved = branch.path.length ? await getSubtree(this.#storageId, recordPath) : (await this.#read(branch))[key];
+                        const saved: DatabaseValue | undefined = branch.path.length
+                            ? await getSubtree(this.#storageId, recordPath)
+                            : (await this.#read(branch) as Record<string, DatabaseValue>)[key];
                         if (saved === undefined || !this.#hasField(saved)) entry = undefined;
                         else entry = {...entry, value: saved};
                     }
@@ -125,7 +148,7 @@ export default class LocalCursor extends DatabaseCursor {
         return page;
     }
 
-    subscribe(listener) {
+    override subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription {
         super.subscribe(listener);
         if (this.#pattern) invalid("Subscriptions to intermediate cursor wildcards are not supported.");
         const cursor = this;
@@ -142,8 +165,8 @@ export default class LocalCursor extends DatabaseCursor {
                 registration.remove();
             }
         };
-        let previous;
-        const notify = event => {
+        let previous: Map<string, DatabaseValue> | undefined;
+        const notify = (event: DatabaseCursorEvent) => {
             if (!subscription.active) return;
             this._started = true;
             subscription[{add: "added", change: "changed", remove: "removed"}[event.type]]++;
@@ -151,7 +174,7 @@ export default class LocalCursor extends DatabaseCursor {
             listener(event);
         };
         const registration = addEventListener(this.#storageId, this.#path, {
-            onChange: value => {
+            onChange: (value: DatabaseValue | undefined) => {
                 const current = new Map(this.#entries(value).map(({key, value}) => [key, value]));
                 if (previous !== undefined) {
                     for (const [key, value] of previous) {
@@ -164,26 +187,27 @@ export default class LocalCursor extends DatabaseCursor {
                 }
                 previous = current;
             },
-            onError: error => this.onError?.(error, "cursor.subscribe", {path: this.path})
+            onError: (error: unknown) => this.onError?.(error, "cursor.subscribe", {path: this.path})
         }, () => this.#read());
         return subscription;
     }
 
-    #childRecordPath(path, key, keyField) {
+    #childRecordPath(path: DatabasePath, key: string, keyField?: string): DatabasePath | Promise<DatabasePath> {
         if (!path.length) return [key];
         return getChildRecordPath(this.#storageId, path, key, keyField);
     }
 
-    #sortValue(key, value) {
+    #sortValue(key: string, value: DatabaseValue): DatabaseValue {
         if (this.#field === undefined && !this.#byValue) return key;
         if (this.#byValue) return value;
-        return this.#field.split("/").reduce((node, name) => {
+        return this.#field.split("/").reduce<DatabaseValue | undefined>((node, name) => {
             if (node === null || typeof node !== "object") return undefined;
-            return node[name];
+            return (node as Record<string, DatabaseValue>)[name];
         }, value) ?? null;
     }
 
-    async #read(branch = {path: this.#path, keyField: this.#identityField}) {
+    async #read(branch: Pick<Branch, "path" | "keyField"> = {path: this.#path, keyField: this.#identityField}):
+        Promise<DatabaseValue | undefined> {
         if (branch.keyField !== undefined) {
             return getCursorChildren(this.#storageId, branch.path, branch.keyField, {
                 orderBy: this.orderBy, equalTo: this.equalTo, start: this.start, end: this.end
@@ -194,25 +218,26 @@ export default class LocalCursor extends DatabaseCursor {
         });
     }
 
-    #hasField(value) {
+    #hasField(value: DatabaseValue): boolean {
         if (!this.#field) return true;
-        const field = this.#field.split("/").reduce((node, name) => {
+        const field = this.#field.split("/").reduce<DatabaseValue | undefined>((node, name) => {
             if (node === null || typeof node !== "object") return undefined;
-            return node[name];
+            return (node as Record<string, DatabaseValue>)[name];
         }, value);
         return field != null;
     }
 
-    #inDateRange(value) {
+    #inDateRange(value: DatabaseValue): boolean {
         if (this.#startTime === undefined && this.#endTime === undefined) return true;
-        const timestamp = value?.timestamp instanceof Date ? value.timestamp.getTime() : value?.timestamp;
+        const stored = (value as {timestamp?: unknown} | null)?.timestamp;
+        const timestamp = stored instanceof Date ? stored.getTime() : stored;
         if (typeof timestamp !== "number" || !Number.isFinite(timestamp)) return false;
         if (this.#startTime !== undefined && timestamp < this.#startTime) return false;
         if (this.#endTime !== undefined && timestamp > this.#endTime) return false;
         return true;
     }
 
-    #compare(left, right) {
+    #compare(left: SortKey, right: SortKey): number {
         const byKey = this.#field === undefined && !this.#byValue;
         let result;
         if (byKey) {
@@ -225,7 +250,7 @@ export default class LocalCursor extends DatabaseCursor {
         return result * direction;
     }
 
-    #entries(value) {
+    #entries(value?: DatabaseValue): OrderedEntry[] {
         const byKey = this.#field === undefined && !this.#byValue;
         return children(value).map(([key, item]) => ({key, value: item, sort: this.#sortValue(key, item)}))
             .filter(({key, value: item, sort}) => {
@@ -239,10 +264,11 @@ export default class LocalCursor extends DatabaseCursor {
             }).sort((a, b) => this.#compare(a, b));
     }
 
-    async #initialize() {
-        const branches = this.#pattern
-            ? await expandCursorBranches(this.#pattern, (path, field) => getCursorWildcardKeys(this.#storageId, path, field))
-            : [{path: this.path}];
+    async #initialize(): Promise<void> {
+        const branches: Pick<Branch, "path" | "params">[] = this.#pattern
+            ? await expandCursorBranches(this.#pattern, (path: DatabasePathSegment[], field: string) =>
+                getCursorWildcardKeys(this.#storageId, path, field))
+            : [{path: this.path!}];
         this.#branches = branches.map(({path, params}) => {
             const parsed = params ? parsePath(path, "collection") : {
                 effectivePath: this.#path,
@@ -252,7 +278,7 @@ export default class LocalCursor extends DatabaseCursor {
         });
     }
 
-    #compareCandidates(a, b) {
+    #compareCandidates(a: Candidate, b: Candidate): number {
         if (!this.#pattern) return this.#compare(a, b);
         const byKey = this.#field === undefined && !this.#byValue;
         const compared = byKey ? compareKeys(a.sort, b.sort) : compareValues(a.sort, b.sort);
@@ -260,6 +286,6 @@ export default class LocalCursor extends DatabaseCursor {
     }
 }
 
-const invalid = message => fail("database/invalid-argument", message);
-const equal = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-const children = value => value !== null && typeof value === "object" ? Object.entries(value) : [];
+const invalid = (message: string) => fail("database/invalid-argument", message);
+const equal = (left: DatabaseValue, right: DatabaseValue) => JSON.stringify(left) === JSON.stringify(right);
+const children = (value?: DatabaseValue): [string, DatabaseValue][] => value !== null && typeof value === "object" ? Object.entries(value) : [];

@@ -32,6 +32,8 @@ type LocalSchema = Record<string, {
     autoIncrement: boolean;
     indexes: Record<string, {keyPath: string | string[]; unique?: boolean; multiEntry?: boolean}>;
 }>;
+export type LocalStorageContext = {storageId: string; schema: LocalSchema; ready?: Promise<void>};
+
 type LocalDatabaseOptions = DatabaseOptions & {
     backend?: Parameters<DatabaseBase["setBackend"]>[0];
     storageId?: string;
@@ -40,7 +42,7 @@ type LocalDatabaseOptions = DatabaseOptions & {
 
 export default class LocalDatabase extends DatabaseBase {
     storageId: string;
-    #context: {storageId: string; schema: LocalSchema; ready?: Promise<void>};
+    #context: LocalStorageContext;
 
     constructor(options: LocalDatabaseOptions = {}) {
         super(options);
