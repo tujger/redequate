@@ -91,8 +91,33 @@ export default class FirebaseCursorBase extends DatabaseCursor {
 
     override get path(): DatabasePath | undefined {
         const path = super.path;
-        return path !== undefined && !this._database && !this._wildcard
-            ? parsePath(path, "collection").address : path;
+        if (path === undefined || this._database || this._wildcard) return path;
+        return parsePath(path, "collection").address;
+    }
+
+    async next(n = 1, handle: DatabaseCursorOptions["handle"] | null = this.handle): Promise<(DatabaseEntry | DatabaseGroupEntry)[]> {
+        this.#header.push(...await super.next(n, handle));
+        if (this.position.finished) return [];
+        if (!this.#states) {
+            this.#initializing ??= this.#initialize().catch(error => { this.#initializing = undefined; throw error; });
+            await this.#initializing;
+        }
+        let entries: DatabaseEntry[];
+        if (this._wildcard) entries = await this.#readWildcard(n, handle);
+        else entries = (await this.readEntries({state: this.#states[0], handle, n, entries: []})).entries;
+        const result = [...this.#header.splice(0), ...entries];
+        this._position = Object.freeze({index: this.position.index + result.length,
+            key: result.at(-1)?.key ?? this.position.key,
+            finished: this.#states.every(state => state.exhausted && state.offset === state.buffer.length)});
+        this._count += result.length;
+        if (this.position.finished) for (const state of this.#states) { state.buffer = []; state.offset = 0; }
+        return result;
+    }
+
+    subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined {
+        super.subscribe(listener);
+        if (this._wildcard) fail("database/invalid-argument", "Subscriptions to intermediate cursor wildcards are not supported.");
+        return undefined;
     }
 
     protected _reference(_address: string): CursorQuery { return notImplemented("cursor reference"); }
@@ -157,30 +182,6 @@ export default class FirebaseCursorBase extends DatabaseCursor {
         return entries;
     }
 
-    async next(n = 1, handle: DatabaseCursorOptions["handle"] | null = this.handle): Promise<(DatabaseEntry | DatabaseGroupEntry)[]> {
-        this.#header.push(...await super.next(n, handle));
-        if (this.position.finished) return [];
-        if (!this.#states) {
-            this.#initializing ??= this.#initialize().catch(error => { this.#initializing = undefined; throw error; });
-            await this.#initializing;
-        }
-        const entries = this._wildcard ? await this.#readWildcard(n, handle)
-            : (await this.readEntries({state: this.#states[0], handle, n, entries: []})).entries;
-        const result = [...this.#header.splice(0), ...entries];
-        this._position = Object.freeze({index: this.position.index + result.length,
-            key: result.at(-1)?.key ?? this.position.key,
-            finished: this.#states.every(state => state.exhausted && state.offset === state.buffer.length)});
-        this._count += result.length;
-        if (this.position.finished) for (const state of this.#states) { state.buffer = []; state.offset = 0; }
-        return result;
-    }
-
-    subscribe(listener: (event: DatabaseCursorEvent) => void): DatabaseCursorSubscription | undefined {
-        super.subscribe(listener);
-        if (this._wildcard) fail("database/invalid-argument", "Subscriptions to intermediate cursor wildcards are not supported.");
-        return undefined;
-    }
-
     private async readEntries(props: CursorRead): Promise<CursorRead> {
         const {state, n, entries} = props;
         while (entries.length < n) {
@@ -209,15 +210,22 @@ export default class FirebaseCursorBase extends DatabaseCursor {
         const child = state.buffer[state.offset];
         const byKey = orderBy === undefined && !byValue;
         // Capture the ordered value before handle can replace or delete it.
-        const sortValue = byKey ? child.key : byValue ? child.val() : child.child(orderBy).val();
-        const inRange = (startKey === undefined || child.key >= startKey) &&
-            (endKey === undefined || child.key <= endKey);
+        let sortValue: DatabaseValue;
+        if (byKey) sortValue = child.key;
+        else if (byValue) sortValue = child.val();
+        else sortValue = child.child(orderBy).val();
+        let inRange = true;
+        if (startKey !== undefined && child.key < startKey) inRange = false;
+        if (inRange && endKey !== undefined && child.key > endKey) inRange = false;
+        let entry: DatabaseEntry | undefined;
+        if (inRange && this.hasOrderedField(child, orderBy)) {
+            entry = {key: child.key, value: child.val(), ...(state.params ? {params: {...state.params}} : {})};
+        }
         return {
             ...props,
             child,
             sortValue,
-            entry: inRange && this.hasOrderedField(child, orderBy)
-                ? {key: child.key, value: child.val(), ...(state.params ? {params: {...state.params}} : {})} : undefined,
+            entry,
             replacement: undefined
         };
     }
@@ -301,9 +309,10 @@ export default class FirebaseCursorBase extends DatabaseCursor {
     private async saveReplacement(props: CursorRead): Promise<CursorRead> {
         const {state, child, replacement} = props;
         if (replacement === undefined) return props;
-        const path = state.params
-            ? [...state.parentPath, {[state.keyField]: child.key}]
-            : state.path ? `${state.path}/${child.key}` : child.key;
+        let path: DatabasePath;
+        if (state.params) path = [...state.parentPath, {[state.keyField]: child.key}];
+        else if (state.path) path = `${state.path}/${child.key}`;
+        else path = child.key;
         await update(this._backend, path, () => replacement);
         return {...props, entry: undefined};
     }
@@ -312,7 +321,11 @@ export default class FirebaseCursorBase extends DatabaseCursor {
         const {child, replacement} = props;
         if (replacement === undefined || replacement === null) return props;
         const saved = await this._readSnapshot(child.ref);
-        return {...props, entry: saved.exists() && this.hasOrderedField(saved, props.state.orderBy) ? {key: child.key, value: saved.val(), ...(props.state.params ? {params: {...props.state.params}} : {})} : undefined};
+        if (!saved.exists() || !this.hasOrderedField(saved, props.state.orderBy)) {
+            return {...props, entry: undefined};
+        }
+        const entry = {key: child.key, value: saved.val(), ...(props.state.params ? {params: {...props.state.params}} : {})};
+        return {...props, entry};
     }
 
     private createCursorQuery(path: DatabasePath, {
