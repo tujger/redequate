@@ -1,15 +1,20 @@
 import validatePath from "./helpers/validatePath";
 import {DatabaseOrder} from "./DatabaseOrder";
-import {fail, identifier} from "../../../common";
+import {fail, identifier, notImplemented} from "../../../common";
 import type BackendBase from "../../../backend/src/common/BackendBase";
 import type DatabaseBase from "./DatabaseBase";
-import parseFirebasePath from "../firebase/helpers/parsePath";
-import parseLocalPath from "../local/helpers/parsePath";
-import {getChildRecordPath} from "../local/helpers/records";
 import type {
     DatabaseEntry, DatabaseGroupEntry, DatabaseCursorEvent, DatabaseCursorPosition,
     DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath, DatabaseValue, CursorStatus
 } from "./DatabaseTypes";
+
+type RecordPathResolver = (branch: DatabasePath, key: string) => DatabasePath | Promise<DatabasePath>;
+
+interface AllOptions {
+    recordPath?: RecordPathResolver;
+    commitPage?: (status: CursorStatus, changes: Map<DatabasePath, DatabaseValue>) => Promise<void>;
+    saveStatus?: (status: CursorStatus) => Promise<void>;
+}
 
 /** Base for cursors consumed sequentially, exclusively by their owner or composition. */
 export default class DatabaseCursor {
@@ -187,15 +192,20 @@ export default class DatabaseCursor {
         };
     }
 
-    async all(size = 1, checkpoint?: DatabaseCursorPosition | null): Promise<number> {
+    async all(size?: number, checkpoint?: DatabaseCursorPosition | null): Promise<number> {
+        return this._all(size, checkpoint);
+    }
+
+    protected async _all(
+        size = 1,
+        checkpoint?: DatabaseCursorPosition | null,
+        {recordPath, commitPage, saveStatus}: AllOptions = {}
+    ): Promise<number> {
         validateAllArguments(size, checkpoint);
-        const readOnly = this._allReadOnly;
-        if (!readOnly && !this._backend) {
-            fail("database/invalid-argument", "Cursor pages require a path and backend.");
-        } else if (this.#path === undefined) {
+        if (this.#path === undefined || (!commitPage && !this._backend)) {
             fail("database/invalid-argument", "Cursor pages require a path and backend.");
         }
-        const previous = readOnly ? {checkpoint: null, count: 0, startedAt: null} : await this.status();
+        const previous = await this.status();
         const {start, resumed} = this.#resolveAllStart(checkpoint, previous.checkpoint);
         const startedAt = resumed ? previous.startedAt ?? Date.now() : Date.now();
         let count = resumed ? previous.count : 0;
@@ -205,36 +215,43 @@ export default class DatabaseCursor {
         if (this.position.finished || this.position.index > (start?.index ?? -1)) {
             fail("database/invalid-argument", "Current cursor is past the requested checkpoint.");
         }
-        const userId = readOnly ? null : (await this._backend!.getCurrentUser()) ?? null;
+        const userId = commitPage ? null : (await this._backend!.getCurrentUser()) ?? null;
         try {
             await this.#restorePosition(start);
             while (true) {
-                const {count: pageCount, changes} = await this.#readAllPage(size, readOnly);
+                const {count: pageCount, changes} = await this.#readAllPage(size, recordPath);
                 const position = this.position;
                 const nextCount = count + pageCount;
-                if (!readOnly) {
+                if (!commitPage) {
                     const current = await this.status();
                     if (JSON.stringify(current.checkpoint) !== JSON.stringify(committed)) {
                         checkpointChanged = true;
                         fail("database/invalid-argument", "Cursor checkpoint changed during page processing.");
                     }
-                    await this.#writeAllPage(changes, position, nextCount, startedAt, userId);
                 }
+                const now = Date.now();
+                const status: CursorStatus = {
+                    checkpoint: position,
+                    count: nextCount,
+                    finishedAt: position.finished ? now : null,
+                    startedAt,
+                    state: position.finished ? "ready" : "running",
+                    updatedAt: now,
+                    userId,
+                };
+                if (commitPage) await commitPage(status, changes);
+                else await this.#writeAllPage(status, changes);
                 count = nextCount;
                 saved = position;
                 committed = position;
                 if (position.finished) return count;
             }
         } catch (error) {
-            if (!readOnly && !checkpointChanged) {
-                await this.#writeAllFailure(error, saved, count, startedAt, userId);
+            if (!checkpointChanged) {
+                await this.#writeAllFailure(error, saved, count, startedAt, userId, saveStatus);
             }
             throw error;
         }
-    }
-
-    protected get _allReadOnly(): boolean {
-        return false;
     }
 
     protected static _assertFresh(cursor: DatabaseCursor): void {
@@ -277,7 +294,7 @@ export default class DatabaseCursor {
         }
     }
 
-    async #readAllPage(size: number, readOnly: boolean): Promise<{
+    async #readAllPage(size: number, recordPath?: RecordPathResolver): Promise<{
         count: number;
         changes: Map<DatabasePath, DatabaseValue>
     }> {
@@ -286,10 +303,9 @@ export default class DatabaseCursor {
         const wrapped = original ? async (entry: DatabaseEntry) => {
             const replacement = await original(entry);
             if (replacement !== undefined) {
-                if (readOnly) {
-                    fail("database/invalid-argument", "Frontend cursor all() cannot change records.");
-                }
-                changes.set(await recordPath(this.#path!, entry, this._database), replacement as DatabaseValue);
+                if (!recordPath) notImplemented("cursor record path");
+                const branch = resolveRecordBranch(this.#path!, entry.params);
+                changes.set(await recordPath(branch, entry.key), replacement as DatabaseValue);
             }
             return undefined;
         } : undefined;
@@ -300,26 +316,11 @@ export default class DatabaseCursor {
         return {count: page.filter(entry => "value" in entry).length, changes};
     }
 
-    async #writeAllPage(
-        changes: Map<DatabasePath, DatabaseValue>,
-        position: DatabaseCursorPosition,
-        count: number,
-        startedAt: number,
-        userId: string | null
-    ): Promise<void> {
-        const now = Date.now();
-        const status: CursorStatus = {
-            checkpoint: position,
-            count,
-            finishedAt: position.finished ? now : null,
-            startedAt,
-            state: position.finished ? "ready" : "running",
-            updatedAt: now,
-            userId,
-        };
+    async #writeAllPage(status: CursorStatus, changes: Map<DatabasePath, DatabaseValue>): Promise<void> {
+        const {checkpoint} = status;
         changes.set(this.#statusPath(), {
             ...status,
-            checkpoint: {...position, key: position.key ?? null}
+            checkpoint: checkpoint ? {...checkpoint, key: checkpoint.key ?? null} : null
         } as unknown as DatabaseValue);
         await this._backend!.request("database.update", "", changes);
     }
@@ -329,7 +330,8 @@ export default class DatabaseCursor {
         saved: DatabaseCursorPosition | null,
         count: number,
         startedAt: number,
-        userId: string | null
+        userId: string | null,
+        saveStatus?: AllOptions["saveStatus"]
     ): Promise<void> {
         const now = Date.now();
         let code = "database/unknown";
@@ -350,40 +352,20 @@ export default class DatabaseCursor {
             userId
         };
         try {
-            await this._backend!.request("database.update", "", new Map([[this.#statusPath(), {
-                ...failure, checkpoint: saved ? {...saved, key: saved.key ?? null} : null
-            } as unknown as DatabaseValue]]));
+            if (saveStatus) await saveStatus(failure);
+            else await this.#writeAllPage(failure, new Map());
         } catch { /* Preserve the original page or commit error. */
         }
     }
 }
 
-async function recordPath(source: DatabasePath, entry: DatabaseEntry, database?: DatabaseBase): Promise<DatabasePath> {
-    const branch = Array.isArray(source)
-        ? source.map(segment => {
-            if (typeof segment !== "string" || !entry.params || !Object.hasOwn(entry.params, segment)) {
-                return segment;
-            }
-            return {[segment]: entry.params[segment]};
-        })
-        : source;
-    if (database && "storageId" in database && typeof database.storageId === "string") {
-        const parsed = parseLocalPath(branch, "collection");
-        if (!parsed.effectivePath.length) {
-            return [entry.key];
-        }
-        return getChildRecordPath(database.storageId, parsed.effectivePath, entry.key, parsed.keyField);
-    }
-    const parsed = parseFirebasePath(branch, "collection");
-    if (parsed.keyField) {
-        return [
-            ...parsed.effectivePath as (string | Record<string, string>)[],
-            {[parsed.keyField]: entry.key}];
-    }
-    if (parsed.address) {
-        return `${parsed.address}/${entry.key}`;
-    }
-    return entry.key;
+function resolveRecordBranch(path: DatabasePath, params: DatabaseEntry["params"]): DatabasePath {
+    if (!params || !Array.isArray(path)) return path;
+    return path.map((segment, index) => {
+        if (index === 0 || index === path.length - 1) return segment;
+        if (typeof segment !== "string" || !Object.hasOwn(params, segment)) return segment;
+        return {[segment]: params[segment]};
+    });
 }
 
 function validateAllArguments(size: number, checkpoint?: DatabaseCursorPosition | null): void {

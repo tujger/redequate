@@ -63,6 +63,15 @@ export default class LocalCursor extends DatabaseCursor {
         return parsePath(path, "collection").effectivePath;
     }
 
+    async all(size, checkpoint) {
+        return super._all(size, checkpoint, {
+            recordPath: (branch, key) => {
+                const {effectivePath, keyField} = parsePath(branch, "collection");
+                return this.#childRecordPath(effectivePath, key, keyField);
+            }
+        });
+    }
+
     async next(n = 1, handle = this.handle) {
         this.#header.push(...await super.next(n, handle));
         if (this.position.finished) return [];
@@ -93,9 +102,7 @@ export default class LocalCursor extends DatabaseCursor {
             if (handle) {
                 const replacement = await handle(structuredClone(entry));
                 if (replacement !== undefined) {
-                    const recordPath = branch.path.length
-                        ? await getChildRecordPath(this.#storageId, branch.path, key, branch.keyField)
-                        : [key];
+                    const recordPath = await this.#childRecordPath(branch.path, key, branch.keyField);
                     await update(this._backend, recordPath, () => replacement);
                     if (replacement === null) entry = undefined;
                     else {
@@ -160,6 +167,11 @@ export default class LocalCursor extends DatabaseCursor {
             onError: error => this.onError?.(error, "cursor.subscribe", {path: this.path})
         }, () => this.#read());
         return subscription;
+    }
+
+    #childRecordPath(path, key, keyField) {
+        if (!path.length) return [key];
+        return getChildRecordPath(this.#storageId, path, key, keyField);
     }
 
     #sortValue(key, value) {

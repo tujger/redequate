@@ -4,7 +4,7 @@ import DatabaseCursor from "./DatabaseCursor";
 import type BackendBase from "../../../backend/src/common/BackendBase";
 import type DatabaseBase from "./DatabaseBase";
 import type {
-    DatabasePath, DatabaseEntry, DatabaseGroupEntry, DatabaseValue,
+    DatabasePath, DatabaseEntry, DatabaseGroupEntry, DatabaseValue, DatabaseCursorPosition,
     DatabaseCursorOptions, DatabaseCursorEvent, DatabaseCursorSubscription
 } from "./DatabaseTypes";
 import {DatabaseOrder} from "./DatabaseOrder";
@@ -93,6 +93,16 @@ export default class FirebaseCursorBase extends DatabaseCursor {
         const path = super.path;
         if (path === undefined || this._wildcard) return path;
         return parsePath(path, "collection").address;
+    }
+
+    override async all(size?: number, checkpoint?: DatabaseCursorPosition | null): Promise<number> {
+        return super._all(size, checkpoint, {
+            recordPath: (branch, key) => {
+                const {address, keyField, path} = parsePath(branch, "collection");
+                if (keyField) return [...path.slice(0, -1), {[keyField]: key}];
+                return address ? `${address}/${key}` : key;
+            }
+        });
     }
 
     async next(n = 1, handle: DatabaseCursorOptions["handle"] | null = this.handle): Promise<(DatabaseEntry | DatabaseGroupEntry)[]> {

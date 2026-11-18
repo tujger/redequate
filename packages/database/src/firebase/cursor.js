@@ -1,11 +1,22 @@
 import {getDatabase, ref, query, orderByChild, orderByValue, orderByKey, equalTo, startAt, endAt, limitToFirst, limitToLast, onChildAdded, onChildChanged, onChildRemoved} from "firebase/database";
 import FirebaseCursorBase from "../common/FirebaseCursorBase";
+import parsePath from "./helpers/parsePath";
 import readSnapshot from "./helpers/readSnapshot";
 
 const constraints = {orderByChild, orderByValue, orderByKey, equalTo, startAt, endAt, limitToFirst, limitToLast};
 
 export default class FirebaseCursorClient extends FirebaseCursorBase {
     #firebase;
+    #status = {
+        checkpoint: null,
+        count: 0,
+        finishedAt: null,
+        startedAt: null,
+        state: "ready",
+        updatedAt: null,
+        userId: null,
+    };
+    #updates = new Map();
 
     constructor(path, options = {}, {backend, database, firebase} = {}) {
         super(path, options, {backend, database});
@@ -21,7 +32,32 @@ export default class FirebaseCursorClient extends FirebaseCursorBase {
         }, error => this.onError(error, "cursor.subscribe", {path: this.path}));
     }
 
-    get _allReadOnly() { return true; }
+    async all(size, checkpoint) {
+        const saveStatus = async status => {
+            this.#status = status;
+        };
+        return super._all(size, checkpoint, {
+            saveStatus,
+            recordPath: (branch, key) => {
+                const {address} = parsePath(branch, "collection");
+                return address ? `${address}/${key}` : key;
+            },
+            commitPage: async (status, changes) => {
+                for (const [path, value] of changes) this.#updates.set(path, value);
+                await saveStatus(status);
+            }
+        });
+    }
+
+    async status() {
+        const {checkpoint, error, ...status} = this.#status;
+        return {
+            ...status,
+            checkpoint: checkpoint ? {...checkpoint} : null,
+            ...(error ? {error: {...error}} : {}),
+            updates: new Map(this.#updates),
+        };
+    }
 
     _reference(address) { return ref(getDatabase(this.#firebase.app), address); }
     _query(reference, method, ...args) { return query(reference, constraints[method](...args)); }
