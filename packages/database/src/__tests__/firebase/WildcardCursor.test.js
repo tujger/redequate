@@ -99,20 +99,21 @@ it("all batches Firebase server wildcard records at their captured paths", async
         return reference;
     }};
     let status = null;
-    const backend = {getDatabaseInstance: () => database, request: vi.fn(async (name, path, changes) => {
+    const backend = {getDatabaseInstance: () => database, getCurrentUser: async () => "admin", request: vi.fn(async (name, path, changes) => {
         if (name === "database.read") return status;
-        status = [...changes].find(([recordPath]) => Array.isArray(recordPath) && recordPath[0] === "meta")?.[1];
+        status = [...changes].find(([recordPath]) => Array.isArray(recordPath) && recordPath[0] === "_checkpoints")?.[1];
     })};
     const cursor = new FirebaseCursorServer(pattern, {
         id: "firebase-server-wildcard-all", handle: () => ({uid: "edited"})
     }, {backend});
     expect(await cursor.all(2)).toBe(2);
+    expect(await cursor.status()).toMatchObject({cursorId: cursor.id, initiator: "admin", count: 2, state: "ready"});
     const batches = backend.request.mock.calls.filter(([name]) => name === "database.update");
     expect(batches).toHaveLength(2);
     expect([...batches[0][2].keys()]).toEqual([
         ["mutual", {mutual_type: "a"}, {mutual_id: "r1"}],
         ["mutual", {mutual_type: "b"}, {mutual_id: "r1"}],
-        ["meta", {setting: "cursor:firebase-server-wildcard-all"}]
+        ["_checkpoints", {path: "mutual:mutual_type"}]
     ]);
-    expect([...batches[1][2].keys()]).toEqual([["meta", {setting: "cursor:firebase-server-wildcard-all"}]]);
+    expect([...batches[1][2].keys()]).toEqual([["_checkpoints", {path: "mutual:mutual_type"}]]);
 });

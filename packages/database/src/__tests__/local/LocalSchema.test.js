@@ -118,3 +118,38 @@ it("keeps configured collections instance-scoped and provider stores separate", 
     await expect(new LocalBackend({storageId: "schema-scope"}).request("database.create", ["$auth", {id: "a"}], {}))
         .rejects.toMatchObject({code: "database/invalid-argument"});
 });
+
+it("upgrades an existing database and resumes a checkpoint by path with a new cursor", async () => {
+    const storageId = "schema-checkpoints-upgrade";
+    const legacy = {...LOCAL_SCHEMA};
+    delete legacy._checkpoints;
+    (await openDatabase(storageId, legacy)).close();
+
+    const backend = new LocalBackend({storageId});
+    await backend.request("database.update", "", new Map([
+        [["chats", {chat_id: "room-1"}, {message_id: "a"}], {text: "first"}],
+        [["chats", {chat_id: "room-1"}, {message_id: "b"}], {text: "second"}]
+    ]));
+    const path = ["chats", {chat_id: "room-1"}, "message_id"];
+    vi.spyOn(backend, "getCurrentUser").mockResolvedValueOnce("alice").mockResolvedValueOnce("bob");
+    const first = await backend.request("database.cursor", path, {
+        handle: ({key}) => {
+            if (key === "b") throw new Error("Second page failed");
+            return {text: "first saved"};
+        }
+    });
+    await expect(first.all(1)).rejects.toThrow("Second page failed");
+    expect(await backend.request("database.read", ["_checkpoints", {path: "chats:room-1"}])).toMatchObject({
+        cursorId: first.id, initiator: "alice", state: "failed", checkpoint: {key: "a"}, count: 1
+    });
+    const handle = vi.fn();
+    const resumed = await backend.request("database.cursor", path, {handle});
+    expect(resumed.id).not.toBe(first.id);
+    expect(await resumed.all(1)).toBe(2);
+    expect(handle.mock.calls.map(([entry]) => entry.key)).toEqual(["b"]);
+    expect(await resumed.status()).toMatchObject({
+        cursorId: resumed.id, initiator: "bob", state: "ready", checkpoint: {key: "b"}, count: 2
+    });
+    expect(await backend.request("database.read", ["chats", {chat_id: "room-1"}, {message_id: "a"}]))
+        .toMatchObject({text: "first saved"});
+});

@@ -24,8 +24,21 @@ it("passes its backend and database to cursors created from paths", async () => 
         const cursor = database.cursor("records");
         expect((await cursor.status()).state).toBe("ready");
         expect(statusCall).toHaveBeenCalledOnce();
-        expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.read", ["meta", {setting: `cursor:${cursor.id}`}]);
+        expect(backend.request).toHaveBeenCalledExactlyOnceWith("database.read", ["_checkpoints", {path: "records"}]);
     } finally {
         statusCall.mockRestore();
     }
+});
+
+it("uses readable checkpoint keys without collisions between path segments", async () => {
+    const backend = {request: vi.fn().mockResolvedValue(null)};
+    for (const path of ["chats/room-1", ["chats", {chat_id: "room-1"}, "message_id"],
+        "a:b/c", "a/b:c", "a%3Ab/c", "", "!root"]) {
+        expect(await new DatabaseCursor(path, {}, {backend}).status()).toMatchObject({
+            cursorId: null, initiator: null, state: "ready"
+        });
+    }
+    expect(backend.request.mock.calls.map(([, [, {path}]]) => path)).toEqual([
+        "chats:room-1", "chats:room-1", "a%3Ab:c", "a:b%3Ac", "a%253Ab:c", "!root", "%21root"
+    ]);
 });
