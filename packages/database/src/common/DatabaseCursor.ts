@@ -12,53 +12,6 @@ import type {
     DatabaseCursorSubscription, DatabaseCursorOptions, DatabasePath, DatabaseValue, CursorStatus
 } from "./DatabaseTypes";
 
-async function recordPath(source: DatabasePath, entry: DatabaseEntry, database?: DatabaseBase): Promise<DatabasePath> {
-    const branch = Array.isArray(source) ? source.map(segment => {
-        if (typeof segment !== "string" || !entry.params || !Object.hasOwn(entry.params, segment)) {
-            return segment;
-        }
-        return {[segment]: entry.params[segment]};
-    }) : source;
-    if (database && "storageId" in database && typeof database.storageId === "string") {
-        const parsed = parseLocalPath(branch, "collection");
-        if (!parsed.effectivePath.length) {
-            return [entry.key];
-        }
-        return getChildRecordPath(database.storageId, parsed.effectivePath, entry.key, parsed.keyField);
-    }
-    const parsed = parseFirebasePath(branch, "collection");
-    if (parsed.keyField) {
-        return [
-            ...parsed.effectivePath as (string | Record<string, string>)[],
-            {[parsed.keyField]: entry.key}];
-    }
-    if (parsed.address) {
-        return `${parsed.address}/${entry.key}`;
-    }
-    return entry.key;
-}
-
-function validateAllArguments(size: number, checkpoint?: DatabaseCursorPosition | null): void {
-    if (!Number.isSafeInteger(size) || size <= 0) {
-        fail("database/invalid-argument", "size must be a positive safe integer.");
-    }
-    if (checkpoint === undefined || checkpoint === null) {
-        return;
-    }
-    if (!Number.isSafeInteger(checkpoint.index) || checkpoint.index < -1) {
-        fail("database/invalid-argument", "Invalid checkpoint.");
-    }
-    if (checkpoint.index === -1 && checkpoint.key !== undefined) {
-        fail("database/invalid-argument", "Invalid checkpoint.");
-    }
-    if (checkpoint.index !== -1 && typeof checkpoint.key !== "string") {
-        fail("database/invalid-argument", "Invalid checkpoint.");
-    }
-    if (typeof checkpoint.finished !== "boolean") {
-        fail("database/invalid-argument", "Invalid checkpoint.");
-    }
-}
-
 /** Base for cursors consumed sequentially, exclusively by their owner or composition. */
 export default class DatabaseCursor {
     readonly #id: string;
@@ -213,22 +166,28 @@ export default class DatabaseCursor {
     }
 
     async status(): Promise<CursorStatus> {
-        if (!this._backend) fail("database/invalid-argument", "Cursor status requires a backend.");
+        if (!this._backend) {
+            fail("database/invalid-argument", "Cursor status requires a backend.");
+        }
         const value = await this._backend.request("database.read", this.#statusPath()) as CursorStatus | null;
         if (!value) {
             return {
-                checkpoint: null, count: 0, startedAt: null, updatedAt: null,
-                finishedAt: null, state: "ready"
+                checkpoint: null,
+                count: 0,
+                finishedAt: null,
+                startedAt: null,
+                state: "ready",
+                updatedAt: null,
             };
         }
         const {checkpoint, count, startedAt, updatedAt, finishedAt, state, error} = value;
         return {
             checkpoint: checkpoint ? {...checkpoint, key: checkpoint.key ?? undefined} : null,
             count,
-            startedAt,
-            updatedAt,
             finishedAt,
+            startedAt,
             state,
+            updatedAt,
             ...(error ? {error} : {})
         };
     }
@@ -313,7 +272,9 @@ export default class DatabaseCursor {
         }
         while (this.position.index < start.index) {
             const page = await this.next(1, null);
-            if (!page?.length) fail("database/invalid-argument", "Checkpoint is no longer reachable.");
+            if (!page?.length) {
+                fail("database/invalid-argument", "Checkpoint is no longer reachable.");
+            }
         }
         if (this.position.index !== start.index || this.position.key !== start.key) {
             fail("database/invalid-argument", "Checkpoint no longer matches cursor order.");
@@ -353,10 +314,10 @@ export default class DatabaseCursor {
         const status: CursorStatus = {
             checkpoint: position,
             count,
-            startedAt,
-            updatedAt: now,
             finishedAt: position.finished ? now : null,
-            state: position.finished ? "ready" : "running"
+            startedAt,
+            state: position.finished ? "ready" : "running",
+            updatedAt: now,
         };
         changes.set(this.#statusPath(), {
             ...status,
@@ -379,10 +340,10 @@ export default class DatabaseCursor {
         const failure: CursorStatus = {
             checkpoint: saved,
             count,
-            startedAt,
-            updatedAt: now,
             finishedAt: null,
+            startedAt,
             state: "failed",
+            updatedAt: now,
             error: {
                 code,
                 message: error instanceof Error ? error.message : String(error)
@@ -394,5 +355,54 @@ export default class DatabaseCursor {
             } as unknown as DatabaseValue]]));
         } catch { /* Preserve the original page or commit error. */
         }
+    }
+}
+
+async function recordPath(source: DatabasePath, entry: DatabaseEntry, database?: DatabaseBase): Promise<DatabasePath> {
+    const branch = Array.isArray(source)
+        ? source.map(segment => {
+            if (typeof segment !== "string" || !entry.params || !Object.hasOwn(entry.params, segment)) {
+                return segment;
+            }
+            return {[segment]: entry.params[segment]};
+        })
+        : source;
+    if (database && "storageId" in database && typeof database.storageId === "string") {
+        const parsed = parseLocalPath(branch, "collection");
+        if (!parsed.effectivePath.length) {
+            return [entry.key];
+        }
+        return getChildRecordPath(database.storageId, parsed.effectivePath, entry.key, parsed.keyField);
+    }
+    const parsed = parseFirebasePath(branch, "collection");
+    if (parsed.keyField) {
+        return [
+            ...parsed.effectivePath as (string | Record<string, string>)[],
+            {[parsed.keyField]: entry.key}];
+    }
+    if (parsed.address) {
+        return `${parsed.address}/${entry.key}`;
+    }
+    return entry.key;
+}
+
+function validateAllArguments(size: number, checkpoint?: DatabaseCursorPosition | null): void {
+    if (!Number.isSafeInteger(size) || size <= 0) {
+        fail("database/invalid-argument", "size must be a positive safe integer.");
+    }
+    if (checkpoint === undefined || checkpoint === null) {
+        return;
+    }
+    if (!Number.isSafeInteger(checkpoint.index) || checkpoint.index < -1) {
+        fail("database/invalid-argument", "Invalid checkpoint.");
+    }
+    if (checkpoint.index === -1 && checkpoint.key !== undefined) {
+        fail("database/invalid-argument", "Invalid checkpoint.");
+    }
+    if (checkpoint.index !== -1 && typeof checkpoint.key !== "string") {
+        fail("database/invalid-argument", "Invalid checkpoint.");
+    }
+    if (typeof checkpoint.finished !== "boolean") {
+        fail("database/invalid-argument", "Invalid checkpoint.");
     }
 }
