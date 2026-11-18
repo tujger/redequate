@@ -1,34 +1,21 @@
-import DatabaseCursor from "../../../../packages/database/src/common/DatabaseCursor";
-import {mutualRequest, mutualRequestsCursor} from "../../../components/MutualComponent/mutualComponentControls";
+import {mutualRequest, mutualRequestAccept, mutualRequestReject} from "../../../components/MutualComponent/mutualComponentControls";
 import {MutualMode} from "../../../components/MutualComponent/MutualConstants";
 
-class RequestCursor extends DatabaseCursor {
-    constructor(entries, options) {
-        super(["mutualrequests", {mutual_type: "friend"}], options);
-        this.entries = entries;
-        this.offset = 0;
-    }
-    async next(n = 1) {
-        await super.next(n);
-        const page = this.entries.slice(this.offset, this.offset + n);
-        this.offset += page.length;
-        this._position = Object.freeze({index: this.offset - 1, key: page.at(-1)?.key,
-            finished: this.offset === this.entries.length});
-        return page;
-    }
-}
-
-it.each([
-    [false, "uid", "id", [{uid: "me", id: "other"}, {uid: "me", id: "them"}]],
-    [true, "id", "uid", [{uid: "other", id: "me"}, {uid: "them", id: "me"}]]
-])("queries %s requests by the current user and scans past another counterpart", async (incoming, field, counterpart, values) => {
-    const database = {cursor: vi.fn((path, options) => new RequestCursor(
-        values.map((value, index) => ({key: `r${index}`, value})), options))};
-    const cursor = mutualRequestsCursor({database, typeId: "friend", userId: "me", counterpartId: "them", incoming});
-    expect(await cursor.next()).toEqual([{key: "r1", value: values[1]}]);
-    expect(database.cursor).toHaveBeenCalledWith(["mutualrequests", {mutual_type: "friend"}, "mutual_id"],
-        {orderBy: [field], equalTo: "me"});
-    expect(values[1][counterpart]).toBe("them");
+it("does not create a duplicate direct relationship", async () => {
+    const database = {cursor: vi.fn(() => ({next: async () => [{key: "existing"}]})), create: vi.fn()};
+    expect(await mutualRequest({database, currentUserData: {id: "me"}, mutualId: "them", typeId: "friend"})).toBeNull();
+    expect(database.cursor).toHaveBeenCalledExactlyOnceWith(["mutual", {mutual_type: "friend"}, "mutual_id"],
+        {equalTo: "me_them", orderBy: ["uid_id"]});
+    expect(database.create).not.toHaveBeenCalled();
+});
+it("accepts or rejects the concrete selected request", async () => {
+    const database = {update: vi.fn().mockResolvedValue(null), delete: vi.fn().mockResolvedValue(null)};
+    const args = {database, requestId: "request", typeId: "friend"};
+    await mutualRequestAccept(args);
+    await mutualRequestReject(args);
+    const path = ["mutualrequests", {mutual_type: "friend"}, {mutual_id: "request"}];
+    expect(database.update).toHaveBeenCalledExactlyOnceWith(path, {accepted: true});
+    expect(database.delete).toHaveBeenCalledExactlyOnceWith(path);
 });
 
 it.each([

@@ -157,3 +157,16 @@ it("exposes all/status on a single source and rejects zero or multiple sources",
         await expect(cursor.status()).rejects.toMatchObject({code: "database/invalid-argument"});
     }
 });
+
+it('restores an explicit checkpoint without rerunning its already processed handlers', async () => {
+    const {cursor} = await setup();
+    const handled = [];
+    const first = await cursor();
+    await first.next(1);
+    const checkpoint = first.position;
+    const resumed = await cursor({handle: ({key}) => {handled.push(key);}});
+    expect(await resumed.all(1, checkpoint)).toBe(2);
+    expect(handled).toEqual(['b', 'c']);
+    expect(await resumed.status()).toMatchObject({state: 'ready', count: 2,
+        checkpoint: {index: 2, key: 'c', finished: true}});
+});

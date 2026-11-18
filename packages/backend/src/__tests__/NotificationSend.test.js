@@ -44,7 +44,9 @@ it("batches Firebase user devices, stringifies data and preserves per-token erro
 it("simulates Firebase emulator delivery without contacting FCM", async () => {
     vi.stubEnv("FUNCTIONS_EMULATOR", "true");
     const backend = {request: vi.fn().mockResolvedValue({one: {notification: "token"}})};
-    expect(await sendFirebaseNotification.call(backend, payload)).toEqual([{token: "token", messageId: "emulator-0"}]);
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    await sendFirebaseNotification.call(backend, payload);
+    expect(info.mock.calls[0][1].results).toEqual([{token: "token", messageId: "emulator-0"}]);
     expect(messaging.sendEachForMulticast).not.toHaveBeenCalled();
 });
 

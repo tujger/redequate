@@ -30,10 +30,14 @@ vi.mock("../../../components/MutualComponent/mutualComponentControls", () => ({
 }));
 
 class Source extends DatabaseCursor {
-    constructor(options, response) { super(options); this.response = response; }
-    async next() {
-        const entries = await this.response;
-        this._position = {...this.position, finished: true};
+    constructor(options, response) { super(["mutualrequests", {mutual_type: "friend"}, "mutual_id"], options); this.response = response; }
+    async next(size = 1) {
+        await super.next(size);
+        this.entries ??= [...await this.response];
+        const entries = this.entries.splice(0, size);
+        this._count += entries.length;
+        this._position = Object.freeze({index: this.position.index + entries.length,
+            key: entries.at(-1)?.key ?? this.position.key, finished: this.entries.length === 0});
         return entries;
     }
 }
@@ -69,7 +73,7 @@ it("loads the matching incoming request and clears it on an empty result", async
     const first = deferred(), empty = deferred();
     context.incoming.push(first.promise, empty.promise);
     await show();
-    await settle(() => first.resolve([request()]));
+    await settle(() => first.resolve([request("unrelated", "ignore this counterpart"), request()]));
     expect(container.textContent).toContain("incoming");
     expect(container.textContent).toContain("Mutual.Accept");
     await settle(() => context.counter(1));

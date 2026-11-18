@@ -50,10 +50,11 @@ const setup = data => {
             if (name === "database.cursor") {
                 class SourceCursor extends DatabaseCursor {
                     constructor(target, query) {
-                        super(query, target);
+                        super(target, query, {backend});
                         this.query = query;
                     }
-                    async next(size) {
+                    async next(size, handle = this.handle) {
+                        await super.next(size, handle);
                         if (!this.records) {
                             const walk = (segments, parent = "", params = {}) => {
                                 if (!segments.length) return [{parent, params}];
@@ -75,7 +76,7 @@ const setup = data => {
                         while (this.offset < this.records.length && page.length < size) {
                             const {parent, ...record} = this.records[this.offset++];
                             if (get(`${parent}/${record.key}`) === null) continue;
-                            const replacement = await this.query.handle(record);
+                            const replacement = await handle?.(record);
                             if (replacement === null) {
                                 await backend.request("database.update", `${parent}/${record.key}`, null);
                             } else {
@@ -83,7 +84,9 @@ const setup = data => {
                                 page.push(record);
                             }
                         }
-                        this._position = {finished: this.offset >= this.records.length};
+                        this._count += page.length;
+                        this._position = Object.freeze({index: this.position.index + page.length,
+                            key: page.at(-1)?.key ?? this.position.key, finished: this.offset >= this.records.length});
                         return page;
                     }
                 }

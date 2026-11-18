@@ -7,7 +7,14 @@ import LocalBackend from "../../../packages/backend/src/local/LocalBackend";
 import LocalDatabase from "../../../packages/database/src/local";
 import Activity from "../../pages/admin/audit/Activity";
 
-const state = vi.hoisted(() => ({dispatch: vi.fn(), database: null}));
+const state = vi.hoisted(() => ({dispatch: vi.fn(), database: null, filterChanged: vi.fn()}));
+vi.mock("../../pages/admin/audit/useActivityFilter", () => ({default: () => {
+    const [filter, setFilter] = useState({activityMode: "type"});
+    return [filter, update => {
+        const next = typeof update === "function" ? update(filter) : update;
+        state.filterChanged(next); setFilter(next);
+    }];
+}}));
 vi.mock("react-redux", () => ({connect: () => Component => Component, useDispatch: () => state.dispatch}));
 vi.mock("../../controllers", () => ({useDatabase: () => state.database, useRedirectToLogin: () => false}));
 vi.mock("../../controllers/General", () => ({
@@ -37,17 +44,17 @@ it("selects the original type from real Local Activity records", async () => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     const backend = new LocalBackend({storageId: "activity-ui-records"});
     state.database = createService(LocalDatabase, {storageId: "activity-ui-records", backend});
-    state.dispatch.mockClear();
+    state.dispatch.mockClear(); state.filterChanged.mockClear();
     const container = document.createElement("div");
     document.body.appendChild(container);
     try {
         await state.database.read(["_activity"]);
         await state.database.update(["_activity", {activity_type_id: "service-id"}],
             {activity_type_id: "service-id", type: "tag.create", value: 123});
-        render(<Activity activityMode="type"/>, container);
+        render(<Activity/>, container);
         await vi.waitFor(() => expect(container.querySelector("button")?.textContent).toBe("tag.create"));
         await act(async () => container.querySelector("button").click());
-        expect(state.dispatch).toHaveBeenLastCalledWith(expect.objectContaining({activityFilterItem: "tag.create"}));
+        expect(state.filterChanged).toHaveBeenLastCalledWith(expect.objectContaining({activityFilterItem: "tag.create"}));
     } finally {
         unmount(container);
         container.remove();
