@@ -7,23 +7,25 @@ const constraints = {orderByChild, orderByValue, orderByKey, equalTo, startAt, e
 export default class FirebaseCursorClient extends FirebaseCursorBase {
     #firebase;
 
-    constructor(firebase, path, options = {}, backend) {
-        super(path, options, backend);
+    constructor(path, options = {}, {backend, database, firebase} = {}) {
+        super(path, options, {backend, database});
         this.#firebase = firebase;
     }
-
-    _reference(address) { return ref(getDatabase(this.#firebase.app), address); }
-    _query(reference, method, ...args) { return query(reference, constraints[method](...args)); }
-    _readSnapshot(reference) { return readSnapshot(reference); }
 
     subscribe(listener) {
         super.subscribe(listener);
         return subscribeEntries(this._queryState(), event => {
             this._started = true;
-            this._count += event.type === "add" ? 1 : event.type === "remove" ? -1 : 0;
+            this._count += {add: 1, change: 0, remove: -1}[event.type];
             return listener(event);
         }, error => this.onError(error, "cursor.subscribe", {path: this.path}));
     }
+
+    get _allReadOnly() { return true; }
+
+    _reference(address) { return ref(getDatabase(this.#firebase.app), address); }
+    _query(reference, method, ...args) { return query(reference, constraints[method](...args)); }
+    _readSnapshot(reference) { return readSnapshot(reference); }
 }
 
 function subscribeEntries(state, notify, onError) {
@@ -40,8 +42,9 @@ function subscribeEntries(state, notify, onError) {
     };
     const callbacks = [["child_added", "add"], ["child_changed", "change"], ["child_removed", "remove"]]
         .map(([event, type]) => [event, child => {
-            if (!active || (startKey !== undefined && child.key < startKey) ||
-                (endKey !== undefined && child.key > endKey)) return;
+            if (!active) return;
+            if (startKey !== undefined && child.key < startKey) return;
+            if (endKey !== undefined && child.key > endKey) return;
             let entry = {key: child.key, value: child.val()};
             let effectiveType = type;
             if (orderBy) {
