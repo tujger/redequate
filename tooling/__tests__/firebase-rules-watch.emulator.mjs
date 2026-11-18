@@ -79,7 +79,7 @@ if (process.argv[2] === 'child') {
   }
   try {
     mkdirSync(join(directory, 'tooling')); mkdirSync(join(directory, 'packages/database/src/firebase'), { recursive: true })
-    for (const path of ['tooling/firebase-rules.mjs', 'tooling/app-config.mjs', 'packages/database/src/firebase/rules.mjs']) copyFileSync(join(root, path), join(directory, path))
+    for (const path of ['tooling/firebase-rules.mjs', 'tooling/app-config.mjs', 'tooling/resolve-firebase-rules.mjs']) copyFileSync(join(root, path), join(directory, path))
     symlinkSync(join(root, 'node_modules'), join(directory, 'node_modules'), 'dir')
     write(join(directory, 'packages/database/src/firebase/database.rules.json'), { rules: { records: { '.read': false, '.write': true, '.indexOn': ['old'] } } })
     write(join(directory, 'sdk.json'), { projectId: `demo-rules-live-${process.pid}` })

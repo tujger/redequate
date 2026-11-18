@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'no
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Linter } from 'eslint'
-import { baseRules, resolveRules } from '../../packages/database/src/firebase/rules.mjs'
+import { baseRules, resolveRules } from '../resolve-firebase-rules.mjs'
 import { resolveConfiguration, buildRules, loadRules } from '../firebase-rules.mjs'
 import queries from '../eslint/database-queries.mjs'
 import localStores, { storesJsonParser } from '../eslint/local-stores.mjs'

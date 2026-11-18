@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, renameSync, rmSync, existsSync, realpathSync, watchFile, unwatchFile } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { resolveRules } from '../packages/database/src/firebase/rules.mjs'
+import { resolveRules } from './resolve-firebase-rules.mjs'
 import { loadProjectConfig } from './app-config.mjs'
 
 const readJSON = file => JSON.parse(readFileSync(file, 'utf8'))

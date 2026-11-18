@@ -16,8 +16,8 @@ async function workspace(t) {
   t.after(() => rmSync(directory, { recursive: true, force: true }))
   const write = (path, value) => { const file = join(directory, path); mkdirSync(join(file, '..'), { recursive: true }); writeFileSync(file, value); return file }
   const base = write('packages/database/src/firebase/database.rules.json', JSON.stringify({ rules: { records: { '.read': false, '.write': false, '.indexOn': ['old'] } } }))
-  copyFileSync(join(root, 'packages/database/src/firebase/rules.mjs'), join(directory, 'packages/database/src/firebase/rules.mjs'))
   const module = write('tooling/firebase-rules.mjs', readFileSync(join(root, 'tooling/firebase-rules.mjs')))
+  copyFileSync(join(root, 'tooling/resolve-firebase-rules.mjs'), join(directory, 'tooling/resolve-firebase-rules.mjs'))
   write('tooling/app-config.mjs', readFileSync(join(root, 'tooling/app-config.mjs')))
   symlinkSync(join(root, 'node_modules'), join(directory, 'node_modules'), 'dir')
   write('sdk.json', '{"projectId":"rules-watch"}')

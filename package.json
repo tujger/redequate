@@ -152,7 +152,6 @@
     "files": [
         "core",
         "tooling",
-        "packages/database/src/firebase/rules.mjs",
         "packages/database/src/firebase/database.rules.json",
         "packages/database/src/local/stores.json"
     ],

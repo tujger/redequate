@@ -5,7 +5,7 @@ import {fileURLToPath} from "node:url";
 import {spawn} from "node:child_process";
 import {createServer} from "node:net";
 
-import {resolveRules} from "../../packages/database/src/firebase/rules.mjs";
+import {resolveRules} from "../resolve-firebase-rules.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const projectId = `demo-redequate-${process.pid}`;
