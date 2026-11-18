@@ -178,17 +178,19 @@ export default class DatabaseCursor {
                 startedAt: null,
                 state: "ready",
                 updatedAt: null,
+                userId: null,
             };
         }
-        const {checkpoint, count, startedAt, updatedAt, finishedAt, state, error} = value;
+        const {userId, checkpoint, count, startedAt, updatedAt, finishedAt, state, error} = value;
         return {
             checkpoint: checkpoint ? {...checkpoint, key: checkpoint.key ?? undefined} : null,
             count,
+            ...(error ? {error} : {}),
             finishedAt,
             startedAt,
             state,
             updatedAt,
-            ...(error ? {error} : {})
+            userId: userId ?? null,
         };
     }
 
@@ -210,6 +212,7 @@ export default class DatabaseCursor {
         if (this.position.finished || this.position.index > (start?.index ?? -1)) {
             fail("database/invalid-argument", "Current cursor is past the requested checkpoint.");
         }
+        const userId = readOnly ? null : (await this._backend!.getCurrentUser()) ?? null;
         try {
             await this.#restorePosition(start);
             while (true) {
@@ -222,7 +225,7 @@ export default class DatabaseCursor {
                         checkpointChanged = true;
                         fail("database/invalid-argument", "Cursor checkpoint changed during page processing.");
                     }
-                    await this.#writeAllPage(changes, position, nextCount, startedAt);
+                    await this.#writeAllPage(changes, position, nextCount, startedAt, userId);
                 }
                 count = nextCount;
                 saved = position;
@@ -231,7 +234,7 @@ export default class DatabaseCursor {
             }
         } catch (error) {
             if (!readOnly && !checkpointChanged) {
-                await this.#writeAllFailure(error, saved, count, startedAt);
+                await this.#writeAllFailure(error, saved, count, startedAt, userId);
             }
             throw error;
         }
@@ -308,7 +311,8 @@ export default class DatabaseCursor {
         changes: Map<DatabasePath, DatabaseValue>,
         position: DatabaseCursorPosition,
         count: number,
-        startedAt: number
+        startedAt: number,
+        userId: string | null
     ): Promise<void> {
         const now = Date.now();
         const status: CursorStatus = {
@@ -318,6 +322,7 @@ export default class DatabaseCursor {
             startedAt,
             state: position.finished ? "ready" : "running",
             updatedAt: now,
+            userId,
         };
         changes.set(this.#statusPath(), {
             ...status,
@@ -330,7 +335,8 @@ export default class DatabaseCursor {
         error: unknown,
         saved: DatabaseCursorPosition | null,
         count: number,
-        startedAt: number
+        startedAt: number,
+        userId: string | null
     ): Promise<void> {
         const now = Date.now();
         let code = "database/unknown";
@@ -340,14 +346,15 @@ export default class DatabaseCursor {
         const failure: CursorStatus = {
             checkpoint: saved,
             count,
+            error: {
+                code,
+                message: error instanceof Error ? error.message : String(error)
+            },
             finishedAt: null,
             startedAt,
             state: "failed",
             updatedAt: now,
-            error: {
-                code,
-                message: error instanceof Error ? error.message : String(error)
-            }
+            userId
         };
         try {
             await this._backend!.request("database.update", "", new Map([[this.#statusPath(), {
