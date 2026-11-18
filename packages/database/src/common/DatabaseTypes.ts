@@ -68,6 +68,8 @@ export interface CursorStatus {
     finishedAt: number | null;
     state: "ready" | "running" | "failed";
     error?: {code: string; message: string};
+    /** Proposed changes from completed pages of a browser all() run. */
+    updates?: Map<DatabasePath, DatabaseValue>;
 }
 
 export interface DatabaseCursorEvent {
