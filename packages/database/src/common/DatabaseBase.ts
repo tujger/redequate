@@ -48,19 +48,31 @@ export default class DatabaseBase {
     }
 
     private handleError(error: unknown, options: DatabaseOptions | undefined,
-        reason: string, context: Record<string, unknown>): void {
+                        reason: string, context: Record<string, unknown>): void {
         const onError = options?.onError ?? this.onError;
         onError(error, reason, context);
     }
 
-    protected run<T>(operation: () => Promise<T>, options: DatabaseOptions | undefined,
-                     reason: string, context: Record<string, unknown>): Promise<T | undefined>;
+    protected run<T>(
+        operation: () => Promise<T>,
+        options: DatabaseOptions | undefined,
+        reason: string,
+        context: Record<string, unknown>
+    ): Promise<T | undefined>;
 
-    protected run<T>(operation: () => T, options: DatabaseOptions | undefined,
-                     reason: string, context: Record<string, unknown>): T | undefined;
+    protected run<T>(
+        operation: () => T,
+        options: DatabaseOptions | undefined,
+        reason: string,
+        context: Record<string, unknown>
+    ): T | undefined;
 
-    protected run<T>(operation: () => T | Promise<T>, options: DatabaseOptions | undefined,
-        reason: string, context: Record<string, unknown>): T | Promise<T | undefined> | undefined {
+    protected run<T>(
+        operation: () => T | Promise<T>,
+        options: DatabaseOptions | undefined,
+        reason: string,
+        context: Record<string, unknown>
+    ): T | Promise<T | undefined> | undefined {
         let result;
         try {
             result = operation();
@@ -77,8 +89,13 @@ export default class DatabaseBase {
         return result as T;
     }
 
-    addEventListener(path: DatabasePath, options: DatabaseListenerOptions = {},
-        subscribe: (callbacks: DatabaseListenerOptions) => {remove(): void} = () => notImplemented("addEventListener")): {remove(): void} | undefined {
+    addEventListener(
+        path: DatabasePath,
+        options: DatabaseListenerOptions = {},
+        subscribe: (callbacks: DatabaseListenerOptions) => {
+            remove(): void
+        } = () => notImplemented("addEventListener")
+    ): { remove(): void } | undefined {
         let callbackFailure: { error: unknown } | undefined;
         const report: DatabaseErrorHandler = (error, reason, context) => {
             try {
@@ -135,7 +152,7 @@ export default class DatabaseBase {
      * concrete records/fields, e.g. {email: "email"}; string paths stay literal.
      * Query options apply to children of the resolved address.
      */
-    read(path: DatabasePath, options: DatabaseReadOptions & {shallow: true}): Promise<string[] | undefined>;
+    read(path: DatabasePath, options: DatabaseReadOptions & { shallow: true }): Promise<string[] | undefined>;
     read(path: DatabasePath, options?: DatabaseReadOptions): Promise<DatabaseValue | undefined>;
     async read(path: DatabasePath, options: DatabaseReadOptions = {}): Promise<DatabaseValue | undefined> {
         return notImplemented("read")
