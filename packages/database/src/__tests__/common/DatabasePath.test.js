@@ -91,8 +91,7 @@ it("attaches and removes listeners at the resolved path", () => {
 });
 
 it("distinguishes paths with named segments from cursor compositions", async () => {
-    expect(new DatabaseBase().cursor(path).path).toEqual(path);
-    expect(new DatabaseBase().cursor([{path}]).path).toBeUndefined();
+    expect(new DatabaseBase().cursor(path).path).toBe("users_public/u123");
     const dynamicPath = ["mutual", {friendship: "m123"}];
     expect(database.cursor(dynamicPath).path).toBe("mutual/m123");
     expect(database.cursor([]).path).toBe("");

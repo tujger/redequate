@@ -206,6 +206,12 @@ it("filters null and undefined sources, including an entirely empty composition"
     }
 });
 
+it("composes source descriptions and requires one source for status", async () => {
+    const cursor = database.cursor([{path: "first"}, {path: "second"}]);
+    expect(cursor.path).toBeUndefined();
+    await expect(cursor.status()).rejects.toThrow("exactly one source");
+});
+
 it("preserves the original request in argument validation error contexts", async () => {
     const onError = vi.fn();
     const cursor = database.cursor(["records"], {onError});
